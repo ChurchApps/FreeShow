@@ -3,7 +3,7 @@ import { randomNumberVariable, variables } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 
 function updateVariable(id: string, key: string, value: any) {
-    variables.update((a) => {
+    variables.update((a: any) => {
         a[id][key] = value
         return a
     })
@@ -76,16 +76,16 @@ async function animateValue(id: string, chars: number, finalValue: { name: strin
 
     for (let i = 0; i < steps; i++) {
         let randomNumber = start
-        ;[...Array(chars - currentStep)].forEach((_, i) => {
-            // never display the same int twice in a row
-            let num = -1
-            do {
-                num = Math.floor(Math.random() * 10) // 0-9
-            } while (lastNums[i] === num)
+            ;[...Array(chars - currentStep)].forEach((_, i) => {
+                // never display the same int twice in a row
+                let num = -1
+                do {
+                    num = Math.floor(Math.random() * 10) // 0-9
+                } while (lastNums[i] === num)
 
-            lastNums[i] = num
-            randomNumber += num
-        })
+                lastNums[i] = num
+                randomNumber += num
+            })
 
         updateVariable(id, "number", Number(randomNumber))
 

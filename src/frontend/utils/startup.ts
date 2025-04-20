@@ -17,7 +17,7 @@ let initialized: boolean = false
 export function startup() {
     window.api.receive(
         STARTUP,
-        (msg) => {
+        (msg: any) => {
             if (initialized || msg.channel !== "TYPE") return
             initialized = true // only call this once per window
             destroy(STARTUP, "startup")

@@ -180,7 +180,7 @@ export function startEventTimer() {
     }, INTERVAL)
 }
 
-function convertEventAction(action) {
+function convertEventAction(action: any) {
     return { triggers: [action.id], actionValues: { [action.id]: action.data || {} } }
 }
 

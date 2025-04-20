@@ -18,7 +18,7 @@ export function convertCSV(data: any) {
     let tempShows: any[] = []
 
     setTimeout(() => {
-        data.forEach((file) => {
+        data.forEach((file: any) => {
             let name: string = file.name
             let content: string = file.content
 
@@ -44,14 +44,14 @@ export function convertCSV(data: any) {
     }, 10)
 }
 
-function createShow({ slides, name }) {
+function createShow({ slides, name }: any) {
     let layoutID: string = uid()
     let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
     let show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
-    slides = slides.filter((a) => a.items.length)
+    slides = slides.filter((a: any) => a.items.length)
 
     let layouts = getLayout(slides)
     let newSlides: any = {}
@@ -73,7 +73,7 @@ function getLayout(slides: Slide[]) {
     return layout
 }
 
-function parseCSVLine(line) {
+function parseCSVLine(line: any) {
     const regex = /"{3}([^"]+)"{3}|"(.*?)"|([^,]+)/g
     let matches: string[] = []
     let match

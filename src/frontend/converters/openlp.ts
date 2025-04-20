@@ -133,7 +133,7 @@ function formatText(text: string) {
 
 // WIP import song books as categories
 function sqliteConvert(content: any) {
-    let songs: any[] = content.songs.map((song) => getSong(song, content))
+    let songs: any[] = content.songs.map((song: any) => getSong(song, content))
 
     return songs
 }
@@ -157,8 +157,8 @@ function getSong(song: any, content: any) {
     function getAuthors() {
         let authors: any[] = []
 
-        let currentSongAuthors = content.authors_songs.filter((a) => a.song_id === song.id)
-        authors = currentSongAuthors.map((a) => ({ name: content.authors.find((author) => author.id === a.author_id)?.display_name || "", type: a.author_type || "words" }))
+        let currentSongAuthors = content.authors_songs.filter((a: any) => a.song_id === song.id)
+        authors = currentSongAuthors.map((a: any) => ({ name: content.authors.find((author: any) => author.id === a.author_id)?.display_name || "", type: a.author_type || "words" }))
 
         return authors
     }
@@ -169,7 +169,7 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => ({ name: a["@type"] + a["@label"], lines: a["#cdata"].split("\n") }))
+        lyrics = lyrics.map((a: any) => ({ name: a["@type"] + a["@label"], lines: a["#cdata"].split("\n") }))
 
         return lyrics
     }
@@ -186,12 +186,12 @@ function XMLtoObject(xml: string) {
     let notes =
         song["#comment"] ||
         (Array.isArray(properties.comments)
-            ? properties.comments?.map((comment) => comment["#text"] || "").join("\n")
+            ? properties.comments?.map((comment: any) => comment["#text"] || "").join("\n")
             : typeof properties.comments?.comment === "string"
-              ? properties.comments.comment
-              : typeof properties.comments === "string"
-                ? properties.comments
-                : "") ||
+                ? properties.comments.comment
+                : typeof properties.comments === "string"
+                    ? properties.comments
+                    : "") ||
         ""
 
     let newSong: Song = {
@@ -222,7 +222,7 @@ function XMLtoObject(xml: string) {
         if (!Array.isArray(currentSongAuthors)) currentSongAuthors = [currentSongAuthors]
 
         let authors: any[] = []
-        authors = currentSongAuthors.map((author) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
+        authors = currentSongAuthors.map((author: any) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
 
         return authors
     }
@@ -230,7 +230,7 @@ function XMLtoObject(xml: string) {
     function formatVerseOrder(verseOrder: string) {
         const hasNumber = /\d+$/
         verseOrder = verseOrder.split(" ").map(format).join(" ")
-        function format(id) {
+        function format(id: any) {
             if (!hasNumber.test(id)) id += "1"
             return id
         }
@@ -242,7 +242,7 @@ function XMLtoObject(xml: string) {
         lyrics = song.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => ({ name: a["@name"], lines: getLines(a.lines || "") }))
+        lyrics = lyrics.map((a: any) => ({ name: a["@name"], lines: getLines(a.lines || "") }))
 
         return lyrics
     }

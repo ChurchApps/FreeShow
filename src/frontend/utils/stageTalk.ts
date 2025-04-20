@@ -14,7 +14,7 @@ import { arrayToObject, filterObjectArray, sendData, setConnectedState } from ".
 import { runAction } from "../components/actions/actions"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
-export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
+export async function sendBackgroundToStage(outputId: any, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
     let next = await getNextBackground(currentOutput?.slide || null, returnPath)
     let path = currentOutput?.background?.path || ""
@@ -69,7 +69,7 @@ async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath
     return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
 }
 
-export const receiveSTAGE = {
+export const receiveSTAGE: any = {
     LAYOUTS: () => {
         return keysToID(get(stageShows))
             .filter((a) => !a.disabled)

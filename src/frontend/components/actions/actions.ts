@@ -4,7 +4,8 @@ import { audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, s
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
-import { API_ACTIONS, API_toggle } from "./api"
+import { API_ACTIONS } from "./api"
+import type { API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
 import { newToast, wait } from "../../utils/common"
@@ -15,7 +16,7 @@ export function runActionId(id: string) {
     runAction(get(midiIn)[id])
 }
 
-export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
+export async function runAction(action: any, { midiIndex = -1, slideIndex = -1 } = {}) {
     // console.log(action)
     if (!action) return
     action = convertOldMidiToNewAction(action)
@@ -42,7 +43,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         })
     }, 20)
 
-    async function runTrigger(actionId) {
+    async function runTrigger(actionId: string) {
         let triggerData = data[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
@@ -53,7 +54,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
             return
         }
 
-        if (!API_ACTIONS[actionId]) {
+        if (!(actionId in API_ACTIONS)) {
             console.log("Missing API for trigger")
             return
         }
@@ -75,7 +76,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
             await wait(10)
         }
 
-        API_ACTIONS[actionId](triggerData)
+        (API_ACTIONS as Record<string, (data: any) => void>)[actionId](triggerData)
     }
 }
 
@@ -150,7 +151,7 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
 }
 
 export function slideHasAction(actions: any, key: string) {
-    return actions?.slideActions?.find((a) => a.triggers?.includes(key))
+    return actions?.slideActions?.find((a: any) => a.triggers?.includes(key))
 }
 
 export function getActionIcon(id: string) {
@@ -158,7 +159,7 @@ export function getActionIcon(id: string) {
     if (actions.length > 1) return "actions"
 
     let trigger = getActionTriggerId(actions[0])
-    return actionData[trigger]?.icon || "actions"
+    return (actionData as Record<string, { icon?: string }>)[trigger]?.icon || "actions"
 }
 
 export function getActionTriggerId(id: string) {
@@ -176,7 +177,10 @@ const namedObjects = {
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows),
-}
+} as const;
+
+type NamedObjectKey = keyof typeof namedObjects;
+
 export function getActionName(actionId: string, actionValue: any) {
     if (actionId === "change_output_style") {
         return get(styles)[actionValue.outputStyle]?.name
@@ -191,7 +195,7 @@ export function getActionName(actionId: string, actionValue: any) {
         return Number(actionValue.volume || 1) * 100
     }
 
-    if (!namedObjects[actionId]) return
+    if (!(actionId in namedObjects)) return
 
-    return namedObjects[actionId]()[actionValue.id]?.name
+    return namedObjects[actionId as NamedObjectKey]()[actionValue.id]?.name
 }

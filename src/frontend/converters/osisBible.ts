@@ -31,7 +31,7 @@ function XMLtoObject(xml: string): Bible {
     let bible = xml2json(xml, true)?.osis?.osisText || {}
     let books: any[] = []
 
-    bible.div?.forEach((book, i) => {
+    bible.div?.forEach((book: any, i: number) => {
         let bookId = book["@osisID"]
         let name = book["@name"] || defaultNames[bookId]
         let number = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? i) + 1

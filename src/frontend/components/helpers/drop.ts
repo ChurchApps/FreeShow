@@ -8,7 +8,7 @@ import { deselect } from "./select"
 
 export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist"
 
-const areas = {
+const areas: any = {
     all_slides: ["template"],
     slides: ["media", "audio", "overlay", "sound", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
@@ -19,7 +19,7 @@ const areas = {
     edit: ["media", "global_timer", "variable"],
     // media_drawer: ["file"],
 }
-const areaChildren = {
+const areaChildren: any = {
     projects: ["folder", "project"],
     project: ["show", "media", "audio", "show_drawer", "player", "action"],
     slides: ["slide", "group", "global_group", "screen", "ndi", "camera", "microphone", "media", "audio", "show"],

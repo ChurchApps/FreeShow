@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { SelectIds } from "../../../types/Main"
+    import type { SelectIds } from "../../../types/Main"
     import { audioPlaylists, categories, overlayCategories, overlays, shows, templateCategories, templates } from "../../stores"
     import T from "../helpers/T.svelte"
     import Center from "../system/Center.svelte"
@@ -10,7 +10,7 @@
     export let id: string
     export let selectId: string
 
-    const categoryStores = {
+    const categoryStores: any = {
         shows: () => $categories,
         overlays: () => $overlayCategories,
         templates: () => $templateCategories,
@@ -25,7 +25,7 @@
         else if (id === "templates") list = Object.values($templates)
 
         let totalLength: number = 0
-        buttons.forEach((button) => {
+        buttons.forEach((button: any) => {
             length[button.id] = 0
 
             if (button.id === "all") {

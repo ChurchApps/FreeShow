@@ -1,15 +1,15 @@
 /*	This work is licensed under Creative Commons GNU LGPL License.
 
-	License: http://creativecommons.org/licenses/LGPL/2.1/
+    License: http://creativecommons.org/licenses/LGPL/2.1/
    Version: 0.9
-	Author:  Stefan Goessner/2006
-	Web:     http://goessner.net/ 
+    Author:  Stefan Goessner/2006
+    Web:     http://goessner.net/ 
 */
 export function xml2json(xmlString: string, removeBreaks: boolean = false) {
     let xml: any = xmlParser(xmlString, removeBreaks)
 
     let X = {
-        toObj: (xml) => {
+        toObj: (xml: any): any => {
             if (xml.nodeType == 1) {
                 let o: any = {}
 
@@ -77,7 +77,7 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
 
             return console.error("unhandled node type: " + xml.nodeType)
         },
-        toJson: (o, name, ind) => {
+        toJson: (o: any, name: any, ind: any) => {
             let json = name ? '"' + name + '"' : ""
 
             if (o instanceof Array) {
@@ -97,11 +97,11 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
 
             return json + (name && ":") + o.toString()
         },
-        innerXml: (node) => {
+        innerXml: (node: any) => {
             if ("innerHTML" in node) return node.innerHTML
 
             let s = ""
-            let asXml = (n) => {
+            let asXml = (n: any) => {
                 if (n.nodeType == 1) {
                     let s = ""
                     s += "<" + n.nodeName
@@ -124,12 +124,12 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
             for (let c = node.firstChild; c; c = c.nextSibling) s += asXml(c)
             return s
         },
-        escape: (txt) => {
+        escape: (txt: string) => {
             return txt.replace(/[\\]/g, "\\\\").replace(/[\"]/g, '\\"').replace(/[\n]/g, "\\n").replace(/[\r]/g, "\\r")
         },
-        removeWhite: (e) => {
+        removeWhite: (e: any) => {
             e.normalize()
-            for (let n = e.firstChild; n; ) {
+            for (let n = e.firstChild; n;) {
                 if (n.nodeType == 3) {
                     // text node
                     if (!n.nodeValue.match(/[^ \f\n\r\t\v]/)) {

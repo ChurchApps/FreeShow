@@ -327,7 +327,7 @@ export class AudioPlayer {
     }
 }
 
-function updatePlayingStore(id: string, key: string, value: any) {
+function updatePlayingStore<K extends keyof AudioData>(id: string, key: K, value: AudioData[K]) {
     playingAudio.update((a) => {
         if (!a[id]) return a
         a[id][key] = value
@@ -335,7 +335,7 @@ function updatePlayingStore(id: string, key: string, value: any) {
     })
 }
 
-function updateAudioStore(id: string, key: string, value: any) {
+function updateAudioStore<K extends keyof HTMLAudioElement>(id: string, key: K, value: HTMLAudioElement[K]) {
     playingAudio.update((a) => {
         if (!a[id]?.audio) return a
         a[id].audio[key] = value

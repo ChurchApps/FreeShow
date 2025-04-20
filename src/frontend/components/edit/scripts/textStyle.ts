@@ -185,19 +185,19 @@ export function getSelectionRange(): { start: number; end: number }[] {
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
     let style: string = ""
-    ;(pos || lines).forEach((_a: any, i: number) => {
-        let currentPos: number = 0
-        lines[i]?.text?.some((text) => {
-            // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
-            if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
-                style = text.style
-                return true
-            }
+        ; (pos || lines).forEach((_a: any, i: number) => {
+            let currentPos: number = 0
+            lines[i]?.text?.some((text) => {
+                // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
+                if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
+                    style = text.style
+                    return true
+                }
 
-            currentPos += text.value.length
-            return false
+                currentPos += text.value.length
+                return false
+            })
         })
-    })
 
     // filter out empty lines
     lines = lines.filter((a) => a.text.length)
@@ -353,7 +353,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = f
     // get child elem
     let childElem = -1
     let currentTextLength = 0
-    lineElem.childNodes.forEach((elem, i) => {
+    lineElem.childNodes.forEach((elem: any, i: number) => {
         if (childElem >= 0) return
         if (pos <= currentTextLength + elem.innerText.length) {
             childElem = i

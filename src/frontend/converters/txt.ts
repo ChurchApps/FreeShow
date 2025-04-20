@@ -134,7 +134,7 @@ export function trimNameFromString(text: string) {
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
 // , existingSlides = {}
-function createSlides(labeled: { type: string; text: string }[], noFormatting) {
+function createSlides(labeled: { type: string; text: string }[], noFormatting: boolean) {
     let slides: { [key: string]: Slide } = {}
     let layouts: SlideData[] = []
 
@@ -326,9 +326,9 @@ function checkRepeats(labeled: { type: string; text: string }[]) {
             let repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
             // remove
             a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length + 1, a.text.length)
-            ;[...Array(Number(repeatNumber))].map(() => {
-                newLabels.push(a)
-            })
+                ;[...Array(Number(repeatNumber))].map(() => {
+                    newLabels.push(a)
+                })
         } else newLabels.push(a)
     })
     return newLabels

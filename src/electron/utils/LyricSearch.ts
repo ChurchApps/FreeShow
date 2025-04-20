@@ -89,6 +89,7 @@ export class LyricSearch {
         const url = `https://hymnary.org/text/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
+        //@ts-ignore
         return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
     }
 
@@ -130,6 +131,7 @@ export class LyricSearch {
         const url = `https://www.letras.mus.br/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
+        //@ts-ignore
         return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
     }
 

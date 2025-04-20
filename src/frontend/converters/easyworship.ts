@@ -107,10 +107,10 @@ const replaceCodes: any = {
     "u8211?": "–",
 }
 
-function decodeString(input) {
+function decodeString(input: any) {
     let regex = /u(\d+)\?/g
 
-    let decodedString = input.replace(regex, (_match, number) => {
+    let decodedString = input.replace(regex, (_match: any, number: any) => {
         return String.fromCharCode(Number(number))
     })
 

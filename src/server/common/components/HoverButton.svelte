@@ -15,12 +15,12 @@
     }
 </script>
 
-<div style={$$props.style} on:click title={$$props.title}>
+<button type="button" style={$$props.style} title={$$props.title} {...$$restProps}>
     <slot />
     <div class="overlay" class:reveal>
         <Icon id={icon} {size} white />
     </div>
-</div>
+</button>
 
 <style>
     div {

@@ -54,7 +54,7 @@ import { save } from "./save"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
-const ctrlKeys = {
+const ctrlKeys: any = {
     a: () => selectAll(),
     c: () => copy(),
     v: () => paste(),
@@ -75,12 +75,12 @@ const ctrlKeys = {
     "?": () => activePopup.set("shortcuts"),
 }
 
-const shiftCtrlKeys = {
+const shiftCtrlKeys: any = {
     f: () => menuClick("focus_mode"),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
-const keys = {
+const keys: any = {
     Escape: () => {
         // hide quick search
         if (get(quickSearchActive)) {
@@ -102,7 +102,7 @@ const keys = {
 
         // blur focused elements
         if (document.activeElement !== document.body) {
-            ;(document.activeElement as HTMLElement).blur()
+            ; (document.activeElement as HTMLElement).blur()
 
             if (!popupId && get(selected).id) setTimeout(() => selected.set({ id: null, data: [] }))
             return
@@ -211,7 +211,7 @@ export const previewCtrlShortcuts = {
     },
 }
 
-export const previewShortcuts = {
+export const previewShortcuts: any = {
     // presenter controller keys
     Escape: () => {
         // WIP if (allCleared) fullscreen = false

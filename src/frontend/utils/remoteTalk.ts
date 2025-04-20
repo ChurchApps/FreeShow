@@ -146,8 +146,8 @@ export const receiveREMOTE: any = {
         msg.data = removeDeleted(keysToID(clone(get(projects))))
 
         // get names
-        msg.data.forEach((project) => {
-            project.shows.forEach((show) => {
+        msg.data.forEach((project: any) => {
+            project.shows.forEach((show: any) => {
                 if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || get(dictionary).main?.unnamed
             })
 

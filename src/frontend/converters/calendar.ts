@@ -44,7 +44,7 @@ export function convertCalendar(data: any) {
         if (!icaEvents.length) return
         console.log(icaEvents)
 
-        let newEvents: Event[] = icaEvents.map((event) => {
+        let newEvents: Event[] = icaEvents.map((event: any) => {
             let fullDay: boolean = false
             let startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
             let endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
@@ -90,8 +90,9 @@ export function convertCalendar(data: any) {
             // get repeats
             if (event.RRULE) {
                 let repeatData: { FREQ?: string; WKST?: "MO" | "SU"; UNTIL?: string; INTERVAL?: number; BYDAY?: string; COUNT?: string } = {}
-                event.RRULE.split(";").forEach((rule) => {
+                event.RRULE.split(";").forEach((rule: any) => {
                     let data = rule.split("=")
+                    //@ts-ignore
                     repeatData[data[0]] = data[1]
                 })
 
@@ -103,7 +104,7 @@ export function convertCalendar(data: any) {
                     date = new Date(date).toISOString().substring(0, 10)
                 }
 
-                const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
+                const types: any = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
                 if (types[repeatData.FREQ || ""]) {
                     newEvent.repeat = true
                     newEvent.repeatData = {
@@ -179,7 +180,7 @@ function convertToJSON(source: string): IcalObject {
                     }
                     // Create a new object, store the reference for future uses
                     currentObj = {}
-                    ;(parentObj[currentValue] as IcalObject[]).push(currentObj)
+                        ; (parentObj[currentValue] as IcalObject[]).push(currentObj)
                     break
                 case "END":
                     currentObj = parentObj
@@ -190,9 +191,9 @@ function convertToJSON(source: string): IcalObject {
                         if (!Array.isArray(currentObj[currentKey])) {
                             currentObj[currentKey] = [currentObj[currentKey]] as string[]
                         }
-                        ;(currentObj[currentKey] as string[]).push(currentValue)
+                        ; (currentObj[currentKey] as string[]).push(currentValue)
                     } else {
-                        ;(currentObj[currentKey] as string) = currentValue
+                        ; (currentObj[currentKey] as string) = currentValue
                     }
             }
         }

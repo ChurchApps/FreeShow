@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { ProjectShowRef } from "../../../../types/Projects"
+    import type { ProjectShowRef } from "../../../../types/Projects"
     import { dictionary, media, outLocked, outputs, showsCache, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { getMediaStyle } from "../../helpers/media"

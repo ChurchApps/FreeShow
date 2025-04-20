@@ -249,7 +249,7 @@ export function closeApp() {
 let initialized: boolean = false
 export function unsavedUpdater() {
     let cachedValues: { [key: string]: string } = {}
-    let s = { ...saveList, folders, projects, showsCache, stageShows }
+    let s: any = { ...saveList, folders, projects, showsCache, stageShows }
 
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
@@ -277,7 +277,7 @@ export function unsavedUpdater() {
     initialized = true
 }
 
-const customSavedListener = {
+const customSavedListener: any = {
     showsCache: (data: Shows) => {
         Object.keys(data).forEach((id) => {
             if (!data[id]?.slides) return

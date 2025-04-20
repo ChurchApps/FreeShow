@@ -119,7 +119,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
         showMedia = _calendarShow.media || {}
 
         showLayoutRef.forEach(addSlidesAndTimers)
-        function addSlidesAndTimers(layoutRef) {
+        function addSlidesAndTimers(layoutRef: any) {
             let id = layoutRef.id
             if (!showSlides[id]) return
             if (!slides[id]) slides[id] = showSlides[id]
@@ -128,7 +128,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
             delete layout.end
 
             if (!layout.nextTimer) {
-                let totalTextLength = slides[id].items.reduce((value, item) => (value += getItemText(item).length), 0) / 2
+                let totalTextLength = slides[id].items.reduce((value: any, item: any) => (value += getItemText(item).length), 0) / 2
                 if (layout.background && !totalTextLength) layout.nextTimer = 10
                 else layout.nextTimer = getToNextDuration(totalTextLength)
             }
@@ -179,7 +179,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
     return { show }
 }
 
-function getEventStringOverMultipleDays(textDay, [day, from, to]: Date[]): string {
+function getEventStringOverMultipleDays(textDay: any, [day, from, to]: Date[]): string {
     let startAndEndSameYear = from.getFullYear() === to.getFullYear()
     let startAndEndSameMonth = from.getMonth() === to.getMonth()
 
@@ -253,8 +253,8 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
 
     // sort
     tempEvents = tempEvents.map(sortDayAndOnlyKeepNormalEvents).filter((a) => a.events.length)
-    function sortDayAndOnlyKeepNormalEvents(events) {
-        events.events = events.events.filter((a) => a.type === "event").sort(sortByTime)
+    function sortDayAndOnlyKeepNormalEvents(events: any) {
+        events.events = events.events.filter((a: any) => a.type === "event").sort(sortByTime)
         return events
     }
 

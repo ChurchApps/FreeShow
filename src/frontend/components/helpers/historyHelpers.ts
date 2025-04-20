@@ -59,7 +59,7 @@ const getDefaultCategoryUpdater = (tabId: string) => ({
     },
 })
 
-export const _updaters = {
+export const _updaters: any = {
     stage: {
         store: stageShows,
         empty: EMPTY_STAGE,
@@ -94,7 +94,7 @@ export const _updaters = {
         store: projects,
         empty: EMPTY_PROJECT,
         cloudCombine: true,
-        initialize: (data) => {
+        initialize: (data: any) => {
             return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
@@ -135,7 +135,7 @@ export const _updaters = {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
         cloudCombine: true,
-        initialize: (data) => {
+        initialize: (data: any) => {
             return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
         },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
@@ -217,7 +217,7 @@ export const _updaters = {
     section: {
         store: projects,
         empty: EMPTY_SECTION,
-        initialize: (data) => {
+        initialize: (data: any) => {
             return replaceEmptyValues(data, { id: uid(5) })
         },
         select: (_id: string, data: any) => {
@@ -241,7 +241,7 @@ export const _updaters = {
     category_shows: {
         store: categories,
         ...getDefaultCategoryUpdater("shows"),
-        select: (id: string, _data, initializing: boolean) => {
+        select: (id: string, _data: any, initializing: boolean) => {
             if (!initializing) return
 
             setDrawerTabData("shows", id)
@@ -251,7 +251,7 @@ export const _updaters = {
     category_overlays: {
         store: overlayCategories,
         ...getDefaultCategoryUpdater("overlays"),
-        select: (id: string, _data, initializing: boolean) => {
+        select: (id: string, _data: any, initializing: boolean) => {
             if (!initializing) return
 
             setDrawerTabData("overlays", id)
@@ -261,7 +261,7 @@ export const _updaters = {
     category_templates: {
         store: templateCategories,
         ...getDefaultCategoryUpdater("templates"),
-        select: (id: string, _data, initializing: boolean) => {
+        select: (id: string, _data: any, initializing: boolean) => {
             if (!initializing) return
 
             setDrawerTabData("templates", id)
@@ -276,7 +276,7 @@ export const _updaters = {
     overlay: {
         store: overlays,
         empty: EMPTY_SLIDE,
-        initialize: (data, id: string) => {
+        initialize: (data: any, id: string) => {
             // get selected category
             if (get(drawerTabsData).overlays?.activeSubTab && get(overlayCategories)[get(drawerTabsData).overlays.activeSubTab!]) {
                 data.category = get(drawerTabsData).overlays.activeSubTab
@@ -296,7 +296,7 @@ export const _updaters = {
     template: {
         store: templates,
         empty: EMPTY_SLIDE,
-        initialize: (data, id: string) => {
+        initialize: (data: any, id: string) => {
             // get selected category
             if (get(drawerTabsData).templates?.activeSubTab && get(templateCategories)[get(drawerTabsData).templates.activeSubTab!]) {
                 data.category = get(drawerTabsData).templates.activeSubTab
@@ -399,7 +399,7 @@ export const _updaters = {
             // remove from "not found" (should not be nessesary)
             setTimeout(() => {
                 notFound.update((a) => {
-                    if (a.show.includes(id)) a.show = a.show.filter((showId) => showId !== id)
+                    if (a.show.includes(id)) a.show = a.show.filter((showId: any) => showId !== id)
                     return a
                 })
             }, 10)
@@ -455,7 +455,7 @@ export const _updaters = {
     tag: {
         store: globalTags,
         empty: EMPTY_TAG,
-        initialize: (data, id: string) => {
+        initialize: (data: any, id: string) => {
             activeRename.set("tag_" + id)
             return data
         },
@@ -505,7 +505,7 @@ export const _updaters = {
     },
     settings_style: {
         store: styles,
-        select: (id: string, data, initializing: boolean) => {
+        select: (id: string, data: any, initializing: boolean) => {
             if (!initializing || data.key) return
             activeRename.set("style_" + id)
         },
@@ -560,7 +560,7 @@ function updateTransparentColors(id: string) {
         return a
     })
 }
-const converts = {
+const converts: any = {
     secondary: [{ id: "secondary-opacity", opacity: 0.5 }],
     text: [
         { id: "hover", opacity: 0.05 },
@@ -577,10 +577,10 @@ function hexToRgb(hex: string) {
     let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
         ? {
-              r: parseInt(result[1], 16),
-              g: parseInt(result[2], 16),
-              b: parseInt(result[3], 16),
-          }
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+        }
         : null
 }
 
@@ -593,15 +593,15 @@ function replaceEmptyValues(object: any, replacer: any) {
 }
 
 export const projectReplacers = [
-    { id: "DD", title: get(dictionary).calendar?.day || "Day", value: (date) => addZero(date.getDate()) },
-    { id: "MM", title: get(dictionary).calendar?.month || "Month", value: (date) => addZero(date.getMonth() + 1) },
-    { id: "YY", title: get(dictionary).calendar?.year || "Year", value: (date) => date.getFullYear().toString().slice(-2) },
-    { id: "YYYY", title: "Full year", value: (date) => date.getFullYear() },
-    { id: "hh", title: "Hours", value: (date) => date.getHours() },
-    { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
-    { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
-    { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
-    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
+    { id: "DD", title: get(dictionary).calendar?.day || "Day", value: (date: any) => addZero(date.getDate()) },
+    { id: "MM", title: get(dictionary).calendar?.month || "Month", value: (date: any) => addZero(date.getMonth() + 1) },
+    { id: "YY", title: get(dictionary).calendar?.year || "Year", value: (date: any) => date.getFullYear().toString().slice(-2) },
+    { id: "YYYY", title: "Full year", value: (date: any) => date.getFullYear() },
+    { id: "hh", title: "Hours", value: (date: any) => date.getHours() },
+    { id: "mm", title: "Minutes", value: (date: any) => date.getMinutes() },
+    { id: "weeknum", title: "Week number", value: (date: any) => getWeekNumber(date) },
+    { id: "weekday", title: "Weekday", value: (date: any) => getWeekday(date.getDay(), get(dictionary), true) },
+    { id: "monthname", title: "Name of month", value: (date: any) => getMonthName(date.getMonth(), get(dictionary), true) },
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 export function getProjectName() {
@@ -628,7 +628,7 @@ function clearOverlayOutput(slideId: string) {
     }
 }
 
-export function setDrawerTabData(tabId, data) {
+export function setDrawerTabData(tabId: any, data: any) {
     drawerTabsData.update((a) => {
         if (!a[tabId]) a[tabId] = { enabled: true, activeSubTab: "" }
         a[tabId].activeSubTab = data

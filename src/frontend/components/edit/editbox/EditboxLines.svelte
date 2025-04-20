@@ -10,7 +10,8 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import autosize from "../scripts/autosize"
+    import type { AutosizeTypes } from "../scripts/autosize"
     import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
@@ -152,7 +153,7 @@
         storeCurrentCaretPos()
     }
 
-    function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
+    function cutInTwo({ e, sel, lines, currentIndex, textPos, start }: any) {
         if ((ref.type || "show") !== "show") return
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
@@ -231,7 +232,7 @@
             if (lastRedo?.id === "SHOW_ITEMS") {
                 let previousData = lastRedo.oldData.previousData
 
-                let historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
+                let historyText = previousData[index]?.lines.reduce((text: any, line: any) => (text += getLineText(line)), "")
                 let linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
 
                 if (historyText === linesText) return

@@ -56,7 +56,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 
         allNewChildIds.forEach(getData)
 
-        function getData(slideId, i) {
+        function getData(slideId: any, i: number) {
             let newParentLayoutIndex = newData.layout.findIndex((a) => a.id === newParentId)
             if (!newData.layout[newParentLayoutIndex].children) newData.layout[newParentLayoutIndex].children = {}
 
@@ -126,10 +126,10 @@ function combineGroups(groups: { globalGroup: string; slides: LayoutRef[] }[], s
 function updateChildren(groups: { globalGroup: string; slides: LayoutRef[] }[]) {
     groups.forEach(updateGroup)
 
-    function updateGroup({ slides, globalGroup }) {
+    function updateGroup({ slides, globalGroup }: any) {
         let newChildren = clone(slides)
             .slice(1)
-            .map(({ id }) => id)
+            .map(({ id }: any) => id)
         let groups = clone(slides)
         groups[0].children = newChildren
         if (globalGroup) groups[0].globalGroup = globalGroup
@@ -214,7 +214,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
 
     return { newParents, groups, newData }
 
-    function checkIfSlideExistsMorePlaces(layout, slide, i) {
+    function checkIfSlideExistsMorePlaces(layout: any, slide: any, i: number) {
         let ref = _show().layouts([layout.layoutId]).ref()[0]
         return ref.find((lslide) => lslide.id === slide.id && (lslide.index !== slide.index || layout.layoutId !== activeLayout || (i === 0 && slide.type === "child")))
     }
@@ -549,7 +549,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
 
         if (!firstLines.at(-1)?.text.length) firstLines.pop()
 
-        function splitLines(text) {
+        function splitLines(text: any) {
             currentIndex += text.value.length
             if (sel[i]?.start !== undefined) start = sel[i].start!
 
@@ -592,10 +592,10 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
 
     // add chords
     let chordLines = clone(lines.map((a) => a.chords || []))
-    ;[...firstLines, ...secondLines].forEach((line) => {
-        let oldLineChords = chordLines.shift()
-        if (oldLineChords?.length) line.chords = oldLineChords
-    })
+        ;[...firstLines, ...secondLines].forEach((line) => {
+            let oldLineChords = chordLines.shift()
+            if (oldLineChords?.length) line.chords = oldLineChords
+        })
 
     // create new slide
     let newSlide = clone(_show().slides([slideRef.id]).get()[0])
@@ -629,7 +629,7 @@ function splitTextContentInHalf(text: string) {
     const center = Math.floor(text.length / 2)
 
     // find split index based on input "./,/!/?" closest to center
-    function findSplitIndex(chars) {
+    function findSplitIndex(chars: string[]) {
         const MARGIN = center / 2
         let index = -1
         for (let i = center - MARGIN; i <= center + MARGIN; i++) {

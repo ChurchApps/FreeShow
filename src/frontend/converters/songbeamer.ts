@@ -71,7 +71,7 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
     }
 
     let tempShows: { id: string; show: Show }[] = []
-    files.forEach(({ name, content }) => {
+    files.forEach(({ name, content }: any) => {
         if (content.substring(0, 3) === BOM8) {
             content = content.substring(3)
         }
@@ -260,7 +260,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 let slideTags = parts[1].trim().split(",")
                 for (const tag of slideTags) {
                     let group: string | null, groupNumber: number | null
-                    ;({ group, groupNumber } = slideTagToGroup(tag))
+                        ; ({ group, groupNumber } = slideTagToGroup(tag))
                     if (group !== null) {
                         metadata.verse_order.push({ group, groupNumber })
                     }

@@ -57,7 +57,7 @@ export function getOutputGroupName() {
 export function getPlayingVideoDuration() {
     let outputId = getActiveOutputs(get(outputs))[0]
     let outputPath = get(outputs)[outputId]?.out?.background?.path || ""
-    let video = get(playingVideos)[outputPath] || {}
+    let video = get(playingVideos)[outputPath as any] || {}
     let time: number = video?.duration || video?.video?.duration || 0
     return time
 }

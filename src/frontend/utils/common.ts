@@ -82,7 +82,7 @@ export function hideDisplay(ctrlKey: boolean = true) {
     outputDisplay.set(false)
 
     let outputsList = getActiveOutputs(get(allOutputs), false)
-    outputsList.forEach((id) => {
+    outputsList.forEach((id: any) => {
         let output = { id, ...get(allOutputs)[id] }
         send(OUTPUT, ["DISPLAY"], { enabled: false, output })
     })
@@ -145,7 +145,7 @@ const ERROR_FILTER = [
     "Uncaught IndexSizeError: Failed to execute 'setEnd' on 'Range'", // caret update/reset (pos larger than content)
     " is not defined\n    at eval", // inputting text into number input
 ]
-export function logerror(err) {
+export function logerror(err: any) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 

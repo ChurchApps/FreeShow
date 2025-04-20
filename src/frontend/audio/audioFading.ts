@@ -50,7 +50,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
         if (faded) removeAudio(path)
     }
 
-    function removeAudio(path) {
+    function removeAudio(path: string) {
         const audio = AudioPlayer.getAudio(path)
         if (!audio) return deleteAudio(path)
 
@@ -59,7 +59,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
         deleteAudio(path)
     }
 
-    function deleteAudio(path) {
+    function deleteAudio(path: string) {
         isFadingOut.set(false)
         AudioPlayer.stop(path)
 
@@ -172,7 +172,7 @@ export function fadeoutAllPlayingAudio() {
         fadeoutAudio(audio)
     })
 
-    async function fadeoutAudio(audio) {
+    async function fadeoutAudio(audio: HTMLAudioElement) {
         let faded = await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5)
         if (faded) {
             audio.pause()
@@ -191,7 +191,7 @@ export function fadeinAllPlayingAudio() {
 
     isAllAudioFading = false
 
-    async function fadeinAudio(audio) {
+    async function fadeinAudio(audio: HTMLAudioElement) {
         audio.play()
         await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true)
         // if (faded) analyseAudio()

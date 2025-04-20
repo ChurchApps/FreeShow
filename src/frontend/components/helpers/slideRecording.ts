@@ -1,4 +1,5 @@
-import { get, Unsubscriber } from "svelte/store"
+import { get } from "svelte/store"
+import type { Unsubscriber } from "svelte/store"
 import type { Recording } from "../../../types/Show"
 import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio, videosData, videosTime } from "../../stores"
 import { getActiveOutputs, setOutput } from "./output"
@@ -8,7 +9,7 @@ import { updateVideoData, updateVideoTime } from "./video"
 
 ///// SLIDE RECORDING /////
 
-export function playRecording(recording: Recording, { showId, layoutId }, startIndex: number = 0, subtractTime: number = 0) {
+export function playRecording(recording: Recording, { showId, layoutId }: any, startIndex: number = 0, subtractTime: number = 0) {
     if (get(outLocked)) return
 
     // WIP play multiple recordings at the same time in different outputs...
@@ -119,7 +120,7 @@ function startBackgroundListener() {
 function checkTimeDifference(currentTime: number) {
     // find closest sequence
     let addedTime: number = 0
-    let sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
+    let sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence: any) => {
         addedTime += sequence.time
         return addedTime > currentTime
     })
@@ -149,7 +150,7 @@ export function stopSlideRecording() {
 }
 
 // slide click update recording to closest same slide
-export function getClosestRecordingSlide(ref, slideIndex: number) {
+export function getClosestRecordingSlide(ref: any, slideIndex: number) {
     let activeRec = get(activeSlideRecording)
     if (!activeRec || activeRec.ref.showId !== ref.showId || activeRec.ref.layoutId !== ref.layoutId) return
 

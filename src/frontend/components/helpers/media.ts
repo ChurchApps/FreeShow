@@ -247,8 +247,9 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
     if (!mediaObj && !currentStyle) return mediaStyle
 
     Object.keys(mediaStyle).forEach((key) => {
-        if (!mediaObj?.[key]) return
-        mediaStyle[key] = mediaObj[key]
+        const typedKey = key as keyof MediaStyle
+        if (!mediaObj?.[typedKey]) return
+        mediaStyle[typedKey] = mediaObj[typedKey]
     })
 
     return mediaStyle
@@ -295,7 +296,7 @@ export function getThumbnailPath(input: string, size: number) {
     let encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
     return encodedPath
 
-    function getFileName(path, size) {
+    function getFileName(path: string, size: number) {
         return `${path}-${size}.png`
     }
 }
@@ -382,7 +383,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // seek video
         if (!isImage) {
-            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ; (mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             await wait(400)
         }
 
@@ -408,7 +409,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
-    async function captureCanvasData(media, mediaSize) {
+    async function captureCanvasData(media: any, mediaSize: any) {
         let ctx = canvas.getContext("2d")
         if (!ctx || completed) return exit()
 

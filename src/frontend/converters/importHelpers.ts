@@ -94,7 +94,7 @@ export function importSpecific(data: { content: string; name?: string; extension
     data.forEach(({ content }) => {
         content = JSON.parse(content)
 
-        store.update((a) => {
+        store.update((a: any) => {
             a[uid()] = content
             return a
         })
@@ -103,7 +103,7 @@ export function importSpecific(data: { content: string; name?: string; extension
     newToast("$main.finished")
 }
 
-export function fixShowIssues(show) {
+export function fixShowIssues(show: any) {
     // remove unused children slides
     let allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
         let slide = show.slides[slideId]

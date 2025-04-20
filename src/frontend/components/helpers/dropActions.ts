@@ -53,7 +53,7 @@ function getId(drag: Selected): string {
 
 type Data = { drag: Selected; drop: DropData }
 
-export const dropActions = {
+export const dropActions: any = {
     slides: ({ drag, drop }: Data, history: History) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: Data, history: History) => {
         let customId: string = drag.showId || drag.data[0]?.showId
@@ -306,8 +306,10 @@ export const dropActions = {
 
         drag.data.forEach(({ index }) => {
             let ref = getLayoutRef()[index]
-            let slides: Slide[] = _show().get().slides
+
+            let slides: { [key: string]: Slide } = _show().get().slides
             let slide = ref.type === "child" ? slides[ref.parent!.id] : slides[ref.id]
+
             let activeTab: string | null = get(drawerTabsData)[get(activeDrawerTab)]?.activeSubTab
 
             let data = {
@@ -358,13 +360,13 @@ export const dropActions = {
     },
 }
 
-function dropFileInDrawerNavigation(drag) {
+function dropFileInDrawerNavigation(drag: any) {
     let drawerTab = get(activeDrawerTab)
     console.log(drag, drawerTab)
 
     // drop folders
     if (drawerTab === "media" || drawerTab === "audio") {
-        drag.data.forEach((file) => {
+        drag.data.forEach((file: any) => {
             if (file.type) return
             addDrawerFolder(file, drawerTab as "media" | "audio")
         })
@@ -395,14 +397,14 @@ export function addDrawerFolder(file: any, type: "media" | "audio") {
 const projectExtra = ["pdf", ...presentationExtensions]
 const fileDropExtensions = [...imageExtensions, ...videoExtensions, ...audioExtensions]
 
-const files = {
+const files: any = {
     project: [...fileDropExtensions, ...projectExtra],
     slides: fileDropExtensions,
     slide: fileDropExtensions,
     templates: mediaExtensions,
 }
 
-const slideDrop = {
+const slideDrop: any = {
     media: ({ drag, drop }: Data, history: History) => {
         let data = drag.data
         // TODO: move multiple add to possible slides
@@ -650,7 +652,7 @@ const slideDrop = {
         let newSlides: any[] = getSlides(drag.data[0])
         let slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         newSlides = newSlides.map((items) => {
-            let firstTextItem = items.find((a) => a.lines)
+            let firstTextItem = items.find((a: any) => a.lines)
             return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: { template: slideTemplate }, notes: "", items }
         })
 
@@ -731,7 +733,7 @@ const slideDrop = {
 
         history.id = "SLIDES"
         let slides = drag.data.map((a) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getTimerItem(a) }))
-        function getTimerItem(timer): Item[] {
+        function getTimerItem(timer: any): Item[] {
             return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timerId: timer.id }]
         }
 
@@ -756,7 +758,7 @@ const slideDrop = {
         if (!variables.length) return
 
         let slides = variables.map((a) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getItem(a) }))
-        function getItem(a): Item[] {
+        function getItem(a: any): Item[] {
             const variableId = `{variable_${getVariableNameId(a.name || "")}}`
             const lines = [{ align: "", text: [{ value: variableId, style: "font-size: 150px;" }] }]
             return [{ type: "text", style: DEFAULT_ITEM_STYLE, lines }]
@@ -796,7 +798,7 @@ const slideDrop = {
             if (!action?.triggers) return
 
             if (action.triggers.length > 1) {
-                let existingIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
+                let existingIndex = slideActions.findIndex((a: any) => a.actionValues?.run_action?.id === action.id)
                 if (existingIndex > -1) return
 
                 newActions.push({ id: uid(), triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } })
@@ -808,7 +810,7 @@ const slideDrop = {
             if (!data) return
 
             // replace if existing & and only one or value is the same
-            let existingIndex = slideActions.findIndex((a) => getActionTriggerId(a.triggers[0]) === triggerId && (!data.canAddMultiple || JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)))
+            let existingIndex = slideActions.findIndex((a: any) => getActionTriggerId(a.triggers[0]) === triggerId && (!data.canAddMultiple || JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)))
             if (existingIndex > -1) {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
                 return
@@ -844,7 +846,7 @@ function createSlideAction(triggerId: string, slideIndex: number, data: any, rem
 }
 
 // WIP duplicate of ScriptureInfo.svelte createSlides()
-function createScriptureShow(drag, drop) {
+function createScriptureShow(drag: any, drop: any) {
     let bibles = drag.data[0]?.bibles
     if (!bibles) return
 
@@ -878,7 +880,7 @@ function createScriptureShow(drag, drop) {
     show.slides = slides
     show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
-    let versions = bibles.map((a) => a.version).join(" + ")
+    let versions = bibles.map((a: any) => a.version).join(" + ")
     show.reference = {
         type: "scripture",
         data: { collection: get(drawerTabsData).scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },

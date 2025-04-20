@@ -115,7 +115,7 @@
             {/each}
         </select>
 
-        <div bind:this={padElem} class="pad" on:mousedown={mousedown} on:touchstart={mousedown}>
+        <div bind:this={padElem} class="pad" role="button" tabindex="0" on:mousedown={mousedown} on:touchstart={mousedown}>
             {#if thumbnailBackground}
                 <div class="thumbnail">
                     <!-- object-fit: {thumbnailBackground.mediaStyle?.fit || 'contain'}; -->

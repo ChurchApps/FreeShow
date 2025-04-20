@@ -18,11 +18,11 @@ function createSlides({ slide }: any) {
 
     slide
         .split('<slide>')
-        .filter(slide => Boolean(slide.trim()))
-        .map(lines => lines.replace(/<BR>/gi, '<br>')
+        .filter((slide: any) => Boolean(slide.trim()))
+        .map((lines: any) => lines.replace(/<BR>/gi, '<br>')
             .split('<br>')
-            .map(line => line.trim())
-            .filter(slide => Boolean(slide.trim()))
+            .map((line: string) => line.trim())
+            .filter((slide: any) => Boolean(slide.trim()))
         )
         .forEach((lines: string[]) => {
             let id: string = uid()
@@ -42,7 +42,7 @@ function createSlides({ slide }: any) {
                 notes: "",
                 items,
             }
-    });
+        });
 
     return { slides, layout }
 }

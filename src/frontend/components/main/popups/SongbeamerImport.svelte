@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
-    import { Option } from "../../../../types/Main"
+    import type { Option } from "../../../../types/Main"
     import { TranslationMethod } from "../../../../types/Songbeamer"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, categories } from "../../../stores"

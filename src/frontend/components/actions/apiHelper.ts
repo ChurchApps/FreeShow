@@ -160,7 +160,7 @@ export function selectSlideByName(name: string) {
     outputSlide(showRef, { index })
 }
 // WIP duplicate of Slides.svelte:57 (slideClick)
-function outputSlide(showRef, data: API_slide_index) {
+function outputSlide(showRef: any, data: API_slide_index) {
     if (get(outLocked)) return
 
     let showId = data.showId || get(activeShow)?.id || ""
@@ -210,7 +210,7 @@ export function moveStageConnection(id: string) {
 export function editTimer(data: API_edit_timer) {
     if (!data?.id || !data.key || data.value === undefined) return
 
-    timers.update((a) => {
+    timers.update((a: any) => {
         if (!a[data.id]) return a
         a[data.id][data.key] = data.value
         return a
@@ -261,7 +261,7 @@ function getVariables() {
     return keysToID(get(variables))
 }
 function updateVariable(value: any, id: string, key: string) {
-    variables.update((a) => {
+    variables.update((a: any) => {
         if (a[id]) a[id][key] = value
         return a
     })
@@ -428,7 +428,7 @@ export function sortByClosestMatch(array: any[], value: string, key: string = "n
     // the object key must contain the input string
     array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
 
-    function similaritySort(a, b) {
+    function similaritySort(a: any, b: any) {
         const similarityA = 1 / (1 + levenshteinDistance(a[key].toLowerCase(), value.toLowerCase()))
         const similarityB = 1 / (1 + levenshteinDistance(b[key].toLowerCase(), value.toLowerCase()))
 
@@ -438,7 +438,7 @@ export function sortByClosestMatch(array: any[], value: string, key: string = "n
     return array.sort(similaritySort)
 }
 // WIP duplicate of files.ts
-function levenshteinDistance(a, b) {
+function levenshteinDistance(a: any, b: any) {
     if (a.length === 0) return b.length
     if (b.length === 0) return a.length
 

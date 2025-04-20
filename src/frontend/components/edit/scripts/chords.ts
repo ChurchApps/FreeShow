@@ -9,7 +9,7 @@ export function createChord(pos: number, key: string, id: string = uid(5)): Chor
     return { id, pos, key }
 }
 
-export function addChords(item: Item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
+export function addChords(item: Item, showRef: any, itemIndex: any, line = 0, pos = 0, key = keys[0]) {
     let newLines = clone(item.lines || [])
     if (!newLines[line].chords) newLines[line].chords = []
     let id = uid(5)
@@ -53,7 +53,7 @@ export function changeKey({ item, showRef, itemIndex, chord, lineIndex }: { item
 // WIP unused:
 // TODO: transpose chords
 let chordDrag: any = null
-export function chordDown(chordData, { showRef, itemIndex }) {
+export function chordDown(chordData: any, { showRef, itemIndex }: any) {
     selected.set({
         id: "chord",
         data: [{ slideId: showRef.id, itemIndex, ...chordData }],
@@ -61,7 +61,7 @@ export function chordDown(chordData, { showRef, itemIndex }) {
     chordDrag = chordData
     // setTimeout(() => (chordDrag = chordData), 10);
 }
-export function chordUp({ showRef, itemIndex, item }) {
+export function chordUp({ showRef, itemIndex, item }: any) {
     if (chordDrag === null) return
     chordDrag = null
     if (showRef.type === "show") {
@@ -129,8 +129,8 @@ export function chordMove(e: any, { textElem, item }: { textElem: HTMLElement; i
 }
 
 // chords getting wrong position if not waiting
-const delay = (ms) => new Promise((res) => setTimeout(res, ms))
-export async function getChordPosition(chord: any, { textElem, item, line }) {
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
+export async function getChordPosition(chord: any, { textElem, item, line }: any) {
     if (!chordDrag) await delay(1)
 
     if (!textElem || !textElem.children[line]) return "display: none;"
@@ -139,7 +139,7 @@ export async function getChordPosition(chord: any, { textElem, item, line }) {
 
     let totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
 
-    let lineLetters = item.lines![line].text?.reduce((value, text) => (value += text.value.length), 0)
+    let lineLetters = item.lines![line].text?.reduce((value: any, text: any) => (value += text.value.length), 0)
     if (!lineLetters) return "display: none;"
     let charWidth = totalLineWidth / lineLetters
 

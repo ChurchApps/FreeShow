@@ -29,12 +29,12 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
-    <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+    <button type="button" class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" data-index={index} aria-disabled={layoutSlide.disabled}>
         <Zoomed resolution={newResolution} background={slide.items.length ? "black" : "transparent"} bind:ratio>
             <!-- class:ghost={!background} -->
             <div class="background" style="zoom: {1 / ratio}">
                 {#if media[layoutSlide.background]?.path && !media[layoutSlide.background].path.includes("freeshow-cache")}
-                    <img src={media[layoutSlide.background].path} />
+                    <img src={media[layoutSlide.background].path} alt="Slide background" />
                 {/if}
             </div>
             <!-- TODO: check if showid exists in shows -->
@@ -49,7 +49,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
             <span style="position: absolute;display: contents;">{index + 1}</span>
             <span class="text">{slide.group === null ? "" : name || "—"}</span>
         </div>
-    </div>
+    </button>
 </div>
 
 <style>

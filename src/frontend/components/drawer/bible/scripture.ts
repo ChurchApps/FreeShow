@@ -62,7 +62,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
                 reject(e)
             })
 
-        function manageResult(data) {
+        function manageResult(data: any) {
             if (!data) return
 
             tempCache[urls[load]] = data
@@ -239,7 +239,7 @@ export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
 }
-export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableReference: boolean = false) {
+export function getSlides({ bibles, sorted }: any, onlyOne: boolean = false, disableReference: boolean = false) {
     let slides: any[][] = [[]]
 
     let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
@@ -248,7 +248,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
 
     const combineWithText = templateTextItems.length <= 1 || get(scriptureSettings).combineWithText
 
-    bibles.forEach((bible, bibleIndex) => {
+    bibles.forEach((bible: any, bibleIndex: any) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
         let itemAlignStyle = currentTemplate?.align || ""
@@ -409,7 +409,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
 
     return slides
 
-    function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
+    function addMeta({ showVersion, showVerse, customText }: any, range: string, { slideIndex, itemIndex }: any) {
         if (!bibles[0]) return
 
         let lines: any[] = []
@@ -421,12 +421,12 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
         let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
-        let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
+        let bibleVersions = bibles.map((a: any) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
         let versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
-        let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+        let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a: any) => a.book)).join(" / ")
 
         // custom value (API)
-        if (bibles.find((a) => a?.attributionRequired)) {
+        if (bibles.find((a: any) => a?.attributionRequired)) {
             showVersion = true
             if (!customText.includes(textKeys.showVersion)) customText += textKeys.showVersion
         }
@@ -437,7 +437,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
         text = text.replaceAll(textKeys.showVersion, showVersion ? versions : "")
         text = text.replaceAll(textKeys.showVerse, showVerse ? books + " " + bibles[0].chapter + referenceDivider + range : "")
 
-        text.split("\n").forEach((line) => {
+        text.split("\n").forEach((line: any) => {
             if (!line.trim()) return
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
         })
@@ -465,11 +465,11 @@ export function formatBibleText(text: string | undefined) {
     return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "")
 }
 
-function removeTags(text) {
+function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
-export function removeTagsAndContent(input) {
+export function removeTagsAndContent(input: string) {
     const regex = /<[^>]*>[^<]*<\/[^>]*>/g
     return input.replace(regex, "")
 }
@@ -496,9 +496,11 @@ const bibleData = {
         nameLocal: "Bibel 2011 Bokmål", // med gammeltestamentlige apokryfer
     },
 }
+
 // ChurchAppsApiBible
 export function customBibleData(data: any) {
-    return { ...data, ...(bibleData[data.sourceKey] || {}) }
+    const key = data.sourceKey as keyof typeof bibleData
+    return { ...data, ...(key && bibleData[key] ? bibleData[key] : {}) }
 }
 
 // HELPERS
@@ -599,8 +601,8 @@ const colorCodesFull = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3,
 const colorCodesNT = [5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
 const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
 
-export function getColorCode(books, bookId: number | string) {
-    let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
+export function getColorCode(books: any, bookId: number | string) {
+    let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a: any) => a.id === bookId)
 
     if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
     else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]

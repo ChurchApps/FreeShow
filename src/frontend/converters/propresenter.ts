@@ -29,7 +29,7 @@ export function convertProPresenter(data: any) {
         }
 
         if (Array.isArray(song.data)) {
-            song.data.forEach((data) => {
+            song.data.forEach((data: any) => {
                 newData.push({ content: data, name, extension: "jsonbundle" })
             })
         }
@@ -122,7 +122,7 @@ function convertJSONBundleToSlides(song: any) {
     let children: string[] = []
 
     console.log(song.lyrics)
-    song.lyrics.forEach(({ lyrics }) => {
+    song.lyrics.forEach(({ lyrics }: any) => {
         if (!lyrics) return
 
         const parent = !Object.keys(slides).length
@@ -164,7 +164,7 @@ function convertJSONToSlides(song: any) {
     let slidesList: string[] = []
     let slidesRef: any = {}
 
-    song.verses.forEach(([text, label]) => {
+    song.verses.forEach(([text, label]: any) => {
         if (!text) return
 
         let id: string = uid()
@@ -215,7 +215,7 @@ function convertToSlides(song: any, extension: string) {
 
     let backgrounds: any = []
 
-    groups.forEach((group) => {
+    groups.forEach((group: any) => {
         let groupSlides = group
         if (extension === "pro4") groupSlides = [groupSlides]
         if (extension === "pro5") groupSlides = groupSlides.slides.RVDisplaySlide
@@ -224,7 +224,7 @@ function convertToSlides(song: any, extension: string) {
         if (!groupSlides?.length) return
 
         let slideIndex: number = -1
-        groupSlides.forEach((slide) => {
+        groupSlides.forEach((slide: any) => {
             let items: Item[] = getSlideItems(slide)
             if (!items?.length) return
             slideIndex++
@@ -292,7 +292,7 @@ function getSlideItems(slide: any): any[] {
 
     let elements: any = null
     if (slide.displayElements) elements = slide.displayElements
-    else elements = slide.array.find((a) => a["@rvXMLIvarName"] === "displayElements")
+    else elements = slide.array.find((a: any) => a["@rvXMLIvarName"] === "displayElements")
     if (!elements) return []
 
     if (!elements.RVTextElement) {
@@ -327,7 +327,7 @@ function getSlideItems(slide: any): any[] {
     return items
 }
 
-function makeParentSlide(slide, { label, color = "" }) {
+function makeParentSlide(slide: any, { label, color = "" }: any) {
     slide.group = label
     if (color) slide.color = rgbStringToHex(color)
 
@@ -340,14 +340,14 @@ function makeParentSlide(slide, { label, color = "" }) {
     return slide
 }
 
-function arrangeLayouts(arrangements, sequences) {
+function arrangeLayouts(arrangements: any, sequences: any) {
     let layouts: Layout[] = []
-    arrangements.forEach((arrangement) => {
+    arrangements.forEach((arrangement: any) => {
         let groupIds = arrangement.array?.NSString || []
         if (!Array.isArray(groupIds)) groupIds = [groupIds]
         if (!groupIds.length) return
 
-        let slides: any[] = groupIds.map((groupID) => ({ id: sequences[groupID] }))
+        let slides: any[] = groupIds.map((groupID: any) => ({ id: sequences[groupID] }))
         layouts.push({ id: arrangement["@uuid"], name: arrangement["@name"], notes: "", slides })
     })
 
@@ -572,12 +572,12 @@ function convertProToSlides(song: any) {
     function createSlides(groups: string[]) {
         let layoutSlides: any[] = []
 
-        groups.forEach((groupId) => {
+        groups.forEach((groupId: any) => {
             let group = tempGroups[groupId]
 
-            let allSlides = group.slides.map((id, i) => createSlide(id, i === 0, { color: group.color, name: group.name }))
+            let allSlides = group.slides.map((id: any, i: number) => createSlide(id, i === 0, { color: group.color, name: group.name }))
             if (allSlides.length > 1) {
-                let children = allSlides.slice(1).map(({ id }) => id)
+                let children = allSlides.slice(1).map(({ id }: any) => id)
                 slides[allSlides[0].id].children = children
             }
 
@@ -593,6 +593,7 @@ function convertProToSlides(song: any) {
         let slideId = uid()
         let layoutSlide: SlideData = { id: slideId }
 
+        //@ts-ignore
         let tempSlide = tempSlides[id]
 
         if (tempSlide.disabled) layoutSlide.disabled = true
@@ -658,25 +659,25 @@ function getArrangements(arrangements: any) {
     if (!arrangements) return []
 
     let newArrangements: any = []
-    arrangements.forEach((a) => {
+    arrangements.forEach((a: any) => {
         newArrangements.push({
             name: a.name,
-            groups: a.groupIdentifiers?.map((a) => a.string) || [],
+            groups: a.groupIdentifiers?.map((a: any) => a.string) || [],
         })
     })
 
-    return newArrangements.filter((a) => a.groups.length)
+    return newArrangements.filter((a: any) => a.groups.length)
 }
 
-function getGroups(groups) {
+function getGroups(groups: any) {
     if (!groups) return {}
 
     let newGroups: any = {}
-    groups.forEach(({ group, cueIdentifiers }) => {
+    groups.forEach(({ group, cueIdentifiers }: any) => {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
-            slides: cueIdentifiers?.map((a) => a.string) || [],
+            slides: cueIdentifiers?.map((a: any) => a.string) || [],
         }
     })
 
@@ -686,14 +687,14 @@ function getGroups(groups) {
 function getSlides(cues: any) {
     let slides: any = {}
 
-    cues.forEach((slide) => {
-        let baseSlide = slide.actions.find((a) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
+    cues.forEach((slide: any) => {
+        let baseSlide = slide.actions.find((a: any) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
         if (!baseSlide) return
 
         slides[slide.uuid.string] = {
             name: slide.name,
             disabled: !slide.isEnabled,
-            media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
+            media: slide.actions.find((a: any) => a.media?.element)?.media?.element?.url?.absoluteString,
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
             items: baseSlide.elements?.map(getItem) || [],

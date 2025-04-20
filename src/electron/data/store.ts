@@ -44,7 +44,7 @@ if (process.env.FS_MOCK_STORE_PATH != undefined) {
 }
 
 // MAIN WINDOW
-export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
+export const config: any = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
 
 let dataPath = config.path
 checkStores(dataPath)
@@ -98,10 +98,10 @@ const DEFAULTS = {
 }
 
 // ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: DEFAULTS.error_log, ...storeExtraConfig })
+export const error_log: any = new Store({ name: fileNames.error_log, defaults: DEFAULTS.error_log, ...storeExtraConfig })
 
 // SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
+const settings: any = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
 let synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
 let themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
 
@@ -109,7 +109,7 @@ let themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...s
 let projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v: any) => JSON.stringify(v), ...storeExtraConfig })
 let stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
 let overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
 let templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
@@ -121,13 +121,13 @@ let events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...s
 let driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v: any) => JSON.stringify(v), ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v: any) => JSON.stringify(v), ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v: any) => JSON.stringify(v), ...storeExtraConfig })
+let usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v: any) => JSON.stringify(v), ...storeExtraConfig })
 let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
 
-export let stores = {
+export let stores: any = {
     SETTINGS: settings,
     SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
@@ -148,7 +148,7 @@ export let stores = {
 // ----- GET STORE -----
 
 export function getStore<T extends keyof typeof stores>(id: T): (typeof stores)[T] extends { store: infer S } ? S : null {
-    if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
+    if (!stores[id]) throw new Error(`Store with key ${String(id)} does not exist.`)
 
     let store = stores[id].store
     return store as (typeof stores)[T] extends { store: infer S } ? S : null
@@ -231,5 +231,5 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
 
     // rewrite data to new location
     stores[key].clear()
-    ;(stores[key] as any).set(tempData)
+        ; (stores[key] as any).set(tempData)
 }

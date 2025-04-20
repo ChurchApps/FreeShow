@@ -221,7 +221,7 @@ export async function syncDataDrive(data: DriveData) {
     async function syncStores(id: keyof typeof stores) {
         let store = stores[id]
         let storeData: any = store.store
-        let name = id + ".json"
+        let name = String(id) + ".json"
 
         let driveFileId = files.find((a) => a.name === name)?.id
         if (!driveFileId) return
@@ -238,7 +238,7 @@ export async function syncDataDrive(data: DriveData) {
         if (matchingContent) return
 
         // combine
-        if (data.method !== "upload" && data.method !== "download" && driveFile && storeContent && combineLocations.includes(id)) {
+        if (data.method !== "upload" && data.method !== "download" && driveFile && storeContent && combineLocations.includes(String(id))) {
             const project = () => ({
                 projects: combineFiles(driveContent?.projects, storeData.projects, newest),
                 folders: combineFiles(driveContent?.folders, storeData.folders, newest),

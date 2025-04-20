@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
     import Icon from "../../helpers/Icon.svelte"
 
     export let item: Item

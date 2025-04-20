@@ -78,7 +78,8 @@
                         {@const color = getColorCode(books, i)}
                         {@const name = getShortName(book.name, i)}
 
-                        <span
+                        <button
+                            type="button"
                             id={id.toString()}
                             on:click={() => {
                                 activeVerse = 0
@@ -91,7 +92,7 @@
                             title={book.name}
                         >
                             {name}
-                        </span>
+                        </button>
                     {/each}
                 {/key}
             {:else}
@@ -108,6 +109,8 @@
                     {@const id = chapter.number ?? i + 1}
                     <span
                         id={id.toString()}
+                        role="button"
+                        tabindex="0"
                         on:mousedown={() => {
                             activeVerse = 0
                             activeChapter = i
@@ -129,10 +132,16 @@
             {#if verses.length}
                 {#each verses as verse, i}
                     {@const id = verse.number ?? i + 1}
-                    <span on:click={() => playScripture(id)} class:active={activeVerse === id}>
+                    <button
+                        type="button"
+                        on:click={() => playScripture(id)}
+                        class:active={activeVerse === id}
+                        aria-pressed={activeVerse === id}
+                        style="background: none; border: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer;"
+                    >
                         {id}
                         <!-- {verse.text || verse.value} -->
-                    </span>
+                    </button>
                 {/each}
             {:else}
                 <Loading />
@@ -210,13 +219,13 @@
 
         font-weight: 600;
     }
-    .grid .books span {
+    .grid .books button {
         /* min-width: 52px; */
         /* min-width: 82px; */
         /* min-width: 33%; */
         min-width: 25%;
     }
-    .grid .big span {
+    .grid .big button {
         min-width: 40px;
     }
 

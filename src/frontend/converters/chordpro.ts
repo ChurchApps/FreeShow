@@ -25,7 +25,7 @@ export function convertChordPro(data: any) {
     let tempShows: any[] = []
 
     setTimeout(() => {
-        data.forEach((file) => {
+        data.forEach((file: any) => {
             let name: string = file.name
             let content = file.content
 
@@ -166,14 +166,14 @@ export function convertChordPro(data: any) {
     }, 10)
 }
 
-function createShow({ slides, metadata, name, notes }) {
+function createShow({ slides, metadata, name, notes }: any) {
     let layoutID: string = uid()
     let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
     let show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
-    slides = slides.filter((a) => a.items.length)
+    slides = slides.filter((a: any) => a.items.length)
 
     let layouts = getLayout(slides)
     let newSlides: any = {}

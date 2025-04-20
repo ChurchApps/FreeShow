@@ -1,10 +1,12 @@
 import getFonts from "css-fonts"
-import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, screen, shell, systemPreferences } from "electron"
+import { app, BrowserWindow, desktopCapturer, screen, shell, systemPreferences } from "electron"
+import type { DesktopCapturerSource } from "electron"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
-import { Main, MainResponses } from "../../types/IPC/Main"
+import { Main } from "../../types/IPC/Main"
+import type { MainResponses } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
@@ -62,15 +64,25 @@ export const mainResponses: MainResponses = {
     [Main.IP]: () => os.networkInterfaces(),
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
+    //@ts-ignore
     [Main.SYNCED_SETTINGS]: () => getStore("SYNCED_SETTINGS"),
+    //@ts-ignore
     [Main.STAGE_SHOWS]: () => getStore("STAGE_SHOWS"),
+    //@ts-ignore
     [Main.PROJECTS]: () => getStore("PROJECTS"),
+    //@ts-ignore
     [Main.OVERLAYS]: () => getStore("OVERLAYS"),
+    //@ts-ignore
     [Main.TEMPLATES]: () => getStore("TEMPLATES"),
+    //@ts-ignore
     [Main.EVENTS]: () => getStore("EVENTS"),
+    //@ts-ignore
     [Main.MEDIA]: () => getStore("MEDIA"),
+    //@ts-ignore
     [Main.THEMES]: () => getStore("THEMES"),
+    //@ts-ignore
     [Main.DRIVE_API_KEY]: () => getStore("DRIVE_API_KEY"),
+    //@ts-ignore
     [Main.HISTORY]: () => getStore("HISTORY"),
     [Main.USAGE]: () => getStore("USAGE"),
     [Main.CACHE]: () => getStore("CACHE"),
@@ -268,13 +280,13 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
         OutputHelper.getAllOutputs().forEach(([_id, output]) => {
             if (output.window) windows.push(output.window)
         })
-        ;[mainWindow!, ...windows].forEach((window) => {
-            let mediaId = window?.getMediaSourceId()
-            let windowsAlreadyExists = sources.find((a) => a.id === mediaId)
-            if (windowsAlreadyExists) return
+            ;[mainWindow!, ...windows].forEach((window) => {
+                let mediaId = window?.getMediaSourceId()
+                let windowsAlreadyExists = sources.find((a) => a.id === mediaId)
+                if (windowsAlreadyExists) return
 
-            screens.push({ name: window?.getTitle(), id: mediaId })
-        })
+                screens.push({ name: window?.getTitle(), id: mediaId })
+            })
 
         return screens
     }
@@ -301,6 +313,7 @@ const maxLogLength = 250
 export function logError(log: ErrorLog, electron: boolean = false) {
     if (!isProd) log.dev = true
 
+    //@ts-ignore
     let storedLog = error_log.store
     let key: "main" | "renderer" = electron ? "main" : "renderer"
 

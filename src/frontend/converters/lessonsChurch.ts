@@ -170,8 +170,8 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
         let messages: any[] = []
 
         sections.forEach((section) => {
-            let actions = section.actions?.filter((a) => a.actionType === "play")
-            actions = actions.map(({ files, content }) => ({ files, name: content }))
+            let actions = section.actions?.filter((a: any) => a.actionType === "play")
+            actions = actions.map(({ files, content }: any) => ({ files, name: content }))
             messages.push(...actions)
         })
 
@@ -199,19 +199,19 @@ async function receiveMessage(): Promise<any[]> {
     })
 }
 
-function convertToSlides(groups) {
+function convertToSlides(groups: any) {
     let slides: any = {}
     let layout: any[] = []
     let media: any = {}
 
-    groups.forEach((group, groupIndex: number) => {
+    groups.forEach((group: any, groupIndex: number) => {
         if (!group.files?.length) return
 
         let children: string[] = []
         let layoutData: any = {}
         let parentId: string = ""
 
-        group.files.forEach((file, fileIndex: number) => {
+        group.files.forEach((file: any, fileIndex: number) => {
             if (!file.url) return
 
             let loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))

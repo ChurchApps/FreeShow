@@ -49,6 +49,7 @@
         if (e.target?.closest(".website") || e.target?.closest(".clickable")) return
         hideDisplay()
     }}
+    role="region"
 >
     {#if enableOutputMove}
         <div class="dragger">

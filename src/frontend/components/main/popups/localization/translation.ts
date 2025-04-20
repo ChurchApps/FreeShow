@@ -58,7 +58,7 @@ export async function translateShow(showId: string, languageCode: string) {
                     let translatedText = ""
                     try {
                         translatedText = await translate(text.join("[-] "), languageCode)
-                    } catch (err) {
+                    } catch (err: any) {
                         console.warn("Error when translating:", err)
                         let tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
                         newToast("Error when translating: " + err + tip)

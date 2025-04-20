@@ -6,9 +6,9 @@ import { outputs, paintCache, serverData } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
 
 let justCleared: NodeJS.Timeout | null = null
-export const receiveCONTROLLER = {
-    ACTION: ({ data }) => {
-        const actions = {
+export const receiveCONTROLLER: any = {
+    ACTION: ({ data }: any) => {
+        const actions: any = {
             next: () => nextSlideIndividual({ key: "ArrowRight" }),
             previous: () => previousSlideIndividual({ key: "ArrowLeft" }),
             clear: () => {
@@ -32,7 +32,7 @@ export const receiveCONTROLLER = {
             justCleared = null
         }
     },
-    FOCUS: ({ data }) => {
+    FOCUS: ({ data }: any) => {
         if (!data.offset) {
             draw.set(null)
             if (data.tool !== undefined) drawTool.set(data.tool || "focus")

@@ -85,7 +85,7 @@ export const defaultMidiActionChannels = {
     index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } },
 }
 
-export function receivedMidi(msg) {
+export function receivedMidi(msg: any) {
     let msgAction = get(midiIn)[msg.id]
     if (!msgAction) return
 
@@ -144,7 +144,7 @@ export function receivedMidi(msg) {
 }
 
 // <= 1.1.6
-export function convertOldMidiToNewAction(action) {
+export function convertOldMidiToNewAction(action: any) {
     if (action.action) {
         action.triggers = [action.action]
         delete action.action

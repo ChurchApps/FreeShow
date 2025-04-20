@@ -157,7 +157,7 @@ export type API_emitter = {
 
 // WIP use these for Stage/Remote..?
 // BC = Integrated to Bitfocus Companion.
-export const API_ACTIONS = {
+export const API_ACTIONS: any = {
     // PROJECT
     id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
@@ -313,11 +313,12 @@ export async function triggerAction(data: API) {
     // API start at 1, code start at 0
     if (data.index !== undefined) data.index--
 
-    if (!API_ACTIONS[id]) return console.log("Missing API ACTION:", id)
+    if (!(id in API_ACTIONS)) return console.log("Missing API ACTION:", id)
 
     let returnId = data.returnId
     delete data.returnId
-    const returnData = await API_ACTIONS[id](data)
+    // Use type assertion to avoid TS error
+    const returnData = await (API_ACTIONS as Record<string, any>)[id](data)
     if (!returnId || returnData === undefined) return
 
     sendMain(Main.API_TRIGGER, { ...data, returnId, data: returnData })

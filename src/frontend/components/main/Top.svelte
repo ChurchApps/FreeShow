@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
     import { slide } from "svelte/transition"
     import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
@@ -7,15 +7,15 @@
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
 
-    export let isWindows: boolean = false
+    export let isWindows = false
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : $activeShow?.type === "pdf" || !$activeShow?.id
     $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
-    let confirm: boolean = false
-    let disableClick: boolean = false
-    let cancelConfirmTimeout: NodeJS.Timeout | null = null
+    let confirm = false
+    let disableClick = false
+    let cancelConfirmTimeout: ReturnType<typeof setTimeout> | undefined
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 

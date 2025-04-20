@@ -50,33 +50,33 @@ export function formatText(text: string, showId: string = "") {
     groupedNewSlides.forEach(({ text, slides }) => {
         let matchFound: boolean = false
 
-        // check matching from existing slides (both old and new)
-        ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old) => {
-            if (matchFound) return
-            if (old.text !== text) return
+            // check matching from existing slides (both old and new)
+            ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old) => {
+                if (matchFound) return
+                if (old.text !== text) return
 
-            matchFound = true
+                matchFound = true
 
-            let id = old.slides[0].id || ""
-            newLayoutSlides.push({ id })
+                let id = old.slides[0].id || ""
+                newLayoutSlides.push({ id })
 
-            // set changed children
-            if (old.slides.length !== slides.length) {
-                newSlides[id] = slides.shift()!
+                // set changed children
+                if (old.slides.length !== slides.length) {
+                    newSlides[id] = slides.shift()!
 
-                if (slides.length) {
-                    // children
-                    let children: string[] = []
-                    slides.forEach((slide) => {
-                        let childId = uid()
-                        children.push(childId)
-                        newSlides[childId] = slide
-                    })
+                    if (slides.length) {
+                        // children
+                        let children: string[] = []
+                        slides.forEach((slide) => {
+                            let childId = uid()
+                            children.push(childId)
+                            newSlides[childId] = slide
+                        })
 
-                    newSlides[id].children = children
+                        newSlides[id].children = children
+                    }
                 }
-            }
-        })
+            })
 
         if (matchFound) return
         doneGroupedSlides.push({ text, slides })
@@ -190,19 +190,19 @@ export function formatText(text: string, showId: string = "") {
         const oldSlide = clone(show.slides[oldSlideId] || {})
         const oldTextboxes = getTextboxes(oldSlide.items || [])
         if (oldTextboxes.length && oldSlideId !== slideId) {
-            slide.items.forEach((a, i) => {
-                let b = oldTextboxes[i]
+            slide.items.forEach((a: any, i: number) => {
+                let b: any = oldTextboxes[i]
                 if (b.style) a.style = b.style
-                ;(a.lines || []).forEach((line, j) => {
-                    let c = b.lines?.[j] || b.lines?.[0]
-                    if (c?.align) line.align = c?.align
+                    ; (a.lines || []).forEach((line: any, j: number) => {
+                        let c = b.lines?.[j] || b.lines?.[0]
+                        if (c?.align) line.align = c?.align
 
-                    // remove customType
-                    let text = (c?.text || []).filter((a) => !a.customType)
-                    if (text[0] && line.text?.[0]) {
-                        if (text[0].style) line.text[0].style = text[0]?.style
-                    }
-                })
+                        // remove customType
+                        let text = (c?.text || []).filter((a: any) => !a.customType)
+                        if (text[0] && line.text?.[0]) {
+                            if (text[0].style) line.text[0].style = text[0]?.style
+                        }
+                    })
 
                 // add auto size etc.
                 const textboxKeys = ["auto", "actions", "autoFontSize", "bindings", "chords", "textFit"]

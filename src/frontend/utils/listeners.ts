@@ -80,7 +80,7 @@ export function storeSubscriber() {
             // TODO: ?
             // send(REMOTE, ["SHOW"], data )
             timedout(REMOTE, { channel: "SHOW", data }, () =>
-                eachConnection(REMOTE, "SHOW", async (connection) => {
+                eachConnection(REMOTE, "SHOW", async (connection: any) => {
                     return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
                 })
             )
@@ -157,7 +157,7 @@ export function storeSubscriber() {
         // STAGE
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
         timedout(STAGE, { channel: "LAYOUT", data }, () =>
-            eachConnection(STAGE, "LAYOUT", (connection) => {
+            eachConnection(STAGE, "LAYOUT", (connection: any) => {
                 if (!connection.active) return
 
                 let currentData = data[connection.active]
@@ -169,14 +169,14 @@ export function storeSubscriber() {
 
     draw.subscribe((data) => {
         let activeOutputs = getActiveOutputs(get(outputs), true, true, true)
-        activeOutputs.forEach((id) => {
+        activeOutputs.forEach((id: any) => {
             send(OUTPUT, ["DRAW"], { id, data })
         })
     })
     drawTool.subscribe((data) => {
         // WIP changing tool while output is not active, will not update tool in output if set to active before changing tool again
         let activeOutputs = getActiveOutputs()
-        activeOutputs.forEach((id) => {
+        activeOutputs.forEach((id: any) => {
             send(OUTPUT, ["DRAW_TOOL"], { id, data })
         })
     })
@@ -283,7 +283,7 @@ export function storeSubscriber() {
     })
 }
 
-const initalOutputData = {
+const initalOutputData: any = {
     STYLES: "styles",
     TRANSITION: "transitionData",
     SHOWS: "showsCache",
@@ -318,11 +318,11 @@ const initalOutputData = {
 
 export function sendInitialOutputData() {
     Object.keys(initalOutputData).forEach((KEY) => {
-        let storeKey = initalOutputData[KEY]
+        let storeKey: any = initalOutputData[KEY]
 
         let storeData: any
-        if (storeKey.data) storeData = { data: get($[storeKey.data]) }
-        else storeData = get($[storeKey])
+        if (storeKey.data) storeData = { data: get($[storeKey.data as keyof typeof $]) }
+        else storeData = get($[storeKey as keyof typeof $])
         if (storeData === undefined) storeData = {}
 
         send(OUTPUT, [KEY], storeData)

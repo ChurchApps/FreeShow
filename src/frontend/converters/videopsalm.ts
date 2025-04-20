@@ -192,7 +192,7 @@ function parseContent(content: string): VideoPsalm | null {
 }
 
 const removeKeys = ["Body", "Background", "Footer", "Header", "Version"]
-function removeStyle(s) {
+function removeStyle(s: any) {
     if (!removeKeys.find((key) => s.includes(`{${key}:`))) return s
 
     let openCount = 0

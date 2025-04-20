@@ -1,12 +1,14 @@
 import { uid } from "uid"
-import { ToMain, ToMainReceiveData, ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
-import { MAIN, Main, MainReceiveData, MainReceiveValue, MainReturnPayloads, type MainSendValue } from "./../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { ToMainReceiveData, ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import { MAIN, Main, type MainSendValue } from "./../../types/IPC/Main"
+import type { MainReceiveData, MainReceiveValue, MainReturnPayloads } from "../../types/IPC/Main"
 import { mainResponses } from "./responsesMain"
 
-// @ts-ignore // T extends keyof typeof Main
-export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
+// T extends keyof typeof Main
+export function requestMainMultiple<T extends keyof MainReturnPayloads>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
     Object.keys(object).forEach((id) => {
-        requestMain(id as T, undefined, object[id])
+        requestMain(id as T, undefined, object[id as T])
     })
 }
 
@@ -64,7 +66,7 @@ export async function receiveMainGlobal() {
         if (!mainResponses[id]) return // console.error(`No response for channel: ${id}`)
 
         const data = msg.data // MainReturnPayloads[Main]
-        ;(mainResponses[id] as any)(data) as MainReceiveData<Main> | ToMainReceiveData<ToMain> // const response =
+            ; (mainResponses[id] as any)(data) as MainReceiveData<Main> | ToMainReceiveData<ToMain> // const response =
     })
 }
 

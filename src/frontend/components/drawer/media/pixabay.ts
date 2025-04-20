@@ -19,7 +19,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
                 console.log("PIXABAY", data)
 
                 // https://pixabay.com/api/?key={API_KEY}&q=yellow+flowers&image_type=photo&pretty=true
-                hits = data.hits.map((media) => {
+                hits = data.hits.map((media: any) => {
                     let path = media.largeImageURL
                     if (video) path = media.videos.medium.url
                     return { path, previewUrl: video ? media.videos.small.thumbnail : media.previewURL, name: media.tags, extension: getExtension(path), credits: getPixabayCredits(media) }
@@ -37,7 +37,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
     })
 }
 
-function getPixabayCredits(media) {
+function getPixabayCredits(media: any) {
     return {
         type: "pixabay",
         photo: media.tags,

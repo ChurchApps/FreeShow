@@ -8,7 +8,7 @@ import Dropdown from "../inputs/Dropdown.svelte"
 import NumberInput from "../inputs/NumberInput.svelte"
 import TextInput from "../inputs/TextInput.svelte"
 
-const getInputValue = {
+const getInputValue: any = {
     string: (e: any) => e.target.value,
     number: (e: any) => Number(e.detail),
     checkbox: (e: any) => e.target.checked,
@@ -36,7 +36,7 @@ export const commonInputs = {
 // init values
 
 // WIP similar to convertToOptions()
-export function initDropdownOptions(object: Option[] | { [key: string]: { name: string; [key: string]: any } }, addEmpty: boolean = false) {
+export function initDropdownOptions(object: Option[] | { [key: string]: { name: string;[key: string]: any } }, addEmpty: boolean = false) {
     let options: Option[] = []
     if (Array.isArray(object)) options = object
     else options = sortByName(Object.keys(object).map((id) => ({ id, name: object[id].name })))
@@ -51,7 +51,7 @@ export function getDropdownValue(options: Option[], id: string | undefined) {
 
 // get values
 
-export function getValues(inputs: Input[], data: Object) {
+export function getValues(inputs: Input[], data: { [key: string]: any }) {
     if (!Array.isArray(inputs)) return []
 
     inputs = inputs.map((input) => {

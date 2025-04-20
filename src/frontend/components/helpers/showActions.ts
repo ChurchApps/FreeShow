@@ -55,7 +55,7 @@ import { stopTimers } from "./timerTick"
 import { getSetChars } from "./randomValue"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
-const getProjectIndex = {
+const getProjectIndex: any = {
     next: (index: number | null, shows: ProjectShowRef[]) => {
         // change active show in project
         if (index === null) return 0
@@ -77,7 +77,7 @@ export function checkInput(e: any) {
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
     e.preventDefault()
-    ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
 
     let selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)
@@ -163,7 +163,7 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start: boolean = false, end: boolean = false) {
-    getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
+    getActiveOutputs().forEach((id: any) => nextSlide(e, start, end, false, false, id))
 }
 
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string = "", nextAfterMedia: boolean = false) {
@@ -283,7 +283,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     }
 }
 
-const triggerActionsBeforeOutput = {
+const triggerActionsBeforeOutput: any = {
     change_output_style: (actionValue: any) => {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
         if (!Array.isArray(layers)) return false
@@ -291,7 +291,7 @@ const triggerActionsBeforeOutput = {
     },
 }
 function shouldTriggerBefore(action: any) {
-    return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
+    return action.triggers?.find((trigger: any) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
 export function checkActionTrigger(layoutData: SlideData, slideIndex: number = 0) {
     layoutData?.actions?.slideActions?.forEach((a) => {
@@ -299,7 +299,7 @@ export function checkActionTrigger(layoutData: SlideData, slideIndex: number = 0
     })
 }
 
-async function goToNextShowInProject(slide, customOutputId) {
+async function goToNextShowInProject(slide: any, customOutputId: any) {
     if (!get(activeProject)) return
 
     // get current project show
@@ -393,7 +393,7 @@ export function goToPreviousProjectItem(key: string = "") {
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function previousSlideIndividual(e: any) {
-    getActiveOutputs().forEach((id) => previousSlide(e, id))
+    getActiveOutputs().forEach((id: any) => previousSlide(e, id))
 }
 
 export function previousSlide(e: any, customOutputId?: string) {
@@ -505,7 +505,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 }
 
 // skip slides that are bound to specific output not customId
-function notBound(ref, outputId: string | undefined) {
+function notBound(ref: any, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
@@ -745,7 +745,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }, actionTimeout)
     } else playOutputStyleTemplateActions(outputIds)
 
-    function nextSlideTimers(outputId) {
+    function nextSlideTimers(outputId: any) {
         // clear any active slide timers
         Object.keys(get(slideTimers)).forEach((id) => {
             if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
@@ -847,13 +847,13 @@ export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_styl
     refreshOut()
 }
 
-export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra: boolean = true) {
+export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }: any, extra: boolean = true) {
     if (!globalGroupIds.length || get(outLocked)) return
 
     // play first matching group
-    let nextAfterOutput = undefined
-    let index = undefined
-    showRef.forEach((ref) => {
+    let nextAfterOutput: any = undefined
+    let index: any = undefined
+    showRef.forEach((ref: any) => {
         // if (ref.id !== slideId) return
         if (!globalGroupIds.includes(ref.id)) return
 
@@ -878,7 +878,7 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 
     setTimeout(() => {
         // defocus search input
-        ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
     }, 10)
 
     return true
@@ -920,7 +920,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
-        let slideTimer = slide?.items?.find((a) => a.type === "timer" && a.timerId === endedId)
+        let slideTimer = slide?.items?.find((a: any) => a.type === "timer" && a.timerId === endedId)
         if (!slideTimer) return false
     }
 
@@ -1087,7 +1087,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         // META
         if (id.includes("meta_")) {
             let key = id.slice(5)
-            return show?.meta?.[key] || ""
+            return (show?.meta?.[key as keyof typeof show.meta] as string | undefined) || ""
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
@@ -1111,7 +1111,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 }
 
-const dynamicValues = {
+const dynamicValues: any = {
     // time
     time_date: () => addZero(new Date().getDate()),
     time_month: () => addZero(new Date().getMonth() + 1),
@@ -1121,36 +1121,36 @@ const dynamicValues = {
     time_seconds: () => addZero(new Date().getSeconds()),
 
     // show
-    show_name: ({ show }) => show.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
+    show_name: ({ show }: any) => show.name || "",
+    show_name_next: ({ projectRef }: any) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
 
-    layout_slides: ({ ref }) => ref.length,
-    layout_notes: ({ layout }) => layout.notes || "",
+    layout_slides: ({ ref }: any) => ref.length,
+    layout_notes: ({ layout }: any) => layout.notes || "",
 
-    slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
-    slide_group: ({ show, ref, slideIndex, outSlide }) => {
+    slide_number: ({ slideIndex }: any) => (Number(slideIndex ?? -1) + 1).toString(),
+    slide_group: ({ show, ref, slideIndex, outSlide }: any) => {
         let parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
         const group = show.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
-    slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
+    slide_group_next: ({ show, ref, slideIndex, outSlide }: any) => {
         if (slideIndex < 0) return ""
         let nextParentIndex = slideIndex + 1
         while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
         const group = show.slides?.[ref[nextParentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
     },
-    slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+    slide_notes: ({ show, ref, slideIndex }: any) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }: any) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // text
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }: any) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
+    slide_text_next: ({ show, ref, slideIndex, outSlide }: any) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
 
     // media
-    video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
-    video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration > 0 ? videoDuration - videoTime : 0)),
-    video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
+    video_time: ({ videoTime }: any) => joinTime(secondsToTime(videoTime)),
+    video_countdown: ({ videoTime, videoDuration }: any) => joinTime(secondsToTime(videoDuration > 0 ? videoDuration - videoTime : 0)),
+    video_duration: ({ videoDuration }: any) => joinTime(secondsToTime(videoDuration)),
 }
 
 export function getVariableNameId(name: string) {

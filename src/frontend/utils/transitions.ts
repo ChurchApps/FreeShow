@@ -20,14 +20,14 @@ export const transitionTypes: { id: TransitionType; name: string }[] = [
 ]
 
 export const transitions: { [key in TransitionType]: any } = {
-    none: () => {},
+    none: () => { },
     blur,
     fade,
     crossfade,
     fly,
     scale,
     // slide,
-    slide: (_node, custom: any) => {
+    slide: (_node: any, custom: any) => {
         return {
             css: (t: number) => {
                 let direction = custom.direction || "left_right"

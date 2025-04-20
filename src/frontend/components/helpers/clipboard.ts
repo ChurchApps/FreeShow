@@ -153,7 +153,7 @@ export function duplicate(clip: Clipboard | null = null) {
 export function selectAll(data: any = {}) {
     let activeElem = document.activeElement
     if (activeElem?.nodeName === "INPUT" || activeElem?.nodeName === "TEXTAREA") {
-        ;(activeElem as HTMLInputElement).select()
+        ; (activeElem as HTMLInputElement).select()
         return
     }
 
@@ -190,7 +190,7 @@ const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthI
 
 /////
 
-const selectActions = {
+const selectActions: any = {
     show_drawer: () => {
         let data: string[] = []
 
@@ -219,7 +219,7 @@ const selectActions = {
         let newSelection: any[] = []
         let ref = getLayoutRef()
 
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             ref.forEach((b, i) => {
                 if (b.type === "child" ? id === b.parent?.id : id === b.id) newSelection.push({ index: i, showId: get(activeShow)?.id })
             })
@@ -345,7 +345,7 @@ const selectActions = {
     audio: () => selectAllAudio.set(true),
 }
 
-const copyActions = {
+const copyActions: any = {
     item: (data: any) => {
         // data = data.sort((a, b) => a.index - b.index)
         let items: Item[] = []
@@ -381,9 +381,9 @@ const copyActions = {
         // dont know why this is like this when ctrl + c
         if (data.slides) data = data.slides
 
-        let sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
+        let sortedData = data.sort((a: any, b: any) => (a.index < b.index ? -1 : 1))
 
-        let ids = sortedData.map((a) => {
+        let ids = sortedData.map((a: any) => {
             // get layout
             if (a.index !== undefined) layouts.push(ref[a.index].data)
 
@@ -443,14 +443,14 @@ const copyActions = {
     },
 }
 
-const pasteActions = {
+const pasteActions: any = {
     item: (data: any) => {
         if (!data || get(activePage) !== "edit") return
 
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
                 let items = clone(get(overlays)[get(activeEdit).id!].items || [])
-                data.forEach((item) => {
+                data.forEach((item: any) => {
                     items.push(clone(item))
                 })
                 history({ id: "UPDATE", newData: { key: "items", data: items }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: "overlay_items" } })
@@ -459,7 +459,7 @@ const pasteActions = {
 
             if (get(activeEdit).type === "template") {
                 let items = clone(get(templates)[get(activeEdit).id!].items || [])
-                data.forEach((item) => {
+                data.forEach((item: any) => {
                     items.push(clone(item))
                 })
                 history({ id: "UPDATE", newData: { key: "items", data: items }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: "template_items" } })
@@ -471,7 +471,7 @@ const pasteActions = {
 
         let ref = getLayoutRef()[get(activeEdit).slide!]
         let items: any[] = []
-        data.forEach((item) => {
+        data.forEach((item: any) => {
             items.push(clone(item))
         })
         history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
@@ -488,7 +488,7 @@ const pasteActions = {
         // if (data.layouts) data.layouts.reverse()
 
         // get all slide ids & child ids
-        let copiedIds: string[] = data.slides.map((a) => a.id)
+        let copiedIds: string[] = data.slides.map((a: any) => a.id)
         // let childs = []
         // data.forEach((slide) => {
         //   copiedIds.push(slide.id)
@@ -506,7 +506,7 @@ const pasteActions = {
         let addedChildren: string[] = []
 
         // remove children
-        data.slides.forEach((slide, i) => {
+        data.slides.forEach((slide: any, i: any) => {
             // dont add child if it is already copied
             if (slide.group === null && addedChildren.includes(slide.id)) return
 
@@ -524,7 +524,7 @@ const pasteActions = {
                 slide.children.forEach((childId: string) => {
                     // !slides[childId]
                     if (!copiedIds.includes(childId)) return
-                    let childSlide: any = clone(data.slides.find((a) => a.id === childId))
+                    let childSlide: any = clone(data.slides.find((a: any) => a.id === childId))
                     if (!childSlide) return
 
                     addedChildren.push(childId)
@@ -567,7 +567,7 @@ const pasteActions = {
     },
     group: (data: any) => pasteActions.slide(data),
     overlay: (data: any) => {
-        data?.forEach((slide) => {
+        data?.forEach((slide: any) => {
             let newSlide = clone(slide)
             delete newSlide.isDefault
             newSlide.name += " (2)"
@@ -575,7 +575,7 @@ const pasteActions = {
         })
     },
     template: (data: any) => {
-        data?.forEach((slide) => {
+        data?.forEach((slide: any) => {
             let newSlide = clone(slide)
             delete newSlide.isDefault
             newSlide.name += " (2)"
@@ -584,8 +584,8 @@ const pasteActions = {
     },
 }
 
-const deleteActions = {
-    item: (data) => {
+const deleteActions: any = {
+    item: (data: any) => {
         if (document.activeElement?.classList.contains("edit")) return
 
         let editId: string = get(activeEdit).id || ""
@@ -629,7 +629,7 @@ const deleteActions = {
             activeEdit.set({ ...get(activeEdit), items: [] })
         }
     },
-    slide: (data, type: "delete" | "remove" = "delete") => {
+    slide: (data: any, type: "delete" | "remove" = "delete") => {
         removeSlide(data, type)
         if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
@@ -638,7 +638,7 @@ const deleteActions = {
     },
     action: (data: any) => {
         // WIP history
-        data.forEach((selData) => {
+        data.forEach((selData: any) => {
             midiIn.update((a) => {
                 delete a[selData.id]
                 return a
@@ -648,7 +648,7 @@ const deleteActions = {
         })
     },
     timer: (data: any) => {
-        data.forEach((a) => {
+        data.forEach((a: any) => {
             let id = a.id || a.timer?.id
             deleteTimer(id)
         })
@@ -657,7 +657,7 @@ const deleteActions = {
     // TODO: history
     variable: (data: any) => {
         variables.update((a) => {
-            data.forEach(({ id }) => {
+            data.forEach(({ id }: any) => {
                 delete a[id]
             })
 
@@ -666,7 +666,7 @@ const deleteActions = {
     },
     trigger: (data: any) => {
         triggers.update((a) => {
-            data.forEach(({ id }) => {
+            data.forEach(({ id }: any) => {
                 delete a[id]
             })
 
@@ -675,7 +675,7 @@ const deleteActions = {
     },
     audio_stream: (data: any) => {
         audioStreams.update((a) => {
-            data.forEach(({ id }) => {
+            data.forEach(({ id }: any) => {
                 delete a[id]
             })
 
@@ -689,7 +689,7 @@ const deleteActions = {
 
         audioPlaylists.update((a) => {
             let songs = clone(a[activePlaylist]?.songs || [])
-            data.forEach((song) => {
+            data.forEach((song: any) => {
                 let currentSongIndex = songs.findIndex((a) => a === song.path)
                 if (currentSongIndex >= 0) songs.splice(currentSongIndex, 1)
             })
@@ -739,7 +739,7 @@ const deleteActions = {
         // remove from all layouts
         let ref = getLayoutRef()
         ref.forEach((slideRef, i) => {
-            let actions = clone(slideRef.data.actions) || {}
+            let actions: any = clone(slideRef.data.actions) || {}
             if (actions[key] !== id) return
             delete actions[key]
 
@@ -770,7 +770,7 @@ const deleteActions = {
         let indexes: number[] = []
 
         // don't remove private shows
-        data.forEach(({ index }) => {
+        data.forEach(({ index }: any) => {
             let projectRef = shows[index]
             if (projectRef.type === "show" || projectRef.type === undefined) {
                 let isPrivate = _show(projectRef.id).get("private")
@@ -827,18 +827,18 @@ const deleteActions = {
         })
     },
     theme: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             if (id === "default") return
             history({ id: "UPDATE", newData: { id: id }, location: { page: "settings", id: "settings_theme" } })
         })
     },
     style: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_style" } })
         })
     },
     output: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             // delete key output
             if (get(outputs)[id]?.keyOutput) history({ id: "UPDATE", newData: { id: get(outputs)[id].keyOutput }, location: { page: "settings", id: "settings_output" } })
 
@@ -881,7 +881,7 @@ const deleteActions = {
     },
 }
 
-const duplicateActions = {
+const duplicateActions: any = {
     event: (data: any) => {
         let event = clone(get(events)[data.id])
         event.name += " 2"
@@ -894,7 +894,7 @@ const duplicateActions = {
     show: (data: any) => {
         if (!get(activeProject)) return
 
-        data = data.map((a) => {
+        data = data.map((a: any) => {
             let newShowRef = clone(a)
             delete newShowRef.index
             if (!newShowRef.type) newShowRef.type = "show"
@@ -927,7 +927,7 @@ const duplicateActions = {
         let newProjects: Project[] = []
 
         folders.update((a) => {
-            data.forEach((folder) => {
+            data.forEach((folder: any) => {
                 let id = folder.id
                 folder = a[id]
                 let parent = Object.values(a).find((a) => a.parent === folder.id) || folder.parent
@@ -967,7 +967,7 @@ const duplicateActions = {
     project: (data: any) => {
         // TODO: history
         projects.update((a) => {
-            data.forEach((project) => {
+            data.forEach((project: any) => {
                 let newProject = clone(a[project.id])
                 a[uid()] = { ...newProject, name: newProject.name + " 2" }
                 return a
@@ -976,7 +976,7 @@ const duplicateActions = {
         })
     },
     theme: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             let theme = clone(get(themes)[id])
             let name = theme.name
             if (theme.default) name = get(dictionary).themes?.[name] || name
@@ -985,14 +985,14 @@ const duplicateActions = {
         })
     },
     style: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             let style = clone(get(styles)[id])
             id = uid()
             history({ id: "UPDATE", newData: { data: style, replace: { name: style.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_style" } })
         })
     },
     output: (data: any) => {
-        data.forEach(({ id }) => {
+        data.forEach(({ id }: any) => {
             let output = clone(get(outputs)[id])
             id = uid()
             history({ id: "UPDATE", newData: { data: output, replace: { name: output.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
@@ -1000,7 +1000,7 @@ const duplicateActions = {
     },
     action: (data: any) => {
         midiIn.update((a) => {
-            data.forEach(({ id }) => {
+            data.forEach(({ id }: any) => {
                 let newAction = clone(get(midiIn)[id])
                 newAction.name += " 2"
 
@@ -1013,7 +1013,7 @@ const duplicateActions = {
     },
     global_timer: (data: any) => {
         timers.update((a) => {
-            data.forEach(({ id }) => {
+            data.forEach(({ id }: any) => {
                 let newTimer = clone(get(timers)[id])
                 newTimer.name += " 2"
 
@@ -1029,14 +1029,14 @@ const duplicateActions = {
 // HELPER FUNCTIONS
 
 const exludedCategories = ["all", "unlabeled", "favourites", "effects_library", "pixabay"]
-function historyDelete(id, data, { updater } = { updater: "" }) {
-    data = data.filter((a) => !exludedCategories.includes(a.id || a))
+function historyDelete(id: any, data: any, { updater } = { updater: "" }) {
+    data = data.filter((a: any) => !exludedCategories.includes(a.id || a))
     data.forEach((a: any) => history({ id, newData: { id: a.id || a }, location: { page: get(activePage) as any, id: updater || undefined } }))
 }
 
 async function duplicateShows(selected: any) {
-    await loadShows(selected.map(({ id }) => id))
-    selected.forEach(({ id }) => {
+    await loadShows(selected.map(({ id }: any) => id))
+    selected.forEach(({ id }: any) => {
         let show = clone(get(showsCache)[id])
         if (!show) return
 

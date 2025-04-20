@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { triggerAction } from "../components/actions/api"
@@ -73,7 +74,8 @@ import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
-import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
+import { Main } from "./../../types/IPC/Main"
+import type { MainReturnPayloads } from "../../types/IPC/Main"
 import { convertCSV } from "../converters/csv"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
@@ -124,7 +126,7 @@ export const mainResponses: MainResponses = {
     [Main.USAGE]: (a) => usageLog.set(a),
 
     // MAIN
-    [ToMain.MENU]: (a) => menuClick(a),
+    [ToMain.MENU]: (a: any) => menuClick(a),
     [Main.SHOWS_PATH]: (a) => showsPath.set(a),
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {
@@ -225,14 +227,14 @@ export const mainResponses: MainResponses = {
 
         // CREATE SHOWS
         let tempShows: { id: string; show: Show }[] = []
-        data.shows.forEach((show) => {
+        data.shows.forEach((show: any) => {
             let id = show.id
             delete show.id
             tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
         })
         setTempShows(tempShows)
 
-        data.projects.forEach((pcoProject) => {
+        data.projects.forEach((pcoProject: any) => {
             // CREATE PROJECT FOLDER
             let folderId = pcoProject.folderId
             if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
@@ -253,7 +255,7 @@ export const mainResponses: MainResponses = {
         })
 
         // open closest to today
-        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
+        activeProject.set(data.projects.sort((a: any, b: any) => a.scheduledTo - b.scheduledTo)[0]?.id)
         projectView.set(false)
     },
     [ToMain.OPEN_FOLDER2]: (a) => {
@@ -268,8 +270,8 @@ export const mainResponses: MainResponses = {
             },
         }
 
-        if (!receiveFOLDER[a.channel]) return
-        receiveFOLDER[a.channel]()
+        if (!a.channel || !(a.channel in receiveFOLDER)) return
+        (receiveFOLDER[a.channel as keyof typeof receiveFOLDER])()
     },
     [ToMain.OPEN_FILE2]: (a) => {
         const receiveFILE = {
@@ -280,8 +282,8 @@ export const mainResponses: MainResponses = {
             },
         }
 
-        if (!receiveFILE[a.channel]) return
-        receiveFILE[a.channel]()
+        if (!a.channel || !(a.channel in receiveFILE)) return
+        receiveFILE[a.channel as keyof typeof receiveFILE]()
     },
     [ToMain.IMPORT2]: (a) => {
         const mainData = a.data
@@ -292,8 +294,8 @@ export const mainResponses: MainResponses = {
             powerkey: () => addToProject("ppt", mainData as string[]),
         }
         if (mainData.find((a) => typeof a === "string")) {
-            if (!receiveFilePathIMPORT[a.channel]) return
-            receiveFilePathIMPORT[a.channel]()
+            if (!a.channel || !(a.channel in receiveFilePathIMPORT)) return
+            (receiveFilePathIMPORT[a.channel as keyof typeof receiveFilePathIMPORT])()
             return
         }
 
@@ -330,7 +332,7 @@ export const mainResponses: MainResponses = {
             BIBLE: () => importBibles(data),
         }
 
-        if (!receiveIMPORT[a.channel]) return
-        receiveIMPORT[a.channel]()
+        if (!a.channel || !(a.channel in receiveIMPORT)) return
+        receiveIMPORT[a.channel as keyof typeof receiveIMPORT]()
     },
 }

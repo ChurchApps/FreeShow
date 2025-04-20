@@ -51,7 +51,7 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     let timerCreated: boolean = false
 
     Object.keys(currentShow.slides).forEach(checkSlide)
-    function checkSlide(slideId) {
+    function checkSlide(slideId: any) {
         let items: any[] = currentShow.slides[slideId].items
 
         // TODO: "backup" global timer to show item.timer

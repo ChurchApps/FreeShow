@@ -40,7 +40,7 @@ function convertToBible(content: any): Bible {
     else if (!Array.isArray(testaments)) testaments = [testaments]
     let books: any[] = []
 
-    testaments.forEach((a) => {
+    testaments.forEach((a: any) => {
         books.push(...getBooks(a.book))
     })
     bible.books = books

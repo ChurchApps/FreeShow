@@ -80,7 +80,7 @@ export function remoteListen() {
 
 let clearing: string[] = []
 const receiveOUTPUTasMAIN: any = {
-    BUFFER: ({ id, time, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }: any) => {
         // this will infinitely increace if this is not in place
         let timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
@@ -91,7 +91,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
-    RESTART: ({ id }) => restartOutputs(id),
+    RESTART: ({ id }: any) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     ACTION_MAIN: (a: { id: string }) => runAction(get(midiIn)[a.id]),
     AUDIO_MAIN: async (data: any) => {
@@ -120,7 +120,7 @@ const receiveOUTPUTasMAIN: any = {
             AudioAnalyserMerger.stop()
         }
     },
-    MOVE: (data) => {
+    MOVE: (data: any) => {
         outputs.update((a) => {
             if (!a[data.id] || a[data.id].boundsLocked) return a
 
@@ -128,8 +128,8 @@ const receiveOUTPUTasMAIN: any = {
             return a
         })
     },
-    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
-        outputs.update((a) => {
+    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }: any) => {
+        outputs.update((a: any) => {
             let ids = id ? [id] : Object.keys(get(outputs))
             ids.forEach((outputId) => {
                 if (a[outputId]) a[outputId][key] = value
@@ -142,7 +142,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: async (msg) => {
+    MAIN_VIDEO_ENDED: async (msg: any) => {
         if (!msg || clearing.includes(msg.id)) return
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
@@ -208,7 +208,7 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    BUFFER: ({ id, time, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }: any) => {
         let timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
@@ -259,7 +259,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     SHOWS_DATA: (a: any) => shows.set(a),
 
     // stage & dynamic value (video)
-    VIDEO_DATA: (data) => {
+    VIDEO_DATA: (data: any) => {
         videosData.set(data.data)
         videosTime.set(data.time)
     },
@@ -273,7 +273,7 @@ export const receiveOUTPUTasOUTPUT: any = {
 // NDI
 
 const receiveNDI: any = {
-    SEND_DATA: (msg) => {
+    SEND_DATA: (msg: any) => {
         if (!msg?.id) return
 
         ndiData.update((a) => {
@@ -337,7 +337,7 @@ const receiveCLOUD = {
 
         syncDrive(true)
     },
-    SYNC_DATA: ({ changes, closeWhenFinished }) => {
+    SYNC_DATA: ({ changes, closeWhenFinished }: any) => {
         if (changes.error) {
             newToast(changes.error)
             if (!closeWhenFinished) return

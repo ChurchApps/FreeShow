@@ -18,7 +18,7 @@ import { getItemText } from "../edit/scripts/textStyle"
 
 // TODO: move history switch to actions
 
-export const historyActions = ({ obj, undo = null }: any) => {
+export const historyActions = ({ obj, undo = null }: any): any => {
     let data: any = {}
     let initializing: boolean = undo === null
 
@@ -67,7 +67,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (changed) data.changed = changed
             }
 
-            updater.store.update((a) => {
+            updater.store.update((a: any) => {
                 if (deleting) return revertOrDeleteElement(a)
                 return updateElement(a)
             })
@@ -92,7 +92,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             /////
 
-            function revertOrDeleteElement(a) {
+            function revertOrDeleteElement(a: any) {
                 let previousData = clone(data.previousData)
 
                 if (key) {
@@ -114,8 +114,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (keys) {
                     // if just keys, but no "key"
-                    let currentData = {}
-                    keys.forEach((currentKey) => {
+                    let currentData: any = {}
+                    keys.forEach((currentKey: any) => {
                         currentData[currentKey] = clone(a[currentKey])
 
                         if (previousData) {
@@ -142,7 +142,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             }
 
-            function updateElement(a) {
+            function updateElement(a: any) {
                 // TODO: check for duplicates!!???
                 if (key) {
                     data.previousData = clone(filterIndexes(a[id]?.[key] ?? {}, subkey, { indexes, keys }))
@@ -150,7 +150,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 } else if (keys) {
                     // if just keys, but no "key"
                     data.previousData = {}
-                    keys.forEach((currentKey) => {
+                    keys.forEach((currentKey: any) => {
                         data.previousData[currentKey] = a[currentKey]
                         let replacerValue = data.data[currentKey] || data.data
                         a[currentKey] = replacerValue
@@ -167,7 +167,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             }
 
-            function updateKeyData(a, newValue) {
+            function updateKeyData(a: any, newValue: any) {
                 if (!a[id]) return a
                 console.log(newValue, indexes, keys, a[id][key], subkey)
 
@@ -177,9 +177,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         return a
                     }
 
-                    a[id][key] = a[id][key].map((value, i) => {
+                    a[id][key] = a[id][key].map((value: any, i: number) => {
                         if (indexes?.length && !indexes.includes(i)) return value
-                        let currentIndex = indexes.findIndex((a) => a === i)
+                        let currentIndex = indexes.findIndex((a: any) => a === i)
                         let replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
 
                         if (subkey) {
@@ -190,13 +190,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         return replacerValue
                     })
 
-                    a[id][key] = a[id][key].filter((a) => a !== undefined)
+                    a[id][key] = a[id][key].filter((a: any) => a !== undefined)
 
                     return a
                 }
 
                 if (keys?.length) {
-                    keys.forEach((currentKey) => {
+                    keys.forEach((currentKey: any) => {
                         let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || data.dataIsArray ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
@@ -251,7 +251,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // check for duplicate names inside itself
             if (!deleting) {
-                showsList.forEach(({ show }, i) => {
+                showsList.forEach(({ show }: any, i: number) => {
                     if (!show) return
 
                     let name = show.name
@@ -283,11 +283,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
-                await loadShows(showsList.map((a) => a.id))
+                await loadShows(showsList.map((a: any) => a.id))
             }
 
             showsCache.update((a) => {
-                showsList.forEach(({ show, id }, i: number) => {
+                showsList.forEach(({ show, id }: any, i: number) => {
                     if (deleting) {
                         if (replace && show) {
                             a[id] = show
@@ -326,7 +326,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             })
 
             shows.update((a) => {
-                showsList.forEach(({ show, id }, i) => {
+                showsList.forEach(({ show, id }: any, i: number) => {
                     if (deleting && !replace) {
                         // store show
                         if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: oldShows[id] }
@@ -414,7 +414,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (get(activeProject)) {
                     let shows = get(projects)[get(activeProject)!]?.shows || []
                     let newShows = shows
-                    showsList.forEach(({ id }) => {
+                    showsList.forEach(({ id }: any) => {
                         newShows = newShows.filter((a) => a.id !== id)
                     })
                     if (showsList.length < shows.length) {
@@ -463,11 +463,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (!slides[0]) return
 
             // sort in descending order so indexes are correct while adding/removing
-            slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+            slides = slides.sort((a: any, b: any) => (a.index < b.index ? 1 : -1))
             if (data.layouts) data.layouts.reverse()
             if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
-            slides.forEach((slide, i) => {
+            slides.forEach((slide: any, i: any) => {
                 let id = slide.id
                 delete slide.id
                 let slideIndex = slide.index ?? index
@@ -639,7 +639,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (deleting) {
                 if (type === "delete" || type === "delete_group") {
                     _show(showId)
-                        .slides(data.data.map((a) => a.id))
+                        .slides(data.data.map((a: any) => a.id))
                         .remove()
                 }
             } else {
@@ -1025,7 +1025,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
     return actions
 }
 
-function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
+function filterIndexes(data: any, subkey: string = "", { indexes, keys }: any) {
     if (!indexes?.length && !keys?.length) return subkey ? data[subkey] : data
 
     let filteredData: any = null
@@ -1038,13 +1038,13 @@ function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
 
         filteredData = data.filter((_, i) => indexes.includes(i))
 
-        if (subkey) filteredData = filteredData.map((a) => a[subkey])
+        if (subkey) filteredData = filteredData.map((a: any) => a[subkey])
     }
 
     if (keys?.length) {
         filteredData = {}
 
-        keys.forEach((key) => {
+        keys.forEach((key: any) => {
             if (subkey) filteredData[key] = data[key]?.[subkey] === undefined ? data[key] : data[key][subkey]
             else filteredData[key] = data[key]
         })

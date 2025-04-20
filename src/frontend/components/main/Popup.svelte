@@ -31,7 +31,7 @@
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div role="dialog" tabindex="0" aria-modal="true" style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
                 <div style="position: relative;">

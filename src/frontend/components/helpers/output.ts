@@ -56,7 +56,7 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
 
     // sort so display order can be changed! (needs app restart)
-    let enabledOutputs = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
+    let enabledOutputs = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id: any) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
@@ -103,7 +103,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let outs = outputId ? [outputId] : allOutputIds
         let inputData = clone(data)
 
-        let firstOutputWithBackground = allOutputIds.findIndex((id) => {
+        let firstOutputWithBackground = allOutputIds.findIndex((id: any) => {
             let layers = get(styles)[get(outputs)[id]?.style || ""]?.layers
             if (!Array.isArray(layers)) layers = ["background"]
             return !a[id]?.isKeyOutput && !a[id]?.stageOutput && layers.includes("background")
@@ -121,8 +121,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         let toggleState = false
         outs.forEach((id: string, i: number) => {
-            let output = a[id]
+            let output: any = a[id]
             if (!output.out) a[id].out = {}
+            // @ts-ignore
             if (!output.out?.[key]) a[id].out![key] = key === "overlays" ? [] : null
             data = clone(inputData)
 
@@ -135,11 +136,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                let index = allOutputIds.findIndex((outId) => outId === id)
+                let index = allOutputIds.findIndex((outId: any) => outId === id)
                 data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputIds[firstOutputWithBackground] })
             }
 
-            let outData = a[id].out?.[key] || null
+            // @ts-ignore
+            let outData = a[id].out && a[id].out[key] !== undefined ? a[id].out[key] : null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
                 if (toggle && i === 0) toggleState = outData?.includes(data[0])
@@ -147,7 +149,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
                 else outData = data
 
-                data.forEach((overlayId) => {
+                data.forEach((overlayId: any) => {
                     // timeout so output can update first
                     if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
                     else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
@@ -160,6 +162,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 }
             }
 
+            // @ts-ignore
             a[id].out![key] = clone(outData)
 
             // save locked overlays
@@ -175,7 +178,7 @@ function appendShowUsage(showId: string) {
     if (!show) return
 
     usageLog.update((a) => {
-        let metadata = show.meta || {}
+        let metadata: any = show.meta || {}
         // remove empty values
         Object.keys(metadata).forEach((key) => {
             if (!metadata[key]) delete metadata[key]
@@ -190,7 +193,7 @@ function appendShowUsage(showId: string) {
     })
 }
 
-function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
+function changeOutputBackground(data: any, { output, id, mute, videoOutputId }: any) {
     if (get(currentWindow) === null) {
         setTimeout(() => {
             // update stage background if any
@@ -295,7 +298,7 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 ///
 
 let sortedOutputs: (Output & { id: string })[] = []
-export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
+export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false): any {
     // WIP cache outputs
     // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
     //     sortedOutputs = sortByName(keysToID(updater || {}))
@@ -360,7 +363,7 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     let outputIds = getActiveOutputs(updater, true, true, true)
 
     outputIds.forEach((id: string) => {
-        let output = updater[id]
+        let output: any = updater[id]
         let keys: string[] = key ? [key] : Object.keys(output.out || {})
         keys.forEach((key: string) => {
             // TODO:
@@ -375,7 +378,7 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
 
     if (cleared && key === "transition") {
         // check overlay timers
-        cleared = !outputIds.find((outputId) => Object.values(get(overlayTimers)).find((a) => a.outputId === outputId))
+        cleared = !outputIds.find((outputId: any) => Object.values(get(overlayTimers)).find((a) => a.outputId === outputId))
     }
 
     return cleared
@@ -383,10 +386,11 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
 
 export function getOutputContent(outputId: string = "", updater = get(outputs), key: string = "slide") {
     if (!outputId) outputId = getActiveOutputs(updater, false, true, true)[0]
+    // @ts-ignore
     return updater[outputId]?.out?.[key] || {}
 }
 
-export function outputSlideHasContent(output) {
+export function outputSlideHasContent(output: any) {
     if (!output) return false
 
     let outSlide: OutSlide = output.out?.slide
@@ -496,7 +500,7 @@ function trimPixelValue(value: any) {
 }
 
 export function checkWindowCapture(startup: boolean = false) {
-    getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
+    getActiveOutputs(get(outputs), false, true, true).forEach((a: any) => shouldBeCaptured(a, startup))
 
     AudioAnalyser.recorderActivate()
 }
@@ -752,7 +756,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // remove exiting styling & add new if set in template
         const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions"]
         extraStyles.forEach((style) => {
+            // @ts-ignore
             delete item[style]
+            // @ts-ignore
             if (templateItem![style]) item[style] = templateItem![style]
         })
 
@@ -931,7 +937,7 @@ function removeTextValue(items: Item[]) {
     return items
 }
 
-export function getTemplateText(value) {
+export function getTemplateText(value: any) {
     // if text has {} it will not get removed (useful for preset text, and dynamic values)
     if (value?.includes("{")) return value
     return ""
@@ -1020,7 +1026,7 @@ export function getStyleTemplate(outSlide: OutSlide, currentStyle: Styles | unde
     let translations: number = outSlide?.id === "temp" ? outSlide.translations || 1 : reference?.data?.translations || reference?.data?.version?.split("+")?.length || 1
     let translationKey = translations > 1 ? `_${translations}` : ""
 
-    let templateId = isScripture ? currentStyle[`templateScripture${translationKey}`] || currentStyle.templateScripture : currentStyle.template
+    let templateId = isScripture ? (currentStyle as any)[`templateScripture${translationKey}`] || currentStyle.templateScripture : currentStyle.template
     let template = get(templates)[templateId || ""] || {}
 
     return template
@@ -1186,7 +1192,7 @@ export function getSlideFilter(slideData: SlideData | null) {
     if (Array.isArray(slideData.filterEnabled) && !slideData.filterEnabled?.includes("background")) return slideFilter
 
     if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
-    if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
+    if ((slideData as any)["backdrop-filter"]) slideFilter += "backdrop-filter: " + (slideData as any)["backdrop-filter"] + ";"
 
     return slideFilter
 }

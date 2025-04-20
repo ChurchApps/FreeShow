@@ -233,7 +233,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     lockedOverlays: (v: any) => {
         // only get locked overlays
-        v = v.filter((id) => get(overlays)[id]?.locked === true)
+        v = v.filter((id: any) => get(overlays)[id]?.locked === true)
 
         lockedOverlays.set(v)
 

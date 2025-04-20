@@ -176,7 +176,7 @@ export function updateShowsList(shows: TrimmedShows) {
 
 // update cached shows
 export function updateCachedShows(shows: Shows) {
-    let cachedShows = {}
+    let cachedShows: any = {}
     Object.entries(shows).forEach(([id, show]) => {
         let customId = getShowCacheId(id, show)
         cachedShows[customId] = updateCachedShow(id, show)
@@ -222,9 +222,10 @@ export function updateCachedShow(id: string, show: Show, layoutId: string = "") 
     }
 
     let customId = getShowCacheId(id, show)
+    const cachedData = get(cachedShowsData);
     let template = {
         id: show.settings?.template,
-        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
+        slidesUpdated: cachedData[customId]?.template?.slidesUpdated || false,
     }
 
     // sort by order when just one layout

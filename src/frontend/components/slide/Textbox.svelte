@@ -5,7 +5,8 @@
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
     import { send } from "../../utils/request"
-    import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
+    import autosize from "../edit/scripts/autosize"
+    import type { AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
@@ -209,7 +210,7 @@
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
     }
 
-    function setItemAutoFontSize(fontSize) {
+    function setItemAutoFontSize(fontSize: any) {
         if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
 
         if (ref.type === "overlay") {

@@ -14,7 +14,7 @@ export function removeDuplicates<T>(array: T) {
 }
 
 // sort array (or event object) by time in ascending order
-export function sortByTime(a, b) {
+export function sortByTime(a: any, b: any) {
     if (a.from) a = a.from
     if (b.from) b = b.from
     return new Date(a).getTime() - new Date(b).getTime()
@@ -86,7 +86,7 @@ export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
         let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
 
         // get only number part if available
-        const extractNumber = (str) => {
+        const extractNumber = (str: string) => {
             const match = str.toString().match(/\d+/)
             return match ? parseInt(match[0], 10) : Infinity
         }
@@ -151,10 +151,10 @@ export function removeDeleted<T extends Record<string, any>>(object: T[]) {
 }
 
 // remove every duplicated values in object
-export function removeDuplicateValues<T>(obj: T): T {
+export function removeDuplicateValues(obj: Record<string, any>): Record<string, any> {
     if (typeof obj !== "object") return obj
 
-    let uniqueObj: T = {} as T
+    let uniqueObj: Record<string, any> = {}
     const valueSet = new Set()
 
     for (const [key, value] of Object.entries(obj!)) {
@@ -169,10 +169,10 @@ export function removeDuplicateValues<T>(obj: T): T {
 }
 
 // change values from one object to another
-export function changeValues<T>(object: T, values: { [key: string]: any }) {
+export function changeValues<T extends Record<string, any>>(object: T, values: { [key: string]: any }) {
     Object.entries(values).forEach(([key, value]) => {
-        object[key] = value
-        if (value === undefined) delete object[key]
+        (object as Record<string, any>)[key] = value
+        if (value === undefined) delete (object as Record<string, any>)[key]
     })
     return object
 }
@@ -184,10 +184,10 @@ export function clone<T>(object: T): T {
 }
 
 // not currently in use, but could be handy
-export function slowLoop(array, interval, returnFunc) {
+export function slowLoop(array: any, interval: number, returnFunc: any) {
     loopFunction(0)
 
-    function loopFunction(index) {
+    function loopFunction(index: any) {
         returnFunc(array[index])
 
         if (index < array.length - 1) {
@@ -199,17 +199,17 @@ export function slowLoop(array, interval, returnFunc) {
 }
 
 // randomize array items
-export function shuffleArray(array) {
+export function shuffleArray(array: any) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        ;[array[i], array[j]] = [array[j], array[i]]
+            ;[array[i], array[j]] = [array[j], array[i]]
     }
 
     return array
 }
 
 // convert object to dropdown options
-export function convertToOptions(object) {
+export function convertToOptions(object: any) {
     let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
     return sortByName(options)
 }

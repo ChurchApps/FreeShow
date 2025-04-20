@@ -98,7 +98,7 @@ export function convertMediaShout(data: any) {
 
         let cues = xml2json(content)?.MediaShout5_Document?.Cues
         if (!Array.isArray(cues)) cues = [cues]
-        let cues2: any[] = cues.map((a) => Object.values(a))?.flat(2)
+        let cues2: any[] = cues.map((a: any) => Object.values(a))?.flat(2)
 
         cues2.forEach((song: MediaShout5Song) => {
             if (!song) return
@@ -113,7 +113,7 @@ export function convertMediaShout(data: any) {
     setTempShows(tempShows)
 }
 
-function convertToShow(song: MediaShout5Song, { name, categoryId }) {
+function convertToShow(song: MediaShout5Song, { name, categoryId }: any) {
     let layoutID = uid()
     let show = new ShowObj(false, categoryId, layoutID)
     show.name = name

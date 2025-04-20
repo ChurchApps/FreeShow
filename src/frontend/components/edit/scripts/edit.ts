@@ -44,7 +44,7 @@ export function setBackgroundColor(input: any, data: any) {
     return input
 }
 
-function getOldOpacity(data) {
+function getOldOpacity(data: any) {
     let backgroundValue = data["background-color"] || ""
     if (!backgroundValue.includes("rgb")) return 1
 
@@ -52,9 +52,9 @@ function getOldOpacity(data) {
     return rgb.a
 }
 
-export function getBackgroundOpacity(itemEditValues, data) {
+export function getBackgroundOpacity(itemEditValues: any, data: any) {
     let backgroundValue = data["background-color"] || ""
-    let boIndex = itemEditValues.default.findIndex((a) => a.id === "background-opacity")
+    let boIndex = itemEditValues.default.findIndex((a: any) => a.id === "background-opacity")
     if (boIndex < 0) return itemEditValues
 
     if (!backgroundValue.includes("rgb")) {

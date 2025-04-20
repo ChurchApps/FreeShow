@@ -99,12 +99,20 @@ interface ObjData {
     menu: ContextMenuItem
 }
 
-export function menuClick(id: string, enabled: boolean = true, menu: ContextMenuItem | null = null, contextElem: HTMLElement | null = null, actionItem: HTMLElement | null = null, sel: Selected | null = null) {
+export function menuClick(
+    id: keyof typeof actions,
+    enabled: boolean = true,
+    menu: ContextMenuItem | null = null,
+    contextElem: HTMLElement | null = null,
+    actionItem: HTMLElement | null = null,
+    sel: Selected | null = null
+) {
     if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
 
     if (sel?.id) sel.id = sel.id.split("___")[0] as SelectIds // different selection ID, same action (currently used to seperate scripture navigation buttons)
 
-    let obj = { sel, actionItem, enabled, contextElem, menu }
+    // Ensure menu is always a ContextMenuItem (not null)
+    let obj = { sel, actionItem, enabled, contextElem, menu: menu ?? { id: "", label: "", type: "", icon: "" } as ContextMenuItem }
     console.log("MENU CLICK: " + id, obj)
 
     actions[id](obj)
@@ -538,10 +546,14 @@ const actions = {
             category_templates: () => templateCategories.update(toggleArchive),
         }
 
-        if (!categoryStores[obj.sel?.id || ""]) return
-        categoryStores[obj.sel!.id!]()
+        const validCategoryIds = ["category_shows", "category_overlays", "category_templates"] as const
+        type CategoryId = typeof validCategoryIds[number]
 
-        function toggleArchive(a) {
+        const id = obj.sel?.id as string
+        if (!validCategoryIds.includes(id as CategoryId)) return
+        categoryStores[id as CategoryId]()
+
+        function toggleArchive(a: any) {
             obj.sel!.data.forEach((id) => {
                 a[id].isArchive = !a[id].isArchive
             })
@@ -555,7 +567,7 @@ const actions = {
     // output
     force_output: () => {
         let enabledOutputs = getActiveOutputs(get(outputs), false)
-        enabledOutputs.forEach((id) => {
+        enabledOutputs.forEach((id: any) => {
             let output = { id, ...get(outputs)[id] }
             // , force: e.ctrlKey || e.metaKey
             send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
@@ -737,7 +749,7 @@ const actions = {
             return a
         })
     },
-    section: (obj) => {
+    section: (obj: any) => {
         let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
@@ -821,7 +833,7 @@ const actions = {
             return
         }
     },
-    editSlideText: (obj) => {
+    editSlideText: (obj: any) => {
         if (obj.sel.id === "slide") {
             let slide = obj.sel.data[0]
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
@@ -1196,7 +1208,8 @@ const actions = {
         let items = get(activeEdit).items
 
         if (get(activeEdit).id) {
-            let currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+            let store = get(($ as any)[(get(activeEdit).type || "") + "s"]) as { [key: string]: any }
+            let currentItems = store?.[get(activeEdit).id!]?.items
             let itemValues = items.map((index) => currentItems[index].bindings || [])
             let newValues: string[][] = []
             itemValues.forEach((value) => {
@@ -1222,9 +1235,9 @@ const actions = {
         let slideRef = ref[slideIndex]
 
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
-        itemValues = itemValues.map((a) => a || [])
+        itemValues = itemValues.map((a: any) => a || [])
         let newValues: string[][] = []
-        itemValues.forEach((value) => {
+        itemValues.forEach((value: any) => {
             if (!id) value = []
             else if (value.includes(id)) value.splice(value.indexOf(id, 1))
             else value.push(id)
@@ -1463,7 +1476,7 @@ function changeSlideAction(obj: ObjData, id: string) {
 
     let actionsList: any[] = []
     indexes.forEach((index: number) => {
-        let actions = ref[index]?.data?.actions || {}
+        let actions: any = ref[index]?.data?.actions || {}
         actions[id] = !actions[id]
         actionsList.push(actions)
     })
@@ -1635,8 +1648,11 @@ export function format(id: string, obj: ObjData, data: any = null) {
     refreshEditSlide.set(true)
 }
 
-const formatting = {
-    find_replace: (t: string, data) => {
+type FormattingMap = {
+    [key: string]: (t: string, data?: any) => string
+}
+const formatting: FormattingMap = {
+    find_replace: (t: string, data: any) => {
         if (!data.findValue) return t
 
         let flags = "g"

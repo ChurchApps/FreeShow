@@ -12,7 +12,8 @@
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import { decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import type { OutputMetadata } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
@@ -24,7 +25,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
-    import { OutData } from "../../../types/Output"
+    import type { OutData } from "../../../types/Output"
 
     export let outputId: string = ""
     export let style = ""
@@ -101,7 +102,7 @@
     let currentSlide: Slide | null = null
 
     $: updateSlideData(slide, outputId)
-    function updateSlideData(slide, _outputChanged) {
+    function updateSlideData(slide: any, _outputChanged: any) {
         if (!slide) {
             currentLayout = []
             slideData = null
@@ -126,7 +127,7 @@
         }
 
         // add template item keys to not update item when no changes is made (when custom style template is set)
-        function formatSlide(currentSlide) {
+        function formatSlide(currentSlide: any) {
             if (!currentSlide) return null
             let newSlide = clone(currentSlide)
             newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items)

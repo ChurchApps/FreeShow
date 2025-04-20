@@ -34,7 +34,7 @@
   {/if} -->
         <div class="background" style="zoom: {1 / ratio}">
             {#if $outShow?.media?.[layout?.background || ""]}
-                <img src={$outShow.media[layout.background || ""].path} />
+                <img src={$outShow.media[layout.background || ""].path} alt="Background" />
             {/if}
         </div>
         {#if $outShow}

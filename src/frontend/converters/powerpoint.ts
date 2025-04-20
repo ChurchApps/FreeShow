@@ -104,9 +104,9 @@ function createSlides(slides: string[][][]) {
         layouts.push({ id })
 
         let items: Item[] = []
-        slide.forEach((textbox) => {
+        slide.forEach((textbox: any) => {
             let lines: any[] = []
-            textbox.forEach((line) => {
+            textbox.forEach((line: any) => {
                 lines.push({ align: "text-align: left;", text: [{ style: "", value: line }] })
             })
 

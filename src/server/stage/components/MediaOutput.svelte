@@ -15,7 +15,7 @@
 {#key path}
     <div style="height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});">
         {#if !errorLoading}
-            <img src={path} on:error={error} />
+            <img src={path} alt="Media content" on:error={error} />
         {/if}
     </div>
 {/key}

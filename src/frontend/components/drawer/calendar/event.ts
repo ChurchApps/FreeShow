@@ -142,7 +142,10 @@ export function updateEventData(editEvent: any, stored: any, { type, action }: a
 }
 
 // action
-export function getActionEventData(event: any, action: any) {
+export function getActionEventData(
+    event: any,
+    action: { id: keyof typeof actionData } // add type annotation for action.id
+) {
     let actionName = translate(actionData[action.id]?.name)
 
     event.action = action

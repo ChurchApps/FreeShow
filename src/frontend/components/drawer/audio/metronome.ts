@@ -169,6 +169,6 @@ async function playNote(time: number, first: boolean = false) {
 
 let accentVolume = 2
 let secondaryVolume = 1.75
-function getVolume(beatVolume) {
+function getVolume(beatVolume: any) {
     return beatVolume * (metronomeValues.volume || 1) * get(volume) * AudioPlayer.getGain()
 }

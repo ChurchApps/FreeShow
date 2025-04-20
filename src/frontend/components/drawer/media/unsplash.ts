@@ -16,7 +16,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
         fetch(url)
             .then((response) => response.json())
             .then((data) => {
-                results = data.results.map((media) => {
+                results = data.results.map((media: any) => {
                     let path = media.urls.full || media.urls.regular
                     return { path, previewUrl: media.urls.thumb, name: media.alt_description, extension: getExtension(path), credits: getUnsplashCredits(media) }
                 })
@@ -34,7 +34,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
 }
 
 const UTM = "?utm_source=freeshow&utm_medium=referral"
-function getUnsplashCredits(media) {
+function getUnsplashCredits(media: any) {
     return {
         type: "unsplash",
         photo: media.description,

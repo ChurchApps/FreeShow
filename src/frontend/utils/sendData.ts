@@ -37,7 +37,7 @@ export function client(id: Clients, msg: ClientMessage) {
 }
 
 export function setConnectedState(type: string, connectionId: string, key: string = "active", value: string | boolean) {
-    connections.update((a) => {
+    connections.update((a: any) => {
         if (!a[type]) a[type] = {}
         if (!a[type][connectionId]) a[type][connectionId] = {}
         a[type][connectionId][key] = value

@@ -28,7 +28,7 @@
     const compressionFactor = threshold / newRange
     const expansionFactor = (1 - newRange) / (1 - threshold)
 
-    function transformRange(value) {
+    function transformRange(value: any) {
         if (value <= threshold) {
             return value / compressionFactor
         } else {
@@ -60,10 +60,10 @@
     <div class="main advanced">
         <!-- WIP volume dots!!! instead of transition.. -->
         <span class="left">
-            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
+            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%"></div>
         </span>
         <span class="right">
-            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
+            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%"></div>
         </span>
 
         <!-- <div class="lines">
@@ -85,18 +85,29 @@
         </div>
     </div>
 {:else}
-    <div class="main" on:click={openAudioMix}>
+    <div
+        class="main"
+        on:click={openAudioMix}
+        on:keydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                openAudioMix()
+            }
+        }}
+        tabindex="0"
+        role="button"
+        aria-label="Open audio mixer"
+    >
         <!-- <span class="left">
-            <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
+            <div style="height: {100 - ($audioChannels.volume?.left || 0)}%"></div>
         </span>
         <span class="right">
-            <div style="height: {100 - ($audioChannels.volume?.right || 0)}%" />
+            <div style="height: {100 - ($audioChannels.volume?.right || 0)}%"></div>
         </span> -->
         <span class="left">
-            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
+            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%"></div>
         </span>
         <span class="right">
-            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
+            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%"></div>
         </span>
     </div>
 {/if}

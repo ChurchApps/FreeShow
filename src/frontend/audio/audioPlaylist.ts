@@ -39,7 +39,7 @@ export class AudioPlaylist {
     static update(id: string, key: string, value: any) {
         if (!get(audioPlaylists)[id]) return
 
-        audioPlaylists.update((a) => {
+        audioPlaylists.update((a: any) => {
             a[id][key] = value
             return a
         })

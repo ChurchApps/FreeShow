@@ -46,7 +46,7 @@
 </script>
 
 <div class="center" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
+    <canvas style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas}></canvas>
 </div>
 
 <style>

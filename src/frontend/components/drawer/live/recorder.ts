@@ -3,10 +3,10 @@ import { RECORDER } from "../../../../types/Channels"
 import { activeRecording, currentRecordingStream, dataPath } from "../../../stores"
 import { newToast } from "../../../utils/common"
 
-let mediaRecorder
+let mediaRecorder: any
 let recordedChunks: any[] = []
 const options: any = { mimeType: "video/webm; codecs=vp9" }
-export function createMediaRecorder(stream) {
+export function createMediaRecorder(stream: any) {
     newToast("$toast.recording_started")
     mediaRecorder = new MediaRecorder(stream, options)
     mediaRecorder.start()

@@ -28,12 +28,12 @@ export async function updateAnimation(animationData: any, currentIndex: number, 
     return animationData
 }
 
-const animations = {
-    wait: async ({ duration }) => await wait(duration * 1000),
-    set: ({ id, key, value, extension }, animationData) => {
+const animations: any = {
+    wait: async ({ duration }: any) => await wait(duration * 1000),
+    set: ({ id, key, value, extension }: any, animationData: any) => {
         animations.change({ id, key, value, extension, duration: 0 }, animationData)
     },
-    change: async ({ id, key, value, extension, duration }, animationData) => {
+    change: async ({ id, key, value, extension, duration }: any, animationData: any) => {
         value = value || 0
         if (extension) value += extension
 
@@ -97,6 +97,6 @@ function removePreviousKeys(array: string[] | undefined, key: string) {
     return array.filter((a) => !a.includes(key))
 }
 
-function randomNumBetween(min = 0, max) {
+function randomNumBetween(min = 0, max: number) {
     return Math.floor(Math.random() * (max - min + 1) + min)
 }

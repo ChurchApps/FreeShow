@@ -1,10 +1,12 @@
-import { get, Writable, writable } from "svelte/store"
+import { get, writable } from "svelte/store"
+import type { Writable } from "svelte/store"
 import type { Output } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
 import type { Overlays, Shows, TrimmedShow } from "../../../types/Show"
 import type { StageLayout } from "../../../types/Stage"
 import { clone } from "../../common/util/helpers"
-import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
+import { __update } from "../../common/util/stores"
+import type { DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
 import { DEFAULT_DICTIONARY } from "./dictionary"
 
 export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))

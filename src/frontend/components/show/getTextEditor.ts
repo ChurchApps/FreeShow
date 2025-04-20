@@ -22,7 +22,7 @@ export function getPlainEditorText(id: string = "active") {
         let slideData: any = { id, items: slide.items, text: "", ref: refSlide }
         let data = getItems(slide.items)
 
-        if (slide.group !== null && (data.hasTextboxItem || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
+        if (slide.group !== null && (data.hasTextboxItem || slide.children?.find((childId: any) => getSlideText(slides[childId]).length))) {
             let groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
             text += groupId + "\n"
             slideData.text += groupId + "\n"

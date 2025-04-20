@@ -11,6 +11,9 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
+    let connectionsValue: any = {}
+    $: connectionsValue = $connections
+
     let ip = "localhost"
 
     onMount(async () => {
@@ -18,7 +21,7 @@
     })
 
     function getIP(nets: any) {
-        let results: any = {}
+        let results: Record<string, string[]> = {}
         for (const name of Object.keys(nets)) {
             for (const net of nets[name]) {
                 // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
@@ -134,7 +137,7 @@
 
 {#each servers as server}
     {@const disabled = server.id === "companion" ? $companion.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+    {@const connections = Object.keys(connectionsValue[server.id.toUpperCase()] || {})?.length || 0}
     <CombinedInput>
         <span style="width: 100%;">
             <Button
@@ -195,7 +198,7 @@
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
 
-<div class="filler" />
+<div class="filler"></div>
 <div class="bottom">
     <Button style="width: 100%;" on:click={reset} center>
         <Icon id="reset" right />

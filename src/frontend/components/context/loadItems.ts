@@ -199,14 +199,14 @@ const loadActions = {
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")
             let actionItems = sortByName(
-                slideActions.map((action) => {
+                slideActions.map((action: any) => {
                     let triggerId = getActionTriggerId(action.triggers?.[0])
-                    let customData = actionData[triggerId] || {}
+                    let customData: any = (triggerId in actionData ? actionData[triggerId as keyof typeof actionData] : {}) || {}
                     let actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
                     let customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
 
-                    let label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
-                    let icon = actionData[triggerId]?.icon || "actions"
+                    let label = translate(actionData[triggerId as keyof typeof actionData]?.name || "") + (customName ? ` (${customName})` : "")
+                    let icon = actionData[triggerId as keyof typeof actionData]?.icon || "actions"
 
                     return { id: action.id, label, translate: false, icon, type: "action" }
                 }),
@@ -232,7 +232,7 @@ const loadActions = {
 
         return items
     },
-    bind_slide: (_items, isItem: boolean = false) => {
+    bind_slide: (_items: any, isItem: boolean = false) => {
         let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
@@ -268,7 +268,7 @@ function setContextData(key: string, data: boolean | string | number) {
     })
 }
 
-function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media") {
+function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media"): (ContextMenuItem | "SEPERATOR")[] {
     let type = get(sorted)[id]?.type || "name"
 
     items = [
@@ -283,7 +283,7 @@ function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media")
         // WIP load used metadata values...
     }
 
-    return items
+    return items as (ContextMenuItem | "SEPERATOR")[];
 }
 
 function sortItemsByLabel(items: ContextMenuItem[]) {
@@ -295,16 +295,18 @@ function sortItemsByLabel(items: ContextMenuItem[]) {
     })
 }
 
-export function loadItems(id: string): [string, ContextMenuItem | "SEPERATOR"][] {
+type LoadActionsKey = keyof typeof loadActions;
+
+export function loadItems(id: LoadActionsKey): [string, ContextMenuItem | "SEPERATOR"][] {
     if (!loadActions[id]) return []
 
-    let items: (ContextMenuItem | "SEPERATOR")[] = loadActions[id]([])
+    let items = loadActions[id]([]) as (ContextMenuItem | "SEPERATOR")[]
     let menuItems: [string, ContextMenuItem | "SEPERATOR"][] = items.map((a) => [a === "SEPERATOR" ? a : id, a])
 
     return menuItems
 }
 
-export function quickLoadItems(id: string) {
+export function quickLoadItems(id: LoadActionsKey) {
     if (!loadActions[id]) return
     loadActions[id]([])
 }

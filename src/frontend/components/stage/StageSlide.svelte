@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { StageLayout } from "../../../types/Stage"
+    import type { StageLayout } from "../../../types/Stage"
     import { outputs, stageShows } from "../../stores"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -29,7 +29,21 @@
 </script>
 
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-    <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
+    <div
+        class="slide context #stage_slide"
+        class:disabled={layout.disabled}
+        style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""}
+        role="button"
+        aria-pressed={active}
+        on:click
+        on:keydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                e.currentTarget?.click()
+            }
+        }}
+        tabindex={0}
+    >
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>

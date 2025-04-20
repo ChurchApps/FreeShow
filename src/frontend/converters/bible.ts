@@ -7,7 +7,7 @@ import { convertBebliaBible } from "./bebliaBible"
 import { convertOpenSongBible } from "./opensong"
 import { get } from "svelte/store"
 
-const bibleTypes = {
+const bibleTypes: any = {
     freeshow: { name: "FreeShow", func: importFSB },
     zefania: { name: "Zefania", func: convertZefaniaBible },
     osis: { name: "OSIS", func: convertOSISBible },

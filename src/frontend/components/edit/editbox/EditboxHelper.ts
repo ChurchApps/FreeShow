@@ -61,7 +61,7 @@ export class EditboxHelper {
         return result
     }
 
-    static cutLinesInTwo({ sel, lines, currentIndex, textPos, start }) {
+    static cutLinesInTwo({ sel, lines, currentIndex, textPos, start }: any) {
         let firstLines: Line[] = []
         let secondLines: Line[] = []
 
@@ -111,11 +111,11 @@ export class EditboxHelper {
         if (!secondLines.length) secondLines = defaultLine
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        let chordLines = clone(lines.map((a) => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach((line) => {
-            let oldLineChords = chordLines.shift()
-            if (oldLineChords?.length) line.chords = oldLineChords
-        })
+        let chordLines = clone(lines.map((a: any) => a.chords || []))
+            ;[...firstLines, ...secondLines].forEach((line) => {
+                let oldLineChords = chordLines.shift()
+                if (oldLineChords?.length) line.chords = oldLineChords
+            })
 
         return { firstLines, secondLines }
     }

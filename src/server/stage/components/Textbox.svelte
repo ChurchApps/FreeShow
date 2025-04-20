@@ -250,6 +250,15 @@
     class:chords={chordLines.length}
     class:clickable={item.button?.press || item.button?.release}
     on:click={toggleActions}
+    on:keydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            toggleActions(e)
+        }
+    }}
+    tabindex="0"
+    role="button"
+    aria-pressed={actionButtons}
     on:pointerdown={press}
     on:pointerup={release}
 >

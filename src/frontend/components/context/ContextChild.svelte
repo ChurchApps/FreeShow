@@ -2,7 +2,8 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import ContextItem from "./ContextItem.svelte"
-    import { ContextMenuItem, contextMenuItems } from "./contextMenus"
+    import { contextMenuItems } from "./contextMenus"
+    import type { ContextMenuItem } from "./contextMenus"
     import { loadItems } from "./loadItems"
 
     export let contextElem: HTMLDivElement | null = null
@@ -64,7 +65,7 @@
 
 <svelte:window on:mouseover={onMouseOver} />
 
-<div bind:this={elem} class="item" class:open on:click={click} tabindex={0} on:keydown={keydown}>
+<div bind:this={elem} class="item" class:open on:click={click} on:keydown={keydown} role="button" tabindex={0} aria-haspopup="true" aria-expanded={open}>
     <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
         <div class="left" style="display: flex;align-items: center;gap: 10px;">
             {#if menu?.icon}<Icon id={menu.icon} />{/if}

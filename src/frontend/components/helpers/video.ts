@@ -8,7 +8,7 @@ export function updateVideoTime(time: number) {
     const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
 
     let timeValues: { [key: string]: number } = {}
-    activeOutputIds.forEach((id) => {
+    activeOutputIds.forEach((id: any) => {
         timeValues[id] = time
     })
 
@@ -17,10 +17,10 @@ export function updateVideoTime(time: number) {
 
 export function updateVideoData(data: any) {
     const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
-    const backgroundOutputId = activeOutputIds.find((id) => getLayersFromId(id).includes("background")) || activeOutputIds[0]
+    const backgroundOutputId = activeOutputIds.find((id: any) => getLayersFromId(id).includes("background")) || activeOutputIds[0]
 
     let dataValues: any = {}
-    activeOutputIds.forEach((id) => {
+    activeOutputIds.forEach((id: any) => {
         dataValues[id] = { ...data, muted: id !== backgroundOutputId ? true : data.muted }
     })
 

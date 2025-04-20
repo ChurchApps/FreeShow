@@ -1,4 +1,4 @@
-export const actionData = {
+export const actionData: any = {
     // PROJECT
     id_select_project: { SECTION: "guide_title.project", name: "actions.id_select_project", icon: "project", input: "id" },
     next_project_item: { name: "actions.next_project_item", icon: "project", incompatible: ["previous_project_item", "index_select_project_item"] },

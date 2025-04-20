@@ -49,9 +49,9 @@
 </script>
 
 {#if item?.timer?.viewType === "line"}
-    <div class="line" style="width: {percentage}%;background-color: {itemColor};" />
+    <div class="line" style="width: {percentage}%;background-color: {itemColor};"></div>
 {:else if item?.timer?.viewType === "circle"}
-    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" />
+    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};"></div>
 {:else}
     <div class="align autoFontSize" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">

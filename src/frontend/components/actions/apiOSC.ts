@@ -59,7 +59,7 @@ export function oscToAPI(data: any) {
     return data
 }
 
-function parsePath(path) {
+function parsePath(path: string) {
     const parts = path.split("/").filter(Boolean)
     console.log("OSC API PATH:", path)
 

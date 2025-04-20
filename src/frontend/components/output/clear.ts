@@ -57,7 +57,7 @@ function storeCache() {
 
     outputCache.update((a) => {
         // only store active outputs
-        activeOutputs.forEach((id) => {
+        activeOutputs.forEach((id: any) => {
             let out = get(outputs)[id]?.out
             if (out) a[id] = clone(out)
         })
@@ -126,7 +126,7 @@ export function clearSlide(clearAll: boolean = false) {
         }
 
         // slide gets outlined if not blurred
-        ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
     }
 
     setOutput("slide", null)

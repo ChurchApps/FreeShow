@@ -40,7 +40,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
     async function syncStores(id: keyof typeof stores) {
         let store = stores[id]
-        let name = id + ".json"
+        let name = String(id) + ".json"
 
         if (id === "SHOWS") shows = store.store as TrimmedShows
         // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
@@ -88,7 +88,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
             return
         }
 
-        let storeId = storesToSave.find((a) => path.includes(a))
+        let storeId = storesToSave.find((a: any) => path.includes(a))
 
         if (!storeId) return
         restoreStore(path, storeId)
@@ -112,7 +112,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
         }
 
         stores[storeId].clear()
-        ;(stores[storeId] as any).set(data)
+            ; (stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
         sendMain(storeId as Main, data)
     }

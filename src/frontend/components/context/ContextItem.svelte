@@ -33,7 +33,8 @@
     import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
-    import { ContextMenuItem, contextMenuItems } from "./contextMenus"
+    import { contextMenuItems } from "./contextMenus"
+    import type { ContextMenuItem } from "./contextMenus"
     import { menuClick } from "./menuClick"
 
     export let contextElem: HTMLDivElement | null = null

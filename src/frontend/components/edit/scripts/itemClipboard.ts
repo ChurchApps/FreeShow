@@ -67,7 +67,7 @@ export function getSlideStyle(): StyleClipboard {
 
 export function getFilterStyle(): StyleClipboard {
     let ref = getLayoutRef()
-    let slideData = ref[get(activeEdit).slide!].data
+    let slideData: any = ref[get(activeEdit).slide!].data
 
     const filterKeys = ["filterEnabled", "backdrop-filter", "filter"]
 
@@ -91,7 +91,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
         await wait(10)
     }
 
-    function updateSlideStyle(slide) {
+    function updateSlideStyle(slide: any) {
         let items: number[] = []
         let values: any[] = []
 
@@ -118,7 +118,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             // })
             showsCache.update((a) => {
-                ;(a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
+                ; (a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
                     .filter((_, i) => items.includes(i))
                     .forEach((item) => {
                         item.lines?.forEach((line) => {
@@ -199,7 +199,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
         await wait(10)
     }
 
-    function updateSlideStyle(slide) {
+    function updateSlideStyle(slide: any) {
         let values: string[] = []
 
         let items: number[] = []
@@ -213,7 +213,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
             location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
         })
 
-        function updateItemStyle(item, i) {
+        function updateItemStyle(item: any, i: any) {
             // only apply to selected items if not apply to all
             if (slides.length === 1 && get(activeEdit).items.length && !get(activeEdit).items.includes(i)) return
 
@@ -249,7 +249,7 @@ export async function setSlideStyle(style: StyleClipboard, slides: any) {
         await wait(10)
     }
 
-    function updateSlideStyle(slide) {
+    function updateSlideStyle(slide: any) {
         let oldData = { style: slide.settings }
 
         history({
@@ -294,7 +294,9 @@ function getSpecialBoxValues(item: Item) {
         if (!id || id === "style") return
 
         if (id.includes(".")) id = id.slice(0, id.indexOf("."))
-        if (item[id] !== undefined) keyValues[id] = item[id]
+
+        // Use type assertion to allow dynamic key access
+        if ((item as any)[id] !== undefined) keyValues[id] = (item as any)[id]
     })
 
     return keyValues

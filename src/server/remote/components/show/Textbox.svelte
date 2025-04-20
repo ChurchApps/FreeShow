@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import autosize, { AutosizeTypes } from "../../../common/util/autosize"
+    import autosize from "../../../common/util/autosize"
+    import type { AutosizeTypes } from "../../../common/util/autosize"
     import { getStyles } from "../../../common/util/style"
 
     export let item: Item

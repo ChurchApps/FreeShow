@@ -110,9 +110,10 @@ export async function exportProject(project: Project) {
     send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: projectData })
 
     function getItem(showRef: ProjectShowRef) {
-        let type = showRef.type || "show"
+        type ProjectItemType = keyof typeof getProjectItems;
+        const type = (showRef.type || "show") as ProjectItemType;
 
-        if (!getProjectItems[type]) {
+        if (!(type in getProjectItems)) {
             console.log("Missing project type:", type)
             return
         }

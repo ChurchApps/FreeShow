@@ -1,5 +1,5 @@
 <script>
-    import YouTube from "svelte-youtube"
+    // import YouTube from "svelte-youtube"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -163,7 +163,9 @@
 
 <div class="main" class:hide={!id}>
     {#if id}
-        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
+        Sorry - YouTuBe is broken for now.
+        <!-- TODO: We could replace it with an iframe for now. -->
+        <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} /> -->
     {/if}
 </div>
 

@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
-    import { Option } from "../../../../types/Main"
+    import type { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"
@@ -142,7 +142,7 @@
 
     // styles
     $: stylesList = getList($styles)
-    function getList(styles) {
+    function getList(styles: any) {
         let sortedList = sortByName(keysToID(styles))
         return [{ id: null, name: "—" }, ...sortedList]
     }
@@ -205,18 +205,18 @@
                 updateBlackmagicData(displayModes, "displayModes")
                 if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
-                    updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
+                    updateBlackmagicData(displayModes.find((a: any) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
             } else if (key === "displayMode") {
                 let device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
-                let modeData = displayModes.find((a) => a.name === value) || {}
+                let modeData = displayModes.find((a: any) => a.name === value) || {}
                 if (!modeData.width) return
 
                 // pixel format
-                let pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
+                let pixelFormats = (modeData.videoModes || []).map((format: any) => ({ name: format }))
                 updateBlackmagicData(pixelFormats, "pixelFormats")
                 updateBlackmagicData(pixelFormats[0]?.name, "pixelFormat")
 
@@ -248,7 +248,7 @@
     let listenerId = uid()
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
-        GET_DEVICES: (data) => {
+        GET_DEVICES: (data: any) => {
             blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
             if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         },
