@@ -26,7 +26,7 @@ async function apiRequest(data: ChumsRequestData): Promise<any> {
   return new Promise((resolve) => {
     const apiUrl = data.api === "doing" ? DOING_API_URL : CONTENT_API_URL;
     const headers = (data.authenticated) ? { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` } : {}
-    console.log(apiUrl, data.endpoint, "GET", headers, {})
+    //console.log(apiUrl, data.endpoint, "GET", headers, {})
     httpsRequest(apiUrl, data.endpoint, "GET", headers, {}, async (err, result) => {
       if (err) { sendToMain(ToMain.ALERT, "Could not get data! " + err.message); return resolve(null); }
       else resolve(result)
@@ -90,7 +90,7 @@ async function loadPlanItems(plan: any) {
     items: projectItems,
   }
   if (Object.keys(projectData).length) projects.push(projectData)
-  console.log(projectData)
+  //console.log(projectData)
 
 }
 
@@ -107,6 +107,7 @@ const loadArrangementKey = async (churchId: string, arrangementId: string) => {
 
   const sections = parseLyrics(data.arrangement.lyrics)
   return getShow(data.arrangementKey, data.arrangement, data.song, data.songDetail, sections)
+  //return getShowAlt(data.arrangementKey, data.arrangement, data.song, data.songDetail, data.arrangement.lyrics)
 }
 
 const parseLyrics = (lyrics: string) => {
@@ -132,23 +133,44 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   const slides: { [key: string]: Slide } = {}
   let layoutSlides: SlideData[] = []
   SECTIONS.forEach((section) => {
-    let slideId = uid()
-    let items = [
-      {
-        style: itemStyle,
-        lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] })),
-      },
-    ]
 
-    slides[slideId] = {
-      group: section.label,
-      globalGroup: section.label.toLowerCase(),
-      color: null,
-      settings: {},
-      notes: "",
-      items,
-    }
-    layoutSlides.push({ id: slideId })
+
+    const linesPerPage = 2;
+    const pages: { lines: string[] }[] = [];
+    let allLines = section.lyrics.split("\n");
+    //Remove empty lines
+    allLines = allLines.filter((line: string) => line.trim() !== "");
+
+    //Split the lines into pages
+    allLines.forEach((line: string, index: number) => {
+      if (index % linesPerPage === 0) pages.push({ lines: [] });
+      pages[pages.length - 1].lines.push(line);
+    });
+
+    pages.forEach((page: any) => {
+      let slideId = uid()
+      console.log("ADDING PAGE", page)
+      let items = [
+        {
+          style: itemStyle,
+          lines: page.lines.map((a: string) => ({ align: "", text: [{ style: "", value: a }] })),
+        },
+      ]
+
+      console.log("ITEMS", items)
+
+      slides[slideId] = {
+        group: section.label,
+        globalGroup: section.label.toLowerCase(),
+        color: null,
+        settings: {},
+        notes: "",
+        items,
+      }
+      layoutSlides.push({ id: slideId })
+    });
+
+
   })
 
   const title = SONG_DETAILS.title + " (" + ARRANGEMENT.name + " - " + ARRANGEMENT_KEY.keySignature + ")" || ""
@@ -189,6 +211,13 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   return { showId, show, seconds: SONG_DETAILS.seconds || 0 }
 }
 
+/*
+function getShowAlt(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS: any, lyrics: string) {
+  const name = SONG_DETAILS.title + " (" + ARRANGEMENT.name + " - " + ARRANGEMENT_KEY.keySignature + ")" || ""
+  const showId = `chumssong_${ARRANGEMENT_KEY.id}`
+  const show = convertText({ name, category: "chums", text: lyrics, noFormatting: true, returnData: true })
+  return { showId, show, seconds: SONG_DETAILS.seconds || 0 }
+}*/
 
 function getEmptyShow(id: string, title: string, description: string, seconds: number) {
   const slides: { [key: string]: Slide } = {}
