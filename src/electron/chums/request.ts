@@ -68,6 +68,12 @@ async function loadPlanItems(plan: any) {
           shows.push({ id: showId, ...show })
           projectItems.push({ type: "show", id: showId, scheduleLength: seconds })
         }
+      } else {
+        const { showId, show, seconds } = getEmptyShow(child.id, child.label, child.description, child.seconds)
+        if (showId && show) {
+          shows.push({ id: showId, ...show })
+          projectItems.push({ type: "show", id: showId, scheduleLength: seconds })
+        }
       }
     }
   }
@@ -182,3 +188,26 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   let showId = `chumssong_${ARRANGEMENT_KEY.id}`
   return { showId, show, seconds: SONG_DETAILS.seconds || 0 }
 }
+
+
+function getEmptyShow(id: string, title: string, description: string, seconds: number) {
+  const slides: { [key: string]: Slide } = {}
+  let layoutSlides: SlideData[] = []
+  const metadata = { title, author: "", publisher: "", copyright: "", CCLI: "", key: "", BPM: "" }
+
+  let layoutId = uid()
+
+  let show: Show = {
+    name: title || "",
+    category: "chums",
+    timestamps: { created: Date.now(), modified: null, used: null },
+    meta: metadata,
+    settings: { activeLayout: layoutId, template: null, },
+    layouts: { [layoutId]: { name: "Default", notes: description || "", slides: layoutSlides } },
+    slides,
+    media: {},
+  }
+  let showId = `chumsshow_${id}`
+  return { showId, show, seconds: seconds || 0 }
+}
+
