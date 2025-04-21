@@ -46,7 +46,7 @@ export async function chumsLoadServices(dataPath: string) {
   const SERVICE_PLANS = await apiRequest({ api: "doing", authenticated: true, scope: "plans", endpoint: "/plans/presenter" })
   if (!SERVICE_PLANS[0]?.id) return
   await Promise.all(
-    SERVICE_PLANS.map(async (plan: any) => { loadPlanItems(plan); })
+    SERVICE_PLANS.map(async (plan: any) => { await loadPlanItems(plan); })
   )
   sendToMain(ToMain.CHUMS_PROJECTS, { shows, projects })
 }
@@ -90,7 +90,6 @@ async function loadPlanItems(plan: any) {
     items: projectItems,
   }
   if (Object.keys(projectData).length) projects.push(projectData)
-  //console.log(projectData)
 
 }
 
@@ -149,15 +148,12 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
 
     pages.forEach((page: any) => {
       let slideId = uid()
-      console.log("ADDING PAGE", page)
       let items = [
         {
           style: itemStyle,
           lines: page.lines.map((a: string) => ({ align: "", text: [{ style: "", value: a }] })),
         },
       ]
-
-      console.log("ITEMS", items)
 
       slides[slideId] = {
         group: section.label,
