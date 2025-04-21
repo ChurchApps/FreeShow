@@ -75,6 +75,6 @@
         /* line-break: anywhere; */
         overflow-x: auto;
 
-        border-top-left-radius: 3px;
+        border-start-start-radius: 3px;
     }
 </style>

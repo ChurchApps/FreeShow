@@ -117,10 +117,10 @@
 
     .card :global(.popup-back) {
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         top: 0;
         min-height: 58px;
 
-        border-top-left-radius: 4px;
+        border-start-start-radius: 4px;
     }
 </style>
