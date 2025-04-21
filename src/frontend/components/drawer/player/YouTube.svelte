@@ -163,9 +163,15 @@
 
 <div class="main" class:hide={!id}>
     {#if id}
-        Sorry - YouTuBe is broken for now.
-        <!-- TODO: We could replace it with an iframe for now. -->
-        <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} /> -->
+        <iframe
+            class="yt"
+            title={title || `YouTube video player ${id}`}
+            src="https://www.youtube.com/embed/{id}?enablejsapi=1&autoplay=1&loop={videoData.loop ? 1 : 0}&fs=0&rel=0&controls={$special.hideCursor ? 0 : 1}&start={Math.floor(startAt)}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            on:load={(e) => onReady({ detail: { target: e.target.contentWindow } })}
+        ></iframe>
     {/if}
 </div>
 
