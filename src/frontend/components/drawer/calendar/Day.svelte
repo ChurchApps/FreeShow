@@ -139,7 +139,7 @@
     }
 
     .time {
-        padding-right: 10px;
+        padding-inline-end: 10px;
         color: var(--text);
         opacity: 0.9;
         white-space: nowrap;

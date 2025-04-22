@@ -132,7 +132,7 @@
     .action :global(button:nth-child(1)) {
         width: 100%;
         justify-content: space-between;
-        text-align: left;
+        text-align: start;
     }
 
     .tabs {

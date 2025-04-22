@@ -247,7 +247,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         z-index: 1;
         font-size: 0.9em;
 

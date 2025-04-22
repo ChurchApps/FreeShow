@@ -109,7 +109,7 @@
     </div>
 
     <div class="actions">
-        <div class="actions" style="height: 100%;justify-content: right;">
+        <div class="actions" style="height: 100%;justify-content: end;">
             <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
                 <Icon size={1.3} id="zoomIn" white />
             </Button>
@@ -174,7 +174,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

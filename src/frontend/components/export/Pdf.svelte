@@ -196,7 +196,7 @@
     }
     .slide .number {
         position: absolute;
-        right: 0px;
+        inset-inline-end: 0px;
         padding: 0 10px;
     }
 
@@ -221,7 +221,7 @@
         zoom: 0.2;
     }
     .text :global(.align) {
-        text-align: left;
+        text-align: start;
     }
 
     .text.margin {
@@ -235,7 +235,7 @@
 
     .page {
         position: absolute;
-        right: 10px;
+        inset-inline-end: 10px;
         /* transform: translateY(-30px); */
     }
 </style>

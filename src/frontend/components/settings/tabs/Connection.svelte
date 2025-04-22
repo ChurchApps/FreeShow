@@ -163,9 +163,9 @@
             >
                 <div style="margin: 0;border: none;">
                     <Icon id={server.icon} size={1.1} right />
-                    <p style="min-width: fit-content;padding-right: 0;">
+                    <p style="min-width: fit-content;padding-inline-end: 0;">
                         {server.name}
-                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-left: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
+                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-inline-start: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
                         {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
                     </p>
                 </div>
@@ -176,7 +176,7 @@
                 {/if}
             </Button>
         </span>
-        <span class="alignRight" style="padding-left: 10px;">
+        <span class="alignRight" style="padding-inline-start: 10px;">
             {#if server.id === "companion"}
                 <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
             {:else}
@@ -251,7 +251,7 @@
     .connections {
         display: flex;
         align-items: center;
-        padding-left: 10px;
+        padding-inline-start: 10px;
         opacity: 0.5;
         font-weight: normal;
     }
@@ -262,7 +262,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

@@ -34,7 +34,7 @@
         {#if !layoutSlide.disabled}
             <span style="padding: 5px;{$outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}">
                 <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                    <span style="left: 0;position: absolute;">{i + 1}</span>
+                    <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                     <span>{slides[layoutSlide.id].group === null ? "" : getName(slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
                 </span>
                 {#each slides[layoutSlide.id].items as item}

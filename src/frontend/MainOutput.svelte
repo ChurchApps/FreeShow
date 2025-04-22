@@ -71,7 +71,7 @@
         -webkit-app-region: drag;
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         height: 5vh;
         width: 100%;
         z-index: 10;

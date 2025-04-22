@@ -52,7 +52,7 @@
                 <Icon id={tab.icon} />
                 {#if labels}
                     {#key tab.name}
-                        <span style="margin-left: 0.5em;">
+                        <span style="margin-inline-start: 0.5em;">
                             <T id={tab.name} />
                         </span>
                     {/key}

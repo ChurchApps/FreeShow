@@ -125,7 +125,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
             let items = [
                 {
-                    style: "left:50px;top:120px;width:1820px;height:840px;",
+                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                     lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords })),
                 },
             ]

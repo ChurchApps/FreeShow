@@ -351,7 +351,7 @@
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
     <Button on:click={() => activePopup.set(currentOutput?.invisible ? "change_output_values" : "choose_screen")}>
-        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-left: 0.5em;" right />
+        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-inline-start: 0.5em;" right />
         <p>
             {#if currentOutput?.invisible}
                 <T id="popup.change_output_values" />
@@ -545,7 +545,7 @@
     .connections {
         display: flex;
         align-items: center;
-        padding-left: 10px;
+        padding-inline-start: 10px;
         opacity: 0.5;
         font-weight: normal;
     }
@@ -564,7 +564,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

@@ -107,10 +107,10 @@ function createSlides(slides: string[][][]) {
         slide.forEach((textbox) => {
             let lines: any[] = []
             textbox.forEach((line) => {
-                lines.push({ align: "text-align: left;", text: [{ style: "", value: line }] })
+                lines.push({ align: "text-align: start;", text: [{ style: "", value: line }] })
             })
 
-            items.push({ style: "left:50px;top:120px;width:1820px;height:840px;", lines })
+            items.push({ style: "inset-inlint-start:50px;top:120px;width:1820px;height:840px;", lines })
         })
 
         slidesObj[id] = {

@@ -39,7 +39,7 @@
     }
 
     svg.right {
-        margin-right: 0.5em;
+        margin-inline-end: 0.5em;
     }
 
     svg.fill {

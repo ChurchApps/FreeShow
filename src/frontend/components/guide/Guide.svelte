@@ -43,7 +43,7 @@
         let top = ""
         if (bounds.y + bounds.height <= 25 + 40) top = `top: ${bounds.y + bounds.height}px;` + ($os.platform === "win32" ? "transform: translateY(-25px);" : "")
 
-        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top ? 0 : 70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
+        currentStyle = `inset-inline-start: ${bounds.x}px;top: ${Math.max(top ? 0 : 70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
         if (flip) currentTextStyle = `max-width: ${bounds.right}px;${top}`
         else currentTextStyle = `max-width: ${width - bounds.left}px;${top}`
     }
@@ -111,7 +111,7 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        left: 0;
+        inset-inline-start: 0;
         top: 0;
 
         overflow: hidden;
@@ -126,7 +126,7 @@
     .focus {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
 
         /* min-height: 100px;
         min-width: 100px;
@@ -140,7 +140,7 @@
 
     .text {
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         top: 0;
         transform: translateY(-70px);
 
@@ -152,8 +152,8 @@
         padding: 8px 12px;
     }
     .text.flip {
-        left: initial;
-        right: 0;
+        inset-inline-start: initial;
+        inset-inline-end: 0;
     }
     .text p {
         white-space: normal;
@@ -162,7 +162,7 @@
     #guideButtons {
         position: absolute;
         bottom: 20px;
-        right: 20px;
+        inset-inline-end: 20px;
 
         display: flex;
         gap: 10px;

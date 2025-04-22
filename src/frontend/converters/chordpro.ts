@@ -149,7 +149,7 @@ export function convertChordPro(data: any) {
                 text = text.replaceAll("\r", "")
 
                 let slideItems = slides[slides.length - 1].items
-                if (!slideItems.length) slideItems.push({ lines: [], style: "left:50px;top:120px;width:1820px;height:840px;" })
+                if (!slideItems.length) slideItems.push({ lines: [], style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;" })
                 slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
             }
 

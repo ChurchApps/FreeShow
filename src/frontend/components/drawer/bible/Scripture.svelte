@@ -111,7 +111,7 @@
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
         error = null
         let data: any = null
-
+        console.log($scriptures)
         // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
         if (typeof bookId === "number") bookId = bookIds[bookId] || "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
@@ -931,7 +931,7 @@
                             }}
                             title={formatBibleText(match.text)}
                         >
-                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                 </div>
@@ -957,7 +957,7 @@
                             }}
                             title={formatBibleText(verse.text)}
                         >
-                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                 </div>
@@ -1069,7 +1069,7 @@
                                     autoComplete = false
                                 }}
                                 class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
-                                style={color ? `border-left: 2px solid ${color};` : ""}
+                                style={color ? `border-inline-start: 2px solid ${color};` : ""}
                             >
                                 {book.name}
                             </span>
@@ -1215,7 +1215,7 @@
         scroll-behavior: smooth;
     }
     .main div:not(.verses):not(.grid):not(.grid div) {
-        border-right: 2px solid var(--primary-lighter);
+        border-inline-end: 2px solid var(--primary-lighter);
     }
     .main .verses {
         flex: 1;
@@ -1257,7 +1257,7 @@
         font-weight: bold;
         display: inline-block;
         width: 45px;
-        margin-right: 10px;
+        margin-inline-end: 10px;
         text-align: center;
     }
     .main p.showAllText {
@@ -1299,7 +1299,7 @@
         border-bottom: 2px solid var(--primary-lighter);
     }
     .grid .chapters {
-        border-right: 2px solid var(--primary-lighter);
+        border-inline-end: 2px solid var(--primary-lighter);
     }
 
     .grid .books,

@@ -158,7 +158,7 @@
         border-bottom: 2px solid var(--primary-lighter);
     }
     .grid.tablet .chapters {
-        border-right: 2px solid var(--primary-lighter);
+        border-inline-end: 2px solid var(--primary-lighter);
     }
 
     .grid div {

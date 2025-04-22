@@ -74,7 +74,7 @@
         background-color: rgb(255 255 255 / 0.05);
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
     }
 
     .over:hover > .card .overlayIcon {
@@ -85,7 +85,7 @@
         cursor: pointer;
 
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
 
@@ -108,7 +108,7 @@
         pointer-events: none;
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         background-color: rgb(0 0 0 / 0.3);
         height: 100%;
         width: 100%;
@@ -150,7 +150,7 @@
     .loader {
         position: absolute;
         top: 50%;
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translate(-50%, -50%);
     }
 </style>

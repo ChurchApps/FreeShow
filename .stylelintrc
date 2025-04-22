@@ -1,0 +1,29 @@
+{
+    "extends": ["stylelint-config-html"],
+    "plugins": ["stylelint-use-logical"],
+    "rules": {
+        "csstools/use-logical": [
+            true,
+            {
+                "except": [
+                    "width",
+                    "height",
+                    "bottom",
+                    "top",
+                    "margin-bottom",
+                    "margin-top",
+                    "padding-bottom",
+                    "padding-top",
+                    "border-bottom",
+                    "border-top",
+                    "border-top-width",
+                    "border-bottom-width",
+                    "min-height",
+                    "max-height",
+                    "min-width",
+                    "max-width"
+                ]
+            }
+        ]
+    }
+}

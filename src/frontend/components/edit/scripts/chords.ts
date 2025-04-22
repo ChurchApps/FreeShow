@@ -143,7 +143,7 @@ export async function getChordPosition(chord: any, { textElem, item, line }) {
     if (!lineLetters) return "display: none;"
     let charWidth = totalLineWidth / lineLetters
 
-    return `left: ${lineElems[0].offsetLeft + chord.pos * charWidth}px;top: ${lineElems[0].offsetTop}px;`
+    return `inset-inline-start: ${lineElems[0].offsetLeft + chord.pos * charWidth}px;top: ${lineElems[0].offsetTop}px;`
 }
 
 // get all chords in a textbox

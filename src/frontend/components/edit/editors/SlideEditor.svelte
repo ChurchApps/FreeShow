@@ -351,7 +351,7 @@
                 {/if}
             </div>
 
-            <div class="actions" style="height: 100%;justify-content: right;">
+            <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- no need to add chords on scripture/events -->
                 {#if !currentShow?.reference?.type && Slide}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
@@ -482,7 +482,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

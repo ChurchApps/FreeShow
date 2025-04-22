@@ -217,7 +217,7 @@
         z-index: 10;
 
         width: 180%;
-        right: 0;
+        inset-inline-end: 0;
     }
     .dropdownElem :global(.dropdownElem .dropdown.arrow) {
         /* this is currently relative to 40px anyway */
@@ -227,7 +227,7 @@
     button {
         color: var(--text);
         border: 2px solid var(--primary-lighter);
-        text-align: left;
+        text-align: start;
     }
 
     button,

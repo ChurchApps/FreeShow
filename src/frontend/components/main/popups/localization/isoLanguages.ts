@@ -14,7 +14,7 @@ export const isoLanguages = [
     { code: "sq", name: "Albanian", nativeName: "Shqip", flag: "🇦🇱" },
     { code: "ald", name: "Alur", nativeName: "Alur", flag: "🇺🇬" },
     { code: "am", name: "Amharic", nativeName: "አማርኛ", flag: "🇪🇹" },
-    { code: "ar", name: "Arabic", nativeName: "العربية", flag: "" },
+    { code: "ar", name: "Arabic", nativeName: "العربية", flag: "🇪🇬" },
     { code: "hy", name: "Armenian", nativeName: "Հայերեն", flag: "🇦🇲" },
     { code: "as", name: "Assamese", nativeName: "অসমীয়া", flag: "🇮🇳" },
     { code: "av", name: "Avar", nativeName: "Авар", flag: "" },

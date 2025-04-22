@@ -26,7 +26,7 @@
         {/if}
     {/each}
     <div class="rotate" style="width: {8 / ratio}px;--line-width: {3 / ratio}px;" class:active></div>
-    <div class="radius" style="width: {6 / ratio}px;left: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
+    <div class="radius" style="width: {6 / ratio}px;inset-inline-start: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
 </section>
 
 <style>
@@ -62,16 +62,16 @@
     .nw,
     .sw,
     .w {
-        left: 0;
+        inset-inline-start: 0;
     }
     .n,
     .s {
-        left: 50%;
+        inset-inline-start: 50%;
     }
     .ne,
     .e,
     .se {
-        left: 100%;
+        inset-inline-start: 100%;
     }
 
     .line {
@@ -96,28 +96,28 @@
 
     .nl {
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         /* height: lineWidth; */
         transform: translateY(-50%);
     }
     .el {
         top: 0;
-        left: 100%;
+        inset-inline-start: 100%;
         /* width: lineWidth; */
         height: 100%;
         transform: translateX(-50%);
     }
     .sl {
         top: 100%;
-        left: 0;
+        inset-inline-start: 0;
         /* height: lineWidth; */
         width: 100%;
         transform: translateY(-50%);
     }
     .wl {
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         /* width: lineWidth; */
         height: 100%;
         transform: translateX(-50%);
@@ -138,7 +138,7 @@
 
     .rotate {
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: -45px;
         transform: translate(-50%, -50%);
 
@@ -159,7 +159,7 @@
         content: "";
 
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         bottom: 0;
         transform: translate(-50%, 100%);
 
@@ -173,7 +173,7 @@
 
     .radius {
         position: absolute;
-        left: 20px;
+        inset-inline-start: 20px;
         top: 0;
 
         background-color: rgb(255 255 255 / 0.8);
