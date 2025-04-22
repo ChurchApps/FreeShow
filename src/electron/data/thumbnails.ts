@@ -1,4 +1,4 @@
-import { BrowserWindow, NativeImage, ResizeOptions, app, nativeImage } from "electron"
+import { app, BrowserWindow, NativeImage, nativeImage, ResizeOptions } from "electron"
 import fs from "fs"
 import path from "path"
 import { isProd, loadWindowContent } from ".."
@@ -6,7 +6,7 @@ import { OUTPUT } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
-import { sendToMain } from "../IPC/main"
+import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { createFolder, dataFolderNames, doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
@@ -161,6 +161,52 @@ export function saveImage(data: { path: string; base64?: string; filePath?: stri
 
     let image = nativeImage.createFromDataURL(dataURL)
     saveToDisk(savePath, image, false, data.format || "png")
+}
+
+export async function pdfToImage({ filePath, dataPath }: { filePath: string; dataPath: string }) {
+    const pdfName = path.basename(filePath, path.extname(filePath))
+    const pathName = createFolder(path.join(dataPath, dataFolderNames.imports, "PDF", pdfName))
+
+    const { pages: pdfImages } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) as { path: string; pages: string[] }
+    if (!Array.isArray(pdfImages)) return
+
+    let images: string[] = []
+    for (let i = 0; i < pdfImages.length; i++) {
+        const base64 = pdfImages[i]
+        const image = nativeImage.createFromDataURL(base64)
+        const imagePath = path.join(pathName, `${i + 1}.jpg`)
+
+        saveToDisk(imagePath, image, false, "jpg")
+        images.push(imagePath)
+    }
+
+    if (images.length) sendToMain(ToMain.IMAGES_TO_SHOW, { images, name: pdfName })
+
+    // const loadingTask = getDocument(filePath)
+    // const pdfDoc = await loadingTask.promise
+    // const pageCount = pdfDoc.numPages
+
+    // let images: string[] = []
+    // for (let i = 0; i < pageCount; i++) {
+    //     const pdfPage = await pdfDoc.getPage(i + 1)
+    //     const operatorList = await pdfPage.getOperatorList()
+
+    //     const imgIndex = operatorList.fnArray.indexOf(OPS.paintImageXObject)
+    //     const imgArgs = operatorList.argsArray[imgIndex]
+    //     const { data } = pdfPage.objs.get(imgArgs[0])
+
+    //     const imagePath = path.join(pathName, `${i + 1}.jpg`)
+
+    //     // let image = nativeImage.createFromDataURL(data)
+    //     let image = nativeImage.createFromBuffer(data)
+    //     saveToDisk(imagePath, image, false, "jpg")
+
+    //     images.push(imagePath)
+    // }
+
+    // await loadingTask.destroy()
+
+    // return images
 }
 
 // https://www.electronjs.org/docs/latest/api/native-image

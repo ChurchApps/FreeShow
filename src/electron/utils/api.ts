@@ -39,7 +39,7 @@ export function startWebSocket(PORT: number | undefined) {
 
 function connected(socket: Socket) {
     log("Client connected.")
-    sendToMain(ToMain.API, "connected") // TODO: respond with API_DATA
+    sendToMain(ToMain.WEBSOCKET, "connected") // TODO: respond with API_DATA
 
     socket.on("disconnect", () => log("Client disconnected."))
 

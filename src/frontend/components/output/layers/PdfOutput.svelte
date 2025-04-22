@@ -1,7 +1,8 @@
 <script lang="ts">
-    import * as pdfjsLib from "pdfjs-dist"
+    import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy } from "pdfjs-dist"
     import type { Transition } from "../../../../types/Show"
     import OutputTransition from "../transitions/OutputTransition.svelte"
+    import { onDestroy } from "svelte"
 
     export let slide
     export let currentStyle
@@ -10,7 +11,7 @@
     $: path = slide.id
     $: console.log(currentStyle)
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
 
     let canvasElem: HTMLCanvasElement | undefined
 
@@ -18,12 +19,22 @@
     $: canvasElemExists = !!canvasElem
     $: if (path && canvasElemExists) loadPage(pageNum)
 
-    let docs: { [key: string]: pdfjsLib.PDFDocumentProxy } = {}
+    onDestroy(() => loadingTask?.destroy())
+
+    let loadingTask: PDFDocumentLoadingTask | null = null
+    let loadedDoc: PDFDocumentProxy | null = null
+    let loadedPath: string = ""
     async function loadPage(pageNumber: number) {
         if (!canvasElem) return
 
-        if (!docs[path]) docs[path] = await pdfjsLib.getDocument(path).promise
-        const page = await docs[path].getPage(pageNumber)
+        if (loadedPath !== path) {
+            if (loadingTask) loadingTask.destroy()
+            loadingTask = getDocument(path)
+            loadedDoc = await loadingTask.promise
+        }
+        if (!loadedDoc) return
+
+        const page = await loadedDoc.getPage(pageNumber)
 
         const context = canvasElem.getContext("2d")
         if (!context) return

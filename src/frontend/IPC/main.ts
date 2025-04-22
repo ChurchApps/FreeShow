@@ -58,13 +58,16 @@ export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>, lis
 }
 
 export async function receiveMainGlobal() {
-    window.api.receive(MAIN, (msg: MainReceiveValue | ToMainReceiveValue) => {
+    window.api.receive(MAIN, async (msg: MainReceiveValue | ToMainReceiveValue, listenerId?: string) => {
         const id = msg.channel
         if (!Object.values({ ...Main, ...ToMain }).includes(id)) throw new Error(`Invalid channel: ${id}`)
         if (!mainResponses[id]) return // console.error(`No response for channel: ${id}`)
 
         const data = msg.data // MainReturnPayloads[Main]
-        ;(mainResponses[id] as any)(data) as MainReceiveData<Main> | ToMainReceiveData<ToMain> // const response =
+        const response = (await (mainResponses[id] as any)(data)) as MainReceiveData<Main> | ToMainReceiveData<ToMain>
+        if (!response) return
+
+        window.api.send(MAIN, { channel: id, data: response }, listenerId)
     })
 }
 

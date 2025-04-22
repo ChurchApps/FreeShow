@@ -6,6 +6,7 @@ import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
 import { stores, updateDataPath } from "./store"
+import { wait } from "../utils/helpers"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
 const storesToSave: (keyof typeof stores)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
@@ -64,6 +65,10 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
             let localContent = readFile(localShowPath)
             if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
         }
+
+        // ensure all shows are added correctly
+        // https://github.com/ChurchApps/FreeShow/issues/1492
+        await wait(Object.keys(shows).length * 0.4)
 
         let content: string = JSON.stringify(allShows)
         let p: string = path.resolve(backupFolder, name)

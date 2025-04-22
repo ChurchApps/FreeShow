@@ -111,13 +111,13 @@
                             activePopup.set(format.popup)
                         }
                     })
-                } else if (format.extensions) {
-                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
-                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
-                    displayTutorial(format)
                 } else if (format.id === "clipboard") {
                     importFromClipboard()
                     activePopup.set(null)
+                } else {
+                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
+                    displayTutorial(format)
                 }
             }}
             bold={false}

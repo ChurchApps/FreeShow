@@ -1,4 +1,4 @@
-import * as pdfjsLib from "pdfjs-dist"
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
@@ -12,6 +12,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import {
@@ -47,13 +48,12 @@ import {
 import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
+import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getGroupName, getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
-import { getSetChars } from "./randomValue"
-import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
 const getProjectIndex = {
     next: (index: number | null, shows: ProjectShowRef[]) => {
@@ -513,9 +513,11 @@ async function playPdf(slide: null | OutSlide, nextPage: number) {
     let data = slide || get(activeShow)
     if (!data?.id) return
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const pdfDoc = await pdfjsLib.getDocument(data.id).promise
+    GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const loadingTask = getDocument(data.id)
+    const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
+    loadingTask.destroy()
     if (nextPage > pages - 1) return
 
     let name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
-import { triggerAction } from "../components/actions/api"
+import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
@@ -126,6 +126,7 @@ export const mainResponses: MainResponses = {
 
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
+    [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
     [Main.SHOWS_PATH]: (a) => showsPath.set(a),
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {

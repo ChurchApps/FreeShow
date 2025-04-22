@@ -1,8 +1,9 @@
-import * as pdfjsLib from "pdfjs-dist"
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import {
     activeDrawerTab,
     activeEdit,
@@ -39,17 +40,16 @@ import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
+import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
 import type { API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
-import { AudioPlayer } from "../../audio/audioPlayer"
-import { setRandomValue } from "../helpers/randomValue"
-import { clearBackground } from "../output/clear"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -465,8 +465,11 @@ function levenshteinDistance(a, b) {
 // PDF
 
 export async function getPDFThumbnails({ path }: API_media) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const pdfDoc = await pdfjsLib.getDocument(path).promise
+    if (!path) return []
+
+    GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const loadingTask = getDocument(path)
+    const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
     const canvas = document.createElement("canvas")
@@ -486,5 +489,6 @@ export async function getPDFThumbnails({ path }: API_media) {
         pages.push(base64)
     }
 
+    loadingTask.destroy()
     return { path, pages }
 }

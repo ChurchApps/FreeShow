@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as pdfjsLib from "pdfjs-dist"
+    import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
@@ -135,10 +135,15 @@
 
             setOutput("background", out)
         } else if (type === "pdf") {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-            const pdfDoc = await pdfjsLib.getDocument(id).promise
+            // get PDF data
+            GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+            const loadingTask = getDocument(id)
+            const pdfDoc = await loadingTask.promise
+            const pages = pdfDoc.numPages
+            loadingTask.destroy()
+
             let name = show.name || removeExtension(getFileName(id))
-            setOutput("slide", { type: "pdf", id, page: 0, pages: pdfDoc.numPages, name })
+            setOutput("slide", { type: "pdf", id, page: 0, pages, name })
             clearBackground()
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
