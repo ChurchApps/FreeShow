@@ -68,6 +68,7 @@ export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const pcoConnected: Writable<boolean> = writable(false)
+export const chumsConnected: Writable<boolean> = writable(false)
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -178,8 +179,8 @@ export const textCache: Writable<any> = writable({}) // {}
 export const groups: Writable<ShowGroups> = writable({}) // {default}
 export const categories: Writable<Categories> = writable({}) // {default}
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
-    text: { type: "fade", duration: 500, easing: "sine" },
-    media: { type: "fade", duration: 800, easing: "sine" },
+  text: { type: "fade", duration: 500, easing: "sine" },
+  media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
 export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
@@ -405,13 +406,13 @@ const debugStores = false
 let updates: { [key: string]: number } = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
-    Object.entries($).forEach(([key, store]) => {
-        store.subscribe(() => {
-            if (!updates[key]) updates[key] = 0
-            updates[key]++
+  Object.entries($).forEach(([key, store]) => {
+    store.subscribe(() => {
+      if (!updates[key]) updates[key] = 0
+      updates[key]++
 
-            // first update is initializing empty store, second update sets saved value
-            if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
-        })
+      // first update is initializing empty store, second update sets saved value
+      if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
     })
+  })
 }
