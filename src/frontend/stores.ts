@@ -260,6 +260,7 @@ export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
+export const direction: Writable<"rtl" | "ltr"> = writable("ltr") // locale direction
 export const autosave: Writable<string> = writable("never") // "never"
 export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
@@ -379,6 +380,7 @@ export const $ = {
     dataPath,
     special,
     language,
+    direction,
     timeFormat,
     alertUpdates,
     autoOutput,

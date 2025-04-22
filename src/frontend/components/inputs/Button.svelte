@@ -189,7 +189,7 @@
     }
 
     button :global(div) {
-        padding-left: 0.8em;
+        padding-inline-start: 0.8em;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow-x: hidden;
@@ -227,9 +227,9 @@
         border-radius: var(--border-radius);
         padding: 5px 10px;
         top: 0;
-        left: 0;
+        left: 0; /* stylelint-disable-line */ /* this is set by mousemove */
         max-width: 250px;
-        text-align: left;
+        text-align: start;
         white-space: normal;
         font-weight: normal;
     }

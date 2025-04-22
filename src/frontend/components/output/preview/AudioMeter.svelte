@@ -146,7 +146,7 @@
     .absolute {
         position: absolute;
         top: 0;
-        left: 5px;
+        inset-inline-start: 5px;
         transform: translateY(-50%);
     }
 

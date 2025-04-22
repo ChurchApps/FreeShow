@@ -8,7 +8,7 @@ import { activePopup, alertMessage, dictionary, groups, shows } from "./../store
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
 
-const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+const itemStyle = "inset-inline-start:50px;top:120px;width:1820px;height:840px;"
 
 export function convertProPresenter(data: any) {
     alertMessage.set("popup.importing")
@@ -638,7 +638,7 @@ function convertItem(item: any) {
         let pos = item.bounds.origin
         let size = item.bounds.size
         if (Object.keys(pos).length === 2 && Object.keys(size).length === 2) {
-            style = `left:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
+            style = `inset-inline-start:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
         }
     }
 

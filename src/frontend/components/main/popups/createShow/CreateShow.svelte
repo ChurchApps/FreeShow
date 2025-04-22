@@ -284,7 +284,7 @@
 
     .name {
         opacity: 0.5;
-        margin-left: 5px;
+        margin-inline-start: 5px;
         align-content: center;
     }
 </style>

@@ -553,7 +553,7 @@
     <Icon id="slide" right />
     <T id="new.show_convert" />
     <!-- {#if slides.length > 1}
-        <span style="opacity: 0.5;margin-left: 0.5em;">({slides.length})</span>
+        <span style="opacity: 0.5;margin-inline-start: 0.5em;">({slides.length})</span>
     {/if} -->
 </Button>
 
@@ -580,13 +580,13 @@
     .settings :global(.dropdown) {
         /* position: absolute; */
         width: 160%;
-        right: 0;
+        inset-inline-end: 0;
     }
 
     .attributionString {
         position: absolute;
         bottom: 15px;
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translateX(-50%);
 
         font-size: 28px;

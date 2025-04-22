@@ -447,7 +447,7 @@
                     {/if}
 
                     {#if !noClosing && (closed[section] || ALWAYS_CLOSED.includes(section))}
-                        <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
+                        <Button style="position: absolute;inset-inline-end: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
                             {#if checkIsClosed(section, item)}
                                 <Icon id="remove" white />
                             {:else}
@@ -652,7 +652,7 @@
 
     div :global(.customInput .dropdown) {
         width: 160%;
-        right: 0;
+        inset-inline-end: 0;
     }
 
     p {

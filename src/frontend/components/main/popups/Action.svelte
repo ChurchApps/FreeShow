@@ -394,7 +394,7 @@
                     bold={!action.keypressActivate}
                 >
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="shortcut" style="margin-left: 0.5em;" right />
+                        <Icon id="shortcut" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if action.keypressActivate}
                                 <span style="text-transform: uppercase;display: flex;align-items: center;">{action.keypressActivate}</span>
@@ -425,7 +425,7 @@
                 <p><T id="actions.custom_activation" /></p>
                 <Button disabled={!$midiIn[id] || action.enabled === false} on:click={() => (actionActivationSelector = true)} title={$dictionary.actions?.set_custom_activation} bold={!customActivation}>
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="trigger" style="margin-left: 0.5em;" right />
+                        <Icon id="trigger" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if customActivation}
                                 <T id={customActionActivations.find((a) => a.id === customActivation)?.name || ""} />

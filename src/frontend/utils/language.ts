@@ -3,7 +3,7 @@ import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
 import { sendMain } from "../IPC/main"
-import { currentWindow, dictionary, language } from "../stores"
+import { currentWindow, dictionary, language, direction } from "../stores"
 import { replace } from "./languageData"
 import { send } from "./request"
 
@@ -29,6 +29,9 @@ function setLanguage(locale: string = "", init: boolean = false) {
 
     if (!replace[locale]) locale = "en"
     language.set(locale)
+
+    const rtlLanguages = ["ar", "fa", "he", "ur"]
+    direction.set(rtlLanguages.includes(locale) ? "rtl" : "ltr")
 
     const url = defaultPath.replace("en", locale)
     fetch(url)

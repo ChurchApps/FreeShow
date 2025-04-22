@@ -74,7 +74,7 @@
         <Icon id="slide" right />
         <T id="new.show_convert" />
         {#if currentEvents.length > 1}
-            <span style="opacity: 0.5;margin-left: 0.5em;">({currentEvents.length})</span>
+            <span style="opacity: 0.5;margin-inline-start: 0.5em;">({currentEvents.length})</span>
         {/if}
     </Button>
 </div>

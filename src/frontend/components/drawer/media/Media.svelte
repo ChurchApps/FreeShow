@@ -485,7 +485,7 @@
                 {/key}
 
                 {#if content}
-                    <span style="opacity: 0.6;font-size: 0.8em;margin-left: 5px;">({content})</span>
+                    <span style="opacity: 0.6;font-size: 0.8em;margin-inline-start: 5px;">({content})</span>
                 {/if}
             </span>
 
@@ -623,7 +623,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

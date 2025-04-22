@@ -58,8 +58,8 @@
         style += `margin-bottom: ${cropping.bottom + paddingTops}px;`
 
         if (minusWidth) style += `width: calc(100% - ${minusWidth}px);`
-        style += `margin-right: ${cropping.right + paddingSides}px;`
-        style += `margin-left: ${cropping.left + paddingSides}px;`
+        style += `margin-inline-end: ${cropping.right + paddingSides}px;`
+        style += `margin-inline-start: ${cropping.left + paddingSides}px;`
 
         return style
     }
@@ -88,7 +88,7 @@
                 class="zoom"
                 style="zoom: {ratio};{drawZoom === 1
                     ? ''
-                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `left: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
+                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `inset-inline-start: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
             >
                 <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / 1920 - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / 1080 - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
                 <slot {ratio} />

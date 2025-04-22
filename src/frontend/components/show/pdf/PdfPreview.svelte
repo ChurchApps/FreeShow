@@ -157,7 +157,7 @@
     .load {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         height: 100%;
 
@@ -187,7 +187,8 @@
         width: 100px;
         height: 100px;
         top: 50%;
-        left: 50%;
+        left: 50%; /* stylelint-disable-line */ 
+        /* If we use logical prop here we'll need to translate with + */
         transform: translate(-50%, -50%);
     }
 
@@ -262,7 +263,7 @@
     /* zoom */
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

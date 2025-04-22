@@ -285,7 +285,7 @@
     .top :global(.hide) {
         position: absolute;
         top: 10px;
-        right: 16px;
+        inset-inline-end: 16px;
         z-index: 1;
         background-color: rgb(0 0 0 / 0.6) !important;
         border: 1px solid rgb(255 255 255 / 0.3);

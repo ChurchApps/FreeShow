@@ -195,7 +195,7 @@
                 <Icon id="export" size={1.2} right />
                 <T id="export.export" />
                 {#if showIds.length > 1 && exportFormat !== "project"}
-                    <span style="opacity: 0.5;padding-left: 10px;align-content: center;">({showIds.length})</span>
+                    <span style="opacity: 0.5;padding-inline-start: 10px;align-content: center;">({showIds.length})</span>
                 {/if}
             </div>
         </Button>

@@ -82,7 +82,7 @@
     <span style="display: flex;">
         <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("API:clear_all")} red dark center>
             <Icon id="clear" size={1.2} />
-            <span style="padding-left: 10px;">{translate("clear.all", $dictionary)}</span>
+            <span style="padding-inline-start: 10px;">{translate("clear.all", $dictionary)}</span>
         </Button>
 
         {#if !tablet}

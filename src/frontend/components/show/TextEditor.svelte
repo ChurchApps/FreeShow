@@ -79,7 +79,7 @@
 
         display: flex;
         align-items: center;
-        justify-content: right;
+        justify-content: end;
         background-color: var(--primary-darkest);
         /* border-top: 3px solid var(--primary-lighter); */
     }
@@ -99,7 +99,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

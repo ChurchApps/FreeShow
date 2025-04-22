@@ -155,7 +155,7 @@
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions"></div>
 
-            <div class="actions" style="height: 100%;justify-content: right;">
+            <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- <div class="seperator" /> -->
 
                 <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
@@ -251,7 +251,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

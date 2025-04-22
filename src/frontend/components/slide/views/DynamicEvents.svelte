@@ -92,7 +92,7 @@
 
 <style>
     .events {
-        text-align: left;
+        text-align: start;
         height: 100%;
         /* line-height: 0.8em; */
     }

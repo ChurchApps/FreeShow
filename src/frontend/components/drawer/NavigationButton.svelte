@@ -81,7 +81,7 @@
             right
         />
         {#if isSubmenu}
-            <span style="width: 100%;text-align: left;">
+            <span style="width: 100%;text-align: start;">
                 <p style="margin: 3px;font-size: 0.9em;">
                     {#if category.name}
                         {category.name}
@@ -91,7 +91,7 @@
                 </p>
             </span>
         {:else}
-            <span id={category.id} style="width: calc(100% - 15px);text-align: left;">
+            <span id={category.id} style="width: calc(100% - 15px);text-align: start;">
                 {#if !tabsWithCategories.includes(id) || defaultFolders.includes(category.id)}
                     <p style="margin: 5px;"><T id={category.name} /></p>
                 {:else}
@@ -113,7 +113,7 @@
     {/if}
 
     {#if length[category.id]}
-        <span style="opacity: 0.5;font-size: 0.9em;min-width: 15px;text-align: right;">
+        <span style="opacity: 0.5;font-size: 0.9em;min-width: 15px;text-align: end;">
             {length[category.id]}
         </span>
     {/if}
@@ -160,6 +160,6 @@
 <style>
     .submenus {
         /* margin-left: 20px; */
-        border-left: 8px solid var(--primary-darker);
+        border-inline-start: 8px solid var(--primary-darker);
     }
 </style>

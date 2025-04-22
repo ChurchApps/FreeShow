@@ -79,7 +79,7 @@
     <div class="grid">
         {#each items as item, i}
             <IconButton
-                style={i === 0 ? "min-width: 100%;" : $labelsDisabled ? "" : "justify-content: start;padding-left: 15px;"}
+                style={i === 0 ? "min-width: 100%;" : $labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
                 name
                 title={$dictionary.items?.[item.name || item.id]}
                 icon={item.icon || item.id}
@@ -98,7 +98,7 @@
     <div class="grid special">
         {#each specialItems as item}
             <IconButton
-                style={$labelsDisabled ? "" : "justify-content: start;padding-left: 15px;"}
+                style={$labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
                 name
                 title={$dictionary.items?.[item.name || item.id]}
                 icon={item.icon || item.id}
@@ -164,10 +164,10 @@
                     }}
                 >
                     <span style="display: flex;">
-                        <p style="margin-right: 10px;">{i + 1}</p>
+                        <p style="margin-inline-end: 10px;">{i + 1}</p>
                         <Icon id={type === "icon" ? currentItem.id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
-                        <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
-                        {#if getIdentifier[type]}<p style="margin-left: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
+                        <p style="margin-inline-start: 10px;">{$dictionary.items?.[type]}</p>
+                        {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
                     </span>
                     <!-- {#if i < allSlideItems.length - 1}
                         <Icon id="down" />

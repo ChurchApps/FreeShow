@@ -172,14 +172,14 @@
     }
     .shortcut {
         position: absolute;
-        right: 5px;
+        inset-inline-end: 5px;
         background-color: var(--primary-darker);
 
         color: rgb(255 255 255 / 0.5);
         opacity: 0.8;
         font-style: italic;
         font-size: 0.8em;
-        padding-left: 5px;
+        padding-inline-start: 5px;
     }
 
     h4 {

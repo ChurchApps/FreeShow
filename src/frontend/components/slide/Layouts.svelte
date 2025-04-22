@@ -237,7 +237,7 @@
 
         display: flex;
         align-items: center;
-        justify-content: left;
+        justify-content: start;
         /* justify-content: center; */
     }
 
@@ -284,7 +284,7 @@
     } */
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

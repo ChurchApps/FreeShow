@@ -43,7 +43,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
     let layouts: any[] = []
 
     // TODO: use template
-    const itemStyle = "left:100px;top:120px;width:1770px;height:840px;"
+    const itemStyle = "inset-inline-start:100px;top:120px;width:1770px;height:840px;"
     const titleStyle = "font-weight: bold;line-height:1.5em;"
     const timeStyle = "font-weight: bold;font-size:60px;font-family:Arial;"
     const nameStyle = "font-size:80px;"
@@ -93,7 +93,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
             textLength += event.name.length / 1.5 + (event.notes?.length || 0) / 5
         })
 
-        let lines: any[] = values.map((a) => ({ align: "text-align:left;", text: a }))
+        let lines: any[] = values.map((a) => ({ align: "text-align:start;", text: a }))
         let items: any[] = [{ style: itemStyle, align: "", lines }]
 
         // TODO: split in half if lines.length > 8

@@ -150,7 +150,7 @@
                     bold={!group.shortcut}
                 >
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="shortcut" style="margin-left: 0.5em;" right />
+                        <Icon id="shortcut" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if group.shortcut}
                                 <span style="text-transform: uppercase;display: flex;align-items: center;">{group.shortcut}</span>
@@ -177,7 +177,7 @@
                     bold={!group.template}
                 >
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="templates" style="margin-left: 0.5em;" right />
+                        <Icon id="templates" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if group.template}
                                 {$templates[group.template || ""]?.name || "—"}
@@ -242,7 +242,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

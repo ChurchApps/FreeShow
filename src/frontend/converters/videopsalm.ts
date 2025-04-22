@@ -300,7 +300,7 @@ function createSlides({ Verses, Sequence }: Song) {
             lines.push(line)
         })
 
-        let items = [{ style: "left:50px;top:120px;width:1820px;height:840px;", lines }]
+        let items = [{ style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;", lines }]
 
         slides[id] = {
             group: "",

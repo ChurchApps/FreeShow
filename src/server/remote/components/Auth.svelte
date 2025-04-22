@@ -32,7 +32,7 @@
 
         <span style="text-align: center;">
             <input type="checkbox" checked={$password.remember} on:change={(e) => _update("password", "remember", isChecked(e))} />
-            <span style="opacity: 0.6;padding-left: 5px;font-size: 0.8em;">{translate("remote.remember", $dictionary)}</span>
+            <span style="opacity: 0.6;padding-inline-start: 5px;font-size: 0.8em;">{translate("remote.remember", $dictionary)}</span>
         </span>
     </div>
 </div>

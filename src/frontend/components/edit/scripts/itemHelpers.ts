@@ -13,7 +13,7 @@ import { getItemText } from "./textStyle"
 import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
 import { getActiveOutputs } from "../../helpers/output"
 
-export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
 
 function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts
@@ -73,8 +73,8 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         let size: number = 300
         let style = getStyles(newData.style)
         let top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
-        let left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
-        style = { ...style, top, left, width: size + "px", height: size + "px", color: options.color }
+        let insetInlineStart: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
+        style = { ...style, top, insetInlineStart, width: size + "px", height: size + "px", color: options.color }
         let styleString: string = ""
         Object.entries(style).forEach(([key, value]) => {
             styleString += `${key}: ${value};`

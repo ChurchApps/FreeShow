@@ -144,13 +144,13 @@
 
     .dropdown.up {
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         position: absolute;
         transform: translateY(-100%);
     }
 
     .dropdown.arrow {
-        right: 0;
+        inset-inline-end: 0;
         width: 300px;
     }
 
@@ -183,7 +183,7 @@
         color: var(--text);
         border: 2px solid var(--primary-lighter);
         /* font-weight: bold; */
-        text-align: left;
+        text-align: start;
 
         display: flex;
         align-items: center;

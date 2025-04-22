@@ -137,7 +137,7 @@
     .settingsButton {
         position: absolute;
         bottom: 0;
-        right: 0;
+        inset-inline-end: 0;
 
         background-color: var(--primary);
     }

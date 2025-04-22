@@ -90,7 +90,7 @@
                 <p style="flex: initial;min-width: auto;width: auto;padding: 0;">
                     <T id="actions.to_all" />
 
-                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-left: 6px;">
+                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-inline-start: 6px;">
                         {#if newTime}({getTime(newTime)}){/if}
                     </span>
                 </p>

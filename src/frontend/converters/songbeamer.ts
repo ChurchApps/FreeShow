@@ -469,7 +469,7 @@ function parseSongbeamerSlides(sections: string[], metadata: SongbeamerMetadata)
 
 function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
     let textbox: Item = {
-        style: "top:50px;left:50px;height:980px;width:1820px;",
+        style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
         lines: [],
     }
     let lineCount = 0
@@ -511,7 +511,7 @@ function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
 }
 function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: number): Item {
     let textbox: Item = {
-        style: "top:50px;left:50px;height:980px;width:1820px;",
+        style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
     }
     if (language < 0 || language >= songbeamerSlide.lines.length) {
         return textbox
@@ -672,7 +672,7 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
             notes: "",
             items: [
                 {
-                    style: "top:50px;left:50px;height:980px;width:1820px;",
+                    style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
                     lines: lineObjects,
                 },
             ],

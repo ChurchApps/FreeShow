@@ -51,7 +51,7 @@
             {@const shown = checkIfShown(project)}
             {@const isEmpty = project.type === "folder" && foldersWithoutContent.includes(project.id || "")}
 
-            <div class:indented={project.parent !== "/"} style="margin-left: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
+            <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
                 <!-- , path: project.path -->
                 <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
                     {#if project.type === "folder" && (project.parent === "/" || shown)}
@@ -64,7 +64,7 @@
 
             {#if shown && isEmpty}
                 <!-- padding: 5px 0; -->
-                <div class:indented={project.parent !== "/"} style="margin-left: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;">
+                <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;">
                     <p style="opacity: 0.5;padding-bottom: 5px;"><T id="empty.general" /></p>
                     <Button style="width: 100%;" on:click={() => history({ id: "UPDATE", newData: { replace: { parent: project.id } }, location: { page: "show", id: "project" } })} title={$dictionary.new?.project} center dark>
                         <Icon id="add" right={!$labelsDisabled} />
@@ -86,6 +86,6 @@
 
 <style>
     .indented {
-        border-left: 2px solid var(--primary-lighter);
+        border-inline-start: 2px solid var(--primary-lighter);
     }
 </style>

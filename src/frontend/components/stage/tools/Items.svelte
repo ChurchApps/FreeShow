@@ -29,7 +29,7 @@
     $: sortedItems = sortItemsByType(Object.values(stageShow.items || {}) as any)
 
     const resolution = { width: 1920, height: 1080 }
-    const DEFAULT_STYLE = `width: ${resolution.width / 2}px;height: ${resolution.height / 2}px;left: ${resolution.width / 4}px;top: ${resolution.height / 4}px;`
+    const DEFAULT_STYLE = `width: ${resolution.width / 2}px;height: ${resolution.height / 2}px;inset-inline-start: ${resolution.width / 4}px;top: ${resolution.height / 4}px;`
 
     let timeout: NodeJS.Timeout | null = null
     function addItem(itemType: string) {
@@ -93,7 +93,7 @@
             {#each normalItems as item}
                 <!-- i === 0 ? "min-width: 100%;" :  -->
                 <IconButton
-                    style={$labelsDisabled ? "" : "justify-content: start;padding-left: 15px;"}
+                    style={$labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
                     name
                     title={$dictionary.items?.[item.name || item.id]}
                     icon={item.icon || item.id}
