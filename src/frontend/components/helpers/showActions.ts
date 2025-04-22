@@ -1046,7 +1046,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     return text
 
-    function getDynamicValue(id: string, show: Show): string {
+    function getDynamicValue(id: string, show: Show | {}): string {
         // VARIABLE
         if (id.includes("variable_set_")) {
             let nameId = id.slice(13)
@@ -1083,11 +1083,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             slideIndex = outSlide?.index ?? -1
             show = _show(showId).get() || {}
         }
+        if (!show) show = {}
 
         // META
         if (id.includes("meta_")) {
             let key = id.slice(5)
-            return show?.meta?.[key] || ""
+            if (!Object.keys(show)) return ""
+            return (show as Show).meta?.[key] || ""
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
