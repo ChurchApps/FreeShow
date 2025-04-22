@@ -3,6 +3,7 @@
     import { activeShow, dictionary, labelsDisabled, showsCache } from "../../stores"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
+    import AutoLyrics from "./tools/AutoLyrics.svelte"
     import Media from "./tools/Media.svelte"
     import Metadata from "./tools/Metadata.svelte"
     import Notes from "./tools/Notes.svelte"
@@ -14,6 +15,7 @@
         media: { name: "tools.media", icon: "media", remove: true },
         metadata: { name: "tools.metadata", icon: "info", overflow: true },
         recording: { name: "example.recording", icon: "record", overflow: true, tooltip: $dictionary.recording?.tip },
+        autoLyrics: { name: "tools.auto_lyrics", icon: "record", overflow: true },
         notes: { name: "tools.notes", icon: "notes", overflow: true },
     }
     let active: string = Object.keys(tabs)[0]
@@ -87,6 +89,10 @@
         {:else if active === "recording"}
             {#key showId}
                 <Recording showId={showId || ""} />
+            {/key}
+        {:else if active === "autoLyrics"}
+            {#key showId}
+                <AutoLyrics showId={showId || ""} />
             {/key}
         {:else if active === "notes"}
             <div class="content" style="background-color: var(--primary-darker);">

@@ -301,9 +301,6 @@
             <T id="actions.{started ? 'stop_recording' : 'start_recording'}" />
         </Button>
 
-        <!-- TODO: live audio recording (save approximate audio) -->
-        <!-- live listen for when to play next slide.. -->
-
         {#if !started}
             <div style="margin-top: 5px;">
                 <T id="recording.tip" />

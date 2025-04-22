@@ -246,6 +246,7 @@ export interface Layout {
     name: string
     notes: string
     recording?: Recording[]
+    autoLyrics?: AutoLyrics[]
     slides: SlideData[]
 }
 
@@ -258,6 +259,13 @@ export interface Recording {
         time: number
         slideRef: { id: string; index: number }
     }[]
+}
+
+export interface AutoLyrics {
+    part: string
+    avgRms: number
+    avgFreq: number
+    timestamp: number
 }
 
 export interface SlideData {
