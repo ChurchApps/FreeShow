@@ -360,7 +360,7 @@
         font-weight: bold;
 
         /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
-        transform: translate(-50%, calc(-8px - var(--offsetY)));
+        transform: translate(-50%, calc(-12px - var(--offsetY)));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
