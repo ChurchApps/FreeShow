@@ -1141,11 +1141,37 @@ const dynamicValues = {
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
     },
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }) => {
+        if(!show?.slides || !ref || ref.length <= slideIndex + 1) {
+            return "";
+        }
+
+        return show.slides?.[ref[slideIndex + 1]?.id]?.notes || ""
+    },
 
     // text
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => {
+        let textLines: string[] = [];
+        if(outSlide?.id === "temp") {
+            textLines = getTextLines({ items: outSlide?.previousSlides });
+        }
+        else if(show?.slides && ref && slideIndex > 0) {
+            textLines = getTextLines(show.slides?.[ref[slideIndex - 1]?.id]);
+        }
+
+        return textLines.join("<br>");
+    },
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => {
+        let textLines: string[] = [];
+        if(outSlide?.id === "temp") {
+            textLines = getTextLines({ items: outSlide?.nextSlides });
+        }
+        else if(show?.slides && ref && ref.length > slideIndex + 1) {
+            textLines = getTextLines(show.slides?.[ref[slideIndex + 1]?.id]);
+        }
+
+        return textLines.join("<br>");
+    },
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
