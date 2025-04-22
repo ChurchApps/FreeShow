@@ -2,8 +2,8 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { pcoSync } from "../../../utils/startup"
+    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, chumsConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { pcoSync, chumsSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
@@ -118,6 +118,22 @@
         activeShow.set(null)
         activePage.set("show")
     }
+
+    function chumsConnect() {
+        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES, { dataPath: $dataPath })
+        else {
+            requestMain(Main.CHUMS_DISCONNECT, undefined, (a) => {
+                if (!a.success) return
+                chumsConnected.set(false)
+            })
+        }
+    }
+
+    function syncChums() {
+        chumsSync()
+        activeShow.set(null)
+        activePage.set("show")
+    }
 </script>
 
 <!-- <CombinedInput>
@@ -184,6 +200,26 @@
     </Button>
     {#if $pcoConnected}
         <Button on:click={syncPCO}>
+            <Icon id="cloud_sync" right />
+            <p><T id="cloud.sync" /></p>
+        </Button>
+    {/if}
+</CombinedInput>
+
+<!-- Chums -->
+<h3>Chums</h3>
+
+<CombinedInput style="border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'});">
+    <Button on:click={chumsConnect} style="width: 100%;" center>
+        <Icon id={$chumsConnected ? "logout" : "login"} right />
+        {#if $chumsConnected}
+            <T id="settings.disconnect_from" replace={["Chums"]} />
+        {:else}
+            <T id="settings.connect_to" replace={["Chums"]} />
+        {/if}
+    </Button>
+    {#if $chumsConnected}
+        <Button on:click={syncChums}>
             <Icon id="cloud_sync" right />
             <p><T id="cloud.sync" /></p>
         </Button>
