@@ -233,8 +233,8 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
     syncDrive(false, closeWhenFinished)
 }
 
-export function initializeClosing() {
-    if (get(special).showClosePopup || get(errorHasOccured)) activePopup.set("unsaved")
+export function initializeClosing(skipPopup: boolean = false) {
+    if (!skipPopup && (get(special).showClosePopup || get(errorHasOccured))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })
     else save(true)

@@ -301,7 +301,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     } else {
                         if (!show) return
 
-                        // return if old show is modified after old show
+                        // return if old show is modified after new show
                         if (initializing && get(shows)[id]?.timestamps?.modified && show.timestamps?.modified && get(shows)[id].timestamps.modified! > show.timestamps.modified) return
 
                         if (replace) {
@@ -345,7 +345,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // remove from deleted when restored
                     deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
 
-                    // return if old show is modified after old show
+                    // return if old show is modified after new show
                     const oldModified = a[id]?.timestamps?.modified || 0
                     const newModified = show.timestamps?.modified || 0
                     if (initializing && newModified && oldModified > newModified) return

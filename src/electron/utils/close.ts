@@ -14,6 +14,10 @@ export function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
 
+    sendMain(Main.CLOSE, false)
+}
+
+export function saveAndClose() {
     sendMain(Main.CLOSE, true)
 }
 

@@ -13,11 +13,11 @@ import { receiveMain, sendMain } from "./IPC/main"
 import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
-import { callClose, exitApp } from "./utils/close"
+import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
-import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { spellcheck } from "./utils/spellcheck"
+import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
@@ -223,6 +223,18 @@ app.on("web-contents-created", (_e, contents) => {
         // remove unused preload scripts
         delete webPreferences.preload
     })
+})
+
+// handle graceful shutdown on SIGINT (e.g. Ctrl+C)
+process.on("SIGINT", () => {
+    console.log("Received SIGINT, closing app...")
+    saveAndClose()
+})
+
+// handle graceful shutdown on SIGTERM (e.g. systemd)
+process.on("SIGTERM", () => {
+    console.log("Received SIGTERM, closing app...")
+    saveAndClose()
 })
 
 // ----- LISTENERS -----
