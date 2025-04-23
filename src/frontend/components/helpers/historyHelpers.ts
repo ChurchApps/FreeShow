@@ -44,6 +44,7 @@ import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
 import { addToPos } from "./mover"
+import { REMOTE } from "../../../types/Channels"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -348,6 +349,9 @@ export const _updaters = {
 
             // name
             replacer.name = checkName(get(dictionary).main?.unnamed || "Unnamed")
+
+            // update remote project shows data, so the new show is properly added
+            setTimeout(() => window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) }))
 
             return replaceEmptyValues(data, replacer)
         },

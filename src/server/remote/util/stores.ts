@@ -5,7 +5,7 @@ import type { Overlays, Show, TrimmedShow } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
 import { clone } from "../../common/util/helpers"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
-import type { ProjectShowRef } from "./../../../types/Projects"
+import type { Project, ProjectShowRef } from "./../../../types/Projects"
 import { DEFAULT_DICTIONARY } from "./dictionary"
 
 export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
@@ -20,6 +20,8 @@ export let password = writable({
 
 export let isConnected = writable(false)
 export let quickPlay = writable(false)
+export let createShow = writable(false)
+export let showSearchValue = writable("")
 export let activeTab = writable("shows")
 export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 
@@ -35,7 +37,7 @@ export let layout: Writable<any[] | null> = writable(null)
 export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
 
 export let projectsOpened: Writable<boolean> = writable(false)
-export let activeProject: Writable<any> = writable(null)
+export let activeProject: Writable<Project | null> = writable(null)
 export let folders: Writable<any> = writable(null)
 export let openedFolders: Writable<any[]> = writable([])
 export let projects: Writable<any[]> = writable([])

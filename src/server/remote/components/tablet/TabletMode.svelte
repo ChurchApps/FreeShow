@@ -65,7 +65,7 @@
     function double(e: any) {
         let id = e.detail
         if (id === "shows") {
-            ;(document.querySelector("#showSearch") as any)?.focus()
+            ;(document.querySelector("#showSearch") as any)?.select()
         } else if (id === "project") {
             _set("projectsOpened", !$projectsOpened)
         } else if (id === "scripture") {

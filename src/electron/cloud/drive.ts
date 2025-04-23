@@ -223,8 +223,7 @@ export async function syncDataDrive(data: DriveData) {
         let storeData: any = store.store
         let name = id + ".json"
 
-        let driveFileId = files.find((a) => a.name === name)?.id
-        if (!driveFileId) return
+        let driveFileId = files.find((a) => a.name === name)?.id || ""
 
         let driveFile = await getFile(driveFileId)
 
@@ -315,15 +314,13 @@ export async function syncDataDrive(data: DriveData) {
 
         // this sets a limit to 100 bibles downloaded from cloud
         let driveBibles = await listFiles(100, "'" + driveBiblesFolderId + "' in parents")
-        if (!driveBibles) return
 
         let localBiblesFolder: string = getDataFolder(dataPath, dataFolderNames.scriptures)
 
         await Promise.all(localBibles.map(syncBible))
 
         async function syncBible(name: string) {
-            let driveFileId = driveBibles!.find((a) => a.name === name)?.id
-            if (!driveFileId) return
+            let driveFileId = driveBibles?.find((a) => a.name === name)?.id || ""
 
             let driveFile = await getFile(driveFileId)
 
@@ -375,8 +372,7 @@ export async function syncDataDrive(data: DriveData) {
         if (DEBUG) console.log("Method:", data.method)
 
         let name = SHOWS_CONTENT + ".json"
-        let driveFileId = files.find((a) => a.name === name)?.id
-        if (!driveFileId) return
+        let driveFileId = files.find((a) => a.name === name)?.id || ""
 
         let driveFile = await getFile(driveFileId)
         // download shows

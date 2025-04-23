@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Textarea from "../../../common/components/Textarea.svelte"
     import { send } from "../../util/socket"
     import { activeShow } from "../../util/stores"
 
@@ -11,21 +12,4 @@
     }
 </script>
 
-<textarea bind:value></textarea>
-
-<style>
-    textarea {
-        flex: 1;
-
-        padding: 20px;
-        outline: none;
-        border: none;
-
-        background-color: inherit;
-        color: inherit;
-        font-size: inherit;
-        font-family: inherit;
-
-        resize: none;
-    }
-</style>
+<Textarea bind:value />

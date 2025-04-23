@@ -843,6 +843,11 @@ const actions = {
             activeEdit.set({ type: "media", id: path, items: [] })
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: getMediaType(getExtension(path)) })
+        } else if (obj.sel.id === "player") {
+            const id = obj.sel.data[0]
+            const onlineTab = get(drawerTabsData).media?.openedSubSubTab?.online || "youtube"
+            popupData.set({ active: onlineTab, id })
+            activePopup.set("player")
         } else if (obj.sel.id === "audio") {
             const path = obj.sel.data[0].path
             activeEdit.set({ type: "audio", id: path, items: [] })

@@ -228,10 +228,11 @@
             <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}
-                        <Icon id="showIcon" right />
+                        <!-- showIcon -->
+                        <Icon id="add" right />
                         <T id="new.show" />
                     {:else}
-                        <Icon id="showIcon" right white />
+                        <Icon id="add" right white />
                         <T id="new.empty_show" />
                     {/if}
 

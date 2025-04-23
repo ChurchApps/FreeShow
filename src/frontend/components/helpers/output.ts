@@ -41,7 +41,7 @@ import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
-import type { API_camera, API_stage_output_layout } from "../actions/api"
+import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
@@ -247,6 +247,10 @@ function videoStarting() {
 
 export function startCamera(cam: API_camera) {
     setOutput("background", { name: cam.name || "", id: cam.id, cameraGroup: cam.groupId, type: "camera" })
+}
+
+export function startScreen(screen: API_screen) {
+    setOutput("background", { name: screen.name || "", id: screen.id, type: "screen" })
 }
 
 /// OVERLAY TIMERS

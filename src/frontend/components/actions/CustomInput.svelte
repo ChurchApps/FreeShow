@@ -15,6 +15,8 @@
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
     import ChooseEmitter from "./ChooseEmitter.svelte"
+    import { requestMain } from "../../IPC/main"
+    import { Main } from "../../../types/IPC/Main"
 
     export let inputId: string
     export let value
@@ -59,6 +61,15 @@
         })
     }
 
+    let screens: { name: string; id: string }[] = []
+    if (inputId === "screen") getScreens()
+    async function getScreens() {
+        let screenList = await requestMain(Main.GET_SCREENS)
+        let windowList = await requestMain(Main.GET_WINDOWS)
+        // screens = sortByName(screensList)
+        screens = [...screenList, ...windowList]
+    }
+
     const getOptions = {
         id_select_project: () => convertToOptions($projects),
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
@@ -97,6 +108,11 @@
     <CombinedInput>
         <p><T id="items.camera" /></p>
         <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
+    </CombinedInput>
+{:else if inputId === "screen"}
+    <CombinedInput>
+        <p><T id="items.screen" /></p>
+        <Dropdown style="width: 100%;" value={screens.find((a) => a.id === value?.id)?.name || "—"} options={screens} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
     <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />

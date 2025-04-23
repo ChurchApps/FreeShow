@@ -34,8 +34,8 @@ export function convertTexts(files: { content: string; name?: string; extension?
 
     setTimeout(() => {
         files?.forEach(({ content, name }) => {
-            const show = convertText({ name, category: activeCategory, text: content, noFormatting: true, returnData: true })
-            tempShows.push({ show, id: uid() })
+            const showData = convertText({ name, category: activeCategory, text: content, noFormatting: true, returnData: true })
+            tempShows.push(showData)
         })
 
         setTempShows(tempShows)
@@ -44,7 +44,7 @@ export function convertTexts(files: { content: string; name?: string; extension?
 
 // convert a plain text input into a show
 // , onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }
-export function convertText({ name = "", category = null, text, noFormatting = false, returnData = false }: any) {
+export function convertText({ name = "", category = null, text, noFormatting = false, returnData = false, open = true }: any) {
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
@@ -105,11 +105,16 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         }
     }
 
-    if (returnData) return show
+    const showId = uid()
+    if (returnData) return { id: showId, show }
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    if (!open) {
+        // WIP DON'T OPEN
+    }
 
-    return show
+    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, oldData: { id: showId }, location: { page: "show", id: "show" } })
+
+    return { id: showId, show }
 }
 
 export function trimNameFromString(text: string) {

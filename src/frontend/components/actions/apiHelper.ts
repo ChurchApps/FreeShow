@@ -49,7 +49,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -491,4 +491,16 @@ export async function getPDFThumbnails({ path }: API_media) {
 
     loadingTask.destroy()
     return { path, pages }
+}
+
+// ADD
+
+export function addToProject(data: API_add_to_project) {
+    projects.update((a) => {
+        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((a) => a.id === data.id)) return a
+        a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
+        return a
+    })
+
+    return get(projects)
 }
