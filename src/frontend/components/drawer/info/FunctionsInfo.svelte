@@ -1,16 +1,41 @@
 <script lang="ts">
-    import { activePopup, activeTimers, drawerTabsData } from "../../../stores"
+    import { onMount } from "svelte"
+    import { actionHistory, activePopup, activeTimers, drawerTabsData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import TimerInfo from "../timers/TimerInfo.svelte"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
+
+    let isMounted = false
+    onMount(() => (isMounted = true))
+
+    $: if ($actionHistory) historyUpdated()
+    let updating: NodeJS.Timeout | null = null
+    let updated = false
+    function historyUpdated() {
+        if (!isMounted) return
+        updated = true
+        if (updating) clearTimeout(updating)
+        updating = setTimeout(() => (updated = false), 1000)
+    }
 </script>
 
 {#if type === "actions"}
-    <div class="scroll" />
+    <div class="scroll">
+        {#if updated && $actionHistory.length}
+            <p style="text-align: center;padding: 10px;">
+                {$actionHistory[0].action}
+                {#if $actionHistory[0].count > 1}<span style="opacity: 0.5;">({$actionHistory[0].count})</span>{/if}
+            </p>
+        {/if}
+    </div>
 
+    <Button style="width: 100%;" on:click={() => activePopup.set("action_history")} center dark>
+        <Icon id="history" right />
+        <T id="popup.action_history" />
+    </Button>
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_emitters")} center dark>
         <Icon id="emitter" right />
         <T id="popup.manage_emitters" />

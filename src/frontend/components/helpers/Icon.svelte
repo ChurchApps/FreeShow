@@ -1,8 +1,7 @@
 <script lang="ts">
     import type { Selected } from "../../../types/Main"
-    import { activePopup, selected } from "../../stores"
+    import { activePopup, localeDirection, selected } from "../../stores"
     import { customIcons } from "../../values/customIcons"
-    import { direction } from "../../stores"
     import icons from "../../values/icons"
 
     export let id: string
@@ -20,8 +19,8 @@
 
     $: icon = custom ? customIcons[id] : icons[id]
 
-    const iconsToBeFlipped = ["back"]; // Add more icons that need to be flipped horizontally if needed
-    const flip = $direction === "rtl" && iconsToBeFlipped.includes(id);
+    const iconsToBeFlipped = ["back"] // Add more icons that need to be flipped horizontally if needed
+    const flip = $localeDirection === "rtl" && iconsToBeFlipped.includes(id)
 
     const click = () => {
         if (!select) return

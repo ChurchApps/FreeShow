@@ -27,6 +27,7 @@ export const os: Writable<OS> = writable({ platform: "win32", name: "", arch: ""
 export const deviceId: Writable<string> = writable("")
 export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
+export const localeDirection: Writable<"rtl" | "ltr"> = writable("ltr")
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
 export const loaded: Writable<boolean> = writable(false)
@@ -124,6 +125,7 @@ export const quickTextCache: Writable<string> = writable("")
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
+export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)
@@ -261,7 +263,6 @@ export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
-export const direction: Writable<"rtl" | "ltr"> = writable("ltr") // locale direction
 export const autosave: Writable<string> = writable("never") // "never"
 export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
@@ -381,7 +382,7 @@ export const $ = {
     dataPath,
     special,
     language,
-    direction,
+    direction: localeDirection,
     timeFormat,
     alertUpdates,
     autoOutput,

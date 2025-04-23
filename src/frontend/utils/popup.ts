@@ -59,6 +59,7 @@ import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelt
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import Conditions from "../components/main/popups/Conditions.svelte"
+import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -111,6 +112,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     reset_all: ResetAll,
     alert: Alert,
     history: History,
+    action_history: ActionHistory,
     manage_emitters: Emitters,
     action: Action,
     category_action: CategoryAction,

@@ -74,13 +74,15 @@ export function toggleOutput(id: string) {
 // overlays: [],
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
+let resetActionTrigger: boolean = false
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
+    let ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
+
     // track usage (& set attributionString)
     if (key === "slide" && data?.id) {
         let showReference = _show(data.id).get("reference")
         if (showReference?.type === "scripture") {
             let translation = showReference.data
-            let ref = _show(data.id).layouts([data.layout]).ref()[0]
             let slide = _show(data.id).get("slides")[ref[data.index]?.id]
 
             let scripture = get(scriptures)[translation.collection] || {}
@@ -98,7 +100,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
     }
 
     outputs.update((a) => {
-        let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
+        let bindings = data?.layout ? ref[data.index]?.data?.bindings || [] : []
         let allOutputIds = bindings.length ? bindings : getActiveOutputs()
         let outs = outputId ? [outputId] : allOutputIds
         let inputData = clone(data)
@@ -110,13 +112,25 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         })
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
-        // reset slide cache (after update)
-        if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
-        // trigger if show is not currently outputted
-        if (key === "slide" && data?.id && get(outputs)[outs?.[0]]?.out?.slide?.id !== data?.id) {
-            let category = get(showsCache)[data.id]?.category || ""
-            if (get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
-            appendShowUsage(data.id)
+        if (key === "slide" && data?.id) {
+            // reset slide cache (after update)
+            setTimeout(() => outputSlideCache.set({}), 50)
+
+            const currentOutSlideId = get(outputs)[outs?.[0]]?.out?.slide?.id || ""
+
+            // log usage if show is not currently outputted
+            if (currentOutSlideId !== data?.id) appendShowUsage(data.id)
+
+            const overrideCategoryAction = ref[data?.index]?.data?.actions?.slideActions?.find((a) => Object.values(a.customData || {}).find((a) => Object.entries(a).find(([key, value]) => key === "overrideCategoryAction" && value === true)))
+
+            // run category action if show slide is not currently outputted, and it does not have a custom override action
+            if (currentOutSlideId !== data?.id || resetActionTrigger) {
+                const category = get(showsCache)[data.id]?.category || ""
+                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
+            }
+
+            if (overrideCategoryAction) resetActionTrigger = true
+            else resetActionTrigger = false
         }
 
         let toggleState = false

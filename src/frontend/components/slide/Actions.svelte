@@ -60,6 +60,12 @@
     // actionData get slideId and convert into slideActions
 
     $: zoom = 4 / columns
+
+    function getCustomStyle(customData: { [key: string]: any }) {
+        if (!Object.keys(customData || {}).length) return ""
+        if (Object.entries(customData).find(([key, value]) => key === "overrideCategoryAction" && value === true)) return "color: #a1faff;"
+        return ""
+    }
 </script>
 
 <div class="icons" style="zoom: {zoom};">
@@ -88,11 +94,12 @@
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
             {@const customData = actionData[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
+            {@const specialData = action?.customData?.[actionId] || action?.customData?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
                 <Button
-                    style="padding: 3px;"
+                    style="padding: 3px;{getCustomStyle(specialData)}"
                     redHover
                     title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name && action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
                     {zoom}

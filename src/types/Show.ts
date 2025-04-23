@@ -307,6 +307,7 @@ export interface SlideAction {
     name?: string
     triggers: string[]
     actionValues?: { [key: string]: any }
+    customData?: { [key: string]: { [key: string]: any } } // currently only used for overrideCategoryAction
 }
 
 export interface Transition {

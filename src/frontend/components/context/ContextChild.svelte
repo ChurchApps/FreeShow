@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { direction } from "../../stores"
+    import { localeDirection } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import ContextItem from "./ContextItem.svelte"
@@ -12,9 +12,8 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let translate: number = 0
 
-    export let side: "right" | "left" = $direction === "rtl" ? "left" : "right"
+    export let side: "right" | "left" = $localeDirection === "rtl" ? "left" : "right"
     $: transform = side === "right" ? "100%" : "-100%"
-
 
     let open: boolean = false
     let elem: HTMLDivElement

@@ -306,6 +306,7 @@ export type Popups =
     | "reset_all"
     | "alert"
     | "history"
+    | "action_history"
     | "manage_emitters"
     | "action"
     | "category_action"

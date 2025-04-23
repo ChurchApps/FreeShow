@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
+import { actionHistory, audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
@@ -42,7 +42,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         })
     }, 20)
 
-    async function runTrigger(actionId) {
+    async function runTrigger(actionId: string) {
         let triggerData = data[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
@@ -76,6 +76,28 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         }
 
         API_ACTIONS[actionId](triggerData)
+
+        // add to history
+        // WIP add source (Action/Event/Remote/API)
+        actionHistory.update((a) => {
+            const time = Date.now()
+
+            let previous = clone(a[0] || {})
+            previous.count = 1
+            previous.time = time
+
+            const data = { action: actionId, data: triggerData, time, count: 1 }
+            let matchingPrevious = JSON.stringify(previous) === JSON.stringify(data)
+
+            if (matchingPrevious) {
+                a[0].time = time
+                a[0].count++
+            } else {
+                a.unshift(data)
+            }
+
+            return a
+        })
     }
 }
 

@@ -1,27 +1,31 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activePopup, dictionary, popupData } from "../../stores"
+    import { activePopup, categories, dictionary, popupData } from "../../stores"
     import { translate } from "../../utils/language"
+    import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { clone } from "../helpers/array"
+    import { _show } from "../helpers/shows"
+    import HRule from "../input/HRule.svelte"
     import Button from "../inputs/Button.svelte"
+    import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
+    import TextInput from "../inputs/TextInput.svelte"
+    import Center from "../system/Center.svelte"
     import CustomInput from "./CustomInput.svelte"
     import { actionData } from "./actionData"
     import { getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
-    import HRule from "../input/HRule.svelte"
-    import TextInput from "../inputs/TextInput.svelte"
-    import { clone } from "../helpers/array"
-    import { formatSearch } from "../../utils/search"
-    import Center from "../system/Center.svelte"
 
     export let list: boolean = false
     export let full: boolean = false
     export let mainId: string = ""
+    export let mode: string = ""
     export let actionId: string
     export let actionValue: any = {}
+    export let customData: any = {}
     export let existingActions: string[] = []
     export let actionNameIndex: number = 0
     export let choosePopup: boolean = false
@@ -161,6 +165,8 @@
         if (e.key !== "Enter" || !searchValue.length || !searchedActions.length) return
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
+
+    const isChecked = (e: any) => e.target.checked
 </script>
 
 <svelte:window on:keydown={chooseAction} />
@@ -250,6 +256,15 @@
 
 {#if dataInputs && (dataOpened || dataMenuOpened)}
     <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
+{/if}
+
+{#if mode === "slide" && getActionTriggerId(actionId) === "run_action" && $categories[_show().get().category]?.action}
+    <CombinedInput>
+        <p style="flex: 1;"><T id="actions.override_category_action" /></p>
+        <span class="alignRight" style="flex: 0;padding: 0 10px;">
+            <Checkbox checked={customData.overrideCategoryAction} on:change={(e) => changeAction({ id: actionId, customDataKey: "overrideCategoryAction", customDataValue: isChecked(e) })} />
+        </span>
+    </CombinedInput>
 {/if}
 
 <style>

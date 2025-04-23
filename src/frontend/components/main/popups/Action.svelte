@@ -128,6 +128,15 @@
 
         if (e.detail.index !== undefined) index = e.detail.index
 
+        // add extra action data (used for "slide action">"run action">"override category action", toggle)
+        if (e.detail.customDataKey) {
+            if (!action.name) action.name = actionId
+            if (!action.customData) action.customData = {}
+            if (!action.customData[actionId]) action.customData[actionId] = {}
+            action.customData[actionId][e.detail.customDataKey] = e.detail.customDataValue
+            return
+        }
+
         // update action value instead of action id
         if (e.detail.actionValue) {
             if (!action.name) action.name = actionId
@@ -316,7 +325,16 @@
 <!-- min-height: 50vh; -->
 <div style="min-width: 45vw;">
     {#if mode === "slide" || mode === "template"}
-        <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
+        <CreateAction
+            mainId={id}
+            actionId={action.triggers?.[0] || ""}
+            existingActions={action.triggers || []}
+            actionValue={action.actionValues?.[action.triggers?.[0] || ""] || {}}
+            customData={action.customData?.[action.triggers?.[0] || ""] || {}}
+            {mode}
+            on:change={changeAction}
+            list
+        />
     {:else}
         {#if actionActivationSelector}
             <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
