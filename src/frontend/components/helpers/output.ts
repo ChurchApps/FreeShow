@@ -474,7 +474,7 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     let width = resolution.width || 1920
     let height = resolution.height || 1080
 
-    if (styles.left) style += "inset-inline-start: " + width * (Number(styles.left) / 100) + "px;"
+    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
     if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
     if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
     if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
