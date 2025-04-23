@@ -5,7 +5,7 @@
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
     import { send } from "../../utils/request"
-    import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
+    import autosize, { type AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"

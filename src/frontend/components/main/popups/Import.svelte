@@ -1,7 +1,7 @@
 <script lang="ts">
     import { tick } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { Popups } from "../../../../types/Main"
+    import type { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, dataPath, os } from "../../../stores"

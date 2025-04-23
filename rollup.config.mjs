@@ -101,7 +101,7 @@ function mainApp() {
         onwarn: (warning, warn) => {
             // many false Svelte "Circular dependencies" warnings
             if (warning.code === "CIRCULAR_DEPENDENCY") return
-            warn(warning)
+            handleWarnings(warning, warn)
         },
         watch: {
             clearScreen: false,
@@ -158,7 +158,7 @@ function webServer(id, options = {}) {
         onwarn: (warning, warn) => {
             // hide false Svelte "Circular dependencies" warnings
             if (warning.code === "CIRCULAR_DEPENDENCY") return
-            warn(warning)
+            handleWarnings(warning, warn)
         },
     }
 }
@@ -177,6 +177,8 @@ function webFiles(id) {
 
 function handleWarnings(warning, handler) {
     // disable A11y warnings
-    if (warning.code.startsWith("a11y-")) return
+    if (warning.code.startsWith("a11y_")) return
+    if (warning.code === "element_invalid_self_closing_tag") return // TODO: Remove this later, here to reduce the size of the PR)
+    if (warning.code === "css_unused_selector") return // TODO: Remove this later, here to reduce the size of the PR)
     handler(warning)
 }

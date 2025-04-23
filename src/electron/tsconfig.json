@@ -21,7 +21,7 @@
         "experimentalDecorators": true,
         "esModuleInterop": true,
         "isolatedModules": false,
-        "skipLibCheck": true
+        "skipLibCheck": true,
     },
     "include": ["."],
     "exclude": ["node_modules"]

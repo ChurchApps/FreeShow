@@ -10,7 +10,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import autosize, { type AutosizeTypes } from "../scripts/autosize"
     import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"

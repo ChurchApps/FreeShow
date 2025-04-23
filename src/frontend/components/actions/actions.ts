@@ -4,7 +4,7 @@ import { actionHistory, audioPlaylists, audioStreams, midiIn, outputs, runningAc
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
-import { API_ACTIONS, API_toggle } from "./api"
+import { API_ACTIONS, type API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
 import { newToast, wait } from "../../utils/common"

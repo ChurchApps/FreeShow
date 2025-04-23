@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { ShowRef } from "../../../../types/Projects"
+    import type { ShowRef } from "../../../../types/Projects"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activeShow, dictionary, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"

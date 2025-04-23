@@ -1,4 +1,4 @@
-import { OUTPUT, ValidChannels } from "../../../types/Channels"
+import { OUTPUT, type ValidChannels } from "../../../types/Channels"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 

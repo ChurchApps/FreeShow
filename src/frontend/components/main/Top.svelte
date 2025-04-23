@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
     import { slide } from "svelte/transition"
     import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"

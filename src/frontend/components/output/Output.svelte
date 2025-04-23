@@ -12,7 +12,7 @@
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import { type OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
@@ -24,7 +24,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
-    import { OutData } from "../../../types/Output"
+    import type { OutData } from "../../../types/Output"
 
     export let outputId: string = ""
     export let style = ""

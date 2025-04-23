@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { ShowType } from "../../../types/Show"
+    import type { ShowType } from "../../../types/Show"
     import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"

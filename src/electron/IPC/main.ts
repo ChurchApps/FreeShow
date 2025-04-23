@@ -2,7 +2,7 @@ import { ipcMain, type IpcMainEvent } from "electron"
 import { uid } from "uid"
 import { mainWindow } from ".."
 import { MAIN, Main, type MainReceiveValue, type ToMainSendValue2 } from "./../../types/IPC/Main"
-import { ToMain, ToMainReceiveValue, ToMainReturnPayloads, type ToMainSendValue } from "./../../types/IPC/ToMain"
+import { ToMain, type ToMainReceiveValue, type ToMainReturnPayloads, type ToMainSendValue } from "./../../types/IPC/ToMain"
 import { mainResponses } from "./responsesMain"
 
 export function sendToMain<ID extends ToMain>(id: ID, value: ToMainSendValue<ID>, listenerId?: string) {

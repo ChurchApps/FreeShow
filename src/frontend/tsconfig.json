@@ -19,7 +19,9 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "esModuleInterop": true,
-        "isolatedModules": true
+        "isolatedModules": true,
+        "noImplicitAny": false,
+        "strict": false,
     },
     "include": ["."],
     "exclude": ["node_modules/*", "__sapper__/*", "public/*"]

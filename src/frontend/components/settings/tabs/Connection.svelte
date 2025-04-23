@@ -150,7 +150,8 @@
 
 {#each servers as server}
     {@const disabled = server.id === "companion" ? $companion.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+    {@const serverConnections = $connections[server.id.toUpperCase()] || {}}
+    {@const connectionsCount = Object.keys(serverConnections).length}
     <CombinedInput>
         <span style="width: 100%;">
             <Button
@@ -166,7 +167,7 @@
                     <p style="min-width: fit-content;padding-inline-end: 0;">
                         {server.name}
                         {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-inline-start: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
-                        {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
+                        {#if connectionsCount}<span style="border: none;" class="connections">{connectionsCount}</span>{/if}
                     </p>
                 </div>
                 {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}

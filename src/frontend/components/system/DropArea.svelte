@@ -1,6 +1,6 @@
 <script lang="ts">
     import { selected } from "../../stores"
-    import { DropAreas, ondrop, validateDrop } from "../helpers/drop"
+    import { type DropAreas, ondrop, validateDrop } from "../helpers/drop"
     import { deselect } from "../helpers/select"
     import T from "../helpers/T.svelte"
 

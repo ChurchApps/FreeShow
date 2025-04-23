@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
-    import { Option } from "../../../../types/Main"
+    import type { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"

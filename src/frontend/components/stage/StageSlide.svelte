@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { StageLayout } from "../../../types/Stage"
+    import type { StageLayout } from "../../../types/Stage"
     import { outputs, stageShows } from "../../stores"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"

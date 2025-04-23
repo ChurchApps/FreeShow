@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { Output } from "../../../../types/Output"
+    import type { Output } from "../../../../types/Output"
 
     import { currentOutputSettings, outputs } from "../../../stores"
     import { send } from "../../../utils/request"

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { SelectIds } from "../../../types/Main"
+    import type { SelectIds } from "../../../types/Main"
     import { audioPlaylists, categories, overlayCategories, overlays, shows, templateCategories, templates } from "../../stores"
     import T from "../helpers/T.svelte"
     import Center from "../system/Center.svelte"

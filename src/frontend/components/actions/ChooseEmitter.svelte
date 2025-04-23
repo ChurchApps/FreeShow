@@ -2,7 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { dictionary, emitters } from "../../stores"
     import { getDropdownValue, initDropdownOptions } from "../input/inputs"
-    import { API_emitter } from "./api"
+    import type { API_emitter } from "./api"
     import Dropdown from "../inputs/Dropdown.svelte"
     import T from "../helpers/T.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"

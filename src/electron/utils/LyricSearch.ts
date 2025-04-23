@@ -89,7 +89,9 @@ export class LyricSearch {
         const url = `https://hymnary.org/text/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
-        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
+        // return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
+        // the "s" flag is only supported in ES2018 and later
+        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/g)
     }
 
     private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
@@ -130,7 +132,9 @@ export class LyricSearch {
         const url = `https://www.letras.mus.br/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
-        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
+        // return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
+        // the "s" flag is only supported in ES2018 and later
+        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/g)
     }
 
     private static getLyricFromHtml = (songHtml: string, regex: RegExp) => {

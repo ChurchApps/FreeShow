@@ -1,5 +1,5 @@
 import { ipcMain } from "electron"
-import express, { Response } from "express"
+import express, { type Response } from "express"
 import http from "http"
 import { join } from "path"
 import { Server, type Socket } from "socket.io"

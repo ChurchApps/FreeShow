@@ -1,5 +1,4 @@
 <script>
-    import YouTube from "svelte-youtube"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -163,8 +162,16 @@
 
 <div class="main" class:hide={!id}>
     {#if id}
-        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
-    {/if}
+        <iframe
+            title="YouTube Player"
+            class="yt"
+            src="https://www.youtube.com/embed/{id}?autoplay=1&loop={videoData.loop ? 1 : 0}&fs=0&rel=0&controls={$special.hideCursor ? 0 : 1}&start={startAt}&playlist={id}"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+            on:load={onReady}
+        ></iframe>
+    {/if}s
 </div>
 
 <style>

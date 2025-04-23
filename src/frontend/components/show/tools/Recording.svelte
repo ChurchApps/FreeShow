@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { Unsubscriber } from "svelte/store"
+    import type { Unsubscriber } from "svelte/store"
     import { uid } from "uid"
     import type { Recording } from "../../../../types/Show"
     import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache, special } from "../../../stores"

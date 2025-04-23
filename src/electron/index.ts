@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
+import { BrowserWindow, Menu, type Rectangle, app, ipcMain, screen } from "electron"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
