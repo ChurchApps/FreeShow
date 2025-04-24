@@ -64,7 +64,7 @@ export function setRandomValue(id: string) {
 
 const steps = 15
 let lastNums: number[] = []
-async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep: number = 0) {
+async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep = 0) {
     if (currentStep === 0) {
         randomNumberVariable.update((a) => {
             a[id] = true

@@ -23,14 +23,14 @@ export function getBoxStyle(item: Item): StyleClipboard {
     if (!item) return { keys: {}, style: {} }
 
     // skip scripture verse numbers (customType)
-    let normalText = item.lines?.[0]?.text?.filter((a) => !a.customType) || []
-    let style = normalText[0]?.style || item.style
-    let linesAlign = item.lines?.[0]?.align || ""
+    const normalText = item.lines?.[0]?.text?.filter((a) => !a.customType) || []
+    const style = normalText[0]?.style || item.style
+    const linesAlign = item.lines?.[0]?.align || ""
 
     const extraKeyValues: string[] = getSpecialBoxValues(item)
 
-    let itemKeys = getItemKeys(true)
-    let newStyles: { [key: string]: number | string } = getStyles(style)
+    const itemKeys = getItemKeys(true)
+    const newStyles: { [key: string]: number | string } = getStyles(style)
 
     // remove any item keys (used for other items than textbox)
     itemKeys.forEach((key) => {
@@ -42,11 +42,11 @@ export function getBoxStyle(item: Item): StyleClipboard {
 
 // get current item style
 export function getItemStyle(item: Item): StyleClipboard {
-    let style = item?.style
+    const style = item?.style
     if (!style) return { keys: {}, style: {} }
 
-    let itemKeys = getItemKeys()
-    let newStyles = getStyles(style)
+    const itemKeys = getItemKeys()
+    const newStyles = getStyles(style)
 
     // only keep item keys
     Object.keys(newStyles).forEach((key) => {
@@ -57,8 +57,8 @@ export function getItemStyle(item: Item): StyleClipboard {
 }
 
 export function getSlideStyle(): StyleClipboard {
-    let ref = getLayoutRef()
-    let settings = _show()
+    const ref = getLayoutRef()
+    const settings = _show()
         .slides([ref[get(activeEdit).slide!].id])
         .get("settings")[0]
 
@@ -66,12 +66,12 @@ export function getSlideStyle(): StyleClipboard {
 }
 
 export function getFilterStyle(): StyleClipboard {
-    let ref = getLayoutRef()
-    let slideData = ref[get(activeEdit).slide!].data
+    const ref = getLayoutRef()
+    const slideData = ref[get(activeEdit).slide!].data
 
     const filterKeys = ["filterEnabled", "backdrop-filter", "filter"]
 
-    let keys: { [key: string]: number | string } = {}
+    const keys: { [key: string]: number | string } = {}
     filterKeys.forEach((key) => {
         keys[key] = slideData[key] || ""
     })
@@ -92,8 +92,8 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
     }
 
     function updateSlideStyle(slide) {
-        let items: number[] = []
-        let values: any[] = []
+        const items: number[] = []
+        const values: any[] = []
 
         slide.items.forEach(updateItemStyle)
 
@@ -139,7 +139,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
         }
 
         function updateItemStyle(item: Item, i: number) {
-            let itemType = item.type || "text"
+            const itemType = item.type || "text"
             if (itemType !== type) return
 
             // only apply to selected items with matching index
@@ -155,7 +155,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             })
 
             if (type !== "text") {
-                let itemStyles = getStyles(item.style)
+                const itemStyles = getStyles(item.style)
                 let newItemStyle = ""
 
                 // add "item" style
@@ -169,7 +169,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 
             if (!item.lines) return
 
-            let text = item.lines.map((a) => {
+            const text = item.lines.map((a) => {
                 if (!a.text) return
 
                 return a.text.map((a) => {
@@ -200,7 +200,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
     }
 
     function updateSlideStyle(slide) {
-        let values: string[] = []
+        const values: string[] = []
 
         let items: number[] = []
         slide.items.forEach(updateItemStyle)
@@ -228,7 +228,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
             })
 
             // get only current style
-            let itemStyles = getStyles(item.style)
+            const itemStyles = getStyles(item.style)
             let currentStyle = ""
 
             // get current style not for "item"
@@ -250,7 +250,7 @@ export async function setSlideStyle(style: StyleClipboard, slides: any) {
     }
 
     function updateSlideStyle(slide) {
-        let oldData = { style: slide.settings }
+        const oldData = { style: slide.settings }
 
         history({
             id: "slideStyle",
@@ -268,10 +268,10 @@ export function setFilterStyle(style: StyleClipboard, indexes: number[]) {
     })
 }
 
-/////
+/// //
 
 const itemAndBoxKeys = ["background-color"]
-export function getItemKeys(isBox: boolean = false) {
+export function getItemKeys(isBox = false) {
     // replace just item style or just box style if not textbox
     let itemKeys: string[] = []
 
@@ -285,8 +285,8 @@ export function getItemKeys(isBox: boolean = false) {
 }
 
 function getSpecialBoxValues(item: Item) {
-    let keyValues: any = {}
-    let inputs = Object.values(boxes[item.type || "text"]?.edit || {}).flat()
+    const keyValues: any = {}
+    const inputs = Object.values(boxes[item.type || "text"]?.edit || {}).flat()
     inputs.push({ id: "align", input: "" })
 
     inputs.forEach((input) => {

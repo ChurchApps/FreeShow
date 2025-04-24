@@ -1,7 +1,7 @@
 export default function lensFlare() {
     "use strict"
 
-    var cvs, ctx, mousePos
+    let cvs; let ctx; let mousePos
 
     return {
         init: (canvas) => {
@@ -9,7 +9,7 @@ export default function lensFlare() {
             ctx = cvs.getContext("2d")
             cvs.width = window.innerWidth
             cvs.height = window.innerHeight
-            var fire = new Flare()
+            const fire = new Flare()
             fire.update({ x: cvs.width / 5, y: cvs.height / 5 })
             // canvas.addEventListener("mousemove", function (a) {
             //     mousePos = getMousePos(cvs, a)
@@ -26,12 +26,12 @@ export default function lensFlare() {
         this.draw = function (obj) {
             ctx.globalCompositeOperation = "screen"
 
-            var dist = 1 - Math.sqrt(Math.pow(obj.x - cvs.width / 2, 2) + Math.pow(obj.y - cvs.height / 2, 2)) / Math.sqrt(Math.pow(cvs.width / 2, 2) + Math.pow(cvs.height / 2, 2))
+            const dist = 1 - Math.sqrt(Math.pow(obj.x - cvs.width / 2, 2) + Math.pow(obj.y - cvs.height / 2, 2)) / Math.sqrt(Math.pow(cvs.width / 2, 2) + Math.pow(cvs.height / 2, 2))
             console.log(dist)
 
-            for (var i = 0; i < this.discs.length; i++) {
+            for (let i = 0; i < this.discs.length; i++) {
                 ctx.beginPath()
-                var hue = this.discs[i].hue
+                const hue = this.discs[i].hue
                 var grad = ctx.createRadialGradient(this.discs[i].x, this.discs[i].y, 0, this.discs[i].x, this.discs[i].y, this.discs[i].dia)
                 grad.addColorStop(0, "hsla(" + hue + ",100%,90%," + 0 * dist + ")")
                 grad.addColorStop(0.9, "hsla(" + hue + ",100%,90%," + 0.15 * dist + ")")
@@ -51,11 +51,11 @@ export default function lensFlare() {
                     ctx.fill()
 
                     ctx.beginPath()
-                    var ease = function (a, b, t) {
+                    const ease = function (a, b, t) {
                         return (b - a) * (1 - Math.pow(t - 1, 2)) + a
                     }
-                    var spec = ease(this.discs[i].dia / 2.5 / 2, this.discs[i].dia / 2.5, dist)
-                    var sdist = 1 - Math.pow(Math.abs(dist - 1), 3)
+                    const spec = ease(this.discs[i].dia / 2.5 / 2, this.discs[i].dia / 2.5, dist)
+                    const sdist = 1 - Math.pow(Math.abs(dist - 1), 3)
                     var grad = ctx.createRadialGradient(this.discs[i].x, this.discs[i].y, 0, this.discs[i].x, this.discs[i].y, spec)
                     grad.addColorStop(0.2 * sdist, "rgba(255,255,255," + sdist + ")")
                     grad.addColorStop(0.6, "hsla(" + this.discs[i].hue + ",100%,75%," + 0.3 * sdist + ")")
@@ -90,9 +90,9 @@ export default function lensFlare() {
 
         this.update = function (obj) {
             ctx.clearRect(0, 0, cvs.width, cvs.height)
-            for (var i = 0; i <= this.discNum; i++) {
-                var temp = {}
-                var j = i - this.discNum / 2
+            for (let i = 0; i <= this.discNum; i++) {
+                const temp = {}
+                const j = i - this.discNum / 2
                 temp.x = (cvs.width / 2 - obj.x) * ((j / this.discNum) * 2) + cvs.width / 2
                 temp.y = (cvs.height / 2 - obj.y) * ((j / this.discNum) * 2) + cvs.height / 2
                 if (this.t == 0) {

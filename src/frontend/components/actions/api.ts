@@ -326,14 +326,14 @@ export async function triggerAction(data: API) {
     // Open Sound Control format
     if (data.action.startsWith("/")) data = oscToAPI(data)
 
-    let id = data.action
+    const id = data.action
 
     // API start at 1, code start at 0
     if (data.index !== undefined) data.index--
 
     if (!API_ACTIONS[id]) return console.log("Missing API ACTION:", id)
 
-    let returnId = data.returnId
+    const returnId = data.returnId
     delete data.returnId
     const returnData = await API_ACTIONS[id](data)
     if (!returnId || returnData === undefined) return

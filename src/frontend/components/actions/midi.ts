@@ -29,8 +29,8 @@ export function midiInListen() {
             await loadShows([show.id])
 
             // check that current show actually has this MIDI receive action
-            let layouts: Layout[] = _show(show.id).layouts().get()
-            let found: boolean = false
+            const layouts: Layout[] = _show(show.id).layouts().get()
+            let found = false
             layouts.forEach((layout) => {
                 layout.slides.forEach((slide) => {
                     if (slide.actions?.receiveMidi === id) found = true
@@ -86,10 +86,10 @@ export const defaultMidiActionChannels = {
 }
 
 export function receivedMidi(msg) {
-    let msgAction = get(midiIn)[msg.id]
+    const msgAction = get(midiIn)[msg.id]
     if (!msgAction) return
 
-    let action: Midi = convertOldMidiToNewAction(msgAction)
+    const action: Midi = convertOldMidiToNewAction(msgAction)
     if (action.enabled === false) return
 
     // get index
@@ -107,7 +107,7 @@ export function receivedMidi(msg) {
     // some programs send note off with velocity 0 upon release/stop, these should not be detected
     if (diff_type && index === 0) return
 
-    let hasindex = action.triggers?.[0]?.includes("index_") ?? false
+    const hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
         newToast("$toast.midi_no_velocity")
         index = 0
@@ -119,19 +119,19 @@ export function receivedMidi(msg) {
 
     runAction(action, { midiIndex: index })
 
-    let shows = action?.shows || []
+    const shows = action?.shows || []
     if (!shows?.length) return
 
-    let slidePlayed: boolean = false
+    let slidePlayed = false
     shows.forEach(async ({ id }) => {
         await loadShows([id])
-        let refs = _show(id).layouts().ref()
+        const refs = _show(id).layouts().ref()
 
         refs.forEach((ref) => {
             ref.forEach((slideRef) => {
                 if (slidePlayed) return
 
-                let receiveMidi = slideRef.data.actions?.receiveMidi
+                const receiveMidi = slideRef.data.actions?.receiveMidi
                 if (!receiveMidi || receiveMidi !== msg.id) return
 
                 // start slide

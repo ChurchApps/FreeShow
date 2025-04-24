@@ -5,7 +5,7 @@ import { similarity } from "../converters/txt"
 import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
-export function formatSearch(value: string, removeSpaces: boolean = false) {
+export function formatSearch(value: string, removeSpaces = false) {
     let newValue = value.toLowerCase().replace(specialChars, "")
     if (removeSpaces) newValue = newValue.replace(/\s+/g, "")
 
@@ -23,13 +23,13 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
         const isArchived = get(categories)[s.category || ""]?.isArchive
         if (isArchived && get(drawerTabsData).shows?.activeSubTab !== s.category) return
 
-        let match = showSearchFilter(searchValue, s)
+        const match = showSearchFilter(searchValue, s)
         if (match) newShows.push({ ...s, match })
     })
-    newShows = sortObjectNumbers(newShows, "match", true) as ShowList[]
+    newShows = sortObjectNumbers(newShows, "match", true) 
 
     // change all values relative to the highest value
-    let highestValue = newShows[0]?.match || 0
+    const highestValue = newShows[0]?.match || 0
     newShows = newShows.map((a) => ({ ...a, match: ((a.match || 0) / highestValue) * 100 }))
 
     return newShows
@@ -84,7 +84,7 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     return combinedScore >= 100 ? 99 : combinedScore < 3 ? 0 : combinedScore
 }
 
-function calculateContentIncludesScore(cache: string, search: string, noShortWords: boolean = false): number {
+function calculateContentIncludesScore(cache: string, search: string, noShortWords = false): number {
     if (!cache) return 0
 
     // remove short words

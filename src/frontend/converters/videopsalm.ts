@@ -93,9 +93,9 @@ const keys = [
     "Tempo",
 ]
 export function convertVideopsalm(data: any) {
-    let categoryId = createCategory("VideoPsalm")
+    const categoryId = createCategory("VideoPsalm")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     data.forEach(({ content }: any) => {
         // add quotes to the invalid JSON formatting
@@ -116,24 +116,24 @@ export function convertVideopsalm(data: any) {
             return
         }
 
-        let i: number = 0
-        let importingText = get(dictionary).popup?.importing || "Importing"
+        let i = 0
+        const importingText = get(dictionary).popup?.importing || "Importing"
 
-        let album: string = content?.Text
+        const album: string = content?.Text
         if (content.Songs?.length) asyncLoop()
 
         function asyncLoop() {
-            let song: Song = content.Songs[i]
-            let title = (song.Text || "").replaceAll("<br>", "")
+            const song: Song = content.Songs[i]
+            const title = (song.Text || "").replaceAll("<br>", "")
 
-            let percentage: string = ((i / content.Songs.length) * 100).toFixed()
+            const percentage: string = ((i / content.Songs.length) * 100).toFixed()
             activePopup.set("alert")
             alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + title)
 
-            let layoutID = uid()
+            const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
-            let showId = song.Guid || uid()
-            let name = title || get(dictionary).main?.unnamed || "Unnamed"
+            const showId = song.Guid || uid()
+            const name = title || get(dictionary).main?.unnamed || "Unnamed"
             show.name = checkName(name, showId) || ""
             show.meta = {
                 number: (song.ID || "").toString(),
@@ -147,7 +147,7 @@ export function convertVideopsalm(data: any) {
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
             if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
-            let { slides, layout, notes }: any = createSlides(song)
+            const { slides, layout, notes }: any = createSlides(song)
             show.slides = slides
             show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: notes || "", slides: layout } }
 
@@ -163,7 +163,7 @@ export function convertVideopsalm(data: any) {
     })
 }
 
-let previousIndex: number = -1
+let previousIndex = -1
 function parseContent(content: string): VideoPsalm | null {
     let newContent: VideoPsalm | null = null
 
@@ -171,17 +171,17 @@ function parseContent(content: string): VideoPsalm | null {
         newContent = JSON.parse(content || "{}")
     } catch (e: any) {
         console.error(e)
-        let posError = e.toString().replace(/ *\([^)]*\) */g, "")
-        let pos = Number(posError.replace(/\D+/g, "") || 100)
+        const posError = e.toString().replace(/ *\([^)]*\) */g, "")
+        const pos = Number(posError.replace(/\D+/g, "") || 100)
         console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
 
         if (pos === previousIndex) return newContent
 
         // TRY to auto fix this (by adding "")
-        let start = content.slice(0, pos)
-        let wordEndIndex = content.indexOf(":", pos)
-        let wordId = content.slice(pos, wordEndIndex)
-        let end = content.slice(wordEndIndex)
+        const start = content.slice(0, pos)
+        const wordEndIndex = content.indexOf(":", pos)
+        const wordId = content.slice(pos, wordEndIndex)
+        const end = content.slice(wordEndIndex)
         content = `${start}"${wordId}"${end}`
 
         previousIndex = pos
@@ -197,7 +197,7 @@ function removeStyle(s) {
 
     let openCount = 0
     let closeCount = 0
-    let index: number = -1
+    let index = -1
     do {
         index++
         if (s[index] === "{") openCount++
@@ -212,14 +212,14 @@ function removeStyle(s) {
 
 function fixText(s: string, i: number) {
     if (i === 0) return s
-    let openingIndex = s.indexOf('"') + 1
-    let closingIndex = s.indexOf('"', openingIndex)
+    const openingIndex = s.indexOf('"') + 1
+    const closingIndex = s.indexOf('"', openingIndex)
     if (openingIndex < 0 || closingIndex < 0) return s
 
     let textContent = s.slice(openingIndex, closingIndex)
     let keyword: string | undefined = ""
     while ((keyword = keys.find((keyword) => textContent.includes(keyword)))) {
-        let index = textContent.indexOf(keyword)
+        const index = textContent.indexOf(keyword)
         // obfusticate keyword
         keyword = keyword.slice(0, 1) + "[[==]]" + keyword.slice(1)
         textContent = textContent.slice(0, index) + textContent.slice(index + keyword.length)
@@ -232,7 +232,7 @@ function fixText(s: string, i: number) {
 function fixJSON(s: string) {
     let index = s.length - 1
     while (s[index]?.match(/[a-z0-9]/i) !== null && index > -1) index--
-    let word: string = s.slice(index + 1, s.length)
+    const word: string = s.slice(index + 1, s.length)
     let notKey = index < 0 || index >= s.length - 1 || !keys.includes(word)
     if (word === "ID" && !notKey && !s.includes("{ID") && !s.includes(",ID")) notKey = true
 
@@ -249,15 +249,15 @@ function fixJSON(s: string) {
 const VPgroups: any = { V: "verse", S: "verse", C: "chorus", R: "chorus", P: "pre_chorus", B: "bridge", T: "tag", I: "intro", O: "outro", N: "break" }
 function createSlides({ Verses, Sequence }: Song) {
     // VerseOrderIndex
-    let slides: any = {}
+    const slides: any = {}
     let layout: any[] = []
-    let sequence: string[] = Sequence?.split(" ") || []
-    let sequences: any = {}
+    const sequence: string[] = Sequence?.split(" ") || []
+    const sequences: any = {}
 
     Verses.forEach((verse, i) => {
         if (!verse.Text) return
 
-        let id: string = uid()
+        const id: string = uid()
         let sequenceKey = sequence[i]
         if (sequenceKey) {
             // find next if already matching
@@ -266,25 +266,25 @@ function createSlides({ Verses, Sequence }: Song) {
         }
         layout.push({ id })
 
-        let lines: any[] = []
+        const lines: any[] = []
         verse.Text.split("<br>").forEach((text) => {
-            let line: any = { align: "", text: [] }
+            const line: any = { align: "", text: [] }
 
-            let chords: any[] = []
-            let newText: string = ""
+            const chords: any[] = []
+            let newText = ""
             text.split("]").forEach((t) => {
                 let chordStart = t.indexOf("[")
                 if (chordStart < 0) chordStart = t.length
 
-                let text = t.slice(0, chordStart)
+                const text = t.slice(0, chordStart)
                 newText += text
 
-                let chord = t.slice(chordStart + 1)
+                const chord = t.slice(chordStart + 1)
                 if (!chord) return
                 // only: [Gm], not: [info] [x4]
                 if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
                 else {
-                    let id = uid(5)
+                    const id = uid(5)
                     chords.push({ id, pos: newText.length, key: chord })
                 }
             })
@@ -300,7 +300,7 @@ function createSlides({ Verses, Sequence }: Song) {
             lines.push(line)
         })
 
-        let items = [{ style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;", lines }]
+        const items = [{ style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;", lines }]
 
         slides[id] = {
             group: "",
@@ -309,7 +309,7 @@ function createSlides({ Verses, Sequence }: Song) {
             notes: "",
             items,
         }
-        let globalGroup = sequenceKey ? VPgroups[sequenceKey.replace(/[0-9]/g, "")] : "verse"
+        const globalGroup = sequenceKey ? VPgroups[sequenceKey.replace(/[0-9]/g, "")] : "verse"
         if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
     })
 

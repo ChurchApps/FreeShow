@@ -8,7 +8,7 @@ export async function updateAnimation(animationData: any, currentIndex: number, 
     // give time for initial element & prevent infinite loops
     if (currentIndex === 0) await wait(50)
 
-    let currentAnimation: any = clone(animationData.animation.actions[currentIndex])
+    const currentAnimation: any = clone(animationData.animation.actions[currentIndex])
 
     // visual outline in popup
     if (!currentAnimation || !outSlide) {
@@ -47,9 +47,9 @@ const animations = {
                 key = "transform"
                 initialValue = "transform: scale(1.3) translate(-50%, -50%);"
                 // WIP not properly centered due to -50%
-                let randomNumber = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
-                let randomTranslate1 = randomNumBetween(-8, 8) / 2
-                let randomTranslate2 = randomNumBetween(-8, 8) / 2
+                const randomNumber = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
+                const randomTranslate1 = randomNumBetween(-8, 8) / 2
+                const randomTranslate2 = randomNumBetween(-8, 8) / 2
                 value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslate1}% + ${randomNumber * 4}%), calc(-50% + ${randomTranslate2}% + ${randomNumber * 4}%));`
             }
         }
@@ -70,17 +70,17 @@ const animations = {
         animationData.transitions[id].push(`${key} ${duration}s`)
 
         // get style value
-        let style = `${variable}${key}: ${value};`
+        const style = `${variable}${key}: ${value};`
         if (!animationData.styles) animationData.styles = {}
         animationData.styles[id] = removePreviousKeys(animationData.styles[id], key)
 
         // set easing
-        let easing = animationData.animation.easing || "" // ease
+        const easing = animationData.animation.easing || "" // ease
         // if (animationData.animation.easing) easing = `transition-timing-function: ${animationData.animation.easing};`
 
         // set transitions first so it can animate
         if (!animationData.style) animationData.style = {}
-        let currentStyle = `${id === "text" ? "--" : ""}transition: ${animationData.transitions[id].join(", ")} ${easing};`
+        const currentStyle = `${id === "text" ? "--" : ""}transition: ${animationData.transitions[id].join(", ")} ${easing};`
         animationData.style[id] = animationData.styles[id].join("") + initialValue + currentStyle
 
         await wait(40)

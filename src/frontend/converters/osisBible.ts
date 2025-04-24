@@ -7,11 +7,11 @@ import { setActiveScripture } from "./bible"
 
 export function convertOSISBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = XMLtoObject(bible.content)
+        const obj: Bible = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
-        let id = uid()
+        const id = uid()
         // create folder & file
         scripturesCache.update((a) => {
             a[id] = obj
@@ -28,26 +28,26 @@ export function convertOSISBible(data: any[]) {
 }
 
 function XMLtoObject(xml: string): Bible {
-    let bible = xml2json(xml, true)?.osis?.osisText || {}
-    let books: any[] = []
+    const bible = xml2json(xml, true)?.osis?.osisText || {}
+    const books: any[] = []
 
     bible.div?.forEach((book, i) => {
-        let bookId = book["@osisID"]
-        let name = book["@name"] || defaultNames[bookId]
-        let number = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? i) + 1
-        let chapters: any[] = []
+        const bookId = book["@osisID"]
+        const name = book["@name"] || defaultNames[bookId]
+        const number = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? i) + 1
+        const chapters: any[] = []
 
         if (!Array.isArray(book.chapter)) book.chapter = [book.chapter]
         book.chapter.forEach((chapter: any, i: number) => {
-            let number = chapter["@osisID"].split(".")?.[1] ?? i + 1
-            let verses: any[] = []
+            const number = chapter["@osisID"].split(".")?.[1] ?? i + 1
+            const verses: any[] = []
 
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
             chapter.verse.forEach((verse: any, i: number) => {
                 let text = verse["#text"] || ""
                 text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
 
-                let number = verse["@osisID"].split(".")?.[2] ?? i + 1
+                const number = verse["@osisID"].split(".")?.[2] ?? i + 1
 
                 verses.push({ number, text })
             })
@@ -59,7 +59,7 @@ function XMLtoObject(xml: string): Bible {
     })
 
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem
-    let info = bible.header?.work || {}
+    const info = bible.header?.work || {}
 
     return { name: info.title || info.description || "", metadata: { ...info, copyright: info.rights || "" }, books }
 }

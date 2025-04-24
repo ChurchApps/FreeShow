@@ -5,10 +5,10 @@
 	Author:  Stefan Goessner/2006
 	Web:     http://goessner.net/ 
 */
-export function xml2json(xmlString: string, removeBreaks: boolean = false) {
+export function xml2json(xmlString: string, removeBreaks = false) {
     let xml: any = xmlParser(xmlString, removeBreaks)
 
-    let X = {
+    const X = {
         toObj: (xml) => {
             if (xml.nodeType == 1) {
                 let o: any = {}
@@ -20,9 +20,9 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
 
                 if (xml.firstChild) {
                     // element has child nodes ..
-                    let textChild = 0,
-                        cdataChild = 0,
-                        hasElementChild = false
+                    let textChild = 0;
+                        let cdataChild = 0;
+                        let hasElementChild = false
 
                     for (let n = xml.firstChild; n; n = n.nextSibling) {
                         if (n.nodeType == 1) hasElementChild = true
@@ -78,7 +78,7 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
             return console.error("unhandled node type: " + xml.nodeType)
         },
         toJson: (o, name, ind) => {
-            let json = name ? '"' + name + '"' : ""
+            const json = name ? '"' + name + '"' : ""
 
             if (o instanceof Array) {
                 for (let i = 0, n = o.length; i < n; i++) o[i] = X.toJson(o[i], "", ind + "\t")
@@ -88,8 +88,8 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
             if (o == null) return json + (name && ":") + "null"
 
             if (typeof o == "object") {
-                let arr: string[] = []
-                for (let m in o) arr[arr.length] = X.toJson(o[m], m, ind + "\t")
+                const arr: string[] = []
+                for (const m in o) arr[arr.length] = X.toJson(o[m], m, ind + "\t")
                 return json + (name ? ":{" : "{") + (arr.length > 1 ? "\n" + ind + "\t" + arr.join(",\n" + ind + "\t") + "\n" + ind : arr.join("")) + "}"
             }
 
@@ -101,7 +101,7 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
             if ("innerHTML" in node) return node.innerHTML
 
             let s = ""
-            let asXml = (n) => {
+            const asXml = (n) => {
                 if (n.nodeType == 1) {
                     let s = ""
                     s += "<" + n.nodeName
@@ -134,7 +134,7 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
                     // text node
                     if (!n.nodeValue.match(/[^ \f\n\r\t\v]/)) {
                         // pure whitespace text node
-                        let nxt = n.nextSibling
+                        const nxt = n.nextSibling
                         e.removeChild(n)
                         n = nxt
                     } else {
@@ -168,23 +168,23 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
         parsedJson = JSON.parse(json)
     } catch (e: any) {
         console.error(e)
-        let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+        const pos = Number(e.toString().replace(/\D+/g, "") || 100)
         console.log(pos, json.slice(pos - 5, pos + 5), json.slice(pos - 100, pos + 100))
     }
 
     return parsedJson
 }
 
-function xmlParser(xml: string, removeBreaks: boolean = false) {
-    let parser = new DOMParser()
+function xmlParser(xml: string, removeBreaks = false) {
+    const parser = new DOMParser()
 
     // // fix for xml files without any line breaks
-    let versionText = xml.indexOf("?>")
+    const versionText = xml.indexOf("?>")
     if (versionText > 0 && versionText < 80) xml = xml.slice(versionText + 2, xml.length)
 
     // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
     while (xml.indexOf("<?xml") >= 0) {
-        let splitted = xml.split("\n")
+        const splitted = xml.split("\n")
         xml = splitted.slice(1, splitted.length).join("\n")
     }
 

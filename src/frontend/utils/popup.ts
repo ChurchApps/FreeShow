@@ -128,7 +128,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
 
     return new Promise((resolve) => {
         // check that popup is still active
-        let interval = setInterval(() => {
+        const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 

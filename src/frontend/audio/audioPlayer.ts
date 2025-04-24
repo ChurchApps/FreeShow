@@ -62,7 +62,7 @@ export class AudioPlayer {
             return
         }
 
-        let audioPlaying = Object.keys(get(playingAudio)).length
+        const audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
         else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade })
 
@@ -70,7 +70,7 @@ export class AudioPlayer {
         // another audio might have been started while awaiting (if played rapidly)
         if (!audio || this.audioExists(path)) return
 
-        let volume = AudioPlayer.getVolume() * (options.volume || 1)
+        const volume = AudioPlayer.getVolume() * (options.volume || 1)
         audio.volume = volume
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
@@ -150,7 +150,7 @@ export class AudioPlayer {
     // private static init(id: string, audio: HTMLAudioElement, metadata: AudioMetadata) {
     // }
 
-    private static initAudio(id: string, waitToPlay: number = 0) {
+    private static initAudio(id: string, waitToPlay = 0) {
         setTimeout(() => {
             // audio might have been cleared
             const audio = this.getAudio(id)
@@ -209,7 +209,7 @@ export class AudioPlayer {
     }
 
     private static togglePausedState(id: string) {
-        let isPaused: boolean = this.isPaused(id)
+        const isPaused: boolean = this.isPaused(id)
         if (isPaused) this.play(id)
         else this.pause(id)
     }
@@ -241,10 +241,10 @@ export class AudioPlayer {
     }
 
     static checkIfEnding(id: string) {
-        let playing = this.getPlaying(id)
+        const playing = this.getPlaying(id)
         if (!playing || playing.paused) return
 
-        let audio = this.getAudio(id)
+        const audio = this.getAudio(id)
         if (!audio) return
 
         if (audio.currentTime < audio.duration) return
@@ -265,7 +265,7 @@ export class AudioPlayer {
         if (get(special).clearMediaOnFinish === false) this.pause(id)
         else this.stop(id)
 
-        let stillPlaying = this.getAllPlaying()
+        const stillPlaying = this.getAllPlaying()
         if (!stillPlaying.length) checkNextAfterMedia(id, "audio")
     }
 
@@ -277,7 +277,7 @@ export class AudioPlayer {
 
     static getAllPlaying() {
         return Object.keys(get(playingAudio)).filter((id) => {
-            let audioData = get(playingAudio)[id]
+            const audioData = get(playingAudio)[id]
             return audioData.audio && !audioData.paused
         })
     }

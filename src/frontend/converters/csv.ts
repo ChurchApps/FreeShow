@@ -15,17 +15,17 @@ export function convertCSV(data: any) {
     alertMessage.set("popup.importing")
     activePopup.set("alert")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         data.forEach((file) => {
-            let name: string = file.name
-            let content: string = file.content
+            const name: string = file.name
+            const content: string = file.content
 
-            let slides: Slide[] = []
+            const slides: Slide[] = []
             content.split("\n").forEach(createSlide)
             function createSlide(line: string) {
-                let items: Item[] = []
+                const items: Item[] = []
 
                 const fields = parseCSVLine(line)
                 fields.forEach((text) => {
@@ -36,7 +36,7 @@ export function convertCSV(data: any) {
                 slides.push({ ...clone(DEFAULT_SLIDE), items })
             }
 
-            let show = createShow({ slides, name })
+            const show = createShow({ slides, name })
             tempShows.push({ id: uid(), show })
         })
 
@@ -45,7 +45,7 @@ export function convertCSV(data: any) {
 }
 
 function createShow({ slides, name }) {
-    let layoutID: string = uid()
+    const layoutID: string = uid()
     let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
     let show = new ShowObj(false, category, layoutID)
@@ -53,8 +53,8 @@ function createShow({ slides, name }) {
     // remove empty slides
     slides = slides.filter((a) => a.items.length)
 
-    let layouts = getLayout(slides)
-    let newSlides: any = {}
+    const layouts = getLayout(slides)
+    const newSlides: any = {}
     layouts.forEach(({ id }, i) => {
         newSlides[id] = slides[i]
     })
@@ -68,14 +68,14 @@ function createShow({ slides, name }) {
 }
 
 function getLayout(slides: Slide[]) {
-    let layout: any[] = slides.map((_) => ({ id: uid() }))
+    const layout: any[] = slides.map((_) => ({ id: uid() }))
 
     return layout
 }
 
 function parseCSVLine(line) {
     const regex = /"{3}([^"]+)"{3}|"(.*?)"|([^,]+)/g
-    let matches: string[] = []
+    const matches: string[] = []
     let match
 
     while ((match = regex.exec(line)) !== null) {

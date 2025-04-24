@@ -21,8 +21,8 @@ import { sendData, setConnectedState } from "./sendData"
 
 // REMOTE
 
-let currentOut: string = ""
-let loadingShow: string = ""
+let currentOut = ""
+let loadingShow = ""
 export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         msg.data = {
@@ -58,7 +58,7 @@ export const receiveREMOTE: any = {
     // },
     SHOW: async (msg: any) => {
         // msg.data = filterObjectArray(get(shows)[msg.data], [""])
-        let showID: string = msg.data
+        const showID: string = msg.data
         console.log(msg)
 
         if (msg.id) {
@@ -83,12 +83,12 @@ export const receiveREMOTE: any = {
     OUT: async (msg: any) => {
         if (get(outLocked)) return
         // set id because convertBackgrounds might use a long time
-        let currentId = uid(5)
+        const currentId = uid(5)
         currentOut = currentId
 
-        let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-        let out: any = currentOutput?.out?.slide || null
-        let id: string = ""
+        const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+        const out: any = currentOutput?.out?.slide || null
+        let id = ""
 
         if (msg.data === "clear") {
             clearAll()
@@ -97,7 +97,7 @@ export const receiveREMOTE: any = {
             id = msg.data.id
             await loadShows([id])
 
-            let layout = getLayoutRef(id)
+            const layout = getLayoutRef(id)
             if (msg.data.index < layout.length && msg.data.index >= 0) {
                 if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
                 updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
@@ -108,16 +108,16 @@ export const receiveREMOTE: any = {
         } else if (msg.data !== null && msg.data !== undefined && out) {
             id = out.id
 
-            let layout = getLayoutRef(id)
+            const layout = getLayoutRef(id)
             if (msg.data < layout.length && msg.data >= 0) {
-                let newOutSlide: any = { ...out, index: msg.data }
+                const newOutSlide: any = { ...out, index: msg.data }
                 setOutput("slide", newOutSlide)
             }
             msg.data = null
         } else if (out?.id === "temp") {
             msg.data = out
         } else {
-            let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
+            const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
             msg.data = { slide: out ? out.index : null, layout: out?.layout || null, styleRes }
             // && out.id !== oldOutSlide
             if (out && out.id !== "temp") {
@@ -136,8 +136,8 @@ export const receiveREMOTE: any = {
         return msg
     },
     OUT_DATA: (msg: any) => {
-        let currentOutput = get(outputs)[getActiveOutputs()[0]]
-        let out = currentOutput?.out || {}
+        const currentOutput = get(outputs)[getActiveOutputs()[0]]
+        const out = currentOutput?.out || {}
         msg.data = out
 
         return msg
@@ -157,10 +157,10 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        let id = msg.data?.id
+        const id = msg.data?.id
         if (!id) return
 
-        let listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
+        const listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
         const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
         destroyMain(listenerId)
@@ -179,12 +179,12 @@ export function initializeRemote(id: string) {
     send(REMOTE, ["FOLDERS"], { folders: get(folders), opened: get(openedFolders) })
     send(REMOTE, ["PROJECT"], get(activeProject))
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
     // this is actually aspect ratio
-    let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
+    const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
 
-    let outSlide = currentOutput?.out?.slide
-    let out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
+    const outSlide = currentOutput?.out?.slide
+    const out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
     if (out.slide !== null && outSlide?.id) {
         oldOutSlide = outSlide.id
         out.show = get(showsCache)[oldOutSlide] || {}
@@ -196,16 +196,16 @@ export function initializeRemote(id: string) {
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 
-export async function convertBackgrounds(show: Show, noLoad: boolean = false) {
+export async function convertBackgrounds(show: Show, noLoad = false) {
     if (!show?.media) return {}
 
     show = clone(show)
-    let mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+    const mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
 
     await Promise.all(
         mediaIds.map(async (id) => {
             let path = show.media[id]?.path || show.media[id]?.id || ""
-            let cloudId = get(driveData).mediaId
+            const cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path
             if (!path) return
 
@@ -214,7 +214,7 @@ export async function convertBackgrounds(show: Show, noLoad: boolean = false) {
                 return
             }
 
-            let base64Path: string = await getBase64Path(path, mediaSize.slideSize)
+            const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
             if (base64Path) show.media[id].path = base64Path
         })
     )

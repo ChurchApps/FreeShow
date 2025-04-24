@@ -101,7 +101,7 @@ export function storeSubscriber() {
         // set all loaded shows to false, so show style can be updated from template again
         cachedShowsData.update((a) => {
             Object.keys(a).forEach((id) => {
-                let customId = getShowCacheId(id, get(showsCache)[id])
+                const customId = getShowCacheId(id, get(showsCache)[id])
                 if (!a[customId]?.template) return
                 a[customId].template.slidesUpdated = false
             })
@@ -160,7 +160,7 @@ export function storeSubscriber() {
             eachConnection(STAGE, "LAYOUT", (connection) => {
                 if (!connection.active) return
 
-                let currentData = data[connection.active]
+                const currentData = data[connection.active]
                 if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
                 return currentData
             })
@@ -168,14 +168,14 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
-        let activeOutputs = getActiveOutputs(get(outputs), true, true, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, true, true)
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW"], { id, data })
         })
     })
     drawTool.subscribe((data) => {
         // WIP changing tool while output is not active, will not update tool in output if set to active before changing tool again
-        let activeOutputs = getActiveOutputs()
+        const activeOutputs = getActiveOutputs()
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW_TOOL"], { id, data })
         })
@@ -258,12 +258,12 @@ export function storeSubscriber() {
 
     activeShow.subscribe((data) => {
         if (!data?.id) return
-        let type = data?.type || "show"
+        const type = data?.type || "show"
         if (type !== "show") return
 
-        let show = get(showsCache)[data.id]
+        const show = get(showsCache)[data.id]
         cachedShowsData.update((a) => {
-            let customId = getShowCacheId(data.id, show)
+            const customId = getShowCacheId(data.id, show)
             a[customId] = updateCachedShow(data.id, show)
             return a
         })
@@ -318,7 +318,7 @@ const initalOutputData = {
 
 export function sendInitialOutputData() {
     Object.keys(initalOutputData).forEach((KEY) => {
-        let storeKey = initalOutputData[KEY]
+        const storeKey = initalOutputData[KEY]
 
         let storeData: any
         if (storeKey.data) storeData = { data: get($[storeKey.data]) }

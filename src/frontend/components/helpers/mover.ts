@@ -6,9 +6,9 @@ export function getIndexes<T>(array: T): number[] {
 export function mover<T>(array: T, selected: number[], pos: number) {
     if (!Array.isArray(array)) return array
 
-    let moved = [] as T,
-        newArray = [] as T,
-        newPos: number = pos || 0
+    const moved = [] as T;
+        const newArray = [] as T;
+        let newPos: number = pos || 0
 
     array.forEach((a, i) => {
         if (!Array.isArray(moved) || !Array.isArray(newArray)) return

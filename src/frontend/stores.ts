@@ -404,7 +404,7 @@ export const $ = {
 
 // DEBUG STORE UPDATES
 const debugStores = false
-let updates: { [key: string]: number } = {}
+const updates: { [key: string]: number } = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
     Object.entries($).forEach(([key, store]) => {

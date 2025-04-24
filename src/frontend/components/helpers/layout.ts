@@ -4,22 +4,22 @@ import { _show } from "./shows"
 import type { Slide, SlideData } from "../../../types/Show"
 
 export function getCurrentLayout() {
-    let slides: { [key: string]: Slide } = clone(_show().get().slides)
-    let layout: SlideData[] = _show().layouts("active").get()[0].slides
+    const slides: { [key: string]: Slide } = clone(_show().get().slides)
+    const layout: SlideData[] = _show().layouts("active").get()[0].slides
     return clone({ slides, layout })
 }
 
-export function cloneSlide(currentLayout: { slides: { [key: string]: Slide }; layout: SlideData[] }, oldSlideId: string, newSlideId: string, keepChildren: boolean = true) {
-    let newSlide = clone(currentLayout.slides[oldSlideId])
+export function cloneSlide(currentLayout: { slides: { [key: string]: Slide }; layout: SlideData[] }, oldSlideId: string, newSlideId: string, keepChildren = true) {
+    const newSlide = clone(currentLayout.slides[oldSlideId])
 
     // cloning a parent means that all its children must be cloned too
     if (newSlide.children) {
         if (keepChildren) {
             // clone children
-            let clonedChildren: string[] = []
+            const clonedChildren: string[] = []
             newSlide.children.forEach((childId: string) => {
-                let newChild = clone(currentLayout.slides[childId])
-                let newChildId: string = uid()
+                const newChild = clone(currentLayout.slides[childId])
+                const newChildId: string = uid()
                 currentLayout.slides[newChildId] = newChild
                 clonedChildren.push(newChildId)
             })

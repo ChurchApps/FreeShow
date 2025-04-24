@@ -3,9 +3,9 @@ import { getExtension } from "../../helpers/media"
 
 // https://pixabay.com/api/docs/
 
-let cache: any = {}
+const cache: any = {}
 
-export async function loadFromPixabay(query: string = "", video: boolean = false): Promise<any[]> {
+export async function loadFromPixabay(query = "", video = false): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query + video]) return resolve(cache[query + video])
 

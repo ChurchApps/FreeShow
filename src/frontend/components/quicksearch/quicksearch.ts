@@ -14,7 +14,7 @@ const MAX_RESULTS = 10
 export function quicksearch(searchValue: string) {
     let values: QuickSearchValue[] = []
 
-    let shows = showSearch(searchValue, get(sortedShowsList))
+    const shows = showSearch(searchValue, get(sortedShowsList))
     values = shows.map((a) => ({ type: "show", icon: "slide", id: a.id, name: a.name }))
 
     // WIP search for media files, settings, etc.
@@ -25,7 +25,7 @@ export function quicksearch(searchValue: string) {
 
 const actions = {
     show: (id: string) => {
-        let newShow: any = { id, type: "show" }
+        const newShow: any = { id, type: "show" }
         activeShow.set(newShow)
 
         // ShowButton.svelte

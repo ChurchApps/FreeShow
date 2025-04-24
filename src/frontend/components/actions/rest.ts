@@ -1,5 +1,5 @@
-//import JZZ from "jzz"
-//import { toApp } from ".."
+// import JZZ from "jzz"
+// import { toApp } from ".."
 import type { API_rest_command } from "./api"
 
 export function sendRestCommandSync(data: API_rest_command) {
@@ -8,11 +8,11 @@ export function sendRestCommandSync(data: API_rest_command) {
 
 export async function sendRestCommand(data: API_rest_command) {
     // For Debugging:
-    //console.log("Send REST (isch) Command:");
-    //console.log("URL:", data.url);
-    //console.log("Method:", data.method);
-    //console.log("Content-Type:", data.contentType);
-    //console.log("Payload:", data.payload);
+    // console.log("Send REST (isch) Command:");
+    // console.log("URL:", data.url);
+    // console.log("Method:", data.method);
+    // console.log("Content-Type:", data.contentType);
+    // console.log("Payload:", data.payload);
 
     // Prepare options:
     const options: RequestInit = {}
@@ -33,7 +33,7 @@ export async function sendRestCommand(data: API_rest_command) {
 
     // If a Payload is provoded, add it to the requests body
     if (data.payload && (data.method === "POST" || data.method === "PUT")) {
-        //options.body = JSON.stringify(data.payload);
+        // options.body = JSON.stringify(data.payload);
         options.body = data.payload
     }
 
@@ -48,17 +48,17 @@ export async function sendRestCommand(data: API_rest_command) {
         const response = await fetch(data.url, options)
 
         if (!response.ok) {
-            //throw new Error(`HTTP error! status: ${response.status}`);
+            // throw new Error(`HTTP error! status: ${response.status}`);
             console.error(`HTTP error! status: ${response.status}`)
         }
 
-        //let result : String = await response.json();
-        let result: String = await response.text()
+        // let result : String = await response.json();
+        const result: String = await response.text()
         console.log(result)
 
-        //return result;
+        // return result;
     } catch (err) {
         console.error("Request failed:", err)
-        //throw error;
+        // throw error;
     }
 }

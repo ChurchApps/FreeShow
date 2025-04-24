@@ -20,7 +20,7 @@ import { getItemText } from "../edit/scripts/textStyle"
 
 export const historyActions = ({ obj, undo = null }: any) => {
     let data: any = {}
-    let initializing: boolean = undo === null
+    const initializing: boolean = undo === null
 
     if (obj) {
         data = obj.newData || {}
@@ -31,24 +31,24 @@ export const historyActions = ({ obj, undo = null }: any) => {
         UPDATE: () => {
             // create / delete / duplicate a full store (or a full key, or set indexes)
             if (!obj.location?.id) return error("no updater id")
-            let updater = _updaters[obj.location.id]
+            const updater = _updaters[obj.location.id]
             if (!updater) return error("missing updater: " + obj.location.id)
 
             let id = data.id
-            let deleting: boolean = id !== undefined
+            const deleting: boolean = id !== undefined
 
             data = clone(deleting ? obj.oldData : data) || {}
 
-            let key = data.key
-            let subkey = data.subkey
+            const key = data.key
+            const subkey = data.subkey
             // insert in array
             let index = data.index
             // replace value[s] in array
-            let indexes = data.indexes
-            let keys = data.keys
+            const indexes = data.indexes
+            const keys = data.keys
 
             if (!deleting) {
-                let empty = !data?.data
+                const empty = !data?.data
                 data = { ...data, data: data?.data ?? clone(updater.empty) }
                 id = obj.oldData?.id || uid()
                 if (keys && !key) id = "keys"
@@ -63,7 +63,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             if (deleting && updater.deselect) {
-                let changed: any = updater.deselect(id, data)
+                const changed: any = updater.deselect(id, data)
                 if (changed) data.changed = changed
             }
 
@@ -90,10 +90,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             obj.newData = deleting ? { id } : data
             obj.oldData = deleting ? data : { id }
 
-            /////
+            /// //
 
             function revertOrDeleteElement(a) {
-                let previousData = clone(data.previousData)
+                const previousData = clone(data.previousData)
 
                 if (key) {
                     if (!a[id]) return a
@@ -114,12 +114,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (keys) {
                     // if just keys, but no "key"
-                    let currentData = {}
+                    const currentData = {}
                     keys.forEach((currentKey) => {
                         currentData[currentKey] = clone(a[currentKey])
 
                         if (previousData) {
-                            let replacerValue = previousData[currentKey] || previousData
+                            const replacerValue = previousData[currentKey] || previousData
                             a[currentKey] = replacerValue
                         } else {
                             delete a[currentKey]
@@ -152,7 +152,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     data.previousData = {}
                     keys.forEach((currentKey) => {
                         data.previousData[currentKey] = a[currentKey]
-                        let replacerValue = data.data[currentKey] || data.data
+                        const replacerValue = data.data[currentKey] || data.data
                         a[currentKey] = replacerValue
                     })
                 } else {
@@ -179,8 +179,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     a[id][key] = a[id][key].map((value, i) => {
                         if (indexes?.length && !indexes.includes(i)) return value
-                        let currentIndex = indexes.findIndex((a) => a === i)
-                        let replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
+                        const currentIndex = indexes.findIndex((a) => a === i)
+                        const replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
 
                         if (subkey) {
                             value[subkey] = replacerValue
@@ -240,11 +240,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
         SHOWS: async () => {
             // bulk add/remove/duplicate shows
-            let showsList = obj.newData?.data || obj.oldData?.data || []
+            const showsList = obj.newData?.data || obj.oldData?.data || []
             if (!showsList.length) return
 
             let replace: boolean = obj.newData?.replace === true
-            let deleting: boolean = !obj.newData?.data?.length
+            let deleting = !obj.newData?.data?.length
             if (obj.oldData?.replace) replace = deleting = true
 
             if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
@@ -264,7 +264,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     showsList[i].show.name = name
 
                     // if renaming to another newly deleted show (with same name) - don't delete!
-                    let deletedIndex = get(deletedShows).findIndex((a) => a.name === name)
+                    const deletedIndex = get(deletedShows).findIndex((a) => a.name === name)
                     if (deletedIndex > -1) {
                         deletedShows.update((a) => {
                             a.splice(deletedIndex, 1)
@@ -277,9 +277,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 notFound.set({ show: [], bible: [] })
             }
 
-            let duplicates: string[] = []
-            let oldShows: any = {}
-            let rename: { [key: string]: { name: string; oldName: string } } = {}
+            const duplicates: string[] = []
+            const oldShows: any = {}
+            const rename: { [key: string]: { name: string; oldName: string } } = {}
 
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
@@ -309,7 +309,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             a[id] = { ...a[id], ...show }
 
                             // rename
-                            let oldName = get(shows)[id]?.name
+                            const oldName = get(shows)[id]?.name
                             if (show.name !== undefined && oldName && oldName !== show.name) {
                                 rename[id] = { name: show.name || id, oldName }
                             }
@@ -350,7 +350,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     const newModified = show.timestamps?.modified || 0
                     if (initializing && newModified && oldModified > newModified) return
 
-                    let oldShow = a[id] ? clone(a[id]) : null
+                    const oldShow = a[id] ? clone(a[id]) : null
                     if (oldShow?.timestamps) delete (oldShow as any).timestamps.used
 
                     a[id] = {
@@ -365,7 +365,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (show.locked) a[id].locked = true
                     else if (a[id].locked) delete a[id].locked
 
-                    let newShow = clone(a[id])
+                    const newShow = clone(a[id])
                     if (newShow?.timestamps) delete (newShow as any).timestamps.used
 
                     if (initializing && !replace && oldShow && JSON.stringify(oldShow) !== JSON.stringify(newShow)) duplicates.push(show.name)
@@ -374,12 +374,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
             })
 
             // rename shows file
-            let renamedIds = Object.keys(rename)
+            const renamedIds = Object.keys(rename)
             if (renamedIds.length) {
                 // renaming multiple times
-                let newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
-                let newRenamedList = keysToID(rename).map((a) => {
-                    let previous = get(renamedShows).find((r) => r.id === a.id)
+                const newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
+                const newRenamedList = keysToID(rename).map((a) => {
+                    const previous = get(renamedShows).find((r) => r.id === a.id)
                     if (!previous) return a
                     return { ...a, oldName: previous.oldName }
                 })
@@ -412,7 +412,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // remove any show in the active project
                 // only active because of undo
                 if (get(activeProject)) {
-                    let shows = get(projects)[get(activeProject)!]?.shows || []
+                    const shows = get(projects)[get(activeProject)!]?.shows || []
                     let newShows = shows
                     showsList.forEach(({ id }) => {
                         newShows = newShows.filter((a) => a.id !== id)
@@ -425,7 +425,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
         SLIDES: () => {
             // add/remove/duplicate slide(s)
-            let deleting: boolean = !!obj.oldData
+            const deleting = !!obj.oldData
             data = (deleting ? obj.oldData : obj.newData) || {}
 
             if (initializing) {
@@ -434,13 +434,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let slides = clone(data?.data) || []
 
-            let { showId, layout } = data.remember || {}
+            const { showId, layout } = data.remember || {}
             if (!showId || !layout) return
-            let ref = _show(showId).layouts([layout]).ref()[0] || []
+            const ref = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
 
-            let type: "delete" | "delete_group" | "remove" = data.type || "delete"
+            const type: "delete" | "delete_group" | "remove" = data.type || "delete"
 
             if (!deleting) {
                 if (data.previousData) {
@@ -470,7 +470,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             slides.forEach((slide, i) => {
                 let id = slide.id
                 delete slide.id
-                let slideIndex = slide.index ?? index
+                const slideIndex = slide.index ?? index
                 delete slide.index
 
                 // check if already exists!!
@@ -483,7 +483,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 //     })
 
                 // add custom
-                let isParent = slide.group !== null
+                const isParent = slide.group !== null
                 if (!id) {
                     error("missing default slide id, may break undo")
                     id = uid()
@@ -494,16 +494,16 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     showsCache.update((a) => {
                         if (!a[showId]?.layouts?.[layout]) return a
 
-                        let slides = a[showId].layouts[layout].slides
+                        const slides = a[showId].layouts[layout].slides
                         let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
 
                         if (type === "delete") {
                             Object.keys(a[showId].slides).forEach((slideId) => {
-                                let slide = a[showId].slides[slideId]
+                                const slide = a[showId].slides[slideId]
 
                                 if (slideId !== id) {
                                     // remove from other slides
-                                    let childIndex = slide.children?.indexOf(id) ?? -1
+                                    const childIndex = slide.children?.indexOf(id) ?? -1
                                     if (childIndex >= 0) slide.children!.splice(childIndex, 1)
                                     return
                                 }
@@ -511,8 +511,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 if (isParent) {
                                     // make first child a parent
                                     if (!slide.children?.length) return
-                                    let firstChildId = slide.children[0]
-                                    let newChildren = clone(slide.children.slice(1))
+                                    const firstChildId = slide.children[0]
+                                    const newChildren = clone(slide.children.slice(1))
 
                                     // make parent
                                     a[showId].slides[firstChildId].globalGroup = slide.globalGroup
@@ -525,8 +525,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                         if (layoutSlideRef.id !== id) return layoutSlideRef
 
                                         // clone layout data
-                                        let newChildren = clone(layoutSlideRef.children || {})
-                                        let newLayoutRef = { id: firstChildId, ...newChildren[firstChildId], children: {} }
+                                        const newChildren = clone(layoutSlideRef.children || {})
+                                        const newLayoutRef = { id: firstChildId, ...newChildren[firstChildId], children: {} }
                                         delete newChildren[firstChildId]
                                         newLayoutRef.children = newChildren
 
@@ -546,13 +546,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // TODO: check if slide is active in edit and decrease index...
                 } else {
-                    let slideData = clone(slide)
+                    const slideData = clone(slide)
                     if (data.addItems === false) slideData.items = []
 
                     _show(showId).slides([id]).add([slideData], isParent)
 
                     // layout
-                    let layoutValue = data.layouts?.[i] || {}
+                    const layoutValue = data.layouts?.[i] || {}
                     layoutValue.id = id
 
                     // TODO: add media to show if it doesent have it
@@ -564,34 +564,34 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // backgrounds
                     if (data.layout?.backgrounds?.length) {
-                        let background = data.layout.backgrounds[i] || data.layout.backgrounds[0]
+                        const background = data.layout.backgrounds[i] || data.layout.backgrounds[0]
 
-                        let id: string = ""
-                        let cloudId = get(driveData).mediaId
+                        let id = ""
+                        const cloudId = get(driveData).mediaId
                         if (layoutValue.background && cloudId && cloudId !== "default") id = layoutValue.background
 
                         // find existing
-                        let existingBackgrounds = _show(showId).get("media")
-                        let existingId = Object.keys(existingBackgrounds).find((id) => existingBackgrounds[id].path === background.path)
+                        const existingBackgrounds = _show(showId).get("media")
+                        const existingId = Object.keys(existingBackgrounds).find((id) => existingBackgrounds[id].path === background.path)
                         if (existingId) id = existingId
 
-                        let bgId = _show(showId).media().add(background, id)
+                        const bgId = _show(showId).media().add(background, id)
                         layoutValue.background = bgId
                     }
 
                     if (isParent) {
                         // get layout slides index (without children)
-                        let refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
-                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : (slideIndex ?? ref.length)
+                        const refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
+                        const slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : (slideIndex ?? ref.length)
 
                         // add to layout at index
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
 
                         // set to correct index
-                        let updatedRef = _show(showId).layouts([layout]).ref()[0]
+                        const updatedRef = _show(showId).layouts([layout]).ref()[0]
                         index = updatedRef.find((a) => a.id === layoutValue.id)?.layoutIndex ?? index
                     } else if (slide.oldChild) {
-                        let parent = ref.find((a) => a.children?.includes(slide.oldChild))
+                        const parent = ref.find((a) => a.children?.includes(slide.oldChild))
                         if (parent) {
                             let newChildren = clone(_show(showId).slides([parent.id]).get()[0]?.children || [])
                             let oldIndex = newChildren.indexOf(slide.oldChild)
@@ -659,20 +659,20 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (deleting) obj.oldData = clone(data)
             else obj.newData = clone(data)
 
-            /////
+            /// //
 
             function createSlide() {
-                let isParent = !ref.length || data.replace?.parent
-                let id = data.id || uid()
+                const isParent = !ref.length || data.replace?.parent
+                const id = data.id || uid()
 
                 if (!isParent) {
-                    let parent = ref[index - 1]?.parent || ref[index - 1]
+                    const parent = ref[index - 1]?.parent || ref[index - 1]
 
                     if (!parent) return
-                    let parentSlide = _show(showId).slides([parent.id]).get()[0]
+                    const parentSlide = _show(showId).slides([parent.id]).get()[0]
 
                     let value: string[] = [id]
-                    let childIndex = parent.layoutIndex < index ? index - parent.layoutIndex - 1 : index
+                    const childIndex = parent.layoutIndex < index ? index - parent.layoutIndex - 1 : index
                     if (parentSlide.children) value = addToPos(parentSlide.children, value, childIndex)
 
                     // timeout is to allow slide to be updated when active in output
@@ -693,7 +693,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     items = removeItemValues(items)
                 }
 
-                let slide: Slide = { ...EMPTY_SHOW_SLIDE, items }
+                const slide: Slide = { ...EMPTY_SHOW_SLIDE, items }
                 if (isParent) slide.globalGroup = "verse"
                 else slide.group = null
 
@@ -702,10 +702,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // increase index (to move edit slide) if there are added more (children) slides before this
             function increaseEditIndex() {
-                let count: number = 1
+                let count = 1
                 count = -1
 
-                let parent = ref[index - 1]?.parent || ref[index - 1]
+                const parent = ref[index - 1]?.parent || ref[index - 1]
                 if (!parent || data.replace?.parent) return
                 ref.forEach((slide) => {
                     if (slide.id === parent.id && slide.layoutIndex < index) count++
@@ -719,7 +719,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
         TEMPLATE: () => {
             // set a template on a slide/show
-            let deleting: boolean = !!obj.oldData
+            const deleting = !!obj.oldData
             data = (deleting ? obj.oldData : obj.newData) || {}
 
             if (initializing) {
@@ -728,29 +728,29 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let show = get(showsCache)[data.remember.showId]
             if (!show) return
-            let previousShow: string = JSON.stringify(show)
+            const previousShow: string = JSON.stringify(show)
             let slides = show.slides || {}
 
             let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
-            let slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
+            const slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
 
-            let createItems: boolean = !!data.data?.createItems
-            let shiftItems: boolean = !!data.data?.shiftItems
-            let previousTemplateId = show.settings?.template
+            const createItems = !!data.data?.createItems
+            const shiftItems = !!data.data?.shiftItems
+            const previousTemplateId = show.settings?.template
 
             if (deleting) {
-                let previousData = data.previousData
+                const previousData = data.previousData
                 if (!previousData) return error("missing previousData")
 
                 _show(data.remember.showId).set({ key: "slides", value: previousData.slides || {} })
                 _show(data.remember.showId).set({ key: "settings.template", value: previousData.template })
             } else {
-                data.previousData = clone({ template: previousTemplateId, slides: slides })
-                let templateId: string = data.id
+                data.previousData = clone({ template: previousTemplateId, slides })
+                const templateId: string = data.id
 
                 if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
-                let template = clone(get(templates)[templateId])
+                const template = clone(get(templates)[templateId])
                 if (template?.settings?.maxLinesPerSlide) splitToMaxLines(template.settings.maxLinesPerSlide)
                 updateSlidesWithTemplate(template)
 
@@ -759,7 +759,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // update cached show
             cachedShowsData.update((a) => {
-                let customId = getShowCacheId(data.remember.showId, null, data.remember.layout)
+                const customId = getShowCacheId(data.remember.showId, null, data.remember.layout)
                 if (a[customId]?.template?.slidesUpdated) a[customId].template.slidesUpdated = true
                 return a
             })
@@ -809,10 +809,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         templateMode = "slide"
                     } else {
                         // group template
-                        let isChild = slide.group === null
+                        const isChild = slide.group === null
                         let globalGroup = slide.globalGroup
                         if (isChild) {
-                            let parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
+                            const parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
                             globalGroup = parent?.globalGroup
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
@@ -824,26 +824,26 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!slideTemplate?.items?.length) return
 
                     // roll items around
-                    let newTemplate = data.previousData.template !== data.id
+                    const newTemplate = data.previousData.template !== data.id
                     if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
                     // shift items to any template textbox with matching "name" (content), if any
                     if (!shiftItems && newTemplate && !slide.settings?.template && slideTemplate.items?.length > 1) {
-                        let previousTemplateItems = get(templates)[data.previousData.template]?.items || []
-                        let newTemplateItems = slideTemplate.items || []
+                        const previousTemplateItems = get(templates)[data.previousData.template]?.items || []
+                        const newTemplateItems = slideTemplate.items || []
                         slide.items = clone(rearrangeContent(slide.items, previousTemplateItems, newTemplateItems))
                         // WIP text style (font size) won't update first time
                     }
 
-                    let changeOverflowItems = !!(slide.settings?.template || createItems)
+                    const changeOverflowItems = !!(slide.settings?.template || createItems)
                     let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems)
 
                     // remove items if not in template (and textbox is empty)
                     if (changeOverflowItems) {
-                        let templateItemCount = getItemsCountByType(slideTemplate.items)
-                        let slideItemCount = getItemsCountByType(newItems)
+                        const templateItemCount = getItemsCountByType(slideTemplate.items)
+                        const slideItemCount = getItemsCountByType(newItems)
                         newItems = newItems.filter((a) => {
-                            let type = a.type || "text"
+                            const type = a.type || "text"
                             if (templateItemCount[type] - slideItemCount[type] >= 0) return true
                             if (type === "text" && !isEmptyOrSpecial(a)) return true
                             if (type === "media" && a.src) return true
@@ -860,14 +860,14 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
                     if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor
 
-                    let isFirst = templateMode === "global" && !!show.layouts[data.remember.layout].slides?.find((a) => a?.id === id)
+                    const isFirst = templateMode === "global" && !!show.layouts[data.remember.layout].slides?.find((a) => a?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
 
-                    let slideRefs = ref.filter((a) => a.id === id)
-                    let oldTemplate = get(templates)[previousTemplateId || ""] || {}
+                    const slideRefs = ref.filter((a) => a.id === id)
+                    const oldTemplate = get(templates)[previousTemplateId || ""] || {}
                     slideRefs.forEach((slideRef) => {
                         // set custom values
-                        let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, data.remember.layout, slideRef, templateMode, changeOverflowItems)
+                        const newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, data.remember.layout, slideRef, templateMode, changeOverflowItems)
 
                         show.layouts = newLayoutData.layouts
                         show.media = newLayoutData.media
@@ -885,7 +885,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
         SHOW_LAYOUT: () => {
             // change the layout of a show
-            let deleting: boolean = !!obj.oldData
+            const deleting = !!obj.oldData
             data = clone((deleting ? obj.oldData : obj.newData) || {})
             // console.log(obj, deleting)
 
@@ -894,12 +894,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             if (deleting) {
-                let previousData = data.previousData
+                const previousData = data.previousData
                 if (!previousData) return error("missing previousData")
 
                 _show(data.remember.showId).set({ key: "layouts", value: previousData.layouts || {} })
             } else {
-                let show = get(showsCache)[data.remember.showId]
+                const show = get(showsCache)[data.remember.showId]
                 if (show) data.previousData = { layouts: clone(show.layouts) }
 
                 updateLayoutSlides()
@@ -913,14 +913,14 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateLayoutSlides() {
                 showsCache.update((a) => {
                     if (!a[data.remember.showId]) return a
-                    let layoutSlides: SlideData[] = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
+                    const layoutSlides: SlideData[] = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
 
                     let currentIndex = -1
                     layoutSlides.forEach((l, i) => {
                         currentIndex++
                         l = updateValues(l, currentIndex)
 
-                        let children = a[data.remember.showId].slides[l.id]?.children
+                        const children = a[data.remember.showId].slides[l.id]?.children
                         if (!children?.length) return
                         if (!l.children) l.children = {}
                         children.forEach((child) => {
@@ -934,12 +934,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 })
             }
 
-            function updateValues(l: any, currentIndex: number = -1) {
-                let indexes: number[] = data.indexes || []
-                let valueIndex: number = indexes.findIndex((a) => a === currentIndex)
+            function updateValues(l: any, currentIndex = -1) {
+                const indexes: number[] = data.indexes || []
+                const valueIndex: number = indexes.findIndex((a) => a === currentIndex)
                 if (currentIndex >= 0 && indexes.length && valueIndex < 0) return l
 
-                let keys: string[] = data.keys || [data.key]
+                const keys: string[] = data.keys || [data.key]
                 let values = data.data
                 if (!Array.isArray(values)) values = [values]
 
@@ -962,11 +962,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
         SHOW_ITEMS: () => {
             // change the values of show items
-            let deleting: boolean = !!obj.oldData
+            const deleting = !!obj.oldData
             data = (deleting ? obj.oldData : obj.newData) || {}
             console.log(obj, deleting)
 
-            let key: string | null = data.key || null
+            const key: string | null = data.key || null
 
             if (initializing) {
                 data.remember = { showId: get(activeShow)?.id }
@@ -1016,7 +1016,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
     //     return object
     // }
 
-    function error(msg: string = "") {
+    function error(msg = "") {
         console.error(obj.id, "HISTORY ERROR:", msg)
     }
 
@@ -1025,7 +1025,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
     return actions
 }
 
-function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
+function filterIndexes(data: any, subkey = "", { indexes, keys }) {
     if (!indexes?.length && !keys?.length) return subkey ? data[subkey] : data
 
     let filteredData: any = null
@@ -1062,7 +1062,7 @@ function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) 
 
     // create a map of previous state values to their indices
     prevState.forEach((item, index) => {
-        let value = getItemText(item)
+        const value = getItemText(item)
         let count = 0
         while (indexMap[getValue(value, count)] !== undefined) count++
         indexMap[getValue(value, count)] = index
@@ -1073,7 +1073,7 @@ function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) 
     const usedIndices = new Set<number>()
 
     newState.forEach((item, newIndex) => {
-        let value = getItemText(item)
+        const value = getItemText(item)
         if (indexMap[value] === undefined) return
 
         let count = 0

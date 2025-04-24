@@ -21,8 +21,8 @@ export function importBibles(data: any[]) {
 
     // timeout to allow popup to display
     setTimeout(() => {
-        let success: { [key: string]: number } = {}
-        let unsupported: { [key: string]: number } = {}
+        const success: { [key: string]: number } = {}
+        const unsupported: { [key: string]: number } = {}
 
         data.forEach((file) => {
             if (bibleTypes[file.type]) {
@@ -73,7 +73,7 @@ export function importFSB(data: any[]) {
 
         if (!bible) return
 
-        let id: string = bible[0] || uid()
+        const id: string = bible[0] || uid()
         bible = bible[1] || bible
 
         scripturesCache.update((a) => {

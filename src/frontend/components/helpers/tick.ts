@@ -48,7 +48,7 @@ export function newSlideTimer(id: string, duration: number) {
         // outTransition.set(null)
 
         // get and reset active element
-        let activeElem = document.activeElement
+        const activeElem = document.activeElement
         if (activeElem) {
             setTimeout(() => {
                 ;(activeElem as HTMLElement).focus()
@@ -154,7 +154,7 @@ function sliderTime(id: any) {
         slideTimers.update((a) => {
             if (!options.remaining || !options.start) return a
 
-            let remaining = options.remaining - (Date.now() - options.start)
+            const remaining = options.remaining - (Date.now() - options.start)
             a[id].time = options.max - remaining / 1000
             a[id].time = Math.min(a[id].time, options.max)
 

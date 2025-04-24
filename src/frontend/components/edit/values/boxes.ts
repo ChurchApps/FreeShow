@@ -62,7 +62,7 @@ export const mediaFitOptions: any[] = [
     // { id: "scale-down", name: "Scale down" },
 ]
 
-export let trackerEdits = [
+export const trackerEdits = [
     {
         name: "clock.type",
         input: "dropdown",

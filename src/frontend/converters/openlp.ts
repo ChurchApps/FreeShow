@@ -30,19 +30,19 @@ export function convertOpenLP(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("OpenLP")
+    const categoryId = createCategory("OpenLP")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
             if (typeof content === "object") {
-                let songs = sqliteConvert(content)
+                const songs = sqliteConvert(content)
                 songs.forEach(addShow)
                 return
             }
 
-            let song = XMLtoObject(content)
+            const song = XMLtoObject(content)
             addShow(song)
         })
 
@@ -50,7 +50,7 @@ export function convertOpenLP(data: any) {
     }, 10)
 
     function addShow(song: Song) {
-        let layoutID = uid()
+        const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
@@ -70,7 +70,7 @@ export function convertOpenLP(data: any) {
         }
         if (!show.timestamps.modified) show.timestamps.modified = show.timestamps.created
 
-        let { slides, layout }: any = createSlides(song)
+        const { slides, layout }: any = createSlides(song)
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.notes || "", slides: layout } }
@@ -82,19 +82,19 @@ export function convertOpenLP(data: any) {
 // Verse, Chorus, Bridge, Pre-Chorus, Intro, Ending, Other
 const OLPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", O: "tag", I: "intro", E: "outro" }
 function createSlides({ verseOrder, lyrics }: Song) {
-    let slides: any = {}
+    const slides: any = {}
     let layout: any[] = []
-    let sequence: string[] = verseOrder.split(" ").filter((a) => a)
-    let sequences: any = {}
+    const sequence: string[] = verseOrder.split(" ").filter((a) => a)
+    const sequences: any = {}
 
     lyrics.forEach((verse) => {
         if (!verse.lines) return
 
-        let id: string = uid()
+        const id: string = uid()
         if (verse.name) sequences[verse.name] = id
         layout.push({ id })
 
-        let items = [
+        const items = [
             {
                 style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                 lines: verse.lines.map((a: any) => ({ align: "", text: [{ style: "", value: formatText(a) }] })),
@@ -109,12 +109,12 @@ function createSlides({ verseOrder, lyrics }: Song) {
             items,
         }
 
-        let globalGroup = OLPgroups[verse.name.replace(/[0-9]/g, "").toUpperCase()]
+        const globalGroup = OLPgroups[verse.name.replace(/[0-9]/g, "").toUpperCase()]
         if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
     })
 
     if (sequence.length) {
-        let newLayout: any[] = []
+        const newLayout: any[] = []
         sequence.forEach((group) => {
             if (sequences[group]) newLayout.push({ id: sequences[group] })
         })
@@ -133,13 +133,13 @@ function formatText(text: string) {
 
 // WIP import song books as categories
 function sqliteConvert(content: any) {
-    let songs: any[] = content.songs.map((song) => getSong(song, content))
+    const songs: any[] = content.songs.map((song) => getSong(song, content))
 
     return songs
 }
 
 function getSong(song: any, content: any) {
-    let newSong: Song = {
+    const newSong: Song = {
         title: song.alternate_title || song.title,
         meta_title: song.alternate_title,
         notes: song.comments,
@@ -157,7 +157,7 @@ function getSong(song: any, content: any) {
     function getAuthors() {
         let authors: any[] = []
 
-        let currentSongAuthors = content.authors_songs.filter((a) => a.song_id === song.id)
+        const currentSongAuthors = content.authors_songs.filter((a) => a.song_id === song.id)
         authors = currentSongAuthors.map((a) => ({ name: content.authors.find((author) => author.id === a.author_id)?.display_name || "", type: a.author_type || "words" }))
 
         return authors
@@ -178,12 +178,12 @@ function getSong(song: any, content: any) {
 // XML
 
 function XMLtoObject(xml: string) {
-    let song = xml2json(xml).song || {}
+    const song = xml2json(xml).song || {}
 
     let lyrics = song.lyrics || {}
-    let properties = song.properties || {}
+    const properties = song.properties || {}
 
-    let notes =
+    const notes =
         song["#comment"] ||
         (Array.isArray(properties.comments)
             ? properties.comments?.map((comment) => comment["#text"] || "").join("\n")
@@ -194,7 +194,7 @@ function XMLtoObject(xml: string) {
                 : "") ||
         ""
 
-    let newSong: Song = {
+    const newSong: Song = {
         title: getTitle(),
         notes,
         // created: song["@createDate"],
@@ -212,7 +212,7 @@ function XMLtoObject(xml: string) {
         let currentSongTitle = properties.titles?.title || []
         if (Array.isArray(currentSongTitle)) currentSongTitle = currentSongTitle[0]
 
-        let title = typeof currentSongTitle["#text"] != "undefined" ? currentSongTitle["#text"] : currentSongTitle
+        const title = typeof currentSongTitle["#text"] != "undefined" ? currentSongTitle["#text"] : currentSongTitle
 
         return title
     }
@@ -256,7 +256,7 @@ function XMLtoObject(xml: string) {
         if (lines["#text"]) lines = lines["#text"]
         // some openlyrics verses can have multiple <lines> tags
         if (Array.isArray(lines)) {
-            let convertedLines: string[] = lines.map(convertToText)
+            const convertedLines: string[] = lines.map(convertToText)
             function convertToText(line: any) {
                 if (line["#text"]) return line["#text"]
                 return line

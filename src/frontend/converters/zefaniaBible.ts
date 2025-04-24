@@ -7,11 +7,11 @@ import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = XMLtoObject(bible.content)
+        const obj: Bible = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
-        let id = uid()
+        const id = uid()
         // create folder & file
         scripturesCache.update((a) => {
             a[id] = obj
@@ -28,18 +28,18 @@ export function convertZefaniaBible(data: any[]) {
 }
 
 function XMLtoObject(xml: string): Bible {
-    let bible = xml2json(xml, true)?.XMLBIBLE || {}
-    let books: any[] = []
+    const bible = xml2json(xml, true)?.XMLBIBLE || {}
+    const books: any[] = []
 
     bible.BIBLEBOOK.forEach((book: any) => {
-        let name = book["@bname"]
-        let number = book["@bnumber"]
-        let chapters: any[] = []
+        const name = book["@bname"]
+        const number = book["@bnumber"]
+        const chapters: any[] = []
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
         book.CHAPTER.forEach((chapter: any) => {
-            let number = chapter["@cnumber"]
-            let verses: any[] = []
+            const number = chapter["@cnumber"]
+            const verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
             chapter.VERS.forEach((verse: any) => {
@@ -69,7 +69,7 @@ function XMLtoObject(xml: string): Bible {
     })
 
     // INFORMATION: contributors, coverage, creator, date, description, format, identifier, language, publisher, rights, source, subject, title, type
-    let info = bible.INFORMATION || {}
+    const info = bible.INFORMATION || {}
 
     return { name: info.title || bible["@biblename"] || "", metadata: { ...info, copyright: info.publisher || "" }, books }
 }

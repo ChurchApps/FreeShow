@@ -48,7 +48,7 @@ export function oscToAPI(data: any) {
         data = { ...data, ...parsePath(data.action) }
     } catch (err) {
         // use path value as api action id
-        let action = data.action.slice(1)
+        const action = data.action.slice(1)
         if (!action.includes("/")) return { ...data, action }
 
         console.error(err)
@@ -65,7 +65,7 @@ function parsePath(path) {
 
     let currentPath: any = oscActions
 
-    for (let part of parts) {
+    for (const part of parts) {
         if (typeof currentPath[part] === "function") {
             currentPath = currentPath[part]()
         } else if (currentPath[part]) {

@@ -12,7 +12,7 @@ export async function getShowTimers(showRef: any) {
     if (showRef.type !== undefined && showRef.type !== "show") return []
     if (!get(showsCache)[showRef.id]) return [] // await loadShows([showRef.id])
 
-    let timers = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
+    const timers = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
 
     if (timers.length) list = timers.map((a) => a.timerId)
 
@@ -45,25 +45,25 @@ export function getTimer(ref: any) {
 export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     if (!showId) return
 
-    let currentShow = _show(showId).get()
+    const currentShow = _show(showId).get()
     if (!currentShow?.slides) return
 
-    let timerCreated: boolean = false
+    let timerCreated = false
 
     Object.keys(currentShow.slides).forEach(checkSlide)
     function checkSlide(slideId) {
-        let items: any[] = currentShow.slides[slideId].items
+        const items: any[] = currentShow.slides[slideId].items
 
         // TODO: "backup" global timer to show item.timer
 
         let timerIndex = items.findIndex((a) => !a?.timerId && a?.timer)
         while (timerIndex >= 0) {
             timerCreated = true
-            let globalTimerId = uid()
+            const globalTimerId = uid()
             currentShow.slides[slideId].items[timerIndex].timerId = globalTimerId
 
             timers.update((t) => {
-                let globalTimer = clone(currentShow.slides[slideId].items[timerIndex].timer)
+                const globalTimer = clone(currentShow.slides[slideId].items[timerIndex].timer)
                 globalTimer.name = currentShow.name
                 delete globalTimer.id
 
@@ -110,7 +110,7 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
 
     await Promise.all(
         projectShows.map(async (a) => {
-            let timers: any[] = await getShowTimers(a)
+            const timers: any[] = await getShowTimers(a)
             if (timers) list.push(...timers)
         })
     )
@@ -121,16 +121,16 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
 }
 
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
-    let currentTime: number = 0
+    let currentTime = 0
 
     if (timer.type === "counter") {
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
-        let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
+        const todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
         currentTime = (todayTime.getTime() - today.getTime()) / 1000
     } else if (timer.type === "event") {
-        let eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
+        const eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
         currentTime = (eventTime - today.getTime()) / 1000
     }
 
@@ -148,9 +148,9 @@ export function pauseAllTimers() {
     })
 }
 
-export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false, pausedState: boolean | null = null) {
+export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedState: boolean | null = null) {
     if (get(timers)[id]?.type !== "counter") return
-    let index = get(activeTimers).findIndex((a) => a.id === id)
+    const index = get(activeTimers).findIndex((a) => a.id === id)
 
     activeTimers.update((a) => {
         if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: pausedState === null ? false : pausedState })
@@ -166,8 +166,8 @@ export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false,
     // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
 }
 
-export function createNewTimer(name: string = "") {
-    let timerId = uid()
+export function createNewTimer(name = "") {
+    const timerId = uid()
 
     timers.update((a) => {
         a[timerId] = { name, type: "counter" }
@@ -183,7 +183,7 @@ export function resetTimer(id: string) {
 }
 
 export function deleteTimer(id: string) {
-    let active = get(activeTimers).findIndex((a) => a.id === id)
+    const active = get(activeTimers).findIndex((a) => a.id === id)
     if (active > -1) {
         activeTimers.update((a) => {
             a.splice(active, 1)

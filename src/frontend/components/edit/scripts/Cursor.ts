@@ -2,9 +2,9 @@
 // https://stackoverflow.com/a/41034697/3480193
 export class Cursor {
     static getCurrentCursorPosition(parentElement: any) {
-        var selection = window.getSelection(),
-            charCount = -1,
-            node
+        const selection = window.getSelection();
+            let charCount = -1;
+            let node
 
         if (selection?.focusNode) {
             if (Cursor._isChildOf(selection.focusNode, parentElement)) {
@@ -34,9 +34,9 @@ export class Cursor {
 
     static setCurrentCursorPosition(chars: number, element: any) {
         if (chars >= 0) {
-            var selection = window.getSelection()
+            const selection = window.getSelection()
 
-            let range = Cursor._createRange(element, { count: chars })
+            const range = Cursor._createRange(element, { count: chars })
 
             if (range) {
                 range.collapse(false)
@@ -66,7 +66,7 @@ export class Cursor {
                     chars.count = 0
                 }
             } else {
-                for (var lp = 0; lp < node.childNodes.length; lp++) {
+                for (let lp = 0; lp < node.childNodes.length; lp++) {
                     range = Cursor._createRange(node.childNodes[lp], chars, range)
 
                     if (chars.count === 0) {

@@ -102,19 +102,19 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        let outputsList: Output[] = keysToID(data.outputs)
+        const outputsList: Output[] = keysToID(data.outputs)
 
         // get active "ghost" key outputs
-        let activeKeyOutputs: string[] = []
+        const activeKeyOutputs: string[] = []
         outputsList.forEach((output) => {
             if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id!)
         })
 
         // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
-        let allOutputs = get(outputs)
-        let outputsUpdated: boolean = false
+        const allOutputs = get(outputs)
+        let outputsUpdated = false
         Object.keys(allOutputs).forEach((outputId) => {
-            let output = allOutputs[outputId]
+            const output = allOutputs[outputId]
             if (!output.isKeyOutput || activeKeyOutputs.includes(outputId)) return
 
             delete allOutputs[outputId]
@@ -131,14 +131,14 @@ export function updateSettings(data: any) {
     }
 
     // remote
-    let disabled = data.disabledServers || {}
+    const disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
     const ports: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
     sendMain(Main.START, { ports, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
 
     // theme
-    let currentTheme = get(themes)[data.theme]
+    const currentTheme = get(themes)[data.theme]
     if (currentTheme) {
         // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
@@ -159,13 +159,13 @@ export function updateSettings(data: any) {
     window.api.send("LOADED")
 }
 
-let videoDataUpdating: boolean = false
-export function restartOutputs(id: string = "") {
-    let data = clone(videosData)
-    let time = clone(videosTime)
+let videoDataUpdating = false
+export function restartOutputs(id = "") {
+    const data = clone(videosData)
+    const time = clone(videosTime)
 
-    let allOutputs = keysToID(get(outputs))
-    let outputIds = id ? [id] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
+    const allOutputs = keysToID(get(outputs))
+    const outputIds = id ? [id] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
     outputIds.forEach((id: string) => {
         let output: Output = get(outputs)[id]
@@ -173,7 +173,7 @@ export function restartOutputs(id: string = "") {
 
         // key output styling
         if (output.isKeyOutput) {
-            let parentOutput = allOutputs.find((a) => a.keyOutput === id)
+            const parentOutput = allOutputs.find((a) => a.keyOutput === id)
             if (parentOutput) output = { ...parentOutput, ...output, id }
         }
 

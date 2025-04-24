@@ -94,14 +94,14 @@ import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: SaveActions = {}) {
+export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     console.log("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
         customActionActivation("save")
     }
 
-    let settings: { [key in SaveListSettings]: any } = {
+    const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
         activeProject: get(activeProject),
         alertUpdates: get(alertUpdates),
@@ -149,7 +149,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: SaveAct
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
-    let syncedSettings: { [key in SaveListSyncedSettings]: any } = {
+    const syncedSettings: { [key in SaveListSyncedSettings]: any } = {
         categories: get(categories),
         drawSettings: get(drawSettings),
         groups: get(groups),
@@ -174,7 +174,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: SaveAct
         customMetadata: get(customMetadata),
     }
 
-    let allSavedData: SaveData = {
+    const allSavedData: SaveData = {
         path: get(showsPath) || "",
         dataPath: get(dataPath),
         // SETTINGS
@@ -223,7 +223,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
 
     if (customTriggers?.backup || customTriggers?.changeUserData) return
 
-    let mainFolderId = get(driveData)?.mainFolderId
+    const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
         if (closeWhenFinished) closeApp()
 
@@ -233,7 +233,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
     syncDrive(false, closeWhenFinished)
 }
 
-export function initializeClosing(skipPopup: boolean = false) {
+export function initializeClosing(skipPopup = false) {
     if (!skipPopup && (get(special).showClosePopup || get(errorHasOccured))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })
@@ -246,10 +246,10 @@ export function closeApp() {
 
 // GET SAVED STATE
 
-let initialized: boolean = false
+let initialized = false
 export function unsavedUpdater() {
-    let cachedValues: { [key: string]: string } = {}
-    let s = { ...saveList, folders, projects, showsCache, stageShows }
+    const cachedValues: { [key: string]: string } = {}
+    const s = { ...saveList, folders, projects, showsCache, stageShows }
 
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
@@ -257,7 +257,7 @@ export function unsavedUpdater() {
         s[id].subscribe((a: any) => {
             if (customSavedListener[id] && a) {
                 a = customSavedListener[id](clone(a))
-                let stringObj = JSON.stringify(a)
+                const stringObj = JSON.stringify(a)
                 if (cachedValues[id] === stringObj) return
 
                 cachedValues[id] = stringObj
@@ -306,70 +306,70 @@ const customSavedListener = {
 const saveList: { [key in SaveList]: any } = {
     initialized: null,
     activeProject: null,
-    alertUpdates: alertUpdates,
-    audioFolders: audioFolders,
-    autoOutput: autoOutput,
-    categories: categories,
-    autosave: autosave,
-    timeFormat: timeFormat,
-    maxConnections: maxConnections,
-    ports: ports,
-    disabledServers: disabledServers,
-    serverData: serverData,
-    events: events,
-    showsPath: showsPath,
-    dataPath: dataPath,
+    alertUpdates,
+    audioFolders,
+    autoOutput,
+    categories,
+    autosave,
+    timeFormat,
+    maxConnections,
+    ports,
+    disabledServers,
+    serverData,
+    events,
+    showsPath,
+    dataPath,
     lockedOverlays: null,
     drawer: null,
     drawerTabsData: null,
-    drawSettings: drawSettings,
-    groupNumbers: groupNumbers,
-    fullColors: fullColors,
-    formatNewShow: formatNewShow,
-    groups: groups,
-    labelsDisabled: labelsDisabled,
-    language: language,
-    mediaFolders: mediaFolders,
-    mediaOptions: mediaOptions,
+    drawSettings,
+    groupNumbers,
+    fullColors,
+    formatNewShow,
+    groups,
+    labelsDisabled,
+    language,
+    mediaFolders,
+    mediaOptions,
     openedFolders: null,
     outLocked: null,
     outputs: null,
     sorted: null,
-    styles: styles,
-    overlayCategories: overlayCategories,
-    overlays: overlays,
-    playerVideos: playerVideos,
-    remotePassword: remotePassword,
+    styles,
+    overlayCategories,
+    overlays,
+    playerVideos,
+    remotePassword,
     resized: null,
-    scriptures: scriptures,
-    scriptureSettings: scriptureSettings,
-    slidesOptions: slidesOptions,
-    splitLines: splitLines,
-    templateCategories: templateCategories,
-    templates: templates,
-    timers: timers,
-    variables: variables,
-    triggers: triggers,
-    audioStreams: audioStreams,
-    audioPlaylists: audioPlaylists,
-    theme: theme,
-    themes: themes,
-    transitionData: transitionData,
+    scriptures,
+    scriptureSettings,
+    slidesOptions,
+    splitLines,
+    templateCategories,
+    templates,
+    timers,
+    variables,
+    triggers,
+    audioStreams,
+    audioPlaylists,
+    theme,
+    themes,
+    transitionData,
     volume: null,
     gain: null,
-    midiIn: midiIn,
-    emitters: emitters,
-    videoMarkers: videoMarkers,
-    mediaTags: mediaTags,
-    actionTags: actionTags,
-    customizedIcons: customizedIcons,
-    driveKeys: driveKeys,
-    driveData: driveData,
+    midiIn,
+    emitters,
+    videoMarkers,
+    mediaTags,
+    actionTags,
+    customizedIcons,
+    driveKeys,
+    driveData,
     calendarAddShow: null,
     metronome: null,
     effectsLibrary: null,
-    special: special,
+    special,
     companion: null,
-    globalTags: globalTags,
+    globalTags,
     customMetadata: null,
 }

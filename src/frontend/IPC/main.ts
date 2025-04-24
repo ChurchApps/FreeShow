@@ -10,10 +10,10 @@ export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: M
     })
 }
 
-let currentlyAwaiting: string[] = []
+const currentlyAwaiting: string[] = []
 // @ts-ignore
 export async function requestMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, value?: MainSendValue<ID>, callback?: (data: R) => void) {
-    let listenerId = id + uid(5)
+    const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
     sendMain(id, value, listenerId)
@@ -38,7 +38,7 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
         )
     })
 
-    let waitIndex = currentlyAwaiting.indexOf(listenerId)
+    const waitIndex = currentlyAwaiting.indexOf(listenerId)
     if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
     window.api.removeListener(MAIN, listenerId)
 
@@ -64,7 +64,7 @@ export async function receiveMainGlobal() {
         if (!mainResponses[id]) return // console.error(`No response for channel: ${id}`)
 
         const data = msg.data // MainReturnPayloads[Main]
-        const response = (await (mainResponses[id] as any)(data)) as MainReceiveData<Main> | ToMainReceiveData<ToMain>
+        const response = (await (mainResponses[id] as any)(data))
         if (!response) return
 
         window.api.send(MAIN, { channel: id, data: response }, listenerId)
@@ -74,7 +74,7 @@ export async function receiveMainGlobal() {
 // @ts-ignore works as it should
 export function receiveMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, callback: (data: R) => void) {
     if (!Object.values(Main).includes(id)) throw new Error(`Invalid channel: ${id}`)
-    let listenerId = uid()
+    const listenerId = uid()
 
     window.api.receive(
         MAIN,
@@ -89,7 +89,7 @@ export function receiveMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>
 
 export function receiveToMain<ID extends ToMain, R = Awaited<ToMainSendPayloads[ID]>>(id: ID, callback: (data: R) => void) {
     if (!Object.values(ToMain).includes(id)) throw new Error(`Invalid channel: ${id}`)
-    let listenerId = uid()
+    const listenerId = uid()
 
     window.api.receive(
         MAIN,

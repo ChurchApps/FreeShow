@@ -38,9 +38,9 @@ export function convertSoftProjector(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("SoftProjector")
+    const categoryId = createCategory("SoftProjector")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     // set timeout to allow popup to open
     setTimeout(() => {
@@ -52,8 +52,8 @@ export function convertSoftProjector(data: any) {
     })
 
     function convertSong(song: Song) {
-        let layoutID = uid()
-        let show = new ShowObj(false, categoryId, layoutID)
+        const layoutID = uid()
+        const show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
         show.meta = {
@@ -62,7 +62,7 @@ export function convertSoftProjector(data: any) {
         }
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
-        let { slides, layout }: any = createSlides(song)
+        const { slides, layout }: any = createSlides(song)
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
@@ -72,22 +72,22 @@ export function convertSoftProjector(data: any) {
 }
 
 function createSlides(song: Song) {
-    let lyrics = song.song_text || ""
+    const lyrics = song.song_text || ""
 
-    let slides: any = {}
-    let layout: any[] = []
+    const slides: any = {}
+    const layout: any[] = []
 
     if (!lyrics) return { slides, layout }
 
-    let slideLines = lyrics.split("\n\n")
+    const slideLines = lyrics.split("\n\n")
     slideLines.forEach((slideLine) => {
-        let lines = slideLine.split("\n")
-        let groupName = lines.shift() || ""
+        const lines = slideLine.split("\n")
+        const groupName = lines.shift() || ""
 
-        let id: string = uid()
+        const id: string = uid()
         layout.push({ id })
 
-        let items = [
+        const items = [
             {
                 style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                 lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] })),
@@ -102,7 +102,7 @@ function createSlides(song: Song) {
             items,
         }
 
-        let globalGroup = getGlobalGroup(groupName)
+        const globalGroup = getGlobalGroup(groupName)
         if (globalGroup) slides[id].globalGroup = globalGroup
         else slides[id].group = groupName.replace(/[\s\d]/g, "")
     })

@@ -27,10 +27,10 @@ function createSlides({ slide }: any) {
                 .filter((slide) => Boolean(slide.trim()))
         )
         .forEach((lines: string[]) => {
-            let id: string = uid()
+            const id: string = uid()
             layout.push({ id })
 
-            let items = [
+            const items = [
                 {
                     style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                     lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),

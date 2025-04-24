@@ -13,13 +13,13 @@ import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
 export async function exportProject(project: Project) {
-    let shows: Shows = {}
+    const shows: Shows = {}
     let files: string[] = []
-    let overlays: Overlays = {}
+    const overlays: Overlays = {}
 
     // get project
     project = clone(project)
-    let parentFolder = get(folders)[project.parent]?.name || ""
+    const parentFolder = get(folders)[project.parent]?.name || ""
     project.parent = "/" // place on root
 
     // project items
@@ -27,33 +27,33 @@ export async function exportProject(project: Project) {
         show: (showRef: ProjectShowRef) => {
             shows[showRef.id] = clone(get(showsCache)[showRef.id])
 
-            let refs = _show(showRef.id).layouts().ref()
-            let mediaIds: string[] = []
+            const refs = _show(showRef.id).layouts().ref()
+            const mediaIds: string[] = []
 
             refs.forEach((ref) => {
                 ref.forEach(({ data }: { data: SlideData }) => {
                     // background
-                    let background = data.background
+                    const background = data.background
                     if (background) mediaIds.push(background)
 
                     // audio
-                    let audio = data.audio || []
+                    const audio = data.audio || []
                     mediaIds.push(...audio)
 
                     // overlays
-                    let overlays = data.overlays || []
+                    const overlays = data.overlays || []
                     overlays.forEach(getOverlay)
                 })
             })
 
             // get media file paths
-            let media = _show(showRef.id).get("media")
+            const media = _show(showRef.id).get("media")
             mediaIds.forEach((id) => {
                 getFile(media[id].path || media[id].id)
             })
 
             // get media from "Media" items
-            let slides = shows[showRef.id].slides
+            const slides = shows[showRef.id].slides
             Object.values(slides).forEach(({ items }) => {
                 items.forEach((item) => {
                     if (item.type === "media") {
@@ -78,10 +78,10 @@ export async function exportProject(project: Project) {
         },
     }
 
-    let projectItems = project.shows
+    const projectItems = project.shows
 
     // load shows
-    let showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
+    const showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
     projectItems.map(getItem)
@@ -91,15 +91,15 @@ export async function exportProject(project: Project) {
 
     // set data
     const projectData: any = { project, parentFolder, shows, overlays }
-    let includeMediaFiles = get(special).projectIncludeMedia ?? true
+    const includeMediaFiles = get(special).projectIncludeMedia ?? true
     if (includeMediaFiles) {
         projectData.files = files
 
-        let mediaData: any = {}
+        const mediaData: any = {}
         files.forEach((path) => {
             if (!get(media)[path]) return
 
-            let data = clone(get(media)[path])
+            const data = clone(get(media)[path])
             // delete data.info
             mediaData[path] = data
         })
@@ -110,7 +110,7 @@ export async function exportProject(project: Project) {
     send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: projectData })
 
     function getItem(showRef: ProjectShowRef) {
-        let type = showRef.type || "show"
+        const type = showRef.type || "show"
 
         if (!getProjectItems[type]) {
             console.log("Missing project type:", type)

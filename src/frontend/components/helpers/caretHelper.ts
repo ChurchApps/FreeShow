@@ -12,15 +12,15 @@ export function pasteText(elem: any) {
 }
 
 function insertValue(elem: any, text: string) {
-    let value: string = elem.value
+    const value: string = elem.value
     if (!text) return value
 
-    let caretPos = getCaretPos(elem)
+    const caretPos = getCaretPos(elem)
 
-    let newValue = value.slice(0, caretPos.start) + text + value.slice(caretPos.end)
+    const newValue = value.slice(0, caretPos.start) + text + value.slice(caretPos.end)
 
     // set new position
-    let newCaretPos = caretPos.start + text.length
+    const newCaretPos = caretPos.start + text.length
     setTimeout(() => {
         elem.selectionStart = elem.selectionEnd = newCaretPos
         // send event so inputs can update values
@@ -33,8 +33,8 @@ function insertValue(elem: any, text: string) {
 
 function getCaretPos(elem: any) {
     // let selection = window.getSelection()
-    let start = elem.selectionStart
-    let end = elem.selectionEnd
+    const start = elem.selectionStart
+    const end = elem.selectionEnd
 
     return { start, end }
 }
@@ -45,9 +45,9 @@ function pasteInDom(elem: any, text: any) {
 
     console.log(elem)
 
-    let caretPos = Cursor.getCurrentCursorPosition(elem)
+    const caretPos = Cursor.getCurrentCursorPosition(elem)
     console.log(caretPos)
-    let range = Cursor._createRange(elem, caretPos)
+    const range = Cursor._createRange(elem, caretPos)
     console.log(range)
 
     // previous

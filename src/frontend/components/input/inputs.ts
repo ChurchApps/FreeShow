@@ -36,7 +36,7 @@ export const commonInputs = {
 // init values
 
 // WIP similar to convertToOptions()
-export function initDropdownOptions(object: Option[] | { [key: string]: { name: string; [key: string]: any } }, addEmpty: boolean = false) {
+export function initDropdownOptions(object: Option[] | { [key: string]: { name: string; [key: string]: any } }, addEmpty = false) {
     let options: Option[] = []
     if (Array.isArray(object)) options = object
     else options = sortByName(Object.keys(object).map((id) => ({ id, name: object[id].name })))

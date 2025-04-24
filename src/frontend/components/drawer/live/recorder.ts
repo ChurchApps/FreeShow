@@ -44,7 +44,7 @@ async function handleStop() {
     const blob = new Blob(recordedChunks, options)
     const arraybuffer = await blob.arrayBuffer()
 
-    let name = `FreeShow_${formatTime()}.webm`
+    const name = `FreeShow_${formatTime()}.webm`
     window.api.send(RECORDER, { blob: arraybuffer, path: get(dataPath), name })
 
     currentRecordingStream.set(null)
@@ -54,13 +54,13 @@ async function handleStop() {
 }
 
 function formatTime() {
-    var today = new Date()
-    var s = String(today.getSeconds()).padStart(2, "0")
-    var m = String(today.getMinutes()).padStart(2, "0")
-    var h = String(today.getHours()).padStart(2, "0")
-    var dd = String(today.getDate()).padStart(2, "0")
-    var mm = String(today.getMonth() + 1).padStart(2, "0")
-    var yyyy = today.getFullYear()
+    const today = new Date()
+    const s = String(today.getSeconds()).padStart(2, "0")
+    const m = String(today.getMinutes()).padStart(2, "0")
+    const h = String(today.getHours()).padStart(2, "0")
+    const dd = String(today.getDate()).padStart(2, "0")
+    const mm = String(today.getMonth() + 1).padStart(2, "0")
+    const yyyy = today.getFullYear()
 
     return mm + "-" + dd + "-" + yyyy + "_" + h + "-" + m + "-" + s
 }
