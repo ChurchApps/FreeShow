@@ -14,7 +14,7 @@
     $: allCleared = isOutCleared(null, $outputs) && audioCleared
     $: if (allCleared) autoChange = true
 
-    let enableRestore: boolean = false
+    let enableRestore = false
     let restoreTimeout: NodeJS.Timeout | null = null
     $: if ($outputCache) {
         enableRestore = false
@@ -70,7 +70,7 @@
     $: slideTimerCleared = isOutCleared("transition", $outputs)
 
     // audio fade out
-    let audioIcon: string = "audio"
+    let audioIcon = "audio"
     $: if ($isFadingOut) startAudioIcon()
     else audioIcon = "audio"
     function startAudioIcon() {

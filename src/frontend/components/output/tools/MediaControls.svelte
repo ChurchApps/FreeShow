@@ -14,14 +14,14 @@
 
     export let currentOutput: Output | null
     export let outputId: string
-    export let big: boolean = false
+    export let big = false
 
     $: videoData = $videosData[outputId] || {}
 
-    let videoTime: number = 0
+    let videoTime = 0
     $: updateVideoTime($videosTime[outputId])
     let timeJustUpdated: NodeJS.Timeout | null = null
-    function updateVideoTime(time: number = 0) {
+    function updateVideoTime(time = 0) {
         if (timeJustUpdated) clearTimeout(timeJustUpdated)
         timeJustUpdated = setTimeout(() => (timeJustUpdated = null), 900)
         videoTime = time
@@ -49,7 +49,7 @@
     $: type = background?.type || "image"
     if (path && !type) type = getMediaType(getExtension(path)) as MediaType
 
-    let mediaName: string = ""
+    let mediaName = ""
     $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
@@ -92,7 +92,7 @@
         sendToOutput()
     }
 
-    let changeValue: number = 0
+    let changeValue = 0
 </script>
 
 <svelte:window on:keydown={keydown} />

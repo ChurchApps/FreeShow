@@ -13,12 +13,12 @@
     import { getStageTextLayoutOffset } from "../stage"
 
     export let currentSlide: OutSlide
-    export let slideOffset: number = 0
-    export let chords: boolean = false
-    export let style: boolean = false
-    export let textStyle: string = ""
-    export let autoSize: boolean = false
-    export let fontSize: number = 0
+    export let slideOffset = 0
+    export let chords = false
+    export let style = false
+    export let textStyle = ""
+    export let autoSize = false
+    export let fontSize = 0
     export let stageItem: StageItem
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -75,7 +75,7 @@
 
     // PRE LOAD SLIDE ITEMS (AUTO SIZE)
 
-    let firstActive: boolean = false
+    let firstActive = false
     let items1: Item[] = []
     let items2: Item[] = []
 

@@ -14,8 +14,8 @@
         showId?: string
         id: string
     }
-    export let chordsMode: boolean = false
-    export let chordsAction: string = ""
+    export let chordsMode = false
+    export let chordsAction = ""
 
     // CHORDS
 

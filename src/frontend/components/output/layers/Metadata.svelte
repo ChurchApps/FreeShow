@@ -5,7 +5,7 @@
     export let value: string
     export let style: string
     export let transition: Transition
-    export let isKeyOutput: boolean = false
+    export let isKeyOutput = false
 
     $: noTransition = transition.type === "none" || transition.duration === 0
 

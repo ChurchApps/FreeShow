@@ -10,7 +10,7 @@
     import Card from "../Card.svelte"
 
     export let active: string
-    export let searchValue: string = ""
+    export let searchValue = ""
 
     $: videos = sortByName(
         Object.entries($playerVideos)

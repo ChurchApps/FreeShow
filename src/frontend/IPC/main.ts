@@ -1,6 +1,6 @@
 import { uid } from "uid"
-import { ToMain, ToMainReceiveData, ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
-import { MAIN, Main, MainReceiveData, MainReceiveValue, MainReturnPayloads, type MainSendValue } from "./../../types/IPC/Main"
+import { ToMain, ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import { MAIN, Main, MainReceiveValue, MainReturnPayloads, type MainSendValue } from "./../../types/IPC/Main"
 import { mainResponses } from "./responsesMain"
 
 // @ts-ignore // T extends keyof typeof Main
@@ -64,7 +64,7 @@ export async function receiveMainGlobal() {
         if (!mainResponses[id]) return // console.error(`No response for channel: ${id}`)
 
         const data = msg.data // MainReturnPayloads[Main]
-        const response = (await (mainResponses[id] as any)(data))
+        const response = await (mainResponses[id] as any)(data)
         if (!response) return
 
         window.api.send(MAIN, { channel: id, data: response }, listenerId)

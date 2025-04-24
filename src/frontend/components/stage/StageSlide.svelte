@@ -13,11 +13,11 @@
     export let layout: StageLayout
     export let id: string
     export let index: number
-    export let columns: number = 1
-    export let active: boolean = false
-    export let list: boolean = false
+    export let columns = 1
+    export let active = false
+    export let list = false
 
-    let ratio: number = 1
+    let ratio = 1
     $: stageOutputId = getStageOutputId($outputs)
     $: resolution = getStageResolution(stageOutputId, $outputs)
 

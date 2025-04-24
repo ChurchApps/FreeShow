@@ -9,15 +9,15 @@
 
     export let id: SelectIds
     export let data: any
-    export let fill: boolean = false
-    export let draggable: boolean = false
+    export let fill = false
+    export let draggable = false
     export let shiftRange: any[] = []
-    export let onlyRightClickSelect: boolean = false
-    export let selectable: boolean = true
+    export let onlyRightClickSelect = false
+    export let selectable = true
     export let trigger: null | "row" | "column" = null
-    export let fileOver: boolean = false
+    export let fileOver = false
     export let borders: "all" | "center" | "edges" = "all"
-    export let triggerOnHover: boolean = false
+    export let triggerOnHover = false
     let elem: HTMLElement | undefined
 
     function enter(e: any) {
@@ -106,7 +106,7 @@
     //     rightClickMenu = false
     // }
 
-    function mousedown(e: any, dragged: boolean = false) {
+    function mousedown(e: any, dragged = false) {
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
@@ -221,7 +221,7 @@
     }
 
     let dragover: null | "start" | "center" | "end" = null
-    let dragActive: boolean = false
+    let dragActive = false
 
     function dragstart() {
         if ($activeRename !== null || $disableDragging) return

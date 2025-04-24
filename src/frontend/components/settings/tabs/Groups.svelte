@@ -12,7 +12,7 @@
 
     $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
 
-    function changeGroup(e: any, id: string, key: string = "name") {
+    function changeGroup(e: any, id: string, key = "name") {
         // remove default tag if name is changed (used for translation)
         // WIP undo won't work here...
         if (key === "name" && $groups[id].default) {

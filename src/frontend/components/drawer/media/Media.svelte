@@ -46,7 +46,7 @@
     import { loadFromUnsplash } from "./unsplash"
 
     export let active: string | null
-    export let searchValue: string = ""
+    export let searchValue = ""
     export let streams: MediaStream[] = []
 
     type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
@@ -170,7 +170,7 @@
     }
 
     // filter files
-    let activeView: string = "all" // keyof typeof nextActiveView
+    let activeView = "all" // keyof typeof nextActiveView
     let filteredFiles: File[] = []
     $: if (activeView || $activeMediaTagFilter) filterFiles()
     $: if (searchValue !== undefined) filterSearch()
@@ -307,7 +307,7 @@
     const nextActiveView = { all: "folder", folder: "image", image: "video", video: "all" }
     $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
 
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 

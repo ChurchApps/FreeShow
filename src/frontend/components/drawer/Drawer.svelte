@@ -20,7 +20,7 @@
     let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT - 0.3 : 0)
     $: height = $drawer.height
 
-    let move: boolean = false
+    let move = false
     let mouse: null | { x: number; y: number; offsetY: number } = null
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
@@ -156,7 +156,7 @@
 
     $: tabs = keysToID(drawerTabs)
 
-    let searchActive: boolean = false
+    let searchActive = false
     $: if (searchActive) {
         setTimeout(() => {
             searchElem?.focus()

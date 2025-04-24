@@ -9,13 +9,13 @@
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
-    export let index: number = -1
-    export let templateId: string = ""
+    export let index = -1
+    export let templateId = ""
     export let actions: any
 
     $: currentShow = $shows[$activeShow?.id || ""] || {}
 
-    function changeAction(id: string, save: boolean = true) {
+    function changeAction(id: string, save = true) {
         if (templateId || currentShow.locked) return
 
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }

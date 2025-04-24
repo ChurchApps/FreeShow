@@ -17,7 +17,7 @@
     export let timer: number[]
     export let layoutSlide: SlideData
     export let background: Media | null
-    export let backgroundCount: number = 0
+    export let backgroundCount = 0
     export let duration: number
     export let columns: number
     export let index: number

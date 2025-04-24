@@ -1,11 +1,11 @@
 <script lang="ts">
     export let value: string
-    export let placeholder: string = ""
-    export let style: string = ""
+    export let placeholder = ""
+    export let style = ""
 
-    export let center: boolean = false
-    export let disabled: boolean = false
-    export let autofocus: boolean = false
+    export let center = false
+    export let disabled = false
+    export let autofocus = false
 </script>
 
 <textarea class="edit" {placeholder} {value} {style} class:center {disabled} {autofocus} on:input />

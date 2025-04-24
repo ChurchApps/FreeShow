@@ -7,7 +7,7 @@
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
 
-    let msg: string = ""
+    let msg = ""
     $: msg = $alertMessage.toString()
 
     // UPDATER

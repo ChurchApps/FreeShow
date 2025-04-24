@@ -36,7 +36,7 @@
         updateValue(e.key.toLowerCase())
     }
 
-    let existing: boolean = false
+    let existing = false
     function updateValue(key: string) {
         if (existingShortcuts.find((a) => a.toLowerCase() === key)) {
             existing = true

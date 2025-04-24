@@ -1,8 +1,8 @@
 <script lang="ts">
     export let value: number
-    export let min: number = 0
-    export let max: number = 100
-    export let invert: boolean = false // flip slider if max < min
+    export let min = 0
+    export let max = 100
+    export let invert = false // flip slider if max < min
 </script>
 
 <input type="range" bind:value style={$$props.style} {min} {max} step={$$props.step || 1} title={$$props.title} disabled={$$props.disabled} class:invert on:mouseenter on:mouseleave on:mousedown on:mousemove on:input on:change />

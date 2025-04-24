@@ -13,7 +13,7 @@
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
 
-    export let activateOutput: boolean = false
+    export let activateOutput = false
 
     let options: any[] = []
     $: options = sortByName(keysToID($outputs))
@@ -39,8 +39,8 @@
 
     let minPosX: number | null = null
     let minPosY: number | null = null
-    let totalScreensWidth: number = 0
-    let totalScreensHeight: number = 0
+    let totalScreensWidth = 0
+    let totalScreensHeight = 0
 
     onMount(async () => {
         const displays = await requestMain(Main.GET_DISPLAYS)
@@ -164,8 +164,8 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    let editCropping: boolean = false
-    const previewSize: number = 0.08
+    let editCropping = false
+    const previewSize = 0.08
     // get any style cropping if not set on window
     $: cropping = clone((currentScreen.cropping === undefined && currentScreen.style ? $styles[currentScreen.style]?.cropping : currentScreen.cropping) || {})
     function updateCropping(value: string | number, side: string) {
@@ -189,7 +189,7 @@
         return style
     }
 
-    let editEdgeBlending: boolean = false
+    let editEdgeBlending = false
     $: blending = currentScreen.blending || {}
     function updateBlending(value: string | number, side: string) {
         if (!screenId) return

@@ -21,10 +21,10 @@
 
     let previewShow: Show | null = null
     let showIds: string[] = []
-    let loading: boolean = false
+    let loading = false
 
-    let exportType: string = ""
-    let exportFormat: string = ""
+    let exportType = ""
+    let exportFormat = ""
 
     const excludedFormats = {
         project: ["show", "txt", "image"],

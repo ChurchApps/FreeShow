@@ -23,7 +23,7 @@
 
     let loadingTask: PDFDocumentLoadingTask | null = null
     let loadedDoc: PDFDocumentProxy | null = null
-    let loadedPath: string = ""
+    let loadedPath = ""
     async function loadPage(pageNumber: number) {
         if (!canvasElem) return
 

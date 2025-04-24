@@ -11,8 +11,8 @@
     export let name: string
     export let parent: ID
     export let id: ID
-    export let recentlyUsed: boolean = false
-    export let template: boolean = false
+    export let recentlyUsed = false
+    export let template = false
     // export let type: ShowType
     // export let created;
     // export let parent; // path
@@ -84,7 +84,7 @@
         else history({ id: "UPDATE", newData: { key: "name", data: e.detail.value }, oldData: { id }, location: { page: "show", id: "project_key" } })
     }
 
-    let editActive: boolean = false
+    let editActive = false
 </script>
 
 <button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>

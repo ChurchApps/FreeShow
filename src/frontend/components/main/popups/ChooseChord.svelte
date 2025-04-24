@@ -42,7 +42,7 @@
         chordData.custom = e.target?.value || ""
     }
 
-    let combinedChord: string = "C"
+    let combinedChord = "C"
     $: if (chordData) combineChord()
     function combineChord() {
         if (!loaded) return

@@ -11,8 +11,8 @@
 
     let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
-    let x: number = 0
-    let y: number = 0
+    let x = 0
+    let y = 0
     let side: "right" | "left" = "right"
     let translate = 0
 

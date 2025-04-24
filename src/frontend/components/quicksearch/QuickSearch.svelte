@@ -12,14 +12,14 @@
     import { formatSearch } from "../../utils/search"
 
     let values: any[] = []
-    let searchValue: string = ""
+    let searchValue = ""
     function search(e: any) {
         searchValue = e.target.value
         values = quicksearch(formatSearch(searchValue))
         selectedIndex = 0
     }
 
-    let selectedIndex: number = 0
+    let selectedIndex = 0
 
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8

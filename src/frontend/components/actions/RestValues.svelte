@@ -9,7 +9,7 @@
     import type { API_rest_command } from "./api"
 
     export let value: API_rest_command
-    export let emitter: boolean = false
+    export let emitter = false
     $: rest = value
 
     // const REST_MESSAGE_INPUTS: Input[] = [

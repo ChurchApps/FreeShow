@@ -27,7 +27,7 @@
     let variableId = existing ? $selected.data[0].id : uid()
     let currentVariable = clone($variables[variableId] || DEFAULT_VARIABLE)
 
-    function updateValue(e: any, key: string, checkbox: boolean = false) {
+    function updateValue(e: any, key: string, checkbox = false) {
         let value = e?.target?.value ?? e
         if (checkbox) value = e.target.checked
         if (!value && !checkbox) return

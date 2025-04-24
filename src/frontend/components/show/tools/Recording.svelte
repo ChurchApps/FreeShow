@@ -31,14 +31,14 @@
     let recordingData: Recording | null = null
     $: recordingData = showLayout.recording?.[0] || null
 
-    let settingsOpened: boolean = false
+    let settingsOpened = false
 
     // $: useDurationTime = recordingData?.useDurationTime !== false
     $: useDurationTime = $special.useDurationTime !== false
     // check if layout slides has changed
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
-    let started: boolean = false
+    let started = false
     let outputListenerUnsubscribe: Unsubscriber | null = null
     let currentSequence: { time: number; slideRef: { id: string; index: any } }[] = []
     function toggleRecording() {

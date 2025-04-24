@@ -28,7 +28,7 @@
 
     // registerProcessor("processor", MyAudioProcessor);
 
-    let soundLevel: number = 0
+    let soundLevel = 0
 
     let audioStream: MediaStream | undefined
     let context: AudioContext | undefined

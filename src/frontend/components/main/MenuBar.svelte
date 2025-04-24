@@ -15,8 +15,8 @@
 
     let activeID: null | string = null
     let activeMenu: string[] = []
-    let x: number = 0
-    let y: number = 25
+    let x = 0
+    let y = 25
 
     $: maximized = !!$windowState.maximized
 

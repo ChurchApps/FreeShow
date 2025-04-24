@@ -29,7 +29,7 @@
 
     $: f = Object.entries($folders)
         .filter(([_, a]) => !a.deleted)
-        .map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
+        .map(([id, folder]) => ({ ...folder, id, type: "folder" as const }))
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
         .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
@@ -60,7 +60,7 @@
     }
 
     let folderSorted: Tree[] = []
-    function sortFolders(parent: string = "/", index: number = 0, path: string = "") {
+    function sortFolders(parent = "/", index = 0, path = "") {
         let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
             folderSorted.push(folder)
@@ -72,7 +72,7 @@
 
     // autoscroll
     let scrollElem: HTMLElement | undefined
-    let offset: number = -1
+    let offset = -1
     $: itemsBefore = $drawer.height < 400 ? 5 : 1
     $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
 
@@ -123,7 +123,7 @@
     $: projectActive = !$projectView && $activeProject !== null
 
     let listScrollElem: HTMLElement | undefined
-    let listOffset: number = -1
+    let listOffset = -1
     $: if (listScrollElem) {
         let time = tree.length * 0.5 + 20
         setTimeout(() => {

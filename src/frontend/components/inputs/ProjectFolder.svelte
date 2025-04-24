@@ -8,7 +8,7 @@
     export let project: any
     export let opened: boolean
 
-    let editActive: boolean = false
+    let editActive = false
 
     const toggle = (e: any, project: any, opened: boolean) => {
         if (editActive || e.ctrlKey || e.metaKey || e.target.classList.contains("name") || e.target.classList.contains("add")) return

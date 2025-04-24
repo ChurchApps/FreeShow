@@ -6,16 +6,16 @@
     import Video from "../../media/Video.svelte"
 
     export let path: string
-    export let path2: string = ""
+    export let path2 = ""
     export let data: OutBackground = {}
 
-    export let animationStyle: string = ""
+    export let animationStyle = ""
     export let mediaStyle: MediaStyle = {}
-    export let mirror: boolean = false
+    export let mirror = false
 
     export let video: HTMLVideoElement | null = null
     export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
-    export let videoTime: number = 0
+    export let videoTime = 0
 
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
@@ -24,7 +24,7 @@
     let retryCount = 0
     $: if (path) retryCount = 0
     let timeout: NodeJS.Timeout | null = null
-    let useAlternative: boolean = false
+    let useAlternative = false
     function reload() {
         if (retryCount > 4) useAlternative = true
         if (retryCount > 4 || timeout) return

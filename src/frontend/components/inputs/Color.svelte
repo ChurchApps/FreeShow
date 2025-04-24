@@ -6,14 +6,14 @@
     import T from "../helpers/T.svelte"
     import { defaultColors, getContrast } from "../helpers/color"
 
-    export let value: string = "#FFF"
-    export let visible: boolean = false
-    export let enableNoColor: boolean = false
-    export let showDisabled: boolean = false
-    export let custom: boolean = false
-    export let rightAlign: boolean = false
-    export let height: number = 0
-    export let width: number = 0
+    export let value = "#FFF"
+    export let visible = false
+    export let enableNoColor = false
+    export let showDisabled = false
+    export let custom = false
+    export let rightAlign = false
+    export let height = 0
+    export let width = 0
 
     let dispatch = createEventDispatcher()
     function change(e, update = false) {
@@ -25,7 +25,7 @@
     }
 
     let pickerId: string = "picker_" + uid()
-    let pickerOpen: boolean = false
+    let pickerOpen = false
     function togglePicker(e: any) {
         if (e.target.closest(".picker") || e.target.closest(".colorpicker")) return
 

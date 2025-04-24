@@ -6,15 +6,15 @@
     import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { combineDateAndTime } from "../../helpers/time"
 
-    export let edit: boolean = false
-    export let textSize: number = 80
+    export let edit = false
+    export let textSize = 80
 
-    export let maxEvents: number = 5
-    export let startDaysFromToday: number = 0
-    export let justOneDay: boolean = false
-    export let enableStartDate: boolean = false
-    export let startDate: string = ""
-    export let startTime: string = "00:00"
+    export let maxEvents = 5
+    export let startDaysFromToday = 0
+    export let justOneDay = false
+    export let enableStartDate = false
+    export let startDate = ""
+    export let startTime = "00:00"
 
     let filteredEvents: any[] = []
 
@@ -44,7 +44,7 @@
         filteredEvents = maxEvents ? eventsList.slice(0, maxEvents) : eventsList
     }
 
-    function getXDaysFromToday(startDaysFromToday: number = 0) {
+    function getXDaysFromToday(startDaysFromToday = 0) {
         let date = new Date()
         if (startDaysFromToday) date.setHours(0, 0, 0, 0)
         date.setDate(date.getDate() + startDaysFromToday)
@@ -52,7 +52,7 @@
     }
 
     // calendar.ts createSlides()
-    function getEventElement(event: any, textSize: number = 80) {
+    function getEventElement(event: any, textSize = 80) {
         let html = "<p>"
 
         if (event.time) {

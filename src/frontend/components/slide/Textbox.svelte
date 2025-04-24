@@ -15,21 +15,21 @@
     import TextboxLines from "./TextboxLines.svelte"
 
     export let item: Item
-    export let itemIndex: number = -1
-    export let slideIndex: number = 0
-    export let preview: boolean = false
-    export let mirror: boolean = true
-    export let isMirrorItem: boolean = false
-    export let ratio: number = 1
-    export let outputId: string = ""
-    export let filter: string = ""
-    export let backdropFilter: string = ""
-    export let key: boolean = false
-    export let disableListTransition: boolean = false
-    export let smallFontSize: boolean = false
+    export let itemIndex = -1
+    export let slideIndex = 0
+    export let preview = false
+    export let mirror = true
+    export let isMirrorItem = false
+    export let ratio = 1
+    export let outputId = ""
+    export let filter = ""
+    export let backdropFilter = ""
+    export let key = false
+    export let disableListTransition = false
+    export let smallFontSize = false
     export let animationStyle: any = {}
-    export let dynamicValues: boolean = true
-    export let isStage: boolean = false
+    export let dynamicValues = true
+    export let isStage = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
     export let ref: {
@@ -39,16 +39,16 @@
         layoutId?: string
         id: string
     }
-    export let style: boolean = true
-    export let customStyle: string = ""
+    export let style = true
+    export let customStyle = ""
     export let stageItem: any = {}
-    export let chords: boolean = false
+    export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
-    export let stageAutoSize: boolean = false
-    export let fontSize: number = 0
-    export let maxLines: number = 0 // stage next item preview
-    export let maxLinesInvert: boolean = false // stage next item preview (last lines)
+    export let stageAutoSize = false
+    export let fontSize = 0
+    export let maxLines = 0 // stage next item preview
+    export let maxLinesInvert = false // stage next item preview (last lines)
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -79,7 +79,7 @@
     let customOutputId = outputId
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
-    function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
+    function getCustomStyle(style: string, outputId = "", _updater: any = null) {
         if (outputId && !isMirrorItem && !isStage) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
@@ -146,7 +146,7 @@
     let customTypeRatio = 1
 
     let loopStop: NodeJS.Timeout | null = null
-    let newCall: boolean = false
+    let newCall = false
     function calculateAutosize() {
         if (isStage && !stageAutoSize) return
 

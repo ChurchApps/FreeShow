@@ -60,7 +60,7 @@
 
     $: if ($activeTriggerFunction === "scripture_newShow") createShow()
     $: if ($activeTriggerFunction === "scripture_newShow_popup") createShow(true)
-    function createShow(noPopup: boolean = false, showPopup: boolean = false) {
+    function createShow(noPopup = false, showPopup = false) {
         if (!verseRange) return
 
         if (!noPopup && (showPopup || sorted.length > 3)) {
@@ -331,10 +331,10 @@
 
     $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
 
-    let longVersesMenuOpened: boolean = false
-    let verseMenuOpened: boolean = false
-    let redMenuOpened: boolean = false
-    let referenceMenuOpened: boolean = false
+    let longVersesMenuOpened = false
+    let verseMenuOpened = false
+    let redMenuOpened = false
+    let referenceMenuOpened = false
 </script>
 
 <svelte:window on:keydown={keydown} />

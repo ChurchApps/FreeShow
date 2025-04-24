@@ -98,7 +98,7 @@
         animation.actions = addToPos(animation.actions, [newItem], index)
     }
 
-    function moveItem(index: number, down: boolean = false) {
+    function moveItem(index: number, down = false) {
         let newItems = clone(animation.actions)
         let currentItem = newItems.splice(index, 1)
 

@@ -14,8 +14,8 @@
 
     export let item
     export let index: number
-    export let ratio: number = 1
-    export let edit: boolean = false
+    export let ratio = 1
+    export let edit = false
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string

@@ -12,8 +12,8 @@
     }
     export let screen: Screen
     let frame: any
-    export let background: boolean = false
-    export let mirror: boolean = false
+    export let background = false
+    export let mirror = false
 
     let canvas: any
 
@@ -59,7 +59,7 @@
         if (background && !mirror) send(BLACKMAGIC, ["STOP_RECEIVER"], { id: screen.id, outputId: Object.keys($outputs)[0] })
     })
 
-    let loaded: boolean = false
+    let loaded = false
 </script>
 
 {#if background}

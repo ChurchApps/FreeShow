@@ -18,20 +18,20 @@
     export let type: ShowType
     export let active: string | null
     export let shiftRange: any[] = []
-    export let thumbnailPath: string = ""
-    export let thumbnail: boolean = true
+    export let thumbnailPath = ""
+    export let thumbnail = true
 
     $: name = name.slice(0, name.lastIndexOf("."))
 
     export let activeFile: null | number
     export let allFiles: string[]
 
-    let loaded: boolean = true
+    let loaded = true
     let videoElem: HTMLVideoElement | undefined
-    let hover: boolean = false
-    let duration: number = 0
+    let hover = false
+    let duration = 0
 
-    const steps: number = 10
+    const steps = 10
     function move(e: any) {
         if (!loaded || !videoElem) {
             // if (hover) clearTimeout(enterTimeout)

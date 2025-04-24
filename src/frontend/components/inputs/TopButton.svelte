@@ -6,8 +6,8 @@
     import Button from "./Button.svelte"
 
     export let id: TopViews
-    export let red: boolean = false
-    export let disabled: boolean = false
+    export let red = false
+    export let disabled = false
     export let hideLabel: null | boolean = null
     $: label = hideLabel === null ? !$labelsDisabled : !hideLabel
 

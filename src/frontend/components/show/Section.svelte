@@ -10,7 +10,7 @@
 
     export let section: any
 
-    let note: string = ""
+    let note = ""
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
@@ -64,7 +64,7 @@
         })
     }
 
-    let settingsOpened: boolean = false
+    let settingsOpened = false
 
     $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
     $: localAction = settingsOpened ? $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || "" : ""

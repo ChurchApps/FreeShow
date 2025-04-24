@@ -5,7 +5,7 @@
 
     $: if ($activeRecording !== undefined) toggleRecording()
 
-    let recorderActive: boolean = false
+    let recorderActive = false
 
     let videoElem
     let currentStream

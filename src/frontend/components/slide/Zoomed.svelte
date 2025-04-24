@@ -3,39 +3,39 @@
     import { draw, outputs, styles } from "../../stores"
     import { getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
 
-    export let id: string = ""
+    export let id = ""
     $: outputId = id || getActiveOutputs($outputs, true, true, true)[0]
 
     export let background: string = $styles[$outputs[outputId]?.style || ""]?.background || "#000000"
-    export let backgroundDuration: number = 800
-    export let center: boolean = false
-    export let zoom: boolean = true
-    export let mirror: boolean = false
-    export let showMirror: boolean = false
-    export let disableStyle: boolean = false
-    export let checkered: boolean = false
-    export let border: boolean = false
-    export let align: string = ""
-    export let drawZoom: number = 1
+    export let backgroundDuration = 800
+    export let center = false
+    export let zoom = true
+    export let mirror = false
+    export let showMirror = false
+    export let disableStyle = false
+    export let checkered = false
+    export let border = false
+    export let align = ""
+    export let drawZoom = 1
 
-    export let outline: string = ""
-    export let disabled: boolean = false
+    export let outline = ""
+    export let disabled = false
 
-    export let relative: boolean = false
-    export let aspectRatio: boolean = true
-    export let hideOverflow: boolean = true
-    export let customZoom: number = 1
+    export let relative = false
+    export let aspectRatio = true
+    export let hideOverflow = true
+    export let customZoom = 1
     export let cropping: Cropping | undefined = { top: 0, right: 0, bottom: 0, left: 0 }
     export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, outputId)
     $: resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
     $: outputRes = getOutputResolution(outputId, $outputs)
 
-    let elemWidth: number = 0
-    let elemHeight: number = 0
+    let elemWidth = 0
+    let elemHeight = 0
 
-    let slideWidth: number = 0
-    let slideHeight: number = 0
-    export let ratio: number = 1
+    let slideWidth = 0
+    let slideHeight = 0
+    export let ratio = 1
     $: ratio = Math.max(0.01, outputRes.width < outputRes.height ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
     $: croppedStyle = getCropping(cropping)

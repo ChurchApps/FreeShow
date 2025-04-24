@@ -3,7 +3,7 @@
     import Icon from "../helpers/Icon.svelte"
 
     export let icon: string
-    export let size: number = 5
+    export let size = 5
 
     // fade out (to show itself)
     let reveal = true

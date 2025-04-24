@@ -23,16 +23,16 @@
         id: string
     }
     export let index: number
-    export let editIndex: number = -1
-    export let plain: boolean = false
-    export let chordsMode: boolean = false
-    export let chordsAction: string = ""
-    export let isLocked: boolean = false
+    export let editIndex = -1
+    export let plain = false
+    export let chordsMode = false
+    export let chordsAction = ""
+    export let isLocked = false
 
     let textElem: HTMLElement | undefined
-    let html: string = ""
-    let previousHTML: string = ""
-    let currentStyle: string = ""
+    let html = ""
+    let previousHTML = ""
+    let currentStyle = ""
 
     // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
     // NOTE: undoing a change will set the html to "", causing the same issue
@@ -49,7 +49,7 @@
         }, 50)
     })
 
-    let currentSlide: number = -1
+    let currentSlide = -1
     $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
         currentSlide = $activeEdit.slide
         setTimeout(getStyle, 10)
@@ -212,7 +212,7 @@
     }
 
     let HISTORY_UPDATE_KEY = 0
-    let updates: number = 0
+    let updates = 0
     function updateLines(newLines: Line[] = []) {
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
@@ -276,7 +276,7 @@
 
     // text change
     let textChanged = false
-    let previousText: string = ""
+    let previousText = ""
     let changedTimeout: NodeJS.Timeout | null = null
     $: if (html && textElem?.innerText !== previousText) checkText()
     function checkText() {
@@ -287,7 +287,7 @@
     }
 
     // typing
-    let isTyping: boolean = false
+    let isTyping = false
     $: if (isAuto && textChanged) checkTyping()
     let typingTimeout: NodeJS.Timeout | null = null
     function checkTyping() {
@@ -309,7 +309,7 @@
     $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
-    let autoSize: number = 0
+    let autoSize = 0
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
@@ -340,9 +340,9 @@
         if (!textElem || !item) return []
 
         let newLines: Line[] = []
-        let pos: number = -1
+        let pos = -1
         currentStyle = ""
-        let updateHTML: boolean = false
+        let updateHTML = false
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
 
         new Array(...textElem.children).forEach((line, i) => {
@@ -519,8 +519,8 @@
     }
 
     // paste
-    let pasting: boolean = false
-    function paste(e: any, clipboardText: string = "") {
+    let pasting = false
+    function paste(e: any, clipboardText = "") {
         let clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
         if (!clipboard) return
 
@@ -528,11 +528,11 @@
 
         let sel = getSelectionRange()
         let caret = { line: 0, pos: 0 }
-        let emptySelection: boolean = !sel.filter((a) => Object.keys(a).length).length
+        let emptySelection = !sel.filter((a) => Object.keys(a).length).length
 
         let lines: Line[] = getNewLines()
         let newLines: any[] = []
-        let pastingIndex: number = -1
+        let pastingIndex = -1
         sel.forEach((lineSel, lineIndex) => {
             if (lineSel.start === undefined && (!emptySelection || lineIndex < sel.length - 1)) {
                 newLines.push(lines[lineIndex])

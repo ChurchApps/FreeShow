@@ -8,12 +8,12 @@
     import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
 
     export let active: string | null
-    export let searchValue: string = ""
+    export let searchValue = ""
 
     // WIP search for events
     $: console.log(searchValue)
 
-    let sundayFirstDay: boolean = false
+    let sundayFirstDay = false
 
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
@@ -94,7 +94,7 @@
         }, 500)
     }
 
-    function nextMonth(checkScroll: boolean = false) {
+    function nextMonth(checkScroll = false) {
         if (!calendarElem) return
         let scrolledToBottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
         if (checkScroll && !scrolledToBottom) return
@@ -102,7 +102,7 @@
         current = new Date(year, month, 33)
     }
 
-    function previousMonth(checkScroll: boolean = false) {
+    function previousMonth(checkScroll = false) {
         let scrolledToTop = calendarElem?.scrollTop === 0
         if (checkScroll && !scrolledToTop) return
 

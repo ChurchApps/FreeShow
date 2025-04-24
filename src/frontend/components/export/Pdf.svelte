@@ -9,7 +9,7 @@
 
     export let shows: Show[] = []
     export let options: any = {}
-    export let path: string = ""
+    export let path = ""
 
     window.api.receive(EXPORT, (a: any) => {
         if (a.channel === "PDF") {
@@ -56,7 +56,7 @@
         if ($currentWindow === "pdf") exportPDF()
     }
 
-    let index: number = 0
+    let index = 0
     function exportPDF() {
         setTimeout(
             () => {

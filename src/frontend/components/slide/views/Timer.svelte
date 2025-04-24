@@ -12,13 +12,13 @@
     // export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; slideId?: string; id: string }
     export let id: string
     export let today: Date
-    export let style: string = ""
-    export let edit: boolean = false
+    export let style = ""
+    export let edit = false
 
     $: ref = { id }
     $: timer = $timers[id] || {}
 
-    let timeValue: string = "00:00"
+    let timeValue = "00:00"
     let currentTime: number
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)

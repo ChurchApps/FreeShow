@@ -11,11 +11,11 @@
 
     export let currentShow: any
 
-    let text: string = ""
+    let text = ""
     $: if (currentShow) text = getPlainEditorText()
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 

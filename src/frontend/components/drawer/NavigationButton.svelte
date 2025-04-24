@@ -9,8 +9,8 @@
     export let id: string
     export let category: any
     export let length: { [key: string]: number }
-    export let categoryId: string = ""
-    export let isSubmenu: boolean = false
+    export let categoryId = ""
+    export let isSubmenu = false
 
     function setTab(tabID: string) {
         drawerTabsData.update((dt) => {
@@ -34,7 +34,7 @@
         templates: (c: { id: string; name: string }) => templateCategories.update((a) => setName(a, c)),
         scripture: (c: { id: string; name: string }) => scriptures.update((a) => setName(a, c, "customName")),
     }
-    const setName = <T,>(a: T, { name, id }, nameKey: string = "name"): T => {
+    const setName = <T,>(a: T, { name, id }, nameKey = "name"): T => {
         // api scriptures
         if (!a[id]) id = Object.entries(a as any).find(([_, a]: any) => a.id === id)?.[0]
         if (!a[id]) return a
@@ -51,7 +51,7 @@
         else console.log("rename " + id)
     }
 
-    let editActive: boolean = false
+    let editActive = false
 
     $: red = id === "scripture" && $notFound.bible.find((a) => a.id === category.id)
 

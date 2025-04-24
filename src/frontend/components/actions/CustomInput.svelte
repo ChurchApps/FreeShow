@@ -21,9 +21,9 @@
     export let inputId: string
     export let value
     export let actionId: string
-    export let actionIndex: number = 0
-    export let mainId: string = ""
-    export let list: boolean = false
+    export let actionIndex = 0
+    export let mainId = ""
+    export let list = false
 
     onMount(() => {
         // set default

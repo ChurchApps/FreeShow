@@ -4,7 +4,7 @@
     import Button from "../../inputs/Button.svelte"
 
     export let columns: number
-    export let overlayId: string = ""
+    export let overlayId = ""
 
     $: overlay = $overlays[overlayId] || {}
 

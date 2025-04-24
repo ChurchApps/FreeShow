@@ -3,10 +3,10 @@
     import { getStyles } from "../helpers/style"
     import { radiusSliderOffset, radiusSliderRatio } from "./textbox"
 
-    export let ratio: number = 1
-    export let itemStyle: string = ""
+    export let ratio = 1
+    export let itemStyle = ""
     export let active: boolean
-    export let onlyCorners: boolean = false
+    export let onlyCorners = false
 
     let corners = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
     let sides = ["n", "e", "s", "w"]

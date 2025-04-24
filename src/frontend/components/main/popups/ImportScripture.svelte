@@ -120,10 +120,10 @@
         searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
-    let searchActive: boolean = false
+    let searchActive = false
     $: if (importType === "" && searchActive) searchActive = false
 
-    let importType: string = ""
+    let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
         { id: "local", name: "$:cloud.local:$", icon: "scripture" },

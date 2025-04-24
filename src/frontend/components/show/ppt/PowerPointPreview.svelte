@@ -22,8 +22,8 @@
         requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a))
     })
 
-    let opening: boolean = false
-    let retry: boolean = false
+    let opening = false
+    let retry = false
     function newPresentation() {
         if ($outLocked) return
 

@@ -74,9 +74,9 @@
             let item = $stageShows[stageId].items[key]
             const styles = getStyles(item.style)
 
-            let textStyle: string = ""
-            let itemStyle: string = ""
-            let defaultStyle: string = ""
+            let textStyle = ""
+            let itemStyle = ""
+            let defaultStyle = ""
 
             // split text/item styles
             Object.entries(styles).forEach(([key, value]) => {

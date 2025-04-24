@@ -6,12 +6,12 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
     export let label: string
-    export let count: number = 0
-    export let renameId: string = ""
-    export let title: string = ""
+    export let count = 0
+    export let renameId = ""
+    export let title = ""
     export let icon: null | string = null
     export let color: null | string = null
-    export let white: boolean = false
+    export let white = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
 
     // RENAME!! (duplicate of NavigationButton.svelte)
@@ -21,7 +21,7 @@
         template: (c: { name: string; id: string }) => templates.update((a) => setName(a, c)),
         player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c)),
     }
-    const setName = (a: any, { name, id }: any, nameKey: string = "name") => {
+    const setName = (a: any, { name, id }: any, nameKey = "name") => {
         if (!a[id]) return a
 
         a[id][nameKey] = name
@@ -37,7 +37,7 @@
         else console.log("Trying to rename unadded type: " + id)
     }
 
-    let editActive: boolean = false
+    let editActive = false
 </script>
 
 <div

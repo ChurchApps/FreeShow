@@ -31,10 +31,10 @@
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
     const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
-    const revertTime: number = 5 // seconds
+    const revertTime = 5 // seconds
     let reverted: string[] = []
 
-    function updateOutput(key: string, value: any, outputId: string = "") {
+    function updateOutput(key: string, value: any, outputId = "") {
         if (!outputId) outputId = currentOutput?.id!
         if (!outputId || !$outputs[outputId]) return
 

@@ -9,7 +9,7 @@
 
     export let screen: { id: string; name: string }
     export let streams: MediaStream[]
-    export let background: boolean = false
+    export let background = false
 
     let loaded = false
 

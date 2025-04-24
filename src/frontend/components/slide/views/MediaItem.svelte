@@ -7,9 +7,9 @@
 
     export let item: Item
 
-    export let preview: boolean = false
-    export let mirror: boolean = true
-    export let edit: boolean = false
+    export let preview = false
+    export let mirror = true
+    export let edit = false
 
     let mediaItemPath = ""
     $: if (item?.type === "media") getMediaItemPath()

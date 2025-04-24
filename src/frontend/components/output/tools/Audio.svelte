@@ -73,7 +73,7 @@
         else activeShow.set({ id, type: "audio", data: { isMic: audio.isMic } })
     }
 
-    let fullLength: boolean = false
+    let fullLength = false
 </script>
 
 {#if Object.keys($playingAudio).length > 1}

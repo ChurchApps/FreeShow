@@ -19,17 +19,17 @@
     import Stagebox from "./Stagebox.svelte"
     import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
-    export let outputId: string = ""
-    export let stageId: string = ""
-    export let preview: boolean = false
-    export let edit: boolean = true
+    export let outputId = ""
+    export let stageId = ""
+    export let preview = false
+    export let edit = true
 
     let lines: [string, number][] = []
     let mouse: any = null
     let newStyles: { [key: string]: number | string } = {}
     $: active = $activeStage.items
 
-    let ratio: number = 1
+    let ratio = 1
 
     $: {
         if (active.length) {
@@ -45,7 +45,7 @@
             let styles = getStyles(items[id].style)
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
 
-            let textStyles: string = ""
+            let textStyles = ""
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
@@ -82,8 +82,8 @@
 
     // RESOLUTION
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     $: stageOutputId = getStageOutputId($outputs)
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
@@ -109,7 +109,7 @@
     }
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (!edit || e.target.closest(".zoom_container") || e.target.closest("button")) return
 

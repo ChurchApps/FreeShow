@@ -57,7 +57,7 @@
             setTimeout(() => getBackgroundOpacity(itemEdit, data), 100)
         }
 
-        let value: string = addStyleString(item!.style, [input.key, input.value]) || ""
+        let value: string = addStyleString(item.style, [input.key, input.value]) || ""
 
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
 

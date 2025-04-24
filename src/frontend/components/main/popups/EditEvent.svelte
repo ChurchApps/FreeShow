@@ -18,7 +18,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import CreateAction from "../../actions/CreateAction.svelte"
 
-    let stored: string = ""
+    let stored = ""
 
     let defaultRepeatData: any = {
         type: "day",
@@ -44,7 +44,7 @@
         repeatData: defaultRepeatData,
     }
 
-    let selectedType: string = "" // "event" | "action"
+    let selectedType = "" // "event" | "action"
 
     onMount(() => {
         selectedType = $drawerTabsData.calendar?.activeSubTab || "event"

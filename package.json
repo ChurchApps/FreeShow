@@ -41,7 +41,7 @@
         "postrelease:32bit": "node scripts/cleanBuilds.js",
         "lint:electron": "eslint -c config/linting/eslint.electron.json --ext .js,.ts src/electron --fix",
         "lint:frontend": "eslint -c config/linting/eslint.frontend.json --ext .js,.ts src/frontend --fix",
-        "lint:svelte": "eslint -c config/linting/eslint.svelte.js --ext .svelte src/frontend",
+        "lint:svelte": "eslint -c config/linting/eslint.svelte.js --ext .svelte src/frontend --fix",
         "lint:styles": "npx stylelint 'src/frontend/**/*.{css,scss,svelte}' --config config/linting/.stylelintrc.json",
         "lint": "npm-run-all -s lint:electron lint:frontend lint:svelte lint:styles",
         "prepublishOnly": "npm-run-all -s test lint",

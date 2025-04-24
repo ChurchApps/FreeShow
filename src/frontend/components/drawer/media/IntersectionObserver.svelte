@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
 
-    export let once: boolean = false
-    export let top: number = 0
-    export let bottom: number = 0
-    export let left: number = 0
-    export let right: number = 0
+    export let once = false
+    export let top = 0
+    export let bottom = 0
+    export let left = 0
+    export let right = 0
 
-    let intersecting: boolean = false
+    let intersecting = false
     let container: HTMLDivElement
 
     onMount(() => {

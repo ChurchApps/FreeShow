@@ -26,11 +26,11 @@
     import Window from "./Window.svelte"
     import { OutData } from "../../../types/Output"
 
-    export let outputId: string = ""
+    export let outputId = ""
     export let style = ""
-    export let ratio: number = 0
-    export let mirror: boolean = false
-    export let preview: boolean = false
+    export let ratio = 0
+    export let mirror = false
+    export let preview = false
 
     $: currentOutput = $outputs[outputId] || {}
 
@@ -63,7 +63,7 @@
 
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
-    function updateOutData(type: string = "") {
+    function updateOutData(type = "") {
         if (!type || type === "slide") {
             let noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
@@ -89,8 +89,8 @@
 
     // overlays
     $: overlayIds = out.overlays
-    let storedOverlayIds: string = ""
-    let storedOverlays: string = ""
+    let storedOverlayIds = ""
+    let storedOverlays = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []

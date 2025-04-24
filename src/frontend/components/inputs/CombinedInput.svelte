@@ -1,7 +1,7 @@
 <script lang="ts">
-    export let style: string = ""
-    export let title: string = ""
-    export let textWidth: number = 50 // %
+    export let style = ""
+    export let title = ""
+    export let textWidth = 50 // %
 
     $: customStyle = style + ";--text-width: " + textWidth + "%"
 </script>

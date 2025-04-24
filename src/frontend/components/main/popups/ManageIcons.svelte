@@ -7,7 +7,7 @@
     import { customIcons, customIconsColors } from "../../../values/customIcons"
     import type { Popups } from "../../../../types/Main"
 
-    let colors: boolean = true
+    let colors = true
 
     function click(icon: string) {
         let isDefault = customIcons[icon]

@@ -34,7 +34,7 @@
 
     export let mediaStyle: MediaStyle = {}
 
-    let videoTime: number = 0
+    let videoTime = 0
     let videoData = {
         paused: false,
         muted: true,
@@ -68,7 +68,7 @@
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}
     $: if (background || showId) backgroundChanged()
-    let playingInOutput: boolean = false
+    let playingInOutput = false
     function backgroundChanged() {
         // background = currentOutput?.out?.background || {}
         // || videoData.paused
@@ -96,12 +96,12 @@
 
     // $: if (background.path === showId && autoPause) videoData.paused = true
 
-    let autoPause: boolean = true
-    let hasLoaded: boolean = false
+    let autoPause = true
+    let hasLoaded = false
 
-    let previewControls: boolean = false
-    let manageSubtitles: boolean = false
-    let timeMarkersEnabled: boolean = false
+    let previewControls = false
+    let manageSubtitles = false
+    let timeMarkersEnabled = false
 
     function onLoad() {
         hasLoaded = true
@@ -164,7 +164,7 @@
     //     })
     // }
 
-    function playVideo(startAt: number = 0) {
+    function playVideo(startAt = 0) {
         if ($outLocked) return
 
         let videoType = mediaStyle.videoType || ""
@@ -190,7 +190,7 @@
 
     $: if (video && mediaStyle.speed) video.playbackRate = Number(mediaStyle.speed)
 
-    let edit: boolean = false
+    let edit = false
 
     // SUBTITLE
 
@@ -284,7 +284,7 @@
         // history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
-    let pausedByEdit: boolean = false
+    let pausedByEdit = false
     $: if (edit) {
         if (!videoData.paused) {
             videoData.paused = true
