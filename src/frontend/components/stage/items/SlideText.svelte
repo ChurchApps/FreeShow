@@ -10,6 +10,7 @@
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Main from "../../system/Main.svelte"
+    import { getStageTextLayoutOffset } from "../stage"
 
     export let currentSlide: OutSlide
     export let slideOffset: number = 0
@@ -27,26 +28,8 @@
 
     $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
 
-    // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
     $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
-    let customOffset: number | null = null
-    $: if (slideOffset > 0 && slideIndex !== null && showRef) {
-        let layoutOffset = slideIndex
-        let offsetFromCurrentExcludingDisabled = 0
-        while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
-            layoutOffset++
-            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
-        }
-        customOffset = layoutOffset
-    } else if (slideOffset < 0 && slideIndex !== null && showRef) {
-        let layoutOffset = slideIndex
-        let offsetFromCurrentExcludingDisabled = 0
-        while (offsetFromCurrentExcludingDisabled > slideOffset && layoutOffset >= 0) {
-            layoutOffset--
-            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
-        }
-        customOffset = layoutOffset
-    } else customOffset = null
+    $: customOffset = getStageTextLayoutOffset(showRef, slideOffset, slideIndex)
 
     $: slideId = (customOffset !== null || slideIndex !== null) && showRef ? showRef[(customOffset ?? slideIndex)!]?.id || null : null
     $: slide = currentSlide?.id === "temp" ? getTempSlides(slideOffset) : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null

@@ -1,5 +1,5 @@
 import type { Resolution } from "./Settings"
-import type { Line } from "./Show"
+import type { Condition, Line } from "./Show"
 
 export interface ActiveStage {
     id: null | string
@@ -35,6 +35,9 @@ export interface StageItem {
     type?: string // ItemType ++
     enabled?: boolean
     label?: string // sending translated label to stage
+
+    // special
+    conditions?: { [key: string]: Condition }
 
     // style
     style: string

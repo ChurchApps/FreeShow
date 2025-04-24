@@ -39,6 +39,7 @@ export function getLabelId(label: string, replaceNumbers: boolean = true) {
         .replaceAll(" ", "_") // " " -> _
         .replaceAll("-", "_") // - -> _
 
+    if (!get(groupNumbers)) replaceNumbers = false
     if (replaceNumbers) label = label.replace(/[0-9]/g, "")
 
     return label

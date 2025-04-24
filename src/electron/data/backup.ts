@@ -4,7 +4,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
+import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, readFileAsync, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { stores, updateDataPath } from "./store"
 import { wait } from "../utils/helpers"
 
@@ -35,8 +35,6 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
     else if (!customTriggers?.silent) openSystemFolder(backupFolder)
 
-    return
-
     /////
 
     async function syncStores(id: keyof typeof stores) {
@@ -48,7 +46,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
         let content: string = JSON.stringify(store.store)
         let p: string = path.resolve(backupFolder, name)
-        writeFile(p, content)
+        await writeFileAsync(p, content)
     }
 
     async function syncAllShows() {
@@ -62,7 +60,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
             let name = (show.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
-            let localContent = readFile(localShowPath)
+            let localContent = await readFileAsync(localShowPath)
             if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
         }
 
@@ -72,7 +70,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
         let content: string = JSON.stringify(allShows)
         let p: string = path.resolve(backupFolder, name)
-        writeFile(p, content)
+        await writeFileAsync(p, content)
     }
 }
 

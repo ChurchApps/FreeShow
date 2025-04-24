@@ -282,7 +282,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
     stage_item: ["delete"],
-    stage_text_item: ["dynamic_values", "SEPERATOR", "delete"],
+    stage_slide_text_item: ["conditions", "SEPERATOR", "delete"],
+    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "delete"],
 
     // EDIT
     edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)

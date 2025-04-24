@@ -1018,13 +1018,9 @@ export function getDynamicIds(noVariables: boolean = false) {
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
-    if (type === "stage" && get(currentWindow) === "output") {
-        let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
-        let outSlide = get(allOutputs)[outputId]?.out?.slide
-        showId = outSlide?.id
-        slideIndex = outSlide?.index ?? -1
-    } else if (type === "stage") {
-        let stageOutput = get(stageShows)[id]?.settings?.output
+    if (type === "stage") {
+        let stageLayoutId: string = get(currentWindow) === "output" ? Object.values(get(outputs))[0]?.stageOutput || id : id
+        let stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
         let outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
         let outSlide = get(outputs)[outputId]?.out?.slide
         showId = outSlide?.id
@@ -1076,6 +1072,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (id.includes("video_") && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
+
+        // set to normal output, if stage output, for video time
+        const stageLayout = get(outputs)[outputId].stageOutput
+        if (stageLayout) outputId = get(stageShows)[stageLayout]?.settings?.output || getActiveOutputs(get(allOutputs), false, true, true)[0]
 
         let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
 

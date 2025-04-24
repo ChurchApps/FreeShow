@@ -97,14 +97,31 @@ export function readFolderAsync(path: string): Promise<string[]> {
     )
 }
 
+export async function writeFileAsync(path: string, content: string | NodeJS.ArrayBufferView, id: string = ""): Promise<boolean> {
+    // don't know if it's necessary to check the file
+    if (await fileContentMatchesAsync(content, path)) return false
+
+    return new Promise((resolve) => {
+        fs.writeFile(path, content, (err) => {
+            actionComplete(err, "Error when writing to file")
+            if (err && id) sendToMain(ToMain.SHOW2, { error: "no_write", err, id })
+            resolve(!err)
+        })
+    })
+}
+
 export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
     // don't know if it's necessary to check the file
-    if (fileContentMatches(content, path)) return
+    if (fileContentMatches(content, path)) return false
 
-    fs.writeFile(path, content, (err) => {
-        actionComplete(err, "Error when writing to file")
-        if (err && id) sendToMain(ToMain.SHOW2, { error: "no_write", err, id })
-    })
+    try {
+        fs.writeFileSync(path, content)
+        return true
+    } catch (err) {
+        actionComplete(err as Error, "Error when writing to file")
+        if (id) sendToMain(ToMain.SHOW2, { error: "no_write", err: err as any, id })
+        return false
+    }
 }
 
 export function deleteFile(path: string) {
@@ -227,6 +244,11 @@ export function getTimePointString() {
     name += `_${("0" + date.getHours()).slice(-2)}-${("0" + date.getMinutes()).slice(-2)}`
 
     return name
+}
+
+export async function fileContentMatchesAsync(content: string | NodeJS.ArrayBufferView, path: string) {
+    if ((await doesPathExistAsync(path)) && content === (await readFileAsync(path))) return true
+    return false
 }
 
 export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {

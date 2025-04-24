@@ -8,7 +8,7 @@ import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
-import { activePopup, activeProject, alertMessage, dictionary, drawerTabsData, formatNewShow, groups, special, splitLines } from "../stores"
+import { activePopup, activeProject, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
 import { setTempShows } from "./importHelpers"
 
 export function getQuickExample() {
@@ -478,7 +478,8 @@ function findPatterns(sections: string[]) {
         if (length < 30 || linesSimilarity(sections[i])) return "tag"
         if (splitted[0].length < 8 && splitted[1].length > 20) {
             sections[i] = splitted.slice(1, splitted.length).join("\n")
-            let group = splitted[0].replace(/\d+/g, "").trim()
+            let group = splitted[0]
+            if (get(groupNumbers)) group = group.replace(/\d+/g, "").trim()
             return get(groups)[group.toLowerCase()] ? group.toLowerCase() : splitted[0]
         }
         if (a.count > 0) {

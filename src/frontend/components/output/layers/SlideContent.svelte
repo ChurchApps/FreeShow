@@ -28,9 +28,13 @@
     let current: any = {}
     let show: boolean = false
 
-    $: filteredItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, slideIndex: outSlide?.index }, $variables))
-
-    // WIP conditions does not remove items when filteredItems updates
+    let filteredItems: Item[] = []
+    $: filterItems(currentItems, $variables)
+    function filterItems(currentItems: Item[], _updater: any) {
+        const data = { outputId, slideIndex: outSlide?.index }
+        const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, data))
+        if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
+    }
 
     // do not update if only line has changed
     $: currentOutSlide = "{}"
@@ -119,7 +123,7 @@
 </script>
 
 <!-- Updating this with another "store" causes svelte transition bug! -->
-{#key show}
+{#key show || filteredItems}
     {#each filteredItems as item}
         {#if show}
             <SlideItemTransition

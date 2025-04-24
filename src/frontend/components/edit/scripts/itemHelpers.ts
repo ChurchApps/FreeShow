@@ -1,17 +1,17 @@
 import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
-import { activeEdit, activePage, activeShow, outputs, overlays, refreshEditSlide, showsCache, templates, timers, variables } from "../../../stores"
+import { activeEdit, activeShow, outputs, overlays, refreshEditSlide, showsCache, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
+import { getActiveOutputs } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
+import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
-import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
-import { getActiveOutputs } from "../../helpers/output"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
 
@@ -157,10 +157,11 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     refreshEditSlide.set(true)
 }
 
-export function shouldItemBeShown(item: Item, allItems: Item[], { outputId, slideIndex }: any, _updater: any) {
+export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, slideIndex, type }: any = { type: "default" }, _updater: any = null) {
     // check bindings
     if (item.bindings?.length && !item.bindings.includes(outputId)) return false
 
+    if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
     let itemsText = slideItems.reduce((value, item) => (value += getItemText(item)), "")
     // set dynamic values
@@ -170,12 +171,12 @@ export function shouldItemBeShown(item: Item, allItems: Item[], { outputId, slid
 
     // check conditions
     const condition = item.conditions?.showItem
-    if (!isConditionMet(condition, itemsText)) return false
+    if (!isConditionMet(condition, itemsText, type)) return false
 
     return true
 }
 
-function isConditionMet(condition: Condition | undefined, itemsText: string) {
+function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage") {
     if (!condition) return true
 
     const conditionValues: boolean[] = condition.values.map((cVal) => {
@@ -188,7 +189,7 @@ function isConditionMet(condition: Condition | undefined, itemsText: string) {
         let value = ""
         if (element === "text") value = itemsText
         else if (element === "variable") value = getVariableValue(elementId)
-        else if (element === "dynamicValue") value = getDynamicValue(elementId)
+        else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
 
         // only value data at the moment
         if (data !== "value") return true
@@ -231,7 +232,7 @@ function getVariableValue(variableId: string) {
     }
 }
 
-export function getDynamicValue(id: string) {
+export function getDynamicValue(id: string, type: "default" | "stage" = "default") {
     let outputId = getActiveOutputs()[0]
     let outSlide = get(outputs)[outputId]?.out?.slide
 
@@ -239,7 +240,7 @@ export function getDynamicValue(id: string) {
         showId: outSlide?.id || get(activeShow)?.id,
         layoutId: outSlide?.layout || _show().get("settings.activeLayout"),
         slideIndex: outSlide?.index ?? get(activeEdit).slide ?? -1,
-        type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show",
+        type: type === "stage" ? "stage" : get(activeEdit).type || "show",
         id: get(activeEdit).id,
     }
 
