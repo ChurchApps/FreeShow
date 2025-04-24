@@ -8,9 +8,9 @@ export function wait(ms: number) {
 }
 
 // wait until input value is true
-export async function waitUntilValueIsDefined(value: Function, intervalTime: number = 50, timeoutValue: number = 5000) {
-    return new Promise(async (resolve) => {
-        let currentValue = await value()
+export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
+    return new Promise((resolve) => {
+        let currentValue = value()
         if (currentValue) resolve(currentValue)
 
         const timeout = setTimeout(() => {
@@ -18,8 +18,8 @@ export async function waitUntilValueIsDefined(value: Function, intervalTime: num
             resolve(null)
         }, timeoutValue)
 
-        const interval = setInterval(async () => {
-            currentValue = await value()
+        const interval = setInterval(() => {
+            currentValue = value()
             if (!currentValue) return
 
             exit()

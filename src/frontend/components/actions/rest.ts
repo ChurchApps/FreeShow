@@ -57,8 +57,8 @@ export async function sendRestCommand(data: API_rest_command) {
         console.log(result)
 
         //return result;
-    } catch (error) {
-        console.error("Request failed:", error)
+    } catch (err) {
+        console.error("Request failed:", err)
         //throw error;
     }
 }

@@ -31,7 +31,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
                 return resolve(hits)
             })
             .catch((error) => {
-                console.log(error)
+                console.error(error)
                 return resolve([])
             })
     })

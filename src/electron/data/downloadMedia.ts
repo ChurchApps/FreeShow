@@ -8,13 +8,13 @@ import { dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
 export function downloadMedia(lessons: LessonsData[]) {
-    let replace = lessons.map(checkLesson)
+    const replace = lessons.map(checkLesson)
 
     sendToMain(ToMain.REPLACE_MEDIA_PATHS, replace.flat())
 }
 
 function checkLesson(lesson: LessonsData) {
-    let type = lesson.type || "lessons"
+    const type = lesson.type || "lessons"
 
     downloadCount = 0
     failedDownloads = 0
@@ -26,7 +26,7 @@ function checkLesson(lesson: LessonsData) {
 
     return lesson.files
         .map((file) => {
-            let filePath = getFilePath(file)
+            const filePath = getFilePath(file)
             if (!filePath) return
 
             return downloadFile(filePath, file, lesson.showId)
@@ -37,7 +37,7 @@ function checkLesson(lesson: LessonsData) {
         if (type === "planningcenter") return path.join(lessonFolder, file.name)
 
         if (file.streamUrl) file.fileType = "video/mp4"
-        let extension = getFileExtension(file.url, file.fileType)
+        const extension = getFileExtension(file.url, file.fileType)
         if (!extension) return
 
         let fileName = file.name
@@ -47,7 +47,7 @@ function checkLesson(lesson: LessonsData) {
     }
 }
 
-function getFileExtension(url: string, fileType: string = "") {
+function getFileExtension(url: string, fileType = "") {
     if (fileType.includes("mp4") || url.includes(".mp4")) return "mp4"
     if (fileType.includes("jpg") || fileType.includes("jpeg") || url.includes(".jpg") || url.includes(".jpeg")) return "jpg"
     if (fileType.includes("png") || url.includes(".png")) return "png"
@@ -56,7 +56,7 @@ function getFileExtension(url: string, fileType: string = "") {
 }
 
 function downloadFile(filePath: string, file: LessonFile, showId: string) {
-    let fileRef = { from: file.url, to: filePath, type: file.type }
+    const fileRef = { from: file.url, to: filePath, type: file.type }
 
     if (doesPathExist(filePath)) {
         // console.log(filePath + " exists!")
@@ -71,9 +71,9 @@ function downloadFile(filePath: string, file: LessonFile, showId: string) {
 }
 
 type DownloadFile = { path: string; file: LessonFile; showId: string }
-let downloadQueue: DownloadFile[] = []
+const downloadQueue: DownloadFile[] = []
 function addToDownloadQueue(file: DownloadFile) {
-    let alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
+    const alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
     if (alreadyInQueue) {
         downloadCount++
         return
@@ -83,16 +83,16 @@ function addToDownloadQueue(file: DownloadFile) {
     initDownload()
 }
 
-let currentlyDownloading: number = 0
+let currentlyDownloading = 0
 const maxAmount = 5
 const refillMargin = maxAmount * 0.6
-let waiting: boolean = false
+let waiting = false
 async function initDownload() {
     if (waiting) return
 
     if (!downloadQueue.length) {
         if (currentlyDownloading < 1 && downloadCount) {
-            console.log(`${downloadCount} file(s) downloaded!`)
+            console.info(`${downloadCount} file(s) downloaded!`)
             downloadCount = 0
             failedDownloads = 0
 
@@ -120,26 +120,26 @@ async function initDownload() {
     startDownload(downloadQueue.shift()!)
 }
 
-let downloadCount: number = 0
-let failedDownloads: number = 0
-let errorCount: number = 0
-async function startDownload(downloading: DownloadFile) {
+let downloadCount = 0
+let failedDownloads = 0
+let errorCount = 0
+function startDownload(downloading: DownloadFile) {
     // download the media
     const file = downloading.file
-    let url = file.url
+    const url = file.url
 
     if (!url) return next()
 
     const fileStream = fs.createWriteStream(downloading.path)
-    console.log(`Downloading lessons media: ${file.name}`)
-    console.log(url)
+    console.info(`Downloading lessons media: ${file.name}`)
+    console.info(url)
     https
         .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(downloading.path, () => {})
+                fs.unlink(downloading.path, (err) => console.error(err))
 
-                console.error(`Failed to download file, status code: ${res.statusCode}`)
+                console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 failedDownloads++
                 sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
@@ -151,14 +151,14 @@ async function startDownload(downloading: DownloadFile) {
 
             res.on("error", (err) => {
                 fileStream.close()
-                console.log(`Response error: ${err.message}`)
+                console.error(`Response error: ${err.message}`)
 
                 retry()
             })
 
-            fileStream.on("error", (err) => {
-                fs.unlink(downloading.path, () => {})
-                console.error(`File error: ${err.message}`)
+            fileStream.on("error", (err1) => {
+                fs.unlink(downloading.path, (err2) => console.error(err2))
+                console.error(`File error: ${err1.message}`)
 
                 retry()
             })
@@ -199,7 +199,7 @@ async function startDownload(downloading: DownloadFile) {
         next()
     }
 
-    let timeout = setTimeout(
+    const timeout = setTimeout(
         () => {
             fileStream.close()
             console.error(`File timed out: ${file.name}`)

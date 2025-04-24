@@ -6,7 +6,7 @@ import { processAudio } from "./processAudio"
 // let sampleRate = 48000 // Hz
 // let audioDelay = 0
 
-export async function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
+export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     switch (msg.channel) {
         case "CAPTURE":
             if (!msg.data?.buffer) {
@@ -22,7 +22,7 @@ export async function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
             decoder.write(Buffer.from(msg.data.buffer))
             break
         default:
-            console.log("Unknown AUDIO channel:", msg.channel)
+            console.error("Unknown AUDIO channel:", msg.channel)
             break
     }
 }
@@ -30,7 +30,7 @@ export async function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
 const ebmlDecoders = new Map<string, Decoder>()
 let previousDataId = ""
 let newIdTimeout: NodeJS.Timeout | null = null
-let timeoutId: string = ""
+let timeoutId = ""
 function createDecoder(id: string) {
     if (ebmlDecoders.has(id)) return ebmlDecoders.get(id)!
     previousDataId = id

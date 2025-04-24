@@ -48,7 +48,7 @@ export const outputOptions: BrowserWindowConstructorOptions = {
     skipTaskbar: true, // hide from taskbar
     hasShadow: false,
     enableLargerThanScreen: true, //
-    titleBarStyle: "default", //On mac, electron uses hiddenInset otherwise, which results in rounded corners.
+    titleBarStyle: "default", // on mac, electron uses hiddenInset otherwise, which results in rounded corners
 
     // fullscreen: true,
     // type: "toolbar", // hide from taskbar

@@ -1,11 +1,11 @@
 import axios from "axios"
 import type { LyricSearchResult } from "../../types/Main"
 
-const lyricsSearchCache = new Map()
+const lyricsSearchCache: Map<string, LyricSearchResult[]> = new Map()
 export class LyricSearch {
     static search = async (artist: string, title: string): Promise<LyricSearchResult[]> => {
         const cacheKey = artist + title
-        if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)
+        if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)!
 
         const results = await Promise.all([LyricSearch.searchGenius(artist, title), LyricSearch.searchHymnary(title), LyricSearch.searchLetras(title)])
         const joinedResults: LyricSearchResult[] = results.flat()
@@ -21,7 +21,7 @@ export class LyricSearch {
         return Promise.resolve("")
     }
 
-    //GENIUS
+    // GENIUS
     private static getGeniusClient = () => {
         const Genius = require("genius-lyrics")
         return new Genius.Client()
@@ -32,28 +32,28 @@ export class LyricSearch {
             const client = this.getGeniusClient()
             const songs = await client.songs.search(title + artist)
             if (songs.length > 3) songs.splice(3, songs.length - 3)
-            return songs.map((s: any) => LyricSearch.convertGenuisToResult(s, title + artist))
-        } catch (ex) {
-            console.log(ex)
+            return songs.map((song: any) => LyricSearch.convertGenuisToResult(song, title + artist))
+        } catch (err) {
+            console.error(err)
             return []
         }
     }
 
-    //Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
+    // Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
     private static getGenius = async (song: LyricSearchResult) => {
         try {
             const client = this.getGeniusClient()
-            const songs = await client.songs.search(song.originalQuery || "")
+            const searchedSongs = await client.songs.search(song.originalQuery || "")
             let result = ""
-            for (let i = 0; i < songs.length; i++) {
-                if (songs[i].id.toString() === song.key) {
-                    result = await songs[i].lyrics()
+            for (const searchedSong of searchedSongs) {
+                if (searchedSong.id.toString() === song.key) {
+                    result = await searchedSong.lyrics()
                     break
                 }
             }
             return result
         } catch (err) {
-            console.log(err)
+            console.error(err)
             return ""
         }
     }
@@ -64,23 +64,24 @@ export class LyricSearch {
             key: geniusResult.id.toString(),
             artist: geniusResult.artist.name,
             title: geniusResult.title,
-            originalQuery: originalQuery,
+            originalQuery,
         } as LyricSearchResult
     }
 
-    //HYMNARY
+    // HYMNARY
     private static searchHymnary = async (title: string) => {
         try {
             const url = `https://hymnary.org/search?qu=%20tuneTitle%3A${encodeURIComponent(title)}%20media%3Atext%20in%3Atexts&export=csv`
             const response = await axios.get(url)
             const csv = await response.data
-            const songs = LyricSearch.CSVToArray(csv, ",")
+            if (typeof csv !== "string") return []
+            const songs = LyricSearch.csvToArray(csv, ",")
             if (songs.length > 0) songs.splice(0, 1)
             for (let i = songs.length - 1; i >= 0; i--) if (songs[i].length < 7) songs.splice(i, 1)
             if (songs.length > 3) songs.splice(3, songs.length - 3)
-            return songs.map((s: any) => LyricSearch.convertHymnaryToResult(s, title))
-        } catch (ex) {
-            console.log(ex)
+            return songs.map((song: any) => LyricSearch.convertHymnaryToResult(song, title))
+        } catch (err) {
+            console.error(err)
             return []
         }
     }
@@ -89,6 +90,7 @@ export class LyricSearch {
         const url = `https://hymnary.org/text/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
+        if (typeof html !== "string") return ""
         return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
     }
 
@@ -98,20 +100,22 @@ export class LyricSearch {
             key: hymnaryResult[4],
             artist: hymnaryResult[6],
             title: hymnaryResult[0],
-            originalQuery: originalQuery,
+            originalQuery,
         } as LyricSearchResult
     }
 
-    //Letras
+    // Letras
     private static searchLetras = async (title: string) => {
         try {
             const url = `https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(title)}`
             const response = await axios.get(url)
-            const json = JSON.parse(response.data.replace("LetrasSug(", "").slice(0, -2))
-            const songs = json.response.docs.filter((d: any) => d.id.startsWith("mus"))
-            return songs.map((s: any) => LyricSearch.convertLetrasToResult(s, title))
-        } catch (ex) {
-            console.log(ex)
+            const data = response.data
+            if (typeof data !== "string") return []
+            const json = JSON.parse(data.replace("LetrasSug(", "").slice(0, -2))
+            const songs = json.response.docs.filter((a: any) => a.id.startsWith("mus"))
+            return songs.map((song: any) => LyricSearch.convertLetrasToResult(song, title))
+        } catch (err) {
+            console.error(err)
             return []
         }
     }
@@ -122,7 +126,7 @@ export class LyricSearch {
             key: `${letrasResult.dns}/${letrasResult.url}`,
             artist: letrasResult.art,
             title: letrasResult.txt,
-            originalQuery: originalQuery,
+            originalQuery,
         } as LyricSearchResult
     }
 
@@ -130,6 +134,7 @@ export class LyricSearch {
         const url = `https://www.letras.mus.br/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
+        if (typeof html !== "string") return ""
         return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
     }
 
@@ -149,7 +154,7 @@ export class LyricSearch {
             const newLines: string[] = []
             lines.pop() // remove source
             lines.forEach((line) => {
-                let contents = line.replace(/^\d+\s+/gm, "").trim() //remove leading numbers
+                const contents = line.replace(/^\d+\s+/gm, "").trim() // remove leading numbers
                 newLines.push(contents)
             })
             result = newLines.join("\n").trim()
@@ -161,15 +166,15 @@ export class LyricSearch {
     // This will parse a delimited string into an array of
     // arrays. The default delimiter is the comma, but this
     // can be overriden in the second argument.
-    static CSVToArray(strData: string, strDelimiter: string) {
+    static csvToArray(strData: string, strDelimiter: string) {
         strDelimiter = strDelimiter || ","
 
         const objPattern = new RegExp("(\\" + strDelimiter + "|\\r?\\n|\\r|^)" + '(?:"([^"]*(?:""[^"]*)*)"|' + '([^"\\' + strDelimiter + "\\r\\n]*))", "gi")
 
-        let arrData: string[][] = [[]]
+        const arrData: string[][] = [[]]
         let arrMatches: RegExpExecArray | null = null
         while ((arrMatches = objPattern.exec(strData))) {
-            let strMatchedDelimiter = arrMatches[1]
+            const strMatchedDelimiter = arrMatches[1]
             if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {
                 arrData.push([])
             }

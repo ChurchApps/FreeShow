@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron"
+import { BrowserWindow, type BrowserWindowConstructorOptions } from "electron"
 import { OUTPUT_CONSOLE, getMainWindow, isMac, loadWindowContent, toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
@@ -11,7 +11,7 @@ import { OutputHelper } from "../OutputHelper"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
-        let id: string = output.id || ""
+        const id: string = output.id || ""
 
         if (OutputHelper.getOutput(id)) {
             CaptureHelper.Lifecycle.stopCapture(id)
@@ -20,13 +20,13 @@ export class OutputLifecycle {
         }
 
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
-        //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
+        // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
         OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked })
-        //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
+        // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: output.bounds })
 
-        //OutputHelper.Bounds.updatePreviewBounds()
+        // OutputHelper.Bounds.updatePreviewBounds()
 
         if (output.stageOutput && !CaptureHelper.Transmitter.stageWindows.includes(id)) CaptureHelper.Transmitter.stageWindows.push(id)
 
@@ -66,7 +66,7 @@ export class OutputLifecycle {
         return window
     }*/
 
-    private static createOutputWindow(options: any, id: string, name: string, extra: any) {
+    private static createOutputWindow(options: BrowserWindowConstructorOptions, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
         if (options.alwaysOnTop === false) {
@@ -74,14 +74,14 @@ export class OutputLifecycle {
             if (!extra.boundsLocked) options.resizable = true
         }
 
-        if (OUTPUT_CONSOLE) options.webPreferences.devTools = true
-        let window: BrowserWindow | null = new BrowserWindow(options)
+        if (OUTPUT_CONSOLE) options.webPreferences!.devTools = true
+        const window: BrowserWindow | null = new BrowserWindow(options)
 
         // only win & linux
         // window.removeMenu() // hide menubar
         // window.setAutoHideMenuBar(true) // hide menubar
 
-        window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
+        window.setSkipTaskbar(!!options.skipTaskbar) // hide from taskbar
         if (isMac) window.minimize() // hide on mac
 
         window.once("show", () => {
@@ -99,7 +99,7 @@ export class OutputLifecycle {
     }
 
     static async removeOutput(id: string, reopen: Output | null = null) {
-        await CaptureHelper.Lifecycle.stopCapture(id)
+        CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
         const output = OutputHelper.getOutput(id)
@@ -121,8 +121,8 @@ export class OutputLifecycle {
             output.window.removeAllListeners("close")
             output.window.close()
             await wait(80)
-        } catch (error) {
-            console.log(error)
+        } catch (err) {
+            console.error(err)
         }
     }
 
@@ -144,7 +144,7 @@ export class OutputLifecycle {
         window.on("move", (e: Electron.Event) => {
             if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
-            let bounds = window.getBounds()
+            const bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
 
@@ -152,12 +152,12 @@ export class OutputLifecycle {
         window.on("resize", (e: Electron.Event) => {
             if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
-            let bounds = window.getBounds()
+            const bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
     }
 
     static async closeAllOutputs() {
-        await Promise.all(OutputHelper.getKeys().map((id) => this.removeOutput(id)))
+        await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
     }
 }

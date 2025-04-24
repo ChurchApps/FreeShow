@@ -39,7 +39,7 @@ export class CaptureLifecycle {
         async function captureFrame() {
             if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
-            let image = await output.captureOptions.window.webContents.capturePage()
+            const image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
 
             if (!output.captureOptions) return
@@ -60,7 +60,7 @@ export class CaptureLifecycle {
     // STOP
     static stopAllCaptures() {
         OutputHelper.getAllOutputs().forEach((output) => {
-            if (output[1].captureOptions) this.stopCapture(output[0])
+            if (output.captureOptions) this.stopCapture(output.id)
         })
     }
 
@@ -68,35 +68,30 @@ export class CaptureLifecycle {
         const output = OutputHelper.getOutput(id)
         const capture = output.captureOptions
 
-        return new Promise((resolve) => {
-            if (!capture) return resolve(true)
+        if (!capture) return
 
-            CaptureHelper.Transmitter.removeAllChannels(id)
-            const windowIsRemoved = !capture.window || capture.window.isDestroyed()
-            if (windowIsRemoved) return deleteAndResolve()
+        CaptureHelper.Transmitter.removeAllChannels(id)
+        const windowIsRemoved = !capture.window || capture.window.isDestroyed()
+        if (windowIsRemoved) {
+            delete output.captureOptions
+            return
+        }
 
-            console.log("Capture - stopping: " + id)
+        console.info("Capture - stopping: " + id)
 
-            endSubscription()
-            removeListeners()
-            deleteAndResolve()
+        endSubscription()
 
-            function endSubscription() {
-                if (!capture?.frameSubscription) return
+        // remove listeners
+        capture?.window.removeAllListeners()
+        capture?.window.webContents.removeAllListeners()
 
-                clearTimeout(capture.frameSubscription)
-                capture.frameSubscription = null
-            }
+        delete output.captureOptions
 
-            function removeListeners() {
-                capture?.window.removeAllListeners()
-                capture?.window.webContents.removeAllListeners()
-            }
+        function endSubscription() {
+            if (!capture?.frameSubscription) return
 
-            function deleteAndResolve() {
-                delete output.captureOptions
-                resolve(true)
-            }
-        })
+            clearTimeout(capture.frameSubscription)
+            capture.frameSubscription = null
+        }
     }
 }

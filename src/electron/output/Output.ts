@@ -5,7 +5,7 @@ export class Output {
     window!: BrowserWindow
     invisible?: boolean
     boundsLocked?: boolean
-    //previewWindow: BrowserWindow
+    // previewWindow: BrowserWindow
     captureOptions?: CaptureOptions
     /*
     previewBounds?: {

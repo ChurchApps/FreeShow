@@ -9,7 +9,7 @@ import { closeServers } from "../servers"
 import { stopApiListener } from "./api"
 import { stopMidi } from "./midi"
 
-export let dialogClose: boolean = false // is unsaved
+export let dialogClose = false // is unsaved
 export function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
@@ -22,7 +22,7 @@ export function saveAndClose() {
 }
 
 export async function exitApp() {
-    console.log("Closing app!")
+    console.info("Closing app!")
 
     dialogClose = false
 

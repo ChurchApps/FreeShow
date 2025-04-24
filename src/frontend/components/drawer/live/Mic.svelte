@@ -82,7 +82,7 @@
             .getUserMedia({ audio: { deviceId: { exact: mic.id } } })
             .then(handleSuccess)
             .catch((err) => {
-                console.log(err)
+                console.error(err)
                 if (err.name === "NotReadableError") {
                     sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }

@@ -28,8 +28,8 @@ export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]e
 if (!isProd) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
 // development settings
-export const OUTPUT_CONSOLE: boolean = false
-const RECORD_STARTUP_TIME: boolean = false
+export const OUTPUT_CONSOLE = false
+const RECORD_STARTUP_TIME = false
 
 // get os platform
 export const isWindows: boolean = process.platform === "win32"
@@ -41,8 +41,8 @@ config.set("loaded", true)
 if (!config.get("loaded")) console.error("Could not get stored data!")
 
 // info
-console.log("Starting FreeShow...")
-if (!isProd) console.log("Building app! (This may take 20-90 seconds)")
+console.info("Starting FreeShow...")
+if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 
 // set application menu
 setGlobalMenu()
@@ -54,7 +54,7 @@ if (config.get("disableHardwareAcceleration") !== false) {
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
     app.disableHardwareAcceleration()
 } else {
-    console.log("Starting with Hardware Acceleration")
+    console.info("Starting with Hardware Acceleration")
 }
 
 // start when ready
@@ -86,10 +86,10 @@ const MIN_WINDOW_SIZE = 200
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")
-    let bounds: Rectangle = config.get("bounds")
-    let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
+    const bounds: Rectangle = config.get("bounds")
+    const screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
-    let options: Electron.BrowserWindowConstructorOptions = {
+    const options: Electron.BrowserWindowConstructorOptions = {
         width: getWindowBounds("width"),
         height: getWindowBounds("height"),
         frame: !isProd || !isWindows,
@@ -125,7 +125,7 @@ function createMain() {
     }
 }
 
-let isLoaded: boolean = false
+let isLoaded = false
 function mainWindowLoaded() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
     isLoaded = true
@@ -140,7 +140,7 @@ function mainWindowLoaded() {
 }
 
 export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
-    let mainOutput = type === null
+    const mainOutput = type === null
 
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
@@ -183,11 +183,11 @@ function setMainListeners() {
     mainWindow.on("close", callClose)
     mainWindow.once("closed", exitApp)
 
-    mainWindow.webContents.on("context-menu", (_, p) => spellcheck(p))
+    mainWindow.webContents.on("context-menu", (_, a) => spellcheck(a))
 }
 
 export function maximizeMain() {
-    let isMaximized: boolean = !!mainWindow?.isMaximized()
+    const isMaximized = !!mainWindow?.isMaximized()
     sendMain(Main.MAXIMIZED, !isMaximized)
 
     if (isMaximized) return mainWindow?.unmaximize()
@@ -219,7 +219,7 @@ app.on("will-quit", () => {
 })
 
 app.on("web-contents-created", (_e, contents) => {
-    contents.on("will-attach-webview", (_event, webPreferences, _params) => {
+    contents.on("will-attach-webview", (_event, webPreferences) => {
         // remove unused preload scripts
         delete webPreferences.preload
     })
@@ -227,13 +227,13 @@ app.on("web-contents-created", (_e, contents) => {
 
 // handle graceful shutdown on SIGINT (e.g. Ctrl+C)
 process.on("SIGINT", () => {
-    console.log("Received SIGINT, closing app...")
+    console.info("Received SIGINT, closing app...")
     saveAndClose()
 })
 
 // handle graceful shutdown on SIGTERM (e.g. systemd)
 process.on("SIGTERM", () => {
-    console.log("Received SIGTERM, closing app...")
+    console.info("Received SIGTERM, closing app...")
     saveAndClose()
 })
 

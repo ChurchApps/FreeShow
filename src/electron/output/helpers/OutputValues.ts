@@ -11,7 +11,7 @@ const setValues = {
 
         setValues.capture({ key: "ndi", value }, window, id)
     },
-    capture: async (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
+    capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
     },
@@ -29,7 +29,7 @@ const setValues = {
 }
 
 export class OutputValues {
-    static async updateValue({ id, key, value }: { id: string; key: string; value: boolean | { key: string; value: boolean } }) {
+    static updateValue({ id, key, value }: { id: string; key: string; value: boolean | { key: string; value: boolean } }) {
         const output = OutputHelper.getOutput(id)
         if (!(key in setValues)) return
 

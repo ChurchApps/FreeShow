@@ -51,7 +51,7 @@ export function oscToAPI(data: any) {
         let action = data.action.slice(1)
         if (!action.includes("/")) return { ...data, action }
 
-        console.log(err)
+        console.error(err)
         return data
     }
 

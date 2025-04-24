@@ -21,7 +21,7 @@ export function mainWindowInitialize() {
 }
 
 export function openDevTools(window: BrowserWindow) {
-    console.log('Opening DevTools... ("[ERROR:CONSOLE] Request Autofill" can be ignored)')
+    console.info('Opening DevTools... ("[ERROR:CONSOLE] Request Autofill" can be ignored)')
     window.webContents.openDevTools()
     // ERROR:CONSOLE(1)] "Request Autofill.enable failed. - can be ignored:
     // https://github.com/electron/electron/issues/41614
@@ -37,7 +37,7 @@ export function waitForBundle() {
     return new Promise((resolve) => {
         const interval = setInterval(() => {
             if (doesPathExist(BUNDLE_PATH)) {
-                console.log("Main bundle created! Loading interface...")
+                console.info("Main bundle created! Loading interface...")
                 clearInterval(interval)
                 resolve(true)
             }

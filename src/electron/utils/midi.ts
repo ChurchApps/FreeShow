@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-unsafe-call: 0 */
+
 import JZZ from "jzz"
 import { sendToMain } from "../IPC/main"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -14,18 +16,16 @@ import { ToMain } from "../../types/IPC/ToMain"
 //     virtualDevices.output?.close()
 // }
 
+type MidiValues = { name: string }[]
+
 // https://jazz-soft.net/doc/JZZ/jzz.html#info
 // https://jazz-soft.net/doc/JZZ/midiin.html#info
 export function getMidiOutputs(): { name: string }[] {
-    return JZZ()
-        .info()
-        .outputs.map((a: any) => ({ name: a.name }))
+    return (JZZ().info().outputs as MidiValues).map((a) => ({ name: a.name }))
 }
 
 export function getMidiInputs(): { name: string }[] {
-    return JZZ()
-        .info()
-        .inputs.map((a: any) => ({ name: a.name }))
+    return (JZZ().info().inputs as MidiValues).map((a: any) => ({ name: a.name }))
 }
 
 let openedOutputPorts: { [key: string]: any } = {}
@@ -67,17 +67,17 @@ export async function receiveMidi(data: any) {
 
     try {
         // connect to the input and listen for notes!
-        let port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
+        const port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
         console.info("LISTENING FOR MIDI SIGNAL:", data)
 
         if (port.name()) openedPorts[data.id] = port
 
-        port.connect((msg: any) => {
+        await port.connect((msg: any) => {
             if (!msg.toString().includes("Note")) return
 
             // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
-            let type: "noteon" | "noteoff" = msg.toString().includes("Off") ? "noteoff" : "noteon"
-            let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
+            const type: "noteon" | "noteoff" = msg.toString().includes("Off") ? "noteoff" : "noteon"
+            const values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
             sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type })
         })
     } catch (err) {
@@ -99,7 +99,7 @@ function closeMidiOutPorts() {
     openedOutputPorts = {}
 }
 
-export function closeMidiInPorts(id: string = "") {
+export function closeMidiInPorts(id = "") {
     if (id && openedPorts[id]) {
         openedPorts[id].close()
         delete openedPorts[id]
