@@ -84,7 +84,7 @@
     .line {
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         z-index: 1000;
         background-color: var(--secondary);
     }
