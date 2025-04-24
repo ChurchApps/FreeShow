@@ -26,10 +26,11 @@
         {/if}
     {/each}
     <div class="rotate" style="width: {8 / ratio}px;--line-width: {3 / ratio}px;" class:active></div>
-    <div class="radius" style="width: {6 / ratio}px;inset-inline-start: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
+    <div class="radius" style="width: {6 / ratio}px;left: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
 </section>
 
 <style>
+/* stylelint-disable csstools/use-logical */
     .square {
         position: absolute;
         transform: translate(-50%, -50%);
@@ -62,16 +63,16 @@
     .nw,
     .sw,
     .w {
-        inset-inline-start: 0;
+        left: 0;
     }
     .n,
     .s {
-        inset-inline-start: 50%;
+        left: 50%;
     }
     .ne,
     .e,
     .se {
-        inset-inline-start: 100%;
+        left: 100%;
     }
 
     .line {
@@ -96,28 +97,28 @@
 
     .nl {
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         width: 100%;
         /* height: lineWidth; */
         transform: translateY(-50%);
     }
     .el {
         top: 0;
-        inset-inline-start: 100%;
+        left: 100%;
         /* width: lineWidth; */
         height: 100%;
         transform: translateX(-50%);
     }
     .sl {
         top: 100%;
-        inset-inline-start: 0;
+        left: 0;
         /* height: lineWidth; */
         width: 100%;
         transform: translateY(-50%);
     }
     .wl {
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         /* width: lineWidth; */
         height: 100%;
         transform: translateX(-50%);
@@ -138,7 +139,7 @@
 
     .rotate {
         position: absolute;
-        inset-inline-start: 50%;
+        left: 50%;
         top: -45px;
         transform: translate(-50%, -50%);
 
@@ -159,7 +160,7 @@
         content: "";
 
         position: absolute;
-        inset-inline-start: 50%;
+        left: 50%;
         bottom: 0;
         transform: translate(-50%, 100%);
 
@@ -173,7 +174,7 @@
 
     .radius {
         position: absolute;
-        inset-inline-start: 20px;
+        left: 20px;
         top: 0;
 
         background-color: rgb(255 255 255 / 0.8);
@@ -188,4 +189,5 @@
     .radius.active {
         opacity: 1;
     }
+/* stylelint-enable csstools/use-logical */
 </style>
