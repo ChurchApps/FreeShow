@@ -23,7 +23,7 @@
     let currentStyle = ""
     let currentTextStyle = ""
     let flip = false
-    async function findElementPos({ pre, query, timeout = 10 }: { pre?: Function; query: string; timeout?: number }) {
+    async function findElementPos({ pre, query, timeout = 10 }: { pre?: () => void; query: string; timeout?: number }) {
         if (pre) pre()
         let timeIndex = stepIndex
         await wait(timeout)

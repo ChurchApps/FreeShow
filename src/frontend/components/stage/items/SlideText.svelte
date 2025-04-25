@@ -5,7 +5,6 @@
     import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import { getLayoutRef } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"

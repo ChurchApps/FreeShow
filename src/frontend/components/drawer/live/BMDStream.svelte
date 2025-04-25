@@ -24,7 +24,7 @@
     })
 
     $: if (frame) setCanvas()
-    async function setCanvas() {
+    function setCanvas() {
         if (!canvas) return
 
         let ctx = canvas.getContext("2d")

@@ -34,7 +34,7 @@
     $: playlist = active && $audioPlaylists[active]
 
     $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
-    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path! || "" : ""
+    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
         active === "all"

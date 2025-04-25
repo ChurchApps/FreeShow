@@ -116,7 +116,7 @@
         if (typeof bookId === "number") bookId = bookIds[bookId] || "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
-        let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
+        let objectId = Object.values($scriptures).find((a) => a.id === bibleId)?.[0] || ""
         if (load === "books" && $scriptures[objectId]?.books2) {
             // load books cache
             data = $scriptures[objectId].books2
@@ -158,14 +158,14 @@
                 versesList[bibleId] = data
                 break
             case "versesText":
-                verses[bibleId] = convertVerses(data, index)
+                verses[bibleId] = convertVerses(data)
                 bibles[index].verses = verses[bibleId]
                 // WIP verses[id] =
                 break
         }
     }
 
-    function convertVerses(data: VerseText[], _index = 0): { [key: string]: string } {
+    function convertVerses(data: VerseText[]): { [key: string]: string } {
         let verses: any = {}
         data.forEach((d: any, i: number) => {
             verses[i + 1] = d.content
@@ -198,7 +198,7 @@
         bibles[currentIndex] = content
 
         let id = data.content?.[0] || data.id
-        books[id] = content.books 
+        books[id] = content.books
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
@@ -284,7 +284,7 @@
     }
 
     function getVerses() {
-        bibles.forEach(async (bible, i) => {
+        bibles.forEach((bible, i) => {
             let id: string = getBibleId(i, bible)
             if (!verses[id]) return
 

@@ -21,7 +21,7 @@
 
     let cachedBibles = ""
     $: if (importType === "api") fetchBibles()
-    async function fetchBibles() {
+    function fetchBibles() {
         // read cache
         if (cachedBibles) {
             bibles = JSON.parse(cachedBibles)

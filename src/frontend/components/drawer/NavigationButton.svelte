@@ -36,7 +36,7 @@
     }
     const setName = <T,>(a: T, { name, id }, nameKey = "name"): T => {
         // api scriptures
-        if (!a[id]) id = Object.entries(a as any).find(([_, a]: any) => a.id === id)?.[0]
+        if (!a[id]) id = Object.values(a as any).find((a: any) => a.id === id)?.[0]
         if (!a[id]) return a
 
         if (a[id].default) delete a[id].default

@@ -205,7 +205,7 @@
     let video: HTMLVideoElement | undefined
     // previousPath is probably not needed as component is unmounted on new path
     let previousPath = id
-    async function analyseVideo() {
+    function analyseVideo() {
         if (fadingOut || $playingVideos[0]?.id === id) return
         if (previousPath && previousPath !== id) {
             AudioAnalyser.detach(previousPath)

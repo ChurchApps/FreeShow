@@ -275,7 +275,7 @@
     $: if (isLessons && $lessonsLoaded) startLazyLoader()
 
     let lazyLoading = false
-    async function startLazyLoader() {
+    function startLazyLoader() {
         if (!layoutSlides || timeout) return
 
         if (lazyLoader >= layoutSlides.length) {

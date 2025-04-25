@@ -329,7 +329,7 @@
             let input = currentEdit[i]
             if (!input) return
 
-            let newValue: any = Object.entries(closedVal).find(([styleId, _value]) => {
+            let newValue: any = Object.keys(closedVal).find((styleId) => {
                 let dataId: string = styleId.split("_")[0]
                 let key: string | undefined = styleId.split("_")[1]
                 let valueIndex: string | undefined = styleId.split("_")[2]

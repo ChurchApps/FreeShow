@@ -7,7 +7,6 @@
     import { refreshOut, setOutput } from "../helpers/output"
     import { getLayoutRef } from "../helpers/show"
     import { updateOut } from "../helpers/showActions"
-    import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
 
     export let currentOutput: Output

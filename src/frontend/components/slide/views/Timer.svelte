@@ -32,7 +32,7 @@
     $: itemColor = getStyles(item?.style)?.color || "#ffffff"
 
     $: overflow = getTimerOverflow(currentTime)
-    $: negative = timer?.start! > timer?.end! || currentTime < 0
+    $: negative = (timer?.start || 0) > (timer?.end || 0) || currentTime < 0
     function getTimerOverflow(time) {
         if (!timer.overflow) return false
 

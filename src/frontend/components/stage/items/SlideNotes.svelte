@@ -2,7 +2,6 @@
     import type { OutSlide } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { getLayoutRef } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
     import { getStageTextLayoutOffset } from "../stage"
 
     export let currentSlide: OutSlide

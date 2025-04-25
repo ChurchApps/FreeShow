@@ -7,7 +7,6 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { addToPos } from "../../helpers/mover"
-    import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"

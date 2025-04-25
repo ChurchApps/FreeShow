@@ -23,7 +23,7 @@
         }, hoverTimeout)
     }
 
-    function leave(_e: any) {
+    function leave() {
         if (!active || !selectChildren) return
 
         count = Math.max(0, count - 1)

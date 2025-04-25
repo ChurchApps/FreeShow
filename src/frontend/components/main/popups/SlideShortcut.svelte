@@ -2,7 +2,6 @@
     import { onMount } from "svelte"
     import { activePopup, dictionary, midiIn, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"

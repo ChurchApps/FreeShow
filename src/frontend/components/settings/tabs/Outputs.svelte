@@ -35,7 +35,7 @@
     let reverted: string[] = []
 
     function updateOutput(key: string, value: any, outputId = "") {
-        if (!outputId) outputId = currentOutput?.id!
+        if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
 
         // auto revert special values

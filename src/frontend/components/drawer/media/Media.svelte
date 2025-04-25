@@ -54,7 +54,7 @@
 
     let specialTabs = ["online", "screens", "cameras"]
     let notFolders = ["all", ...specialTabs]
-    $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
+    $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
     $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name

@@ -109,7 +109,7 @@
         let showMedia = $showsCache[showId]?.media
         let folders = Object.values($audioFolders).map((a) => a.path!)
 
-        audioIds.forEach(async (audioId) => {
+        audioIds.forEach((audioId) => {
             let audio = showMedia[audioId]
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)

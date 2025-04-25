@@ -135,7 +135,7 @@
     }
 
     let video: HTMLVideoElement | undefined
-    async function onPlay() {
+    function onPlay() {
         // autoPause = false
         if (hasLoaded) {
             if (!playingInOutput) videoTime = 0
