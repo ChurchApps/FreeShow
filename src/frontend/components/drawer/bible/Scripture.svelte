@@ -262,9 +262,13 @@
             if (!chapters[id]) return
 
             if (bible.api) {
-                chapters[id].forEach((c) => {
-                    if (c.keyName === chapterId) bibles[i].chapter = c.number
-                })
+                if (typeof chapterId === "number") {
+                    bibles[i].chapter = (chapterId + 1).toString()
+                } else {
+                    chapters[id].forEach((c) => {
+                        if (c.keyName === chapterId) bibles[i].chapter = c.number
+                    })
+                }
 
                 verses[id] = {}
                 await loadAPIBible(id, "verses", i)
@@ -706,11 +710,14 @@
         if (!currentVerses.length) {
             return []
         } else if (currentVerses.length === 1 && verses[firstBibleId]) {
-            if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
-                let msg = $dictionary.toast?.verse_undefined || ""
-                msg = msg.replace("{}", verse)
-                if (verse.length < 3) newToast(msg)
-            }
+            // allow verses to load
+            setTimeout(() => {
+                if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
+                    let msg = $dictionary.toast?.verse_undefined || ""
+                    msg = msg.replace("{}", verse)
+                    if (verse.length < 3) newToast(msg)
+                }
+            }, 30)
         }
 
         // if (!autoComplete)

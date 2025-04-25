@@ -13,6 +13,7 @@
     export let mirror = false
     export let showMirror = false
     export let disableStyle = false
+    export let isStage = false
     export let checkered = false
     export let border = false
     export let align = ""
@@ -27,8 +28,8 @@
     export let customZoom = 1
     export let cropping: Cropping | undefined = { top: 0, right: 0, bottom: 0, left: 0 }
     export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, outputId)
-    $: resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
-    $: outputRes = getOutputResolution(outputId, $outputs)
+    $: if (!isStage) resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
+    $: outputRes = isStage ? resolution : getOutputResolution(outputId, $outputs)
 
     let elemWidth = 0
     let elemHeight = 0
@@ -88,7 +89,8 @@
                 class="zoom"
                 style="zoom: {ratio};{drawZoom === 1
                     ? ''
-                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `inset-inline-start: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
+                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` +
+                      ($draw ? `inset-inline-start: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
             >
                 <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / 1920 - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / 1080 - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
                 <slot {ratio} />

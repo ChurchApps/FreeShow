@@ -11,6 +11,8 @@ export function importProject(files: { content: string; name?: string; extension
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.values(get(folders)).find((folder) => folder.name === parentFolder)?.[0] || "/"
+        let projectId = project.id || ""
+        delete project.id
 
         // add overlays
         if (overlays) {
@@ -40,10 +42,10 @@ export function importProject(files: { content: string; name?: string; extension
             newShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
 
-        history({ id: "SHOWS", newData: { data: newShows } })
+        history({ id: "SHOWS", newData: { data: newShows, projectImport: true } })
 
         // create project
-        history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
+        history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
     })
 
     alertMessage.set("actions.imported")
