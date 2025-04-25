@@ -56,14 +56,14 @@ function getMidiInfo(values: { note?: number; velocity?: number; channel?: numbe
 }
 
 export const formatData = {
-    osc: (values: EmitterTemplateValue[]) => "/" + Object.values(valueArrayToObject(values, true)).join("/"),
+    osc: (values: EmitterTemplateValue[], data: string = "") => `/${Object.values(valueArrayToObject(values, true)).join("/")}${data ? ` ${data}` : ""}`,
     http: (values: EmitterTemplateValue[]) => JSON.stringify(valueArrayToObject(values)),
     midi: (values: EmitterTemplateValue[]) => getMidiInfo(typeof values[0]?.value === "object" ? values[0].value : {}),
 }
 
 const EMIT_DATA = {
-    osc: (signal: OSC_SIGNAL, values: EmitterTemplateValue[]) => {
-        let OSC_DATA = formatData.osc(values)
+    osc: (signal: OSC_SIGNAL, values: EmitterTemplateValue[], data: string) => {
+        let OSC_DATA = formatData.osc(values, data)
         emitOSC(signal, OSC_DATA)
     },
     http: (signal: API_rest_command, values: EmitterTemplateValue[]) => {
@@ -102,5 +102,5 @@ export function emitData(data: API_emitter) {
     let signal: any = emitter.signal || {}
     if (signal.value) signal = signal.value
 
-    EMIT_DATA[emitter.type](signal, values)
+    EMIT_DATA[emitter.type](signal, values, data.data || "")
 }

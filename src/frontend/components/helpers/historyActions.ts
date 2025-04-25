@@ -245,6 +245,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let replace: boolean = obj.newData?.replace === true
             let deleting: boolean = !obj.newData?.data?.length
+            let projectImport: boolean = obj.newData?.projectImport === true
             if (obj.oldData?.replace) replace = deleting = true
 
             if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
@@ -301,8 +302,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     } else {
                         if (!show) return
 
-                        // return if old show is modified after new show
-                        if (initializing && get(shows)[id]?.timestamps?.modified && show.timestamps?.modified && get(shows)[id].timestamps.modified! > show.timestamps.modified) return
+                        // return if old show is modified after new show & not importing project
+                        if (initializing && !projectImport && get(shows)[id]?.timestamps?.modified && show.timestamps?.modified && get(shows)[id].timestamps.modified! > show.timestamps.modified) return
 
                         if (replace) {
                             if (initializing) obj.oldData.data[i].show = clone(a[id])

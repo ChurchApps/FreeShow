@@ -399,6 +399,7 @@ export interface Emitter {
     type: EmitterTypes
     signal?: any
     templates?: { [key: string]: EmitterTemplate }
+    data?: string // custom (OSC) data
 }
 
 //

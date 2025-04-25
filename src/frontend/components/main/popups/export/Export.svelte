@@ -89,7 +89,7 @@
             }
 
             loading = true
-            await exportProject(project)
+            await exportProject(project, $activeProject || "")
         } else if (exportFormat === "image") {
             // only first selected show
             loading = true

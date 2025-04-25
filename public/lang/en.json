@@ -1085,7 +1085,8 @@
         "signal": "Signal",
         "message_template": "Message template",
         "message_templates": "Message templates",
-        "inputs": "Inputs"
+        "inputs": "Inputs",
+        "data": "Data"
     },
     "draw": {
         "focus": "Focus",

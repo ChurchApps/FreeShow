@@ -686,7 +686,7 @@ const actions = {
         if (obj.contextElem?.classList.value.includes("project")) {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             let projectId: string = obj.sel?.data[0]?.id || get(activeProject)
-            exportProject(get(projects)[projectId])
+            exportProject(get(projects)[projectId], projectId)
 
             return
         }

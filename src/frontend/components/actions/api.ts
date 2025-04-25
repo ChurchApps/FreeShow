@@ -154,6 +154,7 @@ export type API_emitter = {
     emitter: string
     template?: string
     templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } }[]
+    data?: string // custom (OSC) data
 }
 
 // ADD

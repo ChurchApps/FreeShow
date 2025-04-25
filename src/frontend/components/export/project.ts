@@ -12,7 +12,7 @@ import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
-export async function exportProject(project: Project) {
+export async function exportProject(project: Project, projectId: string) {
     let shows: Shows = {}
     let files: string[] = []
     let overlays: Overlays = {}
@@ -20,6 +20,7 @@ export async function exportProject(project: Project) {
     // get project
     project = clone(project)
     let parentFolder = get(folders)[project.parent]?.name || ""
+    if (projectId) project.id = projectId
     project.parent = "/" // place on root
 
     // project items
