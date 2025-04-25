@@ -1,15 +1,15 @@
 <script lang="ts">
-    export let id: string = ""
-    export let type: string = "text"
+    export let id = ""
+    export let type = "text"
     export let value: string
-    export let placeholder: string = ""
-    export let style: string = ""
+    export let placeholder = ""
+    export let style = ""
 
-    export let center: boolean = false
-    export let light: boolean = false
-    export let disabled: boolean = false
-    export let autofocus: boolean = false
-    export let autoselect: boolean = false
+    export let center = false
+    export let light = false
+    export let disabled = false
+    export let autofocus = false
+    export let autoselect = false
 
     function select(elem) {
         if (autoselect) elem.select()

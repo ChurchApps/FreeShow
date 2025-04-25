@@ -3,7 +3,6 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
     import { getFilters } from "../../helpers/style"
     import { addFilterString } from "../scripts/textStyle"
     import { slideFilters } from "../values/filters"

@@ -156,12 +156,12 @@
     }
     .right.row :global(.border) {
         border: none;
-        border-right: 2px solid var(--primary-lighter);
+        border-inline-end: 2px solid var(--primary-lighter);
         min-width: 50%;
     }
 
     .right.row :global(.color .picker) {
-        right: -1px;
-        left: unset;
+        inset-inline-end: -1px;
+        inset-inline-start: unset;
     }
 </style>

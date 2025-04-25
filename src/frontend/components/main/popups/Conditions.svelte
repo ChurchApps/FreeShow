@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Condition } from "../../../../types/Show"
-    import { activeEdit, activeShow, dictionary, overlays, popupData, showsCache, templates, variables } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -23,8 +23,13 @@
     let showId = $activeShow?.id || ""
     let ref = getLayoutRef(showId)
     let slideId = ref[edit.slide || 0]?.id || ""
-    let itemIndex = edit.items[0]
-    let slide = edit.type === "overlay" ? $overlays[edit.id!] : edit.type === "template" ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
+
+    const isStage = !!obj.contextElem?.classList.contains("stage_item")
+    const isOverlay = edit.type === "overlay"
+    const isTemplate = edit.type === "template"
+
+    let itemIndex = (isStage ? $activeStage : edit).items[0]
+    let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
     let item = slide?.items[itemIndex]
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
@@ -111,16 +116,26 @@
     }
 
     function updateItem() {
+        if (obj.contextElem?.classList.contains("stage_item")) {
+            const stageId = $activeStage.id || ""
+            stageShows.update((a) => {
+                if (!a[stageId]?.items[itemIndex]) return a
+                a[stageId].items[itemIndex].conditions = conditions
+                return a
+            })
+            return
+        }
+
         if (!obj.contextElem?.classList.contains("editItem")) return
         if (itemIndex === undefined) return
 
-        if (edit.type === "overlay") {
+        if (isOverlay) {
             overlays.update((a) => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions
                 return a
             })
-        } else if (edit.type === "template") {
+        } else if (isTemplate) {
             templates.update((a) => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions

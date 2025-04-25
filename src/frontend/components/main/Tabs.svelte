@@ -10,7 +10,7 @@
     export let active: string
     export let labels: boolean = $labelsDisabled ? false : true
 
-    let manuallyChanged: boolean = false
+    let manuallyChanged = false
 
     $: if ($openToolsTab) openTab()
     function openTab() {
@@ -24,7 +24,7 @@
     }
 
     $: firstOverflowIndex = Object.values(tabs).findIndex((a) => a.overflow)
-    export let overflowHidden: boolean = true
+    export let overflowHidden = true
 
     onMount(() => {
         // show overflow if active is in overflow
@@ -52,7 +52,7 @@
                 <Icon id={tab.icon} />
                 {#if labels}
                     {#key tab.name}
-                        <span style="margin-left: 0.5em;">
+                        <span style="margin-inline-start: 0.5em;">
                             <T id={tab.name} />
                         </span>
                     {/key}

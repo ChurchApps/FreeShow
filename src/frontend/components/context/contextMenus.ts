@@ -219,7 +219,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     template_card_default: ["duplicate", "delete"],
     effect_card: ["edit"],
-    player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
+    player_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "effects_library_add", "favourite", "SEPERATOR", "system_open"],
     audio_effect_button: ["rename", "remove", "SEPERATOR", "system_open"],
     audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
@@ -282,7 +282,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
     stage_item: ["delete"],
-    stage_text_item: ["dynamic_values", "SEPERATOR", "delete"],
+    stage_slide_text_item: ["conditions", "SEPERATOR", "delete"],
+    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "delete"],
 
     // EDIT
     edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)

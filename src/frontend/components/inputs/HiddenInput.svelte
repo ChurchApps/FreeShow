@@ -2,17 +2,17 @@
     import { createEventDispatcher } from "svelte"
     import { activeEdit, activePage, activeProject, activeRename, dictionary, projectView } from "../../stores"
 
-    export let value: string = ""
-    export let style: string = ""
+    export let value = ""
+    export let style = ""
     export let id: string
-    export let allowEmpty: boolean = true
-    export let allowEdit: boolean = true
+    export let allowEmpty = true
+    export let allowEdit = true
 
     $: value = edit ? value.replaceAll("  ", " ") : value.trim()
 
     let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
     export let edit: boolean | string = false
-    let prevVal: string = ""
+    let prevVal = ""
     $: if (!edit && !value.length && prevVal.length) value = prevVal
     const click = (e: any) => {
         if (e.target === nameElem) {
@@ -127,7 +127,7 @@
     p {
         margin: 5px;
         width: 100%;
-        text-align: left;
+        text-align: start;
         /* cursor: text; */
     }
     input {

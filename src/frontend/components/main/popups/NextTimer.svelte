@@ -16,7 +16,7 @@
     let layoutRef = getLayoutRef()
     let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
-    let allSlides: boolean = !$popupData.indexes?.length
+    let allSlides = !$popupData.indexes?.length
 
     onMount(() => {
         popupData.set({})
@@ -50,8 +50,8 @@
     }
 
     // total time
-    let appliedToSlides: number = 0
-    let totalTime: number = 0
+    let appliedToSlides = 0
+    let totalTime = 0
     function getTotalTime() {
         totalTime = allActiveSlides.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
 
@@ -90,7 +90,7 @@
                 <p style="flex: initial;min-width: auto;width: auto;padding: 0;">
                     <T id="actions.to_all" />
 
-                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-left: 6px;">
+                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-inline-start: 6px;">
                         {#if newTime}({getTime(newTime)}){/if}
                     </span>
                 </p>

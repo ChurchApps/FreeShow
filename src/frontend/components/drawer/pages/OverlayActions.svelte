@@ -4,7 +4,7 @@
     import Button from "../../inputs/Button.svelte"
 
     export let columns: number
-    export let overlayId: string = ""
+    export let overlayId = ""
 
     $: overlay = $overlays[overlayId] || {}
 
@@ -51,7 +51,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         /* right: 2px; */
         z-index: 1;
         font-size: 0.9em;

@@ -42,7 +42,7 @@
         chordData.custom = e.target?.value || ""
     }
 
-    let combinedChord: string = "C"
+    let combinedChord = "C"
     $: if (chordData) combineChord()
     function combineChord() {
         if (!loaded) return
@@ -133,7 +133,7 @@
     <TextInput value={chordData.custom} on:input={setCustom} />
 </CombinedInput>
 
-<Button style="margin-top: 12px;" on:click={selectChord} dark center><T id="actions.select_chord" />: <span style="color: var(--secondary);font-weight: bold;margin-left: 5px;">{combinedChord}</span></Button>
+<Button style="margin-top: 12px;" on:click={selectChord} dark center><T id="actions.select_chord" />: <span style="color: var(--secondary);font-weight: bold;margin-inline-start: 5px;">{combinedChord}</span></Button>
 
 <style>
     .chords {

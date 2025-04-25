@@ -1,8 +1,9 @@
-import * as pdfjsLib from "pdfjs-dist"
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import {
     activeDrawerTab,
     activeEdit,
@@ -39,23 +40,22 @@ import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
+import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
-import { AudioPlayer } from "../../audio/audioPlayer"
-import { setRandomValue } from "../helpers/randomValue"
-import { clearBackground } from "../output/clear"
+import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
-    let shows = get(sortedShowsList)
-    let sortedShows = sortByClosestMatch(shows, name)
-    let showId = sortedShows[0]?.id
+    const shows = get(sortedShowsList)
+    const sortedShows = sortByClosestMatch(shows, name)
+    const showId = sortedShows[0]?.id
     if (!showId) return
 
     activeShow.set({ id: showId, type: "show" })
@@ -67,18 +67,18 @@ export function selectShowByName(name: string) {
 export function gotoGroup(dataGroupId: string) {
     if (get(outLocked)) return
 
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput = get(outputs)[outputId] || null
-    let outSlide = currentOutput.out?.slide
-    let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const currentOutput = get(outputs)[outputId] || null
+    const outSlide = currentOutput.out?.slide
+    const currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
 
-    let showRef = getLayoutRef(currentShowId)
-    let groupIds = showRef.map((a) => a.id)
-    let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
+    const showRef = getLayoutRef(currentShowId)
+    const groupIds = showRef.map((a) => a.id)
+    const showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
     if (!showGroups.length) return
 
-    let globalGroupIds: string[] = []
+    const globalGroupIds: string[] = []
     Object.keys(get(groups)).forEach((groupId: string) => {
         if (groupId !== dataGroupId) return
 
@@ -100,7 +100,7 @@ export function selectProjectByIndex(index: number) {
     if (index < 0) return
 
     // select project
-    let selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
+    const selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
     if (!selectedProject) {
         newToast(get(dictionary).toast?.midi_no_project + " " + index)
         return
@@ -111,8 +111,8 @@ export function selectProjectByIndex(index: number) {
 
 export function selectProjectByName(value: string) {
     const projectsList = sortByName(removeDeleted(keysToID(get(projects))))
-    let sortedProjects = sortByClosestMatch(projectsList, value)
-    let projectId = sortedProjects[0]?.id
+    const sortedProjects = sortByClosestMatch(projectsList, value)
+    const projectId = sortedProjects[0]?.id
     if (!projectId) return
 
     activeProject.set(projectId)
@@ -121,12 +121,12 @@ export function selectProjectByName(value: string) {
 export async function selectSlideByIndex(data: API_slide_index) {
     if (data.showId) await loadShows([data.showId])
 
-    let showRef = _show(data.showId || "active")
+    const showRef = _show(data.showId || "active")
         .layouts(data.layoutId ? [data.layoutId] : "active")
         .ref()[0]
     if (!showRef) return newToast("$toast.midi_no_show")
 
-    let slideRef = showRef[data.index]
+    const slideRef = showRef[data.index]
     if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + data.index)
 
     outputSlide(showRef, data)
@@ -134,7 +134,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     // group numbers
-    let groupNums: { [key: string]: number } = {}
+    const groupNums: { [key: string]: number } = {}
     slides = slides
         .filter((a) => a.group)
         .map((a) => {
@@ -147,14 +147,14 @@ export function selectSlideByName(name: string) {
             return { ...a, group }
         })
 
-    let sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
+    const sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
-    let showRef = getLayoutRef()
+    const showRef = getLayoutRef()
     if (!showRef) return newToast("$toast.midi_no_show")
 
-    let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
-    let slideRef = showRef[index]
+    const index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
+    const slideRef = showRef[index]
     if (!slideRef) return
 
     outputSlide(showRef, { index })
@@ -163,9 +163,9 @@ export function selectSlideByName(name: string) {
 function outputSlide(showRef, data: API_slide_index) {
     if (get(outLocked)) return
 
-    let showId = data.showId || get(activeShow)?.id || ""
+    const showId = data.showId || get(activeShow)?.id || ""
     updateOut(showId, data.index, showRef)
-    let activeLayout = _show(showId).get("settings.activeLayout")
+    const activeLayout = _show(showId).get("settings.activeLayout")
     setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
 }
 
@@ -175,8 +175,8 @@ function getSortedOverlays() {
 export function selectOverlayByIndex(index: number) {
     if (get(outLocked)) return
 
-    let sortedOverlays = getSortedOverlays()
-    let overlayId = sortedOverlays[index]?.id
+    const sortedOverlays = getSortedOverlays()
+    const overlayId = sortedOverlays[index]?.id
     if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
     setOutput("overlays", overlayId, false, "", true)
@@ -184,8 +184,8 @@ export function selectOverlayByIndex(index: number) {
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
 
-    let sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
-    let overlayId = sortedOverlays[0]?.id
+    const sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
+    const overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 
     setOutput("overlays", overlayId, false, "", true)
@@ -293,9 +293,9 @@ export async function setShowAPI(id: string, value: string) {
     }
 }
 
-export async function getPlainText(id: string) {
-    await loadShows([id])
-    return { id, value: getPlainEditorText(id) } as API_id_value
+export async function getPlainText(showId: string) {
+    await loadShows([showId])
+    return { id: showId, value: getPlainEditorText(showId) } as API_id_value
 }
 
 export function getShowGroups(id: string) {
@@ -305,18 +305,18 @@ export function getShowGroups(id: string) {
 export async function rearrangeGroups(data: API_rearrange) {
     await loadShows([data.showId])
 
-    let trigger = data.to > data.from ? "end" : ""
-    let pos = trigger === "end" ? 1 : 0
+    const trigger = data.to > data.from ? "end" : ""
+    const pos = trigger === "end" ? 1 : 0
 
-    let ref = getLayoutRef(data.showId)
-    let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
-    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
-    if (isNaN(dropIndex)) dropIndex = ref.length
+    const ref = getLayoutRef(data.showId)
+    const dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
+    let dropIndex = (ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex || 0) - pos
+    if (isNaN(dropIndex) || dropIndex < 0) dropIndex = ref.length
 
     const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
     const drop: DropData = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos, center: false } // , trigger, center: false
 
-    let h = dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
+    const h = dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
     if (h && h.id) history(h)
 }
 
@@ -329,7 +329,7 @@ export async function addGroup(data: API_group) {
 }
 
 export function setTemplate(templateId: string) {
-    let showId = get(activeShow)?.id
+    const showId = get(activeShow)?.id
     if (!showId) {
         // newToast("$empty.show")
         return
@@ -345,17 +345,17 @@ export function setTemplate(templateId: string) {
 // PRESENTATION
 
 export function getClearedState() {
-    let o = get(outputs)
+    const o = get(outputs)
 
     const audio = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
     const background = isOutCleared("background", o)
     const slide = isOutCleared("slide", o)
-    const overlays = isOutCleared("overlays", o, true)
+    const overlaysCleared = isOutCleared("overlays", o, true)
     const slideTimers = isOutCleared("transition", o)
 
     const all = isOutCleared(null, o) && audio
 
-    return { all, background, slide, overlays, audio, slideTimers }
+    return { all, background, slide, overlays: overlaysCleared, audio, slideTimers }
 }
 
 // "1.1.1" = "Gen 1:1"
@@ -363,6 +363,7 @@ export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
     const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
 
+    if (get(activePage) !== "edit") activePage.set("show")
     setDrawerTabData("scripture", data.id)
     activeDrawerTab.set("scripture")
 
@@ -378,15 +379,15 @@ export function playMedia(data: API_media) {
     const extension = getMediaType(getExtension(data.path))
 
     if (extension === "pdf") {
-        let name = removeExtension(getFileName(data.path))
+        const name = removeExtension(getFileName(data.path))
         setOutput("slide", { type: "pdf", id: data.path, page: data.index || 0, pages: data.data?.pageCount ?? 1, name })
         clearBackground()
         return
     }
 
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput = get(outputs)[outputId] || {}
-    let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const currentOutput = get(outputs)[outputId] || {}
+    const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
 
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
@@ -409,7 +410,7 @@ export function stopAudio(data: API_media) {
 }
 
 let unmutedValue = 1
-export function updateVolumeValues(value: number | undefined | "local", changeGain: boolean = false) {
+export function updateVolumeValues(value: number | undefined | "local", changeGain = false) {
     // api mute(unmute)
     if (value === undefined) {
         value = get(volume) ? 0 : unmutedValue
@@ -422,7 +423,7 @@ export function updateVolumeValues(value: number | undefined | "local", changeGa
 
 // SPECIAL
 
-export function sortByClosestMatch(array: any[], value: string, key: string = "name") {
+export function sortByClosestMatch(array: any[], value: string, key = "name") {
     if (!value) return array
 
     // the object key must contain the input string
@@ -465,15 +466,18 @@ function levenshteinDistance(a, b) {
 // PDF
 
 export async function getPDFThumbnails({ path }: API_media) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const pdfDoc = await pdfjsLib.getDocument(path).promise
+    if (!path) return []
+
+    GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const loadingTask = getDocument(path)
+    const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
     if (!context) return []
 
-    let pages: string[] = []
+    const pages: string[] = []
     for (let i = 0; i < pageCount; i++) {
         const page = await pdfDoc.getPage(i + 1)
         const viewport = page.getViewport({ scale: 1.5 })
@@ -486,5 +490,18 @@ export async function getPDFThumbnails({ path }: API_media) {
         pages.push(base64)
     }
 
+    loadingTask.destroy()
     return { path, pages }
+}
+
+// ADD
+
+export function addToProject(data: API_add_to_project) {
+    projects.update((a) => {
+        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
+        a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
+        return a
+    })
+
+    return get(projects)
 }

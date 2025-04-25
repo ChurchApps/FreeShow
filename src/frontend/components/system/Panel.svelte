@@ -1,6 +1,6 @@
 <script lang="ts">
-    export let flex: boolean = false
-    export let column: boolean = false
+    export let flex = false
+    export let column = false
 </script>
 
 <section class:flex class:column>

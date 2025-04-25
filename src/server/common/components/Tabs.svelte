@@ -44,12 +44,12 @@
 
     .tabs :global(button) {
         flex: auto;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding-inline-start: 0 !important;
+        padding-inline-end: 0 !important;
     }
 
     .label {
-        padding-left: 10px;
+        padding-inline-start: 10px;
     }
 
     /* @media screen and (max-width: 1500px) {

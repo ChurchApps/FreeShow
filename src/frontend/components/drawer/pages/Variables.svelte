@@ -193,7 +193,7 @@
 
                 <SelectElem id="variable" data={variable} draggable>
                     <div class="variable context #variable">
-                        <span style="padding-left: 5px;">
+                        <span style="padding-inline-start: 5px;">
                             <Icon id={variable.type} right />
                             <p>
                                 {#if variable.name?.length}
@@ -299,7 +299,7 @@
     .reset {
         position: absolute;
         top: 5px;
-        right: 5px;
+        inset-inline-end: 5px;
     }
     .reset :global(button) {
         padding: 5px !important;

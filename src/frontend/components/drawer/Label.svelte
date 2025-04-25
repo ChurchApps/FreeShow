@@ -6,12 +6,12 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
     export let label: string
-    export let count: number = 0
-    export let renameId: string = ""
-    export let title: string = ""
+    export let count = 0
+    export let renameId = ""
+    export let title = ""
     export let icon: null | string = null
     export let color: null | string = null
-    export let white: boolean = false
+    export let white = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
 
     // RENAME!! (duplicate of NavigationButton.svelte)
@@ -21,7 +21,7 @@
         template: (c: { name: string; id: string }) => templates.update((a) => setName(a, c)),
         player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c)),
     }
-    const setName = (a: any, { name, id }: any, nameKey: string = "name") => {
+    const setName = (a: any, { name, id }: any, nameKey = "name") => {
         if (!a[id]) return a
 
         a[id][nameKey] = name
@@ -37,7 +37,7 @@
         else console.log("Trying to rename unadded type: " + id)
     }
 
-    let editActive: boolean = false
+    let editActive = false
 </script>
 
 <div
@@ -55,13 +55,13 @@
     {#if renameId}
         <HiddenInput value={label} id={renameId} on:edit={(e) => changeName(e, renameId)} bind:edit={editActive} />
     {:else}
-        <span class="title" style={count ? "margin-right: 14px;" : ""}>
+        <span class="title" style={count ? "margin-inline-end: 14px;" : ""}>
             {#if label}
                 {label}
             {:else}
                 <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
             {/if}
-            {#if count}<span style="opacity: 0.6;font-size: 0.8em;position: absolute;right: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
+            {#if count}<span style="opacity: 0.6;font-size: 0.8em;position: absolute;inset-inline-end: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
         </span>
     {/if}
 </div>
@@ -93,14 +93,14 @@
         padding-bottom: 3px;
     }
     div.label:not(.padding) :global(.icon) {
-        margin-left: 3px;
+        margin-inline-start: 3px;
     }
     .label :global(input) {
         padding: 6px;
     }
     div.label.alignRight :global(p),
     div.label.alignRight :global(input) {
-        margin-left: 20px;
+        margin-inline-start: 20px;
     }
     div.label :global(p),
     div.label :global(input) {
@@ -133,10 +133,10 @@
     }
     div.label.alignRight .title {
         margin: 0;
-        margin-left: 24px;
+        margin-inline-start: 24px;
     }
     div.label.list .title {
-        text-align: left;
+        text-align: start;
         padding: 0 10px;
     }
 </style>

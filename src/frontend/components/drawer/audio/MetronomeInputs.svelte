@@ -10,7 +10,7 @@
 
     export let values: API_metronome = {}
     export let audioOutputs: { id: string; name: string }[] = []
-    export let volume: boolean = true
+    export let volume = true
 
     let dispatch = createEventDispatcher()
     function updateValue(key, e) {

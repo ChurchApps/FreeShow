@@ -5,18 +5,18 @@
     import TextInput from "./TextInput.svelte"
 
     export let value: number
-    export let title: string = ""
-    export let style: string = ""
-    export let inputMultiplier: number = 1
-    export let decimals: number = 0
-    export let step: number = 1
-    export let min: number = 0
-    export let max: number = 1000
-    export let fixed: number = 0
-    export let outline: boolean = false
-    export let buttons: boolean = true
-    export let disabled: boolean = false
-    export let disableHold: boolean = false
+    export let title = ""
+    export let style = ""
+    export let inputMultiplier = 1
+    export let decimals = 0
+    export let step = 1
+    export let min = 0
+    export let max = 1000
+    export let fixed = 0
+    export let outline = false
+    export let buttons = true
+    export let disabled = false
+    export let disableHold = false
 
     const dispatch = createEventDispatcher()
     const increment = (customStep: number = step) => dispatch("change", Math.min(Number(value) + customStep, max).toFixed(decimals))

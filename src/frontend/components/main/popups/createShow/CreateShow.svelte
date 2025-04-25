@@ -19,7 +19,7 @@
     import WebSearch from "./WebSearch.svelte"
 
     const isChecked = (e: any) => e.target.checked
-    const changeValue = (e: any, key: string = "text") => {
+    const changeValue = (e: any, key = "text") => {
         values[key] = e.target.value || ""
 
         // store text if popup is closed
@@ -64,7 +64,7 @@
         { id: "web", name: "create_show.web", title: $dictionary.create_show?.search_web, icon: "search" },
         { id: "empty", name: "create_show.empty", title: $dictionary.new?.empty_show, icon: "add" },
     ]
-    let selectedOption: string = ""
+    let selectedOption = ""
     function selectOption(id: string) {
         if (id === "empty") {
             values.text = ""
@@ -100,7 +100,7 @@
 
     // CREATE
 
-    let showMore: boolean = false
+    let showMore = false
 
     function textToShow() {
         let text = values.text
@@ -228,10 +228,11 @@
             <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}
-                        <Icon id="showIcon" right />
+                        <!-- showIcon -->
+                        <Icon id="add" right />
                         <T id="new.show" />
                     {:else}
-                        <Icon id="showIcon" right white />
+                        <Icon id="add" right white />
                         <T id="new.empty_show" />
                     {/if}
 
@@ -284,7 +285,7 @@
 
     .name {
         opacity: 0.5;
-        margin-left: 5px;
+        margin-inline-start: 5px;
         align-content: center;
     }
 </style>

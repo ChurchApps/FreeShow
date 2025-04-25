@@ -154,6 +154,12 @@ export const receiver = {
     "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {
         _update("pdfPages", data.path, data.pages)
     },
+
+    "API:create_show": (data: { show: Show; id: string }) => {
+        send("SHOW", data.id)
+        _set("active", { id: data.id, type: "show" })
+        _set("activeTab", "show")
+    },
 }
 
 function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {

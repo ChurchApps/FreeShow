@@ -5,11 +5,11 @@
     import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { replaceDynamicValues } from "../../helpers/showActions"
 
-    export let id: string = ""
+    export let id = ""
     export let item: null | Item = null
-    export let style: string = ""
-    export let edit: boolean = false
-    export let hideText: boolean = true
+    export let style = ""
+    export let edit = false
+    export let hideText = true
     export let ref: any = {}
 
     $: variable = $variables[id || item?.variable?.id] || {}

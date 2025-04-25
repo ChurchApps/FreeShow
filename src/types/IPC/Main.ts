@@ -80,6 +80,7 @@ export enum Main {
     OUTPUT = "OUTPUT",
     GET_THUMBNAIL = "GET_THUMBNAIL",
     SAVE_IMAGE = "SAVE_IMAGE",
+    PDF_TO_IMAGE = "PDF_TO_IMAGE",
     READ_EXIF = "READ_EXIF",
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
@@ -121,6 +122,9 @@ export enum Main {
     PCO_LOAD_SERVICES = "PCO_LOAD_SERVICES",
     PCO_STARTUP_LOAD = "PCO_STARTUP_LOAD",
     PCO_DISCONNECT = "PCO_DISCONNECT",
+    CHUMS_LOAD_SERVICES = "CHUMS_LOAD_SERVICES",
+    CHUMS_STARTUP_LOAD = "CHUMS_STARTUP_LOAD",
+    CHUMS_DISCONNECT = "CHUMS_DISCONNECT",
 }
 
 export interface MainSendPayloads {
@@ -147,6 +151,7 @@ export interface MainSendPayloads {
     [Main.OUTPUT]: "true" | "false"
     [Main.GET_THUMBNAIL]: { input: string; size: number }
     [Main.SAVE_IMAGE]: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
+    [Main.PDF_TO_IMAGE]: { dataPath: string; filePath: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
@@ -229,6 +234,7 @@ export interface MainReturnPayloads {
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.GET_THUMBNAIL]: { output: string; input: string; size: number }
+    // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
@@ -246,6 +252,7 @@ export interface MainReturnPayloads {
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
     [Main.PCO_DISCONNECT]: { success: boolean }
+    [Main.CHUMS_DISCONNECT]: { success: boolean }
 }
 
 ///////////

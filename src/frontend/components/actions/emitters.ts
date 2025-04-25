@@ -41,8 +41,8 @@ export const emitterData: { [key in EmitterTypes]: EmitterInputs } = {
     },
 }
 
-function valueArrayToObject(values: EmitterTemplateValue[], removeEmptyValues: boolean = false) {
-    let valueObject: { [key: string]: string } = {}
+function valueArrayToObject(values: EmitterTemplateValue[], removeEmptyValues = false) {
+    const valueObject: { [key: string]: string } = {}
     values.forEach(({ name, value }) => {
         if (!name || (removeEmptyValues && !value) || typeof value !== "string") return
         valueObject[name] = value
@@ -56,18 +56,18 @@ function getMidiInfo(values: { note?: number; velocity?: number; channel?: numbe
 }
 
 export const formatData = {
-    osc: (values: EmitterTemplateValue[]) => "/" + Object.values(valueArrayToObject(values, true)).join("/"),
+    osc: (values: EmitterTemplateValue[], data = "") => `/${Object.values(valueArrayToObject(values, true)).join("/")}${data ? ` ${data}` : ""}`,
     http: (values: EmitterTemplateValue[]) => JSON.stringify(valueArrayToObject(values)),
     midi: (values: EmitterTemplateValue[]) => getMidiInfo(typeof values[0]?.value === "object" ? values[0].value : {}),
 }
 
 const EMIT_DATA = {
-    osc: (signal: OSC_SIGNAL, values: EmitterTemplateValue[]) => {
-        let OSC_DATA = formatData.osc(values)
+    osc: (signal: OSC_SIGNAL, values: EmitterTemplateValue[], data: string) => {
+        const OSC_DATA = formatData.osc(values, data)
         emitOSC(signal, OSC_DATA)
     },
     http: (signal: API_rest_command, values: EmitterTemplateValue[]) => {
-        let REST_DATA = signal
+        const REST_DATA = signal
         REST_DATA.contentType = "application/json"
         REST_DATA.payload = formatData.http(values)
         sendRestCommandSync(REST_DATA)
@@ -81,13 +81,13 @@ const EMIT_DATA = {
 }
 
 export function emitData(data: API_emitter) {
-    let emitter = get(emitters)[data.emitter]
+    const emitter = get(emitters)[data.emitter]
     if (!data.emitter || !emitter) return
 
-    let emitterTemplateValues = data.template ? emitter.templates?.[data.template]?.inputs || [] : []
+    const emitterTemplateValues = data.template ? emitter.templates?.[data.template]?.inputs || [] : []
 
     let values = emitterTemplateValues.map((a, i) => {
-        let customValue = data.templateValues?.[i]
+        const customValue = data.templateValues?.[i]
         if (a.value) return a
         return customValue || a
     })
@@ -102,5 +102,5 @@ export function emitData(data: API_emitter) {
     let signal: any = emitter.signal || {}
     if (signal.value) signal = signal.value
 
-    EMIT_DATA[emitter.type](signal, values)
+    EMIT_DATA[emitter.type](signal, values, data.data || "")
 }

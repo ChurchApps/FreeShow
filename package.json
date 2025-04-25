@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.4.1-beta.1",
+    "version": "1.4.1-beta.2",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -8,138 +8,44 @@
     "author": "ChurchApps <support@livecs.org>",
     "license": "GPL-3.0",
     "scripts": {
+        "postinstall": "electron-builder --config config/building/electron-builder.yaml install-app-deps",
+        "---DEVELOPMENT---": "",
         "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
         "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
+        "build:frontend:dev": "cross-env NODE_ENV=development rollup --config config/building/rollup.config.mjs --watch",
+        "start:electron": "npm-run-all -p build:electron:dev:watch start:electron:dev",
+        "build:electron:dev:watch": "tsc -w --p config/typescript/tsconfig.electron.json",
+        "start:electron:dev": "npm-run-all -s build:electron:dev start:electron:script start:electron:run",
+        "build:electron:dev": "tsc --p config/typescript/tsconfig.electron.json",
+        "start:electron:script": "node scripts/electronDevPostBuild.js",
+        "start:electron:run": "electron .",
+        "---PRODUCTION---": "",
         "prebuild": "cross-env NODE_ENV=production node scripts/preBuild.js",
         "build": "cross-env NODE_ENV=production npm-run-all -s build:frontend:prod build:electron:prod",
         "postbuild": "cross-env NODE_ENV=production node scripts/postBuild.js",
-        "build:frontend:dev": "cross-env NODE_ENV=development rollup -c -w",
-        "build:frontend:prod": "cross-env NODE_ENV=production rollup -c",
-        "build:electron:dev": "tsc --p ./tsconfig.electron.json",
-        "build:electron:dev:watch": "tsc -w --p ./tsconfig.electron.json",
-        "build:electron:prod": "cross-env NODE_ENV=production tsc --p ./tsconfig.electron.prod.json",
-        "validate:svelte": "svelte-check",
-        "start:electron:run": "electron .",
-        "start:electron:dev": "npm-run-all -s build:electron:dev start:electron:script start:electron:run",
-        "start:electron:script": "node scripts/electronDevPostBuild.js",
-        "start:electron": "npm-run-all -p build:electron:dev:watch start:electron:dev",
-        "test": "npm-run-all -s build test:*",
-        "test:*": "npm-run-all -p test:prettier test:playwright",
-        "test:prettier": "npx prettier --check src scripts",
-        "test:playwright": "npx playwright test",
-        "postinstall": "electron-builder install-app-deps",
-        "prepack": "npm run build",
-        "pack": "electron-builder --dir",
+        "build:frontend:prod": "cross-env NODE_ENV=production rollup --config config/building/rollup.config.mjs",
+        "build:electron:prod": "cross-env NODE_ENV=production tsc --p config/typescript/tsconfig.electron.prod.json",
+        "---RELEASE---": "",
         "prerelease": "npm run build",
-        "release": "electron-builder",
+        "release": "electron-builder --config config/building/electron-builder.yaml",
         "postrelease": "node scripts/cleanBuilds.js",
         "prerelease:arm64": "npm run build",
-        "release:arm64": "electron-builder --arm64 --publish onTagOrDraft",
+        "release:arm64": "electron-builder --config config/building/electron-builder.yaml --arm64 --publish onTagOrDraft",
         "postrelease:arm64": "node scripts/cleanBuilds.js",
         "prerelease:32bit": "npm run build",
-        "release:32bit": "electron-builder --ia32",
+        "release:32bit": "electron-builder --config config/building/electron-builder.yaml --ia32",
         "postrelease:32bit": "node scripts/cleanBuilds.js",
-        "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
-        "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
-        "lint": "npm-run-all -s lint:electron lint:svelte",
-        "prepublishOnly": "npm-run-all -s test lint",
-        "preversion": "npm-run-all -s"
-    },
-    "prettier": {
-        "trailingComma": "es5",
-        "printWidth": 250,
-        "tabWidth": 4,
-        "semi": false,
-        "singleQuote": false
-    },
-    "build": {
-        "appId": "app.freeshow",
-        "productName": "FreeShow",
-        "artifactName": "FreeShow-${version}-${arch}.${ext}",
-        "files": [
-            "build/electron/**/*",
-            "build/types/**/*",
-            "public/**/*",
-            "!node_modules/@napi-rs"
-        ],
-        "extraResources": [
-            {
-                "from": "node_modules/slideshow/",
-                "to": "slideshow",
-                "filter": [
-                    "connector-*"
-                ]
-            }
-        ],
-        "mac": {
-            "icon": "build/public/icon.png",
-            "target": [
-                {
-                    "target": "dmg",
-                    "arch": [
-                        "x64",
-                        "arm64"
-                    ]
-                },
-                {
-                    "target": "zip",
-                    "arch": [
-                        "x64",
-                        "arm64"
-                    ]
-                }
-            ],
-            "category": "public.app-category.utilities",
-            "hardenedRuntime": true,
-            "gatekeeperAssess": false,
-            "notarize": false,
-            "entitlements": "scripts/entitlements.mac.plist",
-            "entitlementsInherit": "scripts/entitlements.mac.plist",
-            "extendInfo": {
-                "NSMicrophoneUsageDescription": "Please give access to your microphone if you want to use it for input.",
-                "NSCameraUsageDescription": "Please give access to your camera if you want to use it for input.",
-                "com.apple.security.device.audio-input": true,
-                "com.apple.security.device.camera": true
-            }
-        },
-        "afterSign": "scripts/notarize.js",
-        "dmg": {
-            "background": "build/public/dmg.png",
-            "sign": false,
-            "contents": [
-                {
-                    "x": 140,
-                    "y": 150
-                },
-                {
-                    "x": 400,
-                    "y": 150,
-                    "type": "link",
-                    "path": "/Applications"
-                }
-            ]
-        },
-        "linux": {
-            "asarUnpack": [
-                "node_modules/grandiose/**"
-            ],
-            "category": "AudioVideo",
-            "target": [
-                "AppImage",
-                "deb"
-            ],
-            "icon": "build/public"
-        },
-        "win": {
-            "target": "NSIS",
-            "icon": "build/public/icon.png",
-            "azureSignOptions": {
-                "publisherName": "Live Church Solutions",
-                "endpoint": "https://wus2.codesigning.azure.net/",
-                "certificateProfileName": "FreeShow",
-                "codeSigningAccountName": "FreeShow"
-            }
-        }
+        "---CHECKING---": "",
+        "test": "npm-run-all -s test:playwright test:format test:svelte",
+        "test:playwright": "npx playwright test --config config/testing/playwright.config.ts",
+        "test:format": "npx prettier --check src scripts",
+        "test:svelte": "svelte-check",
+        "format:prettier": "npx prettier --check src scripts",
+        "lint": "npm-run-all -s lint:electron lint:frontend lint:svelte lint:styles",
+        "lint:electron": "eslint -c config/linting/eslint.electron.json --ext .js,.ts src/electron --fix",
+        "lint:frontend": "eslint -c config/linting/eslint.frontend.json --ext .js,.ts src/frontend --fix",
+        "lint:svelte": "eslint -c config/linting/eslint.svelte.js --ext .svelte src/frontend --fix",
+        "lint:styles": "npx stylelint 'src/frontend/**/*.{css,scss,svelte}' --config config/linting/.stylelintrc.json"
     },
     "devDependencies": {
         "@electron/notarize": "^2.5.0",
@@ -158,9 +64,16 @@
         "@types/sqlite3": "^3.1.8",
         "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
+        "@typescript-eslint/eslint-plugin": "^5.9.0",
+        "@typescript-eslint/parser": "^5.9.0",
         "cross-env": "^7.0.3",
         "electron": "^32.2.6",
         "electron-builder": "^26.0.1",
+        "eslint": "^8.6.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-jsdoc": "^39.3.6",
+        "eslint-plugin-prefer-arrow": "^1.2.3",
+        "eslint-plugin-svelte3": "^4.0.0",
         "npm-run-all": "^4.1.5",
         "playwright": "^1.49.0",
         "prettier": "^3.4.1",
@@ -170,6 +83,9 @@
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^3.0.0",
         "rollup-plugin-svelte": "^7.1.6",
+        "stylelint": "^16.18.0",
+        "stylelint-config-html": "^1.1.0",
+        "stylelint-use-logical": "^2.1.2",
         "svelte": "^3.59.2",
         "svelte-check": "^2.2.12",
         "svelte-inspector": "github:vassbo/svelte-inspector#78307db",

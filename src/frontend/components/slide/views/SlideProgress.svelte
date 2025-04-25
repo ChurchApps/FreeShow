@@ -5,7 +5,7 @@
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
-    export let autoSize: number = 0
+    export let autoSize = 0
 
     let type: "number" | "bar" | "group" = "number"
     $: type = tracker.type || "number"
@@ -94,7 +94,7 @@
     }
     .groups.column {
         flex-direction: column;
-        text-align: left;
+        text-align: start;
         width: 100%;
     }
     .group {

@@ -99,13 +99,13 @@ interface ObjData {
     menu: ContextMenuItem
 }
 
-export function menuClick(id: string, enabled: boolean = true, menu: ContextMenuItem | null = null, contextElem: HTMLElement | null = null, actionItem: HTMLElement | null = null, sel: Selected | null = null) {
-    if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
+export function menuClick(id: string, enabled = true, menu: ContextMenuItem | null = null, contextElem: HTMLElement | null = null, actionItem: HTMLElement | null = null, sel: Selected | null = null) {
+    if (!actions[id]) return console.error("MISSING CONTEXT: ", id)
 
     if (sel?.id) sel.id = sel.id.split("___")[0] as SelectIds // different selection ID, same action (currently used to seperate scripture navigation buttons)
 
-    let obj = { sel, actionItem, enabled, contextElem, menu }
-    console.log("MENU CLICK: " + id, obj)
+    const obj = { sel, actionItem, enabled, contextElem, menu }
+    console.info("MENU CLICK: " + id, obj)
 
     actions[id](obj)
 }
@@ -123,7 +123,7 @@ const actions = {
     quit: () => initializeClosing(),
     // view
     focus_mode: () => {
-        let project = get(projects)[get(activeProject) || ""]
+        const project = get(projects)[get(activeProject) || ""]
         if (!project?.shows?.length) return
 
         previousShow.set(null)
@@ -132,10 +132,10 @@ const actions = {
 
         // close drawer
         const minDrawerHeight = 40
-        let drawerIsOpened = get(drawer).height > minDrawerHeight
+        const drawerIsOpened = get(drawer).height > minDrawerHeight
         if (drawerIsOpened) drawer.set({ height: minDrawerHeight, stored: get(drawer).height })
 
-        let firstItem = project.shows[0]
+        const firstItem = project.shows[0]
         if (firstItem) activeFocus.set({ id: firstItem.id, index: 0, type: firstItem.type })
 
         activePage.set("show")
@@ -158,9 +158,9 @@ const actions = {
 
     // main
     rename: (obj: ObjData) => {
-        let id = obj.sel?.id || obj.contextElem?.id
+        const id = obj.sel?.id || obj.contextElem?.id
         if (!id) return
-        let data = obj.sel?.data?.[0] || {}
+        const data = obj.sel?.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
         const renameByIdDirect = ["overlay", "template", "player", "layout"]
@@ -173,7 +173,7 @@ const actions = {
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
-        else console.log("Missing rename", obj)
+        else console.error("Missing rename", obj)
     },
     sort_shows: (obj: ObjData) => sort(obj, "shows"),
     sort_projects: (obj: ObjData) => sort(obj, "projects"),
@@ -184,19 +184,19 @@ const actions = {
         if (obj.contextElem?.classList.contains("#slide_recorder_item")) {
             const index = obj.contextElem.id.slice(1)
             const activeLayout = _show().get("settings.activeLayout")
-            let layout = clone(_show().get("layouts")[activeLayout] || {})
+            const layout = clone(_show().get("layouts")[activeLayout] || {})
             layout.recording?.[0].sequence.splice(index, 1)
 
             history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_layout" } })
             return
         }
 
-        let id = obj.sel?.id
+        const id = obj.sel?.id
         if (id === "audio_effect") {
             effectsLibrary.update((a) => {
                 obj.sel?.data.forEach((audio) => {
                     const path = audio.path || audio.id
-                    let index = a.findIndex((a) => a.path === path)
+                    const index = a.findIndex((effect) => effect.path === path)
                     if (index < 0) return
 
                     a.splice(index, 1)
@@ -225,7 +225,7 @@ const actions = {
         if (obj.sel?.id === "show") {
             // wait to delete until after they are removed from project
             setTimeout(() => {
-                let sel: Selected = { ...obj.sel!, id: "show_drawer" }
+                const sel: Selected = { ...obj.sel!, id: "show_drawer" }
                 selected.set(sel)
                 actions.delete({ ...obj, sel })
             })
@@ -263,10 +263,10 @@ const actions = {
     },
     delete_all: (obj: ObjData) => {
         if (obj.contextElem?.classList.value.includes("#event")) {
-            let group = get(events)[obj.contextElem.id].group
+            const group = get(events)[obj.contextElem.id].group
             if (!group) return
 
-            let eventIds: string[] = []
+            const eventIds: string[] = []
             Object.entries(get(events)).forEach(([id, event]) => {
                 if (event.group === group) eventIds.push(id)
             })
@@ -285,7 +285,7 @@ const actions = {
 
     // drawer
     enabled_drawer_tabs: (obj: ObjData) => {
-        let m = { hide: false, enabled: !obj.enabled }
+        const m = { hide: false, enabled: !obj.enabled }
         drawerTabsData.update((a) => {
             if (!a[obj.menu.id!]) a[obj.menu.id!] = { enabled: false, activeSubTab: null }
             a[obj.menu.id!].enabled = !obj.enabled
@@ -301,20 +301,20 @@ const actions = {
         activePopup.set("manage_tags")
     },
     tag_set: (obj: ObjData) => {
-        let tagId = obj.menu.id
+        const tagId = obj.menu.id
         if (tagId === "create") {
             actions.manage_show_tags()
             return
         }
 
-        let disable = get(shows)[obj.sel?.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
+        const disable = get(shows)[obj.sel?.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
 
         obj.sel?.data?.forEach(({ id }) => {
             // WIP similar to Tag.svelte - toggleTag()
-            let quickAccess = get(shows)[id]?.quickAccess || {}
+            const quickAccess = get(shows)[id]?.quickAccess || {}
 
-            let tags = quickAccess.tags || []
-            let existingIndex = tags.indexOf(tagId)
+            const tags = quickAccess.tags || []
+            const existingIndex = tags.indexOf(tagId)
             if (disable) {
                 if (existingIndex > -1) tags.splice(existingIndex, 1)
             } else {
@@ -338,33 +338,33 @@ const actions = {
         })
     },
     tag_filter: (obj: ObjData) => {
-        let tagId = obj.menu.id || ""
+        const tagId = obj.menu.id || ""
 
-        let activeTags = get(activeTagFilter)
-        let currentIndex = activeTags.indexOf(tagId)
+        const activeTags = get(activeTagFilter)
+        const currentIndex = activeTags.indexOf(tagId)
         if (currentIndex < 0) activeTags.push(tagId)
         else activeTags.splice(currentIndex, 1)
 
         activeTagFilter.set(activeTags || [])
     },
     manage_media_tags: () => {
-        closeContextMenu
+        closeContextMenu()
         popupData.set({ type: "media" })
         activePopup.set("manage_tags")
     },
     media_tag_set: (obj: ObjData) => {
-        let tagId = obj.menu.id || ""
+        const tagId = obj.menu.id || ""
         if (tagId === "create") {
             actions.manage_media_tags()
             return
         }
 
-        let disable = get(media)[get(selected).data[0]?.path]?.tags?.includes(tagId)
+        const disable = get(media)[get(selected).data[0]?.path]?.tags?.includes(tagId)
 
         obj.sel?.data?.forEach(({ path }) => {
-            let tags = get(media)[path]?.tags || []
+            const tags = get(media)[path]?.tags || []
 
-            let existingIndex = tags.indexOf(tagId)
+            const existingIndex = tags.indexOf(tagId)
             if (disable) {
                 if (existingIndex > -1) tags.splice(existingIndex, 1)
             } else {
@@ -379,33 +379,33 @@ const actions = {
         })
     },
     media_tag_filter: (obj: ObjData) => {
-        let tagId = obj.menu.id || ""
+        const tagId = obj.menu.id || ""
 
-        let activeTags = get(activeMediaTagFilter)
-        let currentIndex = activeTags.indexOf(tagId)
+        const activeTags = get(activeMediaTagFilter)
+        const currentIndex = activeTags.indexOf(tagId)
         if (currentIndex < 0) activeTags.push(tagId)
         else activeTags.splice(currentIndex, 1)
 
         activeMediaTagFilter.set(activeTags || [])
     },
     manage_action_tags: () => {
-        closeContextMenu
+        closeContextMenu()
         popupData.set({ type: "action" })
         activePopup.set("manage_tags")
     },
     action_tag_set: (obj: ObjData) => {
-        let tagId = obj.menu.id || ""
+        const tagId = obj.menu.id || ""
         if (tagId === "create") {
             actions.manage_action_tags()
             return
         }
 
-        let disable = get(midiIn)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+        const disable = get(midiIn)[get(selected).data[0]?.id]?.tags?.includes(tagId)
 
         obj.sel?.data?.forEach(({ id }) => {
-            let tags = get(midiIn)[id]?.tags || []
+            const tags = get(midiIn)[id]?.tags || []
 
-            let existingIndex = tags.indexOf(tagId)
+            const existingIndex = tags.indexOf(tagId)
             if (disable) {
                 if (existingIndex > -1) tags.splice(existingIndex, 1)
             } else {
@@ -419,10 +419,10 @@ const actions = {
         })
     },
     action_tag_filter: (obj: ObjData) => {
-        let tagId = obj.menu.id || ""
+        const tagId = obj.menu.id || ""
 
-        let activeTags = get(activeActionTagFilter)
-        let currentIndex = activeTags.indexOf(tagId)
+        const activeTags = get(activeActionTagFilter)
+        const currentIndex = activeTags.indexOf(tagId)
         if (currentIndex < 0) activeTags.push(tagId)
         else activeTags.splice(currentIndex, 1)
 
@@ -453,44 +453,44 @@ const actions = {
         // WIP replaced by convertToShow
         let data = obj.sel?.data || []
 
-        let slides = data.map((a) => ({ id: a.id || uid(), group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
+        const slides = data.map((a) => ({ id: a.id || uid(), group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
 
         let videoData: any = {}
         // videos are probably not meant to be background if they are added in bulk
         if (data.length > 1) videoData = { muted: false, loop: false }
 
         data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? videoData : {}) }))
-        let activeLayout = get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
-        let layoutLength = _show().layouts([activeLayout]).get()[0]?.length
-        let newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
+        const activeLayout = get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
+        const layoutLength = _show().layouts([activeLayout]).get()[0]?.length
+        const newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
 
         history({ id: "SLIDES", newData, location: { page: get(activePage) as HistoryPages, show: get(activeShow)!, layout: activeLayout } })
     },
     createSlideshow: (obj: ObjData) => {
-        let data = obj.sel?.data || []
-        let slides = data.map((a) => ({ group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
+        const data = obj.sel?.data || []
+        const slides = data.map((a) => ({ group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        let layoutId = uid()
-        let show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
-        let folderName = splitPath(data[0]?.path).at(-2) || ""
+        const layoutId = uid()
+        const show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
+        const folderName = splitPath(data[0]?.path).at(-2) || ""
         show.name = checkName(get(dictionary).create_show?.slideshow + (folderName ? `" "${folderName}` : ""))
 
         const videoData = { muted: false, loop: false }
         const duration = 6
 
-        let layoutSlides: SlideData[] = []
+        const layoutSlides: SlideData[] = []
         slides.forEach((slide, i) => {
-            let slideId = uid()
+            const slideId = uid()
             show.slides[slideId] = slide
 
-            let mediaId = uid(5)
-            let media = data[i]
-            show.media[mediaId] = { ...media, path: media.path || media.id, ...(media.type === "video" ? videoData : {}) }
+            const mediaId = uid(5)
+            const mediaData = data[i]
+            show.media[mediaId] = { ...mediaData, path: mediaData.path || mediaData.id, ...(mediaData.type === "video" ? videoData : {}) }
 
-            let layoutData: SlideData = { id: slideId, background: mediaId }
-            if (media.type === "video") {
+            const layoutData: SlideData = { id: slideId, background: mediaId }
+            if (mediaData.type === "video") {
                 layoutData.actions = { nextAfterMedia: true }
-            } else if (media.type === "image") {
+            } else if (mediaData.type === "image") {
                 layoutData.nextTimer = duration
                 layoutData.actions = { animate: { actions: [{ type: "change", duration: duration + 2, id: "background", key: "zoom" }] } }
             }
@@ -505,7 +505,7 @@ const actions = {
     },
     lock_show: (obj: ObjData) => {
         if (!obj.sel) return
-        let shouldBeLocked = !get(shows)[obj.sel.data[0]?.id]?.locked
+        const shouldBeLocked = !get(shows)[obj.sel.data[0]?.id]?.locked
 
         showsCache.update((a) => {
             obj.sel!.data.forEach((b) => {
@@ -525,7 +525,7 @@ const actions = {
         })
     },
     category_action: (obj: ObjData) => {
-        let id = obj.sel?.data[0]
+        const id = obj.sel?.data[0]
         if (!id) return
 
         popupData.set({ id })
@@ -554,9 +554,9 @@ const actions = {
 
     // output
     force_output: () => {
-        let enabledOutputs = getActiveOutputs(get(outputs), false)
+        const enabledOutputs = getActiveOutputs(get(outputs), false)
         enabledOutputs.forEach((id) => {
-            let output = { id, ...get(outputs)[id] }
+            const output = { id, ...get(outputs)[id] }
             // , force: e.ctrlKey || e.metaKey
             send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
         })
@@ -567,25 +567,25 @@ const actions = {
         activePopup.set("choose_screen")
     },
     toggle_output: (obj: ObjData) => {
-        let id = obj.contextElem?.id || ""
+        const id = obj.contextElem?.id || ""
         toggleOutput(id)
     },
     move_to_front: (obj: ObjData) => {
         send(OUTPUT, ["TO_FRONT"], obj.contextElem?.id)
     },
     hide_from_preview: (obj: ObjData) => {
-        let outputId = obj.contextElem?.id || ""
+        const outputId = obj.contextElem?.id || ""
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
         setTimeout(() => {
-            outputs.update((a) => {
+            outputs.update((output) => {
                 // should match the outputs list in MultiOutputs.svelte
-                let showingOutputsList = Object.values(a).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
-                let newValue = !a[outputId].hideFromPreview
+                const showingOutputsList = Object.values(output).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
+                const newValue = !output[outputId].hideFromPreview
 
                 if (newValue && showingOutputsList.length <= 1) newToast("$toast.one_output")
-                else a[outputId].hideFromPreview = !a[outputId].hideFromPreview
+                else output[outputId].hideFromPreview = !output[outputId].hideFromPreview
 
-                return a
+                return output
             })
         }, 100)
     },
@@ -622,8 +622,8 @@ const actions = {
         history({ id: "SLIDES" })
     },
     newCategory: (obj: ObjData) => {
-        let classList = obj.contextElem?.classList?.value || ""
-        let index = classList.indexOf("#category")
+        const classList = obj.contextElem?.classList?.value || ""
+        const index = classList.indexOf("#category")
         let id = classList.slice(index + 1, classList.indexOf(" ", index))
         id = id.split("__")[1] || id
         history({ id: "UPDATE", location: { page: "drawer", id } })
@@ -646,7 +646,7 @@ const actions = {
             if (id.length < 5) {
                 name += id.toUpperCase()
             } else {
-                let bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
+                const bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
                 name += getShortBibleName(bibleName)
             }
         })
@@ -668,7 +668,7 @@ const actions = {
     // project
     export: (obj: ObjData) => {
         if (obj.sel?.id === "template") {
-            let template = get(templates)[obj.sel.data[0]]
+            const template = get(templates)[obj.sel.data[0]]
             if (!template) return
             send(EXPORT, ["TEMPLATE"], { path: get(dataPath), content: template })
 
@@ -676,7 +676,7 @@ const actions = {
         }
 
         if (obj.sel?.id === "theme") {
-            let theme = get(themes)[obj.sel.data[0]?.id]
+            const theme = get(themes)[obj.sel.data[0]?.id]
             if (!theme) return
             send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
 
@@ -685,8 +685,8 @@ const actions = {
 
         if (obj.contextElem?.classList.value.includes("project")) {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
-            let projectId: string = obj.sel?.data[0]?.id || get(activeProject)
-            exportProject(get(projects)[projectId])
+            const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
+            exportProject(get(projects)[projectId], projectId)
 
             return
         }
@@ -738,7 +738,7 @@ const actions = {
         })
     },
     section: (obj) => {
-        let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
+        const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
     copy_to_template: (obj: ObjData) => {
@@ -750,7 +750,7 @@ const actions = {
         let id = uid()
 
         // find existing with the same name
-        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
+        const existing = Object.values(get(projectTemplates)).find((a) => a.name === project.name)
         if (existing) id = existing[0]
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
@@ -780,8 +780,8 @@ const actions = {
         if (obj.sel?.id === "slide") {
             showsCache.update((a) => {
                 obj.sel!.data.forEach((b) => {
-                    let ref = getLayoutRef()?.[b.index] || {}
-                    let slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
+                    const ref = getLayoutRef()?.[b.index] || {}
+                    const slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
                     if (!slides) return
 
                     if (ref.type === "child") {
@@ -797,7 +797,7 @@ const actions = {
         if (obj.sel?.id === "stage") {
             // history({ id: "changeStage", newData: {key: "disabled", value: }, location: { page: "stage", slide: obj.sel.data.map(({id}) => (id)) } })
             stageShows.update((a) => {
-                let value: boolean = !a[obj.sel!.data[0].id].disabled
+                const value = !a[obj.sel!.data[0].id].disabled
                 obj.sel!.data.forEach((b) => {
                     a[b.id].disabled = value
                 })
@@ -807,11 +807,11 @@ const actions = {
         }
 
         if (obj.sel?.id === "action") {
-            let enabledState = get(midiIn)[obj.sel.data[0].id].enabled
-            let value = enabledState === undefined ? false : !enabledState
+            const enabledState = get(midiIn)[obj.sel.data[0].id].enabled
+            const value = enabledState === undefined ? false : !enabledState
             midiIn.update((a) => {
                 obj.sel!.data.forEach((b) => {
-                    let action = a[b.id]
+                    const action = a[b.id]
                     if (action && (action.keypressActivate || action.customActivation)) {
                         a[b.id].enabled = value
                     }
@@ -823,7 +823,7 @@ const actions = {
     },
     editSlideText: (obj) => {
         if (obj.sel.id === "slide") {
-            let slide = obj.sel.data[0]
+            const slide = obj.sel.data[0]
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
@@ -834,7 +834,7 @@ const actions = {
         if (!obj.sel) return
 
         if (obj.sel.id === "slide") {
-            let slide = obj.sel.data[0]
+            const slide = obj.sel.data[0]
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
@@ -843,6 +843,11 @@ const actions = {
             activeEdit.set({ type: "media", id: path, items: [] })
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: getMediaType(getExtension(path)) })
+        } else if (obj.sel.id === "player") {
+            const id = obj.sel.data[0]
+            const onlineTab = get(drawerTabsData).media?.openedSubSubTab?.online || "youtube"
+            popupData.set({ active: onlineTab, id })
+            activePopup.set("player")
         } else if (obj.sel.id === "audio") {
             const path = obj.sel.data[0].path
             activeEdit.set({ type: "audio", id: path, items: [] })
@@ -856,9 +861,9 @@ const actions = {
             settingsTab.set("groups")
             activePage.set("settings")
         } else if (obj.sel.id === "action") {
-            let firstActionId = obj.sel.data[0]?.id
-            let action = get(midiIn)[firstActionId]
-            let mode = action.shows?.length ? "slide_midi" : ""
+            const firstActionId = obj.sel.data[0]?.id
+            const action = get(midiIn)[firstActionId]
+            const mode = action.shows?.length ? "slide_midi" : ""
             popupData.set({ id: firstActionId, mode })
             activePopup.set("action")
         } else if (obj.sel.id === "timer") {
@@ -886,16 +891,16 @@ const actions = {
     chord_list: (obj: ObjData) => actions.keys(obj),
     keys: (obj: ObjData) => {
         if (get(selected).id !== "chord") return
-        let data = get(selected).data[0]
+        const data = get(selected).data[0]
 
-        let item: Item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+        const item: Item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
         if (!item) return
 
-        let newLines = clone(item.lines)
+        const newLines = clone(item.lines)
         if (!newLines?.[data.index].chords) return
 
         if (data.chord) {
-            let currentChordIndex = newLines[data.index].chords!.findIndex((a) => a.id === data.chord.id)
+            const currentChordIndex = newLines[data.index].chords!.findIndex((a) => a.id === data.chord.id)
             if (currentChordIndex > -1) newLines[data.index].chords![currentChordIndex].key = obj.menu.id || ""
         } else {
             if (!newLines[0].chords) newLines[0].chords = []
@@ -910,12 +915,12 @@ const actions = {
     custom_key: (obj: ObjData) => {
         if (!obj.sel) return
 
-        let data = obj.sel.data[0]
+        const data = obj.sel.data[0]
         selected.set(obj.sel)
 
         if (!data.chord) {
             // create chord
-            let item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+            const item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
             addChords(item, { showId: get(activeShow)!.id, id: data.slideId }, data.itemIndex)
         }
 
@@ -932,7 +937,7 @@ const actions = {
         activePopup.set("transition")
     },
     item_actions: (obj: ObjData) => {
-        let action = obj.menu.id || ""
+        const action = obj.menu.id || ""
         popupData.set({ action })
 
         // if (action === "transition") {
@@ -942,11 +947,11 @@ const actions = {
         }
     },
     template_actions: (obj: ObjData) => {
-        let templateId = obj.sel?.data[0]
-        let template = get(templates)[templateId]
+        const templateId = obj.sel?.data[0]
+        const template = get(templates)[templateId]
         if (!template) return
 
-        let existingActions = template.settings?.actions || []
+        const existingActions = template.settings?.actions || []
 
         popupData.set({ mode: "template", templateId, existing: existingActions.map((a) => a.triggers?.[0]) })
         activePopup.set("action")
@@ -954,28 +959,28 @@ const actions = {
     remove_layers: (obj: ObjData) => {
         if (!obj.sel || !obj.menu.id) return
 
-        let type: null | "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || (obj.menu.icon as any) || null
-        let slide: number = obj.sel.data[0].index
-        let indexes: number[] = obj.sel.data.map(({ index }) => index)
+        const type: null | "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || (obj.menu.icon as any) || null
+        const slide: number = obj.sel.data[0].index
+        const indexes: number[] = obj.sel.data.map(({ index }) => index)
         let newData: any = null
 
-        let ref = getLayoutRef()
-        let layoutSlide = ref[slide]?.data || {}
+        const ref = getLayoutRef()
+        const layoutSlide = ref[slide]?.data || {}
 
         if (type === "image") {
             newData = { key: "background", data: null, indexes: [slide] }
         } else if (type === "overlays") {
-            let ol = layoutSlide.overlays || []
+            const ol = layoutSlide.overlays || []
             // remove clicked
             ol.splice(ol.indexOf(obj.menu.id), 1)
             newData = { key: "overlays", data: ol, dataIsArray: true, indexes: [slide] }
         } else if (type === "music") {
-            let audio = layoutSlide.audio || []
+            const audio = layoutSlide.audio || []
             // remove clicked
             audio.splice(audio.indexOf(obj.menu.id), 1)
             newData = { key: "audio", data: audio, dataIsArray: true, indexes: [slide] }
         } else if (type === "microphone") {
-            let mics = layoutSlide.mics || []
+            const mics = layoutSlide.mics || []
             // remove clicked
             mics.splice(
                 mics.findIndex((a) => a.id === obj.menu.id),
@@ -983,17 +988,17 @@ const actions = {
             )
             newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
         } else if (type === "action") {
-            let newActions: any[] = []
+            const newActions: any[] = []
             indexes.forEach((i) => {
-                let actions = ref[i]?.data?.actions || {}
-                let slideActions = actions.slideActions || []
+                const layoutActions = ref[i]?.data?.actions || {}
+                const slideActions = layoutActions.slideActions || []
 
-                let actionId = obj.menu.id
-                let actionIndex = slideActions.findIndex((a) => a.id === actionId)
+                const actionId = obj.menu.id
+                const actionIndex = slideActions.findIndex((a) => a.id === actionId)
                 if (actionIndex > -1) slideActions.splice(actionIndex, 1)
 
-                actions.slideActions = slideActions
-                newActions.push(actions)
+                layoutActions.slideActions = slideActions
+                newActions.push(layoutActions)
             })
             newData = { key: "actions", data: newActions, indexes }
         }
@@ -1005,16 +1010,16 @@ const actions = {
     preview: (obj: ObjData) => {
         if (!obj.sel) return
 
-        let path: string = obj.sel.data[0].path || obj.sel.data[0].id || obj.sel.data[0]
+        const path: string = obj.sel.data[0].path || obj.sel.data[0].id || obj.sel.data[0]
         if (!path) return
 
-        let type = obj.sel.id || "media"
+        const type = obj.sel.id || "media"
         if (type === "media" || type === "audio") activeEdit.set({ id: path, type, items: [] })
 
-        let name = removeExtension(getFileName(path))
-        let mediaType = type === "media" ? getMediaType(getExtension(path)) : type
+        const name = removeExtension(getFileName(path))
+        const mediaType = type === "media" ? getMediaType(getExtension(path)) : type
 
-        let showRef: any = { id: path, type: mediaType }
+        const showRef: any = { id: path, type: mediaType }
         if (name) showRef.name = name
         activeShow.set(showRef)
 
@@ -1030,8 +1035,8 @@ const actions = {
         }
 
         if (obj.sel.id.includes("timer")) {
-            let firstTimer = get(activeTimers).find((a) => a.id === obj.sel!.data[0]?.id)
-            let shouldPlay = firstTimer?.paused === undefined ? true : firstTimer.paused
+            const firstTimer = get(activeTimers).find((a) => a.id === obj.sel!.data[0]?.id)
+            const shouldPlay = firstTimer?.paused === undefined ? true : firstTimer.paused
             obj.sel.data.forEach((data) => {
                 playPauseGlobal(data.id, data, false, !shouldPlay)
             })
@@ -1041,38 +1046,38 @@ const actions = {
         // THIS IS NOT IN USE:
 
         // video
-        let path = obj.sel.data[0].path || obj.sel.data[0].id
+        const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
-        let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-        let currentOutput = get(outputs)[outputId] || {}
-        let outputStyle = get(styles)[currentOutput.style || ""]
-        let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
+        const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+        const currentOutput = get(outputs)[outputId] || {}
+        const outputStyle = get(styles)[currentOutput.style || ""]
+        const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
         if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {
-        let path = obj.sel?.data[0].path || obj.sel?.data[0].id
+        const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
 
-        let outputId = getActiveOutputs(get(outputs))[0]
-        let currentOutput = get(outputs)[outputId] || {}
-        let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+        const outputId = getActiveOutputs(get(outputs))[0]
+        const currentOutput = get(outputs)[outputId] || {}
+        const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
 
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
 
         if (!get(outLocked)) setOutput("background", { path, ...mediaStyle, type: getMediaType(getExtension(path)), muted: true })
     },
     play_no_filters: (obj: ObjData) => {
-        let path = obj.sel?.data[0].path || obj.sel?.data[0].id
+        const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
         if (!get(outLocked)) setOutput("background", { path, type: getMediaType(getExtension(path)) })
     },
     favourite: (obj: ObjData) => {
         if (!obj.sel) return
 
-        let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
+        const favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
         obj.sel.data.forEach((card) => {
-            let path = card.path || card.id
+            const path = card.path || card.id
             media.update((a) => {
                 if (!a[path]) a[path] = { filter: "" }
                 if (obj.sel!.id === "audio") a[path].audio = true
@@ -1085,20 +1090,20 @@ const actions = {
         if (!obj.sel) return
 
         const path = obj.sel.data[0].path || obj.sel.data[0].id
-        let existing: boolean = !!get(effectsLibrary).find((a) => a.path === path)
+        const existing = !!get(effectsLibrary).find((a) => a.path === path)
 
         effectsLibrary.update((a) => {
             obj.sel!.data.forEach((audio) => {
-                let path = audio.path || audio.id
+                const currentPath = audio.path || audio.id
 
-                let index = a.findIndex((a) => a.path === path)
+                const index = a.findIndex((effect) => effect.path === currentPath)
                 if (existing) {
                     if (index < 0) return
                     a.splice(index, 1)
                     return
                 }
 
-                if (index < 0) a.push({ path, name: removeExtension(getFileName(path)) })
+                if (index < 0) a.push({ path: currentPath, name: removeExtension(getFileName(currentPath)) })
                 return
             })
             return a
@@ -1111,7 +1116,7 @@ const actions = {
         if (obj.sel.id === "category_media") data = get(mediaFolders)[data]
         else if (obj.sel.id === "category_audio") data = get(audioFolders)[data]
 
-        let path = data?.path
+        const path = data?.path
         if (!path) return
 
         sendMain(Main.SYSTEM_OPEN, path)
@@ -1122,20 +1127,20 @@ const actions = {
         if (get(activeRecording)) {
             stopMediaRecorder()
         } else {
-            let media = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
-            if (!media.video) {
+            const mediaData = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
+            if (!mediaData.video) {
                 newToast("$toast.error_media")
                 return
             }
 
-            activeRecording.set(media)
+            activeRecording.set(mediaData)
         }
     },
 
     // overlays
     lock_to_output: (obj: ObjData) => {
         if (obj.sel?.id !== "overlay") return
-        let setLocked: boolean = !get(overlays)[obj.sel.data[0]]?.locked
+        const setLocked = !get(overlays)[obj.sel.data[0]]?.locked
 
         overlays.update((a) => {
             obj.sel!.data.forEach((id: string) => {
@@ -1146,7 +1151,7 @@ const actions = {
     },
     place_under_slide: (obj: ObjData) => {
         if (obj.sel?.id !== "overlay") return
-        let setUnder: boolean = !get(overlays)[obj.sel.data[0]]?.placeUnderSlide
+        const setUnder = !get(overlays)[obj.sel.data[0]]?.placeUnderSlide
 
         overlays.update((a) => {
             obj.sel!.data.forEach((id: string) => {
@@ -1161,7 +1166,7 @@ const actions = {
 
     // stage
     move_connections: (obj: ObjData) => {
-        let stageId = obj.sel?.data[0]?.id
+        const stageId = obj.sel?.data[0]?.id
         moveStageConnection(stageId)
     },
 
@@ -1171,17 +1176,17 @@ const actions = {
     selectAll: (obj: ObjData) => selectAll(obj.sel),
 
     bind_slide: (obj: ObjData) => {
-        let ref = getLayoutRef()
-        let outputId = obj.menu.id || ""
+        const ref = getLayoutRef()
+        const outputId = obj.menu.id || ""
 
-        let indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
-        let newBindings: string[][] = []
+        const indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
+        const newBindings: string[][] = []
 
-        let add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
+        const add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
 
         indexes.forEach((i) => {
-            let bindings: string[] = ref[i]?.data?.bindings || []
-            let existingIndex = bindings.indexOf(outputId)
+            const bindings: string[] = ref[i]?.data?.bindings || []
+            const existingIndex = bindings.indexOf(outputId)
             if (add && existingIndex < 0) bindings.push(outputId)
             else if (!add && existingIndex >= 0) bindings.splice(existingIndex, 1)
 
@@ -1192,38 +1197,38 @@ const actions = {
     },
     // bind item
     bind_item: (obj: ObjData) => {
-        let id = obj.menu?.id
-        let items = get(activeEdit).items
+        const id = obj.menu?.id
+        const items = get(activeEdit).items
 
         if (get(activeEdit).id) {
-            let currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-            let itemValues = items.map((index) => currentItems[index].bindings || [])
-            let newValues: string[][] = []
-            itemValues.forEach((value) => {
+            const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+            const itemValues1 = items.map((index) => currentItems[index].bindings || [])
+            const newValues1: string[][] = []
+            itemValues1.forEach((value) => {
                 if (!id) value = []
                 else if (value.includes(id)) value.splice(value.indexOf(id, 1))
                 else value.push(id)
 
-                newValues.push(value)
+                newValues1.push(value)
             })
 
             history({
                 id: "UPDATE",
                 oldData: { id: get(activeEdit).id },
-                newData: { key: "items", subkey: "bindings", data: newValues, indexes: items },
+                newData: { key: "items", subkey: "bindings", data: newValues1, indexes: items },
                 location: { page: "edit", id: get(activeEdit).type + "_items", override: true },
             })
 
             return
         }
 
-        let slideIndex: number = get(activeEdit).slide || 0
-        let ref = getLayoutRef()
-        let slideRef = ref[slideIndex]
+        const slideIndex: number = get(activeEdit).slide || 0
+        const ref = getLayoutRef()
+        const slideRef = ref[slideIndex]
 
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
         itemValues = itemValues.map((a) => a || [])
-        let newValues: string[][] = []
+        const newValues: string[][] = []
         itemValues.forEach((value) => {
             if (!id) value = []
             else if (value.includes(id)) value.splice(value.indexOf(id, 1))
@@ -1240,7 +1245,7 @@ const actions = {
         // _show().slides([slideID!]).set({ key: "items", value: items })
     },
     dynamic_values: (obj: ObjData) => {
-        let sel = getSelectionRange()
+        const sel = getSelectionRange()
         let lineIndex = sel.findIndex((a) => a?.start !== undefined)
         if (lineIndex < 0) lineIndex = 0
         const caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
@@ -1265,18 +1270,18 @@ const actions = {
     },
     cut_in_half: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
-            let oldLayoutRef = clone(getLayoutRef())
-            let previousSpiltIds: string[] = []
+            const oldLayoutRef = clone(getLayoutRef())
+            const previousSpiltIds: string[] = []
 
             // go backwards to prevent wrong index when splitted
-            let selectedSlides = obj.sel.data.sort((a, b) => b.index - a.index)
+            const selectedSlides = obj.sel.data.sort((a, b) => b.index - a.index)
 
             selectedSlides.forEach(({ index }) => {
-                let slideRef = oldLayoutRef[index]
+                const slideRef = oldLayoutRef[index]
                 if (!slideRef || previousSpiltIds.includes(slideRef.id)) return
                 previousSpiltIds.push(slideRef.id)
 
-                let slideItems: Item[] = _show().slides([slideRef.id]).get("items")[0]
+                const slideItems: Item[] = _show().slides([slideRef.id]).get("items")[0]
 
                 // check lines array & text array first, then text value
                 let firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1))
@@ -1287,20 +1292,20 @@ const actions = {
             })
         } else if (!obj.sel?.id) {
             // textbox
-            let editSlideIndex: number = get(activeEdit).slide ?? -1
+            const editSlideIndex: number = get(activeEdit).slide ?? -1
             if (editSlideIndex < 0) return
 
-            let textItemIndex: number = get(activeEdit).items[0] ?? -1
+            const textItemIndex: number = get(activeEdit).items[0] ?? -1
             if (textItemIndex < 0) return
 
-            let slideRef = getLayoutRef()[editSlideIndex]
+            const slideRef = getLayoutRef()[editSlideIndex]
             if (!slideRef) return
             splitItemInTwo(slideRef, textItemIndex)
         }
     },
     merge: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
-            let selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
+            const selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
             else if (selectedSlides[0]?.index) mergeTextboxes(selectedSlides[0].index)
         } else if (!obj.sel?.id) {
@@ -1316,9 +1321,9 @@ const actions = {
     // settings
     reset_theme: (obj: ObjData) => {
         obj.sel?.data.forEach(({ id }) => {
-            let oldTheme = get(themes)[id]
-            let defaultTheme = defaultThemes[id] || defaultThemes.default
-            let data = { ...defaultTheme, default: oldTheme.default || false, name: oldTheme.name }
+            const oldTheme = get(themes)[id]
+            const defaultTheme = defaultThemes[id] || defaultThemes.default
+            const data = { ...defaultTheme, default: oldTheme.default || false, name: oldTheme.name }
 
             history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "settings", id: "settings_theme" } })
             updateThemeValues(get(themes)[id])
@@ -1329,10 +1334,10 @@ const actions = {
             const defaultStyle = { name: get(dictionary).example?.default || "Default" }
 
             obj.sel.data.forEach(({ id }) => {
-                let styleId = id || (get(styles).default ? uid() : "default")
+                const styleId = id || (get(styles).default ? uid() : "default")
                 let style = get(styles)[styleId] || clone(defaultStyle)
 
-                let name = style?.name || ""
+                const name = style?.name || ""
                 style = { name }
 
                 styles.update((a) => {
@@ -1347,9 +1352,9 @@ const actions = {
 
         if (obj.sel?.id === "output") {
             obj.sel.data.forEach(({ id }) => {
-                let currentOutput = clone(get(outputs)[id] || defaultOutput)
+                const currentOutput = clone(get(outputs)[id] || defaultOutput)
 
-                let newOutput = clone(defaultOutput)
+                const newOutput = clone(defaultOutput)
 
                 // don't reset these values
                 newOutput.name = currentOutput.name
@@ -1366,31 +1371,31 @@ const actions = {
 }
 
 function changeSlideAction(obj: ObjData, id: string) {
-    let layoutSlide: number = obj.sel?.data[0]?.index || 0
-    let ref = getLayoutRef()
+    const layoutSlide: number = obj.sel?.data[0]?.index || 0
+    const ref = getLayoutRef()
     if (!ref[layoutSlide]) return
 
     // ONLY ONE
 
     if (id === "slide_shortcut") {
-        let data = { index: layoutSlide, mode: "slide_shortcut" }
+        const data = { index: layoutSlide, mode: "slide_shortcut" }
 
         popupData.set(data)
         activePopup.set("assign_shortcut")
         return
     }
 
-    let actions = clone(ref[layoutSlide].data?.actions) || {}
+    const layoutActions = clone(ref[layoutSlide].data?.actions) || {}
 
     if (id === "receiveMidi") {
         let midiId: string = uid()
 
-        if (actions[id]) midiId = actions[id]!
-        else actions[id] = midiId
+        if (layoutActions[id]) midiId = layoutActions[id]!
+        else layoutActions[id] = midiId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes: [layoutSlide] } })
 
-        let data = { id: midiId, index: layoutSlide, mode: "slide_midi" }
+        const data = { id: midiId, index: layoutSlide, mode: "slide_midi" }
 
         popupData.set(data)
         activePopup.set("action")
@@ -1400,39 +1405,39 @@ function changeSlideAction(obj: ObjData, id: string) {
 
     // MULTIPLE
 
-    let indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
+    const indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
 
     if (id === "action") {
-        let id = uid()
-        let existing: any[] = []
-        let actions = clone(
+        const actionId = uid()
+        const existing: any[] = []
+        const filteredLayoutActions = clone(
             indexes
                 .map((i) => {
-                    let a = ref[i]?.data?.actions || {}
+                    const a = ref[i]?.data?.actions || {}
                     if (!a.slideActions) a.slideActions = []
-                    a.slideActions.push({ id, triggers: [] })
+                    a.slideActions.push({ id: actionId, triggers: [] })
 
-                    existing.push(...a.slideActions.map((a) => a.triggers?.[0]))
+                    existing.push(...a.slideActions.map((slideAction) => slideAction.triggers?.[0]))
                     return a
                 })
                 .filter(Boolean) || []
         )
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: filteredLayoutActions, indexes } })
 
-        popupData.set({ id, mode: "slide", indexes, existing })
+        popupData.set({ id: actionId, mode: "slide", indexes, existing })
         activePopup.set("action")
 
         return
     }
 
     if (id === "animate") {
-        if (!actions[id]) {
-            actions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "animate_slide" } })
+        if (!layoutActions[id]) {
+            layoutActions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes }, location: { page: "show", override: "animate_slide" } })
         }
 
-        let data = { data: actions[id], indexes }
+        const data = { data: layoutActions[id], indexes }
 
         popupData.set(data)
         activePopup.set("animate")
@@ -1441,11 +1446,11 @@ function changeSlideAction(obj: ObjData, id: string) {
     }
 
     if (id === "nextTimer") {
-        let nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0
+        const nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0
 
         history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: nextTimer, indexes }, location: { page: "show", override: "change_style_slide" } })
 
-        let data = { value: nextTimer, indexes }
+        const data = { value: nextTimer, indexes }
 
         popupData.set(data)
         activePopup.set("next_timer")
@@ -1455,30 +1460,30 @@ function changeSlideAction(obj: ObjData, id: string) {
 
     // this is old and has to be stored as this
     if (id === "loop") {
-        let loop = ref[layoutSlide]?.data?.end || false
+        const loop = ref[layoutSlide]?.data?.end || false
         history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !loop, indexes } })
 
         return
     }
 
-    let actionsList: any[] = []
+    const actionsList: any[] = []
     indexes.forEach((index: number) => {
-        let actions = ref[index]?.data?.actions || {}
-        actions[id] = !actions[id]
-        actionsList.push(actions)
+        const currentLayoutActions = ref[index]?.data?.actions || {}
+        currentLayoutActions[id] = !currentLayoutActions[id]
+        actionsList.push(currentLayoutActions)
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })
 }
 
 export function removeGroup(data: any[]) {
-    let ref = getLayoutRef()
-    let firstSlideId = ref[0].id
+    const ref = getLayoutRef()
+    const firstSlideId = ref[0].id
 
     let removeSlideIds: string[] = []
     data.forEach((slideRef) => {
         if (!slideRef.index) return
-        let refSlide = ref.find((a) => a.layoutIndex === slideRef.index)
+        const refSlide = ref.find((a) => a.layoutIndex === slideRef.index)
         if (!refSlide || refSlide?.type === "child" || refSlide?.id === firstSlideId) return
 
         removeSlideIds.push(refSlide.id)
@@ -1486,43 +1491,43 @@ export function removeGroup(data: any[]) {
     removeSlideIds = removeDuplicates(removeSlideIds)
     if (!removeSlideIds.length) return
 
-    let newParentIds: { [key: string]: string } = {}
+    const newParentIds: { [key: string]: string } = {}
 
     // remove from layout
-    let activeLayout = _show().get("settings.activeLayout")
-    let layout: SlideData[] = clone(_show().layouts([activeLayout]).get("slides")[0])
-    let newLayoutSlides: any[] = []
+    const activeLayout = _show().get("settings.activeLayout")
+    const layout: SlideData[] = clone(_show().layouts([activeLayout]).get("slides")[0])
+    const newLayoutSlides: any[] = []
     layout.forEach((layoutRef, i: number) => {
         if (!removeSlideIds.includes(layoutRef.id)) {
             newLayoutSlides.push(layoutRef)
             return
         }
 
-        let currentIndex = newLayoutSlides.length - 1
-        let layoutIndex = ref.find((a) => a.id === layoutRef.id && a.index === i)?.layoutIndex
-        let isSelected = data.find((a) => a.index === layoutIndex)
+        const currentIndex = newLayoutSlides.length - 1
+        const layoutIndex = ref.find((a) => a.id === layoutRef.id && a.index === i)?.layoutIndex
+        const isSelected = data.find((a) => a.index === layoutIndex)
         if (isSelected) newParentIds[layoutRef.id] = newLayoutSlides[currentIndex].id
 
         if (!Object.keys(layoutRef).length) return
 
         if (!newLayoutSlides[currentIndex].children) newLayoutSlides[currentIndex].children = {}
-        let id = layoutRef.id
+        const id = layoutRef.id
 
-        let childData: any = layoutRef
+        const childData: any = layoutRef
         delete childData.id
         newLayoutSlides[currentIndex].children[id] = childData
     })
 
-    let slides = clone(_show().get("slides"))
+    const slides = clone(_show().get("slides"))
     Object.keys(slides).forEach((slideId) => {
-        let slide: Slide = slides[slideId]
-        let willChange = removeSlideIds.includes(slideId)
+        const slide: Slide = slides[slideId]
+        const willChange = removeSlideIds.includes(slideId)
         if (!willChange) return
 
-        let newParent: string = newParentIds[slideId]
+        const newParent: string = newParentIds[slideId]
         if (!newParent) return
 
-        let children = slide.children || []
+        const children = slide.children || []
         if (!slides[newParent].children) slides[newParent].children = []
 
         slides[newParent].children = [...slides[newParent].children, slideId, ...children]
@@ -1533,14 +1538,14 @@ export function removeGroup(data: any[]) {
         slides[slideId].color = null
     })
 
-    let newData = { slides, layout: newLayoutSlides }
+    const newData = { slides, layout: newLayoutSlides }
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
 export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
-    let ref = getLayoutRef()
-    let parents: any[] = []
-    let childs: any[] = []
+    const ref = getLayoutRef()
+    const parents: any[] = []
+    const childs: any[] = []
 
     // remove parents and delete childs
     data.forEach(({ index }: any) => {
@@ -1571,8 +1576,8 @@ export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
 export function format(id: string, obj: ObjData, data: any = null) {
     let slideIds: string[] = []
 
-    let editing = get(activeEdit)
-    let items = editing.items || []
+    const editing = get(activeEdit)
+    const items = editing.items || []
 
     // WIP let slide = getEditSlide()
 
@@ -1581,7 +1586,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
         if (editing.type === "overlay") currentItems = get(overlays)[editing.id]?.items || []
         if (editing.type === "template") currentItems = get(templates)[editing.id]?.items || []
 
-        let newItems: Item[] = []
+        const newItems: Item[] = []
         currentItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
@@ -1591,7 +1596,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
             newItems.push(item)
         })
 
-        let override = editing.id + "_format#" + items.join(",")
+        const override = editing.id + "_format#" + items.join(",")
         history({
             id: "UPDATE",
             oldData: { id: editing.id },
@@ -1603,7 +1608,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
         return
     }
 
-    let ref = getLayoutRef()
+    const ref = getLayoutRef()
     if (obj.sel?.id?.includes("slide")) {
         slideIds = obj.sel.data.map((a) => ref[a.index].id)
     } else {
@@ -1615,10 +1620,10 @@ export function format(id: string, obj: ObjData, data: any = null) {
     }
 
     slideIds.forEach((slide) => {
-        let slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
-        let newData: any = { style: { values: [] } }
+        const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
+        const newData: any = { style: { values: [] } }
 
-        let newItems: Item[] = []
+        const newItems: Item[] = []
         slideItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
@@ -1641,7 +1646,7 @@ const formatting = {
 
         let flags = "g"
         if (data.caseSentitive === false) flags += "i"
-        var regExp = new RegExp(data.findValue, flags)
+        const regExp = new RegExp(data.findValue, flags)
         return t.replace(regExp, data.replaceValue)
     },
     uppercase: (t: string) => t.toUpperCase(),
@@ -1658,7 +1663,7 @@ const formatting = {
 // SORT
 
 function sort(obj: ObjData, id: string) {
-    let type = obj.menu.id
+    const type = obj.menu.id
 
     sorted.update((a) => {
         if (!a[id]) a[id] = {}

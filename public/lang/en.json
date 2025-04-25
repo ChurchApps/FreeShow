@@ -443,6 +443,7 @@
         "edit_event": "Edit event",
         "about": "About",
         "history": "History",
+        "action_history": "Action history",
         "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
@@ -699,6 +700,7 @@
         "id_select_group": "Play specific group",
         "id_change_stage_layout": "Change stage connections layout",
         "start_camera": "Start camera",
+        "start_screen": "Start screen",
         "id_select_overlay": "Start overlay",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
@@ -720,6 +722,7 @@
         "custom_activation": "Custom activation",
         "set_custom_activation": "Set custom activation",
         "any": "Any",
+        "override_category_action": "Override category action",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
         "activate_slide_clicked": "Activate on slide click",
@@ -973,6 +976,7 @@
         "media": "Media",
         "image": "Image",
         "camera": "Camera",
+        "screen": "Screen",
         "video": "Video",
         "mirror": "Mirror",
         "clock": "Clock",
@@ -1081,7 +1085,8 @@
         "signal": "Signal",
         "message_template": "Message template",
         "message_templates": "Message templates",
-        "inputs": "Inputs"
+        "inputs": "Inputs",
+        "data": "Data"
     },
     "draw": {
         "focus": "Focus",

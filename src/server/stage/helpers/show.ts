@@ -15,6 +15,6 @@ export function getDynamicValue(value: string) {
 }
 export async function replaceDynamicValues(value: string, _updater: number = 0) {
     const newValue = await awaitRequest("API:get_dynamic_value", { value, ref: { type: "stage" } })
-    if (newValue) cached[value] = newValue
+    if (newValue !== undefined) cached[value] = newValue
     return newValue ?? cached[value] ?? value
 }

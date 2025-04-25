@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
-import { triggerAction } from "../components/actions/api"
+import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
@@ -39,6 +39,7 @@ import {
     activeProject,
     activeShow,
     alertMessage,
+    chumsConnected,
     currentOutputSettings,
     dataPath,
     dictionary,
@@ -87,10 +88,10 @@ export const mainResponses: MainResponses = {
     [Main.SETTINGS]: (a) => updateSettings(a),
     [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
     [Main.SHOWS]: async (a) => {
-        let difference = Object.keys(a).length - Object.keys(get(shows)).length
+        const difference = Object.keys(a).length - Object.keys(get(shows)).length
         if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
             // get new shows & cache their content
-            let newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
+            const newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
             await loadShows(newShowIds)
             newShowIds.forEach((id) => saveTextCache(id, get(showsCache)[id]))
         }
@@ -125,13 +126,14 @@ export const mainResponses: MainResponses = {
 
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
+    [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
     [Main.SHOWS_PATH]: (a) => showsPath.set(a),
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")
 
         if (a === "error.display") {
-            let outputIds = getActiveOutputs(get(outputs), false, true)
+            const outputIds = getActiveOutputs(get(outputs), false, true)
             currentOutputSettings.set(outputIds[0])
             popupData.set({ activateOutput: true })
             activePopup.set("choose_screen")
@@ -142,7 +144,7 @@ export const mainResponses: MainResponses = {
     },
     [ToMain.TOAST]: (a) => newToast(a),
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
-    [Main.CLOSE]: () => initializeClosing(),
+    [Main.CLOSE]: (a) => initializeClosing(a ?? false),
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
     [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
@@ -154,8 +156,8 @@ export const mainResponses: MainResponses = {
         activePopup.set("alert")
     },
     [ToMain.REFRESH_SHOWS2]: (a) => {
-        let oldCount = Object.keys(get(shows)).length
-        let newCount = Object.keys(a).length
+        const oldCount = Object.keys(get(shows)).length
+        const newCount = Object.keys(a).length
 
         shows.set(a)
 
@@ -166,7 +168,7 @@ export const mainResponses: MainResponses = {
     [ToMain.BACKUP]: ({ finished, path }) => {
         if (!finished) return activePopup.set(null)
 
-        console.log("Backed up to:", path)
+        console.info("Backed up to:", path)
         newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
     },
     [ToMain.RESTORE2]: ({ finished, starting }) => {
@@ -182,12 +184,12 @@ export const mainResponses: MainResponses = {
     },
     [Main.LOCATE_MEDIA_FILE]: (data) => {
         if (!data) return
-        let prevPath: string = ""
+        let prevPath = ""
 
         showsCache.update((a) => {
-            let media = a[data.ref.showId].media[data.ref.mediaId]
+            const mediaData = a[data.ref.showId].media[data.ref.mediaId]
             if (data.ref.cloudId) {
-                if (!media.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
+                if (!mediaData.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
                 prevPath = a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId]
                 a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId] = data.path
             } else {
@@ -224,9 +226,9 @@ export const mainResponses: MainResponses = {
         createCategory("Planning Center")
 
         // CREATE SHOWS
-        let tempShows: { id: string; show: Show }[] = []
+        const tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
-            let id = show.id
+            const id = show.id
             delete show.id
             tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
         })
@@ -234,13 +236,13 @@ export const mainResponses: MainResponses = {
 
         data.projects.forEach((pcoProject) => {
             // CREATE PROJECT FOLDER
-            let folderId = pcoProject.folderId
+            const folderId = pcoProject.folderId
             if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
                 history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
             }
 
             // CREATE PROJECT
-            let project: Project = {
+            const project: Project = {
                 name: pcoProject.name,
                 created: pcoProject.created,
                 used: Date.now(), // show on top in last used list
@@ -248,7 +250,52 @@ export const mainResponses: MainResponses = {
                 shows: pcoProject.items || [],
             }
 
-            let projectId = pcoProject.id
+            const projectId = pcoProject.id
+            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
+        })
+
+        // open closest to today
+        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
+        projectView.set(false)
+    },
+    // CHUMS CONNECTION
+    [ToMain.CHUMS_CONNECT]: (data) => {
+        if (!data.success) return
+        chumsConnected.set(true)
+        if (data.isFirstConnection) newToast("$main.finished")
+    },
+    [ToMain.CHUMS_PROJECTS]: (data) => {
+        if (!data.projects) return
+
+        // CREATE CATEGORY
+        createCategory("Chums")
+
+        // CREATE SHOWS
+        const tempShows: { id: string; show: Show }[] = []
+        data.shows.forEach((show) => {
+            const id = show.id
+            delete show.id
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+        })
+        setTempShows(tempShows)
+
+        data.projects.forEach((chumsProject) => {
+            // CREATE PROJECT FOLDER
+            const folderId = chumsProject.folderId
+            if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
+                history({ id: "UPDATE", newData: { replace: { parent: "/", name: chumsProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+            }
+
+            // CREATE PROJECT
+            const project: Project = {
+                name: chumsProject.name,
+                created: chumsProject.created,
+                used: Date.now(), // show on top in last used list
+                parent: folderId || "/",
+                shows: chumsProject.items || [],
+            }
+
+            const projectId = chumsProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
@@ -274,8 +321,8 @@ export const mainResponses: MainResponses = {
     [ToMain.OPEN_FILE2]: (a) => {
         const receiveFILE = {
             GOOGLE_KEYS: () => {
-                let path = a.files[0]
-                let file = a.content[path]
+                const path = a.files[0]
+                const file = a.content[path]
                 if (file) validateKeys(file)
             },
         }
@@ -291,7 +338,7 @@ export const mainResponses: MainResponses = {
             pdf: () => addToProject("pdf", mainData as string[]),
             powerkey: () => addToProject("ppt", mainData as string[]),
         }
-        if (mainData.find((a) => typeof a === "string")) {
+        if (mainData.find((dataValue) => typeof dataValue === "string")) {
             if (!receiveFilePathIMPORT[a.channel]) return
             receiveFilePathIMPORT[a.channel]()
             return

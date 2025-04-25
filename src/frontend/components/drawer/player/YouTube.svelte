@@ -1,6 +1,6 @@
 <script>
     import YouTube from "svelte-youtube"
-    import { MAIN, OUTPUT } from "../../../../types/Channels"
+    import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
     import { createEventDispatcher, onDestroy } from "svelte"
@@ -104,7 +104,7 @@
         seeking = true
 
         player.pauseVideo()
-        player.seekTo(videoTime)
+        player.seekTo(time)
 
         setTimeout(() => {
             if (!player.g) return
@@ -112,7 +112,7 @@
             if (!videoData.paused) player.playVideo()
             seeking = false
 
-            if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: videoTime })
+            if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
         }, 500)
     }
 
@@ -139,7 +139,7 @@
     // $: if ($outputWindow && player && videoData.paused) player.seekTo(videoTime)
 
     let loopStop = false
-    function change(e) {
+    function change() {
         if (loopStop || !loaded || updating || seeking) return
 
         loopStop = true

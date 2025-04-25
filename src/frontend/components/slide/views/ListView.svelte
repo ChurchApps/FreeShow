@@ -4,9 +4,9 @@
     import { custom } from "../../../utils/transitions"
 
     export let list: List = { items: [] }
-    export let disableTransition: boolean = false
+    export let disableTransition = false
 
-    let currentItem: number = 0
+    let currentItem = 0
     $: if (list.interval) startInterval()
     let timeout: NodeJS.Timeout | null = null
     function startInterval() {

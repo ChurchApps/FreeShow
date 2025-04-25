@@ -8,8 +8,8 @@
     export let activeOverlays: string[]
     export let transition: Transition
 
-    export let isKeyOutput: boolean = false
-    export let mirror: boolean = false
+    export let isKeyOutput = false
+    export let mirror = false
 
     // SPAM PREVENTION
 

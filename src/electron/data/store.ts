@@ -39,41 +39,41 @@ const fileNames: { [key: string]: string } = {
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
 const storeExtraConfig: { [key: string]: string } = {}
-if (process.env.FS_MOCK_STORE_PATH != undefined) {
-    storeExtraConfig["cwd"] = process.env.FS_MOCK_STORE_PATH
+if (process.env.FS_MOCK_STORE_PATH !== undefined) {
+    storeExtraConfig.cwd = process.env.FS_MOCK_STORE_PATH
 }
 
 // MAIN WINDOW
 export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
 
-let dataPath = config.path
-checkStores(dataPath)
+const storesPath = config.path
+checkStores(storesPath)
 
 // Check that files are parsed properly!
 function checkStores(dataPath: string) {
     Object.values(fileNames).forEach((fileName) => {
-        let p = path.join(path.dirname(dataPath), fileName + ".json")
-        if (!doesPathExist(p)) return
+        const filePath = path.join(path.dirname(dataPath), fileName + ".json")
+        if (!doesPathExist(filePath)) return
 
         // delete if too large
         if (fileName === "history") {
             const MAX_BYTES = 30 * 1024 * 1024 // 30 MB
-            let stats = statSync(p)
+            const stats = statSync(filePath)
             if (stats.size > MAX_BYTES) {
-                deleteFile(p)
-                console.log(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
+                deleteFile(filePath)
+                console.info(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
                 return
             }
         }
 
-        let jsonData = readFile(p)
+        const jsonData = readFile(filePath)
 
         try {
             JSON.parse(jsonData)
         } catch (err) {
             console.error("Could not read the " + fileName + ".json settings file, probably wrong JSON format!", err)
             // auto delete files that can't be parsed!
-            deleteFile(p)
+            deleteFile(filePath)
         }
     })
 }
@@ -102,32 +102,32 @@ export const error_log = new Store({ name: fileNames.error_log, defaults: DEFAUL
 
 // SETTINGS
 const settings = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
-let synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
-let themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
+const synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
+const themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
 
 // PROJECTS
-let projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
+const projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
-let overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
-let templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
+const shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
+const overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
+const templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
 
 // CALENDAR
-let events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...storeExtraConfig })
+const events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...storeExtraConfig })
 
 // CLOUD
-let driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
+const driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
 
 // CACHE
 const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
+const history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
 
-export let stores = {
+export const stores = {
     SETTINGS: settings,
     SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
@@ -150,7 +150,7 @@ export let stores = {
 export function getStore<T extends keyof typeof stores>(id: T): (typeof stores)[T] extends { store: infer S } ? S : null {
     if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
 
-    let store = stores[id].store
+    const store = stores[id].store
     return store as (typeof stores)[T] extends { store: infer S } ? S : null
 }
 
@@ -173,9 +173,9 @@ export let userDataPath: string | null = null
 export function updateDataPath({ reset, dataPath, load }: { reset?: boolean; dataPath?: string; load?: boolean } = {}) {
     if (reset) return resetStoresPath()
 
-    let settingsStore = settings.store || {}
+    const settingsStore = settings.store || {}
 
-    let useDataPath = !!settingsStore.special?.customUserDataLocation
+    const useDataPath = !!settingsStore.special?.customUserDataLocation
     if (!useDataPath) return
 
     userDataPath = dataPath || settingsStore.dataPath || ""
@@ -191,22 +191,22 @@ function resetStoresPath() {
     updateStoresPath()
 }
 
-function updateStoresPath(load: boolean = false) {
+function updateStoresPath(load = false) {
     if (!userDataPath) return
     Object.keys(portableData).forEach((id) => createStoreAtNewLocation(id, load))
 }
 
-let error: boolean = false
-function createStoreAtNewLocation(id: string, load: boolean = false) {
+let error = false
+function createStoreAtNewLocation(id: string, load = false) {
     if (error) return
 
-    let key = portableData[id].key as keyof typeof stores
+    const key = portableData[id].key
     let tempData: any = {}
     if (!load) {
         try {
             tempData = JSON.parse(JSON.stringify(stores[key].store))
         } catch (err) {
-            console.log("Could not parse store:", key)
+            console.error("Could not parse store:", key)
         }
     }
 
@@ -215,10 +215,10 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
         stores[key] = new Store({ name: fileNames[id], defaults: (portableData[id].defaults || {}) as any, cwd: userDataPath! }) as any
     } catch (err) {
         error = true
-        console.log("Can't create store at set location!", err)
+        console.error("Can't create store at set location!", err)
 
         // revert
-        let special = stores.SETTINGS.get("special")
+        const special = stores.SETTINGS.get("special")
         special.customUserDataLocation = false
         stores.SETTINGS.set("special", special)
         stores.SETTINGS.set("dataPath", "")

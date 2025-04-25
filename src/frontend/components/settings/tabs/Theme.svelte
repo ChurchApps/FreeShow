@@ -51,7 +51,7 @@
         )
     }
 
-    function updateTheme(e: any, id: null | string, key: string = "colors") {
+    function updateTheme(e: any, id: null | string, key = "colors") {
         let value: string = e.target?.value ?? e
 
         let themeId = $selected.data[0]?.id || $theme
@@ -99,7 +99,7 @@
         updateThemeValues(defaultThemes.default)
     }
 
-    let edit: boolean = false
+    let edit = false
 </script>
 
 <!-- <h3><T id="settings.font" /></h3> -->
@@ -185,7 +185,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

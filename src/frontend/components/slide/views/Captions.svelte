@@ -17,12 +17,12 @@
 
     // can't have more than one active per computer
     let roomId = "freeshow" + uid(6)
-    let roomURL: string = ""
+    let roomURL = ""
 
     let showtime = 5000
     let translate = ""
 
-    let ready: boolean = false
+    let ready = false
     onMount(startRoom)
     function startRoom() {
         if (preview) return

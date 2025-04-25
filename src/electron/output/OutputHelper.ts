@@ -30,7 +30,7 @@ export class OutputHelper {
             CAPTURE: (data: { id: string; captures: { [key: string]: boolean } }) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
 
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
-            //PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
+            // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
 
             FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id),
         }
@@ -41,7 +41,7 @@ export class OutputHelper {
         OutputHelper.Send.sendToOutputWindow(msg)
     }
 
-    //static outputWindows: { [key: string]: BrowserWindow } = {}
+    // static outputWindows: { [key: string]: BrowserWindow } = {}
     private static outputs: { [key: string]: OutputData } = {}
 
     static getOutput(id: string) {
@@ -49,7 +49,7 @@ export class OutputHelper {
     }
 
     static getAllOutputs() {
-        return Object.entries(this.outputs)
+        return Object.entries(this.outputs).map(([id, output]) => ({ ...output, id }))
     }
 
     static setOutput(id: string, output: OutputData) {

@@ -31,14 +31,14 @@
     let recordingData: Recording | null = null
     $: recordingData = showLayout.recording?.[0] || null
 
-    let settingsOpened: boolean = false
+    let settingsOpened = false
 
     // $: useDurationTime = recordingData?.useDurationTime !== false
     $: useDurationTime = $special.useDurationTime !== false
     // check if layout slides has changed
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
-    let started: boolean = false
+    let started = false
     let outputListenerUnsubscribe: Unsubscriber | null = null
     let currentSequence: { time: number; slideRef: { id: string; index: any } }[] = []
     function toggleRecording() {
@@ -267,7 +267,7 @@
             {#each recordingData.sequence as action, i}
                 <div id={"#" + i} class="row context #slide_recorder_item">
                     <p>
-                        <span style="opacity: 0.5;padding-right: 3px;min-width: 22px;display: inline-block;">{i + 1}</span>
+                        <span style="opacity: 0.5;padding-inline-end: 3px;min-width: 22px;display: inline-block;">{i + 1}</span>
                         <!-- || (useDurationTime ? i === recordingData.sequence.length - 1 : i === 0) -->
                         <span style={!action.time && i < recordingData.sequence.length - 1 ? "opacity: 0.4;" : ""}>{groupName(action.slideRef)}</span>
                     </p>
@@ -291,7 +291,7 @@
         <div class="total" style="text-align: center;font-weight: bold;">
             <!-- WIP timebar / display real time time progress? -->
             {#if recordingPlaying}
-                <span style="color: var(--secondary);margin-right: 10px;">{joinTime(secondsToTime(recordingData.sequence.slice(0, recordingPlaying.index).reduce((time, value) => (time += value.time), 0) / 1000))}</span>
+                <span style="color: var(--secondary);margin-inline-end: 10px;">{joinTime(secondsToTime(recordingData.sequence.slice(0, recordingPlaying.index).reduce((time, value) => (time += value.time), 0) / 1000))}</span>
             {/if}
             <span>{joinTime(secondsToTime(recordingData.sequence.reduce((time, value) => (time += value.time), 0) / 1000))}</span>
         </div>
@@ -364,7 +364,7 @@
 
     .timebar {
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         bottom: 0;
         transform: translateY(50%);
 

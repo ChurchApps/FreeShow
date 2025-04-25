@@ -4,15 +4,15 @@
     import YouTube from "../drawer/player/YouTube.svelte"
 
     export let id: string
-    export let outputId: string = ""
-    export let preview: boolean = false
+    export let outputId = ""
+    export let preview = false
 
     $: video = $playerVideos[id]
 
     export let videoData = { muted: true, paused: false, loop: false, duration: 0 }
-    export let videoTime: number = 0
-    export let title: string = ""
-    export let startAt: number = 0
+    export let videoTime = 0
+    export let title = ""
+    export let startAt = 0
 
     // TODO: looping player videos does not work!
 </script>

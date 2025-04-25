@@ -9,16 +9,16 @@ import type { ValidChannels } from "../types/Channels"
 // let lastChannel: string = ""
 
 // wait to log messages until after intial load is done
-let appLoaded: boolean = false
+let appLoaded = false
 const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
 const filteredChannelsData: string[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
-let storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
+const storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any, id?: string) => {
-        if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
+        if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(data?.channel)) console.info("TO ELECTRON [" + channel + "]: ", data)
         // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return
 
         ipcRenderer.send(channel, data, id)
@@ -27,11 +27,11 @@ contextBridge.exposeInMainWorld("api", {
         // setTimeout(() => (lastChannel = ""), maxInterval)
     },
     receive: (channel: ValidChannels, func: any, id?: string) => {
-        const receiver = (_e: IpcRendererEvent, args: any, id?: string) => {
+        const receiver = (_e: IpcRendererEvent, args: any, listenedId?: string) => {
             if (!appLoaded && channel === "MAIN" && args?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
-            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args?.channel)) console.log("TO CLIENT [" + channel + "]: ", args)
+            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args?.channel)) console.info("TO CLIENT [" + channel + "]: ", args)
 
-            func(args, id)
+            func(args, listenedId)
         }
 
         ipcRenderer.on(channel, receiver)

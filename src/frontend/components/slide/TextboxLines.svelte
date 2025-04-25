@@ -9,13 +9,13 @@
     import { getStyles } from "../helpers/style"
 
     export let item: Item
-    export let slideIndex: number = 0
-    export let isMirrorItem: boolean = false
-    export let key: boolean = false
-    export let smallFontSize: boolean = false
+    export let slideIndex = 0
+    export let isMirrorItem = false
+    export let key = false
+    export let smallFontSize = false
     export let animationStyle: any = {}
-    export let dynamicValues: boolean = true
-    export let isStage: boolean = false
+    export let dynamicValues = true
+    export let isStage = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
     export let ref: {
@@ -25,16 +25,16 @@
         layoutId?: string
         id: string
     }
-    export let style: boolean = true
-    export let customStyle: string = ""
+    export let style = true
+    export let customStyle = ""
     export let stageItem: any = {}
-    export let chords: boolean = false
+    export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
-    export let fontSize: number = 0
-    export let customTypeRatio: number = 1
-    export let maxLines: number = 0 // stage next item preview
-    export let maxLinesInvert: boolean = false // stage next item preview (last lines)
+    export let fontSize = 0
+    export let customTypeRatio = 1
+    export let maxLines = 0 // stage next item preview
+    export let maxLinesInvert = false // stage next item preview (last lines)
 
     $: lines = clone(item?.lines || [])
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -54,7 +54,7 @@
         clearInterval(dynamicInterval)
     })
 
-    function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
+    function getCustomStyle(style: string, outputId = "", _updater: any = null) {
         if (outputId && !isMirrorItem) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
@@ -360,7 +360,7 @@
         font-weight: bold;
 
         /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
-        transform: translate(-50%, calc(-8px - var(--offsetY)));
+        transform: translate(-50%, calc(-12px - var(--offsetY)));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;

@@ -6,8 +6,8 @@ import { getActiveOutputs } from "../../helpers/output"
 import { getStyles } from "../../helpers/style"
 
 export class EditboxHelper {
-    //Compare text of all the new lines to determine if it's truly a modification or just an index change.
-    //Set the cursor to the start of the last line that was modified.
+    // Compare text of all the new lines to determine if it's truly a modification or just an index change.
+    // Set the cursor to the start of the last line that was modified.
     static determineCaretLine(oldLines: Line[], newLines: Line[]) {
         const oldTexts: string[] = []
         const newTexts: string[] = []
@@ -32,9 +32,9 @@ export class EditboxHelper {
     }
 
     static splitAllCrlf(lines: Line[]) {
-        let result: Line[] = []
+        const result: Line[] = []
         lines.forEach((line) => {
-            let splitLines = this.splitCrlf(line)
+            const splitLines = this.splitCrlf(line)
             result.push(...splitLines)
         })
         return result
@@ -46,8 +46,8 @@ export class EditboxHelper {
         newLine.text = []
 
         line.text.forEach((text) => {
-            let value = text.value
-            let parts = value.replace("\r", "").split("\n")
+            const value = text.value
+            const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
                 for (let i = 1; i < parts.length; i++) {
@@ -76,7 +76,7 @@ export class EditboxHelper {
 
                 if (start > -1 && currentIndex >= start) {
                     if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    let pos = sel[i].start - textPos
+                    const pos = sel[i].start - textPos
                     if (pos > 0)
                         firstLines[firstLines.length - 1].text.push({
                             style: text.style,
@@ -101,7 +101,7 @@ export class EditboxHelper {
         // remove first line if empty
         if (secondLines?.[0]?.text?.[0]?.value === "") secondLines.shift()
 
-        let defaultLine = [
+        const defaultLine = [
             {
                 align: lines[0].align || "",
                 text: [{ style: lines[0].text[0]?.style || "", value: "" }],
@@ -111,9 +111,9 @@ export class EditboxHelper {
         if (!secondLines.length) secondLines = defaultLine
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        let chordLines = clone(lines.map((a) => a.chords || []))
+        const chordLines = clone(lines.map((a) => a.chords || []))
         ;[...firstLines, ...secondLines].forEach((line) => {
-            let oldLineChords = chordLines.shift()
+            const oldLineChords = chordLines.shift()
             if (oldLineChords?.length) line.chords = oldLineChords
         })
 
@@ -123,38 +123,37 @@ export class EditboxHelper {
     static getStyleHtml(item: Item, plain: boolean, currentStyle: string) {
         currentStyle = ""
         let html = ""
-        let firstTextStyleArchive: string = ""
-        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-        let listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : ""
+        let firstTextStyleArchive = ""
+        const lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+        const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
         item?.lines?.forEach((line, i) => {
-            let align = line.align.replaceAll(lineBg, "") + ";"
+            const align = line.align.replaceAll(lineBg, "") + ";"
             currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
-            let style = align || lineBg || listStyle ? 'style="' + align + lineBg + listStyle + '"' : ""
+            const style = align || lineBg || listStyle ? 'style="' + align + lineBg + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
-            let currentChords = line.chords || []
+            const currentChords = line.chords || []
             let textIndex = 0
 
             line.text?.forEach((a, tIndex) => {
                 currentStyle += this.getTextStyle(a)
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)
-                let textEnd = textIndex + a.value.length
-                let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textEnd = textIndex + a.value.length
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
-                let listStyle = "" // item.list?.enabled ? ";display: list-item;" : ""
-                let style = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
+                const textStyle = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
                 let value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })
@@ -164,7 +163,7 @@ export class EditboxHelper {
     }
 
     static getTextStyle(lineText: any) {
-        let style = lineText.style || ""
+        const style = lineText.style || ""
         return style
     }
 

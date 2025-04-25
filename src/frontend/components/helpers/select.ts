@@ -13,7 +13,7 @@ export function select(id: SelectIds, data: any) {
 }
 
 export function getSelected(hasToBeId: SelectIds | null, index: null | number = null, updater: Selected = get(selected)) {
-    let sel = updater
+    const sel = updater
     if (hasToBeId && sel.id !== hasToBeId) return null
     if (index === null) return sel.data
     return sel.data[index]

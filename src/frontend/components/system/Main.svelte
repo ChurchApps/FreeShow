@@ -4,8 +4,8 @@
 
     // export let slide: any = null
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     // slide?.settings?.resolution
     $: resolution = getResolution(null, { $outputs, $styles })
 </script>

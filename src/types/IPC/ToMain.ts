@@ -4,6 +4,7 @@ export enum ToMain {
     ALERT = "ALERT",
     TOAST = "TOAST",
     MENU = "MENU",
+    API = "API",
     SPELL_CHECK = "SPELL_CHECK",
     BACKUP = "BACKUP",
     PRESENTATION_STATE = "PRESENTATION_STATE",
@@ -13,7 +14,9 @@ export enum ToMain {
     IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
     PCO_CONNECT = "PCO_CONNECT",
     PCO_PROJECTS = "PCO_PROJECTS",
-    API = "API",
+    CHUMS_CONNECT = "CHUMS_CONNECT",
+    CHUMS_PROJECTS = "CHUMS_PROJECTS",
+    WEBSOCKET = "WEBSOCKET",
     // Main
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
@@ -29,6 +32,7 @@ export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
     [ToMain.TOAST]: string
     [ToMain.MENU]: string
+    [ToMain.API]: { action: string; data?: any }
     [ToMain.SPELL_CHECK]: { misspelled: string; suggestions: string[] }
     [ToMain.BACKUP]: { finished: boolean; path: string }
     [ToMain.PRESENTATION_STATE]: { id: string; stat: any; info: any }
@@ -38,7 +42,9 @@ export interface ToMainSendPayloads {
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
     [ToMain.PCO_CONNECT]: { success: boolean; isFirstConnection?: boolean }
     [ToMain.PCO_PROJECTS]: { shows: any; projects: any }
-    [ToMain.API]: "connected"
+    [ToMain.CHUMS_CONNECT]: { success: boolean; isFirstConnection?: boolean }
+    [ToMain.CHUMS_PROJECTS]: { shows: any; projects: any }
+    [ToMain.WEBSOCKET]: "connected"
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
@@ -51,10 +57,15 @@ export interface ToMainSendPayloads {
     [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" }
 }
 
+export interface ToMainReturnPayloads {
+    [ToMain.API]: Promise<any>
+}
+
 ///////////
 
 // export type ToMainSendValue<ID extends ToMain, V> = ID extends keyof ToMainSendPayloads ? (ToMainSendPayloads[ID] extends V ? V : never) : never
-export type ToMainSendValue<ID extends ToMain, V> = Extract<ToMainSendPayloads[ID], V>
+// export type ToMainSendValue<ID extends ToMain, V> = Extract<, V>
+export type ToMainSendValue<ID extends ToMain> = ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : never
 
 export type ToMainReceiveData<ID extends ToMain> = ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : undefined
 export type ToMainReceiveValue<ID extends ToMain = ToMain> = {

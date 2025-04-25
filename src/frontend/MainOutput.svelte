@@ -13,15 +13,15 @@
     $: outputId = Object.keys($outputs)[0]
 
     // get output resolution
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     let resolution: Resolution = getResolution()
     $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
 
     // $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
 
     // enable output window dragging
-    let enableOutputMove: boolean = false
+    let enableOutputMove = false
     function mousemoveOutput(e: MouseEvent) {
         if ($outputs[outputId]?.boundsLocked || $special.hideCursor) return
         if (e.ctrlKey || e.metaKey || e.target?.closest(".dragger")) enableOutputMove = true
@@ -30,7 +30,7 @@
     $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })
 
     // make sure it's loaded to prevent output not changing to stage output because of Svelte transition bug
-    let loaded: boolean = false
+    let loaded = false
     onMount(() => {
         setTimeout(() => {
             loaded = true
@@ -71,7 +71,7 @@
         -webkit-app-region: drag;
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         height: 5vh;
         width: 100%;
         z-index: 10;

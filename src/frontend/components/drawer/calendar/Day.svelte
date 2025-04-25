@@ -8,7 +8,7 @@
     import Center from "../../system/Center.svelte"
     import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
 
-    export let type: string = "event"
+    export let type = "event"
 
     let current = new Date($activeDays[0])
     let currentEvents: any[] = []
@@ -139,7 +139,7 @@
     }
 
     .time {
-        padding-right: 10px;
+        padding-inline-end: 10px;
         color: var(--text);
         opacity: 0.9;
         white-space: nowrap;

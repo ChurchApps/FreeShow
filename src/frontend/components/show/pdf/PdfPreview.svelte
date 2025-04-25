@@ -1,15 +1,18 @@
 <script lang="ts">
-    import * as pdfjsLib from "pdfjs-dist"
+    import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask } from "pdfjs-dist"
+    import { onDestroy, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { dictionary, outLocked, outputs, slidesOptions, styles } from "../../../stores"
-    import { wait } from "../../../utils/common"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
+    import { dataPath, dictionary, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { newToast, wait } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { clearBackground } from "../../output/clear"
-    import { onMount } from "svelte"
     import Loader from "../../main/Loader.svelte"
+    import { clearBackground } from "../../output/clear"
 
     export let show
     $: path = show.id
@@ -21,7 +24,7 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     // set active if output
-    let active: number = -1
+    let active = -1
     $: outSlide = $outputs[activeOutput].out?.slide
     $: if (outSlide?.type === "pdf" && outSlide?.id === path) active = outSlide?.page || 0
     else active = -1
@@ -55,13 +58,13 @@
 
     /////
 
-    // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    // GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
 
-    let pageCount: number = 0
+    let pageCount = 0
     let canvases: (HTMLCanvasElement | undefined)[] = []
 
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
@@ -69,7 +72,9 @@
     }
 
     let loading = true
+    let loadingTask: PDFDocumentLoadingTask | null = null
     onMount(loadPages)
+    onDestroy(() => loadingTask?.destroy())
     async function loadPages() {
         loading = true
         if (!path) {
@@ -77,7 +82,8 @@
             return
         }
 
-        const pdfDoc = await pdfjsLib.getDocument(path).promise
+        loadingTask = getDocument(path)
+        const pdfDoc = await loadingTask.promise
         pageCount = pdfDoc.numPages
 
         // Wait for canvases to bind
@@ -98,6 +104,11 @@
             // display when the first page has loaded
             loading = false
         }
+    }
+
+    function convertToImages() {
+        newToast("$actions.converting")
+        sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, filePath: path })
     }
 </script>
 
@@ -124,6 +135,11 @@
         <p>PDF</p>
 
         <div class="buttons">
+            <Button on:click={convertToImages} style="white-space: nowrap;">
+                <Icon id="image" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
+            </Button>
+
             <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
                 <Icon size={1.3} id="zoomIn" white />
             </Button>
@@ -157,7 +173,7 @@
     .load {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         height: 100%;
 
@@ -187,7 +203,8 @@
         width: 100px;
         height: 100px;
         top: 50%;
-        left: 50%;
+        left: 50%; /* stylelint-disable-line */
+        /* If we use logical prop here we'll need to translate with + */
         transform: translate(-50%, -50%);
     }
 
@@ -262,7 +279,7 @@
     /* zoom */
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

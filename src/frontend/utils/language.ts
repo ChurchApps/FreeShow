@@ -3,7 +3,7 @@ import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
 import { sendMain } from "../IPC/main"
-import { currentWindow, dictionary, language } from "../stores"
+import { currentWindow, dictionary, language, localeDirection } from "../stores"
 import { replace } from "./languageData"
 import { send } from "./request"
 
@@ -17,7 +17,7 @@ const defaultPath = "./lang/en.json"
 // WIP right to left
 // const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
-function setLanguage(locale: string = "", init: boolean = false) {
+function setLanguage(locale = "", init = false) {
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
@@ -30,6 +30,9 @@ function setLanguage(locale: string = "", init: boolean = false) {
     if (!replace[locale]) locale = "en"
     language.set(locale)
 
+    const rtlLanguages = ["ar", "fa", "he", "ur"]
+    localeDirection.set(rtlLanguages.includes(locale) ? "rtl" : "ltr")
+
     const url = defaultPath.replace("en", locale)
     fetch(url)
         .then((response) => response.json())
@@ -38,7 +41,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
     async function returnedFile(messages: Dictionary) {
         // replace any missing keys in dictionary with fallback english string
         if (locale !== "en") {
-            let defaultStrings = await (await fetch(defaultPath)).json()
+            const defaultStrings = await (await fetch(defaultPath)).json()
 
             Object.keys(defaultStrings).forEach((key) => {
                 if (!messages[key]) messages[key] = defaultStrings[key]
@@ -59,7 +62,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
 
         language.set(locale)
 
-        let msg = { lang: locale, strings: messages }
+        const msg = { lang: locale, strings: messages }
         sendMain(Main.LANGUAGE, msg)
         // remoteTalk.ts sends this
         // send(REMOTE, ["LANGUAGE"], msg)
@@ -73,22 +76,22 @@ function setLanguage(locale: string = "", init: boolean = false) {
 const translate = (id: string, { parts = false } = {}) => {
     if (typeof id !== "string") return ""
 
-    let d = get(dictionary)
+    const d = get(dictionary)
 
     if (!parts) {
-        let key = id.split(".")
-        return d[key[0]]?.[key[1]] || ""
+        const splittedKey = id.split(".")
+        return d[splittedKey[0]]?.[splittedKey[1]] || ""
     }
 
     if (!id.includes("$:")) return id
 
     // TODO: use regex for this
-    let pre = id.slice(0, id.indexOf("$:"))
-    let suf = id.slice(id.indexOf(":$") + 2, id.length)
+    const pre = id.slice(0, id.indexOf("$:"))
+    const suf = id.slice(id.indexOf(":$") + 2, id.length)
     id = id.slice(id.indexOf("$:") + 2, id.indexOf(":$"))
 
-    let category: string = id.slice(0, id.indexOf("."))
-    let key = id.slice(id.indexOf(".") + 1, id.length)
+    const category: string = id.slice(0, id.indexOf("."))
+    const key = id.slice(id.indexOf(".") + 1, id.length)
 
     id = d[category]?.[key] || `[${id}]`
 

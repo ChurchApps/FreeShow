@@ -9,7 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { getLayoutRef } from "../../helpers/show"
 
-    let value: string = "#FFFFFF"
+    let value = "#FFFFFF"
     $: console.log(value)
     onMount(() => {
         if ($selected.id === "slide") {

@@ -27,8 +27,8 @@
         active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
-    export let resetSearchList: boolean = false
-    let previousSearchValue: string = ""
+    export let resetSearchList = false
+    let previousSearchValue = ""
     $: {
         if (searchValue.length > 1) {
             let currentShowsList = filterByTags(filteredShows, $activeTagFilter)
@@ -102,7 +102,7 @@
         if (e.target?.closest("input") || e.target?.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 
-        let id: string = ""
+        let id = ""
         if (e.key === "ArrowRight") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
             else {

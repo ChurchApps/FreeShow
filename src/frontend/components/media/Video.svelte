@@ -8,15 +8,15 @@
     export let video: HTMLVideoElement | null = null
     export let videoData: any
     export let videoTime: number
-    export let startAt: number = 0
+    export let startAt = 0
 
     export let mediaStyle: MediaStyle = {}
-    export let animationStyle: string = ""
-    export let mirror: boolean = false
+    export let animationStyle = ""
+    export let mirror = false
 
     let dispatch = createEventDispatcher()
 
-    let hasLoaded: boolean = false
+    let hasLoaded = false
     function loaded() {
         hasLoaded = true
         dispatch("loaded", true)
@@ -32,7 +32,7 @@
     $: if (endTime && !mirror && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
         if (!videoTime || !endTime) return
-        if (videoTime >= endTime!) {
+        if (videoTime >= endTime) {
             if (videoData.loop) videoTime = mediaStyle.fromTime || 0
             else dispatch("ended")
         }

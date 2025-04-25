@@ -19,9 +19,9 @@ export class CaptureHelper {
     static customFramerates: { [key: string]: { [key: string]: number } } = {}
 
     static getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
-        let screen: Display = this.getWindowScreen(window)
+        const screen: Display = this.getWindowScreen(window)
 
-        let defaultFramerates = {
+        const defaultFramerates = {
             ndi: this.framerates.connected,
             server: this.framerates.server,
             stage: this.framerates.stage,
@@ -49,8 +49,8 @@ export class CaptureHelper {
             let ndiFramerate = this.framerates.unconnected
             if (NdiSender.NDI[id].status === "connected") ndiFramerate = this.customFramerates[id]?.ndi || this.framerates.connected
 
-            if (captureOptions.framerates.ndi !== parseInt(ndiFramerate.toString())) {
-                captureOptions.framerates.ndi = parseInt(ndiFramerate.toString())
+            if (captureOptions.framerates.ndi !== parseInt(ndiFramerate.toString(), 10)) {
+                captureOptions.framerates.ndi = parseInt(ndiFramerate.toString(), 10)
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }

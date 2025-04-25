@@ -7,14 +7,14 @@
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
 
-    export let isWindows: boolean = false
+    export let isWindows = false
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : $activeShow?.type === "pdf" || !$activeShow?.id
     $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
-    let confirm: boolean = false
-    let disableClick: boolean = false
+    let confirm = false
+    let disableClick = false
     let cancelConfirmTimeout: NodeJS.Timeout | null = null
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
@@ -139,7 +139,7 @@
 
     .unsaved {
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         height: 100%;
         width: 5px;
         background-color: rgb(255 0 0 / 0.25);
@@ -163,7 +163,7 @@
     .click_again {
         position: absolute;
         bottom: 0;
-        right: 0;
+        inset-inline-end: 0;
         transform: translateY(100%);
 
         font-size: 1.1em;
@@ -173,6 +173,6 @@
 
         border: 2px solid var(--secondary);
         border-top: none;
-        border-right: none;
+        border-inline-end: none;
     }
 </style>

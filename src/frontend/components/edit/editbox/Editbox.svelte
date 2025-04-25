@@ -9,19 +9,19 @@
     import EditboxPlain from "./EditboxPlain.svelte"
 
     export let item: Item
-    export let filter: string = ""
-    export let backdropFilter: string = ""
+    export let filter = ""
+    export let backdropFilter = ""
     export let ref: {
         type?: "show" | "overlay" | "template"
         showId?: string
         id: string
     }
     export let index: number
-    export let editIndex: number = -1
-    export let ratio: number = 1
-    export let plain: boolean = false
-    export let chordsMode: boolean = false
-    export let chordsAction: string = ""
+    export let editIndex = -1
+    export let ratio = 1
+    export let plain = false
+    export let chordsMode = false
+    export let chordsAction = ""
 
     let itemElem: HTMLElement | undefined
 
@@ -121,7 +121,7 @@
     }
 
     $: customOutputId = getActiveOutputs($outputs, true, true, true)[0]
-    function getCustomStyle(style: string, outputId: string = "") {
+    function getCustomStyle(style: string, outputId = "") {
         if (outputId) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)

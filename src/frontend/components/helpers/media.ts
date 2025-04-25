@@ -27,7 +27,7 @@ export function removeExtension(name: string): string {
     return name.slice(0, name.lastIndexOf("."))
 }
 
-export function isMediaExtension(extension: string, audio: boolean = false): boolean {
+export function isMediaExtension(extension: string, audio = false): boolean {
     let extensions: string[] = [...imageExtensions, ...videoExtensions]
     if (audio) extensions = audioExtensions
     return extensions.includes(extension.toLowerCase())
@@ -71,9 +71,9 @@ export function encodeFilePath(path: string): string {
     // can't load file paths with "#"
     path = path.replaceAll("#", "%23")
 
-    let splittedPath = splitPath(path)
-    let fileName = splittedPath.pop() || ""
-    let encodedName = encodeURIComponent(fileName)
+    const splittedPath = splitPath(path)
+    const fileName = splittedPath.pop() || ""
+    const encodedName = encodeURIComponent(fileName)
 
     return joinPath([...splittedPath, encodedName])
 }
@@ -97,8 +97,8 @@ export async function getThumbnail(data: API_media) {
 }
 
 export async function getSlideThumbnail(data: API_slide_thumbnail) {
-    let outputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    let outSlide = get(outputs)[outputId]?.out?.slide
+    const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+    const outSlide = get(outputs)[outputId]?.out?.slide
 
     if (!data.showId) data.showId = outSlide?.id
     if (!data.layoutId) data.layoutId = outSlide?.layout
@@ -106,7 +106,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
 
     if (!data?.showId) return ""
 
-    let output = clone(get(outputs)[outputId])
+    const output = clone(get(outputs)[outputId])
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
 
@@ -120,10 +120,10 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
     return new Promise((resolve) => {
-        var xhr = new XMLHttpRequest()
+        const xhr = new XMLHttpRequest()
 
         xhr.onload = () => {
-            var reader = new FileReader()
+            const reader = new FileReader()
             reader.onloadend = () => resolve((reader.result || "").toString())
             reader.readAsDataURL(xhr.response)
         }
@@ -137,9 +137,9 @@ async function toDataURL(url: string): Promise<string> {
 
 // check if media file exists in plain js
 export function checkMedia(src: string): Promise<boolean> {
-    let extension = getExtension(src)
-    let isVideo = videoExtensions.includes(extension)
-    let isAudio = !isVideo && audioExtensions.includes(extension)
+    const extension = getExtension(src)
+    const isVideo = videoExtensions.includes(extension)
+    const isAudio = !isVideo && audioExtensions.includes(extension)
 
     return new Promise((resolve) => {
         let elem
@@ -157,11 +157,11 @@ export function checkMedia(src: string): Promise<boolean> {
         elem.onerror = () => finish(false)
         elem.src = encodeFilePath(src)
 
-        let timedout = setTimeout(() => {
+        const timedout = setTimeout(() => {
             finish(false)
         }, 3000)
 
-        function finish(response: boolean = true) {
+        function finish(response = true) {
             clearTimeout(timedout)
             resolve(response)
         }
@@ -210,7 +210,7 @@ export async function isVideoSupported(path: string) {
 }
 
 export function setMediaTracks(data: { path: string; tracks: Subtitle[] }) {
-    let path: string = data.path || ""
+    const path: string = data.path || ""
 
     media.update((a) => {
         if (!a[path]) a[path] = {}
@@ -221,19 +221,19 @@ export function setMediaTracks(data: { path: string; tracks: Subtitle[] }) {
 
 export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
     if (!video) return
-    let tracks = [...(video.textTracks || [])]
+    const tracks = [...(video.textTracks || [])]
 
-    let enabled = tracks.find((a) => a.mode !== "disabled")
+    const enabled = tracks.find((a) => a.mode !== "disabled")
     if (enabled) enabled.mode = "disabled"
 
     if (!languageId) return
 
-    let newTrack = tracks.find((a) => a.language === languageId)
+    const newTrack = tracks.find((a) => a.language === languageId)
     if (newTrack) newTrack.mode = "showing"
 }
 
 export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {
-    let mediaStyle: MediaStyle = {
+    const mediaStyle: MediaStyle = {
         filter: "",
         flipped: false,
         flippedY: false,
@@ -270,10 +270,10 @@ export async function loadThumbnail(input: string, size: number) {
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache")) return input
 
-    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    let data = await requestMain(Main.GET_THUMBNAIL, { input, size })
+    const data = await requestMain(Main.GET_THUMBNAIL, { input, size })
     if (!data) return ""
 
     thumbnailLoaded(data)
@@ -289,13 +289,13 @@ export function getThumbnailPath(input: string, size: number) {
     // already encoded
     if (input.includes("freeshow-cache")) return input
 
-    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    let encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
+    const encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getThumbnailFileName(hashCode(input))])
     return encodedPath
 
-    function getFileName(path, size) {
+    function getThumbnailFileName(path: string) {
         return `${path}-${size}.png`
     }
 }
@@ -306,7 +306,7 @@ function hashCode(str: string) {
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {
-        let chr = str.charCodeAt(i)
+        const chr = str.charCodeAt(i)
         hash = (hash << 5) - hash + chr // bit shift
         hash |= 0 // convert to 32bit integer
     }
@@ -333,22 +333,22 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http") || path.includes("data:")) return path
 
-    let thumbnailPath = await loadThumbnail(path, size)
+    const thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
     // wait if thumbnail is not generated yet
     await checkThatMediaExists(thumbnailPath)
 
-    let base64Path = await toDataURL(thumbnailPath)
+    const base64Path = await toDataURL(thumbnailPath)
 
     // "data:image/png;base64," +
     return base64Path || thumbnailPath
 }
 
-export async function checkThatMediaExists(path: string, iteration: number = 1): Promise<boolean> {
+export async function checkThatMediaExists(path: string, iteration = 1): Promise<boolean> {
     if (iteration > 8) return false
 
-    let exists = await checkMedia(path)
+    const exists = await checkMedia(path)
     if (!exists) {
         await wait(500 * iteration)
         return checkThatMediaExists(path, iteration + 1)
@@ -360,23 +360,23 @@ export async function checkThatMediaExists(path: string, iteration: number = 1):
 // CACHE
 
 // const jpegQuality = 90 // 0-100
-let capturing: string[] = []
-let retries: { [key: string]: number } = {}
+const capturing: string[] = []
+const retries: { [key: string]: number } = {}
 export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; seek?: number }) {
-    let completed: boolean = false
+    let completed = false
     if (capturing.includes(data.output)) return exit()
     capturing.push(data.output)
 
-    let canvas = document.createElement("canvas")
+    const canvas = document.createElement("canvas")
 
-    let isImage = imageExtensions.includes(data.extension)
-    let mediaElem = document.createElement(isImage ? "img" : "video")
+    const isImage = imageExtensions.includes(data.extension)
+    const mediaElem = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        let mediaSize = isImage
+        const currentMediaSize = isImage
             ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight }
             : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
-        let newSize = getNewSize(mediaSize, data.size || {})
+        const newSize = getNewSize(currentMediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
@@ -387,10 +387,10 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         }
 
         // wait until loaded
-        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement).complete : (mediaElem as HTMLVideoElement).readyState === 4), 20)
+        const hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement).complete : (mediaElem as HTMLVideoElement).readyState === 4), 20)
         if (!hasLoaded) return exit()
 
-        captureCanvasData(mediaElem, mediaSize)
+        captureCanvasData(currentMediaSize)
     })
 
     // this should not get called becaues the file is checked existing, but here in case
@@ -408,18 +408,18 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
-    async function captureCanvasData(media, mediaSize) {
-        let ctx = canvas.getContext("2d")
+    async function captureCanvasData(currentMediaSize) {
+        const ctx = canvas.getContext("2d")
         if (!ctx || completed) return exit()
 
         // ensure lessons are downloaded and loaded before capturing
-        let isLessons = data.input.includes("Lessons")
-        let loading = isLessons ? 3000 : 200
+        const isLessons = data.input.includes("Lessons")
+        const loading = isLessons ? 3000 : 200
         await wait(loading)
-        ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(mediaElem, 0, 0, currentMediaSize.width, currentMediaSize.height, 0, 0, canvas.width, canvas.height)
 
         await wait(200)
-        let dataURL = canvas.toDataURL("image/png") // , jpegQuality
+        const dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
         sendMain(Main.SAVE_IMAGE, { path: data.output, base64: dataURL })
         completed = true

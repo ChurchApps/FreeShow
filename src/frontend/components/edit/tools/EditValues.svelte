@@ -34,9 +34,9 @@
     export let styles: { [key: string]: string } = {}
     export let lineAlignStyle: { [key: string]: string } = {}
     export let alignStyle: { [key: string]: string } = {}
-    export let noClosing: boolean = false
-    export let sessionId: string = ""
-    export let isStage: boolean = false
+    export let noClosing = false
+    export let sessionId = ""
+    export let isStage = false
 
     const inputs = {
         fontDropdown: FontDropdown,
@@ -50,7 +50,7 @@
     }
 
     let dispatch = createEventDispatcher()
-    function valueChange(e: any, input: EditInput, inputUpdate: boolean = false) {
+    function valueChange(e: any, input: EditInput, inputUpdate = false) {
         if (inputUpdate && input.input === "text") return
 
         let value = e.detail ?? e.target?.value ?? null
@@ -325,11 +325,11 @@
         currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
 
         setStyle()
-        function setStyle(i: number = 0) {
+        function setStyle(i = 0) {
             let input = currentEdit[i]
             if (!input) return
 
-            let newValue: any = Object.entries(closedVal).find(([styleId, _value]) => {
+            let newValue: any = Object.keys(closedVal).find((styleId) => {
                 let dataId: string = styleId.split("_")[0]
                 let key: string | undefined = styleId.split("_")[1]
                 let valueIndex: string | undefined = styleId.split("_")[2]
@@ -367,7 +367,7 @@
         if (!closedVal || !defaultEdit || !currentEdit) return
 
         resetInput()
-        function resetInput(i: number = 0) {
+        function resetInput(i = 0) {
             let input = currentEdit[i]
             if (!input) return
             if (input.name === "background_opacity") return resetInput(i + 1)
@@ -447,7 +447,7 @@
                     {/if}
 
                     {#if !noClosing && (closed[section] || ALWAYS_CLOSED.includes(section))}
-                        <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
+                        <Button style="position: absolute;inset-inline-end: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
                             {#if checkIsClosed(section, item)}
                                 <Icon id="remove" white />
                             {:else}
@@ -652,7 +652,7 @@
 
     div :global(.customInput .dropdown) {
         width: 160%;
-        right: 0;
+        inset-inline-end: 0;
     }
 
     p {

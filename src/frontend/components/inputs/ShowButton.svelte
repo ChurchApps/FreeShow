@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as pdfjsLib from "pdfjs-dist"
+    import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
@@ -37,9 +37,9 @@
 
     $: newName = name === null && (type === "image" || type === "video") ? removeExtension(getFileName(id)) : name || ""
 
-    export let icon: boolean = false
+    export let icon = false
     let iconID: null | string = null
-    let custom: boolean = false
+    let custom = false
     $: {
         // WIP simular to focus.ts
         if (icon) {
@@ -66,7 +66,7 @@
     $: selectedItem = $focusMode ? $activeFocus : $activeShow
     $: active = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
-    let editActive: boolean = false
+    let editActive = false
     function click(e: any) {
         if (editActive || e.ctrlKey || e.metaKey || e.shiftKey || active || e.target.closest("input")) return
 
@@ -135,10 +135,15 @@
 
             setOutput("background", out)
         } else if (type === "pdf") {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-            const pdfDoc = await pdfjsLib.getDocument(id).promise
+            // get PDF data
+            GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+            const loadingTask = getDocument(id)
+            const pdfDoc = await loadingTask.promise
+            const pages = pdfDoc.numPages
+            loadingTask.destroy()
+
             let name = show.name || removeExtension(getFileName(id))
-            setOutput("slide", { type: "pdf", id, page: 0, pages: pdfDoc.numPages, name })
+            setOutput("slide", { type: "pdf", id, page: 0, pages, name })
             clearBackground()
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
@@ -165,7 +170,7 @@
             {/if}
 
             {#if show.quickAccess?.number}
-                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-right: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
+                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-inline-end: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
             {/if}
 
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
@@ -180,7 +185,7 @@
         </span>
 
         {#if data}
-            <span style="opacity: 0.5;padding-left: 10px;font-size: 0.9em;">{data}</span>
+            <span style="opacity: 0.5;padding-inline-start: 10px;font-size: 0.9em;">{data}</span>
         {/if}
     </Button>
 </div>
@@ -198,7 +203,7 @@
     .layout {
         opacity: 0.8;
         font-size: 0.8em;
-        padding-left: 5px;
+        padding-inline-start: 5px;
 
         /* overflow: hidden;
         text-overflow: ellipsis; */

@@ -146,7 +146,7 @@
         selected.set({ id: null, data: [] })
     }
 
-    let groupName: string = ""
+    let groupName = ""
     const changeValue = (e: any) => (groupName = e.target.value)
 
     function keydown(e: KeyboardEvent) {

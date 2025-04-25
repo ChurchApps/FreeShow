@@ -14,16 +14,16 @@ type AudioClearOptions = {
     clearTime?: number // effects
 }
 
-export let clearing: string[] = []
-let forceClear: boolean = false
-export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
+export const clearing: string[] = []
+let forceClear = false
+export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     // turn off any playlist
-    if (options.clearPlaylist && (!path || AudioPlaylist.getPlayingPath() === path)) activePlaylist.set(null)
+    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (options.clearPlaylist !== false && !path) stopMetronome()
+    if (options.clearPlaylist !== false && !audioPath) stopMetronome()
 
-    if (clearing.includes(path)) {
+    if (clearing.includes(audioPath)) {
         if (!options.commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
@@ -36,7 +36,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
     }
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
-    const clearIds = path ? [path] : Object.keys(get(playingAudio))
+    const clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
     clearIds.forEach(clear)
 
     async function clear(path: string) {
@@ -46,7 +46,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
         const audio = AudioPlayer.getAudio(path)
         if (!audio) return deleteAudio(path)
 
-        let faded = await fadeAudio(path, audio, clearTime)
+        const faded = await fadeAudio(path, audio, clearTime)
         if (faded) removeAudio(path)
     }
 
@@ -67,14 +67,14 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
     }
 }
 
-let currentlyCrossfadingOut: string[] = []
-export function fadeOutAudio(crossfade: number = 0) {
+const currentlyCrossfadingOut: string[] = []
+export function fadeOutAudio(crossfade = 0) {
     Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
         const type = AudioPlayer.getAudioType(path, audio.duration)
         if (type === "effect" || currentlyCrossfadingOut.includes(path)) return
         currentlyCrossfadingOut.push(path)
 
-        let faded = await fadeAudio(path, audio, crossfade)
+        const faded = await fadeAudio(path, audio, crossfade)
 
         currentlyCrossfadingOut.splice(currentlyCrossfadingOut.indexOf(path), 1)
         if (!faded) return
@@ -84,14 +84,14 @@ export function fadeOutAudio(crossfade: number = 0) {
     })
 }
 // if no "path" is provided it will fade out/clear all audio
-let currentlyCrossfadingIn: string[] = []
-export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean = false, fadeToVolume: number = 1) {
+const currentlyCrossfadingIn: string[] = []
+export function fadeInAudio(path: string, crossfade: number, waitToPlay = false, fadeToVolume = 1) {
     if (!path || currentlyCrossfadingIn.includes(path) || currentlyCrossfadingOut.includes(path)) return
 
     currentlyCrossfadingIn.push(path)
-    let waitTime = waitToPlay ? crossfade * 0.6 * 1000 : 0
+    const waitTime = waitToPlay ? crossfade * 0.6 * 1000 : 0
     setTimeout(async () => {
-        let playing = AudioPlayer.getPlaying(path)?.audio
+        const playing = AudioPlayer.getPlaying(path)?.audio
         if (!playing) {
             currentlyCrossfadingIn.splice(currentlyCrossfadingIn.indexOf(path), 1)
             return
@@ -103,10 +103,10 @@ export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean
 }
 
 const speed = 0.01
-let currentlyFading: { [key: string]: NodeJS.Timeout } = {}
-async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment: boolean = false, fadeToVolume: number = 1): Promise<boolean> {
+const currentlyFading: { [key: string]: NodeJS.Timeout } = {}
+async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment = false, fadeToVolume = 1): Promise<boolean> {
     duration = Number(duration)
-    let fadeId = (increment ? "in_" : "out_") + id
+    const fadeId = (increment ? "in_" : "out_") + id
     if (!audio || !duration || currentlyFading[fadeId]) return true
     // no need to fade out if paused
     if (!increment && audio.paused) return true
@@ -114,7 +114,7 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10
 
-    let time = duration * 1000 * currentSpeed
+    const time = duration * 1000 * currentSpeed
 
     // get speed relative to current volume level
     if (increment) currentSpeed *= fadeToVolume / 1
@@ -139,7 +139,7 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
             }
         }, time)
 
-        let timedout = setTimeout(() => {
+        const timedout = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
             delete currentlyFading[fadeId]
             resolve(true)
@@ -173,7 +173,7 @@ export function fadeoutAllPlayingAudio() {
     })
 
     async function fadeoutAudio(audio) {
-        let faded = await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5)
+        const faded = await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5)
         if (faded) {
             audio.pause()
             // analyseAudio()

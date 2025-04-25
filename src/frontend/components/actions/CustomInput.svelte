@@ -15,13 +15,15 @@
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
     import ChooseEmitter from "./ChooseEmitter.svelte"
+    import { requestMain } from "../../IPC/main"
+    import { Main } from "../../../types/IPC/Main"
 
     export let inputId: string
     export let value
     export let actionId: string
-    export let actionIndex: number = 0
-    export let mainId: string = ""
-    export let list: boolean = false
+    export let actionIndex = 0
+    export let mainId = ""
+    export let list = false
 
     onMount(() => {
         // set default
@@ -57,6 +59,15 @@
             let cameraList = devices.filter((a) => a.kind === "videoinput").map((a) => ({ name: a.label, id: a.deviceId, groupId: a.groupId }))
             cameras = sortByName(cameraList)
         })
+    }
+
+    let screens: { name: string; id: string }[] = []
+    if (inputId === "screen") getScreens()
+    async function getScreens() {
+        let screenList = await requestMain(Main.GET_SCREENS)
+        let windowList = await requestMain(Main.GET_WINDOWS)
+        // screens = sortByName(screensList)
+        screens = [...screenList, ...windowList]
     }
 
     const getOptions = {
@@ -97,6 +108,11 @@
     <CombinedInput>
         <p><T id="items.camera" /></p>
         <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
+    </CombinedInput>
+{:else if inputId === "screen"}
+    <CombinedInput>
+        <p><T id="items.screen" /></p>
+        <Dropdown style="width: 100%;" value={screens.find((a) => a.id === value?.id)?.name || "—"} options={screens} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
     <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />

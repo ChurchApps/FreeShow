@@ -11,10 +11,10 @@ import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide } from "../stores"
 
 export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; menu: { id: string } }) {
-    let ref = getLayoutRef()
+    const ref = getLayoutRef()
 
     // get selected slides in ascending order
-    let selectedSlides: number[] = sortObjectNumbers(obj.sel.data, "index").map(({ index }) => index)
+    const selectedSlides: number[] = sortObjectNumbers(obj.sel.data, "index").map(({ index }) => index)
 
     let groups = getConnectedGroups(obj.menu.id, selectedSlides, ref)
 
@@ -24,10 +24,10 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     let newData = getCurrentLayout()
     groups = updateChildren(groups)
 
-    let updated = updateValues(groups, newData)
+    const updated = updateValues(groups, newData)
     groups = updated.groups
     newData = updated.newData
-    let newParents = updated.newParents
+    const newParents = updated.newParents
 
     // set new children
     groups.forEach(({ slides }) => {
@@ -42,25 +42,25 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     newData = addParents(newData, newParents)
 
     // set child layout data from old parents
-    let newLayout: SlideData[] = []
+    const newLayout: SlideData[] = []
     newData.layout.forEach((layoutRef) => {
         if (!layoutRef.remove) {
             newLayout.push(layoutRef)
             return
         }
 
-        let allNewChildIds = [layoutRef.id, ...Object.keys(layoutRef.children || {})]
+        const allNewChildIds = [layoutRef.id, ...Object.keys(layoutRef.children || {})]
 
-        let newParentId = Object.keys(newData.slides).find((id) => newData.slides[id]?.children?.includes(layoutRef.id))
+        const newParentId = Object.keys(newData.slides).find((id) => newData.slides[id]?.children?.includes(layoutRef.id))
         if (!newParentId) return
 
         allNewChildIds.forEach(getData)
 
         function getData(slideId, i) {
-            let newParentLayoutIndex = newData.layout.findIndex((a) => a.id === newParentId)
+            const newParentLayoutIndex = newData.layout.findIndex((a) => a.id === newParentId)
             if (!newData.layout[newParentLayoutIndex].children) newData.layout[newParentLayoutIndex].children = {}
 
-            let newChildData = i === 0 ? clone(layoutRef) : clone(layoutRef.children?.[slideId] || {})
+            const newChildData = i === 0 ? clone(layoutRef) : clone(layoutRef.children?.[slideId] || {})
             delete newChildData.id
             delete newChildData.children
             newData.layout[newParentLayoutIndex].children![slideId] = newChildData
@@ -72,7 +72,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     // find matches and combine duplicates
     // TODO: combine duplicates (text editor does that)
 
-    let activeLayout: string = _show().get("settings.activeLayout")
+    const activeLayout: string = _show().get("settings.activeLayout")
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
@@ -80,16 +80,16 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 
 function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]) {
     // slides next to each other will be one group
-    let groups: { globalGroup: string; slides: LayoutRef[] }[] = [] // { globalGroup: newGroup, slides: [] }
-    let parentIndexes = slides.map((index) => ref[index].parent?.layoutIndex ?? index)
+    const groups: { globalGroup: string; slides: LayoutRef[] }[] = [] // { globalGroup: newGroup, slides: [] }
+    const parentIndexes = slides.map((index) => ref[index].parent?.layoutIndex ?? index)
 
     let previousParentIndex = -1
     ref.forEach((slideRef) => {
         let parentIndex = slideRef.parent?.layoutIndex ?? slideRef.layoutIndex
         if (!parentIndexes.includes(parentIndex)) return
 
-        let parentIndexPos = parentIndexes.findIndex((a) => a === parentIndex)
-        let selectedIndexWithinGroup = slides[parentIndexPos]
+        const parentIndexPos = parentIndexes.findIndex((a) => a === parentIndex)
+        const selectedIndexWithinGroup = slides[parentIndexPos]
 
         let globalGroup = ""
         if (slideRef.layoutIndex >= selectedIndexWithinGroup) globalGroup = newGroup
@@ -107,13 +107,13 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
 function combineGroups(groups: { globalGroup: string; slides: LayoutRef[] }[], selectedSlides: number[]) {
     let previousSlide: LayoutRef | null = null
 
-    let newGroups: { globalGroup: string; slides: LayoutRef[] }[] = []
+    const newGroups: { globalGroup: string; slides: LayoutRef[] }[] = []
     groups.forEach((group) => {
-        let firstSlide = group.slides[0]
-        let lastSlide = group.slides[group.slides.length - 1]
+        const firstSlide = group.slides[0]
+        const lastSlide = group.slides[group.slides.length - 1]
 
-        let bothParents = firstSlide.type === "parent" && previousSlide?.type === "parent"
-        let bothSelected = selectedSlides.includes(firstSlide.layoutIndex) && selectedSlides.includes(previousSlide?.layoutIndex ?? -1)
+        const bothParents = firstSlide.type === "parent" && previousSlide?.type === "parent"
+        const bothSelected = selectedSlides.includes(firstSlide.layoutIndex) && selectedSlides.includes(previousSlide?.layoutIndex ?? -1)
         if (previousSlide && firstSlide.layoutIndex === previousSlide.layoutIndex + 1 && (bothParents || bothSelected)) newGroups[newGroups.length - 1].slides.push(...group.slides)
         else newGroups.push(group)
 
@@ -127,47 +127,47 @@ function updateChildren(groups: { globalGroup: string; slides: LayoutRef[] }[]) 
     groups.forEach(updateGroup)
 
     function updateGroup({ slides, globalGroup }) {
-        let newChildren = clone(slides)
+        const newChildren = clone(slides)
             .slice(1)
             .map(({ id }) => id)
-        let groups = clone(slides)
-        groups[0].children = newChildren
-        if (globalGroup) groups[0].globalGroup = globalGroup
+        const layoutRef = clone(slides)
+        layoutRef[0].children = newChildren
+        if (globalGroup) layoutRef[0].globalGroup = globalGroup
     }
 
     return groups
 }
 
 function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], newData: { slides: { [key: string]: Slide }; layout: SlideData[] }) {
-    let newParents: { id: string; data: SlideData; parent: string; pos: number }[] = []
-    let layouts: (Layout & { layoutId: string })[] = _show().layouts("active").get(null, true)
-    let activeLayout: string = _show().get("settings.activeLayout")
+    const newParents: { id: string; data: SlideData; parent: string; pos: number }[] = []
+    const layouts: (Layout & { layoutId: string })[] = _show().layouts("active").get(null, true)
+    const activeLayout: string = _show().get("settings.activeLayout")
 
     // , group = ""
     groups.forEach(({ globalGroup = "", slides }) => {
-        let firstSlideChildren = slides.filter((slide, i) => (i === 0 ? slides[0].id === slide.id : slides[0].children?.includes(slide.id)))
-        let hasChanged = slides[0].clone || slides[0].type === "child" || firstSlideChildren.length !== slides.length
+        const firstSlideChildren = slides.filter((slide, i) => (i === 0 ? slides[0].id === slide.id : slides[0].children?.includes(slide.id)))
+        const hasChanged = slides[0].clone || slides[0].type === "child" || firstSlideChildren.length !== slides.length
 
         slides.forEach((slide, i) => {
-            let otherSlides = layouts.find((l) => checkIfSlideExistsMorePlaces(l, slide, i))
-            let activeLayoutIndex = layouts.findIndex((a) => a.layoutId === activeLayout)
-            let childData = layouts[activeLayoutIndex].slides?.find((a) => a.children?.[slide.id])?.children?.[slide.id] || {}
+            const otherSlides = layouts.find((l) => checkIfSlideExistsMorePlaces(l, slide, i))
+            const activeLayoutIndex = layouts.findIndex((a) => a.layoutId === activeLayout)
+            const childData = layouts[activeLayoutIndex].slides?.find((a) => a.children?.[slide.id])?.children?.[slide.id] || {}
 
             let slideId = slide.id
-            let originalHasChanged = otherSlides && hasChanged
+            const originalHasChanged = otherSlides && hasChanged
             if (originalHasChanged) cloneOtherSlides()
 
             // delete id, it shouldn't be there!
             delete newData.slides[slideId].id
 
-            let isFirstSlide = i === 0
+            const isFirstSlide = i === 0
             if (isFirstSlide) {
-                let oldChildNotInUse = slide.type === "child" && !otherSlides
+                const oldChildNotInUse = slide.type === "child" && !otherSlides
                 if (oldChildNotInUse) removeChild()
 
                 setAsParent()
             } else {
-                let wasParent = slide.type === "parent"
+                const wasParent = slide.type === "parent"
                 if (wasParent) removeParent()
 
                 setAsChild()
@@ -177,7 +177,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
                 slideId = uid()
                 newData = cloneSlide(newData, slide.id, slideId, i === 0)
                 slides[i].id = slideId
-                let end: boolean = true
+                const end = true
 
                 if (slide.type === "child") {
                     // TODO: this does not work with multiple layouts
@@ -192,7 +192,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
                 if (!slide.parent) return
 
                 newData.slides[slide.parent.id].children?.splice(newData.slides[slide.parent.id].children!.indexOf(slideId), 1)
-                let end: boolean = false
+                const end = false
                 newParents.push({ id: slideId, data: childData, parent: slide.parent.id, pos: slide.parent.index + (end ? 1 : 0) })
             }
 
@@ -201,7 +201,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
             }
 
             function setAsParent() {
-                let newValues: { group: string; color: string; globalGroup?: string } = { group: "", color: "" }
+                const newValues: { group: string; color: string; globalGroup?: string } = { group: "", color: "" }
                 if (globalGroup) newValues.globalGroup = globalGroup
                 changeValues(newData.slides[slideId], newValues)
             }
@@ -215,7 +215,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
     return { newParents, groups, newData }
 
     function checkIfSlideExistsMorePlaces(layout, slide, i) {
-        let ref = _show().layouts([layout.layoutId]).ref()[0]
+        const ref = _show().layouts([layout.layoutId]).ref()[0]
         return ref.find((lslide) => lslide.id === slide.id && (lslide.index !== slide.index || layout.layoutId !== activeLayout || (i === 0 && slide.type === "child")))
     }
 }
@@ -224,7 +224,7 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
 
 // layout is old and ref is new
 export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide }, ref: LayoutRef[], moved: LayoutRef[], index: number) {
-    let newLayout: (SlideData & { id: string })[] = []
+    const newLayout: (SlideData & { id: string })[] = []
 
     // find parent
     if (moved[0].type !== "parent") {
@@ -236,23 +236,23 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
     layout = ref
 
     let parent: string = ref[0].id
-    let newChildrenOrder: { [key: string]: string[] } = {}
+    const newChildrenOrder: { [key: string]: string[] } = {}
 
-    let allChanged: string[] = ref.filter((a, i) => a.layoutIndex !== i).map(({ id }) => id)
+    const allChanged: string[] = ref.filter((a, i) => a.layoutIndex !== i).map(({ id }) => id)
 
-    let skip: number[] = []
+    const skip: number[] = []
 
     ref.forEach((slideRef, i) => {
-        let alreadyChanged: boolean = slideRef.layoutIndex === i ? allChanged.includes(slideRef.id) : false
+        const alreadyChanged: boolean = slideRef.layoutIndex === i ? allChanged.includes(slideRef.id) : false
         // if (!alreadyChanged) alreadyChanged = checkChanged(slideRef)
 
         let isParent: boolean = slideRef.newType ? slideRef.newType === "parent" : slideRef.type === "parent"
         let changedButNotThis = slideRef.newType ? false : ref.find((a) => a.id === slideRef.id && a.layoutIndex !== slideRef.layoutIndex && !a.newType) || true
-        let replacesParent = slideRef.newType ? false : ref.find((a) => (a.id === slideRef.id || a.parent?.id === slideRef.id) && a.replacesParent)
+        const replacesParent = slideRef.newType ? false : ref.find((a) => (a.id === slideRef.id || a.parent?.id === slideRef.id) && a.replacesParent)
         if (!replacesParent) changedButNotThis = false
 
         if (changedButNotThis) {
-            let changedSlide = ref.find((a) => a.id === slideRef.id && a.layoutIndex !== slideRef.layoutIndex && a.newType)
+            const changedSlide = ref.find((a) => a.id === slideRef.id && a.layoutIndex !== slideRef.layoutIndex && a.newType)
             if (changedSlide) isParent = changedSlide.newType === "parent"
         }
 
@@ -272,10 +272,10 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
         }
 
         // set new child data
-        let index: number = newLayout.length - 1
+        const lastIndex: number = newLayout.length - 1
         // if (!newLayout[index]) newLayout[index] = {}
-        if (!newLayout[index].children) newLayout[index].children = {}
-        newLayout[index].children![slideRef.id] = layout[i].data
+        if (!newLayout[lastIndex].children) newLayout[lastIndex].children = {}
+        newLayout[lastIndex].children![slideRef.id] = layout[i].data
 
         if (skip.includes(slideRef.parent?.layoutIndex ?? -1)) return
         if (changedButNotThis || alreadyChanged) {
@@ -300,7 +300,7 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
             if (slideId === id) return
             children.forEach((childId) => {
                 if (slides[slideId].children?.length) {
-                    let childIndex = slides[slideId].children!.indexOf(childId)
+                    const childIndex = slides[slideId].children!.indexOf(childId)
                     if (childIndex < 0) return
 
                     // remove if it includes child from another slide
@@ -316,44 +316,44 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
 // sorry for the complicated code, this function will check if a parent slide is moved over one of it's own children slides,
 // and then change itself to be a child and its own child to be a parent
 function checkParentMove(ref: LayoutRef[], moved: LayoutRef[], index: number) {
-    let dropSlide = ref.find((a) => a.layoutIndex === index)!
+    const dropSlide = ref.find((a) => a.layoutIndex === index)!
     if (!dropSlide || dropSlide.type !== "child") return ref
 
-    let moveToIsChildOfMovedParent = moved.find((a) => dropSlide.parent?.id === a.id)
+    const moveToIsChildOfMovedParent = moved.find((a) => dropSlide.parent?.id === a.id)
     if (!moveToIsChildOfMovedParent) return ref
 
-    let oldParentId = dropSlide.parent?.id || ""
-    let oldParentRef = ref.find((a) => a.id === oldParentId)
+    const oldParentId = dropSlide.parent?.id || ""
+    const oldParentRef = ref.find((a) => a.id === oldParentId)
     if (oldParentRef === undefined) return ref
 
     if (oldParentRef.layoutIndex >= index) return ref
 
     // parent moved over child
-    let selectedChildrenOfParent = moved.filter((a) => a.type === "child" && a.parent?.id === oldParentId).map(({ id }) => id)
+    const selectedChildrenOfParent = moved.filter((a) => a.type === "child" && a.parent?.id === oldParentId).map(({ id }) => id)
     let newChildren = oldParentRef.children?.filter((id) => !selectedChildrenOfParent.includes(id)) || []
 
     if (!newChildren.length) return ref
 
-    let newParentId = newChildren[0]
-    let newParentRef = ref.find((a) => a.id === newParentId)
+    const newParentId = newChildren[0]
+    const newParentRef = ref.find((a) => a.id === newParentId)
     if (newParentRef === undefined) return ref
 
     newChildren = newChildren.slice(1)
     // newChildren[0] = oldParentId
 
-    let movedToPosId = ref.find((a) => a.layoutIndex === index + 1)?.id
+    const movedToPosId = ref.find((a) => a.layoutIndex === index + 1)?.id
     let movedToPosChildren = newChildren.findIndex((id) => id === movedToPosId) // + 1
     if (movedToPosChildren < 0) movedToPosChildren = newChildren.length
     newChildren = addToPos(newChildren, [oldParentId], movedToPosChildren)
 
     // remove new parent
-    ref = ref.filter((a) => a.layoutIndex !== newParentRef!.layoutIndex)
+    ref = ref.filter((a) => a.layoutIndex !== newParentRef.layoutIndex)
 
     // new parent shall become parent of new children, and old parent shall become a child!
     let newChildrenRef = newChildren.map((id) => {
-        let childIndex = ref.findIndex((a) => a.id === id && (a.parent?.layoutIndex === oldParentRef!.layoutIndex || a.layoutIndex === newParentRef!.parent?.layoutIndex))
+        const childIndex = ref.findIndex((a) => a.id === id && (a.parent?.layoutIndex === oldParentRef.layoutIndex || a.layoutIndex === newParentRef.parent?.layoutIndex))
 
-        let newRef = clone(ref[childIndex])
+        const newRef = clone(ref[childIndex])
         ref.splice(childIndex, 1)
 
         if (id === oldParentId) newRef.newType = "child"
@@ -371,7 +371,7 @@ function checkParentMove(ref: LayoutRef[], moved: LayoutRef[], index: number) {
 }
 
 function changeParent(slides: { [key: string]: Slide }, parentId: string, slideRef: LayoutRef) {
-    let isParent = slideRef.newType ? slideRef.newType === "parent" : slideRef.type === "parent"
+    const isParent = slideRef.newType ? slideRef.newType === "parent" : slideRef.type === "parent"
     // remove old children
     if (slideRef.type === "child" && slideRef.parent?.id !== parentId) slides[slideRef.parent?.id || ""].children?.splice(slideRef.index, 1)
     if (!isParent) {
@@ -405,7 +405,7 @@ function changeParent(slides: { [key: string]: Slide }, parentId: string, slideR
     return slides
 }
 
-/////
+/// //
 
 export function removeItemValues(items: Item[]) {
     return items.map((item) => {
@@ -490,13 +490,13 @@ export function removeItemValues(items: Item[]) {
 
 // split in half
 // WIP simular to Editbox.svelte
-export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { start?: number; end?: number }[] = [], cutIndex: number = -1) {
+export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { start?: number; end?: number }[] = [], cutIndex = -1) {
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
     lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
     // if only one line (like scriptures, split by text)
     if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.length > 1) {
-        let newLines: Line[] = []
+        const newLines: Line[] = []
         let centerTextIndex = Math.ceil(lines[0]?.text?.length / 2)
         if (lines[0]?.text?.[centerTextIndex - 1]?.customType) centerTextIndex++
         newLines.push({ ...lines[0], text: lines[0]?.text.slice(0, centerTextIndex) || [] })
@@ -509,11 +509,11 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
         // verse number style
         const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
 
-        let text = getItemText({ lines } as Item)
+        const text = getItemText({ lines } as Item)
         const [firstHalf, secondHalf] = splitTextContentInHalf(text)
-        let newLines: Line[] = []
+        const newLines: Line[] = []
         // try getting second text first (if customType is first)
-        let styling = lines[0].text[1] || lines[0].text[0]
+        const styling = lines[0].text[1] || lines[0].text[0]
         newLines.push({ ...lines[0], text: [...(custom ? [custom] : []), { ...styling, value: firstHalf }] })
         newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
 
@@ -528,7 +528,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     } else if (!sel.length) {
         // auto find center line
         // round up to 5 = 3+2
-        let centerLineIndex = Math.ceil(lines.length / 2)
+        const centerLineIndex = Math.ceil(lines.length / 2)
         sel[centerLineIndex] = { start: 0 }
     }
 
@@ -564,7 +564,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             }
 
             if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-            let pos = (sel[i]?.start || 0) - textPos
+            const pos = (sel[i]?.start || 0) - textPos
 
             if (pos > 0) {
                 firstLines[firstLines.length - 1].text.push({
@@ -581,7 +581,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
         }
     })
 
-    let defaultLine = [
+    const defaultLine = [
         {
             align: lines[0].align || "",
             text: [{ style: lines[0].text[0]?.style || "", value: "" }],
@@ -591,14 +591,14 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     if (!secondLines.length) secondLines = defaultLine
 
     // add chords
-    let chordLines = clone(lines.map((a) => a.chords || []))
+    const chordLines = clone(lines.map((a) => a.chords || []))
     ;[...firstLines, ...secondLines].forEach((line) => {
-        let oldLineChords = chordLines.shift()
+        const oldLineChords = chordLines.shift()
         if (oldLineChords?.length) line.chords = oldLineChords
     })
 
     // create new slide
-    let newSlide = clone(_show().slides([slideRef.id]).get()[0])
+    const newSlide = clone(_show().slides([slideRef.id]).get()[0])
     newSlide.items[itemIndex].lines = secondLines
     delete newSlide.id
     delete newSlide.globalGroup
@@ -606,20 +606,20 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     newSlide.color = null
 
     // add new slide
-    let slideId = uid()
-    let slides = clone(_show().get("slides"))
+    const slideId = uid()
+    const slides = clone(_show().get("slides"))
 
     slides[slideId] = newSlide
     slides[slideRef.id].items[itemIndex].lines = firstLines
 
     // set child
-    let parentId = slideRef.type === "child" ? slideRef.parent!.id : slideRef.id
+    const parentId = slideRef.type === "child" ? slideRef.parent!.id : slideRef.id
     let children = _show().slides([parentId]).get("children")[0] || []
-    let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
+    const slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
     children = addToPos(children, [slideId], slideIndex)
     slides[parentId].children = children
 
-    let showId = get(activeShow)?.id
+    const showId = get(activeShow)?.id || ""
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
@@ -638,7 +638,7 @@ function splitTextContentInHalf(text: string) {
         return index
     }
 
-    function checkForSpaces(left: boolean = true) {
+    function checkForSpaces(left = true) {
         let index = -1
         for (let i = center; left ? i >= 0 : i < text.length; i += left ? -1 : 1) {
             if (text[i] === " ") {
@@ -654,8 +654,8 @@ function splitTextContentInHalf(text: string) {
 
     // split by the closest space if no punctuations matched
     if (splitIndex === -1) {
-        let leftIndex = checkForSpaces(true)
-        let rightIndex = checkForSpaces(false)
+        const leftIndex = checkForSpaces(true)
+        const rightIndex = checkForSpaces(false)
 
         // get the closest space
         if (leftIndex !== -1 && (rightIndex === -1 || center - leftIndex <= rightIndex - center)) splitIndex = leftIndex
@@ -670,44 +670,44 @@ function splitTextContentInHalf(text: string) {
 }
 
 export function mergeSlides(indexes: { index: number }[]) {
-    let layoutRef = getLayoutRef()
+    const layoutRef = getLayoutRef()
 
-    let allMergedSlideIds: string[] = []
-    let firstSlideIndex = indexes[0].index
-    let firstSlideId: string = layoutRef[firstSlideIndex]?.id
-    let newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
-    let previousTextboxStyles = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => a.style || "")
+    const allMergedSlideIds: string[] = []
+    const firstSlideIndex = indexes[0].index
+    const firstSlideId: string = layoutRef[firstSlideIndex]?.id
+    const newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
+    const previousTextboxStyles = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => a.style || "")
 
     if (newSlide.group === null) {
         newSlide.group = ""
         newSlide.globalGroup = "verse"
     }
     newSlide.items = []
-    let pushedItems: string[] = []
-    let newLines: Line[][] = []
-    let sameTextboxCount =
+    const pushedItems: string[] = []
+    const newLines: Line[][] = []
+    const sameTextboxCount =
         new Set(
             indexes.map(({ index }) => {
-                let slide: Slide = _show().slides([layoutRef[index]?.id]).get()[0]
+                const slide: Slide = _show().slides([layoutRef[index]?.id]).get()[0]
                 return (slide?.items || []).filter((a) => (a.type || "text") === "text").length
             })
         ).size === 1
 
     indexes.forEach(({ index }) => {
-        let ref = layoutRef[index]
+        const ref = layoutRef[index]
         if (!ref || allMergedSlideIds.includes(ref.id)) return
         allMergedSlideIds.push(ref.id)
 
-        let currentSlide: Slide = _show().slides([ref.id]).get()[0]
+        const currentSlide: Slide = _show().slides([ref.id]).get()[0]
         let textItemIndex = 0
         currentSlide.items.forEach((item) => {
             if ((item.type || "text") === "text") {
-                let index = sameTextboxCount ? textItemIndex : 0
-                if (!newLines[index]) newLines[index] = []
-                newLines[index].push(...(item.lines || []))
+                const textboxIndex = sameTextboxCount ? textItemIndex : 0
+                if (!newLines[textboxIndex]) newLines[textboxIndex] = []
+                newLines[textboxIndex].push(...(item.lines || []))
                 textItemIndex++
             } else {
-                let uniqueItem = JSON.stringify(item)
+                const uniqueItem = JSON.stringify(item)
                 if (pushedItems.includes(uniqueItem)) return
 
                 newSlide.items.push(item)
@@ -722,29 +722,29 @@ export function mergeSlides(indexes: { index: number }[]) {
         return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] }) as Item)
     }
 
-    let newShow: Show = clone(_show().get())
-    let activeLayoutId = newShow.settings.activeLayout
+    const newShow: Show = clone(_show().get())
+    const activeLayoutId = newShow.settings.activeLayout
     let layoutIndex = layoutRef[firstSlideIndex].index
 
     // add to layout if child
     if (layoutRef[firstSlideIndex].parent) {
-        let slides = newShow.layouts[activeLayoutId].slides
-        let parentIndex = layoutRef[firstSlideIndex].parent?.index ?? -1
+        const slides = newShow.layouts[activeLayoutId].slides
+        const parentIndex = layoutRef[firstSlideIndex].parent?.index ?? -1
         layoutIndex = parentIndex + 1
         newShow.layouts[activeLayoutId].slides = [...slides.slice(0, layoutIndex), { id: firstSlideId }, ...slides.slice(layoutIndex)]
     }
 
     // delete parents child refs
-    let firstLayoutIndex = layoutRef[firstSlideIndex].parent?.index ?? layoutRef[firstSlideIndex].index
+    const firstLayoutIndex = layoutRef[firstSlideIndex].parent?.index ?? layoutRef[firstSlideIndex].index
     indexes.forEach(({ index }) => {
-        let ref = layoutRef[index]
+        const ref = layoutRef[index]
         if (!ref.parent) {
             if (firstLayoutIndex > ref.index) layoutIndex--
             return
         }
 
-        let children = newShow.slides[ref.parent.id]?.children || []
-        let childIndex = children.indexOf(ref.id)
+        const children = newShow.slides[ref.parent.id]?.children || []
+        const childIndex = children.indexOf(ref.id)
         if (childIndex < 0) return
 
         children.splice(childIndex, 1)
@@ -752,7 +752,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     })
 
     // delete layout slides (except for first one)
-    let activeLayoutIndex = Object.keys(newShow.layouts).findIndex((id) => id === activeLayoutId)
+    const activeLayoutIndex = Object.keys(newShow.layouts).findIndex((id) => id === activeLayoutId)
     Object.values(newShow.layouts).forEach((layout, currentIndex) => {
         layout.slides = layout.slides.filter((a, i) => {
             if (activeLayoutIndex === currentIndex && i === layoutIndex) return true
@@ -763,7 +763,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     // delete slides
     allMergedSlideIds.forEach((id) => {
         // only delete if no children or they are selected!
-        let children = newShow.slides[id].children || []
+        const children = newShow.slides[id].children || []
         // return if at least one children is not selected
         if (children.find((childId) => !allMergedSlideIds.includes(childId))) {
             if (id === firstSlideId) {
@@ -780,7 +780,7 @@ export function mergeSlides(indexes: { index: number }[]) {
 
     // add new slide
     delete newSlide.id // delete old id if it's there
-    let newSlideId = uid()
+    const newSlideId = uid()
     newShow.slides[newSlideId] = newSlide
     if (!newShow.layouts[newShow.settings.activeLayout].slides[layoutIndex]) return // something went wrong!
     newShow.layouts[newShow.settings.activeLayout].slides[layoutIndex].id = newSlideId
@@ -788,12 +788,12 @@ export function mergeSlides(indexes: { index: number }[]) {
     history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } }) // , override: "merge_slides"
 }
 
-export function mergeTextboxes(customSlideIndex: number = -1) {
-    let editSlideIndex: number = customSlideIndex < 0 ? (get(activeEdit).slide ?? -1) : customSlideIndex
+export function mergeTextboxes(customSlideIndex = -1) {
+    const editSlideIndex: number = customSlideIndex < 0 ? (get(activeEdit).slide ?? -1) : customSlideIndex
     if (editSlideIndex < 0) return
 
-    let slideRef = getLayoutRef()[editSlideIndex] || {}
-    let slide: Slide = clone(
+    const slideRef = getLayoutRef()[editSlideIndex] || {}
+    const slide: Slide = clone(
         _show()
             .slides([slideRef.id || ""])
             .get()[0]
@@ -802,17 +802,17 @@ export function mergeTextboxes(customSlideIndex: number = -1) {
 
     let selected = get(activeEdit).items
     if (!selected.length) selected = slide.items.map((_, i) => i)
-    let selectedItems = slide.items.filter((a, i) => selected.includes(i) && (a.type || "text") === "text")
+    const selectedItems = slide.items.filter((a, i) => selected.includes(i) && (a.type || "text") === "text")
     if (selectedItems.length < 2) return
 
     // add all lines into one
-    let newLines: Line[] = []
+    const newLines: Line[] = []
     selectedItems.forEach((item) => {
         newLines.push(...(item.lines || []))
     })
 
     // create new textbox
-    let newTextbox: Item = clone(selectedItems[0])
+    const newTextbox: Item = clone(selectedItems[0])
     newTextbox.lines = newLines
 
     // set new item & remove old ones

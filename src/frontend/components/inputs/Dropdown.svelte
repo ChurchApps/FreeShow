@@ -8,16 +8,16 @@
 
     const dispatch = createEventDispatcher()
     export let options: Option[]
-    export let id: string = ""
-    export let disabled: boolean = false
-    export let center: boolean = false
-    export let arrow: boolean = false
-    let active: boolean = false
+    export let id = ""
+    export let disabled = false
+    export let center = false
+    export let arrow = false
+    let active = false
     export let value: string
-    export let activeId: string = ""
-    export let title: string = ""
-    export let flags: boolean = false
-    export let up: boolean = false
+    export let activeId = ""
+    export let title = ""
+    export let flags = false
+    export let up = false
     let normalizedValue: any = value
     $: (normalizedValue = value || options[0]?.name || "—"), $language
 
@@ -144,13 +144,13 @@
 
     .dropdown.up {
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         position: absolute;
         transform: translateY(-100%);
     }
 
     .dropdown.arrow {
-        right: 0;
+        inset-inline-end: 0;
         width: 300px;
     }
 
@@ -183,7 +183,7 @@
         color: var(--text);
         border: 2px solid var(--primary-lighter);
         /* font-weight: bold; */
-        text-align: left;
+        text-align: start;
 
         display: flex;
         align-items: center;

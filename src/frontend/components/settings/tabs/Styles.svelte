@@ -21,7 +21,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
-    function updateStyle(e: any, key: string, currentId: string = "") {
+    function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
 
         if (!currentId) currentId = styleId || "default"
@@ -155,7 +155,7 @@
             if (e.detail) updateStyle(e, "backgroundImage")
         }}
     >
-        <Icon id="image" style="margin-left: 0.5em;" right />
+        <Icon id="image" style="margin-inline-start: 0.5em;" right />
         <p style="overflow: hidden;">
             {#if currentStyle.backgroundImage}
                 {getFileName(currentStyle.backgroundImage)}
@@ -197,7 +197,7 @@
         bold={!currentStyle.transition}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="transition" style="margin-left: 0.5em;" right />
+            <Icon id="transition" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if currentStyle.transition}
                     <T id={textTransitionData?.name || "actions.change_transition"} />
@@ -231,7 +231,7 @@
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="media_fit" style="margin-left: 0.5em;" right />
+            <Icon id="media_fit" style="margin-inline-start: 0.5em;" right />
             <p>
                 <!-- <T id="popup.media_fit" />: -->
                 {#key mediaFit}
@@ -258,7 +258,7 @@
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="aspect_ratio" style="margin-left: 0.5em;" right />
+            <Icon id="aspect_ratio" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if aspectRatio.outputResolutionAsRatio}
                     <T id="settings.output_resolution_ratio" />
@@ -359,7 +359,7 @@
         bold={!maxLines}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="lines" style="margin-left: 0.5em;" right />
+            <Icon id="lines" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if maxLines}
                     {maxLines}
@@ -392,7 +392,7 @@
         bold={!currentStyle.template}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <Icon id="templates" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if currentStyle.template}
                     {$templates[currentStyle.template || ""]?.name || "—"}
@@ -431,7 +431,7 @@
         bold={!(currentStyle.templateScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4)}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <Icon id="templates" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if currentStyle.templateScripture}
                     {$templates[currentStyle.templateScripture || ""]?.name || "—"}
@@ -476,7 +476,7 @@
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="info" style="margin-left: 0.5em;" right />
+            <Icon id="info" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#key metadataDisplay}
                     <T id={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} />
@@ -500,7 +500,7 @@
             bold={false}
         >
             <div style="display: flex;align-items: center;padding: 0;">
-                <Icon id="templates" style="margin-left: 0.5em;" right />
+                <Icon id="templates" style="margin-inline-start: 0.5em;" right />
                 <p>{$templates[currentStyle.metadataTemplate || "metadata"]?.name || "—"}</p>
             </div>
         </Button>
@@ -531,7 +531,7 @@
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <Icon id="templates" style="margin-inline-start: 0.5em;" right />
             <p>{$templates[currentStyle.messageTemplate || "message"]?.name || "—"}</p>
         </div>
     </Button>
@@ -625,7 +625,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

@@ -8,13 +8,13 @@
 
     export let id: string
     export let overlays: { [key: string]: Overlay }
-    export let mirror: boolean = false
+    export let mirror = false
     export let transition: Transition
 
     $: transitionEnabled = !!((transition.type !== "none" && transition.duration) || transition.in || transition.out)
 
     let currentItems: Item[] = []
-    let show: boolean = false
+    let show = false
 
     $: if (overlays[id]?.items !== undefined) updateItems()
 

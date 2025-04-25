@@ -10,7 +10,7 @@
     import Tag from "./Tag.svelte"
     import { _show } from "../helpers/shows"
 
-    export let list: boolean = false
+    export let list = false
 
     $: currentShow = $shows[$activeShow!.id]
     $: showTags = currentShow.quickAccess?.tags || []

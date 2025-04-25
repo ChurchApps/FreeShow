@@ -12,16 +12,16 @@ import { isoLanguages } from "./isoLanguages"
 // https://github.com/ssut/py-googletrans/issues/268
 
 const api = "https://translate.googleapis.com/translate_a/single"
-export async function translate(text: string, language: string, source: string = "auto"): Promise<string> {
+export async function translate(text: string, language: string, source = "auto"): Promise<string> {
     const query = `${api}?client=gtx&sl=${source}&tl=${language}&dt=t&q=${encodeURI(text)}`
 
     return new Promise((resolve, reject) => {
         fetch(query)
             .then((a) => a.json())
-            .then((text) => {
-                text = text?.[0]?.[0]?.[0]
-                if (!text) reject("Could not get translation!")
-                return resolve(text)
+            .then((json) => {
+                const txt = json?.[0]?.[0]?.[0]
+                if (!txt) reject("Could not get translation!")
+                return resolve(txt)
             })
             .catch(reject)
     })
@@ -32,16 +32,16 @@ export function getIsoLanguages() {
 }
 
 export async function translateShow(showId: string, languageCode: string) {
-    let show = get(showsCache)[showId]
-    let slides = clone(show.slides)
+    const show = get(showsCache)[showId]
+    const slides = clone(show.slides)
     let changed = false
     let onlyOneTextbox = true
 
     await Promise.all(
         Object.keys(slides).map(async (slideId) => {
-            let newItems: Item[] = []
+            const newItems: Item[] = []
 
-            let items = slides[slideId].items.filter((a) => !a.language)
+            const items = slides[slideId].items.filter((a) => !a.language)
             if (onlyOneTextbox && (items.length > 1 || (items[0]?.type || "text") !== "text")) onlyOneTextbox = false
 
             await Promise.all(
@@ -52,7 +52,7 @@ export async function translateShow(showId: string, languageCode: string) {
                         return
                     }
 
-                    let text = getItemTextArray(item)
+                    const text = getItemTextArray(item)
                     if (!text.length) return
 
                     let translatedText = ""
@@ -60,17 +60,17 @@ export async function translateShow(showId: string, languageCode: string) {
                         translatedText = await translate(text.join("[-] "), languageCode)
                     } catch (err) {
                         console.warn("Error when translating:", err)
-                        let tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
-                        newToast("Error when translating: " + err + tip)
+                        const tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
+                        newToast("Error when translating: " + String(err) + tip)
                     }
                     if (!translatedText.length) return
 
-                    let translatedLines = translatedText.split("[-]")
+                    const translatedLines = translatedText.split("[-]")
 
                     const alignStyle = item.lines?.[0]?.align || ""
                     const textStyle = item.lines?.[0]?.text?.[0]?.style || ""
 
-                    let newLines: Line[] = []
+                    const newLines: Line[] = []
                     translatedLines.forEach((lineText) => {
                         newLines.push({ align: alignStyle, text: [{ style: textStyle, value: lineText.trim() }] })
                     })
@@ -96,13 +96,13 @@ export async function translateShow(showId: string, languageCode: string) {
     }
 }
 
-export function removeTranslationFromShow(showId: string, langId: string = "") {
-    let show = get(showsCache)[showId]
-    let slides = clone(show.slides)
+export function removeTranslationFromShow(showId: string, langId = "") {
+    const show = get(showsCache)[showId]
+    const slides = clone(show.slides)
     let changed = false
 
     Object.keys(slides).forEach((slideId) => {
-        let previousSize = slides[slideId].items.length
+        const previousSize = slides[slideId].items.length
         slides[slideId].items = slides[slideId].items.filter((item) => !item.language || (langId ? item.language !== langId : false))
         if (slides[slideId].items.length < previousSize) changed = true
     })

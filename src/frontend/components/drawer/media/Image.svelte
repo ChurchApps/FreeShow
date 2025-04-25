@@ -4,9 +4,9 @@
 
     export let src: string
     export let alt: string
-    export let transition: boolean = true
+    export let transition = true
 
-    let loaded: boolean = false
+    let loaded = false
     let image: HTMLImageElement | null = null
 
     onMount(() => {

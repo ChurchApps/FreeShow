@@ -87,13 +87,13 @@
         videoData.paused = true
         seeking = true
         setTimeout(() => {
-            player.setCurrentTime(videoTime)
+            player.setCurrentTime(time)
 
             setTimeout(() => {
                 if (isPlaying) videoData.paused = false
                 seeking = false
 
-                if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: videoTime })
+                if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
             }, 800)
         }, 100)
     }

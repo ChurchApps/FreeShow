@@ -26,13 +26,15 @@
         } else if (key === "template") {
             let inputs = clone(emitter?.templates?.[v]?.inputs || [])
             value.templateValues = inputs
+        } else if (key === "data") {
+            v = v.target?.value || ""
         }
 
         value[key] = v
         dispatch("change", value)
     }
 
-    function setTemplateValue(index: string | number, e: any, key: string = "value") {
+    function setTemplateValue(index: string | number, e: any, key = "value") {
         let v = e.target?.value
 
         if (!value.templateValues) value.templateValues = clone(emitter?.templates?.[v]?.inputs || [])
@@ -68,7 +70,7 @@
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))
 
-    $: dataPreview = value.templateValues?.length ? formatData[emitter?.type]?.(value.templateValues) : ""
+    $: dataPreview = value.templateValues?.length ? formatData[emitter?.type]?.(value.templateValues, value.data) : ""
 </script>
 
 <CombinedInput textWidth={38}>
@@ -117,6 +119,14 @@
                 <TextInput placeholder={$dictionary.variables?.value} value={input.value} on:change={(e) => setTemplateValue(input.id, e, "value")} />
             </div>
         </DynamicList>
+    {/if}
+
+    <!-- extra DATA -->
+    {#if emitter.type === "osc"}
+        <CombinedInput textWidth={38}>
+            <p><T id="emitters.data" /></p>
+            <TextInput value={value.data || ""} on:change={(e) => updateValue("data", e)} />
+        </CombinedInput>
     {/if}
 
     <CombinedInput textWidth={38}>

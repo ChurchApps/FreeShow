@@ -27,7 +27,7 @@
     let action: any = { name: "", triggers: [] }
     let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
 
-    let loaded: boolean = false
+    let loaded = false
     onMount(setAction)
     function setAction() {
         if (!id) {
@@ -65,7 +65,7 @@
         if (!indexes) return
 
         let newActions: any[] = []
-        let changed: boolean = false
+        let changed = false
         indexes.forEach((i) => {
             let layoutSlide = ref[i] || {}
             let actions = layoutSlide.data?.actions || {}
@@ -89,7 +89,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
-    let existingSearched: boolean = false
+    let existingSearched = false
     $: if (action.triggers?.[0]) findExisting()
     function findExisting() {
         if (mode !== "slide" || ($popupData.index === undefined && !$popupData.indexes?.length) || existingSearched) return
@@ -111,7 +111,7 @@
         popupData.set({ ...$popupData, id })
     }
 
-    function updateValue(key: string, e: any, checkbox: boolean = false) {
+    function updateValue(key: string, e: any, checkbox = false) {
         let value = e.detail ?? e.target?.value ?? e
         if (checkbox) value = e.target?.checked
 
@@ -119,7 +119,7 @@
     }
 
     let autoActionName = ""
-    function changeAction(e, index: number = -1) {
+    function changeAction(e, index = -1) {
         let actionId = e.detail.id || ""
         if (!actionId) return
 
@@ -127,6 +127,15 @@
         if (canAddMultiple && !actionId.includes(":")) actionId += ":" + uid(5)
 
         if (e.detail.index !== undefined) index = e.detail.index
+
+        // add extra action data (used for "slide action">"run action">"override category action", toggle)
+        if (e.detail.customDataKey) {
+            if (!action.name) action.name = actionId
+            if (!action.customData) action.customData = {}
+            if (!action.customData[actionId]) action.customData[actionId] = {}
+            action.customData[actionId][e.detail.customDataKey] = e.detail.customDataValue
+            return
+        }
 
         // update action value instead of action id
         if (e.detail.actionValue) {
@@ -242,13 +251,13 @@
         }
     }
 
-    function saveSlide(remove: boolean = false) {
+    function saveSlide(remove = false) {
         let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!Array.isArray(indexes)) return
 
         let newActions: any[] = []
-        let changed: boolean = false
+        let changed = false
         indexes.forEach((i) => {
             let actions = clone(ref[i]?.data?.actions) || {}
             if (!actions.slideActions) actions.slideActions = []
@@ -270,7 +279,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
-    let addTrigger: boolean = false
+    let addTrigger = false
 
     // set show when selected
     $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
@@ -298,8 +307,8 @@
         .filter(Boolean)
 
     let actionSelector: any = null
-    let actionActivationSelector: boolean = false
-    let activationMenuOpened: boolean = false
+    let actionActivationSelector = false
+    let activationMenuOpened = false
 
     // function nameKeydown(e: any) {
     //     if (e.key === "Enter" && !action?.triggers?.length) {
@@ -316,7 +325,16 @@
 <!-- min-height: 50vh; -->
 <div style="min-width: 45vw;">
     {#if mode === "slide" || mode === "template"}
-        <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
+        <CreateAction
+            mainId={id}
+            actionId={action.triggers?.[0] || ""}
+            existingActions={action.triggers || []}
+            actionValue={action.actionValues?.[action.triggers?.[0] || ""] || {}}
+            customData={action.customData?.[action.triggers?.[0] || ""] || {}}
+            {mode}
+            on:change={changeAction}
+            list
+        />
     {:else}
         {#if actionActivationSelector}
             <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
@@ -394,7 +412,7 @@
                     bold={!action.keypressActivate}
                 >
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="shortcut" style="margin-left: 0.5em;" right />
+                        <Icon id="shortcut" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if action.keypressActivate}
                                 <span style="text-transform: uppercase;display: flex;align-items: center;">{action.keypressActivate}</span>
@@ -425,7 +443,7 @@
                 <p><T id="actions.custom_activation" /></p>
                 <Button disabled={!$midiIn[id] || action.enabled === false} on:click={() => (actionActivationSelector = true)} title={$dictionary.actions?.set_custom_activation} bold={!customActivation}>
                     <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="trigger" style="margin-left: 0.5em;" right />
+                        <Icon id="trigger" style="margin-inline-start: 0.5em;" right />
                         <p>
                             {#if customActivation}
                                 <T id={customActionActivations.find((a) => a.id === customActivation)?.name || ""} />

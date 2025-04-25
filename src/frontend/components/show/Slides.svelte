@@ -19,8 +19,8 @@
     import DropArea from "../system/DropArea.svelte"
 
     export let showId: string
-    export let layout: string = ""
-    export let projectIndex: number = -1
+    export let layout = ""
+    export let projectIndex = -1
 
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
@@ -44,7 +44,7 @@
     }
 
     let scrollElem: HTMLElement | undefined
-    let offset: number = -1
+    let offset = -1
     $: {
         let output = $outputs[activeOutputs[0]] || {}
         if (loaded && scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
@@ -69,7 +69,7 @@
         }, 500)
     }
 
-    let disableAutoScroll: boolean = false
+    let disableAutoScroll = false
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
@@ -190,7 +190,7 @@
         }
     }
 
-    let altKeyPressed: boolean = false
+    let altKeyPressed = false
     function keydown(e: KeyboardEvent) {
         if (e.altKey) {
             e.preventDefault()
@@ -253,9 +253,9 @@
 
     // lazy loader
 
-    let lazyLoader: number = 1
+    let lazyLoader = 1
     let timeout: NodeJS.Timeout | true | null = null
-    let loaded: boolean = false
+    let loaded = false
 
     // reset loading when changing view modes
     $: if (showId || activeLayout) loaded = false
@@ -268,14 +268,14 @@
 
     $: isLessons = currentShow?.category === "lessons"
     // let showLessonsAlert: boolean = false
-    let lessonsFailed: number = 0
+    let lessonsFailed = 0
     // let currentTries: number = 0
     let lessonsTimeout: NodeJS.Timeout | null = null
 
     $: if (isLessons && $lessonsLoaded) startLazyLoader()
 
-    let lazyLoading: boolean = false
-    async function startLazyLoader() {
+    let lazyLoading = false
+    function startLazyLoader() {
         if (!layoutSlides || timeout) return
 
         if (lazyLoader >= layoutSlides.length) {
@@ -367,7 +367,7 @@
         })
     }
 
-    let loading: boolean = false
+    let loading = false
     $: if (showId) startLoading()
     $: if ($notFound.show?.includes(showId)) loading = false
     function startLoading() {

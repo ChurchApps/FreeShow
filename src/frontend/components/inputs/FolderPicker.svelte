@@ -7,8 +7,8 @@
     export let id: string
     export let title: string | undefined = undefined
     export let path: string | undefined = undefined
-    export let style: string = ""
-    export let center: boolean = true
+    export let style = ""
+    export let center = true
 
     function pickFolder() {
         // linux dialog behind window message

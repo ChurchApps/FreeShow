@@ -36,7 +36,7 @@
         <AudioMeter advanced />
     </div>
 
-    <div class="volume" style="left: calc(50% + (48px / 2));">
+    <div class="volume" style="inset-inline-start: calc(50% + (48px / 2));">
         <p style="font-size: 0.9em;"><T id="media.volume" /></p>
         <div class="slider">
             <Slider value={volumeValue} step={0.01} max={$special.allowGaining ? 1.25 : 1} on:input={setVolume} />
@@ -64,7 +64,7 @@
 
     .volume {
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: 50%;
         transform: translate(-50%, -48%);
         pointer-events: none;

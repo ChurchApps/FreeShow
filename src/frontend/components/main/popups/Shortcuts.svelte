@@ -97,7 +97,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        padding-left: 10px;
+        padding-inline-start: 10px;
     }
     main div:nth-child(odd) {
         background-color: rgb(0 0 20 / 0.08);

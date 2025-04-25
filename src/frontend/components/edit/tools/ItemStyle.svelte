@@ -4,7 +4,6 @@
     import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
     import { getFilters, getStyles } from "../../helpers/style"
     import { getBackgroundOpacity, setBackgroundColor } from "../scripts/edit"
     import { addFilterString, addStyleString } from "../scripts/textStyle"

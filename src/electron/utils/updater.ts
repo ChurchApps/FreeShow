@@ -4,10 +4,10 @@ import { isProd } from ".."
 
 // let notification: Notification | null
 
-export default function checkForUpdates() {
+export default async function checkForUpdates() {
     if (!isProd) return
 
-    autoUpdater.checkForUpdatesAndNotify()
+    await autoUpdater.checkForUpdatesAndNotify()
     // {
     //   title: app.getName(),
     //   body: "Downloading new update...",

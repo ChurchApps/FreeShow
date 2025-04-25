@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let size: number = 1
+    export let size = 1
 </script>
 
 <div class="loader" style="width: {40 * size}px;height: {40 * size}px;" />

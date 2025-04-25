@@ -22,15 +22,15 @@ export const exportTypes: Option[] = [
 ]
 
 export const getShowIdsFromType = {
-    project: (onlyShows: boolean = true) => {
+    project: (onlyShows = true) => {
         if (!get(activeProject)) return
 
-        let projectShows = (get(projects)[get(activeProject)!]?.shows || []).filter((a) => (onlyShows ? (a?.type || "show") === "show" : true))
+        const projectShows = (get(projects)[get(activeProject)!]?.shows || []).filter((a) => (onlyShows ? (a?.type || "show") === "show" : true))
         return projectShows.map(({ id }) => id)
     },
     selected_shows: () => {
         if (!get(selected).id?.includes("show")) {
-            let showId = getActiveShowId()
+            const showId = getActiveShowId()
             return showId ? [showId] : []
         }
 

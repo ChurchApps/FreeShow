@@ -3,6 +3,7 @@ import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
 import { triggerFunction } from "../../utils/common"
 import { syncDrive } from "../../utils/drive"
@@ -11,7 +12,7 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } from "../helpers/output"
+import { changeStageOutputLayout, displayOutputs, startCamera, startScreen, toggleOutput } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
@@ -38,6 +39,7 @@ import {
 } from "./apiGet"
 import {
     addGroup,
+    addToProject,
     changeShowLayout,
     changeVariable,
     editTimer,
@@ -113,6 +115,7 @@ export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_camera = { name?: string; id: string; groupId?: string }
+export type API_screen = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
 export type API_edit_timer = { id: string; key: string; value: any }
 export type API_transition = {
@@ -151,7 +154,16 @@ export type API_emitter = {
     emitter: string
     template?: string
     templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } }[]
+    data?: string // custom (OSC) data
 }
+
+// ADD
+
+export type API_add_to_project = { projectId: string; id: string; data?: any }
+
+// CREATE
+
+export type API_create_show = { text: string; name?: string; category?: string }
 
 /// ACTIONS ///
 
@@ -197,6 +209,7 @@ export const API_ACTIONS = {
 
     // MEDIA (Backgrounds)
     start_camera: (data: API_camera) => startCamera(data),
+    start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
     // play / pause playing
     // control time
@@ -270,6 +283,12 @@ export const API_ACTIONS = {
     run_action: (data: API_id) => runActionId(data.id),
     toggle_action: (data: API_toggle) => toggleAction(data),
 
+    // ADD
+    add_to_project: (data: API_add_to_project) => addToProject(data),
+
+    // CREATE
+    create_show: (data: API_create_show) => convertText({ noFormatting: true, open: false, ...data }),
+
     // GET
     get_shows: () => getShows(),
     get_show: (data: API_id) => getShow(data),
@@ -308,14 +327,14 @@ export async function triggerAction(data: API) {
     // Open Sound Control format
     if (data.action.startsWith("/")) data = oscToAPI(data)
 
-    let id = data.action
+    const id = data.action
 
     // API start at 1, code start at 0
     if (data.index !== undefined) data.index--
 
-    if (!API_ACTIONS[id]) return console.log("Missing API ACTION:", id)
+    if (!API_ACTIONS[id]) return console.error("Missing API ACTION:", id)
 
-    let returnId = data.returnId
+    const returnId = data.returnId
     delete data.returnId
     const returnData = await API_ACTIONS[id](data)
     if (!returnId || returnData === undefined) return

@@ -56,7 +56,7 @@
         }, 100)
     }
 
-    let drawStop: boolean = false
+    let drawStop = false
     let timeout: NodeJS.Timeout | null = null
     $: if (settings.dots) startTimeout()
     function startTimeout() {
@@ -97,7 +97,7 @@
     }
 
     let previousPos: Draw | null = null
-    let mouseDown: boolean = false
+    let mouseDown = false
     $: {
         if ($draw !== null && !mouseDown) mouseDown = true
         else if ($draw === null) mouseDown = false
@@ -121,7 +121,7 @@
     canvas {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         border: none;
         background-color: transparent;
         width: 100%;

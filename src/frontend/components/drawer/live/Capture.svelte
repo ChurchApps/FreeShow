@@ -9,7 +9,7 @@
 
     export let screen: { id: string; name: string }
     export let streams: MediaStream[]
-    export let background: boolean = false
+    export let background = false
 
     let loaded = false
 
@@ -55,7 +55,7 @@
             })
             .catch(function (err) {
                 let msg: string = err.message
-                console.log(err.name + ": " + msg)
+                console.error(err.name + ": " + msg)
 
                 // if (err.name === "NotReadableError") {
                 sendMain(Main.ACCESS_SCREEN_PERMISSION)
@@ -99,7 +99,7 @@
 <style>
     video {
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
     }

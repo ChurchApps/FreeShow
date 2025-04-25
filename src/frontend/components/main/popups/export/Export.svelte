@@ -21,10 +21,10 @@
 
     let previewShow: Show | null = null
     let showIds: string[] = []
-    let loading: boolean = false
+    let loading = false
 
-    let exportType: string = ""
-    let exportFormat: string = ""
+    let exportType = ""
+    let exportFormat = ""
 
     const excludedFormats = {
         project: ["show", "txt", "image"],
@@ -89,7 +89,7 @@
             }
 
             loading = true
-            await exportProject(project)
+            await exportProject(project, $activeProject || "")
         } else if (exportFormat === "image") {
             // only first selected show
             loading = true
@@ -195,7 +195,7 @@
                 <Icon id="export" size={1.2} right />
                 <T id="export.export" />
                 {#if showIds.length > 1 && exportFormat !== "project"}
-                    <span style="opacity: 0.5;padding-left: 10px;align-content: center;">({showIds.length})</span>
+                    <span style="opacity: 0.5;padding-inline-start: 10px;align-content: center;">({showIds.length})</span>
                 {/if}
             </div>
         </Button>

@@ -7,15 +7,15 @@ export function checkForUpdates(currentVersion: string) {
 
     fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
         .then((response) => response.json())
-        .then((a) => {
+        .then((data) => {
             if (get(activePopup) !== null) return
 
-            let latestAll = a.filter((a: any) => a.draft === false)[0]
-            let latestVersionAll = latestAll.tag_name.slice(1)
+            const latestAll = data.filter((a: any) => a.draft === false)[0]
+            const latestVersionAll = latestAll.tag_name.slice(1)
             if (currentVersion === latestVersionAll) return
 
-            let latestRelease = a.filter((a: any) => a.draft === false && a.prerelease === false)[0]
-            let latestVersion = includeBeta ? latestVersionAll : latestRelease.tag_name.slice(1)
+            const latestRelease = data.filter((a: any) => a.draft === false && a.prerelease === false)[0]
+            const latestVersion = includeBeta ? latestVersionAll : latestRelease.tag_name.slice(1)
             if (currentVersion === latestVersion) return
 
             alertMessage.set(

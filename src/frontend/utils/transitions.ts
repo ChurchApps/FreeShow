@@ -20,6 +20,7 @@ export const transitionTypes: { id: TransitionType; name: string }[] = [
 ]
 
 export const transitions: { [key in TransitionType]: any } = {
+    // eslint-disable-next-line
     none: () => {},
     blur,
     fade,
@@ -27,14 +28,14 @@ export const transitions: { [key in TransitionType]: any } = {
     fly,
     scale,
     // slide,
-    slide: (_node, custom: any) => {
+    slide: (_node, customData: any) => {
         return {
             css: (t: number) => {
-                let direction = custom.direction || "left_right"
+                const direction = customData.direction || "left_right"
 
                 // go a bit faster, because transition will finish a bit before slide is done! (only in output...)
                 // let pos = Math.min(1, (1 - t) * 1.1) * 100
-                let pos = (1 - t) * 100
+                const pos = (1 - t) * 100
 
                 if (direction === "left_right") return `transform: translate(-${pos}%);`
                 if (direction === "right_left") return `transform: translate(${pos}%);`
@@ -71,8 +72,8 @@ export const easings: any[] = [
 ]
 
 // : Transition
-export function custom(node: any, { type = "fade", duration = 500, easing = "sine", delay = 0, custom = {} }: any) {
-    let customTransition = { ...transitions[type as TransitionType](node, custom), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing)?.data || linear, delay }
+export function custom(node: any, { type = "fade", duration = 500, easing = "sine", delay = 0, custom: customData = {} }: any) {
+    const customTransition = { ...transitions[type as TransitionType](node, customData), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing)?.data || linear, delay }
     // if (type === "crossfade") customTransition.key = "a"
     return customTransition
 }

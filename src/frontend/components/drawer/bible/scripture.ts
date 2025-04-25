@@ -7,8 +7,8 @@ import { sendMain } from "../../../IPC/main"
 import { Main } from "../../../../types/IPC/Main"
 
 const api = "https://contentapi.churchapps.org/bibles/"
-let tempCache: any = {}
-let fetchTimeout: any = {}
+const tempCache: any = {}
+const fetchTimeout: any = {}
 export let isFallback = false
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
@@ -43,9 +43,9 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
                 // fallback key
                 if (response.status >= 400) {
                     isFallback = true
-                    console.log("Could not fetch, trying fallback key")
+                    console.error("Could not fetch, trying fallback key")
                     fetch(urls[load], { headers: { "api-key": getKey("bibleapi_fallback") } })
-                        .then((response) => response.json())
+                        .then((response1) => response1.json())
                         .then(manageResult)
                         .catch((e) => {
                             clearTimeout(fetchTimeout[active])
@@ -73,16 +73,16 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
-    let url = `${api}${active}/search?query=${searchQuery}`
+    const url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
         fetch(url)
             .then((response) => {
                 // fallback key
                 if (response.status >= 400) {
-                    console.log("Could not fetch, trying fallback key")
+                    console.error("Could not fetch, trying fallback key")
                     fetch(url, { headers: { "api-key": getKey("bibleapi_fallback") } })
-                        .then((response) => response.json())
+                        .then((response1) => response1.json())
                         .then((data) => resolve(data.data))
                         .catch((e) => {
                             reject(e)
@@ -101,12 +101,12 @@ export function searchBibleAPI(active: string, searchQuery: string) {
     })
 }
 
-export function loadBible(active: string, index: number = 0, bible: any) {
+export function loadBible(active: string, index = 0, bible: any) {
     Object.entries(get(scriptures)).forEach(([id, scripture]: any) => {
         if (!scripture || (scripture.id !== active && id !== active)) return
 
-        let customName = get(scriptures)[id]?.customName || scripture.name || get(scriptures)[id]?.name
-        let isAPI = scripture.api
+        const customName = get(scriptures)[id]?.customName || scripture.name || get(scriptures)[id]?.name
+        const isAPI = scripture.api
 
         if (isAPI) {
             bible.api = true
@@ -141,8 +141,8 @@ export function receiveBibleContent(data: any) {
         return a
     })
 
-    let bible: any = content
-    let id = data.content[0] || data.id
+    const bible: any = content
+    const id = data.content[0] || data.id
 
     bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
     bible.metadata = content.metadata || {}
@@ -153,11 +153,11 @@ export function receiveBibleContent(data: any) {
 }
 
 export function joinRange(array: string[]) {
-    let prev: number = -1
-    let range: string = ""
+    let prev = -1
+    let range = ""
 
     array.forEach((a: string, i: number) => {
-        let splitted = a.toString().split("_")
+        const splitted = a.toString().split("_")
         const id = splitted[0]
         const subverse = Number(splitted[1] || 0)
         const v = id + (subverse ? getVersePartLetter(subverse) : "")
@@ -184,8 +184,8 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     const chars = Number(get(scriptureSettings).longVersesChars || 100)
     const newVerses: { [key: string | number]: string } = {}
     Object.keys(verses || {}).forEach((verseKey) => {
-        let verse = verses[verseKey]
-        let newVerseStrings = splitText(verse, chars)
+        const verse = verses[verseKey]
+        const newVerseStrings = splitText(verse, chars)
 
         for (let i = 0; i < newVerseStrings.length; i++) {
             const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
@@ -197,7 +197,7 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 }
 
 export function splitText(value: string, maxLength: number) {
-    let splitted: string[] = []
+    const splitted: string[] = []
 
     // for (let i = 0; i < value.length; i += maxLength) {
     //     let string = value.substring(i, i + maxLength)
@@ -211,14 +211,14 @@ export function splitText(value: string, maxLength: number) {
         // find the next possible break point
         let end = start + maxLength
         if (end < value.length) {
-            let spaceIndex = value.lastIndexOf(" ", end)
+            const spaceIndex = value.lastIndexOf(" ", end)
             if (spaceIndex > start) {
                 end = spaceIndex // adjust to the last space within range
             }
         }
 
-        let string = value.substring(start, end).trim()
-        splitted.push(string)
+        const trimmedValue = value.substring(start, end).trim()
+        splitted.push(trimmedValue)
 
         start = end + 1
     }
@@ -239,38 +239,38 @@ export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
 }
-export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableReference: boolean = false) {
-    let slides: any[][] = [[]]
+export function getSlides({ bibles, sorted }, onlyOne = false, disableReference = false) {
+    const slides: any[][] = [[]]
 
-    let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
-    let templateTextItems = template.filter((a) => a.lines)
-    let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+    const template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
+    const templateTextItems = template.filter((a) => a.lines)
+    const templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
 
     const combineWithText = templateTextItems.length <= 1 || get(scriptureSettings).combineWithText
 
     bibles.forEach((bible, bibleIndex) => {
-        let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
-        let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-        let itemAlignStyle = currentTemplate?.align || ""
-        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
-        let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
+        const currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
+        const itemStyle = currentTemplate?.style || "top: 150px;inset-inline-start: 50px;width: 1820px;height: 780px;"
+        const itemAlignStyle = currentTemplate?.align || ""
+        const alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: start;"
+        const textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { align: itemAlignStyle, lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
+        const emptyItem = { align: itemAlignStyle, lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
 
-        let slideIndex: number = 0
+        let slideIndex = 0
         slides[slideIndex].push(clone(emptyItem))
 
         const verses = getSplittedVerses(bible.verses)
 
         let verseLine = 0
-        sorted.forEach((s: any, i: number) => {
-            let slideArr: any = slides[slideIndex][bibleIndex]
+        sorted.forEach((s: any, rangeIndex: number) => {
+            const slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
 
             let text: string = verses[s] || bible.verses[s] || ""
             if (!text) return
 
-            let lineIndex: number = 0
+            let lineIndex = 0
             // verses on individual lines
             if (get(scriptureSettings).versesOnIndividualLines) {
                 lineIndex = verseLine
@@ -281,10 +281,10 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
             // verse number
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
-                if (i === 0) size *= 1.2
-                let verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+                if (rangeIndex === 0) size *= 1.2
+                const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
-                let splitted = s.toString().split("_")
+                const splitted = s.toString().split("_")
                 const id = splitted[0]
                 const subverse = Number(splitted[1] || 0)
                 const value = id + (subverse ? getVersePartLetter(subverse) : "") + " "
@@ -301,15 +301,15 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
             text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
 
             // highlight Jesus text
-            let textArray: any[] = []
+            const textArray: any[] = []
             if (get(scriptureSettings).redJesus) {
-                let jesusWords: any[] = []
+                const jesusWords: any[] = []
                 let jesusStart = text.indexOf("!{")
 
                 while (jesusStart > -1) {
                     let jesusEnd = 0
 
-                    let splitted = text.split("")
+                    const splitted = text.split("")
                     splitted.find((letter, i) => {
                         if (i < jesusStart + 1 || jesusEnd) return false
 
@@ -336,12 +336,12 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
                     textArray.push({ value: removeTags(formatBibleText(text.slice(0, jesusWords[0][0]))), style: textStyle })
                 }
 
-                let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
+                const redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
                 jesusWords.forEach(([start, end], i) => {
                     textArray.push({ value: removeTags(formatBibleText(text.slice(start + 2, end - 2))), style: textStyle + redText, customType: "disableTemplate_jw" })
 
                     if (!jesusWords[i + 1] || end < jesusWords[i + 1][0]) {
-                        let remainingText = removeTags(formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1)))
+                        const remainingText = removeTags(formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1)))
                         if (remainingText.length) textArray.push({ value: remainingText, style: textStyle })
                     }
                 })
@@ -357,17 +357,17 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
             slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
-            if (onlyOne || (i + 1) % get(scriptureSettings).versesPerSlide > 0) return
+            if (onlyOne || (rangeIndex + 1) % get(scriptureSettings).versesPerSlide > 0) return
 
             if (!disableReference && bibleIndex + 1 >= bibles.length) {
-                let range: any[] = onlyOne ? sorted : sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
+                let range: any[] = onlyOne ? sorted : sorted.slice(rangeIndex - get(scriptureSettings).versesPerSlide + 1, rangeIndex + 1)
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
                 indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
             }
 
-            if (i + 1 >= sorted.length) return
+            if (rangeIndex + 1 >= sorted.length) return
 
             slideIndex++
             verseLine = 0
@@ -377,7 +377,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
 
         // add remaining
         if (!disableReference && bibleIndex + 1 >= bibles.length) {
-            let remainder = onlyOne ? sorted.length : sorted.length % get(scriptureSettings).versesPerSlide
+            const remainder = onlyOne ? sorted.length : sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
@@ -412,18 +412,18 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
         if (!bibles[0]) return
 
-        let lines: any[] = []
+        const lines: any[] = []
 
         // WIP itemIndex is mostly correct if combineWithText
 
         // if (combineWithText) itemIndex = 0
-        let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
-        let alignStyle = metaTemplate?.lines?.[0]?.align || ""
-        let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
+        const metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
+        const alignStyle = metaTemplate?.lines?.[0]?.align || ""
+        const verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
-        let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
-        let versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
-        let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+        const bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
+        const versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
+        const books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         // custom value (API)
         if (bibles.find((a) => a?.attributionRequired)) {
@@ -451,7 +451,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
             } else {
                 slides[slideIndex].push({
                     lines,
-                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: metaTemplate?.style || "top: 910px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
                     actions: metaTemplate?.actions || {},
                 })
@@ -600,7 +600,7 @@ const colorCodesNT = [5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
 const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
 
 export function getColorCode(books, bookId: number | string) {
-    let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
+    const bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
 
     if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
     else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]

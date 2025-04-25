@@ -44,6 +44,7 @@ import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
 import { addToPos } from "./mover"
+import { REMOTE } from "../../../types/Channels"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -75,11 +76,11 @@ export const _updaters = {
             }
 
             // find any stage output window linked to this stage layout
-            let outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
+            const outputId = Object.values(get(outputs)).find((output) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
             // get first stage layout
-            let stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
+            const stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
             if (!stageOutput) return
 
             // set to new stage output
@@ -178,20 +179,20 @@ export const _updaters = {
             }
 
             // remove projects & folders inside
-            let parentId = get(folders)[id]?.parent
+            const parentId = get(folders)[id]?.parent
             if (!parentId) return
 
-            let parents: any = { project: [], folder: [] }
+            const parents: any = { project: [], folder: [] }
             projects.update((a) => findAllParents(a, "project"))
             folders.update((a) => findAllParents(a, "folder"))
 
             return parents
 
             function findAllParents(items: any, type: "project" | "folder") {
-                let found: number = -1
+                let found = -1
                 do {
                     if (found > -1) {
-                        let key = Object.keys(items)[found]
+                        const key = Object.keys(items)[found]
                         parents[type].push({ id: key, parent: items[key].parent })
                         items[key].parent = parentId
                     }
@@ -319,7 +320,7 @@ export const _updaters = {
         store: events,
         empty: EMPTY_EVENT,
         deselect: (id: string, data: any) => {
-            let event = get(events)[id]
+            const event = get(events)[id]
             if (!event) return
             if (data.data?.repeat === true && data.previousData?.repeat === false) {
                 // TODO: delete repeated...
@@ -335,7 +336,7 @@ export const _updaters = {
         store: showsCache,
         empty: new ShowObj(),
         initialize: (data: any) => {
-            let replacer: any = {}
+            const replacer: any = {}
 
             // template
             let template = _show().get("settings.template") || null
@@ -349,11 +350,14 @@ export const _updaters = {
             // name
             replacer.name = checkName(get(dictionary).main?.unnamed || "Unnamed")
 
+            // update remote project shows data, so the new show is properly added
+            setTimeout(() => window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) }))
+
             return replaceEmptyValues(data, replacer)
         },
         select: (id: string, data: any) => {
             // add to current(stored) project
-            let showRef: any = { id, type: "show" }
+            const showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
                     if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
@@ -388,7 +392,7 @@ export const _updaters = {
             })
 
             // open selected drawer tab
-            let activeCategory = get(drawerTabsData).shows?.activeSubTab
+            const activeCategory = get(drawerTabsData).shows?.activeSubTab
             if (activeCategory !== "all" && activeCategory !== "unlabeled") {
                 drawerTabsData.update((a) => {
                     a.shows = { enabled: true, activeSubTab: data.data.category }
@@ -410,7 +414,7 @@ export const _updaters = {
             // remove from stored project
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((a) => {
-                    a[data.remember.project].shows = a[data.remember.project].shows.filter((a) => a.id !== id)
+                    a[data.remember.project].shows = a[data.remember.project].shows.filter((showRef) => showRef.id !== id)
                     return a
                 })
             }
@@ -443,7 +447,7 @@ export const _updaters = {
         deselect: (id: string, { subkey }: any) => {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
-            let firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
+            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((layoutId) => layoutId !== subkey)[0]
             if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
@@ -517,14 +521,14 @@ export const _updaters = {
         },
         deselect: () => {
             setTimeout(() => {
-                let allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
-                    let output = get(outputs)[outputId]
+                const allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
+                    const output = get(outputs)[outputId]
                     return !output.isKeyOutput && !output.stageOutput
                 })
 
                 if (allNormalOutputs.length > 0) {
                     // enable if no enabled
-                    let allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
+                    const allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
                     if (!allEnabled.length) {
                         outputs.update((a) => {
                             a[allNormalOutputs[0]].enabled = true
@@ -548,10 +552,10 @@ function updateTransparentColors(id: string) {
     themes.update((a) => {
         Object.entries(a[id].colors).forEach(([subId, color]: any) => {
             if (!converts[subId]) return
-            let transparentColors: any[] = converts[subId]
+            const transparentColors: any[] = converts[subId]
 
             transparentColors.forEach(({ id: colorId, opacity }: any) => {
-                let rgba = makeTransparent(color, opacity)
+                const rgba = makeTransparent(color, opacity)
 
                 a[id].colors[colorId] = rgba
             })
@@ -567,14 +571,14 @@ const converts = {
         { id: "focus", opacity: 0.1 },
     ],
 }
-function makeTransparent(value: string, amount: number = 0.5) {
-    let rgb = hexToRgb(value)
+function makeTransparent(value: string, amount = 0.5) {
+    const rgb = hexToRgb(value)
     if (!rgb) return null
-    let newValue: string = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
+    const newValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
     return newValue
 }
 function hexToRgb(hex: string) {
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
         ? {
               r: parseInt(result[1], 16),
@@ -607,7 +611,7 @@ export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 export function getProjectName() {
     let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
 
-    let date = new Date()
+    const date = new Date()
     projectReplacers.forEach((a) => {
         name = name.replaceAll(`{${a.id}}`, a.value(date))
     })
@@ -620,7 +624,7 @@ function clearOverlayOutput(slideId: string) {
         outputs.update((a) => {
             Object.entries(a).forEach(([id, output]) => {
                 if (output.out?.overlays?.includes(slideId)) {
-                    a[id].out!.overlays = a[id].out!.overlays!.filter((a) => a !== slideId)
+                    a[id].out!.overlays = a[id].out!.overlays!.filter((overlayId) => overlayId !== slideId)
                 }
             })
             return a

@@ -112,7 +112,7 @@
 <div class="actions">
     <!-- localization -->
     {#if item?.language}
-        <div title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
             </span>
@@ -121,7 +121,7 @@
 
     <!-- text transform -->
     {#if textTransform}
-        <div title={$dictionary.edit?.text_transform} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.edit?.text_transform} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="capitalize" white />
             </span>
@@ -130,7 +130,7 @@
 
     <!-- list mode -->
     {#if item?.list?.enabled}
-        <div title={$dictionary.edit?.list} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.edit?.list} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="list" white />
             </span>
@@ -139,7 +139,7 @@
 
     <!-- scrolling -->
     {#if item?.scrolling?.type && item.scrolling.type !== "none"}
-        <div title={$dictionary.edit?.scrolling} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.edit?.scrolling} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="scrolling" white />
             </span>
@@ -148,7 +148,7 @@
 
     <!-- button -->
     {#if item?.button?.press || item?.button?.release}
-        <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="button" white />
             </span>
@@ -157,7 +157,7 @@
 
     <!-- bindings -->
     {#if item?.bindings?.length}
-        <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <Button on:click={removeBindings} redHover>
                 <Icon id="bind" white />
             </Button>
@@ -177,7 +177,7 @@
 
     <!-- conditions -->
     {#if Object.values(item?.conditions || {}).length}
-        <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <Button on:click={removeConditions} redHover>
                 <Icon id="light" white />
             </Button>
@@ -187,7 +187,7 @@
     <!-- actions -->
     {#if item?.actions}
         {#each Object.keys(item.actions) as action}
-            <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+            <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                 <Button on:click={() => removeAction(action)} redHover>
                     <Icon id={actions[action]?.icon} white />
                 </Button>
@@ -203,7 +203,7 @@
     .actions {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
 
         display: flex;
         flex-direction: column;

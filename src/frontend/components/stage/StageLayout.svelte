@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, currentWindow, dictionary, outputs, stageShows } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, dictionary, outputs, stageShows, variables } from "../../stores"
     import { send } from "../../utils/request"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -15,20 +15,21 @@
     import Zoomed from "../slide/Zoomed.svelte"
     import Center from "../system/Center.svelte"
     import Snaplines from "../system/Snaplines.svelte"
-    import { updateStageShow } from "./stage"
+    import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
-    export let outputId: string = ""
-    export let stageId: string = ""
-    export let preview: boolean = false
-    export let edit: boolean = true
+    export let outputId = ""
+    export let stageId = ""
+    export let preview = false
+    export let edit = true
 
     let lines: [string, number][] = []
     let mouse: any = null
     let newStyles: { [key: string]: number | string } = {}
     $: active = $activeStage.items
 
-    let ratio: number = 1
+    let ratio = 1
 
     $: {
         if (active.length) {
@@ -44,7 +45,7 @@
             let styles = getStyles(items[id].style)
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
 
-            let textStyles: string = ""
+            let textStyles = ""
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
@@ -64,11 +65,11 @@
 
     let timeout: NodeJS.Timeout | null = null
 
-    $: stageShowId = stageId || $activeStage.id
-    $: show = $stageShows[stageShowId || ""] || {}
+    $: stageLayoutId = stageId || $activeStage.id
+    $: layout = $stageShows[stageLayoutId || ""] || {}
 
     // get video time
-    $: if ($currentWindow === "output" && Object.keys(show.items || {}).find((id) => id.includes("video"))) requestVideoData()
+    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).find((id) => id.includes("video"))) requestVideoData()
     let interval: NodeJS.Timeout | null = null
     function requestVideoData() {
         if (interval) return
@@ -81,8 +82,8 @@
 
     // RESOLUTION
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     $: stageOutputId = getStageOutputId($outputs)
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
@@ -108,7 +109,7 @@
     }
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (!edit || e.target.closest(".zoom_container") || e.target.closest("button")) return
 
@@ -116,7 +117,7 @@
     }
 
     $: currentOutput = $outputs[outputId] || {}
-    $: backgroundColor = currentOutput.transparent ? "transparent" : show.settings?.color || "#000000"
+    $: backgroundColor = currentOutput.transparent ? "transparent" : layout.settings?.color || "#000000"
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -124,20 +125,20 @@
 <div class="stageArea">
     <!-- <Main slide={stageShowId ? show : null} let:width let:height let:resolution> -->
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if stageShowId}
+        {#if stageLayoutId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center={zoom >= 1}>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
-                <!-- {#key Slide} -->
-                {#each Object.entries(show.items || {}) as [id, item]}
-                    {#if item.type || item.enabled}
-                        <Stagebox {edit} stageLayout={edit ? null : show} {id} item={clone(item)} {ratio} {preview} bind:mouse />
-                    {/if}
-                {/each}
-                <!-- {/key} -->
+                {#key stageLayoutId}
+                    {#each Object.entries(layout.items || {}) as [id, item]}
+                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables))}
+                            <Stagebox {edit} stageLayout={edit ? null : layout} {id} item={clone(item)} {ratio} {preview} bind:mouse />
+                        {/if}
+                    {/each}
+                {/key}
             </Zoomed>
         {:else if edit}
             <Center size={2} faded>
@@ -151,11 +152,11 @@
         <T id="settings.connections" />: {Object.keys($connections.STAGE || {}).length}
     </div> -->
 
-    {#if edit && stageShowId}
+    {#if edit && stageLayoutId}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions"></div>
 
-            <div class="actions" style="height: 100%;justify-content: right;">
+            <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- <div class="seperator" /> -->
 
                 <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
@@ -251,7 +252,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

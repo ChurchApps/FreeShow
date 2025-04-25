@@ -21,7 +21,7 @@
 
     let searchedShows = clone(defaultShows)
     let searchValue = ""
-    let previousSearchValue: string = ""
+    let previousSearchValue = ""
     function search(e: any = null) {
         searchValue = formatSearch(e?.target?.value || "")
 

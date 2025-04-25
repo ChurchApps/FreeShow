@@ -11,7 +11,7 @@
     import Capture from "./Capture.svelte"
 
     export let streams: MediaStream[]
-    export let searchValue: string = ""
+    export let searchValue = ""
 
     let windows: { name: string; id: string }[] = []
 

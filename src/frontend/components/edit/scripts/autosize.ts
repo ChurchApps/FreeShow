@@ -33,18 +33,18 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         return maxFontSize
     }
 
-    const boxElem = virtualElem(elem)
+    const boxElem = virtualElem()
     if (!boxElem) return defaultFontSize
 
-    let boxWidth = boxElem.clientWidth
-    let boxHeight = boxElem.clientHeight
+    const boxWidth = boxElem.clientWidth
+    const boxHeight = boxElem.clientHeight
 
     let textChildren: HTMLElement[] | HTMLCollection = []
     if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
     if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
 
     let fontSize = defaultFontSize // maxFontSize * 0.5
-    let styles: string[] = []
+    const styles: string[] = []
     addStyleToElemText(fontSize)
 
     if (type === "shrinkToFit") {
@@ -91,16 +91,16 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         return boxElem!.scrollWidth > boxWidth || boxElem!.scrollHeight > boxHeight
     }
 
-    function addStyleToElemText(fontSize: number) {
+    function addStyleToElemText(currentFontSize: number) {
         let i = 0
-        for (let textElem of textChildren) {
+        for (const textElem of textChildren) {
             if (!styles[i]) styles[i] = textElem.getAttribute("style") || ""
-            textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${fontSize}px !important;`)
+            textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize}px !important;`)
             i++
         }
     }
 
-    function virtualElem(elem: HTMLElement) {
+    function virtualElem() {
         const cloned = elem.cloneNode(true) as HTMLElement
         if (!cloned) return null
 
@@ -111,8 +111,8 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
         // "include" paddings
         const computedStyle = getComputedStyle(elem)
-        let newWidth = elem.clientWidth - parseFloat(computedStyle.paddingRight) - parseFloat(computedStyle.paddingLeft)
-        let newHeight = elem.clientHeight - parseFloat(computedStyle.paddingBottom) - parseFloat(computedStyle.paddingTop)
+        const newWidth = elem.clientWidth - parseFloat(computedStyle.paddingRight) - parseFloat(computedStyle.paddingLeft)
+        const newHeight = elem.clientHeight - parseFloat(computedStyle.paddingBottom) - parseFloat(computedStyle.paddingTop)
         cloned.style.width = `${newWidth}px`
         cloned.style.height = `${newHeight}px`
         cloned.style.padding = "0"
@@ -121,7 +121,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.alignItems = "center"
         if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
 
-        for (let elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
+        for (const elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
             ;(elemHide as HTMLElement).style.display = "none"
         }
 

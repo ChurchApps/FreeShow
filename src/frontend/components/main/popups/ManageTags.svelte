@@ -22,7 +22,7 @@
     let type: string = $popupData.type || "show"
     let tags: (Tag & { id: string })[] = []
 
-    let emptyTag: boolean = false
+    let emptyTag = false
     onMount(getTags)
     function getTags() {
         tags = sortByName(keysToID(get(store[type]())))

@@ -28,14 +28,14 @@ const areaChildren = {
     audio_playlist: ["audio"],
 }
 
-export function validateDrop(id: string, selected: SelectIds | null, children: boolean = false): boolean {
-    return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
+export function validateDrop(id: string, selectedId: SelectIds | null, children = false): boolean {
+    return areas[id]?.includes(selectedId) || (children && areaChildren[id]?.includes(selectedId))
 }
 
 export function ondrop(e: any, id: string) {
     // let data: string = e.dataTransfer.getData("text")
-    let h = { id: null, location: { page: get(activePage) } }
-    let sel = get(selected)
+    const h = { id: null, location: { page: get(activePage) } }
+    const sel = get(selected)
 
     let elem: HTMLElement | null = null
     if (e !== null) {
@@ -44,20 +44,20 @@ export function ondrop(e: any, id: string) {
         else if (id === "slide") elem = e.target.querySelector(".selectElem")
     }
 
-    let trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
-    let data: any = JSON.parse(elem?.getAttribute("data") || "{}")
+    const trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
+    const data: any = JSON.parse(elem?.getAttribute("data") || "{}")
     let index: undefined | number = data.index
-    let center: boolean = false
+    let center = false
     if (trigger?.includes("center")) center = true
     if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id || "")) index++
 
     const dropdata: DropData = { id, data, trigger, center, index }
 
-    console.log("DRAG: ", sel)
-    console.log("DROP: ", dropdata)
+    console.info("DRAG: ", sel)
+    console.info("DROP: ", dropdata)
 
     if (dropActions[id]) {
-        let dropData = { drag: sel, drop: dropdata }
+        const dropData = { drag: sel, drop: dropdata }
 
         const hist = dropActions[id](dropData, h) as History | undefined
         if (hist && hist.id) history(hist)
@@ -65,5 +65,5 @@ export function ondrop(e: any, id: string) {
         return
     }
 
-    console.log("NOT ASSIGNED!", sel.id + " => " + id)
+    console.info("NOT ASSIGNED!", sel.id + " => " + id)
 }

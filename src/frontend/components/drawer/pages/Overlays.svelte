@@ -18,7 +18,7 @@
     import OverlayActions from "./OverlayActions.svelte"
 
     export let active: string | null
-    export let searchValue: string = ""
+    export let searchValue = ""
 
     $: resolution = getResolution(null, { $outputs, $styles })
 
@@ -51,7 +51,7 @@
     }
 
     // open drawer tab instantly before content has loaded
-    let preloader: boolean = true
+    let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 </script>
 

@@ -56,7 +56,7 @@
         })
     }
 
-    let note: string = ""
+    let note = ""
     $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) note = editSlide?.notes || ""
 
     function edit(e: any) {

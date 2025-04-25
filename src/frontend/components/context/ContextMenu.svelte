@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, os, spellcheck } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, os, spellcheck, localeDirection } from "../../stores"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
@@ -11,8 +11,8 @@
 
     let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
-    let x: number = 0
-    let y: number = 0
+    let x = 0
+    let y = 0
     let side: "right" | "left" = "right"
     let translate = 0
 
@@ -30,7 +30,9 @@
 
         x = e.clientX
         y = e.clientY
-        side = "right"
+        side = $localeDirection === "rtl" ? "left" : "right"
+
+        // side = "right"
         translate = 0
 
         contextElem = target.closest(".context") || document.body

@@ -5,7 +5,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
-    async function deleteSelected() {
+    function deleteSelected() {
         let shows = $selected.data
         history({ id: "SHOWS", oldData: { data: shows }, location: { page: "drawer" } })
 

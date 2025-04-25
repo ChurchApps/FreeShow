@@ -35,12 +35,12 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     // Slide?.settings?.resolution
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let ratio: number = 1
+    let ratio = 1
 
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
@@ -66,7 +66,7 @@
     // LOAD BACKGROUND
     $: bgPath = backgroundPath || background?.id || ""
     $: if (bgPath) loadBackground()
-    let thumbnailPath: string = ""
+    let thumbnailPath = ""
     async function loadBackground() {
         let newPath = await loadThumbnail(bgPath, mediaSize.big)
         if (newPath) thumbnailPath = newPath
@@ -103,7 +103,7 @@
             let item = items[id]
             if (item) {
                 let styles = getStyles(item.style)
-                let textStyles: string = ""
+                let textStyles = ""
 
                 Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
                 Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
@@ -143,7 +143,7 @@
         }
     }
 
-    let altKeyPressed: boolean = false
+    let altKeyPressed = false
     function keydown(e: KeyboardEvent) {
         if (e.altKey) {
             e.preventDefault()
@@ -174,7 +174,7 @@
     }
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         keyup()
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
@@ -191,7 +191,7 @@
     // combine and remove duplicates
     $: usedChords = slideChords.length + allChords.length ? [...new Set([...slideChords, ...allChords])] : []
 
-    let chordsAction: string = ""
+    let chordsAction = ""
     function setDefaultChordsAction() {
         if (chordsAction === "") {
             alertMessage.set("actions.chord_info")
@@ -201,7 +201,7 @@
         }
     }
 
-    let chordsMode: boolean = false
+    let chordsMode = false
     function toggleChords() {
         chordsMode = !chordsMode
     }
@@ -231,7 +231,7 @@
     )
 
     // remove overflow if scrollbars are flickering over 25 times per second
-    let hideOverflow: boolean = false
+    let hideOverflow = false
     // let changedTimes: number = 0
     // $: if (ratio) changedTimes++
     // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
@@ -351,7 +351,7 @@
                 {/if}
             </div>
 
-            <div class="actions" style="height: 100%;justify-content: right;">
+            <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- no need to add chords on scripture/events -->
                 {#if !currentShow?.reference?.type && Slide}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
@@ -482,7 +482,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

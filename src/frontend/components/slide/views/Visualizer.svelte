@@ -7,7 +7,7 @@
     import { send } from "../../../utils/request"
 
     export let item: Item
-    export let preview: boolean = false
+    export let preview = false
 
     // visualizer
     // TODO: videos & mics
@@ -44,7 +44,7 @@
         if (checkInterval) clearInterval(checkInterval)
     })
 
-    let rendering: number = 0
+    let rendering = 0
     function visualizer() {
         if (!canvas || rendering) return
         if (!ctx) {
@@ -140,7 +140,7 @@
     canvas {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         height: 100%;
     }

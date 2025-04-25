@@ -14,8 +14,8 @@
         showId?: string
         id: string
     }
-    export let chordsMode: boolean = false
-    export let chordsAction: string = ""
+    export let chordsMode = false
+    export let chordsAction = ""
 
     // CHORDS
 
@@ -149,7 +149,7 @@
         content: "";
         position: absolute;
         bottom: -5px;
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translate(-50%, 100%);
         width: 5px;
         /* this height works best as 100px font size */

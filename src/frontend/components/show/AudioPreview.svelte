@@ -17,8 +17,8 @@
     $: playing = $playingAudio[path] || {}
     $: paused = playing.paused !== false
 
-    let currentTime: number = 0
-    let duration: number = 0
+    let currentTime = 0
+    let duration = 0
     $: if (path) getDuration()
     async function getDuration() {
         duration = 0
@@ -81,9 +81,9 @@
     let canvas: HTMLCanvasElement | undefined
     $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
 
-    let isRendering: boolean = false
+    let isRendering = false
     let analysers: AnalyserNode[] = []
-    let rendering: number = 0
+    let rendering = 0
     function renderVisualiser() {
         analysers = AudioAnalyser.getAnalysers()
         if (!canvas || !analysers.length) return
@@ -154,7 +154,7 @@
         renderFrame()
     }
 
-    let fullLength: boolean = false
+    let fullLength = false
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -303,7 +303,7 @@
         pointer-events: none;
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
     }
 </style>

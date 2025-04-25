@@ -29,7 +29,7 @@ export interface Time {
     s: string
     m: string
     h: string
-    d: string
+    d: number
 }
 
 export type SelectIds =
@@ -201,6 +201,8 @@ export interface LessonFile {
     type: string
     fileType: string
     streamUrl?: string
+    loopVideo?: boolean
+    loop?: boolean
 }
 
 export interface Variable {
@@ -306,6 +308,7 @@ export type Popups =
     | "reset_all"
     | "alert"
     | "history"
+    | "action_history"
     | "manage_emitters"
     | "action"
     | "category_action"

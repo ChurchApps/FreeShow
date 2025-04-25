@@ -37,7 +37,7 @@
 <p class="tip"><T id="category.action_tip" /></p>
 
 <div style="min-height: 200px;">
-    <CombinedInput>
+    <CombinedInput textWidth={30}>
         <p><T id="midi.start_action" /></p>
         <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === currentAction || "")?.name || "—"} on:click={updateValue} />
     </CombinedInput>

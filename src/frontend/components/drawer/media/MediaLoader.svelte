@@ -12,25 +12,25 @@
     import { videoExtensions } from "../../../values/extensions"
     import NdiStream from "../live/NDIStream.svelte"
 
-    export let name: string = ""
+    export let name = ""
     export let path: string
-    export let thumbnailPath: string = ""
-    export let loadFullImage: boolean = false
-    export let cameraGroup: string = ""
+    export let thumbnailPath = ""
+    export let loadFullImage = false
+    export let cameraGroup = ""
     export let mediaStyle: MediaStyle = {}
     export let type: null | MediaType | ShowType = null
-    export let hover: boolean = false
-    export let loaded: boolean = false
+    export let hover = false
+    export let loaded = false
     export let resolution: Resolution | null = null
-    export let duration: number = 0
-    export let getDuration: boolean = false
-    export let ghost: boolean = false
+    export let duration = 0
+    export let getDuration = false
+    export let ghost = false
     export let videoElem: HTMLVideoElement | null = null
 
     $: if (path) loaded = false
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
 
     // type
     $: if (!type && path) {
@@ -96,7 +96,7 @@
     $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: mediaStyleBlurString = `filter: ${mediaStyle.filter || ""} blur(4px) opacity(0.3);object-fit: cover;pointer-events: none;position: absolute;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
-    let readyToLoad: boolean = false
+    let readyToLoad = false
     onMount(() => {
         // sometimes the img elem loaded before "loaded" was set to false, causing it to load twice!
         readyToLoad = true
