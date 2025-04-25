@@ -8,7 +8,7 @@
     "author": "ChurchApps <support@livecs.org>",
     "license": "GPL-3.0",
     "scripts": {
-        "postinstall": "electron-builder --config config/building/electron-builder.yaml install-app-deps",
+        "postinstall": "electron-builder install-app-deps",
         "---DEVELOPMENT---": "",
         "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
         "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
