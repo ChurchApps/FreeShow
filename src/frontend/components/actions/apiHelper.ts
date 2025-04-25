@@ -363,6 +363,7 @@ export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
     const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
 
+    if (get(activePage) !== "edit") activePage.set("show")
     setDrawerTabData("scripture", data.id)
     activeDrawerTab.set("scripture")
 

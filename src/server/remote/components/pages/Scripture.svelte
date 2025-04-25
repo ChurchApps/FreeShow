@@ -57,12 +57,12 @@
         {/if}
     </div>
 
-    {#if $isCleared.all && depth}
+    {#if $isCleared.all}
         <Button on:click={() => (depth ? depth-- : openScripture(""))} style="width: 100%;" center dark>
             <Icon id="back" right />
             {translate("actions.back", $dictionary)}
         </Button>
-    {:else if !$isCleared.all}
+    {:else}
         <div class="buttons" style="display: flex;width: 100%;background-color: var(--primary-darker);">
             <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
             <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
