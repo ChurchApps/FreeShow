@@ -94,26 +94,26 @@ const receiveOUTPUTasMAIN: any = {
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     ACTION_MAIN: (a: { id: string }) => runAction(get(midiIn)[a.id]),
-    AUDIO_MAIN: async (data: any) => {
+    AUDIO_MAIN: (data: any) => {
         if (!data.id) return
 
         if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
-        playingVideos.update((a) => {
-            const existing = a.findIndex((a) => a.id === data.id)
+        playingVideos.update((playingVideo) => {
+            const existing = playingVideo.findIndex((a) => a.id === data.id)
 
             if (data.stop) {
-                if (existing > -1) a.splice(existing, 1)
-                return a
+                if (existing > -1) playingVideo.splice(existing, 1)
+                return playingVideo
             }
 
             if (existing > -1) {
-                a[existing] = { ...data, location: "output" }
+                playingVideo[existing] = { ...data, location: "output" }
             } else if (get(outputs)[data.id]?.out?.background) {
-                a.push({ location: "output", ...data })
+                playingVideo.push({ location: "output", ...data })
             }
 
-            return a
+            return playingVideo
         })
 
         if (data.stop && !AudioAnalyser.shouldAnalyse()) {
@@ -139,10 +139,10 @@ const receiveOUTPUTasMAIN: any = {
         if (autoSave) save()
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
-    MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_LOG: (msg: any) => console.info(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: async (msg) => {
+    MAIN_VIDEO_ENDED: (msg) => {
         if (!msg || clearing.includes(msg.id)) return
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)

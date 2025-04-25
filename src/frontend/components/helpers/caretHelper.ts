@@ -1,5 +1,3 @@
-import { Cursor } from "../edit/scripts/Cursor"
-
 export function pasteText(elem: any) {
     if (!elem?.classList?.contains("edit")) return
 
@@ -43,12 +41,8 @@ function getCaretPos(elem: any) {
 function pasteInDom(elem: any, text: any) {
     if (!elem.innerHTML || !text) return
 
-    console.log(elem)
-
-    const caretPos = Cursor.getCurrentCursorPosition(elem)
-    console.log(caretPos)
-    const range = Cursor._createRange(elem, caretPos)
-    console.log(range)
+    // const caretPos = Cursor.getCurrentCursorPosition(elem)
+    // const range = Cursor._createRange(elem, caretPos)
 
     // previous
     elem.innerHTML += text

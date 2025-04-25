@@ -362,7 +362,7 @@ function createNew() {
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     else {
-        console.log("CREATE NEW", selectId)
+        console.info("CREATE NEW:", selectId)
         activePopup.set("show")
     }
 }

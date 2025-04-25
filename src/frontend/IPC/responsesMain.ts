@@ -168,7 +168,7 @@ export const mainResponses: MainResponses = {
     [ToMain.BACKUP]: ({ finished, path }) => {
         if (!finished) return activePopup.set(null)
 
-        console.log("Backed up to:", path)
+        console.info("Backed up to:", path)
         newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
     },
     [ToMain.RESTORE2]: ({ finished, starting }) => {
@@ -187,9 +187,9 @@ export const mainResponses: MainResponses = {
         let prevPath = ""
 
         showsCache.update((a) => {
-            const media = a[data.ref.showId].media[data.ref.mediaId]
+            const mediaData = a[data.ref.showId].media[data.ref.mediaId]
             if (data.ref.cloudId) {
-                if (!media.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
+                if (!mediaData.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
                 prevPath = a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId]
                 a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId] = data.path
             } else {
@@ -338,7 +338,7 @@ export const mainResponses: MainResponses = {
             pdf: () => addToProject("pdf", mainData as string[]),
             powerkey: () => addToProject("ppt", mainData as string[]),
         }
-        if (mainData.find((a) => typeof a === "string")) {
+        if (mainData.find((dataValue) => typeof dataValue === "string")) {
             if (!receiveFilePathIMPORT[a.channel]) return
             receiveFilePathIMPORT[a.channel]()
             return

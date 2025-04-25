@@ -23,7 +23,6 @@ export async function sendRestCommand(data: API_rest_command) {
     } else {
         // on default use GET-Request
         options.method = "GET"
-        console.log("Using Default GET")
     }
 
     // if Content Type is set, add the corresponding field in the Request-Header
@@ -52,9 +51,8 @@ export async function sendRestCommand(data: API_rest_command) {
             console.error(`HTTP error! status: ${response.status}`)
         }
 
-        // let result : String = await response.json();
-        const result: String = await response.text()
-        console.log(result)
+        // let result: string = await response.json();
+        // const result: string = await response.text()
 
         // return result;
     } catch (err) {

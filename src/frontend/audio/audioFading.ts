@@ -16,14 +16,14 @@ type AudioClearOptions = {
 
 export const clearing: string[] = []
 let forceClear = false
-export function clearAudio(path = "", options: AudioClearOptions = {}) {
+export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     // turn off any playlist
-    if (options.clearPlaylist && (!path || AudioPlaylist.getPlayingPath() === path)) activePlaylist.set(null)
+    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (options.clearPlaylist !== false && !path) stopMetronome()
+    if (options.clearPlaylist !== false && !audioPath) stopMetronome()
 
-    if (clearing.includes(path)) {
+    if (clearing.includes(audioPath)) {
         if (!options.commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
@@ -36,7 +36,7 @@ export function clearAudio(path = "", options: AudioClearOptions = {}) {
     }
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
-    const clearIds = path ? [path] : Object.keys(get(playingAudio))
+    const clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
     clearIds.forEach(clear)
 
     async function clear(path: string) {

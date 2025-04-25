@@ -95,7 +95,7 @@ import { newToast } from "./common"
 import { syncDrive } from "./drive"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
-    console.log("SAVING...")
+    console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
         customActionActivation("save")
@@ -218,7 +218,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
         if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
 
         saved.set(true)
-        console.log("SAVED!")
+        console.info("SAVED!")
     }
 
     if (customTriggers?.backup || customTriggers?.changeUserData) return

@@ -6,20 +6,15 @@ export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
     seconds = Math.abs(seconds)
 
-    const d: any = Math.floor(seconds / (3600 * 24))
-    let h: any = Math.floor(seconds / 3600 - d * 24)
-    let m: any = Math.floor((seconds - d * 3600 * 24 - h * 3600) / 60)
-    let s: any = Math.floor(seconds - d * 3600 * 24 - h * 3600 - m * 60)
+    const d: number = Math.floor(seconds / (3600 * 24))
+    const h: number = Math.floor(seconds / 3600 - d * 24)
+    const m: number = Math.floor((seconds - d * 3600 * 24 - h * 3600) / 60)
+    const s: number = Math.floor(seconds - d * 3600 * 24 - h * 3600 - m * 60)
     // TODO: ms
-    // let ms: any = Math.round(seconds - h * 3600 - m * 60 - s * 60)
-    let ms: any = 0
+    // let ms: number = Math.round(seconds - h * 3600 - m * 60 - s * 60)
+    const ms = 9
 
-    if (h < 10) h = "0" + h
-    if (m < 10) m = "0" + m
-    if (s < 10) s = "0" + s
-    if (ms < 10) ms = "0" + ms
-
-    return { ms, s, m, h, d }
+    return { ms: padString(ms), s: padString(s), m: padString(m), h: padString(h), d }
 }
 
 export function joinTime(time: Time, ms = false): string {
@@ -30,9 +25,9 @@ export function joinTime(time: Time, ms = false): string {
 }
 
 export function joinTimeBig(time: number, showHours = true) {
-    const allTimes: any = secondsToTime(time)
+    const allTimes = secondsToTime(time)
 
-    const days = allTimes.d === 0 ? "" : allTimes.d + ", "
+    const days = allTimes.d === 0 ? "" : allTimes.d.toString() + ", "
     const hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
     const minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
     let timeValue = days + [hours, minutes, allTimes.s].join(":")
@@ -51,22 +46,22 @@ export function dateToString(date: string | number | Date, full = false, d: any 
     let month: any = date.getMonth() + 1
     let day: any = date.getDate()
 
-    let string = ""
+    let value = ""
     if (full) {
         const weekday = getWeekday(date.getDay(), d, true)
         month = getMonthName(date.getMonth(), d)
 
         // Monday 6. February, 2021
-        string = weekday + " " + day + ". " + month + ", " + year
+        value = weekday + " " + String(day) + ". " + String(month) + ", " + String(year)
     } else {
-        if (month < 10) month = "0" + month
-        if (day < 10) day = "0" + day
+        if (month < 10) month = "0" + String(month)
+        if (day < 10) day = "0" + String(day)
         year = year.toString().slice(-2)
-        string = [day, month, year].join(".")
+        value = [day, month, year].join(".")
     }
 
     // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
-    return string
+    return value
 }
 
 export function getWeekday(day: number, d = get(dictionary), uppercase = false) {
@@ -108,7 +103,7 @@ export function format(t: string, { hours, minutes, seconds }: any) {
 }
 
 export const padString = (a: number) => a.toString().padStart(2, "0")
-export const addZero = (a: number) => ("0" + a).slice(-2)
+export const addZero = (a: number) => ("0" + String(a)).slice(-2)
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
 
 export function splitDate(time: Date) {

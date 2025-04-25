@@ -169,7 +169,7 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => ({ name: a["@type"] + a["@label"], lines: a["#cdata"].split("\n") }))
+        lyrics = lyrics.map((a: { [key: string]: string }) => ({ name: a["@type"] + a["@label"], lines: a["#cdata"].split("\n") }))
 
         return lyrics
     }

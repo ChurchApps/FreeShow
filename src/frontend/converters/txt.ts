@@ -159,7 +159,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         const formatText: boolean = noFormatting ? false : get(formatNewShow)
         const autoGroups: boolean = get(special).autoGroups !== false
 
-        const text: string = fixText(a.text, formatText)
+        const slideText: string = fixText(a.text, formatText)
         // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
         // if (stored[a.type]) id = stored[a.type].find((b) => b.text === text)?.id
 
@@ -184,13 +184,13 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         if (!autoGroups && !hasTextGroup && group) group = "verse"
         const color: string | null = null
 
-        let allLines: string[] = [text]
-        const lines = text.split("\n").filter(Boolean)
+        let allLines: string[] = [slideText]
+        const slideLines = slideText.split("\n").filter(Boolean)
 
         // split lines into a set amount of lines
-        if (Number(get(splitLines)) && lines.length > get(splitLines)) {
+        if (Number(get(splitLines)) && slideLines.length > get(splitLines)) {
             allLines = []
-            while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
+            while (slideLines.length) allLines.push(slideLines.splice(0, get(splitLines)).join("\n"))
         }
 
         const children: string[] = []
@@ -425,7 +425,7 @@ function findPatterns(sections: string[]) {
 
     return { sections, indexes }
 
-    function countMatchingSections(a: string, i: number) {
+    function countMatchingSections(section: string, i: number) {
         similarCount[i] = { matches: [], count: 0 }
 
         const alreadyCounted = similarCount.find((a) => a.matches.includes(i))
@@ -438,13 +438,13 @@ function findPatterns(sections: string[]) {
         if (similarCount[i].count > 0) totalMatches++
 
         function count(b: string, j: number) {
-            if (i === j || similarityNum > similarity(a, b)) return
+            if (i === j || similarityNum > similarity(section, b)) return
             similarCount[i].count++
             similarCount[i].matches.push(j)
         }
     }
 
-    function getIndexes(a: { matches: number[]; count: 0 }, i: number): string {
+    function getIndexes(similar: { matches: number[]; count: 0 }, i: number): string {
         // let lines = sections[i].split("\n")
         const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
         const length: number = sections[i].replaceAll("\n", "").length
@@ -482,11 +482,11 @@ function findPatterns(sections: string[]) {
             if (get(groupNumbers)) group = group.replace(/\d+/g, "").trim()
             return get(groups)[group.toLowerCase()] ? group.toLowerCase() : splitted[0]
         }
-        if (a.count > 0) {
-            const groups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
+        if (similar.count > 0) {
+            const globalGroups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
             matches++
-            let group = groups[matches]
-            if (totalMatches > 2) group = groups[matches - 1] || "other"
+            let group = globalGroups[matches]
+            if (totalMatches > 2) group = globalGroups[matches - 1] || "other"
             stored.push({ type: group, text: sections[i] })
             return group
         }
@@ -515,7 +515,7 @@ export function similarity(s1: string, s2: string) {
         shorter = s1
     }
     const longerLength: number = longer.length
-    if (longerLength == 0) {
+    if (longerLength === 0) {
         return 1.0
     }
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString())
@@ -529,11 +529,11 @@ function editDistance(s1: string, s2: string) {
     for (let i = 0; i <= s1.length; i++) {
         let lastValue = i
         for (let j = 0; j <= s2.length; j++) {
-            if (i == 0) costs[j] = j
+            if (i === 0) costs[j] = j
             else {
                 if (j > 0) {
                     let newValue = costs[j - 1]
-                    if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
+                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
                     costs[j - 1] = lastValue
                     lastValue = newValue
                 }

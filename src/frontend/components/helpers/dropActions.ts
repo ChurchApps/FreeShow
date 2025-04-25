@@ -1,3 +1,5 @@
+/* eslint no-shadow: 0 */
+
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { History } from "../../../types/History"
@@ -68,7 +70,7 @@ export const dropActions = {
             return history
         }
 
-        console.log("Missing slide drop action:", drag.id)
+        console.error("Missing slide drop action:", drag.id)
         return history
     },
     projects: ({ drag, drop }: Data, h: History) => {
@@ -360,13 +362,12 @@ export const dropActions = {
 
 function dropFileInDrawerNavigation(drag) {
     const drawerTab = get(activeDrawerTab)
-    console.log(drag, drawerTab)
 
     // drop folders
     if (drawerTab === "media" || drawerTab === "audio") {
         drag.data.forEach((file) => {
             if (file.type) return
-            addDrawerFolder(file, drawerTab )
+            addDrawerFolder(file, drawerTab)
         })
     }
 
@@ -533,7 +534,6 @@ const slideDrop = {
             selected.forEach(selectChildren)
             function selectChildren(index: number) {
                 if (ref[index]?.type !== "parent") return
-                console.log(newIndex, index, ref[index].children)
                 const children: string[] = ref[index].children || []
                 if (!children) return
 
@@ -576,7 +576,6 @@ const slideDrop = {
         // check if first slide child
         if (newLayoutRef[0]?.type === "child") newLayoutRef[0].newType = "parent"
 
-        console.log(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
         history.newData = changeLayout(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
         return history
     },
@@ -595,13 +594,13 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)!.id].slides)
-        const media: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
+        const mediaData: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
         if (drop.index === undefined) drop.index = layout.length
         const newIndex: number = drop.index
 
-        let newMedia: any = media
+        let newMedia: any = mediaData
         drag.data.forEach(({ slide, layoutData, media }) => {
             const id = uid()
             delete slide.id
@@ -787,17 +786,17 @@ const slideDrop = {
         history.id = "SHOW_LAYOUT"
 
         const ref = getLayoutRef()[drop.index!]
-        const data: any = ref?.data?.actions || {}
+        const actionsData: any = ref?.data?.actions || {}
 
-        const slideActions = data.slideActions || []
+        const slideActions = actionsData.slideActions || []
         const newActions: any[] = []
 
         drag.data.forEach((action) => {
             if (!action?.triggers) return
 
             if (action.triggers.length > 1) {
-                const existingIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
-                if (existingIndex > -1) return
+                const existingRunActionIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
+                if (existingRunActionIndex > -1) return
 
                 newActions.push({ id: uid(), triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } })
                 return
@@ -817,8 +816,8 @@ const slideDrop = {
             newActions.push({ id: uid(), ...action })
         })
 
-        data.slideActions = [...slideActions, ...newActions]
-        history.newData = { key: "actions", data, indexes: [drop.index] }
+        actionsData.slideActions = [...slideActions, ...newActions]
+        history.newData = { key: "actions", data: actionsData, indexes: [drop.index] }
         return history
     },
 }

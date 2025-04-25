@@ -20,19 +20,20 @@ export function arrayToObject(array: any[], key = "id") {
 
 // get data from client
 export function client(id: Clients, msg: ClientMessage) {
+    const msgId = msg.id || ""
     if (msg.channel === "CONNECTION") {
         connections.update((c: any) => {
             if (!c[id]) c[id] = {}
-            c[id][msg.id!] = { entered: false, ...msg.data }
+            c[id][msgId] = { entered: false, ...msg.data }
             return c
         })
-        console.info("SERVER: " + msg.id + " connected")
+        console.info("SERVER: " + msgId + " connected")
     } else if (msg.channel === "DISCONNECT") {
         connections.update((c: any) => {
-            if (c[id]) delete c[id][msg.id!]
+            if (c[id]) delete c[id][msgId]
             return c
         })
-        console.info("SERVER: " + msg.id + " disconnected")
+        console.info("SERVER: " + msgId + " disconnected")
     } else sendData(id, msg)
 }
 
@@ -61,25 +62,25 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
 
     if (channel === "API") {
         if (!msg.data) msg.data = {}
-        const id = msg.api || ""
-        const data = await API_ACTIONS[id]?.(msg.data)
+        const apiId = msg.api || ""
+        const data = await API_ACTIONS[apiId]?.(msg.data)
 
-        if (id === "get_thumbnail") msg.data.thumbnail = data
+        if (apiId === "get_thumbnail") msg.data.thumbnail = data
         else msg.data = data
 
         msg.send = true
         if (data === undefined) msg.data = null
     } else if (id === REMOTE) {
-        if (!receiveREMOTE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        if (!receiveREMOTE[channel]) return console.info("UNKNOWN CHANNEL:", channel)
         msg = await receiveREMOTE[channel](msg)
     } else if (id === STAGE) {
-        if (!receiveSTAGE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        if (!receiveSTAGE[channel]) return console.info("UNKNOWN CHANNEL:", channel)
         msg.data = receiveSTAGE[channel](msg.data, connectionId)
 
         if (msg.data === undefined) msg.data = null
         if (msg.data?.channel === "ERROR") msg = { ...msg, channel: "ERROR", data: msg.data?.data }
     } else if (id === CONTROLLER) {
-        if (!receiveCONTROLLER[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        if (!receiveCONTROLLER[channel]) return console.info("UNKNOWN CHANNEL:", channel)
         msg = receiveCONTROLLER[channel](msg)
     }
 
@@ -97,8 +98,8 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
 // limit data sent per second
 const timeouts: any = {}
 const time = 1000
-export function timedout(id: Clients, msg: ClientMessage, run: Function) {
-    const timeID = id + msg.id || "" + msg.channel
+export function timedout(id: Clients, msg: ClientMessage, run: () => void) {
+    const timeID = id + (msg.id || "") + msg.channel
     if (!timeouts[timeID]) {
         timeouts[timeID] = true
         const first: string = JSON.stringify(msg.data)

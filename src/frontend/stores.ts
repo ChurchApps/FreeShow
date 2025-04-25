@@ -413,6 +413,7 @@ function startSubscriptions() {
             updates[key]++
 
             // first update is initializing empty store, second update sets saved value
+            // eslint-disable-next-line
             if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
         })
     })

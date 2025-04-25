@@ -293,9 +293,9 @@ export async function setShowAPI(id: string, value: string) {
     }
 }
 
-export async function getPlainText(id: string) {
-    await loadShows([id])
-    return { id, value: getPlainEditorText(id) } as API_id_value
+export async function getPlainText(showId: string) {
+    await loadShows([showId])
+    return { id: showId, value: getPlainEditorText(showId) } as API_id_value
 }
 
 export function getShowGroups(id: string) {
@@ -310,8 +310,8 @@ export async function rearrangeGroups(data: API_rearrange) {
 
     const ref = getLayoutRef(data.showId)
     const dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
-    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
-    if (isNaN(dropIndex)) dropIndex = ref.length
+    let dropIndex = (ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex || 0) - pos
+    if (isNaN(dropIndex) || dropIndex < 0) dropIndex = ref.length
 
     const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
     const drop: DropData = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos, center: false } // , trigger, center: false
@@ -350,12 +350,12 @@ export function getClearedState() {
     const audio = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
     const background = isOutCleared("background", o)
     const slide = isOutCleared("slide", o)
-    const overlays = isOutCleared("overlays", o, true)
+    const overlaysCleared = isOutCleared("overlays", o, true)
     const slideTimers = isOutCleared("transition", o)
 
     const all = isOutCleared(null, o) && audio
 
-    return { all, background, slide, overlays, audio, slideTimers }
+    return { all, background, slide, overlays: overlaysCleared, audio, slideTimers }
 }
 
 // "1.1.1" = "Gen 1:1"
@@ -497,7 +497,7 @@ export async function getPDFThumbnails({ path }: API_media) {
 
 export function addToProject(data: API_add_to_project) {
     projects.update((a) => {
-        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((a) => a.id === data.id)) return a
+        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
         return a
     })

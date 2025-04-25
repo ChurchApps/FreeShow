@@ -92,7 +92,7 @@ export function convertMediaShout(data: any) {
     const tempShows: any[] = []
     data?.forEach(({ content, name }: any) => {
         if (!content) {
-            console.log("File missing content!")
+            console.error("File missing content!")
             return
         }
 
@@ -159,7 +159,7 @@ function convertItem(text: string) {
 
     return newItem
 
-    function getLine(text: string) {
-        return { align: "", text: [{ value: text, style: "" }] }
+    function getLine(lineText: string) {
+        return { align: "", text: [{ value: lineText, style: "" }] }
     }
 }

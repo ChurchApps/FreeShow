@@ -84,8 +84,8 @@ export function getFilterStyle(): StyleClipboard {
 export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: ItemType) {
     const itemKeys = getItemKeys(true)
 
-    for (let i = 0; i < slides.length; i++) {
-        updateSlideStyle(slides[i])
+    for (const slide of slides) {
+        updateSlideStyle(slide)
 
         // prevent lag when updating many slides
         await wait(10)
@@ -147,10 +147,10 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 
             items.push(i)
 
-            const style = styles[i] || styles[0]
+            const currentStyle = styles[i] || styles[0]
 
             let newStyle = ""
-            Object.entries(style.style).forEach(([key, value]) => {
+            Object.entries(currentStyle.style).forEach(([key, value]) => {
                 newStyle += `${key}: ${value};`
             })
 
@@ -169,20 +169,20 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 
             if (!item.lines) return
 
-            const text = item.lines.map((a) => {
-                if (!a.text) return
+            const newLines = item.lines.map((line) => {
+                if (!line.text) return
 
-                return a.text.map((a) => {
+                return line.text.map((text) => {
                     // don't style scripture verses
-                    if (a.customType && !a.customType.includes("jw")) return a
+                    if (text.customType && !text.customType.includes("jw")) return text
 
-                    a.style = newStyle
+                    text.style = newStyle
 
-                    return a
+                    return text
                 })
             })
 
-            values.push(text)
+            values.push(newLines)
         }
     }
 }
@@ -192,8 +192,8 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
 
     const itemKeys = getItemKeys()
 
-    for (let i = 0; i < slides.length; i++) {
-        updateSlideStyle(slides[i])
+    for (const slide of slides) {
+        updateSlideStyle(slide)
 
         // prevent lag when updating many slides
         await wait(10)
@@ -242,8 +242,8 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
 }
 
 export async function setSlideStyle(style: StyleClipboard, slides: any) {
-    for (let i = 0; i < slides.length; i++) {
-        updateSlideStyle(slides[i])
+    for (const slide of slides) {
+        updateSlideStyle(slide)
 
         // prevent lag when updating many slides
         await wait(10)

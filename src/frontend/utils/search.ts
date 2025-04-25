@@ -26,7 +26,7 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
         const match = showSearchFilter(searchValue, s)
         if (match) newShows.push({ ...s, match })
     })
-    newShows = sortObjectNumbers(newShows, "match", true) 
+    newShows = sortObjectNumbers(newShows, "match", true)
 
     // change all values relative to the highest value
     const highestValue = newShows[0]?.match || 0
@@ -39,7 +39,7 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     // WIP tag search?
 
     // Priority 0: Number Exact Match
-    const songNumber = show.quickAccess?.number || ""
+    const songNumber: string = show.quickAccess?.number || ""
     if (songNumber && Number(songNumber) === Number(searchValue)) return 100
     // Priority 0.5: CCLI Exact Match
     const songId = show.quickAccess?.metadata?.CCLI || ""

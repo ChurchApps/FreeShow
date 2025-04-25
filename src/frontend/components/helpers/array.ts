@@ -123,7 +123,7 @@ export function sortFilenames<T extends Record<string, any>>(filenames: T[]) {
         if (nameComparison !== 0) return nameComparison
 
         // compare any numbers
-        const numComparison = (parseInt(numA) || 0) - (parseInt(numB) || 0)
+        const numComparison = (parseInt(numA, 10) || 0) - (parseInt(numB, 10) || 0)
         if (numComparison !== 0) return numComparison
 
         // compare extensions at last

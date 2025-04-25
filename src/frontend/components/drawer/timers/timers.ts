@@ -1,20 +1,20 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Timer } from "../../../../types/Show"
-import { activeProject, activeTimers, events, projects, timers } from "../../../stores"
-import { clone, removeDuplicates } from "../../helpers/array"
+import { activeTimers, events, timers } from "../../../stores"
+import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
 
-export async function getShowTimers(showRef: any) {
+export function getShowTimers(showRef: any) {
     let list: string[] = []
 
     if (showRef.type !== undefined && showRef.type !== "show") return []
     if (!get(showsCache)[showRef.id]) return [] // await loadShows([showRef.id])
 
-    const timers = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
+    const timerItems = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
 
-    if (timers.length) list = timers.map((a) => a.timerId)
+    if (timerItems.length) list = timerItems.map((a) => a.timerId)
 
     return list
 }
@@ -105,20 +105,18 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
 // }
 
 // get all timers in project
-export async function loadProjectTimers(projectShows = get(projects)[get(activeProject)!]?.shows || []) {
-    let list: any[] = []
+// export function loadProjectTimers(projectShows = get(projects)[get(activeProject)!]?.shows || []) {
+//     let list: any[] = []
 
-    await Promise.all(
-        projectShows.map(async (a) => {
-            const timers: any[] = await getShowTimers(a)
-            if (timers) list.push(...timers)
-        })
-    )
+//     projectShows.map((a) => {
+//         const timerItems: any[] = getShowTimers(a)
+//         if (timerItems) list.push(...timerItems)
+//     })
 
-    // remove duplicates
-    list = removeDuplicates(list)
-    return list
-}
+//     // remove duplicates
+//     list = removeDuplicates(list)
+//     return list
+// }
 
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime = 0

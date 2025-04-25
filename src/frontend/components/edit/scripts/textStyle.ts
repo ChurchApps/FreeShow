@@ -43,8 +43,8 @@ function combine(item: Item): Item {
         const a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
-                const d1: any[] = [];
-                    const d2: any[] = []
+                const d1: any[] = []
+                const d2: any[] = []
                 let sameStyles = false
                 if (a[i].style) d1.push(a[i].style)
                 if (a[i + 1].style) d2.push(a[i + 1].style)
@@ -156,7 +156,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
                     start = count + endOffset
                     sel[line].start = start
                     endNode = startNode
-                    startNode = selection.focusNode?.parentNode!
+                    startNode = selection.focusNode?.parentNode || null
                     endOffset = startOffset
                 }
 
@@ -414,8 +414,8 @@ function createRange(node: any, pos: number, range: any = null) {
                 pos = 0
             }
         } else {
-            for (let lp = 0; lp < node.childNodes.length; lp++) {
-                range = createRange(node.childNodes[lp], pos, range)
+            for (const childNode of node.childNodes) {
+                range = createRange(childNode, pos, range)
 
                 if (pos === 0) {
                     break

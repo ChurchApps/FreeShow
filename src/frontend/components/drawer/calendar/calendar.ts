@@ -110,8 +110,8 @@ export async function createSlides(currentEvents: any[], showId = "") {
     if (includeShowId) await addCustomShowSlides()
     async function addCustomShowSlides() {
         await loadShows([includeShowId])
-        const show = get(showsCache)[includeShowId]
-        if (!show) return
+        const currentShow = get(showsCache)[includeShowId]
+        if (!currentShow) return
 
         const _calendarShow = clone(_show(includeShowId).get())
         const showLayoutRef = clone(getLayoutRef(includeShowId))
@@ -253,9 +253,9 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
 
     // sort
     tempEvents = tempEvents.map(sortDayAndOnlyKeepNormalEvents).filter((a) => a.events.length)
-    function sortDayAndOnlyKeepNormalEvents(events) {
-        events.events = events.events.filter((a) => a.type === "event").sort(sortByTime)
-        return events
+    function sortDayAndOnlyKeepNormalEvents(temp) {
+        temp.events = temp.events.filter((a) => a.type === "event").sort(sortByTime)
+        return temp
     }
 
     currentEvents = tempEvents.sort((a, b) => a.date - b.date)

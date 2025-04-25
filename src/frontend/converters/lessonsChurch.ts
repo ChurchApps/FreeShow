@@ -12,6 +12,7 @@ import { activeProject, activeRename, dataPath, projectView, projects, refreshSl
 import { newToast } from "../utils/common"
 import { videoExtensions } from "../values/extensions"
 import { createCategory, setTempShows } from "./importHelpers"
+import type { LessonFile } from "../../types/Main"
 
 type File = {
     name: string
@@ -211,7 +212,7 @@ function convertToSlides(groups) {
         const layoutData: any = {}
         let parentId = ""
 
-        group.files.forEach((file, fileIndex: number) => {
+        group.files.forEach((file: LessonFile, fileIndex: number) => {
             if (!file.url) return
 
             const loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))

@@ -385,7 +385,7 @@ export function _show(id = "active") {
                         let layoutIndex = -1
                         shows[id].layouts[layoutId]?.slides?.forEach((layoutSlide: any, index: number) => {
                             if (!shows[id].slides[layoutSlide.id]) {
-                                console.log("MISSING SLIDE")
+                                console.error("MISSING SLIDE")
                                 return
                             }
 
@@ -394,9 +394,9 @@ export function _show(id = "active") {
                             let children = slide?.children || []
                             // fix bug where some childs are stored as an array
                             const newChildren: any[] = []
-                            children.forEach((a) => {
-                                if (Array.isArray(a)) newChildren.push(...a)
-                                else newChildren.push(a)
+                            children.forEach((child) => {
+                                if (Array.isArray(child)) newChildren.push(...child)
+                                else newChildren.push(child)
                             })
                             if (newChildren.length && JSON.stringify(children) !== JSON.stringify(newChildren)) _show().slides([layoutSlide.id]).set({ key: "children", value: newChildren })
                             children = newChildren
@@ -412,14 +412,14 @@ export function _show(id = "active") {
                                     // check if layout is a "real" slide
                                     if (!shows[id].slides[childId]) {
                                         // remove empty slide
-                                        showsCache.update((a) => {
-                                            if (!a[id]) return a
+                                        showsCache.update((a1) => {
+                                            if (!a1[id]) return a1
 
-                                            a[id].slides[layoutSlide.id].children?.splice(jndex, 1)
-                                            if (a[id].layouts[layoutId].slides[index].children?.[childId]) {
-                                                delete a[id].layouts[layoutId].slides[index].children![childId]
+                                            a1[id].slides[layoutSlide.id].children?.splice(jndex, 1)
+                                            if (a1[id].layouts[layoutId].slides[index].children?.[childId]) {
+                                                delete a1[id].layouts[layoutId].slides[index].children![childId]
                                             }
-                                            return a
+                                            return a1
                                         })
                                         return
                                     }
@@ -546,15 +546,13 @@ export function _show(id = "active") {
                             if (addToIndex < 0) addToIndex = slides.length
                             if (indexesDefined) {
                                 indexes
-                                    .sort((a, b) => a - b)
+                                    .sort((a1, b) => a1 - b)
                                     .forEach((index: number, i) => {
-                                        console.log(a[id].layouts[layoutId].slides, [layouts[i]], index)
                                         if (parent === null) a[id].layouts[layoutId].slides = addToPos(a[id].layouts[layoutId].slides, [layouts[i]], index)
                                         else {
                                             if (!a[id].layouts[layoutId].slides[parent].children) a[id].layouts[layoutId].slides[parent].children = {}
                                             a[id].layouts[layoutId].slides[parent].children![layouts[i].id] = removeId(layouts[i]) || {}
                                         }
-                                        console.log(a[id].layouts[layoutId].slides)
                                     })
                             } else {
                                 if (parent === null) a[id].layouts[layoutId].slides = addToPos(slides, layouts, addToIndex)
@@ -586,7 +584,7 @@ export function _show(id = "active") {
                             prev[layoutId] = { indexes: [], layouts: [] }
                             if (!indexes[i]?.length && deleteAll) indexes[i] = Object.keys(shows[id].layouts[layoutId]?.slides || {})
                             indexes[i]
-                                .sort((a: any, b: any) => b - a)
+                                .sort((a1: any, b: any) => b - a1)
                                 .forEach((index: number) => {
                                     if (!a[id].layouts[layoutId].slides[index]) return
 

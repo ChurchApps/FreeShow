@@ -33,16 +33,16 @@ function XMLtoObject(xml: string): Bible {
 
     bible.BIBLEBOOK.forEach((book: any) => {
         const name = book["@bname"]
-        const number = book["@bnumber"]
+        const bookNumber = book["@bnumber"]
         const chapters: any[] = []
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
         book.CHAPTER.forEach((chapter: any) => {
-            const number = chapter["@cnumber"]
+            const chapterNumber = chapter["@cnumber"]
             const verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
-            chapter.VERS.forEach((verse: any) => {
+            chapter.VERS.forEach((verse: { ["@vnumber"]: string; ["#text"]?: string; STYLE?: string[] }) => {
                 if (!verse) return
                 let text = verse["#text"] || ""
 
@@ -62,10 +62,10 @@ function XMLtoObject(xml: string): Bible {
                 verses.push({ number: verse["@vnumber"], text })
             })
 
-            chapters.push({ number, verses })
+            chapters.push({ number: chapterNumber, verses })
         })
 
-        books.push({ name, number, chapters })
+        books.push({ name, number: bookNumber, chapters })
     })
 
     // INFORMATION: contributors, coverage, creator, date, description, format, identifier, language, publisher, rights, source, subject, title, type

@@ -100,12 +100,12 @@ interface ObjData {
 }
 
 export function menuClick(id: string, enabled = true, menu: ContextMenuItem | null = null, contextElem: HTMLElement | null = null, actionItem: HTMLElement | null = null, sel: Selected | null = null) {
-    if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
+    if (!actions[id]) return console.error("MISSING CONTEXT: ", id)
 
     if (sel?.id) sel.id = sel.id.split("___")[0] as SelectIds // different selection ID, same action (currently used to seperate scripture navigation buttons)
 
     const obj = { sel, actionItem, enabled, contextElem, menu }
-    console.log("MENU CLICK: " + id, obj)
+    console.info("MENU CLICK: " + id, obj)
 
     actions[id](obj)
 }
@@ -173,7 +173,7 @@ const actions = {
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
-        else console.log("Missing rename", obj)
+        else console.error("Missing rename", obj)
     },
     sort_shows: (obj: ObjData) => sort(obj, "shows"),
     sort_projects: (obj: ObjData) => sort(obj, "projects"),
@@ -196,7 +196,7 @@ const actions = {
             effectsLibrary.update((a) => {
                 obj.sel?.data.forEach((audio) => {
                     const path = audio.path || audio.id
-                    const index = a.findIndex((a) => a.path === path)
+                    const index = a.findIndex((effect) => effect.path === path)
                     if (index < 0) return
 
                     a.splice(index, 1)
@@ -348,7 +348,7 @@ const actions = {
         activeTagFilter.set(activeTags || [])
     },
     manage_media_tags: () => {
-        closeContextMenu
+        closeContextMenu()
         popupData.set({ type: "media" })
         activePopup.set("manage_tags")
     },
@@ -389,7 +389,7 @@ const actions = {
         activeMediaTagFilter.set(activeTags || [])
     },
     manage_action_tags: () => {
-        closeContextMenu
+        closeContextMenu()
         popupData.set({ type: "action" })
         activePopup.set("manage_tags")
     },
@@ -484,13 +484,13 @@ const actions = {
             show.slides[slideId] = slide
 
             const mediaId = uid(5)
-            const media = data[i]
-            show.media[mediaId] = { ...media, path: media.path || media.id, ...(media.type === "video" ? videoData : {}) }
+            const mediaData = data[i]
+            show.media[mediaId] = { ...mediaData, path: mediaData.path || mediaData.id, ...(mediaData.type === "video" ? videoData : {}) }
 
             const layoutData: SlideData = { id: slideId, background: mediaId }
-            if (media.type === "video") {
+            if (mediaData.type === "video") {
                 layoutData.actions = { nextAfterMedia: true }
-            } else if (media.type === "image") {
+            } else if (mediaData.type === "image") {
                 layoutData.nextTimer = duration
                 layoutData.actions = { animate: { actions: [{ type: "change", duration: duration + 2, id: "background", key: "zoom" }] } }
             }
@@ -577,15 +577,15 @@ const actions = {
         const outputId = obj.contextElem?.id || ""
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
         setTimeout(() => {
-            outputs.update((a) => {
+            outputs.update((output) => {
                 // should match the outputs list in MultiOutputs.svelte
-                const showingOutputsList = Object.values(a).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
-                const newValue = !a[outputId].hideFromPreview
+                const showingOutputsList = Object.values(output).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
+                const newValue = !output[outputId].hideFromPreview
 
                 if (newValue && showingOutputsList.length <= 1) newToast("$toast.one_output")
-                else a[outputId].hideFromPreview = !a[outputId].hideFromPreview
+                else output[outputId].hideFromPreview = !output[outputId].hideFromPreview
 
-                return a
+                return output
             })
         }, 100)
     },
@@ -750,7 +750,7 @@ const actions = {
         let id = uid()
 
         // find existing with the same name
-        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
+        const existing = Object.values(get(projectTemplates)).find((a) => a.name === project.name)
         if (existing) id = existing[0]
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
@@ -990,15 +990,15 @@ const actions = {
         } else if (type === "action") {
             const newActions: any[] = []
             indexes.forEach((i) => {
-                const actions = ref[i]?.data?.actions || {}
-                const slideActions = actions.slideActions || []
+                const layoutActions = ref[i]?.data?.actions || {}
+                const slideActions = layoutActions.slideActions || []
 
                 const actionId = obj.menu.id
                 const actionIndex = slideActions.findIndex((a) => a.id === actionId)
                 if (actionIndex > -1) slideActions.splice(actionIndex, 1)
 
-                actions.slideActions = slideActions
-                newActions.push(actions)
+                layoutActions.slideActions = slideActions
+                newActions.push(layoutActions)
             })
             newData = { key: "actions", data: newActions, indexes }
         }
@@ -1094,16 +1094,16 @@ const actions = {
 
         effectsLibrary.update((a) => {
             obj.sel!.data.forEach((audio) => {
-                const path = audio.path || audio.id
+                const currentPath = audio.path || audio.id
 
-                const index = a.findIndex((a) => a.path === path)
+                const index = a.findIndex((effect) => effect.path === currentPath)
                 if (existing) {
                     if (index < 0) return
                     a.splice(index, 1)
                     return
                 }
 
-                if (index < 0) a.push({ path, name: removeExtension(getFileName(path)) })
+                if (index < 0) a.push({ path: currentPath, name: removeExtension(getFileName(currentPath)) })
                 return
             })
             return a
@@ -1127,13 +1127,13 @@ const actions = {
         if (get(activeRecording)) {
             stopMediaRecorder()
         } else {
-            const media = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
-            if (!media.video) {
+            const mediaData = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
+            if (!mediaData.video) {
                 newToast("$toast.error_media")
                 return
             }
 
-            activeRecording.set(media)
+            activeRecording.set(mediaData)
         }
     },
 
@@ -1202,20 +1202,20 @@ const actions = {
 
         if (get(activeEdit).id) {
             const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-            const itemValues = items.map((index) => currentItems[index].bindings || [])
-            const newValues: string[][] = []
-            itemValues.forEach((value) => {
+            const itemValues1 = items.map((index) => currentItems[index].bindings || [])
+            const newValues1: string[][] = []
+            itemValues1.forEach((value) => {
                 if (!id) value = []
                 else if (value.includes(id)) value.splice(value.indexOf(id, 1))
                 else value.push(id)
 
-                newValues.push(value)
+                newValues1.push(value)
             })
 
             history({
                 id: "UPDATE",
                 oldData: { id: get(activeEdit).id },
-                newData: { key: "items", subkey: "bindings", data: newValues, indexes: items },
+                newData: { key: "items", subkey: "bindings", data: newValues1, indexes: items },
                 location: { page: "edit", id: get(activeEdit).type + "_items", override: true },
             })
 
@@ -1385,15 +1385,15 @@ function changeSlideAction(obj: ObjData, id: string) {
         return
     }
 
-    const actions = clone(ref[layoutSlide].data?.actions) || {}
+    const layoutActions = clone(ref[layoutSlide].data?.actions) || {}
 
     if (id === "receiveMidi") {
         let midiId: string = uid()
 
-        if (actions[id]) midiId = actions[id]!
-        else actions[id] = midiId
+        if (layoutActions[id]) midiId = layoutActions[id]!
+        else layoutActions[id] = midiId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes: [layoutSlide] } })
 
         const data = { id: midiId, index: layoutSlide, mode: "slide_midi" }
 
@@ -1408,36 +1408,36 @@ function changeSlideAction(obj: ObjData, id: string) {
     const indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
 
     if (id === "action") {
-        const id = uid()
+        const actionId = uid()
         const existing: any[] = []
-        const actions = clone(
+        const filteredLayoutActions = clone(
             indexes
                 .map((i) => {
                     const a = ref[i]?.data?.actions || {}
                     if (!a.slideActions) a.slideActions = []
-                    a.slideActions.push({ id, triggers: [] })
+                    a.slideActions.push({ id: actionId, triggers: [] })
 
-                    existing.push(...a.slideActions.map((a) => a.triggers?.[0]))
+                    existing.push(...a.slideActions.map((slideAction) => slideAction.triggers?.[0]))
                     return a
                 })
                 .filter(Boolean) || []
         )
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: filteredLayoutActions, indexes } })
 
-        popupData.set({ id, mode: "slide", indexes, existing })
+        popupData.set({ id: actionId, mode: "slide", indexes, existing })
         activePopup.set("action")
 
         return
     }
 
     if (id === "animate") {
-        if (!actions[id]) {
-            actions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "animate_slide" } })
+        if (!layoutActions[id]) {
+            layoutActions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes }, location: { page: "show", override: "animate_slide" } })
         }
 
-        const data = { data: actions[id], indexes }
+        const data = { data: layoutActions[id], indexes }
 
         popupData.set(data)
         activePopup.set("animate")
@@ -1468,9 +1468,9 @@ function changeSlideAction(obj: ObjData, id: string) {
 
     const actionsList: any[] = []
     indexes.forEach((index: number) => {
-        const actions = ref[index]?.data?.actions || {}
-        actions[id] = !actions[id]
-        actionsList.push(actions)
+        const currentLayoutActions = ref[index]?.data?.actions || {}
+        currentLayoutActions[id] = !currentLayoutActions[id]
+        actionsList.push(currentLayoutActions)
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })

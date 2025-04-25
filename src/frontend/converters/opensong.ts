@@ -44,7 +44,6 @@ export function convertOpenSong(data: any) {
             let song: any = {}
             if (content.includes("<html>")) song = HTMLtoObject(content)
             else song = XMLtoObject(content)
-            console.log(song)
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
@@ -60,7 +59,6 @@ export function convertOpenSong(data: any) {
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
             if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
-            console.log(song)
             const { slides, layout, media }: any = createSlides(song)
 
             show.slides = slides
@@ -240,7 +238,7 @@ function XMLtoBible(xml: string): Bible {
         const number = i + 1
         const chapters: any[] = []
         ;[...getChildren(book, "c")].forEach((chapter: any) => {
-            const number = chapter.getAttribute("n")
+            const chapterNumber = chapter.getAttribute("n")
             const verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
                 const text = verse.innerHTML
@@ -250,7 +248,7 @@ function XMLtoBible(xml: string): Bible {
                 length += text.length
                 if (text.length) verses.push({ number: verse.getAttribute("n"), text })
             })
-            chapters.push({ number, verses })
+            chapters.push({ number: chapterNumber, verses })
         })
         if (length) books.push({ name, number, chapters })
     })
@@ -266,9 +264,9 @@ function HTMLtoObject(content: string) {
 
     // WIP chords
 
-    const groups = content.split('<span class="heading">').slice(1)
+    const slideGroups = content.split('<span class="heading">').slice(1)
     let lyrics = ""
-    groups.forEach((group) => {
+    slideGroups.forEach((group) => {
         const linesEnd = group.lastIndexOf("<br/>")
         const g = group.slice(0, linesEnd)
         const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)

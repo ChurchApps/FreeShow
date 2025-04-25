@@ -1,7 +1,7 @@
 import { os, version, deviceId, isDev, activePage, activeDrawerTab } from "../stores"
 import { get } from "svelte/store"
 
-export async function trackEvent(eventName: string, params?: any) {
+export function trackEvent(eventName: string, params?: any) {
     if (get(isDev)) return
 
     const sec = atob("YlVwZE42bXpRVjYyWDc2d0Z3OGMwZw==")

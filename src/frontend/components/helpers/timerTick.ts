@@ -60,7 +60,7 @@ export function stopTimers() {
     }, 50)
 }
 
-function increment(timer: any, i: number) {
+function increment(timer: { id: string; start: number; end: number; [key: string]: any }, i: number) {
     if (!timer.paused && (timer.start < timer.end ? timer.currentTime >= timer.end && timer.currentTime < timer.end + 1 : timer.currentTime <= timer.end && timer.currentTime > timer.end - 1)) {
         if (!timer.overflow) timer.paused = true
 
@@ -75,9 +75,9 @@ function increment(timer: any, i: number) {
     // store timer start time (for accuracy)
     if (!timer.startTime) {
         const timerIs = timer.currentTime - timer.start
-        const timerShouldBe = timerIs * 1000 // - 1
-        if (timer.start < timer.end) timer.startTime = currentTime - timerShouldBe
-        else timer.startTime = currentTime + timerShouldBe
+        const timerStartShouldBe = timerIs * 1000 // - 1
+        if (timer.start < timer.end) timer.startTime = currentTime - timerStartShouldBe
+        else timer.startTime = currentTime + timerStartShouldBe
     }
 
     const difference = currentTime - timer.startTime

@@ -9,6 +9,7 @@ import NumberInput from "../inputs/NumberInput.svelte"
 import TextInput from "../inputs/TextInput.svelte"
 
 const getInputValue = {
+    // eslint-disable-next-line
     string: (e: any) => e.target.value,
     number: (e: any) => Number(e.detail),
     checkbox: (e: any) => e.target.checked,
@@ -27,6 +28,7 @@ export const customInputs = {
 
 // [DEFAULT] IN: value= OUT=on:change
 export const commonInputs = {
+    // eslint-disable-next-line
     string: TextInput,
     number: NumberInput,
     dropdown: Dropdown, // OUT=click
@@ -51,7 +53,7 @@ export function getDropdownValue(options: Option[], id: string | undefined) {
 
 // get values
 
-export function getValues(inputs: Input[], data: Object) {
+export function getValues(inputs: Input[], data: object) {
     if (!Array.isArray(inputs)) return []
 
     inputs = inputs.map((input) => {

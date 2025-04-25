@@ -83,8 +83,8 @@ function convertPPTX(content: any) {
             if (!line?.["a:r"]) return
 
             let value = ""
-            line["a:r"].forEach((list: any) => {
-                value += list["a:t"]?.[0] || ""
+            line["a:r"].forEach((a: any) => {
+                value += a["a:t"]?.[0] || ""
             })
 
             lines.push(value)

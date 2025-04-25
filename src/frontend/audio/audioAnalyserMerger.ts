@@ -72,10 +72,10 @@ export class AudioAnalyserMerger {
     private static mergeAnalysers() {
         const merged: number[][] = []
 
-        const channels = this.channels
-        channels.main = AudioAnalyser.getChannelsVolume()
+        const allChannels = this.channels
+        allChannels.main = AudioAnalyser.getChannelsVolume()
 
-        Object.values(channels).forEach((channels) => {
+        Object.values(allChannels).forEach((channels) => {
             channels.forEach((channel, channelIndex) => {
                 if (!merged[channelIndex]) merged[channelIndex] = []
 

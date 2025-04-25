@@ -193,7 +193,6 @@ function createShow({ slides, metadata, name, notes }) {
 }
 
 function getLayout(slides: Slide[]) {
-    const layout: any[] = slides.map((_) => ({ id: uid() }))
-
+    const layout: any[] = slides.map(() => ({ id: uid() }))
     return layout
 }

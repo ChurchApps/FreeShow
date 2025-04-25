@@ -155,7 +155,7 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
 
     const closest = getClosestIndexes(activeRec.index, activeRec.sequence.length)
 
-    const findFirstWithSameSlideIndex = closest.find((index) => activeRec.sequence[index].slideRef.index === slideIndex)
+    const findFirstWithSameSlideIndex = closest.find((i) => activeRec.sequence[i].slideRef.index === slideIndex)
     if (!findFirstWithSameSlideIndex) return
 
     const recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
@@ -172,9 +172,9 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
     if (backgroundPath) playVideo(backgroundPath, index, recording)
 
     // e.g: index=2, [0, 1, 2, 3, 4, 5, 6] = [2, 1, 3, 0, 4, 5, 6]
-    function getClosestIndexes(index: number, length: number) {
+    function getClosestIndexes(activeIndex: number, length: number) {
         const arr = Array.from({ length }, (_, i) => i)
-        return arr.sort((a, b) => Math.abs(a - index) - Math.abs(b - index))
+        return arr.sort((a, b) => Math.abs(a - activeIndex) - Math.abs(b - activeIndex))
         // prefer right values?
         // e.g: index=2, [0, 1, 2, 3, 4, 5, 6] = [2, 3, 1, 4, 0, 5, 6]
         // arr.sort((a, b) => {

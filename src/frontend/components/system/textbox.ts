@@ -1,7 +1,9 @@
 import { getStyles } from "./../helpers/style"
 
+type TMouse = { left: number; top: number; width: number; height: number; offset: { x: number; y: number; width: number; height: number }; e: any }
+
 const snapDistance = 8
-export function moveBox(e: any, mouse: any, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
+export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
     const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return { styles: {}, lines: [] }
 
@@ -43,10 +45,11 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
             if (item.id) id = item.id
             if (active.includes(id)) return
 
-            const style: any = getStyles(item.getAttribute("style"))
-            Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
-            xLines.push(style.left, style.left + style.width / 2, style.left + style.width)
-            yLines.push(style.top, style.top + style.height / 2, style.top + style.height)
+            const style = getStyles(item.getAttribute("style"))
+            const styleNumbers: { [key: string]: number } = {}
+            Object.entries(style).map((s) => (styleNumbers[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
+            xLines.push(styleNumbers.left, styleNumbers.left + styleNumbers.width / 2, styleNumbers.left + styleNumbers.width)
+            yLines.push(styleNumbers.top, styleNumbers.top + styleNumbers.height / 2, styleNumbers.top + styleNumbers.height)
         }
 
         checkMatch(xLines, xItems, "x", snapDistance / ratio)
@@ -100,9 +103,9 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
             const linesInclude = lines
                 .join(".")
                 .replaceAll(",", "")
-                .includes(id + linePos)
+                .includes(id + String(linePos))
             if (boxMatch !== undefined && !linesInclude) lines = [...lines, [id, linePos]]
-            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + linePos)
+            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + String(linePos))
         })
     }
 
@@ -112,7 +115,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
 }
 
 // const maxSize = 16
-export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
+export function resizeBox(e: any, mouse: TMouse, square: boolean, ratio: number) {
     const itemElem = mouse.e.target.closest(".item")
     const styles: any = {}
     let store: null | number = null
@@ -183,8 +186,16 @@ export function rotateBox(e: any, mouse: any, ratio: number) {
     const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return 0
 
-    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
-    const itemPosY = itemElem.offsetTop * ratio + itemElem.closest(".slide").offsetTop + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop
+    const itemOffsetLeft: number = itemElem.offsetLeft || 0
+    const slideOffsetLeft: number = itemElem.closest(".slide").offsetLeft || 0
+    const editOffsetLeft: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft || 0
+
+    const itemOffsetTop: number = itemElem.offsetTop || 0
+    const slideOffsetTop: number = itemElem.closest(".slide").offsetTop || 0
+    const editOffsetTop: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop || 0
+
+    const itemPosX = itemOffsetLeft * ratio + slideOffsetLeft + editOffsetLeft
+    const itemPosY = itemOffsetTop * ratio + slideOffsetTop + editOffsetTop
 
     const itemCenterX = itemPosX + (itemElem.offsetWidth * ratio) / 2
     const itemCenterY = itemPosY + (itemElem.offsetHeight * ratio) / 2
@@ -256,7 +267,11 @@ export function getRadius(e: any, mouse: any, ratio: number) {
     const sliderStart = radiusSliderOffset
     const sliderLength = maxRadius * radiusSliderRatio
 
-    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
+    const itemOffsetLeft: number = itemElem.offsetLeft || 0
+    const slideOffsetLeft: number = itemElem.closest(".slide").offsetLeft || 0
+    const editOffsetLeft: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft || 0
+
+    const itemPosX = itemOffsetLeft * ratio + slideOffsetLeft + editOffsetLeft
     const sliderPosStart = itemPosX + sliderStart * ratio
     // const sliderPosEnd = sliderPosStart + sliderLength * ratio
 

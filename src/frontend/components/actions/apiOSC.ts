@@ -55,13 +55,12 @@ export function oscToAPI(data: any) {
         return data
     }
 
-    console.log("OSC API DATA:", data)
+    console.info("OSC API DATA:", data)
     return data
 }
 
 function parsePath(path) {
     const parts = path.split("/").filter(Boolean)
-    console.log("OSC API PATH:", path)
 
     let currentPath: any = oscActions
 

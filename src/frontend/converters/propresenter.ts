@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Layout, Slide, SlideData } from "../../types/Show"
+import type { Item, Layout, Line, Slide, SlideData } from "../../types/Show"
 import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
@@ -29,8 +29,8 @@ export function convertProPresenter(data: any) {
         }
 
         if (Array.isArray(song.data)) {
-            song.data.forEach((data) => {
-                newData.push({ content: data, name, extension: "jsonbundle" })
+            song.data.forEach((songData) => {
+                newData.push({ content: songData, name, extension: "jsonbundle" })
             })
         }
     })
@@ -43,7 +43,7 @@ export function convertProPresenter(data: any) {
             let song: any = {}
 
             if (!content) {
-                console.log("File missing content!")
+                console.error("File missing content!")
                 return
             }
 
@@ -121,7 +121,6 @@ function convertJSONBundleToSlides(song: any) {
     const parentId = uid()
     const children: string[] = []
 
-    console.log(song.lyrics)
     song.lyrics.forEach(({ lyrics }) => {
         if (!lyrics) return
 
@@ -151,7 +150,6 @@ function convertJSONBundleToSlides(song: any) {
     slides[parentId].children = children
 
     const layouts = [{ id: uid(), name: "", notes: "", slides: layoutSlides }]
-    console.log(layouts, slides)
     return { slides, layouts }
 }
 
@@ -199,11 +197,11 @@ function convertJSONToSlides(song: any) {
 }
 
 function convertToSlides(song: any, extension: string) {
-    let groups: any = []
-    if (extension === "pro4") groups = song.slides.RVDisplaySlide || []
-    if (extension === "pro5") groups = song.groups.RVSlideGrouping || []
-    if (extension === "pro6") groups = song.array[0].RVSlideGrouping || []
-    if (!Array.isArray(groups)) groups = [groups]
+    let slideGroups: any = []
+    if (extension === "pro4") slideGroups = song.slides.RVDisplaySlide || []
+    if (extension === "pro5") slideGroups = song.groups.RVSlideGrouping || []
+    if (extension === "pro6") slideGroups = song.array[0].RVSlideGrouping || []
+    if (!Array.isArray(slideGroups)) slideGroups = [slideGroups]
     const arrangements = song.arrangements || song.array?.[1]?.RVSongArrangement || []
 
     // console.log(song)
@@ -215,7 +213,7 @@ function convertToSlides(song: any, extension: string) {
 
     const backgrounds: any = []
 
-    groups.forEach((group) => {
+    slideGroups.forEach((group) => {
         let groupSlides = group
         if (extension === "pro4") groupSlides = [groupSlides]
         if (extension === "pro5") groupSlides = groupSlides.slides.RVDisplaySlide
@@ -225,7 +223,7 @@ function convertToSlides(song: any, extension: string) {
 
         let slideIndex = -1
         groupSlides.forEach((slide) => {
-            const items: Item[] = getSlideItems(slide)
+            const items = getSlideItems(slide)
             if (!items?.length) return
             slideIndex++
 
@@ -235,11 +233,11 @@ function convertToSlides(song: any, extension: string) {
             slides[slideId] = newSlide({ notes: slide["@notes"] || "", items })
 
             // media
-            const media = slide.RVMediaCue
+            const mediaCue = slide.RVMediaCue
 
             // TODO: images
-            const path: string = media?.RVVideoElement?.["@source"] || ""
-            if (path) backgrounds[slideIndex] = { path, name: media["@displayName"] || "" }
+            const path: string = mediaCue?.RVVideoElement?.["@source"] || ""
+            if (path) backgrounds[slideIndex] = { path, name: mediaCue["@displayName"] || "" }
 
             const isFirstSlide: boolean = slideIndex === 0
             if (isFirstSlide) {
@@ -287,7 +285,7 @@ function convertToSlides(song: any, extension: string) {
     return { slides, layouts, media }
 }
 
-function getSlideItems(slide: any): any[] {
+function getSlideItems(slide: any) {
     if (!slide) return []
 
     let elements: any = null
@@ -299,7 +297,7 @@ function getSlideItems(slide: any): any[] {
         return []
     }
 
-    const items: any[] = []
+    const items: Item[] = []
 
     const textElement = elements.RVTextElement
     let itemStrings = elements.RVTextElement.NSString
@@ -357,9 +355,9 @@ function arrangeLayouts(arrangements, sequences) {
 /// //
 
 function splitTextToLines(text: string) {
-    let lines: any[] = []
+    let lines: Line[] = []
     const data = text.split("\n\n")
-    lines = data.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
+    lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText }] }))
 
     return lines
 }
@@ -405,9 +403,9 @@ const latin1 = {
 function decodeBase64(text: string) {
     if (typeof text !== "string") return ""
 
-    let b = 0;
-        let l = 0;
-        let r = ""
+    let b = 0
+    let l = 0
+    let r = ""
     const m = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
     text.split("").forEach(function (v) {
@@ -565,14 +563,14 @@ function convertProToSlides(song: any) {
     if (slidesWithoutGroup.length) slidesWithoutGroup.forEach((id) => createSlide(id))
 
     tempArrangements.forEach(createLayout)
-    function createLayout({ name = "", groups }: any) {
-        layouts.push({ id: uid(), name, notes: "", slides: createSlides(groups) })
+    function createLayout({ name = "", groups: arrGroups }: any) {
+        layouts.push({ id: uid(), name, notes: "", slides: createSlides(arrGroups) })
     }
 
-    function createSlides(groups: string[]) {
+    function createSlides(arrGroups: string[]) {
         const layoutSlides: any[] = []
 
-        groups.forEach((groupId) => {
+        arrGroups.forEach((groupId) => {
             const group = tempGroups[groupId]
 
             const allSlides = group.slides.map((id, i) => createSlide(id, i === 0, { color: group.color, name: group.name }))
@@ -649,8 +647,8 @@ function convertItem(item: any) {
 
     return newItem
 
-    function getLine(text: string) {
-        return { align: "", text: [{ value: text, style: "" }] }
+    function getLine(lineText: string) {
+        return { align: "", text: [{ value: lineText, style: "" }] }
     }
 }
 
@@ -658,21 +656,21 @@ function getArrangements(arrangements: any) {
     if (!arrangements) return []
 
     const newArrangements: any = []
-    arrangements.forEach((a) => {
+    arrangements.forEach((arr) => {
         newArrangements.push({
-            name: a.name,
-            groups: a.groupIdentifiers?.map((a) => a.string) || [],
+            name: arr.name,
+            groups: arr.groupIdentifiers?.map((a) => a.string) || [],
         })
     })
 
     return newArrangements.filter((a) => a.groups.length)
 }
 
-function getGroups(groups) {
-    if (!groups) return {}
+function getGroups(cueGroups) {
+    if (!cueGroups) return {}
 
     const newGroups: any = {}
-    groups.forEach(({ group, cueIdentifiers }) => {
+    cueGroups.forEach(({ group, cueIdentifiers }) => {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
@@ -723,7 +721,7 @@ function decodeRTF(text: string) {
     return text
 }
 
-function getColorValue(color: any) {
+function getColorValue(color: { red: number; green: number; blue: number; alpha: number }) {
     if (!color) return ""
 
     color = {

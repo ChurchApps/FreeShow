@@ -24,10 +24,10 @@ export function convertCSV(data: any) {
 
             const slides: Slide[] = []
             content.split("\n").forEach(createSlide)
-            function createSlide(line: string) {
+            function createSlide(csvLine: string) {
                 const items: Item[] = []
 
-                const fields = parseCSVLine(line)
+                const fields = parseCSVLine(csvLine)
                 fields.forEach((text) => {
                     const line = { align: "", text: [{ value: text, style: "" }] }
                     items.push({ lines: [line], style: DEFAULT_ITEM_STYLE })
@@ -68,8 +68,7 @@ function createShow({ slides, name }) {
 }
 
 function getLayout(slides: Slide[]) {
-    const layout: any[] = slides.map((_) => ({ id: uid() }))
-
+    const layout: any[] = slides.map(() => ({ id: uid() }))
     return layout
 }
 

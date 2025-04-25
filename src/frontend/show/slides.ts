@@ -130,9 +130,9 @@ function updateChildren(groups: { globalGroup: string; slides: LayoutRef[] }[]) 
         const newChildren = clone(slides)
             .slice(1)
             .map(({ id }) => id)
-        const groups = clone(slides)
-        groups[0].children = newChildren
-        if (globalGroup) groups[0].globalGroup = globalGroup
+        const layoutRef = clone(slides)
+        layoutRef[0].children = newChildren
+        if (globalGroup) layoutRef[0].globalGroup = globalGroup
     }
 
     return groups
@@ -272,10 +272,10 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
         }
 
         // set new child data
-        const index: number = newLayout.length - 1
+        const lastIndex: number = newLayout.length - 1
         // if (!newLayout[index]) newLayout[index] = {}
-        if (!newLayout[index].children) newLayout[index].children = {}
-        newLayout[index].children![slideRef.id] = layout[i].data
+        if (!newLayout[lastIndex].children) newLayout[lastIndex].children = {}
+        newLayout[lastIndex].children![slideRef.id] = layout[i].data
 
         if (skip.includes(slideRef.parent?.layoutIndex ?? -1)) return
         if (changedButNotThis || alreadyChanged) {
@@ -619,7 +619,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     children = addToPos(children, [slideId], slideIndex)
     slides[parentId].children = children
 
-    const showId = get(activeShow)?.id
+    const showId = get(activeShow)?.id || ""
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
@@ -702,9 +702,9 @@ export function mergeSlides(indexes: { index: number }[]) {
         let textItemIndex = 0
         currentSlide.items.forEach((item) => {
             if ((item.type || "text") === "text") {
-                const index = sameTextboxCount ? textItemIndex : 0
-                if (!newLines[index]) newLines[index] = []
-                newLines[index].push(...(item.lines || []))
+                const textboxIndex = sameTextboxCount ? textItemIndex : 0
+                if (!newLines[textboxIndex]) newLines[textboxIndex] = []
+                newLines[textboxIndex].push(...(item.lines || []))
                 textItemIndex++
             } else {
                 const uniqueItem = JSON.stringify(item)

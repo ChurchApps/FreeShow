@@ -5,9 +5,9 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
-export function getPlainEditorText(id = "active") {
-    const ref = getLayoutRef(id)
-    const slides = _show(id).get("slides")
+export function getPlainEditorText(showId = "active") {
+    const ref = getLayoutRef(showId)
+    const slides = _show(showId).get("slides")
 
     // slide data for editing (WIP unused)
     const slidesData: any[] = []
@@ -59,8 +59,8 @@ function getItems(items: Item[]) {
             plainText += textboxId + "\n"
         }
 
-        const filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length) || []
-        filteredLines.forEach((line, i) => {
+        const filteredLines = item.lines?.filter((line) => line.text?.filter((lineText) => lineText.value.length).length) || []
+        filteredLines.forEach((line, lineIndex) => {
             let tempText = ""
             line.text?.forEach((txt) => {
                 tempText += txt.value
@@ -75,7 +75,7 @@ function getItems(items: Item[]) {
 
             if (tempText.length) {
                 text += tempText + "\n"
-                plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
+                plainText += tempText + (lineIndex < filteredLines.length - 1 ? "\n" : "")
             }
         })
 

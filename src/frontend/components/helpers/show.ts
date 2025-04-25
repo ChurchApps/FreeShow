@@ -52,8 +52,8 @@ export function getGlobalGroup(group: string, returnInputIfNull = false): string
 
     if (get(groups)[groupId]) return groupId
 
-    const matchingName = Object.keys(get(groups)).find((groupId) => {
-        return get(groups)[groupId].name === group
+    const matchingName = Object.keys(get(groups)).find((id) => {
+        return get(groups)[id].name === group
     })
     if (matchingName) return matchingName
 
@@ -152,9 +152,9 @@ export function newSlide(data: { items?: Item[]; group?: string; globalGroup?: s
 }
 
 // update list for drawer
-export function updateShowsList(shows: TrimmedShows) {
+export function updateShowsList(allShows: TrimmedShows) {
     // sort shows in alphabeticly order & remove private shows
-    const showsList = keysToID(shows)
+    const showsList = keysToID(allShows)
 
     const sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
@@ -176,9 +176,9 @@ export function updateShowsList(shows: TrimmedShows) {
 }
 
 // update cached shows
-export function updateCachedShows(shows: Shows) {
+export function updateCachedShows(newShowsData: Shows) {
     const cachedShows = {}
-    Object.entries(shows).forEach(([id, show]) => {
+    Object.entries(newShowsData).forEach(([id, show]) => {
         const customId = getShowCacheId(id, show)
         cachedShows[customId] = updateCachedShow(id, show)
     })
@@ -207,12 +207,12 @@ export function getCachedShow(id: string, layout = "", updater = get(cachedShows
 }
 
 // update cached show
-export function updateCachedShow(id: string, show: Show, layoutId = "") {
+export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     // WIP looped many times when show not loading
     // console.log(id, show)
     if (!show) return
 
-    const layout = GetLayout(id, layoutId)
+    const layout = GetLayout(showId, layoutId)
     // $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
     // let layout = _show(id).layouts(activeLayout).ref()[0]
 
@@ -222,7 +222,7 @@ export function updateCachedShow(id: string, show: Show, layoutId = "") {
         if (lastEnabledSlide >= 0) endIndex = lastEnabledSlide
     }
 
-    const customId = getShowCacheId(id, show)
+    const customId = getShowCacheId(showId, show)
     const template = {
         id: show.settings?.template,
         slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
@@ -251,8 +251,8 @@ export function updateCachedShow(id: string, show: Show, layoutId = "") {
             // update local group
             if (JSON.stringify(oldGroup) !== JSON.stringify({ group: slide.group, color: slide.color })) {
                 showsCache.update((a) => {
-                    a[id].slides[slide.id].group = slide.group
-                    a[id].slides[slide.id].color = slide.color
+                    a[showId].slides[slide.id].group = slide.group
+                    a[showId].slides[slide.id].color = slide.color
                     return a
                 })
             }

@@ -20,7 +20,7 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
     if (!itemId.includes("#")) {
         let name = ""
 
-        if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
+        if (itemId === "variable") name = get(variables)[item.variable?.id || ""]?.name
         else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
         else if (itemId === "text") name = dynamicValueString(getItemText(item as Item))
 

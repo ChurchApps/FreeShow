@@ -11,7 +11,6 @@ import { convertText } from "./txt"
 export function createCategory(name: string, icon = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
     // return selected category if it is empty
     const selectedCategory = get(drawerTabsData).shows?.activeSubTab || ""
-    console.log(selectedCategory)
     if (get(activeDrawerTab) === "shows" && selectedCategory !== "all" && selectedCategory !== "unlabeled") {
         const categoryCount = Object.values(get(shows)).reduce((count, show) => (count += show.category === selectedCategory ? 1 : 0), 0)
         if (!categoryCount) return selectedCategory
@@ -48,7 +47,8 @@ export function importShow(files: { content: string; name?: string; extension?: 
     const tempShows: { id: string; show: Show }[] = []
 
     files.forEach(({ content, name }) => {
-        let id; let show
+        let id
+        let show
 
         try {
             ;[id, show] = JSON.parse(content)
@@ -58,10 +58,10 @@ export function importShow(files: { content: string; name?: string; extension?: 
 
             try {
                 ;[id, show] = JSON.parse(content)
-            } catch (e: any) {
-                console.error(name, e)
-                const pos = Number(e.toString().replace(/\D+/g, "") || 100)
-                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+            } catch (err: any) {
+                console.error(name, err)
+                const pos = Number(err.toString().replace(/\D+/g, "") || 100)
+                console.info(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
                 return
             }
         }

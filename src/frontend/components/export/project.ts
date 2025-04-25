@@ -41,15 +41,15 @@ export async function exportProject(project: Project) {
                     mediaIds.push(...audio)
 
                     // overlays
-                    const overlays = data.overlays || []
-                    overlays.forEach(getOverlay)
+                    const overlayIds = data.overlays || []
+                    overlayIds.forEach(getOverlay)
                 })
             })
 
             // get media file paths
-            const media = _show(showRef.id).get("media")
+            const mediaData = _show(showRef.id).get("media")
             mediaIds.forEach((id) => {
-                getFile(media[id].path || media[id].id)
+                getFile(mediaData[id].path || mediaData[id].id)
             })
 
             // get media from "Media" items
@@ -113,7 +113,7 @@ export async function exportProject(project: Project) {
         const type = showRef.type || "show"
 
         if (!getProjectItems[type]) {
-            console.log("Missing project type:", type)
+            console.error("Missing project type:", type)
             return
         }
 

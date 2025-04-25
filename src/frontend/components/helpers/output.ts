@@ -75,11 +75,11 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 let resetActionTrigger = false
-export function setOutput(key: string, data: any, toggle = false, outputId = "", add = false) {
+export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
 
     // track usage (& set attributionString)
-    if (key === "slide" && data?.id) {
+    if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")
         if (showReference?.type === "scripture") {
             const translation = showReference.data
@@ -112,7 +112,7 @@ export function setOutput(key: string, data: any, toggle = false, outputId = "",
         })
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
-        if (key === "slide" && data?.id) {
+        if (type === "slide" && data?.id) {
             // reset slide cache (after update)
             setTimeout(() => outputSlideCache.set({}), 50)
 
@@ -121,7 +121,9 @@ export function setOutput(key: string, data: any, toggle = false, outputId = "",
             // log usage if show is not currently outputted
             if (currentOutSlideId !== data?.id) appendShowUsage(data.id)
 
-            const overrideCategoryAction = ref[data?.index]?.data?.actions?.slideActions?.find((a) => Object.values(a.customData || {}).find((a) => Object.entries(a).find(([key, value]) => key === "overrideCategoryAction" && value === true)))
+            const overrideCategoryAction = ref[data?.index]?.data?.actions?.slideActions?.find((action) =>
+                Object.values(action.customData || {}).find((a1) => Object.entries(a1).find(([key, value]) => key === "overrideCategoryAction" && value === true))
+            )
 
             // run category action if show slide is not currently outputted, and it does not have a custom override action
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
@@ -137,14 +139,14 @@ export function setOutput(key: string, data: any, toggle = false, outputId = "",
         outs.forEach((id: string, i: number) => {
             const output = a[id]
             if (!output.out) a[id].out = {}
-            if (!output.out?.[key]) a[id].out![key] = key === "overlays" ? [] : null
+            if (!output.out?.[type]) a[id].out![type] = type === "overlays" ? [] : null
             data = clone(inputData)
 
-            if (key === "slide" && data === null && output.out?.slide?.type === "ppt") {
+            if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
             }
 
-            if (key === "background") {
+            if (type === "background") {
                 // clear if PDF/PPT is active
                 const slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
@@ -153,12 +155,12 @@ export function setOutput(key: string, data: any, toggle = false, outputId = "",
                 data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputIds[firstOutputWithBackground] })
             }
 
-            let outData = a[id].out?.[key] || null
-            if (key === "overlays" && data.length) {
+            let outData = a[id].out?.[type] || null
+            if (type === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
                 if (toggle && i === 0) toggleState = outData?.includes(data[0])
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
-                else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
+                else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
                 data.forEach((overlayId) => {
@@ -169,15 +171,15 @@ export function setOutput(key: string, data: any, toggle = false, outputId = "",
             } else {
                 outData = data
 
-                if (key === "overlays") {
+                if (type === "overlays") {
                     clearOverlayTimers(id)
                 }
             }
 
-            a[id].out![key] = clone(outData)
+            a[id].out![type] = clone(outData)
 
             // save locked overlays
-            if (key === "overlays") lockedOverlays.set(outData)
+            if (type === "overlays") lockedOverlays.set(outData)
         })
 
         return a
@@ -313,14 +315,14 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 ///
 
 let sortedOutputs: (Output & { id: string })[] = []
-export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, removeStageOutput = false) {
+export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
     // WIP cache outputs
     // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
     //     sortedOutputs = sortByName(keysToID(updater || {}))
     // }
     sortedOutputs = sortByName(keysToID(updater || {}))
 
-    let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
+    let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
 
     if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
 
@@ -377,16 +379,16 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     let cleared = true
     const outputIds = getActiveOutputs(updater, true, true, true)
 
-    outputIds.forEach((id: string) => {
-        const output = updater[id]
+    outputIds.forEach((outputId: string) => {
+        const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        keys.forEach((key: string) => {
+        keys.forEach((type: string) => {
             // TODO:
-            if (output.out?.[key]) {
-                if (key === "overlays") {
+            if (output.out?.[type]) {
+                if (type === "overlays") {
                     if (checkLocked && output.out.overlays?.length) cleared = false
                     else if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
-                } else if (output.out[key] !== null) cleared = false
+                } else if (output.out[type] !== null) cleared = false
             }
         })
     })
@@ -476,26 +478,26 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
     return outputRes
 }
 
-export function stylePosToPercentage(styles: { [key: string]: any }) {
-    if (styles.left) styles.left = (Number(styles.left) / 1920) * 100
-    if (styles.top) styles.top = (Number(styles.top) / 1080) * 100
-    if (styles.width) styles.width = (Number(styles.width) / 1920) * 100
-    if (styles.height) styles.height = (Number(styles.height) / 1080) * 100
+export function stylePosToPercentage(stylesData: { [key: string]: any }) {
+    if (stylesData.left) stylesData.left = (Number(stylesData.left) / 1920) * 100
+    if (stylesData.top) stylesData.top = (Number(stylesData.top) / 1080) * 100
+    if (stylesData.width) stylesData.width = (Number(stylesData.width) / 1920) * 100
+    if (stylesData.height) stylesData.height = (Number(stylesData.height) / 1080) * 100
 
-    return styles
+    return stylesData
 }
 
 export function percentageStylePos(style: string, resolution: Resolution) {
-    let styles = getStyles(style, true)
-    styles = stylePosToPercentage(styles)
+    let stylesData = getStyles(style, true)
+    stylesData = stylePosToPercentage(stylesData)
 
     const width = resolution.width || 1920
     const height = resolution.height || 1080
 
-    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
-    if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
-    if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
-    if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
+    if (stylesData.left) style += "left: " + width * (Number(stylesData.left) / 100) + "px;"
+    if (stylesData.top) style += "top: " + height * (Number(stylesData.top) / 100) + "px;"
+    if (stylesData.width) style += "width: " + width * (Number(stylesData.width) / 100) + "px;"
+    if (stylesData.height) style += "height: " + height * (Number(stylesData.height) / 100) + "px;"
 
     return style
 }
@@ -665,12 +667,12 @@ export function deleteOutput(outputId: string) {
     if (Object.keys(get(outputs)).length <= 1) return
 
     outputs.update((a) => {
-        const keyOutput = a[outputId].isKeyOutput
+        const isKeyOutput = a[outputId].isKeyOutput
 
         send(OUTPUT, ["REMOVE"], { id: outputId })
         delete a[outputId]
 
-        if (!keyOutput) currentOutputSettings.set(Object.keys(a)[0])
+        if (!isKeyOutput) currentOutputSettings.set(Object.keys(a)[0])
         return a
     })
 }
@@ -684,14 +686,14 @@ export async function clearPlayingVideo(clearOutput = "") {
     return new Promise((resolve) => {
         setTimeout(() => {
             // remove from playing
-            playingVideos.update((a) => {
+            playingVideos.update((playingVideo) => {
                 let existing = -1
                 do {
-                    existing = a.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
-                    if (existing > -1) a.splice(existing, 1)
+                    existing = playingVideo.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
+                    if (existing > -1) playingVideo.splice(existing, 1)
                 } while (existing > -1)
 
-                return a
+                return playingVideo
             })
             // playingVideos.set([])
 
@@ -765,7 +767,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
-        if (templateItem.textFit) item.textFit
+        if (templateItem.textFit) item.textFit = templateItem.textFit
 
         // remove exiting styling & add new if set in template
         const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions"]
@@ -995,14 +997,14 @@ export function getItemsCountByType(items: Item[]) {
 
 export const defaultLayers: string[] = ["background", "slide", "overlays"]
 
-export function getCurrentStyle(styles: { [key: string]: Styles }, styleId: string | undefined): Styles {
+export function getCurrentStyle(stylesUpdater: { [key: string]: Styles }, styleId: string | undefined): Styles {
     const defaultStyle = { name: "" }
 
     if (!styleId) return defaultStyle
-    return styles[styleId] || defaultStyle
+    return stylesUpdater[styleId] || defaultStyle
 }
 
-export function getOutputTransitions(slideData: SlideData | null, styleTransition: any, transitionData: any, disableTransitions: boolean) {
+export function getOutputTransitions(slideData: SlideData | null, styleTransition: any, transitionDataUpdater: any, disableTransitions: boolean) {
     let transitions: { [key: string]: Transition } = {}
 
     if (disableTransitions) {
@@ -1021,9 +1023,9 @@ export function getOutputTransitions(slideData: SlideData | null, styleTransitio
         media: styleTransition?.media || null,
     }
 
-    transitions.text = slideTransitions.text || styleTransitions.text || transitionData.text || {}
-    transitions.media = slideTransitions.media || styleTransitions.media || transitionData.media || {}
-    transitions.overlay = styleTransitions.text || transitionData.text || {}
+    transitions.text = slideTransitions.text || styleTransitions.text || transitionDataUpdater.text || {}
+    transitions.media = slideTransitions.media || styleTransitions.media || transitionDataUpdater.media || {}
+    transitions.overlay = styleTransitions.text || transitionDataUpdater.text || {}
 
     return clone(transitions)
 }
@@ -1154,9 +1156,9 @@ export function joinMetadata(message: { [key: string]: string }, divider = "; ")
         .join(divider)
 }
 
-function getTemplateStyle(templateId: string, templates: Templates) {
+function getTemplateStyle(templateId: string, templatesUpdater: Templates) {
     if (!templateId) return
-    const template = templates[templateId]
+    const template = templatesUpdater[templateId]
     if (!template) return
 
     const style = template.items?.[0]?.style || ""

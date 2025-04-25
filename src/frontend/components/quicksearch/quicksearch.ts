@@ -38,7 +38,7 @@ const actions = {
 
 export function selectQuicksearchValue(value: QuickSearchValue) {
     if (!actions[value.type]) {
-        console.log("Unknown Quick search type:", value.type)
+        console.error("Unknown Quick search type:", value.type)
         return
     }
 

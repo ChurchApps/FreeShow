@@ -50,16 +50,18 @@ export function convertEasyWorship(data: any) {
 
     const tempShows: any[] = []
 
+    const songsCount: number = songsWords.length || 0
+
     asyncLoop()
     function asyncLoop() {
         const words: Words = songsWords[i]
         const song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
 
-        const percentage: string = ((i / songsWords.length) * 100).toFixed()
+        const percentage: string = ((i / songsCount) * 100).toFixed()
         activePopup.set("alert")
-        alertMessage.set(importingText + " " + i + "/" + songsWords.length + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
+        alertMessage.set(importingText + " " + String(i) + "/" + String(songsCount) + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
 
-        if (get(shows)[song?.song_uid || ""] && i < songsWords.length - 1) {
+        if (get(shows)[song?.song_uid || ""] && i < songsCount - 1) {
             i++
             requestAnimationFrame(asyncLoop)
             return
@@ -93,7 +95,7 @@ export function convertEasyWorship(data: any) {
 
         if (allText.length) tempShows.push({ id: showId, show })
 
-        if (i + 1 < songsWords.length) {
+        if (i + 1 < songsCount) {
             i++
             requestAnimationFrame(asyncLoop)
         } else {
@@ -173,17 +175,17 @@ function createSlides({ words }: Words) {
     })
     if (lines.length) newSlides.push(lines)
 
-    newSlides?.forEach((lines: any) => {
-        if (!lines.length) lines = [""]
-        if (lines.length) {
+    newSlides?.forEach((slideLines: any) => {
+        if (!slideLines.length) slideLines = [""]
+        if (slideLines.length) {
             const id: string = uid()
-            let group = lines[0]
+            let group = slideLines[0]
                 .replace(/[0-9:]/g, "")
                 .toLowerCase()
                 .trim()
             if (get(groups)[group]) {
                 // console.log("REMOVE FIRST", lines)
-                lines.shift()
+                slideLines.shift()
             } else {
                 let found = false
                 Object.keys(get(groups)).forEach((key) => {
@@ -197,7 +199,7 @@ function createSlides({ words }: Words) {
                     ) {
                         found = true
                         group = key
-                        lines.shift()
+                        slideLines.shift()
                     }
                 })
             }
@@ -206,7 +208,7 @@ function createSlides({ words }: Words) {
             const items = [
                 {
                     style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                    lines: lines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+                    lines: slideLines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
                 },
             ]
             slides[id] = {

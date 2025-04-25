@@ -125,7 +125,7 @@ export class EditboxHelper {
         let html = ""
         let firstTextStyleArchive = ""
         const lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-        const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : ""
+        const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
         item?.lines?.forEach((line, i) => {
             const align = line.align.replaceAll(lineBg, "") + ";"
@@ -145,16 +145,15 @@ export class EditboxHelper {
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)
                 const textEnd = textIndex + a.value.length
-                const textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
-                const listStyle = "" // item.list?.enabled ? ";display: list-item;" : ""
-                const style = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
+                const textStyle = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
                 let value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

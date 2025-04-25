@@ -70,8 +70,8 @@ export class AudioPlayer {
         // another audio might have been started while awaiting (if played rapidly)
         if (!audio || this.audioExists(path)) return
 
-        const volume = AudioPlayer.getVolume() * (options.volume || 1)
-        audio.volume = volume
+        const newVolume = AudioPlayer.getVolume() * (options.volume || 1)
+        audio.volume = newVolume
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
         playingAudio.update((a) => {
@@ -88,7 +88,7 @@ export class AudioPlayer {
         if (audioPlaying && options.crossfade) {
             audio.volume = 0
             waitToPlay = options.crossfade * 0.6
-            fadeInAudio(path, options.crossfade, !!waitToPlay, volume)
+            fadeInAudio(path, options.crossfade, !!waitToPlay, newVolume)
         }
 
         this.initAudio(path, waitToPlay)
@@ -214,8 +214,8 @@ export class AudioPlayer {
         else this.pause(id)
     }
 
-    static updateVolume(id: string | null = null) {
-        const ids = id ? [id] : Object.keys(get(playingAudio))
+    static updateVolume(specificAudioPath: string | null = null) {
+        const ids = specificAudioPath ? [specificAudioPath] : Object.keys(get(playingAudio))
         ids.forEach((id) => {
             let newVolume = this.getVolume(id)
 

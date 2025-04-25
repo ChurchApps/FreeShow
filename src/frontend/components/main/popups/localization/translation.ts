@@ -18,10 +18,10 @@ export async function translate(text: string, language: string, source = "auto")
     return new Promise((resolve, reject) => {
         fetch(query)
             .then((a) => a.json())
-            .then((text) => {
-                text = text?.[0]?.[0]?.[0]
-                if (!text) reject("Could not get translation!")
-                return resolve(text)
+            .then((json) => {
+                const txt = json?.[0]?.[0]?.[0]
+                if (!txt) reject("Could not get translation!")
+                return resolve(txt)
             })
             .catch(reject)
     })
@@ -61,7 +61,7 @@ export async function translateShow(showId: string, languageCode: string) {
                     } catch (err) {
                         console.warn("Error when translating:", err)
                         const tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
-                        newToast("Error when translating: " + err + tip)
+                        newToast("Error when translating: " + String(err) + tip)
                     }
                     if (!translatedText.length) return
 

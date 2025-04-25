@@ -31,31 +31,31 @@ function XMLtoObject(xml: string): Bible {
     const bible = xml2json(xml, true)?.osis?.osisText || {}
     const books: any[] = []
 
-    bible.div?.forEach((book, i) => {
+    bible.div?.forEach((book, bookIndex) => {
         const bookId = book["@osisID"]
         const name = book["@name"] || defaultNames[bookId]
-        const number = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? i) + 1
+        const bookNumber = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? bookIndex) + 1
         const chapters: any[] = []
 
         if (!Array.isArray(book.chapter)) book.chapter = [book.chapter]
-        book.chapter.forEach((chapter: any, i: number) => {
-            const number = chapter["@osisID"].split(".")?.[1] ?? i + 1
+        book.chapter.forEach((chapter: any, chapterIndex: number) => {
+            const chapterNumber = chapter["@osisID"].split(".")?.[1] ?? chapterIndex + 1
             const verses: any[] = []
 
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
-            chapter.verse.forEach((verse: any, i: number) => {
+            chapter.verse.forEach((verse: any, verseIndex: number) => {
                 let text = verse["#text"] || ""
                 text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
 
-                const number = verse["@osisID"].split(".")?.[2] ?? i + 1
+                const verseNumber = verse["@osisID"].split(".")?.[2] ?? verseIndex + 1
 
-                verses.push({ number, text })
+                verses.push({ number: verseNumber, text })
             })
 
-            chapters.push({ number, verses })
+            chapters.push({ number: chapterNumber, verses })
         })
 
-        books.push({ name, number, chapters })
+        books.push({ name, number: bookNumber, chapters })
     })
 
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem

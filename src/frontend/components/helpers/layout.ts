@@ -29,7 +29,6 @@ export function cloneSlide(currentLayout: { slides: { [key: string]: Slide }; la
 
     currentLayout.slides[newSlideId] = newSlide
 
-    console.log("NEW SLIDE CLONE", newSlide)
     return currentLayout
 }
 

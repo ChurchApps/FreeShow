@@ -12,7 +12,7 @@ import { removeTemplatesFromShow } from "./show"
 // override previous history
 const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "slideStyle", "STAGE"]
 
-export async function historyAwait(s: string[], obj: History) {
+export function historyAwait(s: string[], obj: History) {
     loadShows(s)
         .then(() => {
             history(obj)
@@ -22,13 +22,13 @@ export async function historyAwait(s: string[], obj: History) {
         })
 }
 
-export function history(obj: History, undo: null | boolean = null) {
+export function history(obj: History, shouldUndo: null | boolean = null) {
     // let page: HistoryPages = obj.location?.page || "shows"
     if (!obj.location) obj.location = { page: get(activePage) as any }
     if (!obj.oldData) obj.oldData = null
     if (!obj.newData) obj.newData = null
 
-    if (undo === null) obj.time = new Date().getTime()
+    if (shouldUndo === null) obj.time = new Date().getTime()
 
     let showID: string | undefined
     if (obj.location?.show?.id) showID = obj.location.show.id
@@ -36,13 +36,13 @@ export function history(obj: History, undo: null | boolean = null) {
     const temp: any = {}
 
     if (historyActions({})[obj.id]) {
-        historyActions({ obj, undo })[obj.id]()
+        historyActions({ obj, undo: shouldUndo })[obj.id]()
     } else {
         switch (obj.id) {
             // EDIT
             // style
             case "deleteItem":
-                if (undo) _show(showID).slides([obj.location.slide!]).items(obj.location.items).add(obj.newData.items)
+                if (shouldUndo) _show(showID).slides([obj.location.slide!]).items(obj.location.items).add(obj.newData.items)
                 else old = { items: _show(showID).slides([obj.location.slide!]).items(obj.location.items).remove() }
                 _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
                 break
@@ -60,17 +60,26 @@ export function history(obj: History, undo: null | boolean = null) {
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID || "")
+                if (!shouldUndo) removeTemplatesFromShow(showID || "")
                 break
             case "setItems":
             case "setStyle":
-                old = { style: _show(showID).slides([obj.location.slide!]).items(obj.location.items).set(obj.newData.style) }
+                old = {
+                    style: _show(showID)
+                        .slides([obj.location?.slide || ""])
+                        .items(obj.location.items)
+                        .set(obj.newData.style),
+                }
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID || "")
+                if (!shouldUndo) removeTemplatesFromShow(showID || "")
                 break
             case "slideStyle":
-                old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
+                old = {
+                    style: _show(showID)
+                        .slides([obj.location?.slide || ""])
+                        .set({ key: "settings", value: obj.newData.style }),
+                }
                 break
             case "slide":
                 old = {
@@ -91,18 +100,18 @@ export function history(obj: History, undo: null | boolean = null) {
                             if (media.id === obj.newData.id) bgid = media.key
                         })
 
-                if (undo) {
+                if (shouldUndo) {
                     if (bgid) _show(showID).media([bgid]).remove()
                     _show(showID)
                         .layouts([obj.location.layout!])
                         .slides([[obj.location.layoutSlide!]])
                         .remove("background")
                 } else {
-                    const ref = _show(showID).layouts([obj.location.layout!]).ref()[0]?.[obj.location.layoutSlide!]
-                    if (ref) {
+                    const layoutRefSlide = _show(showID).layouts([obj.location.layout!]).ref()[0]?.[obj.location.layoutSlide!]
+                    if (layoutRefSlide) {
                         const cloudId = get(driveData).mediaId
-                        if (ref.data.background && cloudId && cloudId !== "default") {
-                            bgid = ref.data.background
+                        if (layoutRefSlide.data.background && cloudId && cloudId !== "default") {
+                            bgid = layoutRefSlide.data.background
                             _show(showID).media().add(obj.newData, bgid)
                         } else {
                             // look for existing media
@@ -115,8 +124,8 @@ export function history(obj: History, undo: null | boolean = null) {
                         if (!bgid) bgid = _show(showID).media().add(obj.newData)
 
                         // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
-                        if (ref.type === "parent") _show(showID).layouts([obj.location.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
-                        else _show(showID).layouts([obj.location.layout!]).slides([ref.parent?.index]).children([ref.id]).set({ key: "background", value: bgid })
+                        if (layoutRefSlide.type === "parent") _show(showID).layouts([obj.location.layout!]).slides([layoutRefSlide.index]).set({ key: "background", value: bgid })
+                        else _show(showID).layouts([obj.location.layout!]).slides([layoutRefSlide.parent?.index]).children([layoutRefSlide.id]).set({ key: "background", value: bgid })
                     }
                 }
                 break
@@ -139,7 +148,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 const audio = ref?.data?.audio || []
                 if (!ref) return
 
-                if (undo) {
+                if (shouldUndo) {
                     _show(showID).media([obj.newData.path]).remove()
                     if (audioId) {
                         audio.splice(audioId, 1)
@@ -168,7 +177,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 break
 
             default:
-                console.log(obj)
+                console.info("Missing history:", obj)
                 break
         }
     }
@@ -176,10 +185,10 @@ export function history(obj: History, undo: null | boolean = null) {
     if (temp.obj) obj = temp.obj
 
     // set old
-    if (old && !undo && !obj.oldData) obj.oldData = old
+    if (old && !shouldUndo && !obj.oldData) obj.oldData = old
 
     if (obj.save === false) return
-    if (undo === null) redoHistory.set([])
+    if (shouldUndo === null) redoHistory.set([])
 
     // TODO: remove history obj if oldData is exactly the same as newdata
 
@@ -197,7 +206,7 @@ export function history(obj: History, undo: null | boolean = null) {
     // TODO: slide text edit, dont override different style keys!
     // }
 
-    if (undo) {
+    if (shouldUndo) {
         redoHistory.update((rh: History[]) => {
             rh.push(obj)
 
@@ -210,7 +219,12 @@ export function history(obj: History, undo: null | boolean = null) {
         undoHistory.update((uh: History[]) => {
             // if id and location is equal push new data to previous stored
             // not: project | newProject | newFolder | addShowToProject | slide
-            if (undo === null && (override.includes(obj.id) || obj.location?.override) && uh[uh.length - 1]?.id === obj.id && JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))) {
+            if (
+                shouldUndo === null &&
+                (override.includes(obj.id) || obj.location?.override) &&
+                uh[uh.length - 1]?.id === obj.id &&
+                JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))
+            ) {
                 // override, but keep previousData!!!
                 const newestData = obj.newData
                 if (newestData?.previousData) newestData.previousData = uh[uh.length - 1].newData.previousData
@@ -236,8 +250,8 @@ export function history(obj: History, undo: null | boolean = null) {
         deselect()
     }
 
-    console.log("UNDO: ", [...get(undoHistory)])
-    console.log("REDO: ", [...get(redoHistory)])
+    console.info("UNDO: ", [...get(undoHistory)])
+    console.info("REDO: ", [...get(redoHistory)])
 }
 
 export const undo = () => {
@@ -254,7 +268,7 @@ export const undo = () => {
     lastUndo!.oldData = clone(lastUndo!.newData)
     lastUndo!.newData = oldData
 
-    console.log("UNDO", [...get(undoHistory)], [...get(redoHistory)])
+    console.info("UNDO", [...get(undoHistory)], [...get(redoHistory)])
 
     history(lastUndo!, true)
 }
@@ -273,7 +287,7 @@ export const redo = () => {
     lastRedo!.oldData = clone(lastRedo!.newData)
     lastRedo!.newData = oldData
 
-    console.log("REDO", [...get(undoHistory)], [...get(redoHistory)])
+    console.info("REDO", [...get(undoHistory)], [...get(redoHistory)])
 
     history(lastRedo!, false)
 }

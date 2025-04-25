@@ -167,17 +167,16 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             }
 
-            function updateKeyData(a, newValue) {
-                if (!a[id]) return a
-                console.log(newValue, indexes, keys, a[id][key], subkey)
+            function updateKeyData(keyData, newValue) {
+                if (!keyData[id]) return keyData
 
-                if (indexes?.length && Array.isArray(a[id][key])) {
-                    if (!a[id][key].length && newValue.length) {
-                        a[id][key] = newValue
-                        return a
+                if (indexes?.length && Array.isArray(keyData[id][key])) {
+                    if (!keyData[id][key].length && newValue.length) {
+                        keyData[id][key] = newValue
+                        return keyData
                     }
 
-                    a[id][key] = a[id][key].map((value, i) => {
+                    keyData[id][key] = keyData[id][key].map((value, i) => {
                         if (indexes?.length && !indexes.includes(i)) return value
                         const currentIndex = indexes.findIndex((a) => a === i)
                         const replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
@@ -190,52 +189,52 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         return replacerValue
                     })
 
-                    a[id][key] = a[id][key].filter((a) => a !== undefined)
+                    keyData[id][key] = keyData[id][key].filter((a) => a !== undefined)
 
-                    return a
+                    return keyData
                 }
 
                 if (keys?.length) {
                     keys.forEach((currentKey) => {
-                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || data.dataIsArray ? newValue : newValue[currentKey]
+                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || keyData.dataIsArray ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
-                            if (!a[id][key]?.[currentKey]) return
-                            if (index === -1) a[id][key][currentKey][subkey].push(...replacerValue)
-                            else a[id][key][currentKey][subkey] = replacerValue
+                            if (!keyData[id][key]?.[currentKey]) return
+                            if (index === -1) keyData[id][key][currentKey][subkey].push(...replacerValue)
+                            else keyData[id][key][currentKey][subkey] = replacerValue
                             return
                         }
 
-                        if (index === -1) a[id][key][currentKey].push(...replacerValue)
-                        else a[id][key][currentKey] = replacerValue
+                        if (index === -1) keyData[id][key][currentKey].push(...replacerValue)
+                        else keyData[id][key][currentKey] = replacerValue
                     })
-                    return a
+                    return keyData
                 }
 
                 if (subkey) {
-                    if (!a[id][key]) a[id][key] = {}
+                    if (!keyData[id][key]) keyData[id][key] = {}
 
                     // insert at index
-                    if (index !== undefined && Array.isArray(a[id][key][subkey])) {
-                        if (index === -1) a[id][key][subkey].push(newValue)
-                        else a[id][key][subkey].splice(index, 0, newValue)
-                        return a
+                    if (index !== undefined && Array.isArray(keyData[id][key][subkey])) {
+                        if (index === -1) keyData[id][key][subkey].push(newValue)
+                        else keyData[id][key][subkey].splice(index, 0, newValue)
+                        return keyData
                     }
 
-                    a[id][key][subkey] = newValue
-                    return a
+                    keyData[id][key][subkey] = newValue
+                    return keyData
                 }
 
                 // insert at index
-                if (index !== undefined && Array.isArray(a[id][key])) {
-                    if (index === -1) a[id][key].push(newValue)
-                    else a[id][key].splice(index, 0, newValue)
-                    return a
+                if (index !== undefined && Array.isArray(keyData[id][key])) {
+                    if (index === -1) keyData[id][key].push(newValue)
+                    else keyData[id][key].splice(index, 0, newValue)
+                    return keyData
                 }
 
-                a[id][key] = newValue
-                return a
+                keyData[id][key] = newValue
+                return keyData
             }
         },
         SHOWS: async () => {
@@ -343,7 +342,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!show) return
 
                     // remove from deleted when restored
-                    deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
+                    deletedShows.set(get(deletedShows).filter((deleted) => deleted.id !== id))
 
                     // return if old show is modified after new show
                     const oldModified = a[id]?.timestamps?.modified || 0
@@ -412,12 +411,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // remove any show in the active project
                 // only active because of undo
                 if (get(activeProject)) {
-                    const shows = get(projects)[get(activeProject)!]?.shows || []
-                    let newShows = shows
+                    const projectItems = get(projects)[get(activeProject)!]?.shows || []
+                    let newShows = projectItems
                     showsList.forEach(({ id }) => {
                         newShows = newShows.filter((a) => a.id !== id)
                     })
-                    if (showsList.length < shows.length) {
+                    if (showsList.length < projectItems.length) {
                         history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
                     }
                 }
@@ -468,7 +467,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
             slides.forEach((slide, i) => {
-                let id = slide.id
+                let slideId = slide.id
                 delete slide.id
                 const slideIndex = slide.index ?? index
                 delete slide.index
@@ -484,9 +483,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 // add custom
                 const isParent = slide.group !== null
-                if (!id) {
+                if (!slideId) {
                     error("missing default slide id, may break undo")
-                    id = uid()
+                    slideId = uid()
                 }
 
                 if (deleting) {
@@ -494,41 +493,41 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     showsCache.update((a) => {
                         if (!a[showId]?.layouts?.[layout]) return a
 
-                        const slides = a[showId].layouts[layout].slides
-                        let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
+                        const layoutSlides = a[showId].layouts[layout].slides
+                        let newSlides = clone(layoutSlides).filter((layoutSlide, layoutSlideIndex) => (slideIndex !== undefined ? layoutSlideIndex !== slideIndex : layoutSlide.id !== slideId))
 
                         if (type === "delete") {
-                            Object.keys(a[showId].slides).forEach((slideId) => {
-                                const slide = a[showId].slides[slideId]
+                            Object.keys(a[showId].slides).forEach((currentSlideId) => {
+                                const currentSlide = a[showId].slides[currentSlideId]
 
-                                if (slideId !== id) {
+                                if (currentSlideId !== currentSlideId) {
                                     // remove from other slides
-                                    const childIndex = slide.children?.indexOf(id) ?? -1
-                                    if (childIndex >= 0) slide.children!.splice(childIndex, 1)
+                                    const childIndex = currentSlide.children?.indexOf(currentSlideId) ?? -1
+                                    if (childIndex >= 0) currentSlide.children!.splice(childIndex, 1)
                                     return
                                 }
 
                                 if (isParent) {
                                     // make first child a parent
-                                    if (!slide.children?.length) return
-                                    const firstChildId = slide.children[0]
-                                    const newChildren = clone(slide.children.slice(1))
+                                    if (!currentSlide.children?.length) return
+                                    const firstChildId = currentSlide.children[0]
+                                    const newChildren = clone(currentSlide.children.slice(1))
 
                                     // make parent
-                                    a[showId].slides[firstChildId].globalGroup = slide.globalGroup
-                                    a[showId].slides[firstChildId].group = slide.group
-                                    a[showId].slides[firstChildId].color = slide.color
+                                    a[showId].slides[firstChildId].globalGroup = currentSlide.globalGroup
+                                    a[showId].slides[firstChildId].group = currentSlide.group
+                                    a[showId].slides[firstChildId].color = currentSlide.color
                                     a[showId].slides[firstChildId].children = newChildren
 
                                     // add to layout
-                                    newSlides = clone(slides).map((layoutSlideRef) => {
-                                        if (layoutSlideRef.id !== id) return layoutSlideRef
+                                    newSlides = clone(layoutSlides).map((layoutSlideRef) => {
+                                        if (layoutSlideRef.id !== currentSlideId) return layoutSlideRef
 
                                         // clone layout data
-                                        const newChildren = clone(layoutSlideRef.children || {})
-                                        const newLayoutRef = { id: firstChildId, ...newChildren[firstChildId], children: {} }
-                                        delete newChildren[firstChildId]
-                                        newLayoutRef.children = newChildren
+                                        const newLayoutChildren = clone(layoutSlideRef.children || {})
+                                        const newLayoutRef = { id: firstChildId, ...newLayoutChildren[firstChildId], children: {} }
+                                        delete newLayoutChildren[firstChildId]
+                                        newLayoutRef.children = newLayoutChildren
 
                                         return newLayoutRef
                                     })
@@ -549,11 +548,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     const slideData = clone(slide)
                     if (data.addItems === false) slideData.items = []
 
-                    _show(showId).slides([id]).add([slideData], isParent)
+                    _show(showId).slides([slideId]).add([slideData], isParent)
 
                     // layout
                     const layoutValue = data.layouts?.[i] || {}
-                    layoutValue.id = id
+                    layoutValue.id = slideId
 
                     // TODO: add media to show if it doesent have it
                     // if (data.background && !_show(showId).media([data.background]).get()[0]) {
@@ -572,7 +571,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         // find existing
                         const existingBackgrounds = _show(showId).get("media")
-                        const existingId = Object.keys(existingBackgrounds).find((id) => existingBackgrounds[id].path === background.path)
+                        const existingId = Object.keys(existingBackgrounds).find((mediaId) => existingBackgrounds[mediaId].path === background.path)
                         if (existingId) id = existingId
 
                         const bgId = _show(showId).media().add(background, id)
@@ -597,7 +596,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             let oldIndex = newChildren.indexOf(slide.oldChild)
                             if (oldIndex < 0) oldIndex = newChildren.length
 
-                            newChildren = addToPos(newChildren, [id], oldIndex)
+                            newChildren = addToPos(newChildren, [slideId], oldIndex)
 
                             _show(showId).slides([parent.id]).set({ key: "children", value: newChildren })
 
@@ -607,11 +606,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             // newLayoutChildren[id] = parent.data.children?.[slide.oldChild] || {}
                             // _show(showId).layouts([layout]).slides([parent.index]).set({ key: "children", value: newLayoutChildren })
                         } else {
-                            _show(showId).slides([id]).set({ key: "group", value: "" })
+                            _show(showId).slides([slideId]).set({ key: "group", value: "" })
                             _show(showId)
                                 .layouts([layout])
                                 .slides()
-                                .add([{ ...layoutValue, id }])
+                                .add([{ ...layoutValue, id: slideId }])
                         }
                     }
 
@@ -946,7 +945,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 keys.forEach((key, i) => {
                     // for overlays, add full array
                     let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : data.dataIsArray === false ? values[valueIndex] || values[i] : values[i]?.[valueIndex] || values[valueIndex] || values[i]
-                    console.log(value, valueIndex, values, keys, key, data)
 
                     if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
 
@@ -964,7 +962,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
             // change the values of show items
             const deleting = !!obj.oldData
             data = (deleting ? obj.oldData : obj.newData) || {}
-            console.log(obj, deleting)
 
             const key: string | null = data.key || null
 

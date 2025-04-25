@@ -276,7 +276,7 @@ export function storeSubscriber() {
 
     driveKeys.subscribe(driveConnect)
 
-    refreshSlideThumbnails.subscribe((_) => {
+    refreshSlideThumbnails.subscribe(() => {
         setTimeout(() => {
             refreshSlideThumbnails.set(false)
         })

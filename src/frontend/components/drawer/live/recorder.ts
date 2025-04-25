@@ -34,7 +34,6 @@ export function stopMediaRecorder() {
 }
 
 function handleDataAvailable(e: any) {
-    console.log("Video available")
     recordedChunks.push(e.data)
 }
 

@@ -57,7 +57,7 @@ export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>, lis
     window.api.send(MAIN, { channel: id, data: value }, listenerId)
 }
 
-export async function receiveMainGlobal() {
+export function receiveMainGlobal() {
     window.api.receive(MAIN, async (msg: MainReceiveValue | ToMainReceiveValue, listenerId?: string) => {
         const id = msg.channel
         if (!Object.values({ ...Main, ...ToMain }).includes(id)) throw new Error(`Invalid channel: ${id}`)

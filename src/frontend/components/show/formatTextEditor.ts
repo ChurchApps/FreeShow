@@ -47,13 +47,13 @@ export function formatText(text: string, showId = "") {
     let newLayoutSlides: SlideData[] = []
 
     const doneGroupedSlides: { text: string; slides: Slide[] }[] = []
-    groupedNewSlides.forEach(({ text, slides }) => {
+    groupedNewSlides.forEach(({ text: newText, slides: slidesNew }) => {
         let matchFound = false
 
         // check matching from existing slides (both old and new)
         ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old) => {
             if (matchFound) return
-            if (old.text !== text) return
+            if (old.text !== newText) return
 
             matchFound = true
 
@@ -61,41 +61,41 @@ export function formatText(text: string, showId = "") {
             newLayoutSlides.push({ id })
 
             // set changed children
-            if (old.slides.length !== slides.length) {
-                newSlides[id] = slides.shift()!
+            if (old.slides.length !== slidesNew.length) {
+                slidesNew[id] = slidesNew.shift()!
 
-                if (slides.length) {
+                if (slidesNew.length) {
                     // children
-                    const children: string[] = []
-                    slides.forEach((slide) => {
+                    const newChildren: string[] = []
+                    slidesNew.forEach((slide) => {
                         const childId = uid()
-                        children.push(childId)
-                        newSlides[childId] = slide
+                        newChildren.push(childId)
+                        slidesNew[childId] = slide
                     })
 
-                    newSlides[id].children = children
+                    slidesNew[id].children = newChildren
                 }
             }
         })
 
         if (matchFound) return
-        doneGroupedSlides.push({ text, slides })
+        doneGroupedSlides.push({ text: newText, slides: slidesNew })
 
         const children: string[] = []
-        slides.forEach((_slide, i) => {
+        slidesNew.forEach((_slide, i) => {
             if (i > 0) {
-                slides[i].id = uid()
-                children.push(slides[i].id!)
+                slidesNew[i].id = uid()
+                children.push(slidesNew[i].id!)
             }
         })
-        slides[0].id = uid()
-        if (children.length) slides[0].children = children
+        slidesNew[0].id = uid()
+        if (children.length) slidesNew[0].children = children
 
-        slides.forEach((slide) => {
-            newSlides[slide.id || ""] = slide
+        slidesNew.forEach((slide) => {
+            slidesNew[slide.id || ""] = slide
         })
 
-        newLayoutSlides.push({ id: slides[0].id })
+        newLayoutSlides.push({ id: slidesNew[0].id })
     })
 
     const oldLayoutSlides = show.layouts[_show(showId).get("settings.activeLayout")].slides
@@ -130,24 +130,24 @@ export function formatText(text: string, showId = "") {
             const idCommingUp = newLayoutSlides.find((a, index) => index > i && a.id === id)
             if (idCommingUp) return
 
-            const oldLayoutSlide = oldLayoutSlides[0]
-            const oldSlideChildren: string[] = show.slides[oldLayoutSlide.id]?.children || []
+            const oldLayoutSlide2 = oldLayoutSlides[0]
+            const oldSlideChildren: string[] = show.slides[oldLayoutSlide2.id]?.children || []
 
             // find children data
-            if (oldLayoutSlide.children) {
+            if (oldLayoutSlide2.children) {
                 const newChildrenData: { [key: string]: any } = {}
-                oldSlideChildren.forEach((oldChildId, i) => {
-                    const newChildId = newSlides[id].children?.[i]
+                oldSlideChildren.forEach((oldChildId, childIndex) => {
+                    const newChildId = newSlides[id].children?.[childIndex]
                     if (!newChildId) return
 
                     replacedIds[newChildId] = oldChildId
-                    newChildrenData[newChildId] = oldLayoutSlide.children![oldChildId]
+                    newChildrenData[newChildId] = oldLayoutSlide2.children![oldChildId]
                 })
-                oldLayoutSlide.children = newChildrenData
+                oldLayoutSlide2.children = newChildrenData
             }
 
-            replacedIds[id] = oldLayoutSlide.id
-            newLayoutSlides[i] = { ...oldLayoutSlide, id }
+            replacedIds[id] = oldLayoutSlide2.id
+            newLayoutSlides[i] = { ...oldLayoutSlide2, id }
             oldLayoutSlides.splice(0, 1)
             return
         }
@@ -164,8 +164,8 @@ export function formatText(text: string, showId = "") {
     const allOldSlideIds = Object.keys(show.slides)
 
     let allUsedSlidesIds: string[] = []
-    Object.values(show.layouts).forEach(({ slides }) => {
-        allUsedSlidesIds.push(...slides.map(({ id }) => id))
+    Object.values(show.layouts).forEach(({ slides: layoutSlides }) => {
+        allUsedSlidesIds.push(...layoutSlides.map(({ id }) => id))
     })
     allUsedSlidesIds = removeDuplicates(allUsedSlidesIds)
 
@@ -190,24 +190,24 @@ export function formatText(text: string, showId = "") {
         const oldSlide = clone(show.slides[oldSlideId] || {})
         const oldTextboxes = getTextboxes(oldSlide.items || [])
         if (oldTextboxes.length && oldSlideId !== slideId) {
-            slide.items.forEach((a, i) => {
+            slide.items.forEach((item, i) => {
                 const b = oldTextboxes[i]
-                if (b.style) a.style = b.style
-                ;(a.lines || []).forEach((line, j) => {
+                if (b.style) item.style = b.style
+                ;(item.lines || []).forEach((line, j) => {
                     const c = b.lines?.[j] || b.lines?.[0]
                     if (c?.align) line.align = c?.align
 
                     // remove customType
-                    const text = (c?.text || []).filter((a) => !a.customType)
-                    if (text[0] && line.text?.[0]) {
-                        if (text[0].style) line.text[0].style = text[0]?.style
+                    const filteredText = (c?.text || []).filter((a) => !a.customType)
+                    if (filteredText[0] && line.text?.[0]) {
+                        if (filteredText[0].style) line.text[0].style = filteredText[0]?.style
                     }
                 })
 
                 // add auto size etc.
                 const textboxKeys = ["auto", "actions", "autoFontSize", "bindings", "chords", "textFit"]
                 textboxKeys.forEach((key) => {
-                    if (b[key]) a[key] = b[key]
+                    if (b[key]) item[key] = b[key]
                 })
             })
             // newSlides[slideId].items = slide.items
@@ -379,7 +379,7 @@ function groupSlides(slides: Slide[]) {
 
         // adding length so line breaks with no text changes works
         const linesLength = textItems.reduce((value, item) => (value += item.lines?.length || 0), 0)
-        slideGroups[currentIndex].text += fullOldSlideText + linesLength
+        slideGroups[currentIndex].text += fullOldSlideText + String(linesLength)
     })
 
     return slideGroups

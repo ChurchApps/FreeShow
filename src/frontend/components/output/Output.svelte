@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { Styles } from "../../../types/Settings"
-    import type { LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
@@ -176,9 +176,9 @@
     }
 
     // ANIMATE
-    let animationData: any = {}
+    let animationData: AnimationData = {}
     let currentAnimationId = ""
-    $: slideAnimation = slideData?.actions?.animate || {}
+    $: slideAnimation = slideData?.actions?.animate || null
 
     $: if (slide) stopAnimation()
     onDestroy(stopAnimation)
@@ -190,7 +190,7 @@
     // TODO: play slide animations on each textbox so animation can continue while transitioning
     $: if (slideAnimation) initializeAnimation()
     async function initializeAnimation() {
-        if (!Object.keys(slideAnimation).length) {
+        if (!Object.keys(slideAnimation || {}).length) {
             stopAnimation()
             return
         }
@@ -225,7 +225,7 @@
             if (typeof animationData.newIndex !== "number") return
 
             // stop if ended & not repeating
-            if (!animationData.animation.repeat && !animationData.animation.actions[animationData.newIndex]) return
+            if (!animationData.animation?.repeat && !animationData.animation?.actions[animationData.newIndex]) return
 
             animate(animationData.newIndex)
         }

@@ -43,9 +43,9 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
                 // fallback key
                 if (response.status >= 400) {
                     isFallback = true
-                    console.log("Could not fetch, trying fallback key")
+                    console.error("Could not fetch, trying fallback key")
                     fetch(urls[load], { headers: { "api-key": getKey("bibleapi_fallback") } })
-                        .then((response) => response.json())
+                        .then((response1) => response1.json())
                         .then(manageResult)
                         .catch((e) => {
                             clearTimeout(fetchTimeout[active])
@@ -80,9 +80,9 @@ export function searchBibleAPI(active: string, searchQuery: string) {
             .then((response) => {
                 // fallback key
                 if (response.status >= 400) {
-                    console.log("Could not fetch, trying fallback key")
+                    console.error("Could not fetch, trying fallback key")
                     fetch(url, { headers: { "api-key": getKey("bibleapi_fallback") } })
-                        .then((response) => response.json())
+                        .then((response1) => response1.json())
                         .then((data) => resolve(data.data))
                         .catch((e) => {
                             reject(e)
@@ -217,8 +217,8 @@ export function splitText(value: string, maxLength: number) {
             }
         }
 
-        const string = value.substring(start, end).trim()
-        splitted.push(string)
+        const trimmedValue = value.substring(start, end).trim()
+        splitted.push(trimmedValue)
 
         start = end + 1
     }
@@ -263,7 +263,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
         const verses = getSplittedVerses(bible.verses)
 
         let verseLine = 0
-        sorted.forEach((s: any, i: number) => {
+        sorted.forEach((s: any, rangeIndex: number) => {
             const slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
 
@@ -281,7 +281,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
             // verse number
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
-                if (i === 0) size *= 1.2
+                if (rangeIndex === 0) size *= 1.2
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
                 const splitted = s.toString().split("_")
@@ -357,17 +357,17 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
             slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
-            if (onlyOne || (i + 1) % get(scriptureSettings).versesPerSlide > 0) return
+            if (onlyOne || (rangeIndex + 1) % get(scriptureSettings).versesPerSlide > 0) return
 
             if (!disableReference && bibleIndex + 1 >= bibles.length) {
-                let range: any[] = onlyOne ? sorted : sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
+                let range: any[] = onlyOne ? sorted : sorted.slice(rangeIndex - get(scriptureSettings).versesPerSlide + 1, rangeIndex + 1)
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
                 indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
             }
 
-            if (i + 1 >= sorted.length) return
+            if (rangeIndex + 1 >= sorted.length) return
 
             slideIndex++
             verseLine = 0

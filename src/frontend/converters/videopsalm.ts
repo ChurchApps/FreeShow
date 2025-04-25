@@ -120,15 +120,16 @@ export function convertVideopsalm(data: any) {
         const importingText = get(dictionary).popup?.importing || "Importing"
 
         const album: string = content?.Text
-        if (content.Songs?.length) asyncLoop()
+        const songsCount: number = content.Songs?.length || 0
+        if (songsCount) asyncLoop()
 
         function asyncLoop() {
             const song: Song = content.Songs[i]
             const title = (song.Text || "").replaceAll("<br>", "")
 
-            const percentage: string = ((i / content.Songs.length) * 100).toFixed()
+            const percentage: string = ((i / songsCount) * 100).toFixed()
             activePopup.set("alert")
-            alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + title)
+            alertMessage.set(importingText + " " + String(i) + "/" + String(songsCount) + " (" + percentage + "%)" + "<br>" + title)
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
@@ -153,7 +154,7 @@ export function convertVideopsalm(data: any) {
 
             tempShows.push({ id: showId, show })
 
-            if (i < content.Songs.length - 1) {
+            if (i < songsCount - 1) {
                 i++
                 requestAnimationFrame(asyncLoop)
             } else {
@@ -173,7 +174,7 @@ function parseContent(content: string): VideoPsalm | null {
         console.error(e)
         const posError = e.toString().replace(/ *\([^)]*\) */g, "")
         const pos = Number(posError.replace(/\D+/g, "") || 100)
-        console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
+        console.info(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
 
         if (pos === previousIndex) return newContent
 
@@ -192,7 +193,7 @@ function parseContent(content: string): VideoPsalm | null {
 }
 
 const removeKeys = ["Body", "Background", "Footer", "Header", "Version"]
-function removeStyle(s) {
+function removeStyle(s: string) {
     if (!removeKeys.find((key) => s.includes(`{${key}:`))) return s
 
     let openCount = 0
@@ -218,7 +219,7 @@ function fixText(s: string, i: number) {
 
     let textContent = s.slice(openingIndex, closingIndex)
     let keyword: string | undefined = ""
-    while ((keyword = keys.find((keyword) => textContent.includes(keyword)))) {
+    while ((keyword = keys.find((a) => textContent.includes(a)))) {
         const index = textContent.indexOf(keyword)
         // obfusticate keyword
         keyword = keyword.slice(0, 1) + "[[==]]" + keyword.slice(1)
@@ -276,16 +277,16 @@ function createSlides({ Verses, Sequence }: Song) {
                 let chordStart = t.indexOf("[")
                 if (chordStart < 0) chordStart = t.length
 
-                const text = t.slice(0, chordStart)
-                newText += text
+                const chordText = t.slice(0, chordStart)
+                newText += chordText
 
                 const chord = t.slice(chordStart + 1)
                 if (!chord) return
                 // only: [Gm], not: [info] [x4]
                 if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
                 else {
-                    const id = uid(5)
-                    chords.push({ id, pos: newText.length, key: chord })
+                    const chordId = uid(5)
+                    chords.push({ id: chordId, pos: newText.length, key: chord })
                 }
             })
 

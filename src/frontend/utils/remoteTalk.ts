@@ -35,7 +35,7 @@ export const receiveREMOTE: any = {
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
-        initializeRemote(msg.id)
+        initializeRemote()
 
         return msg
     },
@@ -48,7 +48,7 @@ export const receiveREMOTE: any = {
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
-        initializeRemote(msg.id)
+        initializeRemote()
 
         return msg
     },
@@ -59,7 +59,6 @@ export const receiveREMOTE: any = {
     SHOW: async (msg: any) => {
         // msg.data = filterObjectArray(get(shows)[msg.data], [""])
         const showID: string = msg.data
-        console.log(msg)
 
         if (msg.id) {
             setConnectedState("REMOTE", msg.id, "active", showID)
@@ -171,8 +170,7 @@ export const receiveREMOTE: any = {
 }
 
 let oldOutSlide = ""
-export function initializeRemote(id: string) {
-    console.log(id)
+export function initializeRemote() {
     send(REMOTE, ["ACCESS"])
 
     sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })

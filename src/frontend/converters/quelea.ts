@@ -96,7 +96,7 @@ function createSlides(song: Song) {
 
     if (!Array.isArray(lyrics)) lyrics = [lyrics]
     lyrics.forEach((slideLine, slideIndex) => {
-        const lines = (slideLine.lyrics || "").split("\n").filter(Boolean)
+        const allLines = (slideLine.lyrics || "").split("\n").filter(Boolean)
         const groupName = slideLine["@title"] || ""
 
         const id: string = uid()
@@ -105,14 +105,14 @@ function createSlides(song: Song) {
         let items: Item[] = [
             {
                 style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                lines: parseLines(lines),
+                lines: parseLines(allLines),
             },
         ]
 
         // custom translations
         const tItems: Item[] = []
-        translationItems.forEach(({ name, lyrics }) => {
-            const lines = (lyrics[slideIndex] || "").split("\n").filter(Boolean)
+        translationItems.forEach(({ name, lyrics: lineTexts }) => {
+            const lines = (lineTexts[slideIndex] || "").split("\n").filter(Boolean)
             tItems.push(clone(items[0]))
             tItems[tItems.length - 1].language = name
             tItems[tItems.length - 1].lines = parseLines(lines)

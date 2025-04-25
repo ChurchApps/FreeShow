@@ -134,12 +134,12 @@ const loadActions = {
         if (!data) return []
 
         const showMedia: { [key: string]: Media } = _show().get().media
-        const media: (ContextMenuItem | "SEPERATOR")[] = []
+        const mediaList: (ContextMenuItem | "SEPERATOR")[] = []
 
         // get background
         const bg = data.background
         if (bg && showMedia[bg]?.name) {
-            media.push({
+            mediaList.push({
                 id: bg,
                 label: removeExtension(showMedia[bg].name!),
                 translate: false,
@@ -150,8 +150,8 @@ const loadActions = {
         // get overlays
         const ol = data.overlays || []
         if (ol.length) {
-            if (media.length) media.push("SEPERATOR")
-            media.push(
+            if (mediaList.length) mediaList.push("SEPERATOR")
+            mediaList.push(
                 ...sortByName(
                     ol.map((id: string) => ({ id, label: get(overlays)[id]?.name, translate: false, icon: "overlays" })),
                     "label"
@@ -162,7 +162,7 @@ const loadActions = {
         // get audio
         const audio = data.audio || []
         if (audio.length) {
-            if (media.length) media.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPERATOR")
             const audioItems = sortByName(
                 audio.map((id: string) => {
                     const name = showMedia[id]?.name || ""
@@ -175,13 +175,13 @@ const loadActions = {
                 }),
                 "label"
             )
-            media.push(...audioItems)
+            mediaList.push(...audioItems)
         }
 
         // get mics
         const mics = data.mics || []
         if (mics.length) {
-            if (media.length) media.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPERATOR")
             const micItems = sortByName(
                 mics.map((mic) => ({
                     id: mic.id,
@@ -191,13 +191,13 @@ const loadActions = {
                 })),
                 "label"
             )
-            media.push(...micItems)
+            mediaList.push(...micItems)
         }
 
         // get slide actions
         const slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
-            if (media.length) media.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPERATOR")
             const actionItems = sortByName(
                 slideActions.map((action) => {
                     const triggerId = getActionTriggerId(action.triggers?.[0])
@@ -212,12 +212,12 @@ const loadActions = {
                 }),
                 "label"
             )
-            media.push(...actionItems)
+            mediaList.push(...actionItems)
         }
 
-        setContextData("layers", !!media?.length)
+        setContextData("layers", !!mediaList?.length)
 
-        if (media.length) return media
+        if (mediaList.length) return mediaList
         return [{ label: "empty.general", disabled: true }]
     },
     keys: () => {

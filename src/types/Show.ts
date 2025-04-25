@@ -1,5 +1,6 @@
-import type { Resolution } from "./Settings"
 import type { Input } from "./Input"
+import type { Animation } from "./Output"
+import type { Resolution } from "./Settings"
 
 export interface Shows {
     [key: string]: Show
@@ -285,7 +286,7 @@ export interface SlideData {
 
         receiveMidi?: string
         nextAfterMedia?: boolean
-        animate?: any
+        animate?: Animation
         slide_shortcut?: { key: string }
         startShow?: { id: string }
 
@@ -329,6 +330,15 @@ export interface TransitionData {
     delay?: number // item in/out wait
 }
 
+export interface AnimationData {
+    id?: string
+    animation?: Animation
+    transitions?: { [key: string]: string[] }
+    styles?: { [key: string]: string[] }
+    style?: { [key: string]: string }
+    newIndex?: number
+}
+
 export interface Media {
     // name?: string
     id?: string
@@ -350,7 +360,7 @@ export interface Midi {
     tags?: string[]
     // action?: string
     // actionData?: any
-    shows?: any[] // ??
+    shows?: any[] // play specific show slide directly from midi input
     customActivation?: string
     keypressActivate?: string
     enabled?: boolean // should customActivation trigger

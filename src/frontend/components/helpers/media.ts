@@ -292,10 +292,10 @@ export function getThumbnailPath(input: string, size: number) {
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    const encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
+    const encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getThumbnailFileName(hashCode(input))])
     return encodedPath
 
-    function getFileName(path, size) {
+    function getThumbnailFileName(path: string) {
         return `${path}-${size}.png`
     }
 }
@@ -373,10 +373,10 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     const mediaElem = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        const mediaSize = isImage
+        const currentMediaSize = isImage
             ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight }
             : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
-        const newSize = getNewSize(mediaSize, data.size || {})
+        const newSize = getNewSize(currentMediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
@@ -390,7 +390,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         const hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement).complete : (mediaElem as HTMLVideoElement).readyState === 4), 20)
         if (!hasLoaded) return exit()
 
-        captureCanvasData(mediaElem, mediaSize)
+        captureCanvasData(currentMediaSize)
     })
 
     // this should not get called becaues the file is checked existing, but here in case
@@ -408,7 +408,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
-    async function captureCanvasData(media, mediaSize) {
+    async function captureCanvasData(currentMediaSize) {
         const ctx = canvas.getContext("2d")
         if (!ctx || completed) return exit()
 
@@ -416,7 +416,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         const isLessons = data.input.includes("Lessons")
         const loading = isLessons ? 3000 : 200
         await wait(loading)
-        ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(mediaElem, 0, 0, currentMediaSize.width, currentMediaSize.height, 0, 0, canvas.width, canvas.height)
 
         await wait(200)
         const dataURL = canvas.toDataURL("image/png") // , jpegQuality

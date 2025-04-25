@@ -79,8 +79,8 @@ const translate = (id: string, { parts = false } = {}) => {
     const d = get(dictionary)
 
     if (!parts) {
-        const key = id.split(".")
-        return d[key[0]]?.[key[1]] || ""
+        const splittedKey = id.split(".")
+        return d[splittedKey[0]]?.[splittedKey[1]] || ""
     }
 
     if (!id.includes("$:")) return id

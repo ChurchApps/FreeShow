@@ -108,7 +108,6 @@ export function chordMove(e: any, { textElem, item }: { textElem: HTMLElement; i
     // if (mouse.x < lineLeft) pos = 0;
     // if (mouse.x > lineElems[0].offsetWidth) pos = lineLetters;
     const pos = Math.floor(mouse.x / charWidth)
-    console.log(pos)
     if (pos > lineLetters) return
 
     const newLines = [...item.lines!]
@@ -151,8 +150,8 @@ export function loadChords(item: Item) {
     const chordsList: string[] = []
     if (!item) return chordsList
 
-    item.lines?.forEach((item) => {
-        item.chords?.forEach((chord) => {
+    item.lines?.forEach((line) => {
+        line.chords?.forEach((chord) => {
             chordsList.push(chord.key)
         })
     })

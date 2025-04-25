@@ -42,7 +42,6 @@ export function convertCalendar(data: any) {
 
         const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
-        console.log(icaEvents)
 
         const newEvents: Event[] = icaEvents.map((event) => {
             let fullDay = false
@@ -83,16 +82,16 @@ export function convertCalendar(data: any) {
                 id: event.UID,
             }
             if (!fullDay) {
-                newEvent.fromTime = from.hours + ":" + from.minutes
-                newEvent.toTime = to.hours + ":" + to.minutes
+                newEvent.fromTime = from.hours.toString() + ":" + from.minutes.toString()
+                newEvent.toTime = to.hours.toString() + ":" + to.minutes.toString()
             }
 
             // get repeats
             if (event.RRULE) {
                 const repeatData: { FREQ?: string; WKST?: "MO" | "SU"; UNTIL?: string; INTERVAL?: number; BYDAY?: string; COUNT?: string } = {}
                 event.RRULE.split(";").forEach((rule) => {
-                    const data = rule.split("=")
-                    repeatData[data[0]] = data[1]
+                    const ruleData = rule.split("=")
+                    repeatData[ruleData[0]] = ruleData[1]
                 })
 
                 let date: any = repeatData.UNTIL
@@ -126,7 +125,6 @@ export function convertCalendar(data: any) {
             return newEvent
         })
 
-        console.log(newEvents)
         // add events
         // TODO: history ?
         events.update((a) => {
@@ -140,8 +138,8 @@ export function convertCalendar(data: any) {
     })
 }
 
-function addCharAtPos(string: string, char: string, pos: number) {
-    return [string.slice(0, pos), char, string.slice(pos)].join("")
+function addCharAtPos(value: string, char: string, pos: number) {
+    return [value.slice(0, pos), char, value.slice(pos)].join("")
 }
 
 function convertToJSON(source: string): IcalObject {
@@ -154,10 +152,9 @@ function convertToJSON(source: string): IcalObject {
 
     let currentKey = ""
 
-    for (let i = 0; i < lines.length; i++) {
+    for (const line of lines) {
         let currentValue = ""
 
-        const line = lines[i]
         if (line.charAt(0) === SPACE) {
             currentObj[currentKey] += line.substr(1)
         } else {

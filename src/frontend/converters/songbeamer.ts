@@ -3,6 +3,7 @@ import { uid } from "uid"
 import type { Chords, ID, Item, Layout, Line, Show, Slide, SlideData } from "../../types/Show"
 import { TranslationMethod } from "../../types/Songbeamer"
 import { ShowObj } from "../classes/Show"
+import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
@@ -20,25 +21,6 @@ interface SongbeamerChord {
     line: number
     key: string
 }
-class SongbeamerMetadata {
-    lang_count = 1
-    title = ""
-    author = ""
-    copyright = ""
-    composer = ""
-    publisher = ""
-    comments = "" // notes
-    keywords = "" // tags
-    format = ""
-    title_format = ""
-    background_image = ""
-    number = ""
-    ccli = ""
-    tempo = 0
-    key = ""
-    chords: SongbeamerChord[][] = []
-    verse_order: { group: string; groupNumber: number | null }[] = []
-}
 
 interface SongbeamerLine {
     text: string
@@ -50,12 +32,33 @@ class SongbeamerSlide {
     groupNumber: number | null = null
     lines: SongbeamerLine[][] = []
 }
+
+const songbeamerMetadata = {
+    lang_count: 1,
+    title: "",
+    author: "",
+    copyright: "",
+    composer: "",
+    publisher: "",
+    comments: "", // notes
+    keywords: "", // tags
+    format: "",
+    title_format: "",
+    background_image: "",
+    number: "",
+    ccli: "",
+    tempo: 0,
+    key: "",
+    chords: [] as SongbeamerChord[][],
+    verse_order: [] as { group: string; groupNumber: number | null }[],
+}
+
 function getGroupId(group: string | null, groupNumber: number | null): string | null {
     if (!group) {
         return null
     }
     if (groupNumber !== null) {
-        return group + groupNumber
+        return group + groupNumber.toString()
     }
     return group
 }
@@ -151,7 +154,7 @@ function getTags(tags: string[]) {
 }
 function getOrCreateTag(name: string) {
     // get existing with same name
-    const existing = Object.entries(get(globalTags)).find(([_id, tag]) => tag.name.toLowerCase() === name.toLowerCase())
+    const existing = Object.values(get(globalTags)).find((tag) => tag.name.toLowerCase() === name.toLowerCase())
     if (existing) return existing[0]
 
     const tagId = uid(5)
@@ -168,8 +171,8 @@ function base64Utf8Decode(text: string, encoding: BufferEncoding = "utf8"): stri
     const decoder = new TextDecoder(encoding)
     return decoder.decode(bytes)
 }
-function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): SongbeamerMetadata {
-    const metadata = new SongbeamerMetadata()
+function parseMetadata(text: string, encoding: BufferEncoding = "utf8") {
+    const metadata = clone(songbeamerMetadata)
 
     text.split("\n").forEach((line: string) => {
         if (!line || line[0] !== "#") {
@@ -182,7 +185,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
 
         switch (parts[0]) {
             case "LangCount":
-                const langCount = parseInt(parts[1])
+                const langCount = parseInt(parts[1], 10)
                 if (!isNaN(langCount) && langCount > 0) {
                     metadata.lang_count = langCount
                 }
@@ -225,7 +228,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 metadata.key = parts[1].trim()
                 break
             case "Tempo":
-                const tempo = parseInt(parts[1])
+                const tempo = parseInt(parts[1], 10)
                 if (!isNaN(tempo) && tempo > 0) {
                     metadata.tempo = tempo
                 }
@@ -234,13 +237,13 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 const chords: string = base64Utf8Decode(parts[1].trim(), encoding)
                 for (const chord of chords.split("\r")) {
                     const chordParts = chord.split(",")
-                    const line = parseInt(chordParts[1])
-                    if (!Array.isArray(metadata.chords[line])) {
-                        metadata.chords[line] = []
+                    const chordLine = parseInt(chordParts[1], 10)
+                    if (!Array.isArray(metadata.chords[chordLine])) {
+                        metadata.chords[chordLine] = []
                     }
-                    metadata.chords[line].push({
+                    metadata.chords[chordLine].push({
                         x: parseFloat(chordParts[0]),
-                        line,
+                        line: chordLine,
                         key: chordParts[2],
                     })
                 }
@@ -259,8 +262,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
             case "VerseOrder":
                 const slideTags = parts[1].trim().split(",")
                 for (const tag of slideTags) {
-                    let group: string | null; let groupNumber: number | null
-                    ;({ group, groupNumber } = slideTagToGroup(tag))
+                    const { group, groupNumber } = slideTagToGroup(tag)
                     if (group !== null) {
                         metadata.verse_order.push({ group, groupNumber })
                     }
@@ -328,7 +330,7 @@ function slideTagToGroup(line: string): { group: string | null; globalGroup: str
     const tag: string = parts[0].toLowerCase()
     let groupNumber: number | null = null
     if (parts.length > 1) {
-        groupNumber = parseInt(parts[1])
+        groupNumber = parseInt(parts[1], 10)
         if (isNaN(groupNumber) || groupNumber < 1) {
             groupNumber = null
         }
@@ -345,7 +347,7 @@ function slideTagToGroup(line: string): { group: string | null; globalGroup: str
     return { group, globalGroup, groupNumber }
 }
 
-function createLayoutFromVerseOrder(metadata: SongbeamerMetadata, groupSlides: Map<string, SlideData>): SlideData[] | null {
+function createLayoutFromVerseOrder(metadata: typeof songbeamerMetadata, groupSlides: Map<string, SlideData>): SlideData[] | null {
     if (!metadata.verse_order.length || !groupSlides.size) {
         return null
     }
@@ -371,7 +373,7 @@ function getSlideIndexFromLayout(layout: SlideData[], slideId: string): number |
     }
     return null
 }
-function parseSongbeamerSlides(sections: string[], metadata: SongbeamerMetadata): SongbeamerSlide[] {
+function parseSongbeamerSlides(sections: string[], metadata: typeof songbeamerMetadata): SongbeamerSlide[] {
     const slides: SongbeamerSlide[] = []
 
     const markerRegex = /^#([a-zA-Z]+)\s+/
@@ -437,7 +439,7 @@ function parseSongbeamerSlides(sections: string[], metadata: SongbeamerMetadata)
                 }
             } else {
                 line.text = lineText.substring(langOverwrite[0].length)
-                const langNumber = parseInt(langOverwrite[2])
+                const langNumber = parseInt(langOverwrite[2], 10)
                 if (!langOverwrite[1]) {
                     ++language
                 }
@@ -542,7 +544,11 @@ function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: nu
     return textbox
 }
 
-function createSlidesMultipleLanguagesPerSlide(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerMetadata, translationMethod: TranslationMethod): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
+function createSlidesMultipleLanguagesPerSlide(
+    songbeamerSlides: SongbeamerSlide[],
+    metadata: typeof songbeamerMetadata,
+    translationMethod: TranslationMethod
+): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
     const slides: { [key: ID]: Slide } = {}
     const layout: SlideData[] = []
     const groupSlides: Map<string, SlideData> = new Map()
@@ -622,7 +628,7 @@ function createSlidesMultipleLanguagesPerSlide(songbeamerSlides: SongbeamerSlide
     return { slides, layout, groupSlides }
 }
 
-function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: number, metadata: SongbeamerMetadata): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
+function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: number, metadata: typeof songbeamerMetadata): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
     const slides: { [key: ID]: Slide } = {}
     const layout: SlideData[] = []
     const groupSlides: Map<string, SlideData> = new Map()
@@ -721,11 +727,9 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
     return { slides, layout, groupSlides }
 }
 
-function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerMetadata, settings: ImportSettings): { slides: { [key: ID]: Slide }; layouts: Layout[] } {
+function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: typeof songbeamerMetadata, settings: ImportSettings): { slides: { [key: ID]: Slide }; layouts: Layout[] } {
     let slides: { [key: ID]: Slide } = {}
     const layouts: Layout[] = []
-
-    console.log(songbeamerSlides)
 
     switch (settings.translationMethod) {
         case TranslationMethod.MultiLine:

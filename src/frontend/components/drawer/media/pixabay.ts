@@ -16,8 +16,6 @@ export async function loadFromPixabay(query = "", video = false): Promise<any[]>
         fetch(url)
             .then((response) => response.json())
             .then((data) => {
-                console.log("PIXABAY", data)
-
                 // https://pixabay.com/api/?key={API_KEY}&q=yellow+flowers&image_type=photo&pretty=true
                 hits = data.hits.map((media) => {
                     let path = media.largeImageURL

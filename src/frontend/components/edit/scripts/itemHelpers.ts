@@ -33,7 +33,7 @@ function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     return styleString
 }
 
-export function addItem(type: ItemType, id: string | null = null, options: any = {}, value = "") {
+export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "") {
     const activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id]?.settings?.template : null
     const template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
@@ -43,7 +43,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     }
     if (id) newData.id = id
 
-    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
+    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
@@ -157,15 +157,14 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     refreshEditSlide.set(true)
 }
 
-export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, slideIndex, type }: any = { type: "default" }, _updater: any = null) {
+export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null) {
     // check bindings
     if (item.bindings?.length && !item.bindings.includes(outputId)) return false
 
     if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
-    const itemsText = slideItems.reduce((value, item) => (value += getItemText(item)), "")
+    const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
-    console.log(slideIndex)
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
     // itemsText = replaceDynamicValues(itemsText, { ...ref, slideIndex })
 

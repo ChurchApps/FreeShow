@@ -3,50 +3,23 @@ import { outputs, slideTimers } from "../../stores"
 import { clone } from "./array"
 import { nextSlide } from "./showActions"
 
-// let timers: any = {}
-// let activeTimers: string[] = []
-
-export function newSlideTimer(id: string, duration: number) {
+export function newSlideTimer(timerId: string, duration: number) {
     if (duration <= 0) return
-    // timerMax = duration
 
-    console.log("CREATE SLIDE TIMER", duration)
-    console.log("CURRENT TIMERS", get(slideTimers))
-
-    // if (timers[id]) return timers[id]
-    // if (timers[id]) timers[id].stop()
-
-    // timer = { time: 0, paused: true }
-    if (get(slideTimers)[id]) {
-        get(slideTimers)[id]?.timer?.clear()
-        // delete timers[id]
+    if (get(slideTimers)[timerId]) {
+        get(slideTimers)[timerId]?.timer?.clear()
     }
 
-    // let currentOutput = getActiveOutputs(get(outputs), false, true, true)[0]
-    // let outputStyle =get(styles)[currentOutput.style] || {}
-    // let lines = outputStyle.lines || 0
-    // let currentLine = get(outputs)[currentOutput]?.out?.slide?.line || 0
-    // if (lines) duration /= lines
-    // , currentLine, lines
-
     slideTimers.update((a) => {
-        a[id] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, id) }
+        a[timerId] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, timerId) }
         return a
     })
 
     setTimeout(() => {
-        get(slideTimers)[id]?.timer?.resume()
+        get(slideTimers)[timerId]?.timer?.resume()
     }, 10)
 
     function timerEnded(id: string) {
-        // if (timer.paused) {
-        //   timer = { time: 0, paused: true }
-        //   return
-        // }
-
-        // console.log(currentOutput.out?.slide?.index)
-        // outTransition.set(null)
-
         // get and reset active element
         const activeElem = document.activeElement
         if (activeElem) {
@@ -67,28 +40,15 @@ export function newSlideTimer(id: string, duration: number) {
             return a
         })
 
-        console.log("DONE", clone(get(slideTimers)), id)
-
         nextSlide(null, false, false, true, true, id)
-        // timer = { time: 0, paused: false }
     }
-
-    // return get(timers)[id]
 }
 
-// let timer = { time: 0, paused: true }
-// let timerMax: number = 0
-// let timeObj: any = null
-// let sliderTimer: any = null
-// let autoPlay: boolean = true
-const Timer: any = function (this: any, callback: (id: string) => void, delay: number, id: string) {
+const Timer: any = function (this: any, callback: (id: string) => void, delay: number, timerId: string) {
     let timeout: NodeJS.Timeout | null
     let start: number
     let remaining: number = delay
     let options: any = {}
-
-    // let options: any = get(timers)[id]
-    // options.time = options.max - remaining / 1000
 
     this.clear = () => {
         if (timeout) clearTimeout(timeout)
@@ -96,13 +56,13 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
         timeout = null
         options.sliderTimer = null
         slideTimers.update((a) => {
-            delete a[id]
+            delete a[timerId]
             return a
         })
     }
 
     this.pause = () => {
-        options = get(slideTimers)[id]
+        options = get(slideTimers)[timerId]
         if (timeout) clearTimeout(timeout)
         clearTimeout(options.sliderTimer)
         timeout = null
@@ -116,7 +76,7 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
 
     this.resume = () => {
         if (timeout) return
-        options = get(slideTimers)[id]
+        options = get(slideTimers)[timerId]
         start = Date.now()
         remaining = (options.max - options.time) * 1000
         options.remaining = remaining
@@ -124,17 +84,16 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
         timeout = setTimeout(() => {
             if (timeout) clearTimeout(timeout)
             timeout = null
-            callback(id)
+            callback(timerId)
         }, remaining)
         options.paused = false
-        sliderTime(id)
-        console.log(get(slideTimers)[id])
+        sliderTime(timerId)
         update()
     }
 
     function update() {
         slideTimers.update((a) => {
-            a[id] = { ...a, ...options, start }
+            a[timerId] = { ...a, ...options, start }
             return a
         })
     }

@@ -33,7 +33,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         return maxFontSize
     }
 
-    const boxElem = virtualElem(elem)
+    const boxElem = virtualElem()
     if (!boxElem) return defaultFontSize
 
     const boxWidth = boxElem.clientWidth
@@ -91,16 +91,16 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         return boxElem!.scrollWidth > boxWidth || boxElem!.scrollHeight > boxHeight
     }
 
-    function addStyleToElemText(fontSize: number) {
+    function addStyleToElemText(currentFontSize: number) {
         let i = 0
         for (const textElem of textChildren) {
             if (!styles[i]) styles[i] = textElem.getAttribute("style") || ""
-            textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${fontSize}px !important;`)
+            textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize}px !important;`)
             i++
         }
     }
 
-    function virtualElem(elem: HTMLElement) {
+    function virtualElem() {
         const cloned = elem.cloneNode(true) as HTMLElement
         if (!cloned) return null
 

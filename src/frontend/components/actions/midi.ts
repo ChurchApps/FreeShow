@@ -119,11 +119,11 @@ export function receivedMidi(msg) {
 
     runAction(action, { midiIndex: index })
 
-    const shows = action?.shows || []
-    if (!shows?.length) return
+    const actionShows = action?.shows || []
+    if (!actionShows?.length) return
 
     let slidePlayed = false
-    shows.forEach(async ({ id }) => {
+    actionShows.forEach(async ({ id }) => {
         await loadShows([id])
         const refs = _show(id).layouts().ref()
 

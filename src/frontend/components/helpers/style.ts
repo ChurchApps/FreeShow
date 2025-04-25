@@ -41,7 +41,7 @@ export function getFilters(filter: string) {
     return styles
 }
 
-export function removeText(string: string): string {
+export function removeText(value: string): string {
     // .replace(/\D.+/g, "")
-    return string.replace(/[^0-9.-]/g, "")
+    return value.replace(/[^0-9.-]/g, "")
 }

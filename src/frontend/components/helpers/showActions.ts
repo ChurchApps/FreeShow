@@ -56,16 +56,16 @@ import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 
 const getProjectIndex = {
-    next: (index: number | null, shows: ProjectShowRef[]) => {
+    next: (index: number | null, items: ProjectShowRef[]) => {
         // change active show in project
         if (index === null) return 0
-        index = shows.findIndex((_a, i) => i - 1 === index)
+        index = items.findIndex((_a, i) => i - 1 === index)
         return index === null || index < 0 ? null : index
     },
-    previous: (index: number | null, shows: ProjectShowRef[]) => {
+    previous: (index: number | null, items: ProjectShowRef[]) => {
         // change active show in project
-        if (index === null) return shows.length - 1
-        index = shows.findIndex((_a, i) => i + 1 === index)
+        if (index === null) return items.length - 1
+        index = items.findIndex((_a, i) => i + 1 === index)
         return index === null || index < 0 ? null : index
     },
 }
@@ -84,26 +84,26 @@ export function checkInput(e: any) {
 }
 
 export function selectProjectShow(select: number | "next" | "previous") {
-    const shows = get(projects)[get(activeProject) || ""]?.shows
+    const items = get(projects)[get(activeProject) || ""]?.shows
     const index: null | number = (get(focusMode) ? get(activeFocus).index : get(activeShow)?.index) ?? null
-    const newIndex: number | null = !isNaN((select as any) || 0) ? select || 0 : getProjectIndex[select](index, shows)
+    const newIndex: number | null = !isNaN((select as any) || 0) ? select || 0 : getProjectIndex[select](index, items)
 
-    if (newIndex === null || !shows[newIndex]) return
+    if (newIndex === null || !items[newIndex]) return
 
     // show
-    if (!get(focusMode) && (shows[newIndex].type || "show") === "show") {
+    if (!get(focusMode) && (items[newIndex].type || "show") === "show") {
         // async waiting for show to load
         setTimeout(async () => {
             // preload show (so the layout can be changed)
-            await loadShows([shows[newIndex].id])
-            if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
+            await loadShows([items[newIndex].id])
+            if (get(showsCache)[items[newIndex].id]) swichProjectItem(newIndex, items[newIndex].id)
         })
     }
 
     // set active show in project list
     if (newIndex !== index) {
-        if (get(focusMode)) activeFocus.set({ id: shows[newIndex].id, index: newIndex, type: shows[newIndex].type })
-        else activeShow.set({ ...shows[newIndex], index: newIndex })
+        if (get(focusMode)) activeFocus.set({ id: items[newIndex].id, index: newIndex, type: items[newIndex].type })
+        else activeShow.set({ ...items[newIndex], index: newIndex })
     }
 }
 
@@ -131,7 +131,7 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide) {
     let amount = 0
     slide.items?.forEach((item) => {
-        const lines: number = item.lines?.filter((a) => a.text.filter((a) => a.value.length)?.length)?.length || 0
+        const lines: number = item.lines?.filter((line) => line.text.filter((text) => text.value.length)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
@@ -479,10 +479,6 @@ export function previousSlide(e: any, customOutputId?: string) {
         while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index--
 
         // get slide line
-        const showSlide: Slide | null =
-            _show(slide ? slide.id : "active")
-                .slides([layout[index].id])
-                .get()[0] || null
         const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
         if (amountOfLinesToShow) {
             const maxIndex = slideLines ? amountOfLinesToShow * Math.ceil(slideLines / amountOfLinesToShow) : 0
@@ -591,7 +587,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: LayoutRef[], extra = true, outputId = "", actionTimeout = 10) {
+export function updateOut(showId: string, index: number, layout: LayoutRef[], extra = true, specificOutputId = "", actionTimeout = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -609,7 +605,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     }
 
     // get output slide
-    const outputIds = outputId ? [outputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
@@ -975,7 +971,7 @@ export async function activateTrigger(triggerId: string): Promise<string> {
     if (!trigger) return ""
 
     if (!customTriggers[trigger.type]) {
-        console.log("Missing trigger:", trigger.type)
+        console.error("Missing trigger:", trigger.type)
         return "error"
     }
 
@@ -1027,35 +1023,35 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         slideIndex = outSlide?.index ?? -1
     }
 
-    const show = _show(showId).get()
-    if (type === "show" && !show) return text
+    const currentShow = _show(showId).get()
+    if (type === "show" && !currentShow) return text
 
-    getDynamicIds().forEach((id) => {
-        let textHasValue = text.includes(dynamicValueText(id))
-        if (id.includes("$") && text.includes(dynamicValueText(id.replace("$", "variable_")))) textHasValue = true
+    getDynamicIds().forEach((dynamicId) => {
+        let textHasValue = text.includes(dynamicValueText(dynamicId))
+        if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
         if (!textHasValue) return
 
-        const newValue = getDynamicValue(id, show)
-        text = text.replaceAll(dynamicValueText(id), newValue)
+        const newValue = getDynamicValueText(dynamicId, currentShow)
+        text = text.replaceAll(dynamicValueText(dynamicId), newValue)
 
         // $ = variable_
-        if (id.includes("$")) text = text.replaceAll(dynamicValueText(id.replace("$", "variable_")), newValue)
+        if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
     })
 
     return text
 
-    function getDynamicValue(id: string, show: Show | {}): string {
+    function getDynamicValueText(dynamicId: string, show: Show | object): string {
         // VARIABLE
-        if (id.includes("variable_set_")) {
-            const nameId = id.slice(13)
+        if (dynamicId.includes("variable_set_")) {
+            const nameId = dynamicId.slice(13)
             const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (variable?.type !== "random_number") return ""
 
             return variable.setName || ""
         }
 
-        if (id.includes("$") || id.includes("variable_")) {
-            const nameId = id.includes("$") ? id.slice(1) : id.slice(9)
+        if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
+            const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
             const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 
@@ -1063,13 +1059,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
 
             if (variable.enabled === false) return ""
-            if (variable.text?.includes(id)) return variable.text || ""
-            return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id })
+            if (variable.text?.includes(dynamicId)) return variable.text || ""
+            return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id: dynamicId })
         }
 
         let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
 
-        if (id.includes("video_") && get(currentWindow) === "output") {
+        if (dynamicId.includes("video_") && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
@@ -1088,8 +1084,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (!show) show = {}
 
         // META
-        if (id.includes("meta_")) {
-            const key = id.slice(5)
+        if (dynamicId.includes("meta_")) {
+            const key = dynamicId.slice(5)
             if (!Object.keys(show)) return ""
             return (show as Show).meta?.[key] || ""
         }
@@ -1105,9 +1101,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        const value = (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration }) ?? "").toString()
+        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration }) ?? "").toString()
 
-        if (id === "show_name_next" && !value && get(currentWindow) === "output") {
+        if (dynamicId === "show_name_next" && !value && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
         }
 

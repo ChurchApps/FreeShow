@@ -28,8 +28,8 @@ const areaChildren = {
     audio_playlist: ["audio"],
 }
 
-export function validateDrop(id: string, selected: SelectIds | null, children = false): boolean {
-    return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
+export function validateDrop(id: string, selectedId: SelectIds | null, children = false): boolean {
+    return areas[id]?.includes(selectedId) || (children && areaChildren[id]?.includes(selectedId))
 }
 
 export function ondrop(e: any, id: string) {
@@ -53,8 +53,8 @@ export function ondrop(e: any, id: string) {
 
     const dropdata: DropData = { id, data, trigger, center, index }
 
-    console.log("DRAG: ", sel)
-    console.log("DROP: ", dropdata)
+    console.info("DRAG: ", sel)
+    console.info("DROP: ", dropdata)
 
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }
@@ -65,5 +65,5 @@ export function ondrop(e: any, id: string) {
         return
     }
 
-    console.log("NOT ASSIGNED!", sel.id + " => " + id)
+    console.info("NOT ASSIGNED!", sel.id + " => " + id)
 }

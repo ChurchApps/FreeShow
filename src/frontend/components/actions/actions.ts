@@ -20,15 +20,15 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
     if (!action) return
     action = convertOldMidiToNewAction(action)
 
-    const triggers = action.triggers || []
-    if (!triggers.length) return
+    const actionTriggers = action.triggers || []
+    if (!actionTriggers.length) return
 
-    const data = action.actionValues || {}
+    const actionValues = action.actionValues || {}
 
     // set to active
     runningActions.set([...get(runningActions), action.id])
 
-    for (const actionId of triggers) {
+    for (const actionId of actionTriggers) {
         await runTrigger(actionId)
     }
 
@@ -43,7 +43,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
     }, 20)
 
     async function runTrigger(actionId: string) {
-        let triggerData = data[actionId] || {}
+        let triggerData = actionValues[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
         actionId = getActionTriggerId(actionId)
@@ -54,7 +54,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         }
 
         if (!API_ACTIONS[actionId]) {
-            console.log("Missing API for trigger")
+            console.error("Missing API for trigger")
             return
         }
 

@@ -83,8 +83,8 @@ export function restoreOutput() {
     outputCache.set(null)
 }
 
-export function clearBackground(outputId = "") {
-    const outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+export function clearBackground(specificOutputId = "") {
+    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
 
     outputIds.forEach((outputId) => {
         // clearVideo()
@@ -106,8 +106,8 @@ export function clearBackground(outputId = "") {
     customActionActivation("background_cleared")
 }
 
-export function clearSlide(clearAll = false) {
-    if (!clearAll) {
+export function clearSlide(shouldClearAll = false) {
+    if (!shouldClearAll) {
         // store position
         const slideCache: { [key: string]: OutSlide } = {}
         const outputIds: string[] = getActiveOutputs()
@@ -134,8 +134,8 @@ export function clearSlide(clearAll = false) {
     customActionActivation("slide_cleared")
 }
 
-export function clearOverlays(outputId = "") {
-    const outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+export function clearOverlays(specificOutputId = "") {
+    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
 
     outputIds.forEach((outputId) => {
         let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
@@ -146,11 +146,11 @@ export function clearOverlays(outputId = "") {
     lockedOverlays.set([])
 }
 
-export function clearTimers(outputId = "") {
+export function clearTimers(specificOutputId = "") {
     // clear slide timers
-    setOutput("transition", null, false, outputId)
+    setOutput("transition", null, false, specificOutputId)
 
-    const outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
     Object.keys(get(slideTimers)).forEach((id) => {
         if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })

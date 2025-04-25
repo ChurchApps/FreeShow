@@ -76,7 +76,7 @@ export const _updaters = {
             }
 
             // find any stage output window linked to this stage layout
-            const outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
+            const outputId = Object.values(get(outputs)).find((output) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
             // get first stage layout
@@ -414,7 +414,7 @@ export const _updaters = {
             // remove from stored project
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((a) => {
-                    a[data.remember.project].shows = a[data.remember.project].shows.filter((a) => a.id !== id)
+                    a[data.remember.project].shows = a[data.remember.project].shows.filter((showRef) => showRef.id !== id)
                     return a
                 })
             }
@@ -447,7 +447,7 @@ export const _updaters = {
         deselect: (id: string, { subkey }: any) => {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
-            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
+            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((layoutId) => layoutId !== subkey)[0]
             if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
@@ -624,7 +624,7 @@ function clearOverlayOutput(slideId: string) {
         outputs.update((a) => {
             Object.entries(a).forEach(([id, output]) => {
                 if (output.out?.overlays?.includes(slideId)) {
-                    a[id].out!.overlays = a[id].out!.overlays!.filter((a) => a !== slideId)
+                    a[id].out!.overlays = a[id].out!.overlays!.filter((overlayId) => overlayId !== slideId)
                 }
             })
             return a

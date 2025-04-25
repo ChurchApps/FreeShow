@@ -138,17 +138,17 @@ export class AudioPlaylist {
 
             // generate list
             if (!playlist) return []
-            let songs = playlist.songs
+            let songsList = playlist.songs
 
             const mode = playlist.mode
-            if (mode === "shuffle") songs = shuffleArray(songs)
+            if (mode === "shuffle") songsList = shuffleArray(songsList)
 
             activePlaylist.update((a) => {
-                a.songs = songs
+                a.songs = songsList
                 return a
             })
 
-            return songs
+            return songsList
         }
     }
 }
