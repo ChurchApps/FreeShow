@@ -127,18 +127,18 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageLayoutId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center={zoom >= 1}>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
-                <!-- {#key Slide} -->
-                {#each Object.entries(layout.items || {}) as [id, item]}
-                    {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables))}
-                        <Stagebox {edit} stageLayout={edit ? null : layout} {id} item={clone(item)} {ratio} {preview} bind:mouse />
-                    {/if}
-                {/each}
-                <!-- {/key} -->
+                {#key stageLayoutId}
+                    {#each Object.entries(layout.items || {}) as [id, item]}
+                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables))}
+                            <Stagebox {edit} stageLayout={edit ? null : layout} {id} item={clone(item)} {ratio} {preview} bind:mouse />
+                        {/if}
+                    {/each}
+                {/key}
             </Zoomed>
         {:else if edit}
             <Center size={2} faded>

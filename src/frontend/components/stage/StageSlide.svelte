@@ -34,7 +34,7 @@
     <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
-                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>
+                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each Object.entries(layout.items) as [id, item]}
                         {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables)}
                             <Stagebox {id} item={clone(item)} {ratio} stageLayout={layout} />
