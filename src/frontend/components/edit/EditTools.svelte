@@ -116,7 +116,7 @@
 
     // PASTE
 
-    function pasteStyle(applyToAll: boolean = false, applyToFollowing: boolean = false) {
+    function pasteStyle(applyToAll = false, applyToFollowing = false) {
         let styles = $copyPasteEdit[type]
         if (!Array.isArray(styles)) return
 
@@ -140,7 +140,7 @@
 
         setNewStyle()
         function setNewStyle() {
-            if (active === "text") return setBoxStyle(styles, slides, itemType as any)
+            if (active === "text") return setBoxStyle(styles, slides, itemType )
             if (active === "item") return setItemStyle(styles, slides)
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {

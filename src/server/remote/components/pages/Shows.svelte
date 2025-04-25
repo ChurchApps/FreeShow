@@ -5,12 +5,14 @@
     import { dateToString } from "../../../common/util/time"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { _set, activeShow, dictionary, quickPlay, shows } from "../../util/stores"
+    import { _set, activeShow, createShow, dictionary, quickPlay, shows, showSearchValue } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
+    import Button from "../../../common/components/Button.svelte"
+    import Icon from "../../../common/components/Icon.svelte"
 
     export let tablet: boolean = false
 
-    let searchValue: string = ""
+    $: searchValue = $showSearchValue
     // sort shows in alphabeticly order
     let showsSorted: any
     $: {
@@ -108,6 +110,10 @@
         _set("quickPlay", quickPlay)
     }
 
+    function newShow() {
+        createShow.set(true)
+    }
+
     onMount(() => {
         try {
             _set("quickPlay", localStorage.getItem("quickPlay") === "true")
@@ -118,20 +124,43 @@
         setTimeout(() => (loadingStarted = true), 10)
     })
 
+    // SEARCH
+
+    function updateTextValue(e: any) {
+        showSearchValue.set(e.target?.value)
+        selected = false
+    }
+
+    let selected = false
+    function select(e: any) {
+        if (selected) return
+        e.target?.select()
+        selected = true
+    }
+
+    // SCROLL
+
+    let scrollElem: HTMLDivElement | undefined
+    $: activeShowId = $activeShow?.id
+    $: if (activeShowId && scrollElem && scrollElem.scrollTop < 10) {
+        let activeElement = [...scrollElem.children].find((a) => a.id === activeShowId) as HTMLDivElement | undefined
+        scrollElem.scrollTo(0, (activeElement?.offsetTop || 0) - 50 - 80)
+    }
+
     // open tab instantly before loading content
     let loadingStarted: boolean = false
 </script>
 
 {#if $shows.length}
     {#if $shows.length < 10 || loadingStarted}
-        <input id="showSearch" type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} />
+        <input id="showSearch" type="text" class="input" placeholder="Search..." value={searchValue} on:input={updateTextValue} on:keydown={showSearchKeydown} on:click={select} bind:this={searchElem} />
         <!-- {#each shows as showObj}
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->
-        <div class="scroll">
+        <div class="scroll" bind:this={scrollElem}>
             {#each filteredShows as show}
                 {#if searchValue.length <= 1 || show.match}
-                    <ShowButton on:click={(e) => openShow(e.detail)} {activeShow} show={$shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+                    <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={$shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
                 {/if}
             {/each}
         </div>
@@ -139,12 +168,19 @@
             <Center faded>{translate("empty.search", $dictionary)}</Center>
         {/if}
 
-        {#if !tablet}
+        {#if searchValue.length < 2}
             <div class="buttons">
-                <div class="check">
-                    <p style="font-size: 0.8em;">{translate("remote.quick_play", $dictionary)}</p>
-                    <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
-                </div>
+                {#if !tablet}
+                    <div class="check">
+                        <p style="font-size: 0.8em;">{translate("remote.quick_play", $dictionary)}</p>
+                        <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
+                    </div>
+                {/if}
+
+                <Button on:click={newShow} style="width: 100%;" center dark>
+                    <Icon id="add" right />
+                    <p style="font-size: 0.8em;">{translate("new.show", $dictionary)}</p>
+                </Button>
             </div>
         {/if}
     {:else}

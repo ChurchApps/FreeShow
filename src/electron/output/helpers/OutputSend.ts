@@ -1,24 +1,25 @@
 import { OUTPUT, ValidChannels } from "../../../types/Channels"
+import type { Message } from "../../../types/Socket"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 
 export class OutputSend {
-    static sendToOutputWindow(msg: any) {
+    static sendToOutputWindow(msg: Message) {
         OutputHelper.getAllOutputs().forEach(sendToWindow)
 
-        function sendToWindow([id, output]: [string, Output]) {
-            if ((msg.data?.id && msg.data.id !== id) || !output?.window || output.window.isDestroyed()) return
+        function sendToWindow(output: Output & { id: string }) {
+            if ((msg.data?.id && msg.data.id !== output.id) || !output?.window || output.window.isDestroyed()) return
 
-            let tempMsg: any = JSON.parse(JSON.stringify(msg))
-            if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
+            let tempMsg: Message = JSON.parse(JSON.stringify(msg))
+            if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, output.id)
 
             output.window.webContents.send(OUTPUT, tempMsg)
 
-            //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
-            //output.previewWindow.webContents.send(OUTPUT, tempMsg)
+            // if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+            // output.previewWindow.webContents.send(OUTPUT, tempMsg)
         }
 
-        function onlySendToMatchingId(tempMsg: any, id: string) {
+        function onlySendToMatchingId(tempMsg: Message, id: string) {
             if (!msg.data?.[id]) return tempMsg
 
             tempMsg.data = { [id]: msg.data[id] }
@@ -30,7 +31,7 @@ export class OutputSend {
         const output = OutputHelper.getOutput(id)
         if (!output?.window || output.window.isDestroyed()) return
         output.window.webContents.send(channel, msg)
-        //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
-        //output.previewWindow.webContents.send(OUTPUT, msg)
+        // if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+        // output.previewWindow.webContents.send(OUTPUT, msg)
     }
 }

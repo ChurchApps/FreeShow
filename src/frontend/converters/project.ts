@@ -7,10 +7,12 @@ import { activeProject, activeShow, folders, projects, overlays as overlayStores
 
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
-        let { project, parentFolder, shows, overlays, media } = JSON.parse(content)
+        const { project, parentFolder, shows, overlays, media } = JSON.parse(content)
 
         // find any parent folder with the same name as previous parent, or place at root
-        if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
+        if (parentFolder) project.parent = Object.values(get(folders)).find((folder) => folder.name === parentFolder)?.[0] || "/"
+        const projectId = project.id || ""
+        delete project.id
 
         // add overlays
         if (overlays) {
@@ -34,16 +36,16 @@ export function importProject(files: { content: string; name?: string; extension
         }
 
         // create shows
-        let newShows: { id: string; show: Show }[] = []
+        const newShows: { id: string; show: Show }[] = []
         Object.entries(shows).forEach(([id, show]: any) => {
             if (!show) return
             newShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
 
-        history({ id: "SHOWS", newData: { data: newShows } })
+        history({ id: "SHOWS", newData: { data: newShows, projectImport: true } })
 
         // create project
-        history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
+        history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
     })
 
     alertMessage.set("actions.imported")
@@ -51,32 +53,32 @@ export function importProject(files: { content: string; name?: string; extension
 }
 
 export function addToProject(type: ShowType, filePaths: string[]) {
-    let currentProject = get(activeProject)
+    const currentProject = get(activeProject)
     if (!currentProject) {
         // ALERT please open a project
         return
     }
 
-    let projectShows = get(projects)[currentProject]?.shows || []
+    const projectShows = get(projects)[currentProject]?.shows || []
 
-    let newProjectItems = filePaths.map((filePath) => {
-        let name: string = getFileName(filePath)
+    const newProjectItems = filePaths.map((filePath) => {
+        const name: string = getFileName(filePath)
         if (!type) type = getMediaType(getExtension(filePath))
 
         return { name: removeExtension(name), id: filePath, type }
     })
 
-    let project = { key: "shows", data: [...projectShows, ...newProjectItems] }
+    const project = { key: "shows", data: [...projectShows, ...newProjectItems] }
     history({ id: "UPDATE", newData: project, oldData: { id: currentProject }, location: { page: "show", id: "project_ref" } })
 
     // open project item
-    let lastItem = newProjectItems[newProjectItems.length - 1]
+    const lastItem = newProjectItems[newProjectItems.length - 1]
     activeShow.set({ ...lastItem, index: project.data.length - 1 })
 }
 
 export function addSection() {
-    let activeShowIndex = get(activeShow)?.index !== undefined ? (get(activeShow)?.index ?? -1) + 1 : null
-    let index: number = activeShowIndex ?? get(projects)[get(activeProject) || ""]?.shows?.length ?? 0
+    const activeShowIndex = get(activeShow)?.index !== undefined ? (get(activeShow)?.index ?? -1) + 1 : null
+    const index: number = activeShowIndex ?? get(projects)[get(activeProject) || ""]?.shows?.length ?? 0
 
     history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
 }

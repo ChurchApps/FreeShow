@@ -15,7 +15,7 @@
     $: modified = show?.timestamps?.modified || null
     $: used = show?.timestamps?.used || null
 
-    let words: number = 0
+    let words = 0
     let allLines: Line[][]
     $: if (fullShow) allLines = _show($activeShow!.id).slides().items().lines().get()
     $: if (allLines) getWords()

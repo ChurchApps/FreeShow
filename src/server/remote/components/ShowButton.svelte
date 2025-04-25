@@ -36,7 +36,7 @@
         </span>
 
         {#if match}
-            <span style="opacity: 0.8;padding-left: 10px;">
+            <span style="opacity: 0.8;padding-inline-start: 10px;">
                 {match}%
             </span>
         {/if}

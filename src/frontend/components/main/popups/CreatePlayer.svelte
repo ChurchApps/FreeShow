@@ -7,13 +7,15 @@
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import { clone } from "../../helpers/array"
 
     let active: string | null = $popupData.active
+    let editId: string = $popupData.id || ""
     $: if (active) popupData.set({})
 
-    let data = { name: "", id: "" }
+    let data = clone($playerVideos[editId] || { name: "", id: "" })
     function add() {
-        if (!data.id.length) {
+        if (!data.id?.length) {
             newToast("$toast.no_video_id")
             return activePopup.set(null)
         }
@@ -35,7 +37,7 @@
         if (!name) name = id
 
         playerVideos.update((a) => {
-            a[uid()] = { id, name, type: active as any }
+            a[editId || uid()] = { id, name, type: active as any }
             return a
         })
 
@@ -55,23 +57,30 @@
 </script>
 
 <div on:keydown={keydown}>
-    <CombinedInput textWidth={40}>
-        <p><T id="inputs.name" /></p>
-        <!-- placeholder={$dictionary.inputs?.name} -->
-        <TextInput value={data.name} on:change={(e) => setValue(e, "name")} />
-    </CombinedInput>
+    {#if !editId}
+        <CombinedInput textWidth={40}>
+            <p><T id="inputs.name" /></p>
+            <!-- placeholder={$dictionary.inputs?.name} -->
+            <TextInput value={data.name} on:change={(e) => setValue(e, "name")} />
+        </CombinedInput>
+    {/if}
     <CombinedInput textWidth={40}>
         <p><T id="inputs.video_id" /></p>
         <!-- placeholder="X-AJdKty74M" -->
-        <TextInput value={data.id} on:change={(e) => setValue(e, "id")} />
+        <TextInput value={data.id || ""} on:change={(e) => setValue(e, "id")} />
     </CombinedInput>
 
     <br />
 
     <CombinedInput>
         <Button style="width: 100%;" on:click={add} center dark>
-            <Icon id="add" size={1.2} right />
-            <T id="settings.add" />
+            {#if editId}
+                <Icon id="edit" size={1.2} right />
+                <T id="timer.edit" />
+            {:else}
+                <Icon id="add" size={1.2} right />
+                <T id="settings.add" />
+            {/if}
         </Button>
     </CombinedInput>
 </div>

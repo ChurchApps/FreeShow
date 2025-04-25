@@ -31,7 +31,7 @@
         })
     }
 
-    function toggleData(e: any, key, invert: boolean = false) {
+    function toggleData(e: any, key, invert = false) {
         let checked: boolean = e.target.checked || false
 
         driveData.update((a) => {
@@ -74,7 +74,7 @@
 <CombinedInput>
     <p><T id="cloud.google_drive_api" /></p>
     <Button on:click={getKeysFile}>
-        <Icon id="key" style="margin-left: 0.5em;" right />
+        <Icon id="key" style="margin-inline-start: 0.5em;" right />
         <p>
             {#if validKeys}
                 <T id="cloud.update_key" />
@@ -170,7 +170,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

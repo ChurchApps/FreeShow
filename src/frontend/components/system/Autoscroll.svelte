@@ -2,12 +2,12 @@
     import { createEventDispatcher } from "svelte"
 
     export let scrollElem: Element | null = null
-    export let timeout: number = 0
-    export let smoothTimeout: number = 800
-    export let offset: number = -1
-    export let disabled: boolean = false
+    export let timeout = 0
+    export let smoothTimeout = 800
+    export let offset = -1
+    export let disabled = false
 
-    let behaviour: string = ""
+    let behaviour = ""
     setTimeout(() => (behaviour = "scroll-behavior: smooth;"), smoothTimeout)
 
     let t: any = null

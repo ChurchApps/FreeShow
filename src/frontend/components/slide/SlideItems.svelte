@@ -20,18 +20,18 @@
 
     export let item: Item
 
-    export let edit: boolean = false
+    export let edit = false
     export let itemElem: HTMLElement | undefined = undefined
 
-    export let slideIndex: number = 0
-    export let preview: boolean = false
-    export let mirror: boolean = true
-    export let isMirrorItem: boolean = false
-    export let disableListTransition: boolean = false
-    export let smallFontSize: boolean = false
-    export let fontSize: number = 0
+    export let slideIndex = 0
+    export let preview = false
+    export let mirror = true
+    export let isMirrorItem = false
+    export let disableListTransition = false
+    export let smallFontSize = false
+    export let fontSize = 0
 
-    export let ratio: number = 1
+    export let ratio = 1
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -54,7 +54,7 @@
     // AUTO SIZE
 
     $: if (edit && item && itemElem) calculateAutosize()
-    let autoSize: number = 0
+    let autoSize = 0
     let loopStop: NodeJS.Timeout | null = null
     function calculateAutosize() {
         if (loopStop) return

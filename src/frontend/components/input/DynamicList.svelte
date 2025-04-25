@@ -13,10 +13,10 @@
     }
 
     export let items: Item[]
-    export let allowOpen: boolean = true
-    export let addDisabled: boolean = false
-    export let nothingText: boolean = true
-    export let textWidth: number = 50
+    export let allowOpen = true
+    export let addDisabled = false
+    export let nothingText = true
+    export let textWidth = 50
 
     let dispatch = createEventDispatcher()
     function openItem(id: string) {

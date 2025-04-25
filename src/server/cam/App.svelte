@@ -59,7 +59,7 @@
     //     })
     //     .catch((err) => {
     //       errors.push(err.name + ": " + err.message)
-    //       console.log(err.name + ": " + err.message)
+    //       console.error(err.name + ": " + err.message)
     //     })
     //   // }
 

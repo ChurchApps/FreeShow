@@ -18,19 +18,23 @@
     export let lines: any
 
     export let ratio: number
-    export let mirror: boolean = false
-    export let preview: boolean = false
+    export let mirror = false
+    export let preview = false
     export let transition: any = {}
-    export let transitionEnabled: boolean = false
-    export let isKeyOutput: boolean = false
+    export let transitionEnabled = false
+    export let isKeyOutput = false
 
     let currentItems: Item[] = []
     let current: any = {}
-    let show: boolean = false
+    let show = false
 
-    $: filteredItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, slideIndex: outSlide?.index }, $variables))
-
-    // WIP conditions does not remove items when filteredItems updates
+    let filteredItems: Item[] = []
+    $: filterItems(currentItems, $variables)
+    function filterItems(currentItems: Item[], _updater: any) {
+        const data = { outputId, slideIndex: outSlide?.index }
+        const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, data))
+        if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
+    }
 
     // do not update if only line has changed
     $: currentOutSlide = "{}"
@@ -51,7 +55,7 @@
     let timeout: NodeJS.Timeout | null = null
 
     // if anything is outputted & changing to something that's outputted
-    let transitioningBetween: boolean = false
+    let transitioningBetween = false
 
     function updateItems() {
         if (!currentSlide?.items?.length) {
@@ -119,7 +123,7 @@
 </script>
 
 <!-- Updating this with another "store" causes svelte transition bug! -->
-{#key show}
+{#key show || filteredItems}
     {#each filteredItems as item}
         {#if show}
             <SlideItemTransition

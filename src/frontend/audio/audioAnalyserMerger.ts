@@ -8,8 +8,8 @@ import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 
 export class AudioAnalyserMerger {
-    static dBmin: number = -80
-    static dBmax: number = 0
+    static dBmin = -80
+    static dBmax = 0
 
     private static channels: { [key: string]: AudioChannel[] } = {}
 
@@ -35,7 +35,7 @@ export class AudioAnalyserMerger {
     private static updateInterval = 80
     private static timeoutNext() {
         if (this.timeout) return
-        let timeSinceLast = Date.now() - this.previousMerge
+        const timeSinceLast = Date.now() - this.previousMerge
         if (timeSinceLast > this.updateInterval + 100 && timeSinceLast < this.updateInterval + 200) {
             // wait if lagging behind
             this.timeout = setTimeout(() => {
@@ -70,12 +70,12 @@ export class AudioAnalyserMerger {
     }
 
     private static mergeAnalysers() {
-        let merged: number[][] = []
+        const merged: number[][] = []
 
-        const channels = this.channels
-        channels.main = AudioAnalyser.getChannelsVolume()
+        const allChannels = this.channels
+        allChannels.main = AudioAnalyser.getChannelsVolume()
 
-        Object.values(channels).forEach((channels) => {
+        Object.values(allChannels).forEach((channels) => {
             channels.forEach((channel, channelIndex) => {
                 if (!merged[channelIndex]) merged[channelIndex] = []
 
@@ -98,7 +98,7 @@ export class AudioAnalyserMerger {
         if (!array.length) return this.dBmin
 
         // https://stackoverflow.com/a/22613964
-        let avgLinear = array.reduce((sum, dB) => (sum += Math.pow(10, dB / 20)), 0) / array.length
+        const avgLinear = array.reduce((sum, dB) => (sum += Math.pow(10, dB / 20)), 0) / array.length
 
         // convert back to dB
         let newDB = Math.log10(avgLinear) * 20

@@ -6,11 +6,11 @@
     import StageLayout from "../../stage/StageLayout.svelte"
     import Output from "../Output.svelte"
 
-    export let fullscreen: boolean = false
-    export let disableTransitions: boolean = false
-    export let disabled: boolean = false
-    export let outputId: string = ""
-    export let style: string = ""
+    export let fullscreen = false
+    export let disableTransitions = false
+    export let disabled = false
+    export let outputId = ""
+    export let style = ""
 
     $: resolution = getResolution(null, [$outputs, $styles], false, outputId)
     let width = 0

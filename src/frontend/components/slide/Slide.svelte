@@ -53,23 +53,23 @@
     export let show: Show
     export let color: string | null = slide.color
     export let index: number
-    export let columns: number = 1
+    export let columns = 1
     export let output: { color: string; line: number; maxLines: number; cached: boolean } | null = null
-    export let active: boolean = false
-    export let focused: boolean = false
-    export let list: boolean = false
+    export let active = false
+    export let focused = false
+    export let list = false
     export let endIndex: null | number = null
-    export let icons: boolean = false
-    export let noQuickEdit: boolean = false
-    export let altKeyPressed: boolean = false
-    export let disableThumbnails: boolean = false
+    export let icons = false
+    export let noQuickEdit = false
+    export let altKeyPressed = false
+    export let disableThumbnails = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
-    let bgIndex: number = -1
-    let isFirstGhost: boolean = false
+    let bgIndex = -1
+    let isFirstGhost = false
     // don't show ghost backgrounds if over slide 40 (because of loading/performance!)
     $: if (!background && index < 40) {
         ghostBackground = null
@@ -109,7 +109,7 @@
         let showMedia = $showsCache[showId]?.media
         let folders = Object.values($audioFolders).map((a) => a.path!)
 
-        audioIds.forEach(async (audioId) => {
+        audioIds.forEach((audioId) => {
             let audio = showMedia[audioId]
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)
@@ -149,7 +149,7 @@
         })
     }
 
-    let duration: number = 0
+    let duration = 0
 
     // CLOUD BG
     let cloudBg = ""
@@ -159,7 +159,7 @@
     // LOAD BACKGROUND
     $: bgPath = cloudBg || bg?.path || bg?.id || ""
     $: if (bgPath && !disableThumbnails) loadBackground()
-    let thumbnailPath: string = ""
+    let thumbnailPath = ""
     async function loadBackground() {
         if (ghostBackground) {
             if (isFirstGhost) {
@@ -199,8 +199,8 @@
     $: name = getGroupName({ show, showId }, layoutSlide.id, group, index, true)
 
     // quick edit
-    let html: string = ""
-    let previousHTML: string = ""
+    let html = ""
+    let previousHTML = ""
     let longest: number | null = null
 
     onMount(() => {
@@ -276,8 +276,8 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
     $: layers = Array.isArray(currentStyle.layers) ? currentStyle.layers : ["background"]
 
-    let colorStyle: string = ""
-    let style: string = ""
+    let colorStyle = ""
+    let style = ""
     $: {
         colorStyle = ""
         style = ""
@@ -543,7 +543,7 @@
         width: 100%;
         height: 100%;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
 
         opacity: 0.25;
     }
@@ -568,7 +568,7 @@
         background-color: rgb(255 255 255 / 0.05);
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         z-index: 1;
     }
 
@@ -618,7 +618,7 @@
 
     .childLink {
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
         width: 8px;
@@ -632,7 +632,7 @@
     .lineProgress {
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         transform: translateY(-100%);
         width: 100%;
         height: 2px;
@@ -651,7 +651,7 @@
 
         position: absolute;
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
         transform: translateY(-100%);
         width: 100%;
         padding: 4px 8px;

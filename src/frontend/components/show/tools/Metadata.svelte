@@ -20,7 +20,7 @@
     let metadata: any = {}
     let outputShowSettings: any = {}
 
-    let loaded: boolean = false
+    let loaded = false
     onMount(getValues)
     $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
     $: if ($activeShow!.id || messageUpdate || $customMetadata) getValues()

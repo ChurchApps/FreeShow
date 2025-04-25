@@ -2,8 +2,8 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { pcoSync } from "../../../utils/startup"
+    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, chumsConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { pcoSync, chumsSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
@@ -118,6 +118,22 @@
         activeShow.set(null)
         activePage.set("show")
     }
+
+    function chumsConnect() {
+        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES)
+        else {
+            requestMain(Main.CHUMS_DISCONNECT, undefined, (a) => {
+                if (!a.success) return
+                chumsConnected.set(false)
+            })
+        }
+    }
+
+    function syncChums() {
+        chumsSync()
+        activeShow.set(null)
+        activePage.set("show")
+    }
 </script>
 
 <!-- <CombinedInput>
@@ -147,9 +163,9 @@
             >
                 <div style="margin: 0;border: none;">
                     <Icon id={server.icon} size={1.1} right />
-                    <p style="min-width: fit-content;padding-right: 0;">
+                    <p style="min-width: fit-content;padding-inline-end: 0;">
                         {server.name}
-                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-left: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
+                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-inline-start: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
                         {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
                     </p>
                 </div>
@@ -160,7 +176,7 @@
                 {/if}
             </Button>
         </span>
-        <span class="alignRight" style="padding-left: 10px;">
+        <span class="alignRight" style="padding-inline-start: 10px;">
             {#if server.id === "companion"}
                 <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
             {:else}
@@ -184,6 +200,26 @@
     </Button>
     {#if $pcoConnected}
         <Button on:click={syncPCO}>
+            <Icon id="cloud_sync" right />
+            <p><T id="cloud.sync" /></p>
+        </Button>
+    {/if}
+</CombinedInput>
+
+<!-- Chums -->
+<h3>Chums</h3>
+
+<CombinedInput style="border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'});">
+    <Button on:click={chumsConnect} style="width: 100%;" center>
+        <Icon id={$chumsConnected ? "logout" : "login"} right />
+        {#if $chumsConnected}
+            <T id="settings.disconnect_from" replace={["Chums"]} />
+        {:else}
+            <T id="settings.connect_to" replace={["Chums"]} />
+        {/if}
+    </Button>
+    {#if $chumsConnected}
+        <Button on:click={syncChums}>
             <Icon id="cloud_sync" right />
             <p><T id="cloud.sync" /></p>
         </Button>
@@ -215,7 +251,7 @@
     .connections {
         display: flex;
         align-items: center;
-        padding-left: 10px;
+        padding-inline-start: 10px;
         opacity: 0.5;
         font-weight: normal;
     }
@@ -226,7 +262,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

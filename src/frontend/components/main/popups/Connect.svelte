@@ -165,7 +165,7 @@
             <br />
 
             {#if ip === "localhost"}
-                <p style="text-align: left;">
+                <p style="text-align: start;">
                     <T id="error.ip" />
                     <!-- <br />Should look similar to this: 192.168.1.100 -->
                 </p>
@@ -180,7 +180,7 @@
         {/if}
     </div>
 
-    <Button style="position: absolute;left: 10px;bottom: 10px;padding: 12px;" title={$dictionary.edit?.options} on:click={() => (options = true)}>
+    <Button style="position: absolute;inset-inline-start: 10px;bottom: 10px;padding: 12px;" title={$dictionary.edit?.options} on:click={() => (options = true)}>
         <Icon id="settings" size={1.5} white />
     </Button>
 {/if}

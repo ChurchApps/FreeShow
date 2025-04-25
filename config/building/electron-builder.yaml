@@ -1,0 +1,75 @@
+appId: app.freeshow
+productName: FreeShow
+artifactName: FreeShow-${version}-${arch}.${ext}
+
+files:
+    - build/electron/**
+    - build/types/**
+    - public/**
+    - "!node_modules/@napi-rs"
+
+extraResources:
+    - from: node_modules/slideshow/
+      to: slideshow
+      filter:
+          - connector-*
+
+# windows
+
+win:
+    target: NSIS
+    icon: build/public/icon.png
+    azureSignOptions:
+        publisherName: Live Church Solutions
+        endpoint: https://wus2.codesigning.azure.net/
+        certificateProfileName: FreeShow
+        codeSigningAccountName: FreeShow
+
+# linux
+
+linux:
+    asarUnpack:
+        - node_modules/grandiose/**
+    category: AudioVideo
+    target:
+        - AppImage
+        - deb
+    icon: build/public
+
+# macos
+
+mac:
+    icon: build/public/icon.png
+    target:
+        - target: dmg
+          arch:
+              - x64
+              - arm64
+        - target: zip
+          arch:
+              - x64
+              - arm64
+    category: public.app-category.utilities
+    hardenedRuntime: true
+    gatekeeperAssess: false
+    notarize: false
+    entitlements: scripts/macos/entitlements.mac.plist
+    entitlementsInherit: scripts/macos/entitlements.mac.plist
+    extendInfo:
+        NSMicrophoneUsageDescription: Please give access to your microphone if you want to use it for input.
+        NSCameraUsageDescription: Please give access to your camera if you want to use it for input.
+        com.apple.security.device.audio-input: true
+        com.apple.security.device.camera: true
+
+afterSign: scripts/macos/notarize.js
+
+dmg:
+    background: build/public/dmg.png
+    sign: false
+    contents:
+        - x: 140
+          y: 150
+        - x: 400
+          y: 150
+          type: link
+          path: /Applications

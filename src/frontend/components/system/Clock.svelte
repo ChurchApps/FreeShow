@@ -8,22 +8,22 @@
     // Initialize plugins
     dayjs.extend(localizedFormat)
 
-    export let style: boolean = true
-    export let autoSize: number = 0
+    export let style = true
+    export let autoSize = 0
     export let type: "digital" | "analog" | "custom" = "digital"
-    export let dateFormat: string = "none"
-    export let customFormat: string = "hh:mm a"
-    export let showTime: boolean = true
-    export let seconds: boolean = true
+    export let dateFormat = "none"
+    export let customFormat = "hh:mm a"
+    export let showTime = true
+    export let seconds = true
 
     $: twelwe = $timeFormat === "12"
 
     let d: Date = new Date()
     const clockInterval = setInterval(() => (d = new Date()), 250)
-    let h: number = 0
-    let m: number = 0
-    let s: number = 0
-    let pm: boolean = false
+    let h = 0
+    let m = 0
+    let s = 0
+    let pm = false
 
     onDestroy(() => clearInterval(clockInterval))
 

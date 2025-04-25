@@ -9,13 +9,13 @@
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
-    export let index: number = -1
-    export let templateId: string = ""
+    export let index = -1
+    export let templateId = ""
     export let actions: any
 
     $: currentShow = $shows[$activeShow?.id || ""] || {}
 
-    function changeAction(id: string, save: boolean = true) {
+    function changeAction(id: string, save = true) {
         if (templateId || currentShow.locked) return
 
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
@@ -60,6 +60,12 @@
     // actionData get slideId and convert into slideActions
 
     $: zoom = 4 / columns
+
+    function getCustomStyle(customData: { [key: string]: any }) {
+        if (!Object.keys(customData || {}).length) return ""
+        if (Object.entries(customData).find(([key, value]) => key === "overrideCategoryAction" && value === true)) return "color: #a1faff;"
+        return ""
+    }
 </script>
 
 <div class="icons" style="zoom: {zoom};">
@@ -88,11 +94,12 @@
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
             {@const customData = actionData[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
+            {@const specialData = action?.customData?.[actionId] || action?.customData?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
                 <Button
-                    style="padding: 3px;"
+                    style="padding: 3px;{getCustomStyle(specialData)}"
                     redHover
                     title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name && action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
                     {zoom}
@@ -112,7 +119,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        right: 2px;
+        inset-inline-end: 2px;
         z-index: 1;
         font-size: 0.9em;
 
@@ -136,7 +143,7 @@
     .button p {
         pointer-events: all;
         background-color: rgb(0 0 0 / 0.4);
-        padding-right: 5px;
+        padding-inline-end: 5px;
         font-size: 0.8em;
         font-weight: normal;
         max-width: 60px;

@@ -1,7 +1,7 @@
 <script lang="ts">
     import T from "../helpers/T.svelte"
 
-    export let title: string = ""
+    export let title = ""
 </script>
 
 <div class="title">
@@ -31,9 +31,9 @@
     }
 
     .title:not(:empty)::before {
-        margin-right: 10px;
+        margin-inline-end: 10px;
     }
     .title:not(:empty)::after {
-        margin-left: 10px;
+        margin-inline-start: 10px;
     }
 </style>

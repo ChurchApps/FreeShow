@@ -45,7 +45,7 @@
     }
 
     let scrollElem: HTMLElement | undefined
-    let offset: number = -1
+    let offset = -1
     $: {
         if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) {
             let index = $activeEdit.slide - 1
@@ -70,16 +70,16 @@
         }, 500)
     }
 
-    let altKeyPressed: boolean = false
+    let altKeyPressed = false
     function keyup() {
         altKeyPressed = false
     }
 
     // lazy loader
 
-    let lazyLoader: number = 1
+    let lazyLoader = 1
     let timeout: NodeJS.Timeout | null = null
-    let loaded: boolean = false
+    let loaded = false
 
     // reset loading when changing view modes
     $: if (showId) loaded = false
@@ -90,7 +90,7 @@
         startLazyLoader()
     }
 
-    let lazyLoading: boolean = false
+    let lazyLoading = false
     function startLazyLoader() {
         if (!layoutSlides) return
         if (lazyLoader >= layoutSlides.length) {

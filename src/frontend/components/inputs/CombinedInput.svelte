@@ -1,7 +1,7 @@
 <script lang="ts">
-    export let style: string = ""
-    export let title: string = ""
-    export let textWidth: number = 50 // %
+    export let style = ""
+    export let title = ""
+    export let textWidth = 50 // %
 
     $: customStyle = style + ";--text-width: " + textWidth + "%"
 </script>
@@ -26,14 +26,14 @@
     }
 
     .input :global(*:not(:first-child)) {
-        border-left: 1px solid var(--primary);
+        border-inline-start: 1px solid var(--primary);
     }
     .input :global(*:not(:last-child)) {
-        border-right: 1px solid var(--primary);
+        border-inline-end: 1px solid var(--primary);
     }
     .input :global(*:not(:first-child):not(:last-child)) {
-        border-left: 1px solid var(--primary);
-        border-right: 1px solid var(--primary);
+        border-inline-start: 1px solid var(--primary);
+        border-inline-end: 1px solid var(--primary);
     }
 
     .input :global(input),
@@ -77,7 +77,7 @@
     }
     .input :global(.color) {
         border: none;
-        border-left: 1px solid var(--primary);
+        border-inline-start: 1px solid var(--primary);
     }
 
     .input :global(.switch) {
@@ -87,13 +87,13 @@
         display: flex;
         align-items: center;
         justify-content: end;
-        padding-right: 10px;
+        padding-inline-end: 10px;
     }
     .input :global(.alignLeft) {
         display: flex;
         align-items: center;
         justify-content: start;
-        padding-left: 10px;
+        padding-inline-start: 10px;
     }
 
     .input :global(:nth-child(2):not(.switch):not(.numberInput)) {

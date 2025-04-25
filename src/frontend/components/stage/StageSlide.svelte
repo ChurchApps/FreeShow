@@ -1,21 +1,23 @@
 <script lang="ts">
-    import { StageLayout } from "../../../types/Stage"
-    import { outputs, stageShows } from "../../stores"
+    import type { StageLayout } from "../../../types/Stage"
+    import { allOutputs, outputs, stageShows, variables } from "../../stores"
+    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { getSlideTextItems, stageItemToItem } from "./stage"
     import Stagebox from "./Stagebox.svelte"
 
     export let layout: StageLayout
     export let id: string
     export let index: number
-    export let columns: number = 1
-    export let active: boolean = false
-    export let list: boolean = false
+    export let columns = 1
+    export let active = false
+    export let list = false
 
-    let ratio: number = 1
+    let ratio = 1
     $: stageOutputId = getStageOutputId($outputs)
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
@@ -32,9 +34,9 @@
     <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
-                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>
+                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each Object.entries(layout.items) as [id, item]}
-                        {#if item.type || item.enabled !== false}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables)}
                             <Stagebox {id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}

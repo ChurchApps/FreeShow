@@ -14,8 +14,8 @@
     //   currentOutput = outs.find((output) => output.out?.transition)
     // }
 
-    let autoPause: boolean = false
-    let step: boolean = false
+    let autoPause = false
+    let step = false
     function transitionChange(e: any) {
         step = true
 

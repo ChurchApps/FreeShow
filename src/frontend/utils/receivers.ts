@@ -78,11 +78,11 @@ export function remoteListen() {
 
 // OUTPUT
 
-let clearing: string[] = []
+const clearing: string[] = []
 const receiveOUTPUTasMAIN: any = {
     BUFFER: ({ id, time, buffer, size }) => {
         // this will infinitely increace if this is not in place
-        let timeSinceSent = Date.now() - time
+        const timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
         previewBuffers.update((a) => {
@@ -94,26 +94,26 @@ const receiveOUTPUTasMAIN: any = {
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     ACTION_MAIN: (a: { id: string }) => runAction(get(midiIn)[a.id]),
-    AUDIO_MAIN: async (data: any) => {
+    AUDIO_MAIN: (data: any) => {
         if (!data.id) return
 
         if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
-        playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === data.id)
+        playingVideos.update((playingVideo) => {
+            const existing = playingVideo.findIndex((a) => a.id === data.id)
 
             if (data.stop) {
-                if (existing > -1) a.splice(existing, 1)
-                return a
+                if (existing > -1) playingVideo.splice(existing, 1)
+                return playingVideo
             }
 
             if (existing > -1) {
-                a[existing] = { ...data, location: "output" }
+                playingVideo[existing] = { ...data, location: "output" }
             } else if (get(outputs)[data.id]?.out?.background) {
-                a.push({ location: "output", ...data })
+                playingVideo.push({ location: "output", ...data })
             }
 
-            return a
+            return playingVideo
         })
 
         if (data.stop && !AudioAnalyser.shouldAnalyse()) {
@@ -130,7 +130,7 @@ const receiveOUTPUTasMAIN: any = {
     },
     UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
         outputs.update((a) => {
-            let ids = id ? [id] : Object.keys(get(outputs))
+            const ids = id ? [id] : Object.keys(get(outputs))
             ids.forEach((outputId) => {
                 if (a[outputId]) a[outputId][key] = value
             })
@@ -139,15 +139,15 @@ const receiveOUTPUTasMAIN: any = {
         if (autoSave) save()
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
-    MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_LOG: (msg: any) => console.info(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: async (msg) => {
+    MAIN_VIDEO_ENDED: (msg) => {
         if (!msg || clearing.includes(msg.id)) return
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
 
-        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
+        const videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
@@ -157,7 +157,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(() => {
             // double check that output is still the same
-            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
+            const newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
             if (newVideoPath !== videoPath) return
 
             clearBackground(msg.id)
@@ -182,21 +182,21 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
 }
 
-let previousOutputs: string = ""
+let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent
-        let id = Object.keys(a)[0]
+        const id = Object.keys(a)[0]
         if (!id) {
             outputs.set(a)
             return
         }
 
-        let active: boolean = a[id].active
+        const active: boolean = a[id].active
         delete a[id].active
 
         // only update if there are any changes in this output
-        let newOutputs = JSON.stringify(a)
+        const newOutputs = JSON.stringify(a)
         if (previousOutputs === newOutputs) return
 
         a[id].active = active
@@ -209,7 +209,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     },
     // only received by stage screen outputs
     BUFFER: ({ id, time, buffer, size }) => {
-        let timeSinceSent = Date.now() - time
+        const timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
         // WIP only receive the "output capture" from this outputs "stageOutput id"

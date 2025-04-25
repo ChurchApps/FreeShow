@@ -36,36 +36,38 @@ interface Words {
 }
 
 export function convertEasyWorship(data: any) {
-    let categoryId = createCategory("EasyWorship")
+    const categoryId = createCategory("EasyWorship")
 
-    let songs = data.find((a: any) => a.content.song)?.content.song
-    let songsWords = data.find((a: any) => a.content.word)?.content.word
+    const songs = data.find((a: any) => a.content.song)?.content.song
+    const songsWords = data.find((a: any) => a.content.word)?.content.word
     if (!songsWords) {
         newToast("$toast.no_songswords_easyworship")
         return
     }
 
     let i = 0
-    let importingText = get(dictionary).popup?.importing || "Importing"
+    const importingText = get(dictionary).popup?.importing || "Importing"
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
+
+    const songsCount: number = songsWords.length || 0
 
     asyncLoop()
     function asyncLoop() {
-        let words: Words = songsWords[i]
-        let song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
+        const words: Words = songsWords[i]
+        const song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
 
-        let percentage: string = ((i / songsWords.length) * 100).toFixed()
+        const percentage: string = ((i / songsCount) * 100).toFixed()
         activePopup.set("alert")
-        alertMessage.set(importingText + " " + i + "/" + songsWords.length + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
+        alertMessage.set(importingText + " " + String(i) + "/" + String(songsCount) + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
 
-        if (get(shows)[song?.song_uid || ""] && i < songsWords.length - 1) {
+        if (get(shows)[song?.song_uid || ""] && i < songsCount - 1) {
             i++
             requestAnimationFrame(asyncLoop)
             return
         }
 
-        let layoutID = uid()
+        const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         if (song) {
             show.meta = {
@@ -77,23 +79,23 @@ export function convertEasyWorship(data: any) {
         }
         if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
-        let { slides, layout }: any = createSlides(words)
+        const { slides, layout }: any = createSlides(words)
 
         // if (!Object.keys(slides).length || !layout.length) {
         //   console.log("ERROR " + i + ", " + song?.title, songsWords, words, slides)
         // }
 
-        let showId = song?.song_uid || uid()
+        const showId = song?.song_uid || uid()
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
-        let allText = trimNameFromString(getSlidesText(slides))
+        const allText = trimNameFromString(getSlidesText(slides))
         show.name = checkName(song?.title || allText || showId, showId)
         show.settings.template = "default"
 
         if (allText.length) tempShows.push({ id: showId, show })
 
-        if (i + 1 < songsWords.length) {
+        if (i + 1 < songsCount) {
             i++
             requestAnimationFrame(asyncLoop)
         } else {
@@ -108,9 +110,9 @@ const replaceCodes: any = {
 }
 
 function decodeString(input) {
-    let regex = /u(\d+)\?/g
+    const regex = /u(\d+)\?/g
 
-    let decodedString = input.replace(regex, (_match, number) => {
+    const decodedString = input.replace(regex, (_match, number) => {
         return String.fromCharCode(Number(number))
     })
 
@@ -118,11 +120,11 @@ function decodeString(input) {
 }
 
 function createSlides({ words }: Words) {
-    let slides: any = {}
-    let layout: any[] = []
+    const slides: any = {}
+    const layout: any[] = []
 
     // format
-    let newSlides: any[] = []
+    const newSlides: any[] = []
     let lines: any[] = []
 
     // .replaceAll('"', '\\"')
@@ -141,14 +143,14 @@ function createSlides({ words }: Words) {
 
     let splitString = "li0fi0ri0sb0slsa0 "
     if (words.indexOf(splitString) < 0) splitString = "sdfsauto"
-    let splitted = words?.split(splitString)
+    const splitted = words?.split(splitString)
     // console.log(splitted)
     splitted.forEach((text: any) => {
         // if (text.includes("plainf1fntnamaut")) {
         // let sliced: string = text.slice(text.indexOf("t ") + 2, text.lastIndexOf("par"))
         // <SIDESKIFT>
         // sdewtemplatestyle101
-        let sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
+        const sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
 
         // console.log(text.includes("plainf") && sliced.length, sliced)
         if (sliced.length) {
@@ -173,21 +175,21 @@ function createSlides({ words }: Words) {
     })
     if (lines.length) newSlides.push(lines)
 
-    newSlides?.forEach((lines: any) => {
-        if (!lines.length) lines = [""]
-        if (lines.length) {
-            let id: string = uid()
-            let group = lines[0]
+    newSlides?.forEach((slideLines: any) => {
+        if (!slideLines.length) slideLines = [""]
+        if (slideLines.length) {
+            const id: string = uid()
+            let group = slideLines[0]
                 .replace(/[0-9:]/g, "")
                 .toLowerCase()
                 .trim()
             if (get(groups)[group]) {
                 // console.log("REMOVE FIRST", lines)
-                lines.shift()
+                slideLines.shift()
             } else {
-                let found: boolean = false
+                let found = false
                 Object.keys(get(groups)).forEach((key) => {
-                    let g = get(groups)[key]
+                    const g = get(groups)[key]
                     if (
                         g.default &&
                         get(dictionary)
@@ -197,16 +199,16 @@ function createSlides({ words }: Words) {
                     ) {
                         found = true
                         group = key
-                        lines.shift()
+                        slideLines.shift()
                     }
                 })
             }
 
             layout.push({ id })
-            let items = [
+            const items = [
                 {
-                    style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: lines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                    lines: slideLines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
                 },
             ]
             slides[id] = {
@@ -217,7 +219,7 @@ function createSlides({ words }: Words) {
                 items,
             }
 
-            let globalGroup = getGlobalGroup(group)
+            const globalGroup = getGlobalGroup(group)
             slides[id].globalGroup = globalGroup || "verse"
         }
     })

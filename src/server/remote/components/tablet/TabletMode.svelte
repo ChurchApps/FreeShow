@@ -65,7 +65,7 @@
     function double(e: any) {
         let id = e.detail
         if (id === "shows") {
-            ;(document.querySelector("#showSearch") as any)?.focus()
+            ;(document.querySelector("#showSearch") as any)?.select()
         } else if (id === "project") {
             _set("projectsOpened", !$projectsOpened)
         } else if (id === "scripture") {
@@ -191,7 +191,7 @@
                                     }}
                                 >
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                                        <span style="left: 0;position: absolute;">{i + 1}</span>
+                                        <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
                                     </span>
                                     {#each $activeShow.slides[layoutSlide.id].items as item}
@@ -330,10 +330,10 @@
     }
 
     .left {
-        border-right: 4px solid var(--primary-lighter);
+        border-inline-end: 4px solid var(--primary-lighter);
     }
     .right {
-        border-left: 4px solid var(--primary-lighter);
+        border-inline-start: 4px solid var(--primary-lighter);
     }
 
     .center {

@@ -7,7 +7,6 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { addToPos } from "../../helpers/mover"
-    import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -98,7 +97,7 @@
         animation.actions = addToPos(animation.actions, [newItem], index)
     }
 
-    function moveItem(index: number, down: boolean = false) {
+    function moveItem(index: number, down = false) {
         let newItems = clone(animation.actions)
         let currentItem = newItems.splice(index, 1)
 

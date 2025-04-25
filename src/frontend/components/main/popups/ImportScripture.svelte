@@ -21,7 +21,7 @@
 
     let cachedBibles = ""
     $: if (importType === "api") fetchBibles()
-    async function fetchBibles() {
+    function fetchBibles() {
         // read cache
         if (cachedBibles) {
             bibles = JSON.parse(cachedBibles)
@@ -120,10 +120,10 @@
         searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
-    let searchActive: boolean = false
+    let searchActive = false
     $: if (importType === "" && searchActive) searchActive = false
 
-    let importType: string = ""
+    let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
         { id: "local", name: "$:cloud.local:$", icon: "scripture" },
@@ -203,14 +203,14 @@
     <p style="font-size: 1.1em;"><T id="scripture.supported_formats" /></p>
     <ul style="list-style: inside;">
         <li style="font-size: 0.8em;font-weight: bold;">XML</li>
-        <ul style="margin-left: 22px;">
+        <ul style="margin-inline-start: 22px;">
             <li>Zefania</li>
             <li>OSIS</li>
             <li>Beblia</li>
             <li>OpenSong</li>
         </ul>
         <li style="font-size: 0.8em;font-weight: bold;">JSON</li>
-        <ul style="margin-left: 22px;">
+        <ul style="margin-inline-start: 22px;">
             <li>FreeShow</li>
         </ul>
     </ul>
@@ -275,7 +275,7 @@
     .list :global(button) {
         line-height: 1.5em;
         cursor: pointer;
-        text-align: left;
+        text-align: start;
     }
 
     hr {
@@ -290,7 +290,7 @@
     .description {
         opacity: 0.5;
         font-style: italic;
-        margin-left: 10px;
+        margin-inline-start: 10px;
 
         max-width: 40%;
         overflow: hidden;

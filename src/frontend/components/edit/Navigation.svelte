@@ -14,8 +14,8 @@
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
 
     function addSlide(e: any) {
-        let index: number = 1
-        let isParent: boolean = false
+        let index = 1
+        let isParent = false
 
         // check that current edit slide exists
         if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) {

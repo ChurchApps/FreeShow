@@ -6,7 +6,7 @@
     export let h: number
     export let m: number
     export let s: number
-    export let seconds: boolean = true
+    export let seconds = true
 
     // define and set the initial tweening function
     let sweep = tweened(parseInt(((date.getTime() / 1000) % 60).toString()), {

@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/restrict-plus-operands: 0 */
 /*	This work is licensed under Creative Commons GNU LGPL License.
 
 	License: http://creativecommons.org/licenses/LGPL/2.1/
@@ -5,30 +6,30 @@
 	Author:  Stefan Goessner/2006
 	Web:     http://goessner.net/ 
 */
-export function xml2json(xmlString: string, removeBreaks: boolean = false) {
-    let xml: any = xmlParser(xmlString, removeBreaks)
+export function xml2json(xmlString: string, removeBreaks = false) {
+    let xmlData: any = xmlParser(xmlString, removeBreaks)
 
-    let X = {
+    const X = {
         toObj: (xml) => {
-            if (xml.nodeType == 1) {
+            if (xml.nodeType === 1) {
                 let o: any = {}
 
                 // element node ..
                 if (xml.attributes.length)
                     // element with attributes  ..
-                    for (let i = 0; i < xml.attributes.length; i++) o["@" + xml.attributes[i].nodeName] = X.escape((xml.attributes[i].nodeValue || "").toString())
+                    for (const attr of xml.attributes) o["@" + attr.nodeName] = X.escape((attr.nodeValue || "").toString())
 
                 if (xml.firstChild) {
                     // element has child nodes ..
-                    let textChild = 0,
-                        cdataChild = 0,
-                        hasElementChild = false
+                    let textChild = 0
+                    let cdataChild = 0
+                    let hasElementChild = false
 
                     for (let n = xml.firstChild; n; n = n.nextSibling) {
-                        if (n.nodeType == 1) hasElementChild = true
-                        else if (n.nodeType == 3 && n.nodeValue.match(/[^ \f\n\r\t\v]/))
+                        if (n.nodeType === 1) hasElementChild = true
+                        else if (n.nodeType === 3 && n.nodeValue.match(/[^ \f\n\r\t\v]/))
                             textChild++ // non-whitespace text
-                        else if (n.nodeType == 4) cdataChild++ // cdata section node
+                        else if (n.nodeType === 4) cdataChild++ // cdata section node
                     }
 
                     if (hasElementChild) {
@@ -36,10 +37,10 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
                             // structured element with evtl. a single text or/and cdata node ..
                             X.removeWhite(xml)
                             for (let n = xml.firstChild; n; n = n.nextSibling) {
-                                if (n.nodeType == 3)
+                                if (n.nodeType === 3)
                                     // text node
                                     o["#text"] = X.escape(n.nodeValue)
-                                else if (n.nodeType == 4)
+                                else if (n.nodeType === 4)
                                     // cdata node
                                     o["#cdata"] = X.escape(n.nodeValue)
                                 else if (o[n.nodeName]) {
@@ -70,7 +71,7 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
                 return o
             }
 
-            if (xml.nodeType == 9) {
+            if (xml.nodeType === 9) {
                 // document.node
                 return X.toObj(xml.documentElement)
             }
@@ -78,34 +79,34 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
             return console.error("unhandled node type: " + xml.nodeType)
         },
         toJson: (o, name, ind) => {
-            let json = name ? '"' + name + '"' : ""
+            const jsonValue = name ? '"' + name + '"' : ""
 
             if (o instanceof Array) {
                 for (let i = 0, n = o.length; i < n; i++) o[i] = X.toJson(o[i], "", ind + "\t")
-                return json + (name ? ":[" : "[") + (o.length > 1 ? "\n" + ind + "\t" + o.join(",\n" + ind + "\t") + "\n" + ind : o.join("")) + "]"
+                return jsonValue + (name ? ":[" : "[") + (o.length > 1 ? "\n" + ind + "\t" + o.join(",\n" + ind + "\t") + "\n" + ind : o.join("")) + "]"
             }
 
-            if (o == null) return json + (name && ":") + "null"
+            if (o === null) return jsonValue + (name && ":") + "null"
 
-            if (typeof o == "object") {
-                let arr: string[] = []
-                for (let m in o) arr[arr.length] = X.toJson(o[m], m, ind + "\t")
-                return json + (name ? ":{" : "{") + (arr.length > 1 ? "\n" + ind + "\t" + arr.join(",\n" + ind + "\t") + "\n" + ind : arr.join("")) + "}"
+            if (typeof o === "object") {
+                const arr: string[] = []
+                // eslint-disable-next-line
+                for (const m in o) arr[arr.length] = X.toJson(o[m], m, ind + "\t")
+                return jsonValue + (name ? ":{" : "{") + (arr.length > 1 ? "\n" + ind + "\t" + arr.join(",\n" + ind + "\t") + "\n" + ind : arr.join("")) + "}"
             }
 
-            if (typeof o == "string") return json + (name && ":") + '"' + o.toString() + '"'
+            if (typeof o === "string") return jsonValue + (name && ":") + '"' + o.toString() + '"'
 
-            return json + (name && ":") + o.toString()
+            return jsonValue + (name && ":") + o.toString()
         },
         innerXml: (node) => {
             if ("innerHTML" in node) return node.innerHTML
 
-            let s = ""
-            let asXml = (n) => {
-                if (n.nodeType == 1) {
+            const asXml = (n) => {
+                if (n.nodeType === 1) {
                     let s = ""
                     s += "<" + n.nodeName
-                    for (let i = 0; i < n.attributes.length; i++) s += " " + n.attributes[i].nodeName + '="' + (n.attributes[i].nodeValue || "").toString() + '"'
+                    for (const attr of n.attributes) s += " " + attr.nodeName + '="' + (attr.nodeValue || "").toString() + '"'
 
                     if (n.firstChild) {
                         s += ">"
@@ -117,12 +118,13 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
                     return s + "/>"
                 }
 
-                if (n.nodeType == 3) return n.nodeValue
-                if (n.nodeType == 4) return "<![CDATA[" + n.nodeValue + "]]>"
+                if (n.nodeType === 3) return n.nodeValue
+                if (n.nodeType === 4) return "<![CDATA[" + n.nodeValue + "]]>"
             }
 
-            for (let c = node.firstChild; c; c = c.nextSibling) s += asXml(c)
-            return s
+            let fullString = ""
+            for (let c = node.firstChild; c; c = c.nextSibling) fullString += asXml(c)
+            return fullString
         },
         escape: (txt) => {
             return txt.replace(/[\\]/g, "\\\\").replace(/[\"]/g, '\\"').replace(/[\n]/g, "\\n").replace(/[\r]/g, "\\r")
@@ -130,17 +132,17 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
         removeWhite: (e) => {
             e.normalize()
             for (let n = e.firstChild; n; ) {
-                if (n.nodeType == 3) {
+                if (n.nodeType === 3) {
                     // text node
                     if (!n.nodeValue.match(/[^ \f\n\r\t\v]/)) {
                         // pure whitespace text node
-                        let nxt = n.nextSibling
+                        const nxt = n.nextSibling
                         e.removeChild(n)
                         n = nxt
                     } else {
                         n = n.nextSibling
                     }
-                } else if (n.nodeType == 1) {
+                } else if (n.nodeType === 1) {
                     // element node
                     X.removeWhite(n)
                     n = n.nextSibling
@@ -154,9 +156,9 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
     }
 
     // document node
-    if (xml.nodeType == 9) xml = xml.documentElement
+    if (xmlData.nodeType === 9) xmlData = xmlData.documentElement
 
-    let json = X.toJson(X.toObj(X.removeWhite(xml)), xml.nodeName, "\t")
+    let json = X.toJson(X.toObj(X.removeWhite(xmlData)), xmlData.nodeName, "\t")
     json = "{" + json.replace(/\t|\n/g, "") + "}"
 
     // in some cases propresenter will have this in the song metadata, making the json "bad escaped"
@@ -168,23 +170,23 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
         parsedJson = JSON.parse(json)
     } catch (e: any) {
         console.error(e)
-        let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-        console.log(pos, json.slice(pos - 5, pos + 5), json.slice(pos - 100, pos + 100))
+        const pos = Number(e.toString().replace(/\D+/g, "") || 100)
+        console.info(pos, json.slice(pos - 5, pos + 5), json.slice(pos - 100, pos + 100))
     }
 
     return parsedJson
 }
 
-function xmlParser(xml: string, removeBreaks: boolean = false) {
-    let parser = new DOMParser()
+function xmlParser(xml: string, removeBreaks = false) {
+    const parser = new DOMParser()
 
     // // fix for xml files without any line breaks
-    let versionText = xml.indexOf("?>")
+    const versionText = xml.indexOf("?>")
     if (versionText > 0 && versionText < 80) xml = xml.slice(versionText + 2, xml.length)
 
     // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
     while (xml.indexOf("<?xml") >= 0) {
-        let splitted = xml.split("\n")
+        const splitted = xml.split("\n")
         xml = splitted.slice(1, splitted.length).join("\n")
     }
 

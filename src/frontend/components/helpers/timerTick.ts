@@ -25,7 +25,7 @@ export function startTimer() {
 
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
-        let newActiveTimers = clone(get(activeTimers)).map(increment)
+        const newActiveTimers = clone(get(activeTimers)).map(increment)
 
         send(OUTPUT, ["ACTIVE_TIMERS"], newActiveTimers)
         send(STAGE, ["ACTIVE_TIMERS"], newActiveTimers)
@@ -37,15 +37,15 @@ export function startTimer() {
 }
 
 export function startTimerByName(name: string) {
-    let timersList = sortByClosestMatch(keysToID(get(timers)), name)
-    let timerId = timersList[0]?.id
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
     if (!timerId) return
 
     startTimerById(timerId)
 }
 
 export function startTimerById(id: string) {
-    let timer = get(timers)[id]
+    const timer = get(timers)[id]
     if (!timer) return
 
     playPauseGlobal(id, timer)
@@ -60,7 +60,7 @@ export function stopTimers() {
     }, 50)
 }
 
-function increment(timer: any, i: number) {
+function increment(timer: { id: string; start: number; end: number; [key: string]: any }, i: number) {
     if (!timer.paused && (timer.start < timer.end ? timer.currentTime >= timer.end && timer.currentTime < timer.end + 1 : timer.currentTime <= timer.end && timer.currentTime > timer.end - 1)) {
         if (!timer.overflow) timer.paused = true
 
@@ -71,22 +71,22 @@ function increment(timer: any, i: number) {
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
 
-    let currentTime = Date.now()
+    const currentTime = Date.now()
     // store timer start time (for accuracy)
     if (!timer.startTime) {
-        let timerIs = timer.currentTime - timer.start
-        let timerShouldBe = timerIs * 1000 // - 1
-        if (timer.start < timer.end) timer.startTime = currentTime - timerShouldBe
-        else timer.startTime = currentTime + timerShouldBe
+        const timerIs = timer.currentTime - timer.start
+        const timerStartShouldBe = timerIs * 1000 // - 1
+        if (timer.start < timer.end) timer.startTime = currentTime - timerStartShouldBe
+        else timer.startTime = currentTime + timerStartShouldBe
     }
 
-    let difference = currentTime - timer.startTime
-    let timerShouldBe = Math.floor(difference / 1000) + 1
+    const difference = currentTime - timer.startTime
+    const timerShouldBe = Math.floor(difference / 1000) + 1
 
     // prevent interval time increasing more and more
     if (i === 0) {
-        let preciseTime = (timerShouldBe - 1) * 1000
-        let differenceMs = difference - preciseTime
+        const preciseTime = (timerShouldBe - 1) * 1000
+        const differenceMs = difference - preciseTime
         customInterval = Math.max(500, INTERVAL - differenceMs)
     }
 
@@ -97,15 +97,15 @@ function increment(timer: any, i: number) {
 }
 
 // convert "show" to "action" <= 1.1.7
-let initialized: boolean = false
+let initialized = false
 function convertShowToAction() {
     if (initialized) return
     initialized = true
 
-    let updated: boolean = false
-    let allEvents = get(events)
+    let updated = false
+    const allEvents = get(events)
     Object.keys(allEvents).forEach((eventId) => {
-        let newEvent = allEvents[eventId]
+        const newEvent = allEvents[eventId]
         if (newEvent.type !== "show") return
 
         updated = true
@@ -124,9 +124,9 @@ export function startEventTimer() {
 
     convertShowToAction()
 
-    let currentTime: Date = new Date()
+    const currentTime: Date = new Date()
     let actionEvents: Event[] = Object.values(get(events)).filter((a) => {
-        let eventTime: Date = new Date(a.from)
+        const eventTime: Date = new Date(a.from)
         return a.type === "action" && currentTime.getTime() - INTERVAL < eventTime.getTime()
     })
 
@@ -138,14 +138,14 @@ export function startEventTimer() {
         actionEvents.forEach((event, i) => {
             if (!event.action) return
 
-            let eventTime: Date = new Date(event.from)
-            let toast = get(dictionary).toast || {}
+            const eventTime: Date = new Date(event.from)
+            const toast = get(dictionary).toast || {}
             if (get(nextActionEventPaused)) return
 
-            let actionId = event.action.id
-            let actionName = translate(actionData[actionId]?.name)
+            const actionId = event.action.id
+            const actionName = translate(actionData[actionId]?.name)
 
-            let timeLeft: number = eventTime.getTime() - currentTime.getTime()
+            const timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (i === 0) nextActionEventStart.set({ name: actionName, timeLeft })
 
             // less than 1 minute
@@ -193,7 +193,7 @@ export function checkTimers() {
     Object.entries(get(timers)).forEach(([id, timer]) => {
         if (timer.type === "counter") return
 
-        let time = getCurrentTimerValue({ ...timer, overflow: true }, {}, new Date())
+        const time = getCurrentTimerValue({ ...timer, overflow: true }, {}, new Date())
 
         if (time < 0 && time >= -1) {
             checkNextAfterMedia(id, "timer")

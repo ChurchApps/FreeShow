@@ -142,7 +142,7 @@
         <NumberInput value={$historyCacheCount} on:change={(e) => historyCacheCount.set(e.detail)} buttons={false} />
     </div> -->
     {:else}
-        <Center>
+        <Center faded>
             <T id="empty.general" />
         </Center>
     {/if}

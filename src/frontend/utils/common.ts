@@ -51,7 +51,7 @@ export function wait(ms: number) {
 }
 
 // wait until input value is true
-export async function waitUntilValueIsDefined(value: Function, intervalTime: number = 50, timeoutValue: number = 5000) {
+export async function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
     return new Promise(async (resolve) => {
         let currentValue = await value()
         if (currentValue) resolve(currentValue)
@@ -77,13 +77,13 @@ export async function waitUntilValueIsDefined(value: Function, intervalTime: num
 }
 
 // hide output window
-export function hideDisplay(ctrlKey: boolean = true) {
+export function hideDisplay(ctrlKey = true) {
     if (!ctrlKey) return
     outputDisplay.set(false)
 
-    let outputsList = getActiveOutputs(get(allOutputs), false)
+    const outputsList = getActiveOutputs(get(allOutputs), false)
     outputsList.forEach((id) => {
-        let output = { id, ...get(allOutputs)[id] }
+        const output = { id, ...get(allOutputs)[id] }
         send(OUTPUT, ["DISPLAY"], { enabled: false, output })
     })
 }
@@ -92,7 +92,7 @@ export function mainClick(e: any) {
     // open links externally
     if (e.target?.closest("a.open")) {
         e.preventDefault()
-        let href = e.target.getAttribute("href")
+        const href = e.target.getAttribute("href")
         if (href) sendMain(Main.URL, href)
     }
 }
@@ -111,7 +111,7 @@ export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
 
-    let saveInterval = convertAutosave[get(autosave)]
+    const saveInterval = convertAutosave[get(autosave)]
     if (!saveInterval) {
         autosaveTimeout = null
         return
@@ -124,7 +124,7 @@ export function startAutosave() {
 }
 
 // get dropdown list
-export function getList(object: any, addEmptyValue: boolean = false) {
+export function getList(object: any, addEmptyValue = false) {
     let list = sortByName(keysToID(object))
     if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
 
@@ -146,10 +146,10 @@ const ERROR_FILTER = [
     " is not defined\n    at eval", // inputting text into number input
 ]
 export function logerror(err) {
-    let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
+    const msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
-    let log: ErrorLog = {
+    const log: ErrorLog = {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),
@@ -170,7 +170,7 @@ export function logerror(err) {
 export function toggleRemoteStream() {
     if (get(currentWindow)) return
 
-    let value = { key: "server", value: false }
+    const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId
     if (!captureOutputId || !get(outputs)[captureOutputId]) captureOutputId = getActiveOutputs(get(outputs), true, true)[0]
     if (get(disabledServers).output_stream === false) value.value = true
@@ -192,11 +192,11 @@ export function startDevMode() {
 // toggle drawer & left/right panels
 const minDrawerHeight = 40
 const minPanelWidth = 4
-let panelsManuallyClosed: boolean = false
+let panelsManuallyClosed = false
 export function togglePanels() {
-    let drawerIsOpened = get(drawer).height > minDrawerHeight
-    let leftPanelIsOpened = get(resized).leftPanel > minPanelWidth
-    let rightPanelIsOpened = get(resized).rightPanel > minPanelWidth
+    const drawerIsOpened = get(drawer).height > minDrawerHeight
+    const leftPanelIsOpened = get(resized).leftPanel > minPanelWidth
+    const rightPanelIsOpened = get(resized).rightPanel > minPanelWidth
 
     // close all
     if (drawerIsOpened || leftPanelIsOpened || rightPanelIsOpened) {
@@ -212,7 +212,7 @@ export function togglePanels() {
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-let triggerTimeout: NodeJS.Timeout | null = null
+const triggerTimeout: NodeJS.Timeout | null = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 

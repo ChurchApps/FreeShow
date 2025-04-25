@@ -1,14 +1,21 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { editColumns, resized } from "../../stores"
+    import { editColumns, resized, localeDirection } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
 
     export let id: string
-    export let side: "left" | "right" | "top" | "bottom" = "left"
+    export let side: "left" | "right" | "top" | "bottom" = "left";
+
+    const originalSide = side;
+    $: if ($localeDirection === "rtl") {
+        side = originalSide === "left" ? "right" : originalSide === "right" ? "left" : originalSide;
+    } else {
+        side = originalSide;
+    }
 
     let width: number = DEFAULT_WIDTH
-    let handleWidth: number = 4
+    let handleWidth = 4
     export let maxWidth: number = DEFAULT_WIDTH * 2.2
     export let minWidth: number = handleWidth
 
@@ -24,7 +31,7 @@
         }, 2000)
     })
 
-    let move: boolean = false
+    let move = false
     let mouse: null | { x: number; y: number; offset: number; target: any } = null
 
     $: handleWidth = width <= 8 ? 6 : 4
@@ -95,7 +102,7 @@
             return a
         })
 
-        if (id === "leftPanel") {
+        if (side === 'left') {
             let gap = maxWidth - DEFAULT_WIDTH
             let triple = DEFAULT_WIDTH + gap * 0.8
             let double = DEFAULT_WIDTH + gap * 0.4
@@ -136,12 +143,12 @@
     }
 
     :global(.bar_left) {
-        padding-right: var(--handle-width);
+        padding-inline-end: var(--handle-width);
         /* border-radius: 0 var(--border-radius) var(--border-radius) 0; */
         /* box-shadow: 2px 0 14px rgb(0 0 0 / 0.12); */
     }
     :global(.bar_right) {
-        padding-left: var(--handle-width);
+        padding-inline-start: var(--handle-width);
         /* border-radius: var(--border-radius) 0 0 var(--border-radius); */
         /* box-shadow: -2px 0 14px rgb(0 0 0 / 0.12); */
     }
@@ -172,7 +179,7 @@
         position: absolute;
         top: 50%;
 
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translate(-50%, -50%);
 
         /* right: 0;
@@ -187,12 +194,12 @@
     }
 
     div:global(.bar_left)::after {
-        right: 0;
+        right: 0; /* stylelint-disable-line */
         width: var(--handle-width);
         cursor: ew-resize;
     }
     div:global(.bar_right)::after {
-        left: 0;
+        left: 0; /* stylelint-disable-line */
         width: var(--handle-width);
         cursor: ew-resize;
     }

@@ -15,7 +15,7 @@ export function SRTtoVTT(srt: string) {
         else timestampIndex = 1
 
         // convert timestamps from SRT (00:00:00,000) to VTT format (00:00:00.000)
-        let timestamp = lines[timestampIndex].replaceAll(",", ".")
+        const timestamp = lines[timestampIndex].replaceAll(",", ".")
 
         const subtitleText = lines
             .slice(timestampIndex + 1)

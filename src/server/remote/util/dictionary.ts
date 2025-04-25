@@ -12,6 +12,10 @@ export const DEFAULT_DICTIONARY = {
         backgrounds: "No backgrounds in show",
         groups: "No groups",
         events: "No events",
+        text: "Type something",
+    },
+    new: {
+        show: "New show",
     },
     tabs: {
         scripture: "Scriptures",
@@ -50,5 +54,8 @@ export const DEFAULT_DICTIONARY = {
     },
     media: {
         play: "Play",
+    },
+    context: {
+        addToProject: "Add to project",
     },
 }

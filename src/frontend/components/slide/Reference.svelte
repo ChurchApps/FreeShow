@@ -12,7 +12,7 @@
 
     export let show: Show
 
-    $: data = show.reference?.data || {}
+    $: data = show?.reference?.data || {}
 
     async function updateCalendar() {
         let currentEvents = getSelectedEvents(data.days)
@@ -32,7 +32,7 @@
 
     function openTab() {
         let collection = data.collection
-        if (!collection) return
+        if (!collection || !show) return
 
         let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a) => a.id === collection)
         if (!scriptureId) return
@@ -57,7 +57,7 @@
 </script>
 
 <div>
-    {#if show.reference?.type === "calendar"}
+    {#if show?.reference?.type === "calendar"}
         <p>
             <T id="menu.calendar" />: {getDaysString()}
             {#if data.show && $shows[data.show]}
@@ -69,14 +69,14 @@
             <Icon id="calendar" right={!$labelsDisabled} />
             {#if !$labelsDisabled}<T id="show.update" />{/if}
         </Button>
-    {:else if show.reference?.type === "scripture"}
+    {:else if show?.reference?.type === "scripture"}
         <p title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
         <Button on:click={openTab} style="white-space: nowrap;">
             <Icon id="scripture" right={!$labelsDisabled} />
             {#if !$labelsDisabled}<T id="main.open" />{/if}
         </Button>
-    {:else if show.reference?.type === "lessons"}
+    {:else if show?.reference?.type === "lessons"}
         <p>
             {#if data.studyName}
                 {data.studyName}{#if data.about}:{/if}

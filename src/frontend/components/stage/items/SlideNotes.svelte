@@ -2,35 +2,18 @@
     import type { OutSlide } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { getLayoutRef } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
+    import { getStageTextLayoutOffset } from "../stage"
 
     export let currentSlide: OutSlide
-    export let slideOffset: number = 0
-    export let autoSize: number = 100
+    export let slideOffset = 0
+    export let autoSize = 100
 
     $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
 
-    // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
     $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
-    $: if (slideOffset > 0 && slideIndex !== null && showRef) {
-        let layoutOffset = slideIndex
-        let offsetFromCurrentExcludingDisabled = 0
-        while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
-            layoutOffset++
-            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
-        }
-        slideIndex = layoutOffset
-    } else if (slideOffset < 0 && slideIndex !== null && showRef) {
-        let layoutOffset = slideIndex
-        let offsetFromCurrentExcludingDisabled = 0
-        while (offsetFromCurrentExcludingDisabled > slideOffset && layoutOffset >= 0) {
-            layoutOffset--
-            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
-        }
-        slideIndex = layoutOffset
-    }
+    $: customOffset = getStageTextLayoutOffset(showRef, slideOffset, slideIndex)
 
-    $: slideId = slideIndex !== null && currentSlide ? showRef[slideIndex]?.id || null : null
+    $: slideId = customOffset !== null && currentSlide ? showRef[customOffset]?.id || null : null
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
     $: notes = slide?.notes ? slide.notes.replaceAll("\n", "<br>") : ""
 </script>

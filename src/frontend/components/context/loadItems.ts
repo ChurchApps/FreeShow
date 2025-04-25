@@ -17,9 +17,9 @@ import type { ContextMenuItem } from "./contextMenus"
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
         const tabsToRemove = 2
-        let tabs = keysToID(clone(drawerTabs)).slice(tabsToRemove)
+        const tabs = keysToID(clone(drawerTabs)).slice(tabsToRemove)
         items = tabs.map((a) => {
-            let enabled = get(drawerTabsData)[a.id]?.enabled !== false
+            const enabled = get(drawerTabsData)[a.id]?.enabled !== false
             return { id: a.id, label: a.name, icon: a.icon, enabled }
         })
 
@@ -28,34 +28,34 @@ const loadActions = {
 
     // TAGS
     tag_set: () => {
-        let selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
-        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
+        const selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
+        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
     },
     tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        const sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
         setContextData("tags", sortedTags.length)
         return sortedTags
     },
     media_tag_set: () => {
-        let selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
-        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
+        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
     },
     media_tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
+        const sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
         setContextData("media_tags", sortedTags.length)
         return sortedTags
     },
     action_tag_set: () => {
-        let selectedTags = get(midiIn)[get(selected).data[0]?.id]?.tags || []
-        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const selectedTags = get(midiIn)[get(selected).data[0]?.id]?.tags || []
+        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
@@ -72,12 +72,12 @@ const loadActions = {
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     sort_media: (items: ContextMenuItem[]) => sortItems(items, "media"),
     slide_groups: (items: ContextMenuItem[]) => {
-        let selectedIndex = get(selected).data[0]?.index
-        let slideRef = getLayoutRef()?.[selectedIndex] || {}
-        let currentSlide = _show().get("slides")[slideRef.id]
+        const selectedIndex = get(selected).data[0]?.index
+        const slideRef = getLayoutRef()?.[selectedIndex] || {}
+        const currentSlide = _show().get("slides")[slideRef.id]
         if (!currentSlide) return []
 
-        let currentGroup: string = currentSlide.globalGroup || ""
+        const currentGroup: string = currentSlide.globalGroup || ""
         items = Object.entries(get(groups)).map(([id, a]) => {
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
@@ -86,10 +86,10 @@ const loadActions = {
         return sortItemsByLabel(items)
     },
     actions: () => {
-        let slideRef = getLayoutRef()?.[get(selected).data[0]?.index]
-        let currentActions = slideRef?.data?.actions
+        const slideRef = getLayoutRef()?.[get(selected).data[0]?.index]
+        const currentActions = slideRef?.data?.actions
 
-        let slideActions = [
+        const slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
             "SEPERATOR",
             { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", enabled: currentActions?.slide_shortcut || false },
@@ -105,13 +105,13 @@ const loadActions = {
         return slideActions
     },
     item_actions: () => {
-        let slide = getEditSlide()
+        const slide = getEditSlide()
         if (!slide) return []
 
-        let selectedItems: number[] = get(activeEdit).items || []
-        let currentItemActions = slide.items?.[selectedItems[0]]?.actions || {}
+        const selectedItems: number[] = get(activeEdit).items || []
+        const currentItemActions = slide.items?.[selectedItems[0]]?.actions || {}
 
-        let itemActions = [
+        const itemActions = [
             // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
             { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
             { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
@@ -120,8 +120,8 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlides = getLayoutRef()
-        let layoutSlide = layoutSlides[get(selected).data[0]?.index] || {}
+        const layoutSlides = getLayoutRef()
+        const layoutSlide = layoutSlides[get(selected).data[0]?.index] || {}
 
         // text content
         let textContent = ""
@@ -130,16 +130,16 @@ const loadActions = {
         })
         setContextData("textContent", textContent)
 
-        let data = layoutSlide.data
+        const data = layoutSlide.data
         if (!data) return []
 
-        let showMedia: { [key: string]: Media } = _show().get().media
-        let media: (ContextMenuItem | "SEPERATOR")[] = []
+        const showMedia: { [key: string]: Media } = _show().get().media
+        const mediaList: (ContextMenuItem | "SEPERATOR")[] = []
 
         // get background
-        let bg = data.background
+        const bg = data.background
         if (bg && showMedia[bg]?.name) {
-            media.push({
+            mediaList.push({
                 id: bg,
                 label: removeExtension(showMedia[bg].name!),
                 translate: false,
@@ -148,10 +148,10 @@ const loadActions = {
         }
 
         // get overlays
-        let ol = data.overlays || []
+        const ol = data.overlays || []
         if (ol.length) {
-            if (media.length) media.push("SEPERATOR")
-            media.push(
+            if (mediaList.length) mediaList.push("SEPERATOR")
+            mediaList.push(
                 ...sortByName(
                     ol.map((id: string) => ({ id, label: get(overlays)[id]?.name, translate: false, icon: "overlays" })),
                     "label"
@@ -160,10 +160,10 @@ const loadActions = {
         }
 
         // get audio
-        let audio = data.audio || []
+        const audio = data.audio || []
         if (audio.length) {
-            if (media.length) media.push("SEPERATOR")
-            let audioItems = sortByName(
+            if (mediaList.length) mediaList.push("SEPERATOR")
+            const audioItems = sortByName(
                 audio.map((id: string) => {
                     const name = showMedia[id]?.name || ""
                     return {
@@ -175,14 +175,14 @@ const loadActions = {
                 }),
                 "label"
             )
-            media.push(...audioItems)
+            mediaList.push(...audioItems)
         }
 
         // get mics
-        let mics = data.mics || []
+        const mics = data.mics || []
         if (mics.length) {
-            if (media.length) media.push("SEPERATOR")
-            let micItems = sortByName(
+            if (mediaList.length) mediaList.push("SEPERATOR")
+            const micItems = sortByName(
                 mics.map((mic) => ({
                     id: mic.id,
                     label: mic.name,
@@ -191,33 +191,33 @@ const loadActions = {
                 })),
                 "label"
             )
-            media.push(...micItems)
+            mediaList.push(...micItems)
         }
 
         // get slide actions
-        let slideActions = data.actions?.slideActions || []
+        const slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
-            if (media.length) media.push("SEPERATOR")
-            let actionItems = sortByName(
+            if (mediaList.length) mediaList.push("SEPERATOR")
+            const actionItems = sortByName(
                 slideActions.map((action) => {
-                    let triggerId = getActionTriggerId(action.triggers?.[0])
-                    let customData = actionData[triggerId] || {}
-                    let actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
-                    let customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
+                    const triggerId = getActionTriggerId(action.triggers?.[0])
+                    const customData = actionData[triggerId] || {}
+                    const actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
+                    const customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
 
-                    let label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
-                    let icon = actionData[triggerId]?.icon || "actions"
+                    const label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
+                    const icon = actionData[triggerId]?.icon || "actions"
 
                     return { id: action.id, label, translate: false, icon, type: "action" }
                 }),
                 "label"
             )
-            media.push(...actionItems)
+            mediaList.push(...actionItems)
         }
 
-        setContextData("layers", !!media?.length)
+        setContextData("layers", !!mediaList?.length)
 
-        if (media.length) return media
+        if (mediaList.length) return mediaList
         return [{ label: "empty.general", disabled: true }]
     },
     keys: () => {
@@ -232,8 +232,8 @@ const loadActions = {
 
         return items
     },
-    bind_slide: (_items, isItem: boolean = false) => {
-        let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
+    bind_slide: (_items, isItem = false) => {
+        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
         if (isItem) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
@@ -241,11 +241,11 @@ const loadActions = {
         let currentBindings: string[] = []
         if (isItem) {
             // get current item bindings
-            let editItems = getEditItems(true)
+            const editItems = getEditItems(true)
             currentBindings = editItems[0]?.bindings || []
         } else {
-            let selectedIndex = get(selected).data[0]?.index
-            let currentSlide = getLayoutRef()?.[selectedIndex] || {}
+            const selectedIndex = get(selected).data[0]?.index
+            const currentSlide = getLayoutRef()?.[selectedIndex] || {}
             currentBindings = currentSlide.data?.bindings || []
         }
 
@@ -269,7 +269,7 @@ function setContextData(key: string, data: boolean | string | number) {
 }
 
 function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media") {
-    let type = get(sorted)[id]?.type || "name"
+    const type = get(sorted)[id]?.type || "name"
 
     items = [
         { id: "name", label: "sort.name", icon: "text", enabled: type === "name" },
@@ -288,8 +288,8 @@ function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media")
 
 function sortItemsByLabel(items: ContextMenuItem[]) {
     return items.sort((a, b) => {
-        let aName = a.translate ? translate(a.label) : a.label
-        let bName = b.translate ? translate(b.label) : b.label
+        const aName = a.translate ? translate(a.label) : a.label
+        const bName = b.translate ? translate(b.label) : b.label
 
         return aName.localeCompare(bName)
     })
@@ -298,8 +298,8 @@ function sortItemsByLabel(items: ContextMenuItem[]) {
 export function loadItems(id: string): [string, ContextMenuItem | "SEPERATOR"][] {
     if (!loadActions[id]) return []
 
-    let items: (ContextMenuItem | "SEPERATOR")[] = loadActions[id]([])
-    let menuItems: [string, ContextMenuItem | "SEPERATOR"][] = items.map((a) => [a === "SEPERATOR" ? a : id, a])
+    const items: (ContextMenuItem | "SEPERATOR")[] = loadActions[id]([])
+    const menuItems: [string, ContextMenuItem | "SEPERATOR"][] = items.map((a) => [a === "SEPERATOR" ? a : id, a])
 
     return menuItems
 }

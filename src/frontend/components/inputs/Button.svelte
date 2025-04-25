@@ -2,22 +2,22 @@
     import { fade } from "svelte/transition"
     import { os } from "../../stores"
 
-    export let active: boolean = false
+    export let active = false
     export let outlineColor: string | null = null
-    export let outline: boolean = false
-    export let title: string = ""
-    export let flipTitlePos: boolean = false
-    export let zoom: number = 1
-    export let center: boolean = false
-    export let border: boolean = false
-    export let dark: boolean = false
-    export let bold: boolean = true
-    export let red: boolean = false
-    export let redHover: boolean = false
-    export let brighterHover: boolean = false
+    export let outline = false
+    export let title = ""
+    export let flipTitlePos = false
+    export let zoom = 1
+    export let center = false
+    export let border = false
+    export let dark = false
+    export let bold = true
+    export let red = false
+    export let redHover = false
+    export let brighterHover = false
 
-    let tooltipTime: number = 800
-    let showTooltip: boolean = false
+    let tooltipTime = 800
+    let showTooltip = false
     let timeout: NodeJS.Timeout | null = null
     let autoHideTimeout: NodeJS.Timeout | null = null
     function startTimer() {
@@ -43,7 +43,7 @@
         timeout = null
     }
 
-    let tooltipStyle: string = ""
+    let tooltipStyle = ""
     let mouse: { x: number; y: number } = { x: 0, y: 0 }
     function mousemove(e: any) {
         if (!title?.length) return
@@ -189,7 +189,7 @@
     }
 
     button :global(div) {
-        padding-left: 0.8em;
+        padding-inline-start: 0.8em;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow-x: hidden;
@@ -227,9 +227,9 @@
         border-radius: var(--border-radius);
         padding: 5px 10px;
         top: 0;
-        left: 0;
+        left: 0; /* stylelint-disable-line */ /* this is set by mousemove */
         max-width: 250px;
-        text-align: left;
+        text-align: start;
         white-space: normal;
         font-weight: normal;
     }

@@ -20,7 +20,7 @@ export function sortByTime(a, b) {
     return new Date(a).getTime() - new Date(b).getTime()
 }
 
-export function sortByTimeNew<T>(array: T, key: string = "time") {
+export function sortByTimeNew<T>(array: T, key = "time") {
     if (!Array.isArray(array)) return array
     return array.sort((a, b) => new Date(a[key]).getTime() - new Date(b[key]).getTime())
 }
@@ -28,7 +28,7 @@ export function sortByTimeNew<T>(array: T, key: string = "time") {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T = "name", numberSort: boolean = true) {
+export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T = "name", numberSort = true) {
     return arr
         .filter((a) => typeof a[key] === "string")
         .sort((a, b) => {
@@ -73,7 +73,7 @@ export function sortObject<T extends Record<string, any>>(object: T[], key: keyo
 }
 
 // sort objects in array numerically
-export function sortObjectNumbers<T extends Record<string, any>>(object: T[], key: keyof T, reverse: boolean = false) {
+export function sortObjectNumbers<T extends Record<string, any>>(object: T[], key: keyof T, reverse = false) {
     return object.sort((a, b) => {
         return reverse ? b[key] - a[key] : a[key] - b[key]
     })
@@ -82,8 +82,8 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
 // sort any object.name by numbers in the front of the string
 export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
     return array.sort((a, b) => {
-        let aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
-        let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
+        const aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
+        const bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
 
         // get only number part if available
         const extractNumber = (str) => {
@@ -123,7 +123,7 @@ export function sortFilenames<T extends Record<string, any>>(filenames: T[]) {
         if (nameComparison !== 0) return nameComparison
 
         // compare any numbers
-        const numComparison = (parseInt(numA) || 0) - (parseInt(numB) || 0)
+        const numComparison = (parseInt(numA, 10) || 0) - (parseInt(numB, 10) || 0)
         if (numComparison !== 0) return numComparison
 
         // compare extensions at last
@@ -134,7 +134,7 @@ export function sortFilenames<T extends Record<string, any>>(filenames: T[]) {
 }
 
 // move keys to IDs in object and return array
-export function keysToID<T extends Record<string, any>>(object: T): Array<T[keyof T] & { id: string }> {
+export function keysToID<T extends Record<string, any>>(object: T): (T[keyof T] & { id: string })[] {
     if (!object) return []
     return Object.entries(object).map(([id, a]) => ({ ...a, id }))
 }
@@ -154,7 +154,7 @@ export function removeDeleted<T extends Record<string, any>>(object: T[]) {
 export function removeDuplicateValues<T>(obj: T): T {
     if (typeof obj !== "object") return obj
 
-    let uniqueObj: T = {} as T
+    const uniqueObj: T = {} as T
     const valueSet = new Set()
 
     for (const [key, value] of Object.entries(obj!)) {
@@ -210,6 +210,6 @@ export function shuffleArray(array) {
 
 // convert object to dropdown options
 export function convertToOptions(object) {
-    let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
+    const options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
     return sortByName(options)
 }

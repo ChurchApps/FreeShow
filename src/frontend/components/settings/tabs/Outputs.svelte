@@ -31,11 +31,11 @@
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
     const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
-    const revertTime: number = 5 // seconds
+    const revertTime = 5 // seconds
     let reverted: string[] = []
 
-    function updateOutput(key: string, value: any, outputId: string = "") {
-        if (!outputId) outputId = currentOutput?.id!
+    function updateOutput(key: string, value: any, outputId = "") {
+        if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
 
         // auto revert special values
@@ -351,7 +351,7 @@
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
     <Button on:click={() => activePopup.set(currentOutput?.invisible ? "change_output_values" : "choose_screen")}>
-        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-left: 0.5em;" right />
+        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-inline-start: 0.5em;" right />
         <p>
             {#if currentOutput?.invisible}
                 <T id="popup.change_output_values" />
@@ -545,7 +545,7 @@
     .connections {
         display: flex;
         align-items: center;
-        padding-left: 10px;
+        padding-inline-start: 10px;
         opacity: 0.5;
         font-weight: normal;
     }
@@ -564,7 +564,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

@@ -21,13 +21,15 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
+    import Button from "../inputs/Button.svelte"
+    import Icon from "../helpers/Icon.svelte"
 
     export let id: string
     export let item: StageItem
     export let stageLayout: StageLayout | null = null
     export let ratio: number
-    export let preview: boolean = false
-    export let edit: boolean = false
+    export let preview = false
+    export let edit = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
 
@@ -131,14 +133,14 @@
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
-    let firstTimerId: string = ""
+    let firstTimerId = ""
     $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     } else firstTimerId = ""
 
-    let itemStyle: string = ""
-    let textStyle: string = ""
+    let itemStyle = ""
+    let textStyle = ""
     $: if (item.style) updateStyles()
     function updateStyles() {
         const styles = getStyles(item.style)
@@ -173,13 +175,24 @@
     }
 
     $: newItem = clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id } })
+
+    // ACTIONS
+
+    // conditions
+    function removeConditions() {
+        stageShows.update((a) => {
+            if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
+            delete a[$activeStage.id!].items[id].conditions
+            return a
+        })
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
     {id}
-    class="stage_item item {edit ? `context #${item.type === 'text' ? 'stage_text_item' : 'stage_item'}` : ''}"
+    class="stage_item item {edit ? `context #${item.type === 'slide_text' ? 'stage_slide_text_item' : item.type === 'text' ? 'stage_text_item' : 'stage_item'}` : ''}"
     class:border={currentShow?.settings?.labels}
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
@@ -193,6 +206,18 @@
     {/if}
     {#if edit}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
+
+        <!-- ACTIONS -->
+        <div class="actions">
+            <!-- conditions -->
+            {#if Object.values(item?.conditions || {}).length}
+                <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                    <Button on:click={removeConditions} redHover>
+                        <Icon id="light" white />
+                    </Button>
+                </div>
+            {/if}
+        </div>
     {/if}
 
     <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
@@ -208,7 +233,7 @@
                     {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
                     <!-- WIP this only includes "next" slide background -->
                     {#if typeof slideBackground?.path === "string"}
-                        <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                        <div class="image" style="position: absolute;inset-inline-start: 0;top: 0;width: 100%;height: 100%;">
                             <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
                         </div>
                     {/if}
@@ -368,5 +393,26 @@
 
     .align .edit_item :global(.align .edit span) {
         font-size: var(--font-size);
+    }
+
+    /* ACTIONS */
+
+    .actions {
+        position: absolute;
+        top: 0;
+        inset-inline-start: 0;
+
+        display: flex;
+        flex-direction: column;
+    }
+    .actionButton {
+        display: flex;
+        align-items: center;
+        background-color: var(--focus);
+        color: var(--text);
+    }
+    .actionButton :global(button) {
+        padding: 5px !important;
+        z-index: 3;
     }
 </style>

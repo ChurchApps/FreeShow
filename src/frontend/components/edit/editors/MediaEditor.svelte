@@ -11,7 +11,7 @@
     $: extension = getExtension(path)
     $: type = getMediaType(extension)
 
-    let videoTime: number = 0
+    let videoTime = 0
     let videoData = { paused: false, muted: true, duration: 0, loop: true }
 
     $: outputId = getActiveOutputs($outputs, false, true, true)[0]

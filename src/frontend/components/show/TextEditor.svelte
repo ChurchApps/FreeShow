@@ -11,11 +11,11 @@
 
     export let currentShow: any
 
-    let text: string = ""
+    let text = ""
     $: if (currentShow) text = getPlainEditorText()
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
@@ -79,7 +79,7 @@
 
         display: flex;
         align-items: center;
-        justify-content: right;
+        justify-content: end;
         background-color: var(--primary-darkest);
         /* border-top: 3px solid var(--primary-lighter); */
     }
@@ -99,7 +99,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

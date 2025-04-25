@@ -35,18 +35,17 @@ export function convertOpenSong(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("OpenSong")
+    const categoryId = createCategory("OpenSong")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
             let song: any = {}
             if (content.includes("<html>")) song = HTMLtoObject(content)
             else song = XMLtoObject(content)
-            console.log(song)
 
-            let layoutID = uid()
+            const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(song.title)
             show.meta = {
@@ -60,8 +59,7 @@ export function convertOpenSong(data: any) {
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
             if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
-            console.log(song)
-            let { slides, layout, media }: any = createSlides(song)
+            const { slides, layout, media }: any = createSlides(song)
 
             show.slides = slides
             show.media = media
@@ -76,8 +74,8 @@ export function convertOpenSong(data: any) {
 
 const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
 function createSlides({ lyrics, presentation, backgrounds }: Song) {
-    let slides: any = {}
-    let media: any = {}
+    const slides: any = {}
+    const media: any = {}
     let layout: any[] = []
     if (!lyrics) return { slides, layout }
 
@@ -86,11 +84,11 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
     lyrics = lyrics.replaceAll("||", "__CHILD_SLIDE__")
 
-    let slideRef: any = {}
+    const slideRef: any = {}
     let slideOrder: string[] = []
 
     lyrics.split("\n\n").forEach((slide) => {
-        let groupText = slide.trim()
+        const groupText = slide.trim()
         let group = groupText
             .split("\n")
             .splice(0, 1)[0]
@@ -99,19 +97,19 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
         if (!groupText) return
 
         slideOrder.push(group)
-        let parentId = uid()
-        let children: string[] = []
+        const parentId = uid()
+        const children: string[] = []
         groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
-            let lines = slideText.trim().split("\n")
+            const lines = slideText.trim().split("\n")
             if (i === 0 && lines[0].includes("[")) lines.shift()
-            let chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
-            let text = lines.filter((_v: string) => !_v.startsWith("."))
+            const chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
+            const text = lines.filter((_v: string) => !_v.startsWith("."))
 
-            let id: string = i === 0 ? parentId : uid()
+            const id: string = i === 0 ? parentId : uid()
             if (i === 0) slideRef[group] = id
             else children.push(id)
 
-            let chords: Chords[] = []
+            const chords: Chords[] = []
             let pos = -1
             chordData
                 .slice(1)
@@ -123,9 +121,9 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
                     pos++ // add extra " " removed by split
                 })
 
-            let items = [
+            const items = [
                 {
-                    style: "left:50px;top:120px;width:1820px;height:840px;",
+                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                     lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords })),
                 },
             ]
@@ -140,7 +138,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
             if (i > 0) return
 
-            let globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
+            const globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
             else slides[id].group = group
         })
@@ -155,7 +153,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     if (slideOrder.length) {
         layout = []
         slideOrder.forEach((group) => {
-            let id = slideRef[group]
+            const id = slideRef[group]
             if (id) layout.push({ id })
         })
     }
@@ -166,7 +164,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
     // add backgrounds
     if (backgrounds?.length) {
-        let bgId = uid(5)
+        const bgId = uid(5)
         layout[0].background = bgId
         media[bgId] = { path: "data:image/jpeg;base64," + backgrounds } // base64:
     }
@@ -175,10 +173,10 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 }
 
 function XMLtoObject(xml: string) {
-    let parser = new DOMParser()
-    let song = parser.parseFromString(xml, "text/xml").children[0]
+    const parser = new DOMParser()
+    const song = parser.parseFromString(xml, "text/xml").children[0]
 
-    let object: Song = {
+    const object: Song = {
         title: song.getElementsByTagName("title")[0]?.textContent || "",
         author: song.getElementsByTagName("author")[0]?.textContent || "",
         copyright: song.getElementsByTagName("copyright")[0]?.textContent || "",
@@ -205,11 +203,11 @@ function XMLtoObject(xml: string) {
 
 export function convertOpenSongBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = XMLtoBible(bible.content)
+        const obj: Bible = XMLtoBible(bible.content)
         obj.name = bible.name || ""
         obj.name = formatToFileName(obj.name)
 
-        let id = uid()
+        const id = uid()
         // create folder & file
         scripturesCache.update((a) => {
             a[id] = obj
@@ -226,31 +224,31 @@ export function convertOpenSongBible(data: any[]) {
 }
 
 function XMLtoBible(xml: string): Bible {
-    let parser = new DOMParser()
+    const parser = new DOMParser()
     // remove first line (standalone attribute): <?xml version="1.0"?>
     xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
-    let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+    const xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 
-    let booksObj = getChildren(xmlDoc, "b")
-    let books: any[] = []
+    const booksObj = getChildren(xmlDoc, "b")
+    const books: any[] = []
 
     ;[...booksObj].forEach((book: any, i: number) => {
         let length = 0
-        let name = book.getAttribute("n")
-        let number = i + 1
-        let chapters: any[] = []
+        const name = book.getAttribute("n")
+        const number = i + 1
+        const chapters: any[] = []
         ;[...getChildren(book, "c")].forEach((chapter: any) => {
-            let number = chapter.getAttribute("n")
-            let verses: any[] = []
+            const chapterNumber = chapter.getAttribute("n")
+            const verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                let text = verse.innerHTML
+                const text = verse.innerHTML
                     .toString()
                     .replace(/\[\d+\] /g, "") // remove [1], not [text]
                     .trim()
                 length += text.length
                 if (text.length) verses.push({ number: verse.getAttribute("n"), text })
             })
-            chapters.push({ number, verses })
+            chapters.push({ number: chapterNumber, verses })
         })
         if (length) books.push({ name, number, chapters })
     })
@@ -261,26 +259,26 @@ function XMLtoBible(xml: string): Bible {
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)
 
 function HTMLtoObject(content: string) {
-    let parser = new DOMParser()
-    let html = parser.parseFromString(content, "text/html").children[0]?.querySelector("body")
+    const parser = new DOMParser()
+    const html = parser.parseFromString(content, "text/html").children[0]?.querySelector("body")
 
     // WIP chords
 
-    const groups = content.split('<span class="heading">').slice(1)
-    let lyrics: string = ""
-    groups.forEach((group) => {
-        let linesEnd = group.lastIndexOf("<br/>")
-        let g = group.slice(0, linesEnd)
+    const slideGroups = content.split('<span class="heading">').slice(1)
+    let lyrics = ""
+    slideGroups.forEach((group) => {
+        const linesEnd = group.lastIndexOf("<br/>")
+        const g = group.slice(0, linesEnd)
         const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)
 
-        let groupName = group.slice(0, group.indexOf("</span>")).trim()
+        const groupName = group.slice(0, group.indexOf("</span>")).trim()
         lyrics += `[${groupName}]\n`
 
         lines.forEach((line) => {
             const sections = line.indexOf('class="lyrics">') > -1 ? line.split('class="lyrics">').slice(1) : [line]
 
             sections.forEach((section) => {
-                let text = section.slice(0, section.indexOf("</td>"))
+                const text = section.slice(0, section.indexOf("</td>"))
                 lyrics += text
             })
 
@@ -292,7 +290,7 @@ function HTMLtoObject(content: string) {
 
     lyrics = lyrics.trim()
 
-    let object: Song = {
+    const object: Song = {
         title: html?.querySelector("#title")?.textContent || "",
         author: html?.querySelector("#author")?.textContent || "",
         ccli: html?.querySelector("#ccli")?.textContent || "",

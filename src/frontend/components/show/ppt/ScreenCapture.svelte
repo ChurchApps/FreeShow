@@ -8,7 +8,7 @@
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
 
-    export let path: string = ""
+    export let path = ""
 
     // get window
 
@@ -62,7 +62,7 @@
         }
     }
 
-    function selectWindow(screenData: any, save: boolean = false) {
+    function selectWindow(screenData: any, save = false) {
         if (findWindowTimeout) clearTimeout(findWindowTimeout)
 
         chosenWindow = screenData

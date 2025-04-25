@@ -31,6 +31,7 @@ export const actionData = {
 
     // MEDIA
     start_camera: { SECTION: "tabs.media", name: "actions.start_camera", icon: "camera", input: "camera" },
+    start_screen: { name: "actions.start_screen", icon: "screen", input: "screen" },
 
     // OVERLAYS
     // SECTION: "tabs.overlays",

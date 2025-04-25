@@ -27,6 +27,7 @@ export const os: Writable<OS> = writable({ platform: "win32", name: "", arch: ""
 export const deviceId: Writable<string> = writable("")
 export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
+export const localeDirection: Writable<"rtl" | "ltr"> = writable("ltr")
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
 export const loaded: Writable<boolean> = writable(false)
@@ -68,6 +69,7 @@ export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const pcoConnected: Writable<boolean> = writable(false)
+export const chumsConnected: Writable<boolean> = writable(false)
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -123,6 +125,7 @@ export const quickTextCache: Writable<string> = writable("")
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
+export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)
@@ -379,6 +382,7 @@ export const $ = {
     dataPath,
     special,
     language,
+    direction: localeDirection,
     timeFormat,
     alertUpdates,
     autoOutput,
@@ -400,7 +404,7 @@ export const $ = {
 
 // DEBUG STORE UPDATES
 const debugStores = false
-let updates: { [key: string]: number } = {}
+const updates: { [key: string]: number } = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
     Object.entries($).forEach(([key, store]) => {
@@ -409,6 +413,7 @@ function startSubscriptions() {
             updates[key]++
 
             // first update is initializing empty store, second update sets saved value
+            // eslint-disable-next-line
             if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
         })
     })

@@ -4,7 +4,7 @@ import http from "http"
 import { join } from "path"
 import { Server, type Socket } from "socket.io"
 import type { Main, MainSendPayloads } from "../types/IPC/Main"
-import type { ServerData } from "../types/Socket"
+import type { Message, ServerData } from "../types/Socket"
 import { CaptureHelper } from "./capture/CaptureHelper"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
@@ -20,7 +20,7 @@ interface ServerValues {
     data: ServerData
 }
 
-const ports: { [key in ServerName]: number } = {
+const serverPorts: { [key in ServerName]: number } = {
     REMOTE: 5510,
     STAGE: 5511,
     CONTROLLER: 5512,
@@ -28,22 +28,22 @@ const ports: { [key in ServerName]: number } = {
     // CAM: 5513,
 }
 
-let servers: { [key in ServerName]?: ServerValues } = {}
-let ioServers: { [key in ServerName]?: Server } = {}
+const servers: { [key in ServerName]?: ServerValues } = {}
+const ioServers: { [key in ServerName]?: Server } = {}
 
 createServers()
 function createServers() {
-    let serverList = Object.keys(ports) as ServerName[]
+    const serverList = Object.keys(serverPorts) as ServerName[]
     serverList.forEach((id) => {
-        let app = express()
-        let server = http.createServer(app)
+        const app = express()
+        const server = http.createServer(app)
 
         app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
         app.use(express.static(join(__dirname, id.toLowerCase())))
 
         servers[id] = {
             ...servers[id],
-            port: ports[id],
+            port: serverPorts[id],
             server,
             io: new Server(server),
             max: 10,
@@ -55,12 +55,12 @@ function createServers() {
     })
 }
 
-var started: boolean = false
+let hasStarted = false
 export function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
-    if (started) closeServers()
-    started = true
+    if (hasStarted) closeServers()
+    hasStarted = true
 
-    let serverList = Object.keys(servers) as ServerName[]
+    const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
         if (!servers[id] || disabled[id.toLowerCase()] !== false) return
 
@@ -69,20 +69,20 @@ export function startServers({ ports, max, disabled, data }: MainSendPayloads[Ma
 
         servers[id]!.data = data[id.toLowerCase()] || {}
 
-        servers[id]!.server.listen(servers[id]!.port, started)
+        servers[id]!.server.listen(servers[id]!.port, onStarted)
         servers[id]!.server.once("error", (err: Error) => {
             if ((err as any).code === "EADDRINUSE") servers[id]!.server.close()
         })
 
-        function started() {
-            console.log(id + " on: " + servers[id]!.port)
+        function onStarted() {
+            console.info(id + " on: " + servers[id]!.port.toString())
             publishPort(id, servers[id]!.port)
         }
     })
 }
 
 export function updateServerData(data: { [key: string]: ServerData }) {
-    let serverList = Object.keys(servers) as ServerName[]
+    const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
         servers[id]!.data = data[id.toLowerCase()] || {}
     })
@@ -95,8 +95,8 @@ export function getServerData(id: ServerName) {
 export function closeServers() {
     unpublishPorts()
 
-    started = false
-    let serverList = Object.keys(servers) as ServerName[]
+    hasStarted = false
+    const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
         if (!servers[id]?.server) return
         servers[id]!.server.close()
@@ -117,7 +117,7 @@ function createBridge(id: ServerName, server: ServerValues) {
 
     // SEND DATA FROM APP TO CLIENT
     ioServers[id] = server.io
-    ipcMain.on(id, (_e, msg) => {
+    ipcMain.on(id, (_e, msg: Message) => {
         if (msg.id) server.io.to(msg.id).emit(id, msg)
         else server.io.emit(id, msg)
     })
@@ -134,12 +134,12 @@ export function getConnections(id: ServerName) {
 // FUNCTIONS
 
 function initialize(id: ServerName, socket: Socket) {
-    let name: string = getOS(socket.handshake.headers["user-agent"] || "")
+    const name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
     servers[id]!.connections[socket.id] = { name }
 
     // SEND DATA FROM CLIENT TO APP
-    socket.on(id, async (msg) => {
+    socket.on(id, async (msg: Message) => {
         if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return

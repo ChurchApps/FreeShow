@@ -23,7 +23,7 @@
         return a
     }
 
-    function click(icon: string, path: string = "") {
+    function click(icon: string, path = "") {
         if ($selected.id && names[$selected.id]) names[$selected.id](icon, path)
         else console.log("change icon " + $selected.id)
 

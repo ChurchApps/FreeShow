@@ -5,9 +5,9 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
     export let tag
-    export let active: boolean = false
+    export let active = false
 
-    let editActive: boolean = false
+    let editActive = false
 
     function rename(e: any, tagId: string) {
         let value = e.detail?.value

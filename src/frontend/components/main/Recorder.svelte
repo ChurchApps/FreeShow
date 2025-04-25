@@ -5,7 +5,7 @@
 
     $: if ($activeRecording !== undefined) toggleRecording()
 
-    let recorderActive: boolean = false
+    let recorderActive = false
 
     let videoElem
     let currentStream
@@ -45,7 +45,7 @@
                 createMediaRecorder(stream)
             })
             .catch(function (err) {
-                console.log(err.name + ": " + err.message)
+                console.error(err.name + ": " + err.message)
             })
     }
 </script>

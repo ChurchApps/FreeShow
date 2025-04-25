@@ -37,12 +37,12 @@
     import { menuClick } from "./menuClick"
 
     export let contextElem: HTMLDivElement | null = null
-    export let topBar: boolean = false
+    export let topBar = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
-    export let disabled: boolean = false
+    export let disabled = false
 
-    let hide: boolean = false
+    let hide = false
     let enabled: boolean = menu?.enabled ? true : false
 
     const conditions = {
@@ -260,7 +260,7 @@
         if (e.key === "Enter") contextItemClick()
     }
 
-    let shortcut: string = ""
+    let shortcut = ""
     $: if (menu?.shortcuts) getShortcuts()
     function getShortcuts() {
         // WIP multiple

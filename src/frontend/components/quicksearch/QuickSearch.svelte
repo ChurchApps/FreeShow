@@ -12,14 +12,14 @@
     import { formatSearch } from "../../utils/search"
 
     let values: any[] = []
-    let searchValue: string = ""
+    let searchValue = ""
     function search(e: any) {
         searchValue = e.target.value
         values = quicksearch(formatSearch(searchValue))
         selectedIndex = 0
     }
 
-    let selectedIndex: number = 0
+    let selectedIndex = 0
 
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
@@ -69,7 +69,7 @@
 <style>
     .quicksearch {
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
         max-width: calc(100% - var(--navigation-width) * 2);

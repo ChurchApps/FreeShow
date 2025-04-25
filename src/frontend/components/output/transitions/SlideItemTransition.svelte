@@ -8,9 +8,9 @@
     // import { onMount } from "svelte"
 
     export let globalTransition: Transition
-    export let transitionEnabled: boolean = false
-    export let transitioningBetween: boolean = false
-    export let preview: boolean = false
+    export let transitionEnabled = false
+    export let transitioningBetween = false
+    export let preview = false
     export let item: Item
     export let currentSlide: any = {}
     export let outSlide: any = {}
@@ -40,8 +40,8 @@
         let transitionBetween = clone(transition.between || transition)
         if (transitioningBetween) inTransition = clone(transitionBetween)
 
-        let inDelay: number = 0
-        let outDelay: number = 0
+        let inDelay = 0
+        let outDelay = 0
 
         // ITEM IN/OUT DELAY
         let showDuration = $currentWindow === "output" || preview ? item?.actions?.showTimer || 0 : 0

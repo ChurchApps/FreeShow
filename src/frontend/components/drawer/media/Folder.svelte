@@ -10,10 +10,10 @@
     export let name: string
     export let path: string
     export let mode: "grid" | "list"
-    export let folderPreview: boolean = false
+    export let folderPreview = false
 
     let files: FileData[] = []
-    let fileCount: number = 0
+    let fileCount = 0
 
     // WIP this creates one listener per individual folder...
     $: if (folderPreview && mode === "grid" && path) {

@@ -55,32 +55,32 @@ export function getOutputGroupName() {
 }
 
 export function getPlayingVideoDuration() {
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let outputPath = get(outputs)[outputId]?.out?.background?.path || ""
-    let video = get(playingVideos)[outputPath] || {}
-    let time: number = video?.duration || video?.video?.duration || 0
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const outputPath = get(outputs)[outputId]?.out?.background?.path || ""
+    const video = get(playingVideos)[outputPath] || {}
+    const time: number = video?.duration || video?.video?.duration || 0
     return time
 }
 
 export function getPlayingVideoTime() {
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let time: number = get(videosTime)[outputId] || 0
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const time: number = get(videosTime)[outputId] || 0
     return time
 }
 
 export function getPlayingAudioDuration() {
-    let audio = Object.values(get(playingAudio))[0]?.audio
+    const audio = Object.values(get(playingAudio))[0]?.audio
     return audio ? audio?.duration || 0 : 0
 }
 
 export function getPlayingAudioTime() {
-    let audio = Object.values(get(playingAudio))[0]?.audio
+    const audio = Object.values(get(playingAudio))[0]?.audio
     return audio ? audio?.currentTime || 0 : 0
 }
 
 export function getPlayingAudioData() {
-    let audioId = Object.keys(get(playingAudio))[0]
-    let audio = get(playingAudio)[audioId]
+    const audioId = Object.keys(get(playingAudio))[0]
+    const audio = get(playingAudio)[audioId]
     if (!audio) return
 
     return { id: audioId, name: audio.name, paused: audio.paused, isMic: audio.isMic, duration: getPlayingAudioDuration() }
@@ -91,12 +91,12 @@ export function getPlaylists() {
 }
 
 export function getPlayingPlaylist(data: API_id_optional) {
-    let id = data?.id || get(activePlaylist)?.id
+    const id = data?.id || get(activePlaylist)?.id
     return get(audioPlaylists)[id] ? { ...get(audioPlaylists)[id], id } : null
 }
 
 export function getSlide(data: API_slide) {
-    let slides = _show(data.showId || "active").get("slides") || {}
-    let slide = slides[data.slideId || Object.keys(slides)[0]]
+    const slides = _show(data.showId || "active").get("slides") || {}
+    const slide = slides[data.slideId || Object.keys(slides)[0]]
     return slide || null
 }

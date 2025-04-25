@@ -65,7 +65,7 @@ function removeTsConfigs() {
     configs.forEach(deleteConfig)
 
     function deleteConfig(id) {
-        const prodConfidPath = join(__dirname, "..", `tsconfig.${id}.prod.json`)
+        const prodConfidPath = join(__dirname, "..", "config", "typescript", `tsconfig.${id}.prod.json`)
         if (!existsSync(prodConfidPath)) return
         unlinkSync(prodConfidPath)
     }

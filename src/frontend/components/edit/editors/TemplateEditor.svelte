@@ -21,7 +21,7 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
-    let ratio: number = 1
+    let ratio = 1
 
     $: {
         if (active.length) updateStyles()
@@ -36,7 +36,7 @@
         active.forEach((id) => {
             let item = items[id]
             let styles = getStyles(item.style)
-            let textStyles: string = ""
+            let textStyles = ""
 
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
@@ -51,8 +51,8 @@
 
     // ZOOM
     let zoom = 1
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
 
     // shortcut
     let nextScrollTimeout: NodeJS.Timeout | null = null
@@ -71,7 +71,7 @@
     }
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
@@ -93,7 +93,7 @@
     </div>
 
     <div class="actions">
-        <div class="actions" style="height: 100%;justify-content: right;">
+        <div class="actions" style="height: 100%;justify-content: end;">
             <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
                 <Icon size={1.3} id="zoomIn" white />
             </Button>
@@ -158,7 +158,7 @@
 
     .zoom_container {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         transform: translateY(-100%);
         overflow: hidden;

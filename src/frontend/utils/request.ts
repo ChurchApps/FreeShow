@@ -4,7 +4,7 @@ export function send(ID: ValidChannels, channels: string[], data: any = null) {
     channels.forEach((channel: string) => window.api.send(ID, { channel, data }))
 }
 
-export function receive(ID: ValidChannels, channels: any, id: string = "") {
+export function receive(ID: ValidChannels, channels: any, id = "") {
     window.api.receive(
         ID,
         (msg: any) => {

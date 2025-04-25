@@ -28,7 +28,7 @@ export class ShowObj implements Show {
     layouts: any
     media: any
 
-    constructor(isPrivate: boolean = false, category: null | string = null, layoutId: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
+    constructor(isPrivate = false, category: null | string = null, layoutId: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
         if (template !== false) {
             // get template from active show (if it's not default with the "Header" template)
             if (typeof template !== "string" && get(activeShow)?.id !== "default") template = _show().get("settings.template") || null

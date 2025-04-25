@@ -118,11 +118,11 @@
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={() => activePopup.set("manage_colors")}>
-        <Icon id="color" style="margin-left: 0.5em;" right />
+        <Icon id="color" style="margin-inline-start: 0.5em;" right />
         <p><T id="popup.manage_colors" /></p>
     </Button>
     <Button on:click={() => activePopup.set("manage_icons")}>
-        <Icon id="star" style="margin-left: 0.5em;" right />
+        <Icon id="star" style="margin-inline-start: 0.5em;" right />
         <p><T id="popup.manage_icons" /></p>
     </Button>
 </CombinedInput>
@@ -142,7 +142,7 @@
     .bottom {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: 100%;
         background-color: var(--primary-darkest);
 

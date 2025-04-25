@@ -1,15 +1,17 @@
 import { get } from "svelte/store"
-import type { Item } from "../../../types/Show"
-import type { StageItem } from "../../../types/Stage"
+import type { Item, LayoutRef } from "../../../types/Show"
+import type { StageItem, StageLayout } from "../../../types/Stage"
 import { translate } from "../../utils/language"
 import { arrayToObject, filterObjectArray } from "../../utils/sendData"
 import { getItemText } from "../edit/scripts/textStyle"
 import { STAGE } from "./../../../types/Channels"
-import { connections, stageShows, timers, variables } from "./../../stores"
+import { activeStage, allOutputs, connections, currentWindow, outputs, outputSlideCache, showsCache, stageShows, timers, variables } from "./../../stores"
+import { getLayoutRef } from "../helpers/show"
+import { getActiveOutputs } from "../helpers/output"
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
-        let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
+        const show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
         if (!show.disabled) window.api.send(STAGE, { channel: "LAYOUT", id, data: show })
     })
 }
@@ -18,7 +20,7 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
     if (!itemId.includes("#")) {
         let name = ""
 
-        if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
+        if (itemId === "variable") name = get(variables)[item.variable?.id || ""]?.name
         else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
         else if (itemId === "text") name = dynamicValueString(getItemText(item as Item))
 
@@ -62,7 +64,7 @@ export function getStageItemId(itemId: string) {
 }
 
 export function stageItemToItem(item: StageItem) {
-    let newItem: Item = {
+    const newItem: Item = {
         style: item?.style || "",
     }
     if (!item) return newItem
@@ -72,4 +74,44 @@ export function stageItemToItem(item: StageItem) {
     // if (item.clock) newItem.clock = { seconds: true, ...item.clock }
 
     return { ...item, ...newItem } as Item
+}
+
+export function getSlideTextItems(stageLayout: StageLayout, item: StageItem, _updater: any = null) {
+    const slideOffset = Number(item.slideOffset || 0)
+    const currentShow = stageLayout === null ? (get(activeStage).id ? get(stageShows)[get(activeStage).id!] : null) : stageLayout
+    const stageMainOutputId = currentShow?.settings?.output || getActiveOutputs(get(currentWindow) === "output" ? get(allOutputs) : get(outputs), false, true, true)[0]
+    const currentOutput = get(outputs)[stageMainOutputId] || get(allOutputs)[stageMainOutputId] || {}
+    const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageMainOutputId] || null : null)
+    const showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
+
+    const slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
+    const customOffset = getStageTextLayoutOffset(showRef, slideOffset, slideIndex)
+
+    const slideId = (customOffset !== null || slideIndex !== null) && showRef ? showRef[(customOffset ?? slideIndex)!]?.id || null : null
+    const currentItems = get(showsCache)[currentSlide?.id]?.slides?.[slideId || ""]?.items || []
+    return currentItems
+}
+
+// GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
+export function getStageTextLayoutOffset(showRef: LayoutRef[], slideOffset: number, slideIndex: number | null) {
+    let customOffset: number | null = null
+    if (slideOffset > 0 && slideIndex !== null && showRef) {
+        let layoutOffset = slideIndex
+        let offsetFromCurrentExcludingDisabled = 0
+        while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
+            layoutOffset++
+            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
+        }
+        customOffset = layoutOffset
+    } else if (slideOffset < 0 && slideIndex !== null && showRef) {
+        let layoutOffset = slideIndex
+        let offsetFromCurrentExcludingDisabled = 0
+        while (offsetFromCurrentExcludingDisabled > slideOffset && layoutOffset >= 0) {
+            layoutOffset--
+            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
+        }
+        customOffset = layoutOffset
+    } else customOffset = null
+
+    return customOffset
 }

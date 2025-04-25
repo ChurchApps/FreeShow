@@ -24,7 +24,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         const request = https.request(options, (response) => {
             let data = ""
 
-            response.on("data", (chunk) => {
+            response.on("data", (chunk: Buffer | string) => {
                 data += chunk.toString()
             })
 

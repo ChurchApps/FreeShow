@@ -43,7 +43,7 @@ function mainApp() {
             svelte({
                 preprocess: sveltePreprocess({
                     typescript: {
-                        tsconfigFile: `./tsconfig.svelte${production ? ".prod" : ""}.json`,
+                        tsconfigFile: `./config/typescript/tsconfig.svelte${production ? ".prod" : ""}.json`,
                     },
                 }),
                 compilerOptions: {
@@ -71,7 +71,7 @@ function mainApp() {
             }),
             commonjs(),
             typescript({
-                tsconfig: `./tsconfig.svelte${production ? ".prod" : ""}.json`,
+                tsconfig: `./config/typescript/tsconfig.svelte${production ? ".prod" : ""}.json`,
                 sourceMap: !production,
                 inlineSources: !production,
             }),
@@ -124,7 +124,7 @@ function webServer(id, options = {}) {
                 preprocess: sveltePreprocess(
                     options.typescript && {
                         typescript: {
-                            tsconfigFile: `./tsconfig.server${production ? ".prod" : ""}.json`,
+                            tsconfigFile: `./config/typescript/tsconfig.server${production ? ".prod" : ""}.json`,
                         },
                     }
                 ),
@@ -146,7 +146,7 @@ function webServer(id, options = {}) {
             commonjs(),
             // options.typescript &&
             typescript({
-                tsconfig: `./tsconfig.server${production ? ".prod" : ""}.json`,
+                tsconfig: `./config/typescript/tsconfig.server${production ? ".prod" : ""}.json`,
                 sourceMap: !production,
                 inlineSources: !production,
             }),

@@ -256,7 +256,7 @@
                         bold={false}
                     >
                         <Icon id={$playingAudio[file.path || ""]?.paused === true ? "play" : $playingAudio[file.path || ""]?.paused === false ? "pause" : "music"} size={1.2} right />
-                        <p style="width: 100%;text-align: left;">{file.name?.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
+                        <p style="width: 100%;text-align: start;">{file.name?.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
 
                         {#if file.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>
@@ -274,7 +274,7 @@
                 <SelectElem id="microphone" data={{ id: mic.id, type: "microphone", name: mic.name }} draggable>
                     <Button style="padding: 8px;width: 100%;" bold={false} on:click={() => AudioMicrophone.start(mic.id, { name: mic.name }, { pauseIfPlaying: true })}>
                         <Icon id="microphone" white={muted} right />
-                        <p style="width: 100%;text-align: left;">{mic.name}</p>
+                        <p style="width: 100%;text-align: start;">{mic.name}</p>
 
                         {#if mic.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{mic.count}</span>
@@ -295,7 +295,7 @@
                 <SelectElem id="action" data={action} draggable>
                     <!-- class="context #action" -->
                     <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
-                        <Icon id={customData.icon || "actions"} size={1.1} style="margin-left: 0.5em;" right />
+                        <Icon id={customData.icon || "actions"} size={1.1} style="margin-inline-start: 0.5em;" right />
                         {#key customData.name}
                             <p>
                                 <T id={customData.name || ""} />{#if customName}:
@@ -336,7 +336,7 @@
     }
 
     .media_item {
-        padding-right: 2px;
+        padding-inline-end: 2px;
     }
 
     .media_item:hover {

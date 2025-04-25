@@ -19,7 +19,7 @@
 
     // VALUES
 
-    const iconSize: number = 60
+    const iconSize = 60
     const icons = {
         none: '<g><path d="M 43 10 L 87 10 C 88.656 10 90 11.344 90 13 L 90 57 C 90 58.656 88.656 60 87 60 L 43 60 C 41.344 60 40 58.656 40 57 L 40 13 C 40 11.344 41.344 10 43 10 Z" style="stroke:none;fill:#FFFFFF;stroke-miterlimit:10;"/><path d="M 43 10 L 87 10 C 88.656 10 90 11.344 90 13 L 90 57 C 90 58.656 88.656 60 87 60 L 43 60 C 41.344 60 40 58.656 40 57 L 40 13 C 40 11.344 41.344 10 43 10 Z" style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-miterlimit:2;"/><path d="M 13.6 30 L 66.4 30 C 68.387 30 70 31.613 70 33.6 L 70 86.4 C 70 88.387 68.387 90 66.4 90 L 13.6 90 C 11.613 90 10 88.387 10 86.4 L 10 33.6 C 10 31.613 11.613 30 13.6 30 Z" style="stroke:none;fill:#FFFFFF;stroke-miterlimit:10;"/><path d="M 13.6 30 L 66.4 30 C 68.387 30 70 31.613 70 33.6 L 70 86.4 C 70 88.387 68.387 90 66.4 90 L 13.6 90 C 11.613 90 10 88.387 10 86.4 L 10 33.6 C 10 31.613 11.613 30 13.6 30 Z" style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-miterlimit:2;"/></g>',
         fade: '<g><rect width="100" height="100" style="fill:rgb(0,0,0)" fill-opacity="0"/><defs><linearGradient id="_lgradient_0" x1="-3.885780586188048e-16" y1="1.0000000000000002" x2="0.9999999999999998" y2="-4.440892098500626e-16"><stop offset="2.5%" style="stop-color:rgba(255,255,255,0.1)"/><stop offset="100%" style="stop-color:#FFFFFF"/></linearGradient></defs><path d="M 43 10 L 87 10 C 88.656 10 90 11.344 90 13 L 90 57 C 90 58.656 88.656 60 87 60 L 43 60 C 41.344 60 40 58.656 40 57 L 40 13 C 40 11.344 41.344 10 43 10 Z" style="stroke:none;fill:url(#_lgradient_0);stroke-miterlimit:10;"/><path d="M 43 10 L 87 10 C 88.656 10 90 11.344 90 13 L 90 57 C 90 58.656 88.656 60 87 60 L 43 60 C 41.344 60 40 58.656 40 57 L 40 13 C 40 11.344 41.344 10 43 10 Z" style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-miterlimit:2;"/><defs><linearGradient id="_lgradient_1" x1="0" y1="1" x2="1" y2="-4.440892098500626e-16"><stop offset="0%" style="stop-color:#FFFFFF"/><stop offset="100%" style="stop-color:rgba(255,255,255,0.43)"/></linearGradient></defs><path d="M 13.6 30 L 66.4 30 C 68.387 30 70 31.613 70 33.6 L 70 86.4 C 70 88.387 68.387 90 66.4 90 L 13.6 90 C 11.613 90 10 88.387 10 86.4 L 10 33.6 C 10 31.613 11.613 30 13.6 30 Z" style="stroke:none;fill:url(#_lgradient_1);stroke-miterlimit:10;"/><path d="M 13.6 30 L 66.4 30 C 68.387 30 70 31.613 70 33.6 L 70 86.4 C 70 88.387 68.387 90 66.4 90 L 13.6 90 C 11.613 90 10 88.387 10 86.4 L 10 33.6 C 10 31.613 11.613 30 13.6 30 Z" style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-miterlimit:2;"/></g>',
@@ -31,7 +31,7 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset: boolean = false) {
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
 
         if (isItem) {
@@ -100,7 +100,7 @@
 
     let updated: string[] = []
     let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset: boolean = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -206,7 +206,7 @@
     $: if (isItem || selectedType === "media") specificScenatios = specificScenatios.slice(0, 2)
     else specificScenatios = clone(SPECIFIC_SCENARIOS)
 
-    let enableSpecific: boolean = false
+    let enableSpecific = false
     let selectedSpecific: string = specificScenatios[0]
     $: if (specificScenatios.find((a) => currentTransitionFull[a])) {
         enableSpecific = true

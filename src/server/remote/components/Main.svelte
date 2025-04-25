@@ -1,10 +1,14 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
+    import Button from "../../common/components/Button.svelte"
+    import Icon from "../../common/components/Icon.svelte"
     import Tabs from "../../common/components/Tabs.svelte"
+    import Textarea from "../../common/components/Textarea.svelte"
+    import TextInput from "../../common/components/TextInput.svelte"
     import { translate } from "../util/helpers"
     import { next, previous } from "../util/output"
     import { send } from "../util/socket"
-    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
+    import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
     import Project from "./pages/Project.svelte"
     import Scripture from "./pages/Scripture.svelte"
@@ -59,6 +63,26 @@
             setTimeout(() => (tab = "scripture"))
         }
     }
+
+    let newShowName = ""
+    let newShowText = ""
+    function newShow() {
+        if (!newShowText) {
+            newShowFinish()
+            return
+        }
+
+        send("API:create_show", { text: newShowText, name: newShowName })
+        // WIP open show
+        newShowFinish()
+    }
+    const updateName = (e: any) => (newShowName = e.target?.value)
+
+    function newShowFinish() {
+        newShowName = ""
+        newShowText = ""
+        createShow.set(false)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -91,6 +115,26 @@
     <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} />
 </section>
 
+{#if $createShow}
+    <div class="fullscreen">
+        <div style="display: flex;height: 50px;">
+            <Button on:click={() => createShow.set(false)} dark>
+                <Icon id="back" size={2} />
+            </Button>
+            <TextInput placeholder={translate("main.unnamed", $dictionary)} value={newShowName} on:change={updateName} />
+        </div>
+
+        <Textarea style="width: 100%;height: calc(100% - 90px - 6px);" bind:value={newShowText} />
+
+        <div style="display: flex;height: 40px;">
+            <Button on:click={newShow} style="width: 100%;" center dark>
+                <Icon id="add" right />
+                <p style="font-size: 0.8em;">{translate("new.show", $dictionary)}</p>
+            </Button>
+        </div>
+    </div>
+{/if}
+
 <style>
     .content {
         display: flex;
@@ -114,6 +158,16 @@
 
         height: 100%;
         justify-content: space-between;
+    }
+
+    .fullscreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-color: var(--primary);
     }
 
     /* tablet & computers */

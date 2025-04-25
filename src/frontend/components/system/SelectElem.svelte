@@ -9,15 +9,15 @@
 
     export let id: SelectIds
     export let data: any
-    export let fill: boolean = false
-    export let draggable: boolean = false
+    export let fill = false
+    export let draggable = false
     export let shiftRange: any[] = []
-    export let onlyRightClickSelect: boolean = false
-    export let selectable: boolean = true
+    export let onlyRightClickSelect = false
+    export let selectable = true
     export let trigger: null | "row" | "column" = null
-    export let fileOver: boolean = false
+    export let fileOver = false
     export let borders: "all" | "center" | "edges" = "all"
-    export let triggerOnHover: boolean = false
+    export let triggerOnHover = false
     let elem: HTMLElement | undefined
 
     function enter(e: any) {
@@ -106,7 +106,7 @@
     //     rightClickMenu = false
     // }
 
-    function mousedown(e: any, dragged: boolean = false) {
+    function mousedown(e: any, dragged = false) {
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
@@ -140,13 +140,13 @@
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
-            let lastSelectedIndex = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index
-            let newIndex = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index
+            let lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
+            let newIndex: number = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index || 0
             let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
             let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
 
             let selectedBetween: number[] = range(lowestNumber, highestNumber)
-            function range(start, end) {
+            function range(start: number, end: number) {
                 return Array(end - start + 1)
                     .fill("")
                     .map((_, idx) => start + idx)
@@ -221,7 +221,7 @@
     }
 
     let dragover: null | "start" | "center" | "end" = null
-    let dragActive: boolean = false
+    let dragActive = false
 
     function dragstart() {
         if ($activeRename !== null || $disableDragging) return
@@ -347,10 +347,10 @@
         border-bottom-width: var(--border-width);
     }
     .trigger.row.start {
-        border-left-width: var(--border-width);
+        border-inline-start-width: var(--border-width);
     }
     .trigger.row.end {
-        border-right-width: var(--border-width);
+        border-inline-end-width: var(--border-width);
     }
     .trigger.center {
         border-width: var(--border-width);
@@ -373,7 +373,7 @@
         height: var(--border-width);
     }
     .trigger.row .between {
-        right: calc(var(--border-width) / 2 * -1);
+        inset-inline-end: calc(var(--border-width) / 2 * -1);
         height: 100%;
         width: var(--border-width);
     }

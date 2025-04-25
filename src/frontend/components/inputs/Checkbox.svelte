@@ -47,4 +47,10 @@
     .switch input:checked + div {
         transform: translate3d(100%, 0, 0);
     }
+    /* There's an open draft for logical css transform https://github.com/w3c/csswg-drafts/issues/1544
+     * After that is implemented, this can be removed.
+     */
+    [dir="rtl"] .switch input:checked + div {
+        transform: translate3d(-100%, 0, 0);
+    }
 </style>

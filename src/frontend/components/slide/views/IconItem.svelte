@@ -3,7 +3,7 @@
     import Icon from "../../helpers/Icon.svelte"
 
     export let item: Item
-    export let ratio: number = 1
+    export let ratio = 1
 </script>
 
 {#if item.customSvg}

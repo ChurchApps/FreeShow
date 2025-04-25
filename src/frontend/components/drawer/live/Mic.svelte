@@ -28,7 +28,7 @@
 
     // registerProcessor("processor", MyAudioProcessor);
 
-    let soundLevel: number = 0
+    let soundLevel = 0
 
     let audioStream: MediaStream | undefined
     let context: AudioContext | undefined
@@ -82,7 +82,7 @@
             .getUserMedia({ audio: { deviceId: { exact: mic.id } } })
             .then(handleSuccess)
             .catch((err) => {
-                console.log(err)
+                console.error(err)
                 if (err.name === "NotReadableError") {
                     sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }

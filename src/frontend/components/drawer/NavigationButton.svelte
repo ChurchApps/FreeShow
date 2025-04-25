@@ -9,8 +9,8 @@
     export let id: string
     export let category: any
     export let length: { [key: string]: number }
-    export let categoryId: string = ""
-    export let isSubmenu: boolean = false
+    export let categoryId = ""
+    export let isSubmenu = false
 
     function setTab(tabID: string) {
         drawerTabsData.update((dt) => {
@@ -34,9 +34,9 @@
         templates: (c: { id: string; name: string }) => templateCategories.update((a) => setName(a, c)),
         scripture: (c: { id: string; name: string }) => scriptures.update((a) => setName(a, c, "customName")),
     }
-    const setName = <T,>(a: T, { name, id }, nameKey: string = "name"): T => {
+    const setName = <T,>(a: T, { name, id }, nameKey = "name"): T => {
         // api scriptures
-        if (!a[id]) id = Object.entries(a as any).find(([_, a]: any) => a.id === id)?.[0]
+        if (!a[id]) id = Object.values(a as any).find((a: any) => a.id === id)?.[0]
         if (!a[id]) return a
 
         if (a[id].default) delete a[id].default
@@ -51,7 +51,7 @@
         else console.log("rename " + id)
     }
 
-    let editActive: boolean = false
+    let editActive = false
 
     $: red = id === "scripture" && $notFound.bible.find((a) => a.id === category.id)
 
@@ -81,7 +81,7 @@
             right
         />
         {#if isSubmenu}
-            <span style="width: 100%;text-align: left;">
+            <span style="width: 100%;text-align: start;">
                 <p style="margin: 3px;font-size: 0.9em;">
                     {#if category.name}
                         {category.name}
@@ -91,7 +91,7 @@
                 </p>
             </span>
         {:else}
-            <span id={category.id} style="width: calc(100% - 15px);text-align: left;">
+            <span id={category.id} style="width: calc(100% - 15px);text-align: start;">
                 {#if !tabsWithCategories.includes(id) || defaultFolders.includes(category.id)}
                     <p style="margin: 5px;"><T id={category.name} /></p>
                 {:else}
@@ -113,7 +113,7 @@
     {/if}
 
     {#if length[category.id]}
-        <span style="opacity: 0.5;font-size: 0.9em;min-width: 15px;text-align: right;">
+        <span style="opacity: 0.5;font-size: 0.9em;min-width: 15px;text-align: end;">
             {length[category.id]}
         </span>
     {/if}
@@ -160,6 +160,6 @@
 <style>
     .submenus {
         /* margin-left: 20px; */
-        border-left: 8px solid var(--primary-darker);
+        border-inline-start: 8px solid var(--primary-darker);
     }
 </style>

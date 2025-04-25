@@ -175,7 +175,7 @@
     }
 
     .searchResultTable th {
-        text-align: left;
+        text-align: start;
         font-size: 0.8em;
         font-weight: bold;
         padding: 2px 10px;

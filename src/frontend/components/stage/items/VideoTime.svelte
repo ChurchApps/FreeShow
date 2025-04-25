@@ -2,9 +2,9 @@
     import { videosData, videosTime } from "../../../stores"
     import { joinTime, secondsToTime } from "../../helpers/time"
 
-    export let outputId: string = ""
-    export let autoSize: number = 0
-    export let reverse: boolean = false
+    export let outputId = ""
+    export let autoSize = 0
+    export let reverse = false
 
     $: data = $videosData[outputId] || {}
     $: time = $videosTime[outputId] || 0

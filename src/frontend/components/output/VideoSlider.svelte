@@ -7,11 +7,11 @@
     export let videoData: any
     export let videoTime: any
     export let activeOutputIds: string[] = []
-    export let unmutedId: string = ""
-    export let toOutput: boolean = false
-    export let big: boolean = false
-    export let disabled: boolean = false
-    export let changeValue: number = 0
+    export let unmutedId = ""
+    export let toOutput = false
+    export let big = false
+    export let disabled = false
+    export let changeValue = 0
 
     $: if (changeValue) updateValue()
     function updateValue() {
@@ -28,10 +28,10 @@
     let sliderValue = 0
 
     let hover = false
-    let time: string = "00:00"
+    let time = "00:00"
 
     function move(e: any) {
-        let padding: number = 3.5
+        let padding = 3.5
         let width: number = e.target.offsetWidth - padding * 2
         let offset: number = e.offsetX - padding
         let percentage: number = offset / width
@@ -43,7 +43,7 @@
     }
 
     // WIP duplicate of video.ts
-    let latestValue: string = "0"
+    let latestValue = "0"
     function sliderInput(e: any) {
         latestValue = e?.target?.value || e
         if ((!movePause && !videoData.paused) || !latestValue) return
@@ -82,8 +82,8 @@
 
     $: if (videoTime !== undefined && !movePause) sliderValue = videoTime
 
-    let movePause: boolean = false
-    function pauseAtMove(boolean: boolean = true) {
+    let movePause = false
+    function pauseAtMove(boolean = true) {
         movePause = videoData.paused = boolean
 
         if (!toOutput) return
@@ -96,7 +96,7 @@
         send(OUTPUT, ["DATA"], dataValues)
     }
 
-    let fullLength: boolean = false
+    let fullLength = false
 </script>
 
 <svelte:window

@@ -101,7 +101,7 @@
                         />
                     {/if}
 
-                    <div style="display: flex;min-width: 125px;justify-content: right;">
+                    <div style="display: flex;min-width: 125px;justify-content: end;">
                         <span style="display: flex;align-self: center;padding: 0 5px;">
                             <Timer id={timer.id} {today} />
                             <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->

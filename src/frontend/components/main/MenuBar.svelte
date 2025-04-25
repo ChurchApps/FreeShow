@@ -15,8 +15,8 @@
 
     let activeID: null | string = null
     let activeMenu: string[] = []
-    let x: number = 0
-    let y: number = 25
+    let x = 0
+    let y = 25
 
     $: maximized = !!$windowState.maximized
 
@@ -49,7 +49,7 @@
 
 <main bind:clientHeight={y}>
     {#if $topContextActive}
-        <div class="contextMenu menu" style="left: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
+        <div class="contextMenu menu" style="inset-inline-start: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
             {#key activeMenu}
                 {#each activeMenu as id}
                     {#if id === "SEPERATOR"}

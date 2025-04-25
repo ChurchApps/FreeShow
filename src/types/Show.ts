@@ -1,5 +1,6 @@
-import type { Resolution } from "./Settings"
 import type { Input } from "./Input"
+import type { Animation } from "./Output"
+import type { Resolution } from "./Settings"
 
 export interface Shows {
     [key: string]: Show
@@ -285,7 +286,7 @@ export interface SlideData {
 
         receiveMidi?: string
         nextAfterMedia?: boolean
-        animate?: any
+        animate?: Animation
         slide_shortcut?: { key: string }
         startShow?: { id: string }
 
@@ -307,6 +308,7 @@ export interface SlideAction {
     name?: string
     triggers: string[]
     actionValues?: { [key: string]: any }
+    customData?: { [key: string]: { [key: string]: any } } // currently only used for overrideCategoryAction
 }
 
 export interface Transition {
@@ -326,6 +328,15 @@ export interface TransitionData {
     duration: number
     easing: string
     delay?: number // item in/out wait
+}
+
+export interface AnimationData {
+    id?: string
+    animation?: Animation
+    transitions?: { [key: string]: string[] }
+    styles?: { [key: string]: string[] }
+    style?: { [key: string]: string }
+    newIndex?: number
 }
 
 export interface Media {
@@ -349,7 +360,7 @@ export interface Midi {
     tags?: string[]
     // action?: string
     // actionData?: any
-    shows?: any[] // ??
+    shows?: any[] // play specific show slide directly from midi input
     customActivation?: string
     keypressActivate?: string
     enabled?: boolean // should customActivation trigger
@@ -398,6 +409,7 @@ export interface Emitter {
     type: EmitterTypes
     signal?: any
     templates?: { [key: string]: EmitterTemplate }
+    data?: string // custom (OSC) data
 }
 
 //

@@ -11,9 +11,9 @@
     export let path: string
     export let name: string
     export let active: string | null = null
-    export let playlist: boolean = false
-    export let index: number = -1
-    export let fileOver: boolean = false
+    export let playlist = false
+    export let index = -1
+    export let fileOver = false
 
     $: outline = !!$playingAudio[path]
 </script>

@@ -3,7 +3,7 @@
     import { activeDrawerTab, activePage, audioChannels, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
-    export let advanced: boolean = false
+    export let advanced = false
     // const numbers: number[] = [0, -3, -6, -9, -12, -15, -21, -36, -51, -63, -80]
     const numbers: number[] = [0, -3, -6, -9, -12, -15, -20, -35, -50, -64, -80]
 
@@ -146,7 +146,7 @@
     .absolute {
         position: absolute;
         top: 0;
-        left: 5px;
+        inset-inline-start: 5px;
         transform: translateY(-50%);
     }
 
