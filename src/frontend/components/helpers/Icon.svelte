@@ -5,14 +5,14 @@
     import icons from "../../values/icons"
 
     export let id: string
-    export let size: number = 1
-    export let white: boolean = false
-    export let right: boolean = false
-    export let fill: boolean = false
-    export let custom: boolean = false
-    export let select: boolean = false
+    export let size = 1
+    export let white = false
+    export let right = false
+    export let fill = false
+    export let custom = false
+    export let select = false
     export let selectData: Selected | null = null
-    export let box: number = 24
+    export let box = 24
 
     $: width = size + "rem"
     $: height = size + "rem"

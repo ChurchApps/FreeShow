@@ -141,7 +141,7 @@ export class AudioAnalyser {
         if (this.recorder || !this.recorderActive) return
         this.initDestination()
 
-        let id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
+        const id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
         // might only work in "main" for OutputShow
 
         this.recorder = new MediaRecorder(this.destNode!.stream, {
@@ -160,7 +160,7 @@ export class AudioAnalyser {
         }
     }
 
-    private static recorderActive: boolean = false
+    private static recorderActive = false
     static recorderActivate() {
         if (!this.shouldBeActive()) return
 

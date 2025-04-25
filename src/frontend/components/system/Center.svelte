@@ -1,9 +1,9 @@
 <script lang="ts">
-    export let faded: boolean = false
-    export let absolute: boolean = false
-    export let padding: number = 0
-    export let size: number = 1
-    export let style: string = ""
+    export let faded = false
+    export let absolute = false
+    export let padding = 0
+    export let size = 1
+    export let style = ""
 </script>
 
 <div style="font-size: {size}em;padding: {padding}px;{style}" class="loader" class:faded class:absolute>

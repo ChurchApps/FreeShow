@@ -34,7 +34,7 @@
         dispatch("change", value)
     }
 
-    function setTemplateValue(index: string | number, e: any, key: string = "value") {
+    function setTemplateValue(index: string | number, e: any, key = "value") {
         let v = e.target?.value
 
         if (!value.templateValues) value.templateValues = clone(emitter?.templates?.[v]?.inputs || [])

@@ -21,8 +21,8 @@ export function importBibles(data: any[]) {
 
     // timeout to allow popup to display
     setTimeout(() => {
-        let success: { [key: string]: number } = {}
-        let unsupported: { [key: string]: number } = {}
+        const success: { [key: string]: number } = {}
+        const unsupported: { [key: string]: number } = {}
 
         data.forEach((file) => {
             if (bibleTypes[file.type]) {
@@ -39,7 +39,7 @@ export function importBibles(data: any[]) {
 
         let message = ""
         if (Object.keys(success).length) {
-            message += "✓ " + get(dictionary).actions?.imported
+            message += "✓ " + (get(dictionary).actions?.imported || "Imported!")
             Object.entries(success).forEach(([key, count]) => {
                 message += `<br>• ${key}`
                 if (count > 1) message += ` <span style="opacity: 0.5;">(${count})</span>`
@@ -48,7 +48,7 @@ export function importBibles(data: any[]) {
         if (Object.keys(unsupported).length) {
             if (Object.keys(success).length) message += "<br><br>"
 
-            message += "✕ " + get(dictionary).error?.import
+            message += "✕ " + (get(dictionary).error?.import || "Could not import")
             Object.entries(unsupported).forEach(([key, count]) => {
                 message += `<br>• ${key}`
                 if (count > 1) message += ` <span style="opacity: 0.5;">(${count})</span>`
@@ -73,7 +73,7 @@ export function importFSB(data: any[]) {
 
         if (!bible) return
 
-        let id: string = bible[0] || uid()
+        const id: string = bible[0] || uid()
         bible = bible[1] || bible
 
         scripturesCache.update((a) => {

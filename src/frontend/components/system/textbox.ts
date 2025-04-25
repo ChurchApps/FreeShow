@@ -1,16 +1,18 @@
 import { getStyles } from "./../helpers/style"
 
-const snapDistance: number = 8
-export function moveBox(e: any, mouse: any, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
-    let itemElem = mouse.e.target.closest(".item")
+type TMouse = { left: number; top: number; width: number; height: number; offset: { x: number; y: number; width: number; height: number }; e: any }
+
+const snapDistance = 8
+export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
+    const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return { styles: {}, lines: [] }
 
-    let isResizing = Object.keys(styles).length > 0
-    let squareElem = mouse.e.target.closest(".square")
-    let directionId: string = squareElem?.classList[1] || ""
+    const isResizing = Object.keys(styles).length > 0
+    const squareElem = mouse.e.target.closest(".square")
+    const directionId: string = squareElem?.classList[1] || ""
 
-    let mouseLeft = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
-    let mouseTop = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
+    const mouseLeft = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
+    const mouseTop = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
 
     if (!isResizing) {
         styles.left = mouseLeft
@@ -25,15 +27,15 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
     function snapBox() {
         if (!itemElem.closest(".slide")) return
 
-        let slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
-        let slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
+        const slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
+        const slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
 
         // slide snap
-        let xLines = [0, slideWidth / 2, slideWidth]
-        let yLines = [0, slideHeight / 2, slideHeight]
+        const xLines = [0, slideWidth / 2, slideWidth]
+        const yLines = [0, slideHeight / 2, slideHeight]
         // item snap
-        let xItems = isResizing ? [directionId.includes("e") ? itemElem.offsetWidth : 0] : [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
-        let yItems = isResizing ? [directionId.includes("s") ? itemElem.offsetHeight : 0] : [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
+        const xItems = isResizing ? [directionId.includes("e") ? itemElem.offsetWidth : 0] : [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
+        const yItems = isResizing ? [directionId.includes("s") ? itemElem.offsetHeight : 0] : [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
         // get other items pos
         ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter((a) => !a.closest(".preview")).forEach(getItemLines)
@@ -43,10 +45,11 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
             if (item.id) id = item.id
             if (active.includes(id)) return
 
-            let style: any = getStyles(item.getAttribute("style"))
-            Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
-            xLines.push(style.left, style.left + style.width / 2, style.left + style.width)
-            yLines.push(style.top, style.top + style.height / 2, style.top + style.height)
+            const style = getStyles(item.getAttribute("style"))
+            const styleNumbers: { [key: string]: number } = {}
+            Object.entries(style).map((s) => (styleNumbers[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
+            xLines.push(styleNumbers.left, styleNumbers.left + styleNumbers.width / 2, styleNumbers.left + styleNumbers.width)
+            yLines.push(styleNumbers.top, styleNumbers.top + styleNumbers.height / 2, styleNumbers.top + styleNumbers.height)
         }
 
         checkMatch(xLines, xItems, "x", snapDistance / ratio)
@@ -59,7 +62,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
         checkMatch([slideHeight / 2], [itemElem.offsetHeight / 2], "yc", (snapDistance * 2) / ratio, true)
     }
 
-    function checkMatch(allLines: number[], items: number[], id: string, margin: number, isCenter: boolean = false) {
+    function checkMatch(allLines: number[], items: number[], id: string, margin: number, isCenter = false) {
         const side = id.includes("x") ? "left" : "top"
 
         const mousePos =
@@ -71,8 +74,8 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
         const boxPos = getNumber(styles[side])
 
         allLines.forEach((linePos: number) => {
-            let mouseMatch = mousePos > linePos - margin && mousePos < linePos + margin
-            let boxMatch: undefined | number = items.find((i) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
+            const mouseMatch = mousePos > linePos - margin && mousePos < linePos + margin
+            const boxMatch: undefined | number = items.find((i) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
 
             // snapping resize
             if (isResizing && !isCenter && mouseMatch === true) {
@@ -97,12 +100,12 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
                 styles[side] = linePos - boxMatch
             }
 
-            let linesInclude = lines
+            const linesInclude = lines
                 .join(".")
                 .replaceAll(",", "")
-                .includes(id + linePos)
+                .includes(id + String(linePos))
             if (boxMatch !== undefined && !linesInclude) lines = [...lines, [id, linePos]]
-            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + linePos)
+            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + String(linePos))
         })
     }
 
@@ -112,11 +115,11 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
 }
 
 // const maxSize = 16
-export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
-    let itemElem = mouse.e.target.closest(".item")
-    let styles: any = {}
+export function resizeBox(e: any, mouse: TMouse, square: boolean, ratio: number) {
+    const itemElem = mouse.e.target.closest(".item")
+    const styles: any = {}
     let store: null | number = null
-    let squareElem = mouse.e.target.closest(".square")
+    const squareElem = mouse.e.target.closest(".square")
 
     // const mouseLeft = (e.clientX - itemElem.closest(".slide").offsetLeft - itemElem.closest(".editArea").closest(".center").offsetLeft) / ratio
     // const mouseTop = (e.clientY - itemElem.closest(".slide").offsetTop - itemElem.closest(".editArea").closest(".center").offsetTop) / ratio
@@ -127,8 +130,8 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
     if (squareElem.classList[1].includes("s")) resizeBottom()
 
     function resizeLeft() {
-        let newLeft: number = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
-        let newWidth: number = mouse.width - newLeft + mouse.left
+        const newLeft: number = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
+        const newWidth: number = mouse.width - newLeft + mouse.left
 
         // WIP don't move further than max size / other side
         // if (mouseLeft + maxSize > newLeft + newWidth) {
@@ -147,8 +150,8 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
             return
         }
 
-        let newTop: number = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
-        let newHeight: number = mouse.height - newTop + mouse.top
+        const newTop: number = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
+        const newHeight: number = mouse.height - newTop + mouse.top
         // if (mouseTop + maxSize > newTop + newHeight) return
         // if (newHeight < maxSize) return
 
@@ -180,11 +183,19 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
 }
 
 export function rotateBox(e: any, mouse: any, ratio: number) {
-    let itemElem = mouse.e.target.closest(".item")
+    const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return 0
 
-    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
-    const itemPosY = itemElem.offsetTop * ratio + itemElem.closest(".slide").offsetTop + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop
+    const itemOffsetLeft: number = itemElem.offsetLeft || 0
+    const slideOffsetLeft: number = itemElem.closest(".slide").offsetLeft || 0
+    const editOffsetLeft: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft || 0
+
+    const itemOffsetTop: number = itemElem.offsetTop || 0
+    const slideOffsetTop: number = itemElem.closest(".slide").offsetTop || 0
+    const editOffsetTop: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop || 0
+
+    const itemPosX = itemOffsetLeft * ratio + slideOffsetLeft + editOffsetLeft
+    const itemPosY = itemOffsetTop * ratio + slideOffsetTop + editOffsetTop
 
     const itemCenterX = itemPosX + (itemElem.offsetWidth * ratio) / 2
     const itemCenterY = itemPosY + (itemElem.offsetHeight * ratio) / 2
@@ -199,7 +210,7 @@ export function rotateBox(e: any, mouse: any, ratio: number) {
     // snap to 0°, 90°, 180°, or 270° if within a margin
     const margin = 5 // degrees
     const snapAngles = [0, 90, 180, 270, 360]
-    for (let snapAngle of snapAngles) {
+    for (const snapAngle of snapAngles) {
         if (e.altKey) break
         if (Math.abs(angle - snapAngle) < margin || Math.abs(angle - (snapAngle - 360)) < margin) {
             angle = snapAngle % 360 // ensure 360 becomes 0
@@ -250,13 +261,17 @@ const maxRadius = 500
 export const radiusSliderOffset = 20
 export const radiusSliderRatio = 0.8
 export function getRadius(e: any, mouse: any, ratio: number) {
-    let itemElem = mouse.e.target.closest(".item")
+    const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return 0
 
     const sliderStart = radiusSliderOffset
     const sliderLength = maxRadius * radiusSliderRatio
 
-    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
+    const itemOffsetLeft: number = itemElem.offsetLeft || 0
+    const slideOffsetLeft: number = itemElem.closest(".slide").offsetLeft || 0
+    const editOffsetLeft: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft || 0
+
+    const itemPosX = itemOffsetLeft * ratio + slideOffsetLeft + editOffsetLeft
     const sliderPosStart = itemPosX + sliderStart * ratio
     // const sliderPosEnd = sliderPosStart + sliderLength * ratio
 

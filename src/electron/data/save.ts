@@ -30,18 +30,18 @@ export function save(data: SaveData) {
     }
 
     // scriptures
-    let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
+    const scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: [string, Bible]) {
         if (!value) return
-        let p: string = path.join(scripturePath, value.name + ".fsb")
-        writeFile(p, JSON.stringify([id, value]), id)
+        const filePath: string = path.join(scripturePath, value.name + ".fsb")
+        writeFile(filePath, JSON.stringify([id, value]), id)
     }
 
     data.path = checkShowsFolder(data.path)
     // rename shows
     if (data.renamedShows) {
-        let renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
+        const renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
         renameShows(renamedShows, data.path)
     }
 
@@ -51,8 +51,8 @@ export function save(data: SaveData) {
         if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
         function saveShow([id, value]: [string, any]) {
             if (!value) return
-            let p: string = path.join(data.path, (value.name || id) + ".show")
-            writeFile(p, JSON.stringify([id, value]), id)
+            const filePath: string = path.join(data.path, String(value.name || id) + ".show")
+            writeFile(filePath, JSON.stringify([id, value]), id)
         }
 
         // delete shows
@@ -60,8 +60,8 @@ export function save(data: SaveData) {
         function deleteShow({ name, id }: { name: string; id: string }) {
             if (!name || data.showsCache?.[id]) return
 
-            let p: string = path.join(data.path, (name || id) + ".show")
-            deleteFile(p)
+            const filePath: string = path.join(data.path, (name || id) + ".show")
+            deleteFile(filePath)
 
             // update cloud
             currentlyDeletedShows.push(id)
@@ -74,6 +74,6 @@ export function save(data: SaveData) {
             }, 300)
         }
 
-        if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath, customTriggers: data.customTriggers })
+        if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, customTriggers: data.customTriggers })
     }, 700)
 }

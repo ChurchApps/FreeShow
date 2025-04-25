@@ -9,8 +9,8 @@
     import Dropdown from "./Dropdown.svelte"
 
     export let value: string
-    export let fontStyleValue: string = ""
-    export let system: boolean = false
+    export let fontStyleValue = ""
+    export let system = false
 
     $: value = value ? value.replaceAll("'", "") : ""
 
@@ -63,7 +63,7 @@
         }
     }
 
-    let active: boolean = false
+    let active = false
     let self: HTMLDivElement
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
@@ -100,7 +100,7 @@
         return value.replace(/[\W_]+/g, "")
     }
 
-    let searchValue: string = ""
+    let searchValue = ""
     $: if (active) searchValue = ""
     // "invisible" search
     function keydown(e: KeyboardEvent) {

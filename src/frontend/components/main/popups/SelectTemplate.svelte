@@ -34,7 +34,7 @@
 
     let searchedTemplates = clone(defaultTemplates)
     let searchValue = ""
-    let previousSearchValue: string = ""
+    let previousSearchValue = ""
     function search(e: any = null) {
         if (searchValue !== previousSearchValue) {
             preloader = true
@@ -57,7 +57,7 @@
         previousSearchValue = searchValue
     }
 
-    function selectTemplate(template: any, keyboard: boolean = false) {
+    function selectTemplate(template: any, keyboard = false) {
         if ($popupData.action !== "select_template") return
 
         let previousValue = value
@@ -86,7 +86,7 @@
     }
 
     // open drawer tab instantly before content has loaded
-    let preloader: boolean = true
+    let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 </script>
 

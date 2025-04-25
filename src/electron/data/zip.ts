@@ -6,8 +6,8 @@ import { getExtension } from "../utils/files"
 
 // https://www.npmjs.com/package/adm-zip
 
-export function decompress(files: string[], asBuffer: boolean = false) {
-    let data: { content: Buffer | string; name: string; extension: string }[] = []
+export function decompress(files: string[], asBuffer = false) {
+    const data: { content: Buffer | string; name: string; extension: string }[] = []
 
     files.forEach((file) => {
         const zip = new AdmZip(file)
@@ -38,19 +38,19 @@ export function decompress(files: string[], asBuffer: boolean = false) {
 }
 
 export function isZip(path: string): Promise<boolean> {
-    const buffer = Buffer.alloc(4)
+    const initialBuffer = Buffer.alloc(4)
 
     return new Promise((resolve) => {
-        fs.open(path, "r", (err, fd) => {
-            if (err) {
-                console.error(err)
+        fs.open(path, "r", (openError, fd) => {
+            if (openError) {
+                console.error(openError)
                 resolve(false)
             }
 
-            fs.read(fd, buffer, 0, 4, 0, (err, _bytesRead, buffer) => {
-                if (err) {
-                    fs.close(fd, (err1) => {
-                        console.error(err1 || err)
+            fs.read(fd, initialBuffer, 0, 4, 0, (readError, _bytesRead, buffer) => {
+                if (readError) {
+                    fs.close(fd, (closeError) => {
+                        console.error(closeError || readError)
                         resolve(false)
                     })
                     return

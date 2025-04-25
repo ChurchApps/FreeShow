@@ -26,7 +26,7 @@ export class AudioMicrophone {
                 AudioPlayer.playStream(id, stream, metadata)
             })
             .catch((err) => {
-                console.log(err)
+                console.error(err)
                 if (err.name === "NotReadableError") {
                     sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }

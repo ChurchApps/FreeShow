@@ -206,7 +206,7 @@
         }
     }
 
-    let selectId: string = "category"
+    let selectId = "category"
     $: selectId = "category_" + id
 
     const dropAreas: (typeof id)[] = ["shows", "media", "audio", "overlays", "templates"]

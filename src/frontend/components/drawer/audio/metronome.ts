@@ -28,13 +28,13 @@ export function toggleMetronome() {
 export function startMetronome(values: API_metronome = {}) {
     if (get(metronome)?.tempo) metronomeValues = get(metronome)
     if (Object.keys(values).length) {
-        let oldValues = clone(metronomeValues)
+        const oldValues = clone(metronomeValues)
         delete oldValues.volume
 
         updateMetronome(values, true)
 
         // return if playing and values are the same
-        let newValues = clone(values)
+        const newValues = clone(values)
         delete newValues.volume
         if (get(playingMetronome) && JSON.stringify(newValues) === JSON.stringify(oldValues)) return
     }
@@ -45,7 +45,7 @@ export function startMetronome(values: API_metronome = {}) {
     initializeMetronome()
 }
 
-export function updateMetronome(values: API_metronome, starting: boolean = false) {
+export function updateMetronome(values: API_metronome, starting = false) {
     if (!values.tempo) values.tempo = metronomeValues.tempo || defaultMetronomeValues.tempo
     if (!starting && get(playingMetronome) && values.tempo !== metronomeValues.tempo) return startMetronome(values)
 
@@ -67,14 +67,14 @@ export function stopMetronome() {
 }
 
 const audioFiles = ["beat-hi", "beat-lo"]
-let audioBuffers: { [key: string]: AudioBuffer } = {}
+const audioBuffers: { [key: string]: AudioBuffer } = {}
 async function setAudioBuffers() {
     if (audioBuffers.hi) return
 
     await Promise.all(
         audioFiles.map(async (fileName) => {
-            let path = `./assets/${fileName}.mp3`
-            let id = fileName.slice(fileName.indexOf("-") + 1)
+            const path = `./assets/${fileName}.mp3`
+            const id = fileName.slice(fileName.indexOf("-") + 1)
 
             const audioBuffer = await fetch(path)
                 .then((res) => res.arrayBuffer())
@@ -85,7 +85,7 @@ async function setAudioBuffers() {
     )
 }
 
-////////////////////
+/// /////////////////
 
 // time values are in seconds
 let timeBetweenEachBeat = 0
@@ -93,7 +93,7 @@ let startTime = 0
 async function initializeMetronome() {
     await setAudioBuffers()
 
-    let beatsPerSecond = 60 / (metronomeValues.tempo || defaultMetronomeValues.tempo)
+    const beatsPerSecond = 60 / (metronomeValues.tempo || defaultMetronomeValues.tempo)
     timeBetweenEachBeat = beatsPerSecond
 
     scheduleNextNote()
@@ -126,28 +126,28 @@ function scheduleNextNote(time = 0, beat = 1) {
 let beatsPlayed = 0
 function scheduleNote(beat: number) {
     beatsPlayed++
-    let timeUntilNextNote = getTimeToNextNote()
+    const timeUntilNextNote = getTimeToNextNote()
 
     playNote(timeUntilNextNote, beat === 1)
     scheduleNextNote(timeUntilNextNote, beat + 1)
 }
 
 function getTimeToNextNote() {
-    let contextTime = audioContext.currentTime
+    const contextTime = audioContext.currentTime
 
-    let nextPlayTime = timeBetweenEachBeat * beatsPlayed
-    let timePassed = contextTime - startTime
+    const nextPlayTime = timeBetweenEachBeat * beatsPlayed
+    const timePassed = contextTime - startTime
 
     return nextPlayTime - timePassed
 }
 
-async function playNote(time: number, first: boolean = false) {
+async function playNote(time: number, first = false) {
     const source = audioContext.createBufferSource()
     const audioBuffer = audioBuffers[first ? "hi" : "lo"]
     source.buffer = audioBuffer
 
     // volume control
-    let gainNode = audioContext.createGain()
+    const gainNode = audioContext.createGain()
     source.connect(gainNode)
     gainNode.connect(audioContext.destination)
 
@@ -167,8 +167,8 @@ async function playNote(time: number, first: boolean = false) {
     source.start(audioContext.currentTime + time)
 }
 
-let accentVolume = 2
-let secondaryVolume = 1.75
+const accentVolume = 2
+const secondaryVolume = 1.75
 function getVolume(beatVolume) {
     return beatVolume * (metronomeValues.volume || 1) * get(volume) * AudioPlayer.getGain()
 }

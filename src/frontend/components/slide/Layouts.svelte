@@ -22,8 +22,8 @@
 
     $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
-    let totalTime: string = "0s"
-    let isTranslated: boolean = false
+    let totalTime = "0s"
+    let isTranslated = false
     $: layoutSlides = layouts?.[activeLayout]?.slides || []
     $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
@@ -81,14 +81,14 @@
 
     let edit: string | boolean = false
 
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
         zoomOpened = false
     }
 
-    let loading: boolean = false
+    let loading = false
     $: if (showId) startLoading()
     $: if ($notFound.show?.includes(showId)) loading = false
     function startLoading() {

@@ -8,7 +8,7 @@
     import Day from "../calendar/Day.svelte"
     import { getSelectedEvents } from "../calendar/calendar"
 
-    let type: string = "event"
+    let type = "event"
     $: type = $drawerTabsData.calendar?.activeSubTab || "event"
 
     let currentEvents: any[] = []

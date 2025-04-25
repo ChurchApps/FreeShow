@@ -3,9 +3,9 @@
     import { dictionary } from "../../../stores"
 
     export let value: string
-    export let placeholder: string = ""
-    export let disabled: boolean = false
-    export let lines: number = 4
+    export let placeholder = ""
+    export let disabled = false
+    export let lines = 4
     // convert from old value
     value = value?.replaceAll("<br>", "\n")
 

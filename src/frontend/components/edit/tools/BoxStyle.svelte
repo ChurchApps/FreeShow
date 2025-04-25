@@ -486,8 +486,8 @@
         if ($activeEdit.id) {
             // overlay / template
             let currentItems: Item[] = []
-            if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id!].items)
-            if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id!].items)
+            if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id].items)
+            if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id].items)
             // only selected
             currentItems = currentItems.filter((_item, i) => allItems.includes(i))
 

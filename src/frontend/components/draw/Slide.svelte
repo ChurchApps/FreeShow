@@ -9,11 +9,11 @@
     // $: currentOutput = $outputs[outputId] || {}
     // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     // Slide?.settings?.resolution
     $: resolution = getOutputResolution(outputId, $outputs, true)
-    let ratio: number = 0
+    let ratio = 0
 
     let initial: ["x" | "y", number] = ["y", 0]
     let parent: HTMLElement | undefined

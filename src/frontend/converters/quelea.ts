@@ -43,9 +43,9 @@ export function convertQuelea(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("Quelea")
+    const categoryId = createCategory("Quelea")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     // set timeout to allow popup to open
     setTimeout(() => {
@@ -57,11 +57,11 @@ export function convertQuelea(data: any) {
     }, 50)
 
     function convertSong(song: Song) {
-        let layoutID = uid()
+        const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
-        let { slides, layout }: any = createSlides(song)
+        const { slides, layout }: any = createSlides(song)
 
         show.meta = {
             title: song.title || "",
@@ -84,35 +84,35 @@ export function convertQuelea(data: any) {
 function createSlides(song: Song) {
     let lyrics = song.lyrics?.section || []
 
-    let slides: any = {}
-    let layout: any[] = []
+    const slides: any = {}
+    const layout: any[] = []
 
     if (!lyrics) return { slides, layout }
 
     // translations
     let translations: any[] = song.translation || []
     if (!Array.isArray(translations)) translations = [translations]
-    let translationItems: any[] = translations.map(({ name, tlyrics }) => ({ name, lyrics: (tlyrics || "").split("\n\n") }))
+    const translationItems: any[] = translations.map(({ name, tlyrics }) => ({ name, lyrics: (tlyrics || "").split("\n\n") }))
 
     if (!Array.isArray(lyrics)) lyrics = [lyrics]
     lyrics.forEach((slideLine, slideIndex) => {
-        let lines = (slideLine.lyrics || "").split("\n").filter(Boolean)
-        let groupName = slideLine["@title"] || ""
+        const allLines = (slideLine.lyrics || "").split("\n").filter(Boolean)
+        const groupName = slideLine["@title"] || ""
 
-        let id: string = uid()
+        const id: string = uid()
         layout.push({ id })
 
         let items: Item[] = [
             {
                 style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                lines: parseLines(lines),
+                lines: parseLines(allLines),
             },
         ]
 
         // custom translations
-        let tItems: Item[] = []
-        translationItems.forEach(({ name, lyrics }) => {
-            let lines = (lyrics[slideIndex] || "").split("\n").filter(Boolean)
+        const tItems: Item[] = []
+        translationItems.forEach(({ name, lyrics: lineTexts }) => {
+            const lines = (lineTexts[slideIndex] || "").split("\n").filter(Boolean)
             tItems.push(clone(items[0]))
             tItems[tItems.length - 1].language = name
             tItems[tItems.length - 1].lines = parseLines(lines)
@@ -128,7 +128,7 @@ function createSlides(song: Song) {
             items,
         }
 
-        let globalGroup = getGlobalGroup(groupName) || "verse"
+        const globalGroup = getGlobalGroup(groupName) || "verse"
         if (globalGroup) slides[id].globalGroup = globalGroup
         else slides[id].group = groupName.replace(/[\s\d]/g, "")
     })
@@ -139,8 +139,8 @@ function createSlides(song: Song) {
 // CHORDS
 
 function parseLines(lines: string[]) {
-    let newLines: any[] = []
-    let chords: string = ""
+    const newLines: any[] = []
+    let chords = ""
 
     lines.forEach((text: any) => {
         if (isChordLine(text)) {
@@ -148,7 +148,7 @@ function parseLines(lines: string[]) {
             return
         }
 
-        let line: Line = { align: "", text: [{ style: "", value: text }] }
+        const line: Line = { align: "", text: [{ style: "", value: text }] }
 
         if (chords) {
             line.chords = parseChordLine(chords)

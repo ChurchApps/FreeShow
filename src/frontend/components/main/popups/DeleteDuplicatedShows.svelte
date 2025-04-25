@@ -15,7 +15,7 @@
 
     let data = $popupData.data
 
-    let loading: boolean = false
+    let loading = false
     async function deleteMatching() {
         loading = true
         let deleteIds: string[] = []
@@ -105,8 +105,8 @@
 
     // MANUAL
 
-    let manualDeletion: boolean = false
-    let manualIndex: number = -1
+    let manualDeletion = false
+    let manualIndex = -1
     function deleteManual() {
         next()
         manualDeletion = true

@@ -64,7 +64,7 @@ export function setRandomValue(id: string) {
 
 const steps = 15
 let lastNums: number[] = []
-async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep: number = 0) {
+async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep = 0) {
     if (currentStep === 0) {
         randomNumberVariable.update((a) => {
             a[id] = true
@@ -76,14 +76,14 @@ async function animateValue(id: string, chars: number, finalValue: { name: strin
 
     for (let i = 0; i < steps; i++) {
         let randomNumber = start
-        ;[...Array(chars - currentStep)].forEach((_, i) => {
+        ;[...Array(chars - currentStep)].forEach((_, step) => {
             // never display the same int twice in a row
             let num = -1
             do {
                 num = Math.floor(Math.random() * 10) // 0-9
-            } while (lastNums[i] === num)
+            } while (lastNums[step] === num)
 
-            lastNums[i] = num
+            lastNums[step] = num
             randomNumber += num
         })
 

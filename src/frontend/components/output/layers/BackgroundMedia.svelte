@@ -17,20 +17,20 @@
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
 
-    export let outputId: string = ""
+    export let outputId = ""
 
     export let data: OutBackground
     export let transition: Transition
-    export let fadingOut: boolean = false
+    export let fadingOut = false
     export let currentStyle: Styles | null = null
-    export let animationStyle: string = ""
-    export let duration: number = 0
-    export let mirror: boolean = false
-    export let styleBackground: boolean = false
+    export let animationStyle = ""
+    export let duration = 0
+    export let mirror = false
+    export let styleBackground = false
 
     $: id = data.path || data.id || ""
 
-    let type: string = "media"
+    let type = "media"
     $: type = data.type || "media"
     $: if (type === "video" || type === "image") type = "media"
 
@@ -40,7 +40,7 @@
     // VIDEO
 
     let videoData = { duration: 0, paused: true, muted: true, loop: styleBackground }
-    let videoTime: number = 0
+    let videoTime = 0
 
     // let videoDuration = 0
     // if (!videoData.duration && duration) videoData.duration = videoDuration
@@ -124,9 +124,9 @@
     }
 
     let listenerId = ""
-    let receiving: boolean = false
+    let receiving = false
 
-    let mounted: boolean = false
+    let mounted = false
     onMount(() => (mounted = true))
     $: if (id && !fadingOut && mounted) startReceiver()
     function startReceiver() {
@@ -151,7 +151,7 @@
     // call end just before (to make room for transition) - this also triggers video ended on loop
     $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()
 
-    let endedCalled: boolean = false
+    let endedCalled = false
     function videoEnded() {
         if (fadingOut || mirror || endedCalled) return
 
@@ -205,7 +205,7 @@
     let video: HTMLVideoElement | undefined
     // previousPath is probably not needed as component is unmounted on new path
     let previousPath = id
-    async function analyseVideo() {
+    function analyseVideo() {
         if (fadingOut || $playingVideos[0]?.id === id) return
         if (previousPath && previousPath !== id) {
             AudioAnalyser.detach(previousPath)

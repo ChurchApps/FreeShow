@@ -7,11 +7,11 @@ import { setActiveScripture } from "./bible"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = convertToBible(xml2json(bible.content))
+        const obj: Bible = convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
-        let id = uid()
+        const id = uid()
         // create folder & file
         scripturesCache.update((a) => {
             a[id] = obj
@@ -28,7 +28,7 @@ export function convertBebliaBible(data: any[]) {
 }
 
 function convertToBible(content: any): Bible {
-    let bible: Bible = {
+    const bible: Bible = {
         name: content.bible["@name"] || content.bible["@translation"] || "",
         metadata: { copyright: content.bible["@info"] || "" },
         books: [],
@@ -38,7 +38,7 @@ function convertToBible(content: any): Bible {
     // some files might be missing <testament>
     if (testaments === undefined) testaments = [{ book: content.bible.book }]
     else if (!Array.isArray(testaments)) testaments = [testaments]
-    let books: any[] = []
+    const books: any[] = []
 
     testaments.forEach((a) => {
         books.push(...getBooks(a.book))
@@ -49,12 +49,12 @@ function convertToBible(content: any): Bible {
 }
 
 function getBooks(oldBooks: any[]) {
-    let books: any[] = []
+    const books: any[] = []
 
     if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
     // console.log("Books:", oldBooks)
     oldBooks.forEach((book) => {
-        let currentBook = {
+        const currentBook = {
             number: book["@number"],
             name: book["@name"] || defaultNames[book["@number"]],
             chapters: getChapters(book.chapter),
@@ -67,12 +67,12 @@ function getBooks(oldBooks: any[]) {
 }
 
 function getChapters(oldChapters: any[]) {
-    let chapters: any[] = []
+    const chapters: any[] = []
 
     if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
     // console.log("Chapters:", oldChapters)
     oldChapters.forEach((chapter) => {
-        let currentChapter = {
+        const currentChapter = {
             number: chapter["@number"],
             verses: getVerses(chapter.verse || []),
         }
@@ -84,12 +84,12 @@ function getChapters(oldChapters: any[]) {
 }
 
 function getVerses(oldVerses: any[]) {
-    let verses: any[] = []
+    const verses: any[] = []
 
     if (!Array.isArray(oldVerses)) oldVerses = [oldVerses]
     // console.log("Verses:", oldVerses)
     oldVerses.forEach((verse) => {
-        let currentVerse = {
+        const currentVerse = {
             number: verse["@number"],
             text: verse["#text"],
         }

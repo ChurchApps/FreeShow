@@ -128,7 +128,7 @@
         setBoxInputValue(edits, "chords", "chords.size", "hidden", !enabled)
         setBoxInputValue(edits, "chords", "chords.offsetY", "hidden", !enabled)
 
-        let data = (typeof item?.chords === "boolean" ? (item as any)?.chordsData : item?.chords) || {}
+        let data = (typeof item?.chords === "boolean" ? (item )?.chordsData : item?.chords) || {}
         if (data.color) setBoxInputValue(edits, "chords", "chords.color", "value", data.color)
         if (data.size) setBoxInputValue(edits, "chords", "chords.size", "value", data.size)
         if (data.offsetY) setBoxInputValue(edits, "chords", "chords.offsetY", "value", data.offsetY)
@@ -237,7 +237,7 @@
             return
         }
 
-        let value: string = addStyleString(item!.style, [input.key, input.value]) || ""
+        let value: string = addStyleString(item.style, [input.key, input.value]) || ""
 
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
 

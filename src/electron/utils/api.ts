@@ -9,24 +9,24 @@ import { sendToMain } from "../IPC/main"
 import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
-let servers: { [key: string]: http.Server | OSC } = {}
+const servers: { [key: string]: http.Server | OSC } = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
 // WebSocket on 5506, REST on +1 (5506), but works with 5505 as well!
 export function startWebSocketAndRest(port: number | undefined) {
-    startRestListener(port ? port + 1 : 0)
-    startWebSocket(port)
-    startOSC(port)
+    startRestListener(port ? port + 1 : DEFAULT_PORTS.REST)
+    startWebSocket(port || DEFAULT_PORTS.WebSocket)
+    startOSC(port || DEFAULT_PORTS.WebSocket)
 }
 
 // WEBSOCKET
 
-export function startWebSocket(PORT: number | undefined) {
-    let server = (servers.WebSocket = http.createServer(app))
+function startWebSocket(PORT: number) {
+    const server = (servers.WebSocket = http.createServer(app))
 
     if (!PORT) PORT = DEFAULT_PORTS.WebSocket
     server.listen(PORT, () => {
-        console.log(`WebSocket: Starting server at port ${PORT}`)
+        console.info(`WebSocket: Starting server at port ${PORT.toString()}`)
     })
 
     server.once("error", (err) => {
@@ -43,12 +43,12 @@ function connected(socket: Socket) {
 
     socket.on("disconnect", () => log("Client disconnected."))
 
-    socket.on("data", async (data: any) => {
+    socket.on("data", async (data: string) => {
         let parsedData
         try {
-            parsedData = JSON.parse(data || "{}")
+            parsedData = data && typeof data === "string" ? JSON.parse(data) : {}
         } catch (err) {
-            console.log("Could not parse socket data.")
+            console.error("Could not parse socket data\n", err)
             return
         }
 
@@ -62,18 +62,17 @@ function connected(socket: Socket) {
         socket.emit("data", msg)
     })
 
-    function log(msg: string, isError: boolean = false) {
-        console.log(`WebSocket: ${msg}`)
+    function log(msg: string, isError = false) {
+        console.info(`WebSocket: ${msg}`)
         if (isError) socket.emit("error", msg)
     }
 }
 
 // REST
 
-export function startRestListener(PORT: number | undefined) {
-    if (!PORT) PORT = DEFAULT_PORTS.REST
-    let server = (servers.REST = app.listen(PORT, () => {
-        console.log(`REST: Listening for data at port ${PORT}`)
+function startRestListener(PORT: number) {
+    const server = (servers.REST = app.listen(PORT, () => {
+        console.info(`REST: Listening for data at port ${PORT.toString()}`)
     }))
 
     server.once("error", (err: any) => {
@@ -88,7 +87,7 @@ export function startRestListener(PORT: number | undefined) {
         // ?action=ACTION_ID&data={}
         if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
 
-        const returnData = await receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
+        const returnData = await receivedData(data, (msg: string) => console.info(`REST: ${msg}`))
         // WIP send error if action does not exist
         if (!returnData) {
             res.status(204).send()
@@ -101,45 +100,44 @@ export function startRestListener(PORT: number | undefined) {
 
 // Open Sound Control
 
-function startOSC(PORT: number | undefined) {
-    if (!PORT) PORT = DEFAULT_PORTS.WebSocket
-
+function startOSC(PORT: number) {
     // const osc = new OSC({ plugin: new OSC.WebsocketServerPlugin() }) // ws://ip:port
     const osc = (servers.OSC = new OSC({ plugin: new OSC.DatagramPlugin() })) // UDP
 
-    osc.on("/freeshow/*", async (msg: any) => {
+    osc.on("/freeshow/*", async (msg: OSC.Message) => {
         // const active = msg.args[1] || 0
         let args: any = {}
         try {
-            args = JSON.parse(msg.args[0] || "{}")
+            const data = msg.args[0]
+            args = data && typeof data === "string" ? JSON.parse(data) : {}
         } catch (err) {
-            console.log("OSC: Could not parse JSON!\n", err)
+            console.error("OSC: Could not parse JSON!\n", err)
         }
 
         const action = msg.address.replace("/freeshow", "")
-        const returnData = await receivedData({ action, ...args }, (msg: string) => console.log(`OSC: ${msg}`))
+        const returnData = await receivedData({ action, ...args }, (a: string) => console.info(`OSC: ${a}`))
         if (!returnData) return
 
-        var message = new OSC.Message(msg.address, returnData)
+        const message = new OSC.Message(msg.address, returnData)
         osc.send(message)
     })
 
     osc.on("open", () => {
-        console.log(`OSC: Listening for data at port ${PORT}`)
+        console.info(`OSC: Listening for data at port ${PORT.toString()}`)
     })
     osc.on("error", (err: any) => {
-        console.log(`OSC: Error. ${JSON.stringify(err)}`)
+        console.info(`OSC: Error. ${JSON.stringify(err)}`)
     })
 
     osc.open({ port: PORT, host: "0.0.0.0" })
 }
 
 // let OSC_SENDER: null | OSC = null // must work with different ip:port
-export function emitOSC(msg: any) {
+export function emitOSC(msg: { signal: any; data: string }) {
     if (typeof msg.data !== "string") return
 
-    const port = msg.signal?.port || 8080
-    const host = msg.signal?.host || "0.0.0.0"
+    const port: number = msg.signal?.port || 8080
+    const host: string = msg.signal?.host || "0.0.0.0"
 
     // @ts-ignore
     const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin({ send: { host, port } }) })
@@ -161,7 +159,7 @@ export function emitOSC(msg: any) {
         if (!OSC_SENDER) return
 
         const message = new OSC.Message(msg.data)
-        console.log(`Emitting OSC at ${host}:${port}:`, message.address)
+        console.info(`Emitting OSC at ${host}:${String(port)}:`, message.address)
 
         OSC_SENDER.send(message)
         // ensure message is sent
@@ -173,7 +171,7 @@ export function emitOSC(msg: any) {
 
 async function receivedData(data: any = {}, log: (...msg: any[]) => void): Promise<any> {
     if (!data?.action) return log("Received message from client, but missing 'action' key.", true)
-    log(`Received action ${data.action}`)
+    log(`Received action ${String(data.action)}`)
 
     const get = data.action.startsWith("get_")
     if (get) data.returnId = uid(5)
@@ -184,13 +182,13 @@ async function receivedData(data: any = {}, log: (...msg: any[]) => void): Promi
 
     const returnData = await waitUntilValueIsDefined(() => returnDataObj[data.returnId], 50, 1000)
     delete returnDataObj[data.returnId]
-    log(`Sending data ${data.action}`)
+    log(`Sending data ${String(data.action)}`)
     return returnData
 }
 
-let returnDataObj: { [key: string]: any } = {}
+const returnDataObj: { [key: string]: any } = {}
 export function apiReturnData(data: any) {
-    let id = data.returnId
+    const id = data.returnId
     if (!id) return
 
     delete data.returnId
@@ -199,12 +197,12 @@ export function apiReturnData(data: any) {
 
 // CLOSE
 
-export function stopApiListener(id: string = "") {
-    if (id) stop(id)
+export function stopApiListener(specificId = "") {
+    if (specificId) stop(specificId)
     else Object.keys(servers).forEach(stop)
 
     function stop(id: string) {
-        console.log(`${id}: Stopping server.`)
+        console.info(`${id}: Stopping server.`)
         servers[id].close()
     }
 }

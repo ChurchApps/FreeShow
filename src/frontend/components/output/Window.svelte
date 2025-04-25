@@ -31,14 +31,13 @@
                 videoElem.onloadedmetadata = loaded
             })
             .catch((err) => {
-                console.log(err.name + ": " + err.message)
+                console.error(err.name + ": " + err.message)
             })
     })
 
     onDestroy(stopStream)
     function stopStream() {
         if (!videoElem) return
-
         ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null
     }

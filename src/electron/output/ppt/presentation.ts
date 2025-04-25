@@ -13,23 +13,23 @@ const connectors = {
 }
 
 export function getPresentationApplications() {
-    let list: string[] = (connectors as any)[os.platform()] || []
+    const list: string[] = (connectors as any)[os.platform()] || []
     return list
 }
 
 let alwaysOnTopDisabled: string[] = []
-let starting: boolean = false
-export function startSlideshow(data: { path: string; program: string }) {
+let starting = false
+export async function startSlideshow(data: { path: string; program: string }) {
     if (closing || starting) return
     starting = true
 
-    initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
+    await initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
 
     if (alwaysOnTopDisabled.length) return
-    OutputHelper.getAllOutputs().forEach(([id, output]) => {
+    OutputHelper.getAllOutputs().forEach((output) => {
         if (output.window.isAlwaysOnTop()) {
-            OutputValues.updateValue({ id, key: "alwaysOnTop", value: false })
-            alwaysOnTopDisabled.push(id)
+            OutputValues.updateValue({ id: output.id, key: "alwaysOnTop", value: false })
+            alwaysOnTopDisabled.push(output.id)
         }
     })
 }
@@ -75,8 +75,8 @@ function stopSlideshow() {
 }
 
 let currentSlideshow: Slideshow | null = null
-let openedPresentation: string = ""
-async function initPresentation(path: string, program: string = "powerpoint") {
+let openedPresentation = ""
+async function initPresentation(path: string, program = "powerpoint") {
     if (currentSlideshow) {
         try {
             await currentSlideshow.stop()
@@ -99,7 +99,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
             sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
             console.error("INIT", err)
-            sendToMain(ToMain.ALERT, (err as Error).toString())
+            sendToMain(ToMain.ALERT, String(err))
         }
 
         starting = false
@@ -113,7 +113,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         if (err === "application still not running") {
             sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
-            sendToMain(ToMain.ALERT, (err as Error).toString())
+            sendToMain(ToMain.ALERT, String(err))
         }
     }
 
@@ -125,7 +125,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
             if (err === "Something went wrong with the presentation controller") {
                 sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
             } else {
-                sendToMain(ToMain.ALERT, (err as Error).toString())
+                sendToMain(ToMain.ALERT, String(err))
             }
         }
     }
@@ -139,7 +139,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         if (err === "still no active presentation") {
             sendToMain(ToMain.ALERT, "Could not start presentation, please open it manually and try again!")
         } else {
-            sendToMain(ToMain.ALERT, (err as Error).toString())
+            sendToMain(ToMain.ALERT, String(err))
         }
 
         starting = false
@@ -150,27 +150,27 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     getMainWindow()?.focus()
 
     starting = false
-    updateState()
+    await updateState()
 }
 
 // prevent rapid changes
 let navigationTimeout: NodeJS.Timeout | null = null
-let navigationWait = 100
+const navigationWait = 50
 const presentationActions = {
-    next: () => {
+    next: async () => {
         if (navigationTimeout) return
         if (stat && stat.position >= stat.slides) return
 
-        currentSlideshow!.next()
+        await currentSlideshow!.next()
 
         navigationTimeout = setTimeout(() => {
             navigationTimeout = null
         }, navigationWait)
     },
-    previous: () => {
+    previous: async () => {
         if (navigationTimeout) return
 
-        currentSlideshow!.prev()
+        await currentSlideshow!.prev()
 
         navigationTimeout = setTimeout(() => {
             navigationTimeout = null
@@ -189,12 +189,12 @@ const presentationActions = {
     stop: () => stopSlideshow(),
 }
 
-export function presentationControl(data: { action: string }) {
+export async function presentationControl(data: { action: string }) {
     if (!currentSlideshow) return
 
     try {
-        if (data.action in presentationActions) presentationActions[data.action as keyof typeof presentationActions]()
-        else console.log("MISSING PRESENTATION CONTROL")
+        if (data.action in presentationActions) await presentationActions[data.action as keyof typeof presentationActions]()
+        else console.error("MISSING PRESENTATION CONTROL")
     } catch (err) {
         console.error("Could not execute action:", err)
     }
@@ -207,20 +207,20 @@ let stat: null | { state: string; position: number; slides: number } = null
 async function updateState() {
     if (!currentSlideshow) return
     if (stateUpdater) clearTimeout(stateUpdater)
-    let state: { id: string; stat: any; info: any } = { id: openedPresentation, stat: {}, info: {} }
+    const state: { id: string; stat: any; info: any } = { id: openedPresentation, stat: {}, info: {} }
 
     try {
         state.stat = await currentSlideshow?.stat()
         stat = state.stat
     } catch (err) {
-        if (currentSlideshow) console.log("STAT", err)
+        if (currentSlideshow) console.info("STAT", err)
         return
     }
 
     try {
         state.info = await currentSlideshow?.info()
     } catch (err) {
-        if (currentSlideshow) console.log("INFO", err)
+        if (currentSlideshow) console.info("INFO", err)
         return
     }
 

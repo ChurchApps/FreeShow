@@ -21,7 +21,7 @@
     $: showId = $activeShow?.id
     $: show = $showsCache[showId || ""]
     let currentLayout: string | null = null
-    let note: string = ""
+    let note = ""
     $: if (showId && show?.settings?.activeLayout !== currentLayout) updateNote()
 
     // let previousShow = showId

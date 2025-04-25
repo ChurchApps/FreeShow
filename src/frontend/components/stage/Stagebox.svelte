@@ -28,8 +28,8 @@
     export let item: StageItem
     export let stageLayout: StageLayout | null = null
     export let ratio: number
-    export let preview: boolean = false
-    export let edit: boolean = false
+    export let preview = false
+    export let edit = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
 
@@ -133,14 +133,14 @@
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
-    let firstTimerId: string = ""
+    let firstTimerId = ""
     $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     } else firstTimerId = ""
 
-    let itemStyle: string = ""
-    let textStyle: string = ""
+    let itemStyle = ""
+    let textStyle = ""
     $: if (item.style) updateStyles()
     function updateStyles() {
         const styles = getStyles(item.style)

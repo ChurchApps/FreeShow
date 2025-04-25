@@ -21,7 +21,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
-    function updateStyle(e: any, key: string, currentId: string = "") {
+    function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
 
         if (!currentId) currentId = styleId || "default"

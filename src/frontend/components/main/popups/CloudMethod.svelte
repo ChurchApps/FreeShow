@@ -27,7 +27,7 @@
         })
     }
 
-    let customFolderEnabled: boolean = false
+    let customFolderEnabled = false
 </script>
 
 <p style="max-width: 400px;white-space: normal;"><T id="cloud.choose_method_tip" /></p>

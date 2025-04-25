@@ -18,15 +18,15 @@
     export let lines: any
 
     export let ratio: number
-    export let mirror: boolean = false
-    export let preview: boolean = false
+    export let mirror = false
+    export let preview = false
     export let transition: any = {}
-    export let transitionEnabled: boolean = false
-    export let isKeyOutput: boolean = false
+    export let transitionEnabled = false
+    export let isKeyOutput = false
 
     let currentItems: Item[] = []
     let current: any = {}
-    let show: boolean = false
+    let show = false
 
     let filteredItems: Item[] = []
     $: filterItems(currentItems, $variables)
@@ -55,7 +55,7 @@
     let timeout: NodeJS.Timeout | null = null
 
     // if anything is outputted & changing to something that's outputted
-    let transitioningBetween: boolean = false
+    let transitioningBetween = false
 
     function updateItems() {
         if (!currentSlide?.items?.length) {

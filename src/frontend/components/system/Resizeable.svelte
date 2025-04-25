@@ -15,7 +15,7 @@
     }
 
     let width: number = DEFAULT_WIDTH
-    let handleWidth: number = 4
+    let handleWidth = 4
     export let maxWidth: number = DEFAULT_WIDTH * 2.2
     export let minWidth: number = handleWidth
 
@@ -31,7 +31,7 @@
         }, 2000)
     })
 
-    let move: boolean = false
+    let move = false
     let mouse: null | { x: number; y: number; offset: number; target: any } = null
 
     $: handleWidth = width <= 8 ? 6 : 4

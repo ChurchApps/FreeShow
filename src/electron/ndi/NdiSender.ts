@@ -19,24 +19,24 @@ export class NdiSender {
     static stopSenderNDI(id: string) {
         if (!this.NDI[id]?.timer) return
 
-        console.log("NDI - stopping sender: " + this.NDI[id].name)
+        console.info("NDI - stopping sender: " + this.NDI[id].name)
         clearInterval(this.NDI[id].timer)
 
         try {
             this.NDI[id].sender.destroy()
-        } catch (error) {
-            console.log("ERROR", error)
+        } catch (err) {
+            console.error("ERROR", err)
         }
 
         delete this.NDI[id]
     }
 
-    static async createSenderNDI(id: string, title: string = "") {
+    static async createSenderNDI(id: string, title = "") {
         if (this.ndiDisabled || this.NDI[id]) return
         const grandiose = require("grandiose")
 
         this.NDI[id] = { name: `FreeShow NDI${title ? ` - ${title}` : ""}` }
-        console.log("NDI - creating sender: " + this.NDI[id].name)
+        console.info("NDI - creating sender: " + this.NDI[id].name)
 
         try {
             this.NDI[id].sender = await grandiose.send({
@@ -45,17 +45,17 @@ export class NdiSender {
                 clockAudio: false,
             })
         } catch (err) {
-            console.log("Could not create NDI sender:", err)
+            console.error("Could not create NDI sender:", err)
             delete this.NDI[id]
             return
         }
 
         this.NDI[id].timer = setInterval(() => {
             /*  poll NDI for connections  */
-            const conns = this.NDI[id].sender?.connections() || 0
+            const conns: number = this.NDI[id].sender?.connections() || 0
             this.NDI[id].status = conns > 0 ? "connected" : "unconnected"
 
-            let newStatus = this.NDI[id].status + conns
+            const newStatus = String(this.NDI[id].status) + conns.toString()
             if (newStatus !== this.NDI[id].previousStatus) {
                 toApp("NDI", { channel: "SEND_DATA", data: { id, status: this.NDI[id].status, connections: conns } })
                 CaptureHelper.updateFramerate(id)
@@ -86,7 +86,7 @@ export class NdiSender {
         }
 
         /*  optionally convert from BGRA to BGRX (no alpha channel)  */
-        let fourCC = (grandiose as any).FOURCC_BGRA
+        const fourCC = grandiose.FOURCC_BGRA
         // if (!this.cfg.v) {
         //     util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
         //     fourCC = grandiose.FOURCC_BGRX
@@ -107,7 +107,7 @@ export class NdiSender {
             frameRateN: framerate * 1000,
             frameRateD: 1000,
             pictureAspectRatio: ratio,
-            frameFormatType: (grandiose as any).FORMAT_TYPE_PROGRESSIVE,
+            frameFormatType: grandiose.FORMAT_TYPE_PROGRESSIVE,
             lineStrideBytes: size.width * bytesForBGRA,
 
             /*  the data itself  */
@@ -118,7 +118,7 @@ export class NdiSender {
         try {
             await this.NDI[id].sender.video(frame)
         } catch (err) {
-            console.log("Error sending NDI video frame:", err)
+            console.error("Error sending NDI video frame:", err)
         }
     }
 
@@ -152,7 +152,7 @@ export class NdiSender {
             channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
 
             /*  the data itself  */
-            fourCC: (grandiose as any).FOURCC_FLTp,
+            fourCC: grandiose.FOURCC_FLTp,
             data: ndiAudioBuffer,
         }
 
@@ -162,7 +162,7 @@ export class NdiSender {
             try {
                 data.sender.audio(frame)
             } catch (err) {
-                console.log("Error sending NDI audio frame:", err)
+                console.error("Error sending NDI audio frame:", err)
             }
         })
     }
@@ -174,7 +174,7 @@ function convertPCMtoPlanarFloat32(buffer: Buffer, channels: number) {
         const pcmconvert = require("pcm-convert")
         return pcmconvert(buffer, { channels, dtype: "int16", endianness: "le", interleaved: true }, { dtype: "float32", endianness: "le", interleaved: false }) as Buffer
     } catch (err) {
-        console.log("Could not convert audio")
+        console.error("Could not convert audio")
         return null
     }
 }

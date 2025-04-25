@@ -18,19 +18,19 @@ function createSlides({ slide }: any) {
 
     slide
         .split("<slide>")
-        .filter((slide) => Boolean(slide.trim()))
+        .filter((a) => Boolean(a.trim()))
         .map((lines) =>
             lines
                 .replace(/<BR>/gi, "<br>")
                 .split("<br>")
                 .map((line) => line.trim())
-                .filter((slide) => Boolean(slide.trim()))
+                .filter((a) => Boolean(a.trim()))
         )
         .forEach((lines: string[]) => {
-            let id: string = uid()
+            const id: string = uid()
             layout.push({ id })
 
-            let items = [
+            const items = [
                 {
                     style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                     lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
@@ -60,7 +60,7 @@ export function convertVerseVIEW(data: any) {
 
         data?.forEach(({ content }: any) => {
             if (!content) {
-                console.log("File missing content!")
+                console.error("File missing content!")
                 return
             }
 
@@ -70,8 +70,6 @@ export function convertVerseVIEW(data: any) {
 
             const { songDB } = root
             const { song: songs } = songDB
-
-            console.log(songs)
 
             for (const song of songs) {
                 const layoutID = uid()

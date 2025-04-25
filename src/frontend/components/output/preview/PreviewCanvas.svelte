@@ -4,13 +4,13 @@
     export let capture: any
     export let fullscreen: any = false
     export let disabled: any = false
-    export let id: string = ""
-    export let style: string = ""
+    export let id = ""
+    export let style = ""
 
     let canvas: any
     let ctx: any
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
 
     onMount(() => {
         if (!canvas) return

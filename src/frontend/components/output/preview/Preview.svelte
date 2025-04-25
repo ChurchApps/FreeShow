@@ -38,7 +38,7 @@
     }
 
     let numberKeyTimeout: NodeJS.Timeout | null = null
-    let previousNumberKey: string = ""
+    let previousNumberKey = ""
     function keydown(e: KeyboardEvent) {
         if ($guideActive || $activePopup === "assign_shortcut") return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
@@ -116,7 +116,7 @@
     }
 
     function actionKeyActivate(key: string) {
-        let actionTriggered: boolean = false
+        let actionTriggered = false
 
         Object.values($midiIn).forEach((action) => {
             if (action.keypressActivate?.toUpperCase() === key) {
@@ -159,7 +159,7 @@
 
     // active menu
     let activeClear: any = null
-    let autoChange: boolean = true
+    let autoChange = true
     $: if (outputId) autoChange = true
     $: if (autoChange && ($outputs || $overlayTimers)) {
         let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))

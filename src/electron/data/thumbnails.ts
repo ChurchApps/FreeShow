@@ -14,15 +14,15 @@ import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
 
 export function getThumbnail(data: { input: string; size: number }) {
-    let output = createThumbnail(data.input, data.size || 500)
+    const output = createThumbnail(data.input, data.size || 500)
 
     return { ...data, output }
 }
 
-export function createThumbnail(filePath: string, size: number = 250) {
+export function createThumbnail(filePath: string, size = 250) {
     if (!filePath) return ""
 
-    let outputPath = getThumbnailPath(filePath, size)
+    const outputPath = getThumbnailPath(filePath, size)
 
     addToGenerateQueue({ input: filePath, output: outputPath, size })
 
@@ -30,7 +30,7 @@ export function createThumbnail(filePath: string, size: number = 250) {
 }
 
 type Thumbnail = { input: string; output: string; size: number }
-let thumbnailQueue: Thumbnail[] = []
+const thumbnailQueue: Thumbnail[] = []
 function addToGenerateQueue(data: Thumbnail) {
     thumbnailQueue.push(data)
     nextInQueue()
@@ -50,7 +50,7 @@ function generationFinished() {
     nextInQueue()
 }
 
-let exists: string[] = []
+const exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
     if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished()
     if (isProd && exists.includes(data.output)) return generationFinished()
@@ -61,26 +61,26 @@ async function generateThumbnail(data: Thumbnail) {
     }
 
     try {
-        await generate(data.input, data.output, data.size + "x?", { seek: 0.5 })
+        await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 })
     } catch (err) {
         console.error(err)
         generationFinished()
     }
 }
 
-let thumbnailFolderPath: string = ""
+let thumbnailFolderPath = ""
 export function getThumbnailFolderPath() {
     if (thumbnailFolderPath) return thumbnailFolderPath
 
-    let p: string = path.join(app.getPath("temp"), "freeshow-cache")
-    if (!doesPathExist(p)) makeDir(p)
-    thumbnailFolderPath = p
+    const folderPath: string = path.join(app.getPath("temp"), "freeshow-cache")
+    if (!doesPathExist(folderPath)) makeDir(folderPath)
+    thumbnailFolderPath = folderPath
 
-    return p
+    return folderPath
 }
 
-function getThumbnailPath(filePath: string, size: number = 250) {
-    let folderPath = thumbnailFolderPath || getThumbnailFolderPath()
+function getThumbnailPath(filePath: string, size = 250) {
+    const folderPath = thumbnailFolderPath || getThumbnailFolderPath()
     return path.join(folderPath, `${filePathHashCode(filePath)}-${size}.png`)
 }
 
@@ -88,7 +88,7 @@ export function filePathHashCode(str: string) {
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {
-        let chr = str.charCodeAt(i)
+        const chr = str.charCodeAt(i)
         hash = (hash << 5) - hash + chr // bit shift
         hash |= 0 // convert to 32bit integer
     }
@@ -97,7 +97,7 @@ export function filePathHashCode(str: string) {
     return "a" + hash.toString()
 }
 
-///// GENERATE /////
+/// // GENERATE /////
 
 interface Config {
     seek?: number // 0-1
@@ -122,7 +122,7 @@ async function generate(input: string, output: string, size: string, config: Con
     await captureWithCanvas({ input, output, size: parsedSize, extension: getExtension(input), config })
 }
 
-let mediaBeingCaptured: number = 0
+let mediaBeingCaptured = 0
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: { input: string; output: string; size: ResizeOptions; extension: string; config: Config }) {
@@ -159,7 +159,7 @@ export function saveImage(data: { path: string; base64?: string; filePath?: stri
 
     if (!dataURL || !savePath) return
 
-    let image = nativeImage.createFromDataURL(dataURL)
+    const image = nativeImage.createFromDataURL(dataURL)
     saveToDisk(savePath, image, false, data.format || "png")
 }
 
@@ -167,10 +167,10 @@ export async function pdfToImage({ filePath, dataPath }: { filePath: string; dat
     const pdfName = path.basename(filePath, path.extname(filePath))
     const pathName = createFolder(path.join(dataPath, dataFolderNames.imports, "PDF", pdfName))
 
-    const { pages: pdfImages } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) as { path: string; pages: string[] }
+    const { pages: pdfImages }: { pages: string[] } = await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })
     if (!Array.isArray(pdfImages)) return
 
-    let images: string[] = []
+    const images: string[] = []
     for (let i = 0; i < pdfImages.length; i++) {
         const base64 = pdfImages[i]
         const image = nativeImage.createFromDataURL(base64)
@@ -227,7 +227,7 @@ function parseSize(sizeStr: string): ResizeOptions {
     const sizeRegex = /(\d+|\?)x(\d+|\?)/g
     const sizeResult = sizeRegex.exec(sizeStr)
     if (sizeResult) {
-        const sizeValues = sizeResult.map((x) => (x === "?" ? null : Number.parseInt(x)))
+        const sizeValues = sizeResult.map((x) => (x === "?" ? null : Number.parseInt(x, 10)))
 
         if (sizeValues[1]) size.width = sizeValues[1] || 0
         if (sizeValues[2]) size.height = sizeValues[2] || 0
@@ -238,10 +238,10 @@ function parseSize(sizeStr: string): ResizeOptions {
     throw new Error("Invalid size string")
 }
 
-///// SAVE /////
+/// // SAVE /////
 
 const jpegQuality = 90 // 0-100
-function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true, format: "png" | "jpg") {
+function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true, format: "png" | "jpg") {
     let img
     if (format === "jpg") img = image.toJPEG(jpegQuality)
     else img = image.toPNG() // higher file size, but supports transparent images
@@ -252,15 +252,15 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolea
     })
 }
 
-///// CAPTURE SLIDE /////
+/// // CAPTURE SLIDE /////
 
 export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | undefined> {
     return new Promise((resolve) => {
         const outSlide = Object.values(data.output)[0].out?.slide
-        const OUTPUT_ID = "capture" + outSlide?.id + outSlide?.layout + outSlide?.index
+        const OUTPUT_ID = "capture" + String(outSlide?.id) + String(outSlide?.layout) + String(outSlide?.index)
         if (OutputHelper.getOutput(OUTPUT_ID)) return
 
-        let window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })
+        const window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })
         loadWindowContent(window, "output")
 
         OutputHelper.setOutput(OUTPUT_ID, { window })

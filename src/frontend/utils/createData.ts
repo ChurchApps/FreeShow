@@ -279,7 +279,7 @@ export function setExampleTemplates() {
         }
         a.bigBold = {
             isDefault: true,
-            name: get(dictionary).example ? get(dictionary).example?.big + " " + get(dictionary).example?.bold : "Big Bold",
+            name: mergeTranslations("big", "bold", "Big Bold"),
             color: null,
             category: "song",
             items: [
@@ -291,7 +291,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: get(dictionary).example ? get(dictionary).example?.big + " " + get(dictionary).example?.bold : "Big Bold",
+                                    value: mergeTranslations("big", "bold", "Big Bold"),
                                     style: "font-size: 120px;font-weight: bold;",
                                 },
                             ],
@@ -302,7 +302,7 @@ export function setExampleTemplates() {
         }
         a.defaultBold = {
             isDefault: true,
-            name: get(dictionary).example ? get(dictionary).example?.default + " " + get(dictionary).example?.bold : "Default Bold",
+            name: mergeTranslations("default", "bold", "Default Bold"),
             color: null,
             category: "song",
             items: [
@@ -314,7 +314,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: get(dictionary).example ? get(dictionary).example?.default + " " + get(dictionary).example?.bold : "Default Bold",
+                                    value: mergeTranslations("default", "bold", "Default Bold"),
                                     style: "font-size: 100px;font-weight: bold;",
                                 },
                             ],
@@ -325,7 +325,7 @@ export function setExampleTemplates() {
         }
         a.smallBold = {
             isDefault: true,
-            name: get(dictionary).example ? get(dictionary).example?.small + " " + get(dictionary).example?.bold : "Small Bold",
+            name: mergeTranslations("small", "bold", "Small Bold"),
             color: null,
             category: "song",
             items: [
@@ -337,7 +337,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: get(dictionary).example ? get(dictionary).example?.small + " " + get(dictionary).example?.bold : "Small Bold",
+                                    value: mergeTranslations("small", "bold", "Small Bold"),
                                     style: "font-size: 80px;font-weight: bold;",
                                 },
                             ],
@@ -767,4 +767,11 @@ export function createDoubleTemplate() {
 
         return a
     })
+}
+
+// HELPERS
+
+function mergeTranslations(firstKey: string, secondKey: string, defaultValue: string) {
+    if (!get(dictionary).example) return defaultValue
+    return get(dictionary).example![firstKey] + " " + get(dictionary).example![secondKey]
 }

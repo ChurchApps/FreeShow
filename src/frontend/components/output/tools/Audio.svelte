@@ -73,7 +73,7 @@
         else activeShow.set({ id, type: "audio", data: { isMic: audio.isMic } })
     }
 
-    let fullLength: boolean = false
+    let fullLength = false
 </script>
 
 {#if Object.keys($playingAudio).length > 1}
@@ -131,7 +131,7 @@
             </span>
 
             {#if $activePlaylist?.active === path}
-                <Button style="flex: 0" disabled={$outLocked} center title={$dictionary.media?.next} on:click={AudioPlaylist.next}>
+                <Button style="flex: 0" disabled={$outLocked} center title={$dictionary.media?.next} on:click={() => AudioPlaylist.next()}>
                     <Icon id="audio_forward" size={1.2} />
                 </Button>
             {/if}

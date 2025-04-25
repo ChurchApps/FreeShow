@@ -12,7 +12,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 
     // update cache data if loading from shows list
     if (value !== "delete" && !get(showsCache)[id]) {
-        let showRef = get(shows)[id]
+        const showRef = get(shows)[id]
         if (showRef && value) {
             value.name = showRef.name
             value.category = showRef.category || null
@@ -69,7 +69,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 
     if (value && value !== "delete") {
         cachedShowsData.update((a) => {
-            let customId = getShowCacheId(id, get(showsCache)[id])
+            const customId = getShowCacheId(id, get(showsCache)[id])
             a[customId] = updateCachedShow(id, value)
             return a
         })
@@ -85,7 +85,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 }
 
 export async function loadShows(s: string[]) {
-    let savedWhenLoading: boolean = get(saved)
+    const savedWhenLoading: boolean = get(saved)
 
     return new Promise((resolve) => {
         let count = 0
@@ -106,7 +106,7 @@ export async function loadShows(s: string[]) {
         // if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
-        let listenerId = receiveMain(Main.SHOW, (data) => {
+        const listenerId = receiveMain(Main.SHOW, (data) => {
             if (!s.includes(data.id)) return
             count++
 
@@ -127,7 +127,7 @@ export async function loadShows(s: string[]) {
                     })
                 }
 
-                let show = fixShowIssues(data.content[1])
+                const show = fixShowIssues(data.content[1])
                 setShow(data.id || data.content[0], show)
             }
 

@@ -16,7 +16,7 @@
     let layoutRef = getLayoutRef()
     let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
-    let allSlides: boolean = !$popupData.indexes?.length
+    let allSlides = !$popupData.indexes?.length
 
     onMount(() => {
         popupData.set({})
@@ -50,8 +50,8 @@
     }
 
     // total time
-    let appliedToSlides: number = 0
-    let totalTime: number = 0
+    let appliedToSlides = 0
+    let totalTime = 0
     function getTotalTime() {
         totalTime = allActiveSlides.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
 

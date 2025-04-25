@@ -20,22 +20,22 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
     if (!action) return
     action = convertOldMidiToNewAction(action)
 
-    let triggers = action.triggers || []
-    if (!triggers.length) return
+    const actionTriggers = action.triggers || []
+    if (!actionTriggers.length) return
 
-    let data = action.actionValues || {}
+    const actionValues = action.actionValues || {}
 
     // set to active
     runningActions.set([...get(runningActions), action.id])
 
-    for (let actionId of triggers) {
+    for (const actionId of actionTriggers) {
         await runTrigger(actionId)
     }
 
     // remove from active (timeout to show outline)
     setTimeout(() => {
         runningActions.update((a) => {
-            let currentIndex = a.findIndex((id) => action.id === id)
+            const currentIndex = a.findIndex((id) => action.id === id)
             if (currentIndex < 0) return a
             a.splice(currentIndex, 1)
             return a
@@ -43,7 +43,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
     }, 20)
 
     async function runTrigger(actionId: string) {
-        let triggerData = data[actionId] || {}
+        let triggerData = actionValues[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
         actionId = getActionTriggerId(actionId)
@@ -54,18 +54,18 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         }
 
         if (!API_ACTIONS[actionId]) {
-            console.log("Missing API for trigger")
+            console.error("Missing API for trigger")
             return
         }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
-            let outputRef = get(outputs)[getActiveOutputs()[0]]?.out?.slide
-            let showId = outputRef?.id || "active"
-            let layoutRef = _show(showId)
+            const outputRef = get(outputs)[getActiveOutputs()[0]]?.out?.slide
+            const showId = outputRef?.id || "active"
+            const layoutRef = _show(showId)
                 .layouts(outputRef?.layout ? [outputRef.layout] : "active")
                 .ref()[0]
             if (layoutRef) {
-                let overlayIds = layoutRef[slideIndex].data?.overlays
+                const overlayIds = layoutRef[slideIndex].data?.overlays
                 triggerData = { overlayIds }
             }
         } else if (actionId === "send_midi" && triggerData.midi) triggerData = triggerData.midi
@@ -82,12 +82,12 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         actionHistory.update((a) => {
             const time = Date.now()
 
-            let previous = clone(a[0] || {})
+            const previous = clone(a[0] || {})
             previous.count = 1
             previous.time = time
 
             const data = { action: actionId, data: triggerData, time, count: 1 }
-            let matchingPrevious = JSON.stringify(previous) === JSON.stringify(data)
+            const matchingPrevious = JSON.stringify(previous) === JSON.stringify(data)
 
             if (matchingPrevious) {
                 a[0].time = time
@@ -107,7 +107,7 @@ export function toggleAction(data: API_toggle) {
     midiIn.update((a) => {
         if (!a[data.id]) return a
 
-        let previousValue = a[data.id].enabled ?? true
+        const previousValue = a[data.id].enabled ?? true
         a[data.id].enabled = data.value ?? !previousValue
 
         return a
@@ -118,7 +118,7 @@ export function checkStartupActions() {
     // WIP only for v1.1.7 (can be removed)
     midiIn.update((a) => {
         Object.keys(a).forEach((actionId) => {
-            let action = a[actionId]
+            const action = a[actionId]
             if (action.startupEnabled && !action.customActivation) {
                 delete action.startupEnabled
                 action.customActivation = "startup"
@@ -133,9 +133,9 @@ export function checkStartupActions() {
 export function customActionActivation(id: string) {
     let actionTriggered = false
     Object.keys(get(midiIn)).forEach((actionId) => {
-        let action = get(midiIn)[actionId]
-        let customActivation = id.split("___")[0]
-        let specificActivation = id.split("___")[1]
+        const action = get(midiIn)[actionId]
+        const customActivation = id.split("___")[0]
+        const specificActivation = id.split("___")[1]
 
         if (action.customActivation !== customActivation || action.enabled === false) return
         if (specificActivation && action.specificActivation?.includes(customActivation) && action.specificActivation.split("__")[1] !== specificActivation) return
@@ -149,22 +149,22 @@ export function customActionActivation(id: string) {
     }
 }
 
-export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
+export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple = false) {
     if (slideIndex < 0) return
 
-    let ref = getLayoutRef()
+    const ref = getLayoutRef()
     if (!ref[slideIndex]) return
 
-    let actions = clone(ref[slideIndex].data?.actions) || {}
+    const actions = clone(ref[slideIndex].data?.actions) || {}
 
-    let id = uid()
+    const id = uid()
     if (!actions.slideActions) actions.slideActions = []
-    let actionValues: { [key: string]: any } = {}
+    const actionValues: { [key: string]: any } = {}
     if (actionValue) actionValues[actionId] = actionValue
 
-    let action = { id, triggers: [actionId], actionValues }
+    const action = { id, triggers: [actionId], actionValues }
 
-    let existingIndex = actions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
+    const existingIndex = actions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
     if (allowMultiple || existingIndex < 0) actions.slideActions.push(action)
     else actions.slideActions[existingIndex] = action
 
@@ -176,10 +176,10 @@ export function slideHasAction(actions: any, key: string) {
 }
 
 export function getActionIcon(id: string) {
-    let actions = get(midiIn)[id]?.triggers || {}
+    const actions = get(midiIn)[id]?.triggers || {}
     if (actions.length > 1) return "actions"
 
-    let trigger = getActionTriggerId(actions[0])
+    const trigger = getActionTriggerId(actions[0])
     return actionData[trigger]?.icon || "actions"
 }
 
@@ -205,7 +205,7 @@ export function getActionName(actionId: string, actionValue: any) {
     }
 
     if (actionId === "start_metronome") {
-        let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
+        const beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
         return (actionValue.tempo || 120) + beats
     }
 

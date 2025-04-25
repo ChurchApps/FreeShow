@@ -24,7 +24,7 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     // set active if output
-    let active: number = -1
+    let active = -1
     $: outSlide = $outputs[activeOutput].out?.slide
     $: if (outSlide?.type === "pdf" && outSlide?.id === path) active = outSlide?.page || 0
     else active = -1
@@ -61,10 +61,10 @@
     // GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
 
-    let pageCount: number = 0
+    let pageCount = 0
     let canvases: (HTMLCanvasElement | undefined)[] = []
 
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 

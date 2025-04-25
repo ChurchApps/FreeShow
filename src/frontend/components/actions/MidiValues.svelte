@@ -13,10 +13,10 @@
     import { defaultMidiActionChannels, midiToNote } from "./midi"
 
     export let value: API_midi
-    export let firstActionId: string = ""
+    export let firstActionId = ""
     export let type: "input" | "output" | "emitter" = "input"
-    export let playSlide: boolean = false
-    export let simple: boolean = false
+    export let playSlide = false
+    export let simple = false
     $: midi = value
 
     $: hasActions = !!firstActionId
@@ -79,7 +79,7 @@
     })
     onDestroy(() => destroyMain(listenerId))
 
-    let autoValues: boolean = false
+    let autoValues = false
     function toggleAutoValues(e: any) {
         autoValues = e.target.checked
 

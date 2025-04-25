@@ -13,13 +13,13 @@
     export let templateId: string
     export let template: Template
 
-    export let width: number = 0
-    export let height: number = 0
-    export let zoom: number = 1
-    export let ratio: number = 1
-    export let preview: boolean = false
+    export let width = 0
+    export let height = 0
+    export let zoom = 1
+    export let ratio = 1
+    export let preview = false
 
-    export let edit: boolean = false
+    export let edit = false
     let lines: [string, number][] = []
     let mouse: any = null
     export let newStyles: { [key: string]: string | number } = {}
@@ -36,7 +36,7 @@
     // LOAD BACKGROUND
     $: bgPath = template?.settings?.backgroundPath || ""
     $: loadBackground(bgPath)
-    let thumbnailPath: string = ""
+    let thumbnailPath = ""
     async function loadBackground(path: string) {
         if (!path) {
             thumbnailPath = ""

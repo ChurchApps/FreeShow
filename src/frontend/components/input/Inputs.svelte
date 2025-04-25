@@ -6,7 +6,7 @@
     import Input from "./Input.svelte"
 
     export let inputs: TInput[]
-    export let title: string = ""
+    export let title = ""
 
     let dispatch = createEventDispatcher()
     function changed(e: any, input: TInput) {

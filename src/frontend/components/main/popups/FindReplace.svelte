@@ -12,7 +12,7 @@
     let findValue = ""
     let replaceValue = ""
 
-    let caseSentitive: boolean = true
+    let caseSentitive = true
 
     function replace() {
         if (!findValue) {

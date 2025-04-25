@@ -102,19 +102,19 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        let outputsList: Output[] = keysToID(data.outputs)
+        const outputsList: (Output & { id: string })[] = keysToID(data.outputs)
 
         // get active "ghost" key outputs
-        let activeKeyOutputs: string[] = []
+        const activeKeyOutputs: string[] = []
         outputsList.forEach((output) => {
-            if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id!)
+            if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id)
         })
 
         // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
-        let allOutputs = get(outputs)
-        let outputsUpdated: boolean = false
+        const allOutputs = get(outputs)
+        let outputsUpdated = false
         Object.keys(allOutputs).forEach((outputId) => {
-            let output = allOutputs[outputId]
+            const output = allOutputs[outputId]
             if (!output.isKeyOutput || activeKeyOutputs.includes(outputId)) return
 
             delete allOutputs[outputId]
@@ -131,14 +131,14 @@ export function updateSettings(data: any) {
     }
 
     // remote
-    let disabled = data.disabledServers || {}
+    const disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
-    const ports: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
-    sendMain(Main.START, { ports, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
+    const customPorts: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
+    sendMain(Main.START, { ports: customPorts, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
 
     // theme
-    let currentTheme = get(themes)[data.theme]
+    const currentTheme = get(themes)[data.theme]
     if (currentTheme) {
         // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
@@ -159,13 +159,13 @@ export function updateSettings(data: any) {
     window.api.send("LOADED")
 }
 
-let videoDataUpdating: boolean = false
-export function restartOutputs(id: string = "") {
-    let data = clone(videosData)
-    let time = clone(videosTime)
+let videoDataUpdating = false
+export function restartOutputs(specificId = "") {
+    const data = clone(videosData)
+    const time = clone(videosTime)
 
-    let allOutputs = keysToID(get(outputs))
-    let outputIds = id ? [id] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
+    const allOutputs = keysToID(get(outputs))
+    const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
     outputIds.forEach((id: string) => {
         let output: Output = get(outputs)[id]
@@ -173,7 +173,7 @@ export function restartOutputs(id: string = "") {
 
         // key output styling
         if (output.isKeyOutput) {
-            let parentOutput = allOutputs.find((a) => a.keyOutput === id)
+            const parentOutput = allOutputs.find((a) => a.keyOutput === id)
             if (parentOutput) output = { ...parentOutput, ...output, id }
         }
 
@@ -193,20 +193,20 @@ export function restartOutputs(id: string = "") {
     }, 2200)
 }
 
-export function updateThemeValues(themes: Themes) {
-    if (!themes) return
+export function updateThemeValues(themeValues: Themes) {
+    if (!themeValues) return
 
-    Object.entries(themes.colors).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(themes.font).forEach(([key, value]) => {
+    Object.entries(themeValues.colors).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(themeValues.font).forEach(([key, value]) => {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
 
     // border radius
-    if (!themes.border) themes.border = {}
+    if (!themeValues.border) themeValues.border = {}
     // set to 0 if nothing is set
-    if (themes.border?.radius === undefined) themes.border.radius = "0"
-    Object.entries(themes.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
+    if (themeValues.border?.radius === undefined) themeValues.border.radius = "0"
+    Object.entries(themeValues.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {

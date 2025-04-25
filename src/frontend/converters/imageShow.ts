@@ -7,19 +7,19 @@ import { getFileName, removeExtension } from "../components/helpers/media"
 export function createImageShow({ images, name }: { images: string[]; name: string }) {
     // newToast("Creating show...")
 
-    let categoryId = createCategory("Presentation", "presentation", { isDefault: true })
+    const categoryId = createCategory("Presentation", "presentation", { isDefault: true })
 
-    let layoutId = uid()
-    let showId = uid()
-    let show = new ShowObj(false, categoryId, layoutId)
+    const layoutId = uid()
+    const showId = uid()
+    const show = new ShowObj(false, categoryId, layoutId)
 
     show.name = checkName(name, showId)
 
-    let backgrounds: any[] = []
-    let slides: any = {}
-    let layoutShows: any[] = []
+    const backgrounds: any[] = []
+    const slides: any = {}
+    const layoutShows: any[] = []
     images.forEach((path, i) => {
-        let slideId = uid()
+        const slideId = uid()
         slides[slideId] = {
             group: (i + 1).toString(),
             color: "",
@@ -28,7 +28,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
             items: [],
         }
 
-        let backgroundId = uid()
+        const backgroundId = uid()
         backgrounds.push([backgroundId, path])
         layoutShows.push({
             id: slideId,
@@ -40,7 +40,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     show.layouts[layoutId].slides = layoutShows
 
     backgrounds.forEach(([id, path]) => {
-        let media = { path, name: removeExtension(getFileName(path)) }
+        const media = { path, name: removeExtension(getFileName(path)) }
         show.media[id] = media
     })
 

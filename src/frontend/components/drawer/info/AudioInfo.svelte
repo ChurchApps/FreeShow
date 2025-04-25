@@ -21,7 +21,7 @@
     }
     let active = Object.keys(tabs)[0]
 
-    let settingsOpened: boolean = false
+    let settingsOpened = false
 
     const isChecked = (e: any) => e.target.checked
 

@@ -20,13 +20,13 @@ export type Channel = {
 export class CaptureTransmitter {
     static stageWindows: string[] = []
     static requestList: string[] = []
-    //static ndiFrameCount = 0
+    // static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
 
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
-        //this.startChannel(captureId, "preview")
+        // this.startChannel(captureId, "preview")
 
         const { ndi, server, stage } = captureOptions.options
         if (ndi) this.startChannel(captureId, "ndi")
@@ -34,7 +34,7 @@ export class CaptureTransmitter {
         if (stage) this.startChannel(captureId, "stage")
 
         if (ndi) {
-            //ENABLE TO TRACK NDI FRAME RATES
+            // ENABLE TO TRACK NDI FRAME RATES
             /*
             console.log("SETTING INTERVAL");
             setInterval(() => {
@@ -86,7 +86,7 @@ export class CaptureTransmitter {
         // check if image is the same as last once in a while
         // if it's the same don't send a frame until it has changed
         channel.lastCheck++
-        let compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
+        const compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
         if (channel.lastCheck > compareImageCount) {
             channel.lastCheck = 0
 
@@ -108,9 +108,9 @@ export class CaptureTransmitter {
         if (!size.width || !size.height) return
 
         switch (key) {
-            //case "preview":
-            //this.sendBufferToPreview(channel.captureId, image, { size })
-            //break
+            // case "preview":
+            // this.sendBufferToPreview(channel.captureId, image, { size })
+            // break
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
@@ -118,7 +118,7 @@ export class CaptureTransmitter {
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
                 // WIP base on receiving screen size
                 const outputshowConnections = getConnections("OUTPUT_STREAM")
-                let reduceSize = outputshowConnections > 5 ? 0.7 : outputshowConnections > 10 ? 0.5 : outputshowConnections > 20 ? 0.3 : 0.8
+                const reduceSize = outputshowConnections > 5 ? 0.7 : outputshowConnections > 10 ? 0.5 : outputshowConnections > 20 ? 0.3 : 0.8
                 this.sendBufferToServer(captureId, image.resize({ width: size.width * reduceSize, height: size.height * reduceSize, quality: "good" }))
                 break
             case "stage":
@@ -131,7 +131,7 @@ export class CaptureTransmitter {
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
-        //this.ndiFrameCount++
+        // this.ndiFrameCount++
         // WIP refresh on enable?
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10 })
     }
@@ -143,12 +143,12 @@ export class CaptureTransmitter {
         return image
     }
 
-    static sendToStageOutputs(msg: any, excludeId: string = "") {
+    static sendToStageOutputs(msg: any, excludeId = "") {
         ;[...new Set(this.stageWindows)].forEach((id) => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
-        let newList: string[] = []
+        const newList: string[] = []
 
         ;[...new Set(this.requestList)].forEach((dataString: string) => {
             const data: { id: string; previewId: string } = JSON.parse(dataString)
@@ -176,7 +176,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
+        const msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg, captureId) // don't send to itself
         this.sendToRequested(msg)

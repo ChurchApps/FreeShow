@@ -1,4 +1,4 @@
-export let rays = new Object({
+export const rays = new Object({
     canvas: false,
     context: false,
     offset: 0,
@@ -15,7 +15,7 @@ export let rays = new Object({
     ray_angle: 0,
     sweep_angle: 0,
 
-    init: function (canvasElem, color_1, color_2) {
+    init (canvasElem, color_1, color_2) {
         this.canvas = canvasElem
         this.color_1 = color_1
         this.color_2 = color_2
@@ -28,7 +28,7 @@ export let rays = new Object({
         this.draw()
         window.addEventListener("resize", this.resetCanvas)
     },
-    animate: function () {
+    animate () {
         if (!rays.animating) {
             // prevent calling too frequently if  animating
             rays.animating = true
@@ -37,10 +37,10 @@ export let rays = new Object({
             window.requestAnimationFrame(rays.animate)
         }
     },
-    update: function () {
+    update () {
         rays.offset += rays.speed
     },
-    resetCanvas: function () {
+    resetCanvas () {
         // Resize the canvas and reset context options
         rays.canvas.width = rays.canvas.offsetWidth
         rays.canvas.height = rays.canvas.offsetHeight
@@ -54,14 +54,14 @@ export let rays = new Object({
         rays.diameter = Math.sqrt(Math.pow(rays.canvas.width, 2) + Math.pow(rays.canvas.height, 2))
         rays.radius = rays.diameter / 2
     },
-    draw: function () {
-        var c = this.canvas
+    draw () {
+        const c = this.canvas
 
         this.context.clearRect(0, 0, c.width, c.height)
         this.context.beginPath()
         for (let i = 0; i < this.num_rays; i++) {
-            var start_angle = this.sweep_angle * i + this.offset
-            var end_angle = start_angle + this.ray_angle
+            const start_angle = this.sweep_angle * i + this.offset
+            const end_angle = start_angle + this.ray_angle
 
             this.context.moveTo(this.mid_x, this.mid_y)
             this.context.arc(this.mid_x, this.mid_y, this.radius, start_angle, end_angle, false)

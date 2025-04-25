@@ -37,9 +37,9 @@
 
     $: newName = name === null && (type === "image" || type === "video") ? removeExtension(getFileName(id)) : name || ""
 
-    export let icon: boolean = false
+    export let icon = false
     let iconID: null | string = null
-    let custom: boolean = false
+    let custom = false
     $: {
         // WIP simular to focus.ts
         if (icon) {
@@ -66,7 +66,7 @@
     $: selectedItem = $focusMode ? $activeFocus : $activeShow
     $: active = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
-    let editActive: boolean = false
+    let editActive = false
     function click(e: any) {
         if (editActive || e.ctrlKey || e.metaKey || e.shiftKey || active || e.target.closest("input")) return
 

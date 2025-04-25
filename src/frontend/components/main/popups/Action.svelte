@@ -27,7 +27,7 @@
     let action: any = { name: "", triggers: [] }
     let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
 
-    let loaded: boolean = false
+    let loaded = false
     onMount(setAction)
     function setAction() {
         if (!id) {
@@ -65,7 +65,7 @@
         if (!indexes) return
 
         let newActions: any[] = []
-        let changed: boolean = false
+        let changed = false
         indexes.forEach((i) => {
             let layoutSlide = ref[i] || {}
             let actions = layoutSlide.data?.actions || {}
@@ -89,7 +89,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
-    let existingSearched: boolean = false
+    let existingSearched = false
     $: if (action.triggers?.[0]) findExisting()
     function findExisting() {
         if (mode !== "slide" || ($popupData.index === undefined && !$popupData.indexes?.length) || existingSearched) return
@@ -111,7 +111,7 @@
         popupData.set({ ...$popupData, id })
     }
 
-    function updateValue(key: string, e: any, checkbox: boolean = false) {
+    function updateValue(key: string, e: any, checkbox = false) {
         let value = e.detail ?? e.target?.value ?? e
         if (checkbox) value = e.target?.checked
 
@@ -119,7 +119,7 @@
     }
 
     let autoActionName = ""
-    function changeAction(e, index: number = -1) {
+    function changeAction(e, index = -1) {
         let actionId = e.detail.id || ""
         if (!actionId) return
 
@@ -251,13 +251,13 @@
         }
     }
 
-    function saveSlide(remove: boolean = false) {
+    function saveSlide(remove = false) {
         let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!Array.isArray(indexes)) return
 
         let newActions: any[] = []
-        let changed: boolean = false
+        let changed = false
         indexes.forEach((i) => {
             let actions = clone(ref[i]?.data?.actions) || {}
             if (!actions.slideActions) actions.slideActions = []
@@ -279,7 +279,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
-    let addTrigger: boolean = false
+    let addTrigger = false
 
     // set show when selected
     $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
@@ -307,8 +307,8 @@
         .filter(Boolean)
 
     let actionSelector: any = null
-    let actionActivationSelector: boolean = false
-    let activationMenuOpened: boolean = false
+    let actionActivationSelector = false
+    let activationMenuOpened = false
 
     // function nameKeydown(e: any) {
     //     if (e.key === "Enter" && !action?.triggers?.length) {

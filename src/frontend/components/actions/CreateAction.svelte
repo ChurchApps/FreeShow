@@ -19,16 +19,16 @@
     import { getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
 
-    export let list: boolean = false
-    export let full: boolean = false
-    export let mainId: string = ""
-    export let mode: string = ""
+    export let list = false
+    export let full = false
+    export let mainId = ""
+    export let mode = ""
     export let actionId: string
     export let actionValue: any = {}
     export let customData: any = {}
     export let existingActions: string[] = []
-    export let actionNameIndex: number = 0
-    export let choosePopup: boolean = false
+    export let actionNameIndex = 0
+    export let choosePopup = false
 
     let dispatch = createEventDispatcher()
     function changeAction(data: any) {
@@ -106,7 +106,7 @@
         return { ...a, section }
     })
 
-    let pickAction: boolean = false
+    let pickAction = false
 
     let input = ""
     $: if (actionId && !pickAction) loadInputs()
@@ -143,7 +143,7 @@
     let searchedActions = clone(ACTIONS) // initially empty
     $: if (ACTIONS) search()
     let searchValue = ""
-    let previousSearchValue: string = ""
+    let previousSearchValue = ""
     function search(e: any = null) {
         searchValue = formatSearch(e?.target?.value || "")
 

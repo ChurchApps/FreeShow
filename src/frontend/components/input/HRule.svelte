@@ -1,7 +1,7 @@
 <script lang="ts">
     import T from "../helpers/T.svelte"
 
-    export let title: string = ""
+    export let title = ""
 </script>
 
 <div class="title">

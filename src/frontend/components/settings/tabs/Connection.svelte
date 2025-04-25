@@ -120,7 +120,7 @@
     }
 
     function chumsConnect() {
-        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES, { dataPath: $dataPath })
+        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES)
         else {
             requestMain(Main.CHUMS_DISCONNECT, undefined, (a) => {
                 if (!a.success) return

@@ -8,31 +8,31 @@
     export let outputId: string
     export let transition: Transition
     export let currentStyle: Styles | null = null
-    export let slideFilter: string = ""
+    export let slideFilter = ""
 
-    export let ratio: number = 1
-    export let isKeyOutput: boolean = false
+    export let ratio = 1
+    export let isKeyOutput = false
 
-    export let animationStyle: string = ""
-    export let mirror: boolean = false
-    export let styleBackground: boolean = false
+    export let animationStyle = ""
+    export let mirror = false
+    export let styleBackground = false
 
     $: duration = transition.duration ?? 800
     $: style = `height: 100%;zoom: ${1 / ratio};transition: filter ${duration}ms, backdrop-filter ${duration}ms;${slideFilter}`
 
-    let firstActive: boolean = true
+    let firstActive = true
     let background1: any = null
     let background2: any = null
-    let firstFadingOut: boolean = false
-    let currentlyLoadingFirst: boolean = false
+    let firstFadingOut = false
+    let currentlyLoadingFirst = false
 
     // WIP changing media while another transitions is not smooth
     // WIP changing quicly between media might make it not receive updates
 
-    let loading: boolean = false
+    let loading = false
     let timeout: NodeJS.Timeout | null = null
     let tooRapid: NodeJS.Timeout | null = null
-    let tryAgain: boolean = false
+    let tryAgain = false
     $: if (data) createBackground()
     function createBackground() {
         // prevent svelte bug creating multiple items if creating new while old clears

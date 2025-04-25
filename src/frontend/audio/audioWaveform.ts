@@ -1,6 +1,6 @@
 import { encodeFilePath } from "../components/helpers/media"
 
-let cachedWaveformData: Map<string, Float32Array> = new Map()
+const cachedWaveformData: Map<string, Float32Array> = new Map()
 export async function createWaveform(container: HTMLElement, path: string) {
     const audioCtx = new AudioContext()
 

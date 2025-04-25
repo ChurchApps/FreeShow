@@ -4,7 +4,7 @@
 
 import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
-import fs from "fs"
+import fs, { type WriteFileOptions } from "fs"
 import { join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
@@ -36,14 +36,14 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
-    let customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
+    const customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
         exportJSON(msg.data.content, customExt, msg.data.path)
         return
     }
 
     if (msg.channel === "USAGE") {
-        let path = createFolder(join(msg.data.path, "Usage"))
+        const path = createFolder(join(msg.data.path, "Usage"))
         exportJSONFile(msg.data.content, path, getTimePointString())
         return
     }
@@ -67,9 +67,9 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 }
 
 // only open once per session
-let systemOpened: boolean = false
-function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string, toMain: boolean = true) {
-    let msg: string = "export.exported"
+let systemOpened = false
+function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string, toMain = true) {
+    let msg = "export.exported"
 
     // open export location in system when completed
     if (!err && !systemOpened) {
@@ -82,28 +82,28 @@ function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string
 
 // ----- PDF -----
 
-const options = {
+const PDFOptions = {
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
-    pageSize: "A4" as "A4",
+    pageSize: "A4" as const,
     printBackground: true,
     landscape: false,
 }
 
 export function generatePDF(path: string) {
-    exportWindow?.webContents.printToPDF(options).then(savePdf).catch(exportMessage)
+    exportWindow?.webContents.printToPDF(PDFOptions).then(savePdf).catch(exportMessage)
 
     function savePdf(data: Buffer) {
-        writeFile(path, ".pdf", data, undefined, doneWritingFile)
+        writeFile(path, ".pdf", data, undefined, doneWritingPDF)
     }
 
-    function doneWritingFile(err: NodeJS.ErrnoException | null) {
+    function doneWritingPDF(err: NodeJS.ErrnoException | null) {
         if (err) return exportMessage(err.toString())
 
         exportWindow?.webContents.send(EXPORT, { channel: "NEXT" })
     }
 }
 
-function exportMessage(message: string = "") {
+function exportMessage(message = "") {
     sendToMain(ToMain.ALERT, message)
 
     exportWindow?.on("closed", () => (exportWindow = null))
@@ -153,7 +153,7 @@ export function exportJSONFile(content: any, path: string, name: string) {
 
 export function exportShow(data: { path: string; shows: Show[] }) {
     data.shows.forEach((show, i) => {
-        let id = show.id
+        const id = show.id
         delete show.id
 
         writeFile(join(data.path, show.name || id!), ".show", JSON.stringify([id, show]), "utf-8", (err) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
@@ -170,19 +170,19 @@ export function exportTXT(data: { path: string; shows: Show[] }) {
 
 // WIP do this in frontend
 function getSlidesText(show: Show) {
-    let text: string = ""
+    let text = ""
 
-    let slides: Slide[] = []
+    const slides: Slide[] = []
     show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide) => {
-        let slide = show.slides[layoutSlide.id]
+        const slide = show.slides[layoutSlide.id]
         if (!slide) return
 
         slides.push(slide)
         if (!slide.children) return
 
         slide.children.forEach((childId: string) => {
-            let slide = show.slides[childId]
-            slides.push(slide)
+            const childSlide = show.slides[childId]
+            slides.push(childSlide)
         })
     })
 
@@ -195,8 +195,8 @@ function getSlidesText(show: Show) {
             item.lines.forEach((line) => {
                 if (!line.text) return
 
-                line.text.forEach((t) => {
-                    text += t.value
+                line.text.forEach((txt) => {
+                    text += txt.value
                 })
                 text += "\n"
             })
@@ -216,15 +216,14 @@ function getSlidesText(show: Show) {
 // ----- ALL SHOWS -----
 
 function exportAllShows(data: { type: string; showsPath: string; path: string }) {
-    let type = data.type
+    const type = data.type
 
     const supportedTypes = ["txt", "show"]
     if (!supportedTypes.includes(type)) return
 
-    let allShows: string[] = getAllShows({ path: data.showsPath })
-    let shows: Show[] = []
-    for (let i = 0; i < allShows.length; i++) {
-        const showName: string = allShows[i]
+    const allShows: string[] = getAllShows({ path: data.showsPath })
+    const shows: Show[] = []
+    for (const showName of allShows) {
         const showFilePath = join(data.showsPath, showName)
         // WIP override existing instead of creating new?
         const showContent = parseShow(readFile(showFilePath))
@@ -273,25 +272,25 @@ export function exportProject(data: { type: "project"; path: string; name: strin
     zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
 
     const outputPath = join(data.path, data.name)
-    let p = getUniquePath(outputPath, ".project")
-    zip.writeZip(p, (err) => doneWritingFile(err, data.path))
+    const filePath = getUniquePath(outputPath, ".project")
+    zip.writeZip(filePath, (err) => doneWritingFile(err, data.path))
 }
 
 // ----- HELPERS -----
 
-function writeFile(path: string, extension: string, data: string | Buffer, options: any = undefined, callback: (err: NodeJS.ErrnoException | null) => void) {
-    let p = getUniquePath(path, extension)
-    fs.writeFile(p, data, options, callback)
+function writeFile(path: string, extension: string, data: string | Buffer, options: WriteFileOptions = {}, callback: (err: NodeJS.ErrnoException | null) => void) {
+    const filePath = getUniquePath(path, extension)
+    fs.writeFile(filePath, data, options, callback)
 }
 
 function getUniquePath(path: string, extension: string) {
-    let number = -1
-    let p: string = path
+    let num = -1
+    let filePath: string = path
 
     do {
-        number++
-        p = path + (number ? "_" + number : "") + extension
-    } while (doesPathExist(p))
+        num++
+        filePath = path + (num ? "_" + num.toString() : "") + extension
+    } while (doesPathExist(filePath))
 
-    return p
+    return filePath
 }

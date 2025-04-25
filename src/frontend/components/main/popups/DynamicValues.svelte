@@ -76,7 +76,7 @@
         previousSearchValue = searchValue
     }
 
-    function applyValue(e: any, id: string = "") {
+    function applyValue(e: any, id = "") {
         if (!id) {
             if (e.key !== "Enter" || searchValue.length < 2) return
             id = Object.values(searchedValues)[0]?.[0]?.id

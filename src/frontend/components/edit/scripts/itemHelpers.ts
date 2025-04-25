@@ -33,17 +33,17 @@ function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     return styleString
 }
 
-export function addItem(type: ItemType, id: string | null = null, options: any = {}, value: string = "") {
-    let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
-    let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
+export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "") {
+    const activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id]?.settings?.template : null
+    const template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
-    let newData: Item = {
+    const newData: Item = {
         style: getDefaultStyles(type, template),
         type,
     }
     if (id) newData.id = id
 
-    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
+    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
@@ -70,12 +70,12 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     //     newData.style = styleString }
     else if (type === "icon" && options.color) {
         // make square and center
-        let size: number = 300
+        const size = 300
         let style = getStyles(newData.style)
-        let top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
-        let insetInlineStart: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
+        const top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
+        const insetInlineStart: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
         style = { ...style, top, insetInlineStart, width: size + "px", height: size + "px", color: options.color }
-        let styleString: string = ""
+        let styleString = ""
         Object.entries(style).forEach(([key, value]) => {
             styleString += `${key}: ${value};`
         })
@@ -87,8 +87,8 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     // console.log("NEW ITEM", newData)
 
     if (!get(activeEdit).id) {
-        let ref = getLayoutRef()
-        let slideId = ref[get(activeEdit).slide!]?.id
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide!]?.id
         history({ id: "UPDATE", newData: { data: newData, key: "slides", keys: [slideId], subkey: "items", index: -1 }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
     } else {
         // overlay, template
@@ -97,7 +97,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
 }
 
 export function getEditSlide() {
-    let active = get(activeEdit)
+    const active = get(activeEdit)
 
     if (active.id) {
         if (active.type === "overlay") return get(overlays)[active.id]
@@ -106,15 +106,15 @@ export function getEditSlide() {
     }
 
     const ref = getLayoutRef()
-    let editSlideRef = ref?.[active.slide ?? -1]
+    const editSlideRef = ref?.[active.slide ?? -1]
     return _show().get("slides")?.[editSlideRef?.id] as Slide
 }
 
-export function getEditItems(onlyActive: boolean = false) {
-    let active = get(activeEdit)
-    let selectedItems: number[] = active.items
+export function getEditItems(onlyActive = false) {
+    const active = get(activeEdit)
+    const selectedItems: number[] = active.items
 
-    let editSlide = clone(getEditSlide())
+    const editSlide = clone(getEditSlide())
     if (!Array.isArray(editSlide?.items)) return []
 
     let editItems = editSlide!.items
@@ -128,7 +128,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     let items = getEditItems()
     if (!items?.length) return
 
-    let currentItem = items.splice(startIndex, 1)[0]
+    const currentItem = items.splice(startIndex, 1)[0]
 
     if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
     else if (type === "backward") startIndex = Math.max(startIndex - 1, 0)
@@ -139,8 +139,8 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     if (!items?.length || items.length < 2) return
 
     if (!get(activeEdit).id) {
-        let ref = getLayoutRef()
-        let slideId = ref[get(activeEdit).slide!]?.id
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide!]?.id
         history({ id: "UPDATE", newData: { data: items, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
     } else {
         // overlay, template
@@ -157,15 +157,14 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     refreshEditSlide.set(true)
 }
 
-export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, slideIndex, type }: any = { type: "default" }, _updater: any = null) {
+export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null) {
     // check bindings
     if (item.bindings?.length && !item.bindings.includes(outputId)) return false
 
     if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
-    let itemsText = slideItems.reduce((value, item) => (value += getItemText(item)), "")
+    const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
-    console.log(slideIndex)
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
     // itemsText = replaceDynamicValues(itemsText, { ...ref, slideIndex })
 
@@ -233,8 +232,8 @@ function getVariableValue(variableId: string) {
 }
 
 export function getDynamicValue(id: string, type: "default" | "stage" = "default") {
-    let outputId = getActiveOutputs()[0]
-    let outSlide = get(outputs)[outputId]?.out?.slide
+    const outputId = getActiveOutputs()[0]
+    const outSlide = get(outputs)[outputId]?.out?.slide
 
     const ref = {
         showId: outSlide?.id || get(activeShow)?.id,

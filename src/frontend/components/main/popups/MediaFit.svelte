@@ -8,7 +8,7 @@
 
     // VALUES
 
-    const iconSize: number = 100
+    const iconSize = 100
     const icons = {
         contain:
             '<g><path d="M 22 20.5 L 78 20.5 C 79.104 20.5 80 21.396 80 22.5 L 80 78.5 C 80 79.604 79.104 80.5 78 80.5 L 22 80.5 C 20.896 80.5 20 79.604 20 78.5 L 20 22.5 C 20 21.396 20.896 20.5 22 20.5 Z" style="fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:square;stroke-miterlimit:2;"/><g><g><rect x="20" y="20.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="35" y="35.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="50" y="50.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="65" y="65.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="65" y="35.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="35" y="65.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="20" y="50.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/><rect x="50" y="20.5" width="15" height="15" transform="matrix(1,0,0,1,0,0)" fill="#FFFFFF"/></g></g><path d="M 7 20.5 L 93 20.5 C 94.104 20.5 95 21.396 95 22.5 L 95 78.5 C 95 79.604 94.104 80.5 93 80.5 L 7 80.5 C 5.896 80.5 5 79.604 5 78.5 L 5 22.5 C 5 21.396 5.896 20.5 7 20.5 Z" style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:square;stroke-miterlimit:2;"/></g>',

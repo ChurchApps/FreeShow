@@ -10,7 +10,7 @@
     import { effects } from "./effects"
 
     export let active: string | null
-    export let searchValue: string = ""
+    export let searchValue = ""
     console.log(active)
 
     $: resolution = getResolution(null, { $outputs, $styles })

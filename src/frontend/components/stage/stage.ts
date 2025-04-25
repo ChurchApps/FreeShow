@@ -11,7 +11,7 @@ import { getActiveOutputs } from "../helpers/output"
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
-        let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
+        const show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
         if (!show.disabled) window.api.send(STAGE, { channel: "LAYOUT", id, data: show })
     })
 }
@@ -20,7 +20,7 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
     if (!itemId.includes("#")) {
         let name = ""
 
-        if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
+        if (itemId === "variable") name = get(variables)[item.variable?.id || ""]?.name
         else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
         else if (itemId === "text") name = dynamicValueString(getItemText(item as Item))
 
@@ -64,7 +64,7 @@ export function getStageItemId(itemId: string) {
 }
 
 export function stageItemToItem(item: StageItem) {
-    let newItem: Item = {
+    const newItem: Item = {
         style: item?.style || "",
     }
     if (!item) return newItem

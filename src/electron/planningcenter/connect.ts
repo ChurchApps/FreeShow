@@ -54,7 +54,7 @@ const HTML_error = `
 
 let PCO_ACCESS: PCOAuthData = null
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
-    let storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
+    const storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
     if (storedAccess?.created_at) {
         if (hasExpired(storedAccess)) {
             PCO_ACCESS = await refreshToken(storedAccess)
@@ -74,8 +74,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     const path = "/auth/complete"
     const redirect_uri = `http://localhost:${PCO_PORT}${path}`
 
-    let server = app.listen(PCO_PORT, () => {
-        console.log(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
+    const server = app.listen(PCO_PORT, () => {
+        console.info(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
     })
 
     server.once("error", (err: Error) => {
@@ -85,11 +85,11 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     app.use(express.json())
 
     return new Promise((resolve) => {
-        app.get(path, async (req, res) => {
-            let code = req.query.code?.toString() || ""
+        app.get(path, (req, res) => {
+            const code = req.query.code?.toString() || ""
             if (!code) return resolve(null)
 
-            console.log("OAuth code received!")
+            console.info("OAuth code received!")
 
             const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
             httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
@@ -103,7 +103,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 }
 
                 // AUTHORIZED
-                console.log("OAuth completed!")
+                console.info("OAuth completed!")
 
                 res.setHeader("Content-Type", "text/html")
                 res.send(HTML_success)
@@ -130,12 +130,12 @@ function hasExpired(access: PCOAuthData) {
 function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
     return new Promise((resolve) => {
         if (!access?.refresh_token) return resolve(null)
-        console.log("Refreshing PCO OAuth token")
+        console.info("Refreshing PCO OAuth token")
 
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
         httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
             if (err || data === null) {
-                sendToMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
+                sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
                 resolve(null)
                 return
             }
@@ -153,7 +153,7 @@ export function pcoDisconnect(scope: PCOScopes = "services") {
     return { success: true }
 }
 
-export function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {
+export async function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {
     if (!stores.ACCESS.get(`pco_${scope}`)) return
-    pcoLoadServices(dataPath)
+    await pcoLoadServices(dataPath)
 }

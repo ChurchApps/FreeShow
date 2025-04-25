@@ -14,7 +14,7 @@
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
-    let loading: boolean = true
+    let loading = true
     const receiveNDI = {
         RECEIVE_LIST: (msg) => {
             loading = false

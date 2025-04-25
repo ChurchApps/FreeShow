@@ -2,12 +2,11 @@
     import type { OutSlide } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { getLayoutRef } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
     import { getStageTextLayoutOffset } from "../stage"
 
     export let currentSlide: OutSlide
-    export let slideOffset: number = 0
-    export let autoSize: number = 100
+    export let slideOffset = 0
+    export let autoSize = 100
 
     $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
 

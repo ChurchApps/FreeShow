@@ -18,7 +18,7 @@ type FileData = { content: Buffer | string; name?: string; extension?: string }
 
 const specialImports = {
     powerpoint: async (files: string[]) => {
-        let data: FileData[] = []
+        const data: FileData[] = []
 
         // https://www.npmjs.com/package/pptx2json
         const pptx2json = new PPTX2Json()
@@ -30,7 +30,7 @@ const specialImports = {
         return data
     },
     word: async (files: string[]) => {
-        let data: FileData[] = []
+        const data: FileData[] = []
 
         // https://www.npmjs.com/package/word-extractor
         const extractor = new WordExtractor()
@@ -44,7 +44,7 @@ const specialImports = {
     pdf: (files: string[]) => files,
     powerkey: (files: string[]) => files,
     sqlite: async (files: string[]) => {
-        let data: FileData[] = []
+        const data: FileData[] = []
 
         await Promise.all(files.map(sqlToFile))
 
@@ -56,7 +56,7 @@ const specialImports = {
             return new Promise((resolve) => {
                 exporter.all((err: Error, all: any) => {
                     if (err) {
-                        console.log(err)
+                        console.error(err)
                         return
                     }
 
@@ -79,18 +79,18 @@ export async function importShow(id: string, files: string[] | null, importSetti
     let importId = id
     let data: (FileData | string)[] = []
 
-    let sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
+    const sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
     if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
 
     if (id === "freeshow_project") {
-        importProject(files, importSettings.path)
+        await importProject(files, importSettings.path)
         return
     }
 
     if (id === "songbeamer") {
-        let encoding = importSettings.encoding.id
-        let fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
+        const encoding = importSettings.encoding.id
+        const fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
         const custom = {
             files: fileContents,
             length: fileContents.length,
@@ -104,13 +104,13 @@ export async function importShow(id: string, files: string[] | null, importSetti
     }
 
     const zip = ["zip", "probundle", "vpc", "qsp"]
-    let zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
+    const zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
     if (zipFiles.length) {
         data = decompress(zipFiles)
         if (data.length) {
-            for (let i = 0; i < data.length; i++) {
-                const customContent = await checkSpecial(data[i] as FileData)
-                if (customContent) (data[i] as FileData).content = customContent
+            for (const fileData of data) {
+                const customContent = await checkSpecial(fileData as FileData)
+                if (customContent) (fileData as FileData).content = customContent
             }
             sendToMain(ToMain.IMPORT2, { channel: id, data })
         }
@@ -138,10 +138,10 @@ export async function importShow(id: string, files: string[] | null, importSetti
 }
 
 async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
-    let content: string = ""
+    let content = ""
 
-    let name: string = getFileName(filePath) || ""
-    let extension: string = getExtension(filePath)
+    const name: string = getFileName(filePath) || ""
+    const extension: string = getExtension(filePath)
 
     try {
         if (extension === "pro") content = await decodeProto(filePath)
@@ -182,7 +182,7 @@ async function importProject(files: string[], dataPath: string) {
     if (!doesPathExist(importFolder)) makeDir(importFolder)
 
     zipFiles.forEach((zipFile) => {
-        let zipData: FileData[] = decompress([zipFile], true)
+        const zipData: FileData[] = decompress([zipFile], true)
         const dataFile = zipData.find((a) => a.name === "data.json")
         if (!dataFile) return
 
@@ -190,7 +190,7 @@ async function importProject(files: string[], dataPath: string) {
         const dataContent = JSON.parse(content)
 
         // write files
-        let replacedMedia: { [key: string]: string } = {}
+        const replacedMedia: { [key: string]: string } = {}
         dataContent.files?.forEach((filePath: string) => {
             // check if path already exists on the system
             if (doesPathExist(filePath)) return

@@ -1,11 +1,11 @@
 <script lang="ts">
     export let items: any[] = []
-    export let columns: number = 1
+    export let columns = 1
 
-    let cardHeight: number = 0
+    let cardHeight = 0
 
     let customCard: HTMLDivElement | undefined
-    let ready: boolean = false
+    let ready = false
     $: if (customCard && columns) initialize()
     function initialize() {
         if (!customCard) return
@@ -26,18 +26,18 @@
         }
     }
 
-    const margin: number = 250
+    const margin = 250
 
-    let viewHeight: number = 0
-    let verticalCardsVisible: number = 0
+    let viewHeight = 0
+    let verticalCardsVisible = 0
     $: verticalCardsVisible = Math.ceil((viewHeight + margin * 2) / cardHeight)
 
-    let firstItemIndex: number = 0
-    let lastItemIndex: number = 0
+    let firstItemIndex = 0
+    let lastItemIndex = 0
 
     // update on ready, items changed, or columns changed
     $: if (ready && items && columns) updateVisibleItems(true)
-    function updateVisibleItems(update: boolean = false) {
+    function updateVisibleItems(update = false) {
         let top = Math.max(0, scrollYPos - margin)
         let firstVerticalItemIndex = Math.floor(top / cardHeight)
         let lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
@@ -92,9 +92,9 @@
         }, createTimeout)
     }
 
-    let lazyLoader: number = 0
+    let lazyLoader = 0
     $: if (ready && items?.length) lazyLoad(true)
-    function lazyLoad(start: boolean = false) {
+    function lazyLoad(start = false) {
         if (start) lazyLoader = 0
         lazyLoader++
 

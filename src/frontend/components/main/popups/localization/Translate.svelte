@@ -28,7 +28,7 @@
         translatedLangs = translatedLangs
     }
 
-    function remove(id: string = "") {
+    function remove(id = "") {
         removeTranslationFromShow(showId, id)
 
         if (id) {

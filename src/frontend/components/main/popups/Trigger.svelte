@@ -7,7 +7,6 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
     import Center from "../../system/Center.svelte"
     import { onMount } from "svelte"
     import { getLayoutRef } from "../../helpers/show"

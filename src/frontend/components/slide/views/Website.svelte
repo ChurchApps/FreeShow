@@ -6,13 +6,13 @@
     import Button from "../../inputs/Button.svelte"
 
     export let src: string
-    export let navigation: boolean = true
-    export let clickable: boolean = false
+    export let navigation = true
+    export let clickable = false
 
     let webview: any
     export let ratio: number
 
-    let parsedSrc: string = ""
+    let parsedSrc = ""
     $: if (src) checkURL()
 
     function checkURL() {
@@ -32,7 +32,7 @@
         parsedSrc = valid ? src : ""
     }
 
-    let loaded: boolean = false
+    let loaded = false
     $: if (parsedSrc) loaded = false
 
     $: if (webview && ratio) setWebpageRatio()
@@ -75,7 +75,7 @@
         setTimeout(() => webview?.focus())
     }
 
-    let hover: boolean = false
+    let hover = false
     function mouseover() {
         hover = true
         checkNavigation()
@@ -84,9 +84,9 @@
         hover = false
     }
 
-    let backDisabled: boolean = true
-    let forwardDisabled: boolean = true
-    function navigate(back: boolean = true) {
+    let backDisabled = true
+    let forwardDisabled = true
+    function navigate(back = true) {
         if (!webview) return
 
         if (back) webview.goBack()

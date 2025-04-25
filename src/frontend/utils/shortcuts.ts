@@ -98,7 +98,7 @@ const keys = {
             return
         }
 
-        let popupId = get(activePopup)
+        const popupId = get(activePopup)
 
         // blur focused elements
         if (document.activeElement !== document.body) {
@@ -129,8 +129,8 @@ export function keydown(e: KeyboardEvent) {
     if (e.key === "F4" && e.altKey) return
 
     if (get(currentWindow) === "output") {
-        let currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
-        let contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
+        const currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
+        const contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
         if (e.key === "Escape" && !contentDisplayed) return hideDisplay()
 
         // allow custom shortcuts through main display (could be useful in some cases when you need output over the main app)
@@ -146,7 +146,7 @@ export function keydown(e: KeyboardEvent) {
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()
 
     if (e.ctrlKey || e.metaKey) {
-        let drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
+        const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
             activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
             // open drawer
@@ -187,7 +187,7 @@ export function keydown(e: KeyboardEvent) {
 
     // change tab with number keys
     if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
-        let menu = menus[Number(e.key) - 1]
+        const menu = menus[Number(e.key) - 1]
         activePage.set(menu)
 
         // open edit
@@ -202,7 +202,7 @@ export function keydown(e: KeyboardEvent) {
     }
 }
 
-///// PREVIEW /////
+/// // PREVIEW /////
 
 export const previewCtrlShortcuts = {
     l: () => outLocked.set(!get(outLocked)),
@@ -243,7 +243,7 @@ export const previewShortcuts = {
         else setOutput("transition", null)
     },
     PageDown: (e: KeyboardEvent) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
 
@@ -251,7 +251,7 @@ export const previewShortcuts = {
         nextSlideIndividual(e)
     },
     PageUp: (e: KeyboardEvent) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
 
@@ -265,9 +265,9 @@ export const previewShortcuts = {
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("next")
 
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) {
-            let out = get(outputs)[getActiveOutputs()[0]]?.out
+            const out = get(outputs)[getActiveOutputs()[0]]?.out
             if (!out?.slide) {
                 if (currentShow?.type === "overlay" && !out?.overlays?.includes(currentShow?.id)) {
                     e.preventDefault()
@@ -290,7 +290,7 @@ export const previewShortcuts = {
         previousSlideIndividual(e)
     },
     " ": (e: KeyboardEvent) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()
@@ -304,10 +304,10 @@ export const previewShortcuts = {
             return playMedia(e)
         }
 
-        let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
-        let outputId = allActiveOutputs[0]
-        let currentOutput = outputId ? get(outputs)[outputId] || null : null
-        let outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
+        const allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
+        const outputId = allActiveOutputs[0]
+        const currentOutput = outputId ? get(outputs)[outputId] || null : null
+        const outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
 
         e.preventDefault()
         if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
@@ -320,7 +320,7 @@ export const previewShortcuts = {
         }
     },
     Home: (e: KeyboardEvent) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
@@ -328,7 +328,7 @@ export const previewShortcuts = {
         nextSlideIndividual(e, true)
     },
     End: (e: KeyboardEvent) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
@@ -344,7 +344,7 @@ export function closeContextMenu() {
 
 // CTRL + N
 function createNew() {
-    let selectId = get(selected)?.id || get(focusedArea)
+    const selectId = get(selected)?.id || get(focusedArea)
 
     if (selectId === "slide")
         history({ id: "SLIDES" }) // show
@@ -362,27 +362,27 @@ function createNew() {
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     else {
-        console.log("CREATE NEW", selectId)
+        console.info("CREATE NEW:", selectId)
         activePopup.set("show")
     }
 }
 
 function playMedia(e: Event) {
     if (get(outLocked)) return
-    let item = get(focusMode) ? get(activeFocus) : get(activeShow)
+    const item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
-    let type: ShowType | undefined = item?.type
+    const type: ShowType | undefined = item?.type
     if (!item || !type) return
     e.preventDefault()
 
-    let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-    let currentOutput = get(outputs)[outputId] || {}
+    const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+    const currentOutput = get(outputs)[outputId] || {}
 
     if (currentOutput.out?.background?.path === item.id) return
 
     if (type === "video" || type === "image" || type === "player") {
-        let outputStyle = get(styles)[currentOutput.style || ""]
-        let mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
+        const outputStyle = get(styles)[currentOutput.style || ""]
+        const mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" })

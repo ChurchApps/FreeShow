@@ -59,7 +59,7 @@ export async function listFolders(pageSize = 20, sort = "modified") {
     return files
 }
 
-export async function listFiles(pageSize = 50, q: string = "") {
+export async function listFiles(pageSize = 50, query = "") {
     if (!driveClient) return null
 
     // let q = "mimeType!='application/vnd.google-apps.folder'"
@@ -69,7 +69,7 @@ export async function listFiles(pageSize = 50, q: string = "") {
     try {
         res = await driveClient.files.list({
             pageSize,
-            q,
+            q: query,
             fields: "nextPageToken, files(id, name, mimeType)",
         })
     } catch (err) {
@@ -89,14 +89,14 @@ export const types = {
 }
 
 export function createFile(parent: string, { type, name }: { type: keyof typeof types; name: string }, body: string) {
-    let metaData = { name, parents: [parent] }
-    let media = { mimeType: types[type], body }
+    const metaData = { name, parents: [parent] }
+    const media = { mimeType: types[type], body }
 
     return { resource: metaData, media } as drive_v3.Params$Resource$Files$Create
 }
 
 export function createFolder(parent: string, name: string) {
-    let metaData = { name, parents: [parent], mimeType: types.folder }
+    const metaData = { name, parents: [parent], mimeType: types.folder }
 
     return { resource: metaData } as drive_v3.Params$Resource$Files$Create
 }
@@ -106,7 +106,7 @@ export async function getFile(id: string) {
     if (!id || !driveClient) return null
 
     // fileId: id
-    let data: drive_v3.Params$Resource$Files$Get = { fields: "id,modifiedTime" }
+    const data: drive_v3.Params$Resource$Files$Get = { fields: "id,modifiedTime" }
     if (id) data.fileId = id
     // if (q) data.q = q
 
@@ -122,7 +122,7 @@ export async function getFile(id: string) {
 }
 
 // drive_v3.Params$Resource$Files$Update | drive_v3.Params$Resource$Files$Create
-export async function uploadFile(data: any, updateId: string = "") {
+export async function uploadFile(data: any, updateId = "") {
     if (!driveClient) return null
 
     // const isFolder = data.resource.mimeType === types.folder
@@ -167,9 +167,9 @@ export async function downloadFile(fileId: string): Promise<any> {
     // https://developers.google.com/drive/api/guides/manage-downloads#node.js
 
     return new Promise((resolve) => {
-        driveClient!.files.get({ fileId: fileId, alt: "media" }, (err, res) => {
+        driveClient!.files.get({ fileId, alt: "media" }, (err, res) => {
             if (err) {
-                console.error("The API returned an error: " + err)
+                console.error("The API returned an error:", err)
                 resolve(null)
                 return
             }
@@ -192,12 +192,12 @@ export async function syncDataDrive(data: DriveData) {
     if (listedFiles === null) return { error: "Error: Could not get files! Have you shared a folder with the service account?" }
     const files = listedFiles
 
-    let changes: { type: string; action: "upload" | "download" | "upload_failed" | "download_failed"; name: string; count?: number }[] = []
+    const changes: { type: string; action: "upload" | "download" | "upload_failed" | "download_failed"; name: string; count?: number }[] = []
 
     // let mainFolder = files.find((a) => a.id === data.mainFolderId)
-    let mainFolder = await getFile(data.mainFolderId)
+    const mainFolder = await getFile(data.mainFolderId)
     if (!mainFolder) return { error: "Error: Could not find main folder! Have you shared it with the service account?" }
-    console.log("Syncing to Drive")
+    console.info("Syncing to Drive")
 
     // let shows = null
     let bibles: { [key: string]: BibleCategories } | null = null
@@ -210,29 +210,29 @@ export async function syncDataDrive(data: DriveData) {
     if (bibles) await syncBibles(data.dataPath)
 
     // SHOWS
-    let syncStates: { [key: string]: number } = {}
+    const syncStates: { [key: string]: number } = {}
     await syncAllShows()
-    if (DEBUG) console.log(JSON.stringify(syncStates))
+    if (DEBUG) console.info(JSON.stringify(syncStates))
 
     return changes
 
-    /////
+    /// //
 
     async function syncStores(id: keyof typeof stores) {
-        let store = stores[id]
-        let storeData: any = store.store
-        let name = id + ".json"
+        const store = stores[id]
+        const storeData: any = store.store
+        const name = id + ".json"
 
-        let driveFileId = files.find((a) => a.name === name)?.id || ""
+        const driveFileId = files.find((a) => a.name === name)?.id || ""
 
-        let driveFile = await getFile(driveFileId)
+        const driveFile = await getFile(driveFileId)
 
-        let newest = getNewest({ driveFile, localPath: store.path })
+        const newest = getNewest({ driveFile, localPath: store.path })
         if (newest === "same") return
 
-        let driveContent = await downloadFile(driveFileId)
-        let storeContent: string = JSON.stringify(storeData)
-        let matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === storeContent
+        const driveContent = await downloadFile(driveFileId)
+        const storeContent: string = JSON.stringify(storeData)
+        const matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === storeContent
 
         if (matchingContent) return
 
@@ -250,15 +250,15 @@ export async function syncDataDrive(data: DriveData) {
             changes.push({ type: "config", action: "download", name })
 
             // upload
-            let file = createFile(data.mainFolderId!, { type: "json", name }, JSON.stringify(combined))
-            let response = await uploadFile(file, driveFileId)
-            if (response?.status != 200) {
+            const file1 = createFile(data.mainFolderId!, { type: "json", name }, JSON.stringify(combined))
+            const response1 = await uploadFile(file1, driveFileId)
+            if (response1?.status !== 200) {
                 changes.push({ type: "config", action: "upload_failed", name })
                 return
             }
             changes.push({ type: "config", action: "upload", name })
 
-            if (DEBUG) console.log("COMBINED " + name)
+            if (DEBUG) console.info("COMBINED " + name)
             return
         }
 
@@ -274,7 +274,7 @@ export async function syncDataDrive(data: DriveData) {
             sendMain(id as Main, driveContent)
 
             changes.push({ type: "config", action: "download", name })
-            if (DEBUG) console.log("DOWNLOADED " + name)
+            if (DEBUG) console.info("DOWNLOADED " + name)
             return
         }
 
@@ -282,21 +282,21 @@ export async function syncDataDrive(data: DriveData) {
         if (data.method === "download") return
         if (id === "SYNCED_SETTINGS") bibles = storeData?.scriptures
 
-        let file = createFile(data.mainFolderId!, { type: "json", name }, storeContent)
-        let response = await uploadFile(file, driveFileId)
+        const file2 = createFile(data.mainFolderId!, { type: "json", name }, storeContent)
+        const response2 = await uploadFile(file2, driveFileId)
 
-        if (response?.status != 200) {
+        if (response2?.status !== 200) {
             changes.push({ type: "config", action: "upload_failed", name })
             return
         }
 
         changes.push({ type: "config", action: "upload", name })
-        if (DEBUG) console.log("UPLOADED " + name)
+        if (DEBUG) console.info("UPLOADED " + name)
         // responses.push(response)
     }
 
     async function syncBibles(dataPath: string) {
-        let localBibles: string[] = Object.values(bibles!)
+        const localBibles: string[] = Object.values(bibles!)
             .filter((a) => !a.api && !a.collection)
             .map((a) => a.name + ".fsb")
 
@@ -306,34 +306,34 @@ export async function syncDataDrive(data: DriveData) {
 
         // create bible folder
         if (!driveBiblesFolderId) {
-            let folder = createFolder(data.mainFolderId!, "Bibles")
-            let response = await uploadFile(folder)
+            const folder = createFolder(data.mainFolderId!, "Bibles")
+            const response = await uploadFile(folder)
             driveBiblesFolderId = (response?.data as drive_v3.Schema$File)?.id
             if (!driveBiblesFolderId) return
         }
 
         // this sets a limit to 100 bibles downloaded from cloud
-        let driveBibles = await listFiles(100, "'" + driveBiblesFolderId + "' in parents")
+        const driveBibles = await listFiles(100, "'" + driveBiblesFolderId + "' in parents")
 
-        let localBiblesFolder: string = getDataFolder(dataPath, dataFolderNames.scriptures)
+        const localBiblesFolder: string = getDataFolder(dataPath, dataFolderNames.scriptures)
 
         await Promise.all(localBibles.map(syncBible))
 
         async function syncBible(name: string) {
-            let driveFileId = driveBibles?.find((a) => a.name === name)?.id || ""
+            const driveFileId = driveBibles?.find((a) => a.name === name)?.id || ""
 
-            let driveFile = await getFile(driveFileId)
+            const driveFile = await getFile(driveFileId)
 
-            let localBiblePath: string = path.resolve(localBiblesFolder, name)
-            let localFile: string = await readFileAsync(localBiblePath)
+            const localBiblePath: string = path.resolve(localBiblesFolder, name)
+            const localFile: string = await readFileAsync(localBiblePath)
 
-            let newest = getNewest({ driveFile, localPath: localBiblePath })
+            const newest = getNewest({ driveFile, localPath: localBiblePath })
 
             if (newest === "same") return
 
-            let driveContent = await downloadFile(driveFileId)
+            const driveContent = await downloadFile(driveFileId)
 
-            let matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === localFile
+            const matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === localFile
             if (matchingContent) return
 
             // download
@@ -352,10 +352,10 @@ export async function syncDataDrive(data: DriveData) {
             // upload (newest === "local")
             if (data.method === "download") return
             if (!localFile) return
-            let file = createFile(driveBiblesFolderId!, { type: "json", name }, localFile)
-            let response = await uploadFile(file, driveFileId)
+            const file = createFile(driveBiblesFolderId!, { type: "json", name }, localFile)
+            const response = await uploadFile(file, driveFileId)
 
-            if (response?.status != 200) {
+            if (response?.status !== 200) {
                 changes.push({ type: "bible", action: "upload_failed", name })
                 return
             }
@@ -365,33 +365,33 @@ export async function syncDataDrive(data: DriveData) {
     }
 
     async function syncAllShows() {
-        let showsPath = checkShowsFolder(data.path || "")
+        const showsPath = checkShowsFolder(data.path || "")
         if (!showsPath) return
 
-        if (DEBUG) console.log("Path:", data.path)
-        if (DEBUG) console.log("Method:", data.method)
+        if (DEBUG) console.info("Path:", data.path)
+        if (DEBUG) console.info("Method:", data.method)
 
-        let name = SHOWS_CONTENT + ".json"
-        let driveFileId = files.find((a) => a.name === name)?.id || ""
+        const name = SHOWS_CONTENT + ".json"
+        const driveFileId = files.find((a) => a.name === name)?.id || ""
 
-        let driveFile = await getFile(driveFileId)
+        const driveFile = await getFile(driveFileId)
         // download shows
-        let driveContent = driveFile ? await downloadFile(driveFileId) : null
+        const driveContent = driveFile ? await downloadFile(driveFileId) : null
 
-        let localShows = loadShows({ showsPath }, true)
+        const localShows = loadShows({ showsPath }, true)
         // some might have the same id
-        let shows: { [key: string]: TrimmedShow | Show } = { ...localShows, ...(driveContent || {}) }
-        if (DEBUG) console.log("Local shows count:", Object.keys(localShows).length)
-        if (DEBUG) console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
+        const shows: { [key: string]: TrimmedShow | Show } = { ...localShows, ...(driveContent || {}) }
+        if (DEBUG) console.info("Local shows count:", Object.keys(localShows).length)
+        if (DEBUG) console.info("Cloud shows count:", Object.keys(driveContent || {}).length)
 
-        let downloadCount: number = 0
-        let uploadCount: number = 0
-        let allShows: { [key: string]: Show | { deleted: boolean; name: string } } = {}
+        let downloadCount = 0
+        let uploadCount = 0
+        const allShows: { [key: string]: Show | { deleted: boolean; name: string } } = {}
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: [string, TrimmedShow | Show]) {
-            let name = (localShows[id]?.name || show?.name || id) + ".show"
-            let localShowPath = path.join(showsPath, name)
+            const showName = (localShows[id]?.name || show?.name || id) + ".show"
+            const localShowPath = path.join(showsPath, showName)
 
             let newest = getNewest({ driveFile, localPath: localShowPath })
             // DEBUG:
@@ -399,18 +399,18 @@ export async function syncDataDrive(data: DriveData) {
             syncStates[newest]++
 
             if (newest === "same") {
-                let showContent = driveContent?.[id] || (await readFileAsync(localShowPath))
+                const showContent = driveContent?.[id] || (await readFileAsync(localShowPath))
                 if (showContent) allShows[id] = showContent
                 return
             }
 
             // get existing content
-            let cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
-            let localContent = await readFileAsync(localShowPath, "utf8")
+            const cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
+            const localContent = await readFileAsync(localShowPath, "utf8")
 
             // double check with content timestamp
             if (newest === "cloud" && cloudContent && localContent) {
-                let actualDrivetime = driveContent?.[id]?.timestamps?.modified || 0
+                const actualDrivetime = driveContent?.[id]?.timestamps?.modified || 0
                 if (actualDrivetime && actualDrivetime < lastLocalTimestamp) {
                     newest = "local"
                     // DEBUG:
@@ -424,26 +424,26 @@ export async function syncDataDrive(data: DriveData) {
             if ((newest === "cloud" || data.method === "download" || isDeleted) && cloudContent) {
                 // deleted locally
                 if (currentlyDeletedShows.includes(id)) {
-                    allShows[id] = { deleted: true, name: driveContent![id].name || "" }
+                    allShows[id] = { deleted: true, name: driveContent[id].name || "" }
 
                     delete shows[id]
                     uploadCount++
-                    if (DEBUG) console.log("Show has been deleted from cloud:", driveContent[id]?.name || "")
+                    if (DEBUG) console.info("Show has been deleted from cloud:", driveContent[id]?.name || "")
 
                     return
                 }
 
-                allShows[id] = driveContent![id]
+                allShows[id] = driveContent[id]
 
                 // if a show is deleted, synced and undone it can't be restored unless a duplicate is created with new ID!
                 // but it can be restored when deleted before it's synced
                 // deleted in cloud
-                if (driveContent![id].deleted === true) {
-                    let p: string = path.join(showsPath, name)
-                    if (doesPathExist(p)) {
-                        deleteFile(p)
+                if (driveContent[id].deleted === true) {
+                    const filePath: string = path.join(showsPath, showName)
+                    if (doesPathExist(filePath)) {
+                        deleteFile(filePath)
                         downloadCount++
-                        if (DEBUG) console.log("Show has been deleted locally:", driveContent![id]?.name || "")
+                        if (DEBUG) console.info("Show has been deleted locally:", driveContent[id]?.name || "")
                     }
 
                     delete shows[id]
@@ -454,7 +454,7 @@ export async function syncDataDrive(data: DriveData) {
                 try {
                     if (!isDeleted) allShows[id] = JSON.parse(localContent)[1]
                 } catch (err) {
-                    console.log(`Could not parse show ${name}.`, err)
+                    console.error(`Could not parse show ${showName}.`, err)
                     return
                 }
             }
@@ -463,16 +463,16 @@ export async function syncDataDrive(data: DriveData) {
 
             // "download" show
             if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
-                let newName = (show?.name || id) + ".show"
-                if (localShows[id] && newName !== name) {
-                    if (DEBUG) console.log("Rename file:", name, "->", newName)
+                const newName = (show?.name || id) + ".show"
+                if (localShows[id] && newName !== showName) {
+                    if (DEBUG) console.info("Rename file:", showName, "->", newName)
                     deleteFile(localShowPath) // renamed
                 }
-                let newPath = path.join(showsPath, newName)
+                const newPath = path.join(showsPath, newName)
 
                 writeFile(newPath, cloudContent, id)
 
-                let trimmedShow = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
+                const trimmedShow = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
                 if (!trimmedShow) {
                     delete shows[id]
                     return
@@ -493,25 +493,25 @@ export async function syncDataDrive(data: DriveData) {
             // something is wrong with the file
             if (!cloudContent && !localContent) delete shows[id]
         }
-        if (DEBUG) console.log("Shows checked!")
+        if (DEBUG) console.info("Shows checked!")
 
         if (downloadCount) {
-            if (DEBUG) console.log("Downloading shows:", downloadCount)
+            if (DEBUG) console.info("Downloading shows:", downloadCount)
             changes.push({ type: "show", action: "download", name, count: downloadCount })
-            if (DEBUG) console.log("Trimmed shows:", Object.keys(shows).length)
+            if (DEBUG) console.info("Trimmed shows:", Object.keys(shows).length)
             if (Object.keys(shows).length) sendMain(Main.SHOWS, shows)
         }
         if (!uploadCount) return
-        if (DEBUG) console.log("Uploading shows:", uploadCount)
+        if (DEBUG) console.info("Uploading shows:", uploadCount)
 
         // upload shows
         if (data.method === "download") return
-        if (DEBUG) console.log("Drive shows:", Object.keys(allShows).length)
-        let file = createFile(data.mainFolderId!, { type: "json", name }, JSON.stringify(allShows))
-        let response = await uploadFile(file, driveFileId)
+        if (DEBUG) console.info("Drive shows:", Object.keys(allShows).length)
+        const file = createFile(data.mainFolderId!, { type: "json", name }, JSON.stringify(allShows))
+        const response = await uploadFile(file, driveFileId)
         currentlyDeletedShows = []
 
-        if (response?.status != 200) {
+        if (response?.status !== 200) {
             changes.push({ type: "show", action: "upload_failed", name })
             return
         }
@@ -523,10 +523,10 @@ export async function syncDataDrive(data: DriveData) {
 const TEN_SECONDS_MS = 10 * 1000
 let lastLocalTimestamp = 0
 function getNewest({ driveFile, localPath }: { driveFile: GaxiosResponse<drive_v3.Schema$File> | null; localPath: string }) {
-    let storeInfo = getFileStats(localPath, true)?.stat
+    const storeInfo = getFileStats(localPath, true)?.stat
 
-    let driveModified = driveFile?.data?.modifiedTime ? new Date(driveFile.data.modifiedTime).getTime() : 0
-    let storeModified = storeInfo?.mtimeMs || 0
+    const driveModified = driveFile?.data?.modifiedTime ? new Date(driveFile.data.modifiedTime).getTime() : 0
+    const storeModified = storeInfo?.mtimeMs || 0
     lastLocalTimestamp = storeModified
 
     if (!driveModified || storeModified > driveModified) return "local"
@@ -537,7 +537,7 @@ function getNewest({ driveFile, localPath }: { driveFile: GaxiosResponse<drive_v
 
 // combine local & cloud based on modified
 function combineFiles(cloudContent: any, localContent: any, newest: string) {
-    let content = (newest === "cloud" ? cloudContent : localContent) || {}
+    const content = (newest === "cloud" ? cloudContent : localContent) || {}
     const olderContent = (newest === "cloud" ? localContent : cloudContent) || {}
 
     Object.keys(olderContent).forEach((id) => {

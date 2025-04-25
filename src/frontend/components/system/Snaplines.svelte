@@ -8,7 +8,7 @@
     export let newStyles: { [key: string]: string | number }
     export let ratio: number
     export let active: (number | string)[]
-    export let isStage: boolean = false
+    export let isStage = false
 
     let styles: { [key: string]: string | number } = {}
     function mousemove(e: any) {

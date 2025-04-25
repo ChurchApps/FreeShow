@@ -27,7 +27,7 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
     }
     if (!mainResponses[id]) return console.error(`No response for channel: ${id}`)
 
-    const handler = mainResponses[id as Main]
+    const handler = mainResponses[id ]
     const data = msg.data
     const response = await (handler as any)(data, e)
 
@@ -36,10 +36,10 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
     if (response !== undefined) e.reply(MAIN, { channel: msg.channel, data: response }, listenerId)
 }
 
-let currentlyAwaiting: string[] = []
+const currentlyAwaiting: string[] = []
 // @ts-ignore
 export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R) => void) {
-    let listenerId = id + uid(5)
+    const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
     sendToMain(id, value, listenerId)
@@ -63,7 +63,7 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
         }
     })
 
-    let waitIndex = currentlyAwaiting.indexOf(listenerId)
+    const waitIndex = currentlyAwaiting.indexOf(listenerId)
     if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
 
     if (callback) callback(returnData)

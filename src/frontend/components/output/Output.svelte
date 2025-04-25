@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { Styles } from "../../../types/Settings"
-    import type { LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
@@ -26,11 +26,11 @@
     import Window from "./Window.svelte"
     import { OutData } from "../../../types/Output"
 
-    export let outputId: string = ""
+    export let outputId = ""
     export let style = ""
-    export let ratio: number = 0
-    export let mirror: boolean = false
-    export let preview: boolean = false
+    export let ratio = 0
+    export let mirror = false
+    export let preview = false
 
     $: currentOutput = $outputs[outputId] || {}
 
@@ -63,7 +63,7 @@
 
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
-    function updateOutData(type: string = "") {
+    function updateOutData(type = "") {
         if (!type || type === "slide") {
             let noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
@@ -89,8 +89,8 @@
 
     // overlays
     $: overlayIds = out.overlays
-    let storedOverlayIds: string = ""
-    let storedOverlays: string = ""
+    let storedOverlayIds = ""
+    let storedOverlays = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
@@ -176,9 +176,9 @@
     }
 
     // ANIMATE
-    let animationData: any = {}
+    let animationData: AnimationData = {}
     let currentAnimationId = ""
-    $: slideAnimation = slideData?.actions?.animate || {}
+    $: slideAnimation = slideData?.actions?.animate || null
 
     $: if (slide) stopAnimation()
     onDestroy(stopAnimation)
@@ -190,7 +190,7 @@
     // TODO: play slide animations on each textbox so animation can continue while transitioning
     $: if (slideAnimation) initializeAnimation()
     async function initializeAnimation() {
-        if (!Object.keys(slideAnimation).length) {
+        if (!Object.keys(slideAnimation || {}).length) {
             stopAnimation()
             return
         }
@@ -225,7 +225,7 @@
             if (typeof animationData.newIndex !== "number") return
 
             // stop if ended & not repeating
-            if (!animationData.animation.repeat && !animationData.animation.actions[animationData.newIndex]) return
+            if (!animationData.animation?.repeat && !animationData.animation?.actions[animationData.newIndex]) return
 
             animate(animationData.newIndex)
         }

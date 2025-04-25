@@ -108,7 +108,7 @@
     }
 
     let versesList: { [key: string]: Verse[] } = {}
-    async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
+    async function loadAPIBible(bibleId: string, load: string, index = 0) {
         error = null
         let data: any = null
         console.log($scriptures)
@@ -116,7 +116,7 @@
         if (typeof bookId === "number") bookId = bookIds[bookId] || "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
-        let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
+        let objectId = Object.values($scriptures).find((a) => a.id === bibleId)?.[0] || ""
         if (load === "books" && $scriptures[objectId]?.books2) {
             // load books cache
             data = $scriptures[objectId].books2
@@ -158,14 +158,14 @@
                 versesList[bibleId] = data
                 break
             case "versesText":
-                verses[bibleId] = convertVerses(data, index)
+                verses[bibleId] = convertVerses(data)
                 bibles[index].verses = verses[bibleId]
                 // WIP verses[id] =
                 break
         }
     }
 
-    function convertVerses(data: VerseText[], _index: number = 0): { [key: string]: string } {
+    function convertVerses(data: VerseText[]): { [key: string]: string } {
         let verses: any = {}
         data.forEach((d: any, i: number) => {
             verses[i + 1] = d.content
@@ -178,7 +178,7 @@
         return verses
     }
 
-    let notLoaded: boolean = false
+    let notLoaded = false
     let listenerId = receiveMain(Main.BIBLE, (data) => {
         if (data.error === "not_found") {
             notLoaded = true
@@ -198,7 +198,7 @@
         bibles[currentIndex] = content
 
         let id = data.content?.[0] || data.id
-        books[id] = content.books as any
+        books[id] = content.books
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
@@ -288,7 +288,7 @@
     }
 
     function getVerses() {
-        bibles.forEach(async (bible, i) => {
+        bibles.forEach((bible, i) => {
             let id: string = getBibleId(i, bible)
             if (!verses[id]) return
 
@@ -300,7 +300,7 @@
         updateSplitted()
     }
 
-    let loaded: boolean = false
+    let loaded = false
     $: if (active) loaded = false
     function selectFirstVerse(bibleId: string, index: number) {
         if (!verses[bibleId] || !bibles[index]) return
@@ -317,7 +317,7 @@
         setTimeout(() => (loaded = true))
     }
 
-    function updateActiveVerses(bibleIndex: number = 0) {
+    function updateActiveVerses(bibleIndex = 0) {
         bibles[bibleIndex].activeVerses = activeVerses
 
         // add to selected (for drag/drop)
@@ -359,7 +359,7 @@
     const updateSearchValue = (v: string) => (searchValue = v)
 
     // let mainElem: HTMLElement | undefined = null
-    let autoComplete: boolean = false
+    let autoComplete = false
     // $: if (searchValue) autoComplete = true
 
     let searchValues: { [key: string]: any } = {
@@ -371,7 +371,7 @@
 
     $: if (searchValue) updateSearch()
 
-    let tempDisableInputs: boolean = false
+    let tempDisableInputs = false
     let storedSearch = ""
     $: if (tempDisableInputs && searchValue) updateSearchValue(storedSearch)
 
@@ -444,9 +444,9 @@
         if (splittedEnd[1]?.endsWith(" ")) updateSearchValue(searchValue.trim())
     }
 
-    let searchBibleActive: boolean = false
-    let contentSearch: string = ""
-    let contentSearchActive: boolean = false
+    let searchBibleActive = false
+    let contentSearch = ""
+    let contentSearchActive = false
     let contentSearchMatches: any[] = []
     let tempCache: any = {}
 
@@ -475,8 +475,8 @@
 
         searchInBible(e)
     }
-    let previousSearch: string = ""
-    let cachedSearches: number = 0
+    let previousSearch = ""
+    let cachedSearches = 0
     async function searchInBible(e: any) {
         contentSearch = e.target?.value || ""
         contentSearchActive = false
@@ -851,7 +851,7 @@
 
     $: outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
 
-    function playOrClearScripture(forcePlay: boolean = false) {
+    function playOrClearScripture(forcePlay = false) {
         if (outputIsScripture && !forcePlay) {
             setOutput("slide", null)
             return
@@ -898,8 +898,8 @@
         return shortName
     }
 
-    let gridMode: boolean = false
-    let history: boolean = false
+    let gridMode = false
+    let history = false
 
     $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0]?.id)).reverse()
 

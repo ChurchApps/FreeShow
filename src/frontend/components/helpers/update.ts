@@ -11,7 +11,7 @@ export function updateStore(storeId: StoreKey, data: StoreData, options: any = {
     oldData.value = undefined
 
     $[storeId].update((a) => {
-        let split: any = splitKeys(a, data, options)
+        const split: any = splitKeys(a, data, options)
 
         oldData = split.old
         a = split.new
@@ -27,8 +27,8 @@ export function removeStore(storeId: StoreKey, data: StoreData) {
 }
 
 export function splitKeys(obj: any, data: StoreData, options: any) {
-    let d: any = { old: undefined, new: obj }
-    let keys: string[] = data.keys || []
+    const d: any = { old: undefined, new: obj }
+    const keys: string[] = data.keys || []
     if (!obj || (!data.key && !data.keys)) return d
 
     if (data.key) {

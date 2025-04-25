@@ -26,7 +26,7 @@
     }
 
     let listElem: HTMLElement | undefined
-    let fromTop: number = 0 // 25px on Windows
+    let fromTop = 0 // 25px on Windows
 
     $: active = $activeFocus
     let scrollingToActive: any = null

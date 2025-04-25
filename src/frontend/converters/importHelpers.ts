@@ -8,20 +8,19 @@ import { activeDrawerTab, activePopup, activeProject, activeRename, categories, 
 import { newToast } from "../utils/common"
 import { convertText } from "./txt"
 
-export function createCategory(name: string, icon: string = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
+export function createCategory(name: string, icon = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
     // return selected category if it is empty
-    let selectedCategory = get(drawerTabsData).shows?.activeSubTab || ""
-    console.log(selectedCategory)
+    const selectedCategory = get(drawerTabsData).shows?.activeSubTab || ""
     if (get(activeDrawerTab) === "shows" && selectedCategory !== "all" && selectedCategory !== "unlabeled") {
-        let categoryCount = Object.values(get(shows)).reduce((count, show) => (count += show.category === selectedCategory ? 1 : 0), 0)
+        const categoryCount = Object.values(get(shows)).reduce((count, show) => (count += show.category === selectedCategory ? 1 : 0), 0)
         if (!categoryCount) return selectedCategory
     }
 
-    let id = name.toLowerCase().replaceAll(" ", "_")
+    const id = name.toLowerCase().replaceAll(" ", "_")
     if (get(categories)[id]) return id
     if (isDefault) name = "category." + name
 
-    let data: Category = { name, icon }
+    const data: Category = { name, icon }
     if (isDefault) data.default = true
     if (isArchive) data.isArchive = true
     history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
@@ -45,10 +44,11 @@ export function setTempShows(tempShows: { id: string; show: Show }[]) {
 }
 
 export function importShow(files: { content: string; name?: string; extension?: string }[]) {
-    let tempShows: { id: string; show: Show }[] = []
+    const tempShows: { id: string; show: Show }[] = []
 
     files.forEach(({ content, name }) => {
-        let id, show
+        let id
+        let show
 
         try {
             ;[id, show] = JSON.parse(content)
@@ -58,10 +58,10 @@ export function importShow(files: { content: string; name?: string; extension?: 
 
             try {
                 ;[id, show] = JSON.parse(content)
-            } catch (e: any) {
-                console.error(name, e)
-                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+            } catch (err: any) {
+                console.error(name, err)
+                const pos = Number(err.toString().replace(/\D+/g, "") || 100)
+                console.info(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
                 return
             }
         }
@@ -75,7 +75,7 @@ export function importShow(files: { content: string; name?: string; extension?: 
     setTempShows(tempShows)
 }
 
-/////
+/// //
 
 export function importFromClipboard() {
     navigator.clipboard
@@ -105,8 +105,8 @@ export function importSpecific(data: { content: string; name?: string; extension
 
 export function fixShowIssues(show) {
     // remove unused children slides
-    let allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
-        let slide = show.slides[slideId]
+    const allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
+        const slide = show.slides[slideId]
         if (slide.group === null) return ids
 
         ids.push(slideId)
@@ -115,7 +115,7 @@ export function fixShowIssues(show) {
     }, [])
 
     Object.keys(show.slides).forEach((slideId: string) => {
-        let slide = show.slides[slideId]
+        const slide = show.slides[slideId]
 
         // remove if unused
         if (!allUsedSlides.includes(slideId) && slide.group === null) {
@@ -126,10 +126,10 @@ export function fixShowIssues(show) {
         // check & fix looping items bug
         if (slide.items?.length < 30) return
 
-        let previousItem: string = ""
-        let matchCount: number = 0
-        for (let item of slide.items) {
-            let currentItem = JSON.stringify(item)
+        let previousItem = ""
+        let matchCount = 0
+        for (const item of slide.items) {
+            const currentItem = JSON.stringify(item)
 
             if (previousItem === currentItem) matchCount++
             if (matchCount >= 30) {

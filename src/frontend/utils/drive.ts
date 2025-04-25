@@ -8,7 +8,7 @@ import { send } from "./request"
 import { save } from "./save"
 
 export function validateKeys(file: string) {
-    let keys = JSON.parse(file)
+    const keys = JSON.parse(file)
 
     // check keys
     let error = ""
@@ -42,9 +42,9 @@ export function driveConnect(keys: any) {
 }
 
 // force = manual sync OR first sync
-export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false, startup: boolean = false) {
-    let autoSyncDisabled = get(driveData).disabled === true
-    let notStartingAndNotClosing = !startup && !closeWhenFinished
+export function syncDrive(force = false, closeWhenFinished = false, startup = false) {
+    const autoSyncDisabled = get(driveData).disabled === true
+    const notStartingAndNotClosing = !startup && !closeWhenFinished
     if (!force && (notStartingAndNotClosing || autoSyncDisabled)) return
 
     let method = get(driveData).initializeMethod

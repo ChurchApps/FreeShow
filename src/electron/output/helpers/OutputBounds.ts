@@ -6,8 +6,8 @@ import { OutputHelper } from "../OutputHelper"
 export class OutputBounds {
     // BOUNDS
 
-    static moveEnabled: boolean = false
-    static updatingBounds: boolean = false
+    static moveEnabled = false
+    static updatingBounds = false
     private static boundsTimeout: NodeJS.Timeout | null = null
 
     static disableWindowMoveListener() {
@@ -21,7 +21,7 @@ export class OutputBounds {
     }
 
     static updateBounds(data: { id: string; bounds: Rectangle }) {
-        let window: BrowserWindow = OutputHelper.getOutput(data.id)?.window
+        const window: BrowserWindow = OutputHelper.getOutput(data.id)?.window
         if (!window || window.isDestroyed()) return
 
         this.disableWindowMoveListener()
@@ -35,7 +35,7 @@ export class OutputBounds {
     }
 
     static moveToFront(id: string) {
-        let window: BrowserWindow = OutputHelper.getOutput(id)?.window
+        const window: BrowserWindow = OutputHelper.getOutput(id)?.window
         if (!window || window.isDestroyed()) return
 
         window.moveTop()
@@ -43,15 +43,15 @@ export class OutputBounds {
 
     static alignWithScreens() {
         OutputHelper.getKeys().forEach((outputId) => {
-            let output = OutputHelper.getOutput(outputId)
+            const output = OutputHelper.getOutput(outputId)
             if (output.boundsLocked) return
 
-            let wBounds = output.window.getBounds()
-            let centerLeft = wBounds.x + wBounds.width / 2
-            let centerTop = wBounds.y + wBounds.height / 2
+            const wBounds = output.window.getBounds()
+            const centerLeft = wBounds.x + wBounds.width / 2
+            const centerTop = wBounds.y + wBounds.height / 2
 
-            let point = { x: centerLeft, y: centerTop }
-            let closestScreen = screen.getDisplayNearestPoint(point)
+            const point = { x: centerLeft, y: centerTop }
+            const closestScreen = screen.getDisplayNearestPoint(point)
 
             if (JSON.stringify(wBounds) === JSON.stringify(closestScreen.bounds)) return
 

@@ -39,13 +39,13 @@ export const receiveCONTROLLER = {
             return
         }
 
-        let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
-        let resolution = getOutputResolution(outputId, get(outputs), true)
+        const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+        const resolution = getOutputResolution(outputId, get(outputs), true)
         data.offset.x *= resolution.width
         data.offset.y *= resolution.height
 
-        let tool = data.tool || "focus"
-        let settings = get(drawSettings)[tool]
+        const tool = data.tool || "focus"
+        const settings = get(drawSettings)[tool]
         if (settings) {
             data.offset.x -= settings.size / 2
             data.offset.y -= settings.size / 2

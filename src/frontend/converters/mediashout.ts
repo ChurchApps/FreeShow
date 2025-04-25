@@ -87,24 +87,24 @@ export function convertMediaShout(data: any) {
     alertMessage.set("popup.importing")
     activePopup.set("alert")
 
-    let categoryId = createCategory("MediaShout")
+    const categoryId = createCategory("MediaShout")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
     data?.forEach(({ content, name }: any) => {
         if (!content) {
-            console.log("File missing content!")
+            console.error("File missing content!")
             return
         }
 
         let cues = xml2json(content)?.MediaShout5_Document?.Cues
         if (!Array.isArray(cues)) cues = [cues]
-        let cues2: any[] = cues.map((a) => Object.values(a))?.flat(2)
+        const cues2: any[] = cues.map((a) => Object.values(a))?.flat(2)
 
         cues2.forEach((song: MediaShout5Song) => {
             if (!song) return
 
-            let showId = song.SongID || uid()
-            let showName = checkName(song.Title || name, showId)
+            const showId = song.SongID || uid()
+            const showName = checkName(song.Title || name, showId)
             const show = convertToShow(song, { name: showName, categoryId })
             if (show) tempShows.push({ id: showId, show })
         })
@@ -114,11 +114,11 @@ export function convertMediaShout(data: any) {
 }
 
 function convertToShow(song: MediaShout5Song, { name, categoryId }) {
-    let layoutID = uid()
-    let show = new ShowObj(false, categoryId, layoutID)
+    const layoutID = uid()
+    const show = new ShowObj(false, categoryId, layoutID)
     show.name = name
 
-    let { slides, layout, media } = convertToSlides(song)
+    const { slides, layout, media } = convertToSlides(song)
     if (!Object.keys(slides).length) return
 
     show.slides = slides
@@ -136,9 +136,9 @@ function convertToShow(song: MediaShout5Song, { name, categoryId }) {
 }
 
 function convertToSlides(song: MediaShout5Song) {
-    let slides: { [key: string]: Slide } = {}
-    let layout: Layout = { name: get(dictionary).example?.default || "", slides: [], notes: "" }
-    let media: any = {}
+    const slides: { [key: string]: Slide } = {}
+    const layout: Layout = { name: get(dictionary).example?.default || "", slides: [], notes: "" }
+    const media: any = {}
 
     let elements = song.Content?.Element
     if (!Array.isArray(elements)) elements = [elements]
@@ -152,14 +152,14 @@ function convertToSlides(song: MediaShout5Song) {
     return { slides, layout, media }
 }
 function convertItem(text: string) {
-    let newItem: Item = {
+    const newItem: Item = {
         style: DEFAULT_ITEM_STYLE,
         lines: text.split("\n").map(getLine),
     }
 
     return newItem
 
-    function getLine(text: string) {
-        return { align: "", text: [{ value: text, style: "" }] }
+    function getLine(lineText: string) {
+        return { align: "", text: [{ value: lineText, style: "" }] }
     }
 }

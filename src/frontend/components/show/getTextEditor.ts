@@ -5,25 +5,25 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
-export function getPlainEditorText(id: string = "active") {
-    let ref = getLayoutRef(id)
-    let slides = _show(id).get("slides")
+export function getPlainEditorText(showId = "active") {
+    const ref = getLayoutRef(showId)
+    const slides = _show(showId).get("slides")
 
     // slide data for editing (WIP unused)
-    let slidesData: any[] = []
+    const slidesData: any[] = []
 
     let text = ""
 
     ref.forEach((refSlide) => {
-        let id = refSlide.id
-        let slide = slides[id]
+        const id = refSlide.id
+        const slide = slides[id]
         if (!slide) return
 
-        let slideData: any = { id, items: slide.items, text: "", ref: refSlide }
+        const slideData: any = { id, items: slide.items, text: "", ref: refSlide }
         let data = getItems(slide.items)
 
         if (slide.group !== null && (data.hasTextboxItem || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
-            let groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
+            const groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
             text += groupId + "\n"
             slideData.text += groupId + "\n"
             // children has content
@@ -47,27 +47,27 @@ function getItems(items: Item[]) {
     let text = ""
     let plainText = ""
     // let selectedItem: Item = getFirstNormalTextbox(items)
-    let selectedItems: Item[] = getTextboxes(clone(items)).reverse()
+    const selectedItems: Item[] = getTextboxes(clone(items)).reverse()
 
     if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 
     selectedItems.forEach((item, i) => {
         if (selectedItems.length > 1) {
-            let translation = item?.language ? `:${item.language}` : ""
-            let textboxId = `[#${i + 1}${translation}]`
+            const translation = item?.language ? `:${item.language}` : ""
+            const textboxId = `[#${i + 1}${translation}]`
             text += textboxId + "\n"
             plainText += textboxId + "\n"
         }
 
-        let filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length) || []
-        filteredLines.forEach((line, i) => {
+        const filteredLines = item.lines?.filter((line) => line.text?.filter((lineText) => lineText.value.length).length) || []
+        filteredLines.forEach((line, lineIndex) => {
             let tempText = ""
             line.text?.forEach((txt) => {
                 tempText += txt.value
             })
 
             // chords (from last in line to first)
-            let sortedChords = line.chords?.sort((a, b) => b.pos - a.pos) || []
+            const sortedChords = line.chords?.sort((a, b) => b.pos - a.pos) || []
             sortedChords.forEach((chord) => {
                 while (!tempText[chord.pos]) tempText += " "
                 tempText = tempText.slice(0, chord.pos) + `[${chord.key}]` + tempText.slice(chord.pos)
@@ -75,7 +75,7 @@ function getItems(items: Item[]) {
 
             if (tempText.length) {
                 text += tempText + "\n"
-                plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
+                plainText += tempText + (lineIndex < filteredLines.length - 1 ? "\n" : "")
             }
         })
 
@@ -89,7 +89,7 @@ function getItems(items: Item[]) {
 
 const br = "||__$BREAK$__||"
 
-function replaceValues(text: string, revert: boolean = false) {
+function replaceValues(text: string, revert = false) {
     if (!text) return ""
 
     if (revert) return text.replaceAll(br, "\n")

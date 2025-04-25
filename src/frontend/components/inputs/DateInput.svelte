@@ -1,8 +1,8 @@
 <script lang="ts">
     export let value
-    export let title: string = ""
-    export let style: string = ""
-    export let disabled: boolean = false
+    export let title = ""
+    export let style = ""
+    export let disabled = false
 </script>
 
 <input {value} {style} {disabled} type="date" {title} on:change />

@@ -25,7 +25,7 @@
     ]
     let selectedEncoding: Option = encodingOptions[0]
 
-    const songbeamerCatId: string = "songbeamer"
+    const songbeamerCatId = "songbeamer"
     let cats: any = [
         ...sortObject(
             Object.keys($categories).map((key: string) => ({

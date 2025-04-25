@@ -7,7 +7,7 @@ import { OUTPUT } from "../../../types/Channels"
 export function updateVideoTime(time: number) {
     const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
 
-    let timeValues: { [key: string]: number } = {}
+    const timeValues: { [key: string]: number } = {}
     activeOutputIds.forEach((id) => {
         timeValues[id] = time
     })
@@ -19,7 +19,7 @@ export function updateVideoData(data: any) {
     const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
     const backgroundOutputId = activeOutputIds.find((id) => getLayersFromId(id).includes("background")) || activeOutputIds[0]
 
-    let dataValues: any = {}
+    const dataValues: any = {}
     activeOutputIds.forEach((id) => {
         dataValues[id] = { ...data, muted: id !== backgroundOutputId ? true : data.muted }
     })

@@ -78,7 +78,7 @@
 
     // shows in folder
     let hiddenShows: string[] = []
-    let brokenShows: number = 0
+    let brokenShows = 0
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {
@@ -198,8 +198,8 @@
 
     // usage log
 
-    let exportingUsageLog: boolean = false
-    let usageLogExported: boolean = false
+    let exportingUsageLog = false
+    let usageLogExported = false
     function exportUsageLog() {
         exportingUsageLog = true
         setTimeout(() => (usageLogExported = true), 1000)

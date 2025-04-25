@@ -17,9 +17,9 @@
     function openShow() {
         if (!slide || slide.id === "temp") return
 
-        if (slide?.layout && $showsCache[slide!.id]) {
+        if (slide?.layout && $showsCache[slide.id]) {
             showsCache.update((a) => {
-                a[slide!.id].settings.activeLayout = slide?.layout!
+                a[slide.id].settings.activeLayout = slide.layout!
                 return a
             })
         }

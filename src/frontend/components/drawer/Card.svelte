@@ -6,21 +6,21 @@
     import Loader from "../main/Loader.svelte"
     import Label from "./Label.svelte"
 
-    export let loaded: boolean = true
-    export let preview: boolean = false
-    export let active: boolean = false
+    export let loaded = true
+    export let preview = false
+    export let active = false
     export let outlineColor: string | null = null
     export let label: string
-    export let count: number = 0
-    export let renameId: string = ""
-    export let title: string = ""
-    export let mediaData: string = ""
-    export let width: number = 0
+    export let count = 0
+    export let renameId = ""
+    export let title = ""
+    export let mediaData = ""
+    export let width = 0
     export let icon: null | string = null
     export let color: null | string = null
-    export let white: boolean = true
-    export let showPlayOnHover: boolean = false
-    export let checkered: boolean = false
+    export let white = true
+    export let showPlayOnHover = false
+    export let checkered = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })

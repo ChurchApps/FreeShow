@@ -7,18 +7,18 @@
     import { loadItems } from "./loadItems"
 
     export let contextElem: HTMLDivElement | null = null
-    export let topBar: boolean = false
+    export let topBar = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
-    export let translate: number = 0
+    export let translate = 0
 
     export let side: "right" | "left" = $localeDirection === "rtl" ? "left" : "right"
     $: transform = side === "right" ? "100%" : "-100%"
 
-    let open: boolean = false
+    let open = false
     let elem: HTMLDivElement
     let timeout: NodeJS.Timeout | null = null
-    let duration: number = 200
+    let duration = 200
 
     function onMouseOver(e: any) {
         if (elem.contains(e.target)) {

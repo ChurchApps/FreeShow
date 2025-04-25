@@ -9,7 +9,7 @@
 
     export let screen: { id: string; name: string }
     export let streams: MediaStream[]
-    export let background: boolean = false
+    export let background = false
 
     let loaded = false
 
@@ -55,7 +55,7 @@
             })
             .catch(function (err) {
                 let msg: string = err.message
-                console.log(err.name + ": " + msg)
+                console.error(err.name + ": " + msg)
 
                 // if (err.name === "NotReadableError") {
                 sendMain(Main.ACCESS_SCREEN_PERMISSION)

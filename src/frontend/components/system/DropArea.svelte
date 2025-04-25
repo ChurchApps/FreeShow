@@ -5,15 +5,15 @@
     import T from "../helpers/T.svelte"
 
     export let id: DropAreas
-    export let selectChildren: boolean = false
-    export let hoverTimeout: number = 500
-    export let file: boolean = false
-    let active: boolean = false
-    let hover: boolean = false
+    export let selectChildren = false
+    export let hoverTimeout = 500
+    export let file = false
+    let active = false
+    let hover = false
 
     $: active = validateDrop(id, $selected.id)
 
-    let count: number = 0
+    let count = 0
     function enter() {
         if (!active || !selectChildren) return
 
@@ -23,7 +23,7 @@
         }, hoverTimeout)
     }
 
-    function leave(_e: any) {
+    function leave() {
         if (!active || !selectChildren) return
 
         count = Math.max(0, count - 1)
@@ -55,7 +55,7 @@
         return files
     }
 
-    let fileOver: boolean = false
+    let fileOver = false
 
     function endDrag() {
         deselect()

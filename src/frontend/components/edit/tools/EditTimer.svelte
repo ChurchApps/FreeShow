@@ -12,7 +12,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     export let item: Item | StageItem
-    export let isStage: boolean = false
+    export let isStage = false
 
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     $: timersList = sortByName(keysToID($timers), "name", true)

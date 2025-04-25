@@ -15,8 +15,8 @@ import { runAction } from "../components/actions/actions"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
-    let currentOutput = updater[outputId]?.out
-    let next = await getNextBackground(currentOutput?.slide || null, returnPath)
+    const currentOutput = updater[outputId]?.out
+    const next = await getNextBackground(currentOutput?.slide || null, returnPath)
     let path = currentOutput?.background?.path || ""
     if (typeof path !== "string") path = ""
 
@@ -29,9 +29,9 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
         return
     }
 
-    let base64path = await getBase64Path(path)
+    const base64path = await getBase64Path(path)
 
-    let bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
+    const bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
 
     if (returnPath) return bg
 
@@ -42,7 +42,7 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
 async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath = false) {
     if (!currentOutputSlide?.id) return {}
 
-    let showRef = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    const showRef = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
     if (!showRef) return {}
 
     // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
@@ -55,16 +55,16 @@ async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath
     }
     const slideIndex = layoutOffset
 
-    let nextLayout = showRef[slideIndex]
+    const nextLayout = showRef[slideIndex]
     if (!nextLayout) return {}
 
-    let bgId = nextLayout.data.background || ""
+    const bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path || ""
     if (typeof path !== "string") path = ""
 
     if (returnPath) return { path, mediaStyle: get(media)[path] || {} }
 
-    let base64path = await getBase64Path(path)
+    const base64path = await getBase64Path(path)
 
     return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
 }
@@ -85,7 +85,7 @@ export const receiveSTAGE = {
 
         // add labels
         Object.keys(layout.items).map((itemId) => {
-            let item = layout.items[itemId]
+            const item = layout.items[itemId]
             item.label = getCustomStageLabel(itemId, item)
         })
 
@@ -121,7 +121,7 @@ export const receiveSTAGE = {
         return output
     },
     SHOW_DATA: (_data: any, connectionId: string) => {
-        let stageId = get(connections).STAGE?.[connectionId]?.active
+        const stageId = get(connections).STAGE?.[connectionId]?.active
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
@@ -138,17 +138,17 @@ export const receiveSTAGE = {
         if (!outputId) outputId = getActiveOutputs(get(outputs), false, true, true)[0]
         if (!outputId) return
 
-        let currentSlideOut = get(outputs)[outputId]?.out?.slide || null
-        let currentShowId = currentSlideOut?.id || ""
-        let currentShowSlide = currentSlideOut?.index ?? -1
-        let currentLayoutRef = getLayoutRef(currentShowId)
-        let currentShowSlides = _show(currentShowId).get("slides") || {}
-        let slidesLength = currentLayoutRef.length || 0
+        const currentSlideOut = get(outputs)[outputId]?.out?.slide || null
+        const currentShowId = currentSlideOut?.id || ""
+        const currentShowSlide = currentSlideOut?.index ?? -1
+        const currentLayoutRef = getLayoutRef(currentShowId)
+        const currentShowSlides = _show(currentShowId).get("slides") || {}
+        const slidesLength = currentLayoutRef.length || 0
 
         // get custom group names
-        let layoutGroups = currentLayoutRef.map((a) => {
-            let ref = a.parent || a
-            let slide = currentShowSlides[ref.id]
+        const layoutGroups = currentLayoutRef.map((a) => {
+            const ref = a.parent || a
+            const slide = currentShowSlides[ref.id]
             if (!slide) return { name: "—" }
 
             if (a.data.disabled || slide.group?.startsWith("~")) return { hide: true }
@@ -159,8 +159,8 @@ export const receiveSTAGE = {
             }
 
             if (typeof group !== "string") group = ""
-            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
-            let oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+            const name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+            const oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
             return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
         })
 

@@ -20,10 +20,10 @@
 
     $: emittersList = sortByName(sortByName(keysToID($emitters)), "type")
 
-    let editEmitter: string = ""
+    let editEmitter = ""
     $: emitter = $emitters[editEmitter]
 
-    let editTemplate: string = ""
+    let editTemplate = ""
     $: template = emitter?.templates?.[editTemplate]
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
     $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(setEmptyValues(templateInputs), emitter.data) : ""

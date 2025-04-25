@@ -22,19 +22,19 @@
     import AudioFile from "./AudioFile.svelte"
 
     export let active: string | null
-    export let searchValue: string = ""
+    export let searchValue = ""
 
     type File = { path: string; name: string; extension?: string; folder?: boolean; favourite?: boolean; audio?: boolean }
 
     let files: File[] = []
     let scrollElem: HTMLElement | undefined
 
-    let playlistSettings: boolean = false
+    let playlistSettings = false
 
     $: playlist = active && $audioPlaylists[active]
 
     $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
-    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path! || "" : ""
+    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
         active === "all"

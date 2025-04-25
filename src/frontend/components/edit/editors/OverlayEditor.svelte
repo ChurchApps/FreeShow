@@ -29,11 +29,11 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
-    let width: number = 0
-    let height: number = 0
+    let width = 0
+    let height = 0
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let ratio: number = 1
+    let ratio = 1
 
     $: {
         if (active.length) updateStyles()
@@ -48,7 +48,7 @@
         active.forEach((id) => {
             let item = items[id]
             let styles = getStyles(item.style)
-            let textStyles: string = ""
+            let textStyles = ""
 
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
@@ -82,7 +82,7 @@
     }
 
     // menu
-    let zoomOpened: boolean = false
+    let zoomOpened = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 

@@ -7,11 +7,11 @@
 
     export let id: string
     export let filter: any
-    export let title: string = ""
-    export let multiple: boolean = false
-    export let clearOnClick: boolean = false
-    export let center: boolean = true
-    export let dark: boolean = true
+    export let title = ""
+    export let multiple = false
+    export let clearOnClick = false
+    export let center = true
+    export let dark = true
 
     function pick() {
         if (clearOnClick) {

@@ -31,7 +31,7 @@
         })
     }
 
-    function toggleData(e: any, key, invert: boolean = false) {
+    function toggleData(e: any, key, invert = false) {
         let checked: boolean = e.target.checked || false
 
         driveData.update((a) => {

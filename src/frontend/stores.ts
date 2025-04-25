@@ -404,7 +404,7 @@ export const $ = {
 
 // DEBUG STORE UPDATES
 const debugStores = false
-let updates: { [key: string]: number } = {}
+const updates: { [key: string]: number } = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
     Object.entries($).forEach(([key, store]) => {
@@ -413,6 +413,7 @@ function startSubscriptions() {
             updates[key]++
 
             // first update is initializing empty store, second update sets saved value
+            // eslint-disable-next-line
             if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
         })
     })

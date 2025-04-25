@@ -24,7 +24,7 @@
         else if (id === "overlays") list = Object.values($overlays)
         else if (id === "templates") list = Object.values($templates)
 
-        let totalLength: number = 0
+        let totalLength = 0
         buttons.forEach((button) => {
             length[button.id] = 0
 

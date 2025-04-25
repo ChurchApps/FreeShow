@@ -13,10 +13,10 @@
         group: string
     }
     export let cam: Cam
-    export let item: boolean = false
-    export let style: string = ""
+    export let item = false
+    export let style = ""
 
-    let loaded: boolean = false
+    let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
     let videoElem: HTMLVideoElement | undefined

@@ -10,9 +10,9 @@ export function createChord(pos: number, key: string, id: string = uid(5)): Chor
 }
 
 export function addChords(item: Item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
-    let newLines = clone(item.lines || [])
+    const newLines = clone(item.lines || [])
     if (!newLines[line].chords) newLines[line].chords = []
-    let id = uid(5)
+    const id = uid(5)
 
     // get first empty
     newLines[line]
@@ -34,10 +34,10 @@ export function addChords(item: Item, showRef, itemIndex, line = 0, pos = 0, key
 export function changeKey({ item, showRef, itemIndex, chord, lineIndex }: { item: Item; showRef: any; itemIndex: number; chord: any; lineIndex: number }) {
     let nextKeyIndex = keys.findIndex((a) => a === chord.key) + 1
     if (nextKeyIndex >= keys.length) nextKeyIndex = 0
-    let nextKey = keys[nextKeyIndex]
+    const nextKey = keys[nextKeyIndex]
 
-    let newLines = [...item.lines!]
-    let currentChordIndex = newLines[lineIndex].chords?.findIndex((a) => a.id === chord.id) ?? -1
+    const newLines = [...item.lines!]
+    const currentChordIndex = newLines[lineIndex].chords?.findIndex((a) => a.id === chord.id) ?? -1
     if (currentChordIndex < 0) return
 
     newLines[lineIndex].chords![currentChordIndex].key = nextKey
@@ -79,27 +79,27 @@ export function chordMove(e: any, { textElem, item }: { textElem: HTMLElement; i
     // let elemBox = textElem.getBoundingClientRect();
     // console.log(e.clientX, elemBox.left);
     // let mouse = { x: e.clientX - elemBox.left, y: e.clientY - elemBox.top };
-    let mouse = { x: e.offsetX, y: e.offsetY + e.target.offsetTop }
+    const mouse = { x: e.offsetX, y: e.offsetY + e.target.offsetTop }
 
     // get closest line
-    let lines = [...textElem.children] as HTMLElement[]
+    const lines = [...textElem.children] as HTMLElement[]
     let closestLine = { index: 0, elem: lines[0] }
     lines.forEach((lineElem, i) => {
-        let currentLine = { index: i, elem: lineElem }
-        let top = lineElem.offsetTop
-        let height = lineElem.offsetHeight
+        const currentLine = { index: i, elem: lineElem }
+        const top = lineElem.offsetTop
+        const height = lineElem.offsetHeight
         // console.log(lineElem.offsetTop, lineElem.offsetHeight, mouse.y);
         // if (mouse.y >= top && mouse.y <= top + height) closestLine = currentLine;
         if (mouse.y >= top - height * 1.2) closestLine = currentLine
     })
     if (!closestLine.elem) return
 
-    let lineElems = [...textElem.children[closestLine.index].children] as HTMLElement[]
-    let totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
-    let lineLetters = item.lines![closestLine.index].text?.reduce((value, text) => (value += text.value.length), 0)
+    const lineElems = [...textElem.children[closestLine.index].children] as HTMLElement[]
+    const totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
+    const lineLetters = item.lines![closestLine.index].text?.reduce((value, text) => (value += text.value.length), 0)
     if (!lineLetters) return
     // times temp value because offset values are not matching
-    let charWidth = totalLineWidth / (lineLetters * 2.5)
+    const charWidth = totalLineWidth / (lineLetters * 2.5)
 
     // get closest char
     // let lineLeft = lineElems[0].offsetLeft;
@@ -107,12 +107,11 @@ export function chordMove(e: any, { textElem, item }: { textElem: HTMLElement; i
     // console.log(mouse.x, lineLeft);
     // if (mouse.x < lineLeft) pos = 0;
     // if (mouse.x > lineElems[0].offsetWidth) pos = lineLetters;
-    let pos = Math.floor(mouse.x / charWidth)
-    console.log(pos)
+    const pos = Math.floor(mouse.x / charWidth)
     if (pos > lineLetters) return
 
-    let newLines = [...item.lines!]
-    let currentChordIndex = newLines[chordDrag.index].chords?.findIndex((a) => a.id === chordDrag.chord.id) ?? -1
+    const newLines = [...item.lines!]
+    const currentChordIndex = newLines[chordDrag.index].chords?.findIndex((a) => a.id === chordDrag.chord.id) ?? -1
     if (currentChordIndex < 0) return
 
     if (chordDrag.index !== closestLine.index) {
@@ -134,25 +133,25 @@ export async function getChordPosition(chord: any, { textElem, item, line }) {
     if (!chordDrag) await delay(1)
 
     if (!textElem || !textElem.children[line]) return "display: none;"
-    let lineElems = [...textElem.children[line].children]
+    const lineElems = [...textElem.children[line].children]
     if (!lineElems?.length) return "display: none;"
 
-    let totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
+    const totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
 
-    let lineLetters = item.lines![line].text?.reduce((value, text) => (value += text.value.length), 0)
+    const lineLetters = item.lines![line].text?.reduce((value, text) => (value += text.value.length), 0)
     if (!lineLetters) return "display: none;"
-    let charWidth = totalLineWidth / lineLetters
+    const charWidth = totalLineWidth / lineLetters
 
     return `inset-inline-start: ${lineElems[0].offsetLeft + chord.pos * charWidth}px;top: ${lineElems[0].offsetTop}px;`
 }
 
 // get all chords in a textbox
 export function loadChords(item: Item) {
-    let chordsList: string[] = []
+    const chordsList: string[] = []
     if (!item) return chordsList
 
-    item.lines?.forEach((item) => {
-        item.chords?.forEach((chord) => {
+    item.lines?.forEach((line) => {
+        line.chords?.forEach((chord) => {
             chordsList.push(chord.key)
         })
     })
@@ -163,7 +162,7 @@ export function loadChords(item: Item) {
 // get a list of unique chords used in a slide
 export function getUsedChords(slide: Slide) {
     if (!slide?.items?.length) return []
-    let itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
+    const itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
     return [...new Set(itemChords)].sort((a, b) => a?.localeCompare(b))
 }
 
