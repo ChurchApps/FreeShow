@@ -30,7 +30,7 @@ function generateProdConfigs() {
     configs.forEach(createProdConfig)
 
     function createProdConfig(id) {
-        const baseConfigPath = join(__dirname, "..", `tsconfig.${id}.json`)
+        const baseConfigPath = join(__dirname, "..", "config", "typescript", `tsconfig.${id}.json`)
         const rawConfig = readFileSync(baseConfigPath, "utf8")
         const parsedConfig = JSON.parse(rawConfig || "{}")
 

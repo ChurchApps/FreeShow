@@ -11,7 +11,7 @@ export function importProject(files: { content: string; name?: string; extension
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.values(get(folders)).find((folder) => folder.name === parentFolder)?.[0] || "/"
-        let projectId = project.id || ""
+        const projectId = project.id || ""
         delete project.id
 
         // add overlays

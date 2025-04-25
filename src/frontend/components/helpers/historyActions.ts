@@ -244,7 +244,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let replace: boolean = obj.newData?.replace === true
             let deleting = !obj.newData?.data?.length
-            let projectImport = obj.newData?.projectImport === true
+            const projectImport = obj.newData?.projectImport === true
             if (obj.oldData?.replace) replace = deleting = true
 
             if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
