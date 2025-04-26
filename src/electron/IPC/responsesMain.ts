@@ -1,10 +1,12 @@
 import getFonts from "css-fonts"
-import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, screen, shell, systemPreferences } from "electron"
+import type { BrowserWindow, DesktopCapturerSource} from "electron";
+import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
-import { Main, MainResponses } from "../../types/IPC/Main"
+import type { MainResponses } from "../../types/IPC/Main";
+import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"

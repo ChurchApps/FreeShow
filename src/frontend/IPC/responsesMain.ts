@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import type { ToMainSendPayloads } from "../../types/IPC/ToMain";
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
@@ -74,7 +75,8 @@ import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
-import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
+import type { MainReturnPayloads } from "./../../types/IPC/Main";
+import { Main } from "./../../types/IPC/Main"
 import { convertCSV } from "../converters/csv"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void

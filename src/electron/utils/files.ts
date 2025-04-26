@@ -2,7 +2,8 @@
 // Functions to interact with local files
 
 import { app, dialog, shell } from "electron"
-import { ExifData, ExifImage } from "exif"
+import type { ExifData} from "exif";
+import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
