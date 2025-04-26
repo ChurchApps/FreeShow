@@ -138,7 +138,7 @@ export async function uploadFile(data: any, updateId = "") {
         }
     } catch (err) {
         response = null
-        error = (err )?.errors || err
+        error = err?.errors || err
     }
 
     switch (response?.status) {
