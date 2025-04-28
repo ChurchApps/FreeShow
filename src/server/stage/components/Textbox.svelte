@@ -7,7 +7,7 @@
     import Icon from "../../common/components/Icon.svelte"
     import { getStyles } from "../../common/util/style"
     import autosize, { type AutosizeTypes } from "../../common/util/autosize"
-    import { variables } from "../util/stores"
+    import { dictionary, variables } from "../util/stores"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import { send } from "../util/socket"
 
@@ -259,9 +259,9 @@
             {#if chordLines.length}
                 <div class="flex">
                     <p style="margin-inline-end: 8px;">Transpose</p>
-                    <Button on:click={() => transpose("down")} title="Down one" dark>{"-1"}</Button>
-                    <Button on:click={() => transpose("reset")} title="Reset" dark>{"0"}</Button>
-                    <Button on:click={() => transpose("up")} title="Up one" dark>{"+1"}</Button>
+                    <Button on:click={() => transpose("down")} title={$dictionary?.edit?.transpose_down} dark>{"-1"}</Button>
+                    <Button on:click={() => transpose("reset")} title={$dictionary?.actions?.reset} dark>{"0"}</Button>
+                    <Button on:click={() => transpose("up")} title={$dictionary?.edit?.transpose_up} dark>{"+1"}</Button>
                 </div>
             {/if}
         </div>

@@ -9,8 +9,9 @@
     import { getPlainEditorText } from "./getTextEditor"
     import Notes from "./tools/Notes.svelte"
     import { transposeText } from "../../utils/chordTranspose"
+    import type { Show } from "../../../types/Show"
 
-    export let currentShow: any
+    export let currentShow: Show | undefined
 
     let text = ""
     $: if (currentShow) text = getPlainEditorText()
@@ -46,22 +47,28 @@
             nextScrollTimeout = null
         }, 500)
     }
+
+    $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a.items?.find((a) => a.lines?.find((a) => a.chords)))
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
 
-<div class="transpose-toolbar">
-    <Button class="transpose-btn" on:click={transposeUp} title="Transpose Up">
-        <Icon id="arrow_up" />
-    </Button>
-    <Button class="transpose-btn" on:click={transposeDown} title="Transpose Down">
-        <Icon id="arrow_down" />
-    </Button>
-</div>
-
 <Notes disabled={currentShow?.locked} style="padding: 30px;height: calc(100% - 28px);font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} />
 
 <div class="actions">
+    <div class="left">
+        {#if showHasChords}
+            <div class="transpose-toolbar">
+                <Button class="transpose-btn" on:click={transposeUp} title={$dictionary.edit?.transpose_up}>
+                    <Icon id="arrow_up" size={1.3} white />
+                </Button>
+                <Button class="transpose-btn" on:click={transposeDown} title={$dictionary.edit?.transpose_down}>
+                    <Icon id="arrow_down" size={1.3} white />
+                </Button>
+            </div>
+        {/if}
+    </div>
+
     <Button on:click={() => textEditActive.set(false)} style="cursor: pointer;" active>
         <Icon id="text" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if}
@@ -88,28 +95,15 @@
 </div>
 
 <style>
+    .left {
+        flex: 1;
+        height: 100%;
+    }
+
     .transpose-toolbar {
-        position: absolute;
-        top: 0;
-        right: 0;
         display: flex;
-        gap: 6px;
-        z-index: 10;
-        padding: 8px 8px 0 0;
     }
-    .transpose-btn {
-        min-width: 28px;
-        min-height: 28px;
-        padding: 0;
-        background: var(--primary-darkest);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .transpose-btn :global(svg) {
-        font-size: 1.3em;
-    }
+
     .actions {
         position: absolute;
         bottom: 0;

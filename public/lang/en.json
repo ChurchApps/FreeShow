@@ -898,6 +898,8 @@
         "chords": "Chords",
         "vertical_offset": "Vertical offset",
         "transpose": "Transpose",
+        "transpose_up": "Transpose up",
+        "transpose_down": "Transpose down",
         "auto_size": "Auto size",
         "no_wrap": "Text on one line",
         "line_spacing": "Line spacing",
