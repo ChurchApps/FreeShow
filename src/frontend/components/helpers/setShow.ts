@@ -84,8 +84,8 @@ export function setShow(id: string, value: "delete" | Show): Show {
     return previousValue!
 }
 
-export async function loadShows(s: string[]) {
-    const savedWhenLoading: boolean = get(saved)
+export async function loadShows(s: string[], deleting: boolean = false) {
+    const savedWhenLoading: boolean = !deleting && get(saved)
 
     return new Promise((resolve) => {
         let count = 0

@@ -249,7 +249,7 @@ export function closeApp() {
 let initialized = false
 export function unsavedUpdater() {
     const cachedValues: { [key: string]: string } = {}
-    const s = { ...saveList, folders, projects, showsCache, stageShows }
+    const s = { ...saveList, folders, projects, showsCache, stageShows, deletedShows, renamedShows }
 
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
@@ -264,6 +264,9 @@ export function unsavedUpdater() {
             }
 
             if (initialized) saved.set(false)
+            if (id === "deletedShows" || id === "renamedShows") {
+                setTimeout(() => saved.set(false))
+            }
         })
 
         // set cached custom listener on load

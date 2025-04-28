@@ -283,7 +283,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
-                await loadShows(showsList.map((a) => a.id))
+                await loadShows(
+                    showsList.map((a) => a.id),
+                    true
+                )
             }
 
             showsCache.update((a) => {

@@ -1,4 +1,4 @@
-import type { Unsubscriber } from "svelte/store";
+import type { Unsubscriber } from "svelte/store"
 import { get } from "svelte/store"
 import type { Recording } from "../../../types/Show"
 import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio, videosData, videosTime } from "../../stores"

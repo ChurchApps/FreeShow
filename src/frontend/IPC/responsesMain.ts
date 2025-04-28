@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { ToMainSendPayloads } from "../../types/IPC/ToMain";
+import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
@@ -17,6 +17,7 @@ import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
+import { convertCSV } from "../converters/csv"
 import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
@@ -75,9 +76,8 @@ import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
-import type { MainReturnPayloads } from "./../../types/IPC/Main";
+import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { convertCSV } from "../converters/csv"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {

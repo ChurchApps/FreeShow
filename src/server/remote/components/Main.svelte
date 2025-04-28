@@ -27,7 +27,7 @@
         scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
         project: { name: translate("remote.project", $dictionary), icon: "project" },
         show: { name: translate("remote.show", $dictionary), icon: "show" },
-        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" }, // slide
+        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" } // slide
         // lyrics: { name: translate("remote.lyrics", $dictionary), icon: "lyrics" },
     }
     $: tabsDisabled = {
@@ -36,7 +36,7 @@
         project: $projects.length || $activeProject,
         show: $activeShow || ($active?.type || "show") !== "show",
         slide: $outShow,
-        lyrics: $outShow,
+        lyrics: $outShow
     }
 
     // keyboard shortcuts
@@ -168,6 +168,7 @@
         height: 100%;
 
         background-color: var(--primary);
+        z-index: 99;
     }
 
     /* tablet & computers */

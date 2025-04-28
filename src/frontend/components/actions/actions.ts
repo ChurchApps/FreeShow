@@ -1,16 +1,16 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { actionHistory, audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
+import { newToast, wait } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
+import { getActiveOutputs } from "../helpers/output"
+import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import type { API_toggle } from "./api";
+import { actionData } from "./actionData"
+import type { API_toggle } from "./api"
 import { API_ACTIONS } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
-import { getActiveOutputs } from "../helpers/output"
-import { newToast, wait } from "../../utils/common"
-import { actionData } from "./actionData"
-import { getLayoutRef } from "../helpers/show"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])

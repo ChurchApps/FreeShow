@@ -1,7 +1,7 @@
 import { uid } from "uid"
-import type { ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain";
+import type { ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { MainReceiveValue, MainReturnPayloads} from "./../../types/IPC/Main";
+import type { MainReceiveValue, MainReturnPayloads } from "./../../types/IPC/Main"
 import { MAIN, Main, type MainSendValue } from "./../../types/IPC/Main"
 import { mainResponses } from "./responsesMain"
 

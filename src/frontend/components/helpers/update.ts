@@ -1,4 +1,4 @@
-import type { StoreKey } from "../../stores";
+import type { StoreKey } from "../../stores"
 import { $ } from "../../stores"
 import { clone } from "./array"
 
