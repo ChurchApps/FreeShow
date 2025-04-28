@@ -1,4 +1,5 @@
-import { BrowserWindow, Rectangle, screen } from "electron"
+import type { BrowserWindow, Rectangle} from "electron";
+import { screen } from "electron"
 import { mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"

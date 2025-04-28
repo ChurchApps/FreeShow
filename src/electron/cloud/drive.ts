@@ -136,9 +136,9 @@ export async function uploadFile(data: any, updateId = "") {
         } else {
             response = await driveClient.files.create({ ...data, fields: "id" })
         }
-    } catch (err) {
+    } catch (err: any) {
         response = null
-        error = (err as any)?.errors || err
+        error = err?.errors || err
     }
 
     switch (response?.status) {
