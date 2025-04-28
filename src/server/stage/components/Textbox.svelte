@@ -431,7 +431,7 @@
         font-size: var(--chord-size) !important;
         font-weight: bold;
 
-        transform: translate(-50%, calc(-55% - 2px - var(--offsetY)));
+        transform: translate(0, calc(-55% - 2px - var(--offsetY)));
         line-height: initial;
         z-index: 2;
     }
