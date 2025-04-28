@@ -8,6 +8,7 @@
     import { formatText } from "./formatTextEditor"
     import { getPlainEditorText } from "./getTextEditor"
     import Notes from "./tools/Notes.svelte"
+    import { transposeText } from "../../utils/chordTranspose"
 
     export let currentShow: any
 
@@ -20,6 +21,14 @@
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
         zoomOpened = false
+    }
+
+    // Transpose handlers
+    function transposeUp() {
+        text = transposeText(text, 1)
+    }
+    function transposeDown() {
+        text = transposeText(text, -1)
     }
 
     // shortcut
@@ -40,6 +49,15 @@
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
+
+<div class="transpose-toolbar">
+    <Button class="transpose-btn" on:click={transposeUp} title="Transpose Up">
+        <Icon id="arrow_up" />
+    </Button>
+    <Button class="transpose-btn" on:click={transposeDown} title="Transpose Down">
+        <Icon id="arrow_down" />
+    </Button>
+</div>
 
 <Notes disabled={currentShow?.locked} style="padding: 30px;height: calc(100% - 28px);font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} />
 
@@ -70,6 +88,28 @@
 </div>
 
 <style>
+    .transpose-toolbar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        gap: 6px;
+        z-index: 10;
+        padding: 8px 8px 0 0;
+    }
+    .transpose-btn {
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0;
+        background: var(--primary-darkest);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .transpose-btn :global(svg) {
+        font-size: 1.3em;
+    }
     .actions {
         position: absolute;
         bottom: 0;
