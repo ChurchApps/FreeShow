@@ -117,7 +117,8 @@
         "quick_lyrics_example_tip": "Legg inn sangtekst eller annen tekst her",
         "quick_lyrics_example_text": "Linje",
         "empty": "Tomt show",
-        "exists": "Fant et eksisterende show med samme navn"
+        "exists": "Fant et eksisterende show med samme navn",
+        "slideshow": "Lysbildefremvisning"
     },
     "preview": {
         "_previous_show": "Forrige show",
@@ -427,6 +428,7 @@
         "set_time": "Sett tid",
         "assign_shortcut": "Angi hurtigtast",
         "dynamic_values": "Dynamiske verdier",
+        "conditions": "Betingelser",
         "animate": "Animer",
         "translate": "Oversetting",
         "next_timer": "Tid til neste lysbilde",
@@ -441,6 +443,7 @@
         "edit_event": "Rediger hendelse",
         "about": "Om",
         "history": "Historie",
+        "action_history": "Historie for handlinger",
         "manage_emitters": "Administrer utsendere",
         "action": "Handling",
         "category_action": "Handling for kategori",
@@ -492,6 +495,7 @@
         "deleted_cache": "Slettet hurtigbuffer med medie-miniatyrbilder.",
         "no_songswords_easyworship": "Mangler SongsWords.db filen.",
         "delete_shows_empty": "Ingen shows å slette.",
+        "reached_end": "Enden er nådd!",
         "output_capture_enabled": "Opptak av utgangsskjerm aktivert, dette kan forårsake ytelsesproblemer. Bruk kun ved behov!",
         "midi_no_project": "Mottok utløser til å endre prosjekt, men ingen prosjekt funnet på indeks:",
         "midi_no_show": "Mottok utløser til å starte lysbilde, men ingen show aktiv.",
@@ -610,6 +614,8 @@
         "bind_to": "Spesifikke utgangsskjermer",
         "remove_binding": "Fjern spesifikke utgangsskjermer",
         "dynamic_values": "Dynamiske verdier",
+        "dynamic_value": "Dynamisk verdi",
+        "conditions": "Betingelser",
         "rearrange": "Juster",
         "to_front": "Flytt fremst",
         "forward": "Flytt fremover",
@@ -694,6 +700,7 @@
         "id_select_group": "Spill av spesifikk gruppe",
         "id_change_stage_layout": "Endre scene-oppsett for tilkoblet",
         "start_camera": "Start kamera",
+        "start_screen": "Start skjerm",
         "id_select_overlay": "Start overlegg",
         "change_volume": "Endre volum",
         "start_audio_stream": "Start lydstrøm",
@@ -715,6 +722,7 @@
         "custom_activation": "Egendefinert aktivering",
         "set_custom_activation": "Angi egendefinert aktivering",
         "any": "Hvilken som helst",
+        "override_category_action": "Overstyr handling for kategori",
         "activate_on_startup": "Aktiver ved oppstart",
         "activate_save": "Aktiver ved lagring",
         "activate_slide_clicked": "Aktiver ved klikk på lysbilde",
@@ -729,6 +737,18 @@
         "activate_show_created": "Aktiver når show blir laget",
         "activate_show_opened": "Aktiver når show blir åpnet",
         "activate_audio_playlist_ended": "Aktiver når spilleliste er ferdig"
+    },
+    "conditions": {
+        "show_item": "Vis element hvis",
+        "all_conditions": "Alle følgende betingelser er oppfylt",
+        "some_conditions": "Noen av følgende betingelser er oppfylt",
+        "none_conditions": "Ingen av følgende betingelser er oppfylt",
+        "has": "har",
+        "has_not": "ikke har",
+        "is": "er",
+        "is_not": "ikke er",
+        "value": "verdi",
+        "empty": "ingenting"
     },
     "recording": {
         "remove": "Fjern opptak",
@@ -800,6 +820,8 @@
         "columns": "Kolonner"
     },
     "context": {
+        "to_dictionary": "Legg til i ordlisten",
+        "correct": "Erstatt med dette ordet",
         "enabledTabs": "Veksle faner",
         "setTag": "Sett etikett",
         "filterByTags": "Filtrer etter etikett",
@@ -811,6 +833,7 @@
         "changeIcon": "Endre ikon",
         "changeGroup": "Endre gruppe",
         "createNew": "Lag ny",
+        "create_slideshow": "Opprett lysbildefremvisning",
         "selectAll": "Merk alt",
         "force_outputs": "Tving visning av skjermer",
         "align_with_screen": "Juster til skjerm",
@@ -873,6 +896,7 @@
         "invert_items": "Inverter elementer",
         "list": "Liste",
         "chords": "Akkorder",
+        "vertical_offset": "Vertikal forskyvning",
         "transpose": "Transponer",
         "auto_size": "Auto-størrelse",
         "no_wrap": "Tekst på en linje",
@@ -937,18 +961,22 @@
         "bottom_top": "Bunn til topp",
         "left_right": "Venstre til høyre",
         "right_left": "Høyre til venstre",
+        "press_action": "Handling ved trykk",
+        "release_action": "Handling ved slipp",
         "max_events": "Maks hendelser",
         "start_days_from_today": "Start på antall dager fra i dag",
         "just_one_day": "Bare en dag",
         "enable_start_date": "Aktiver startdato",
         "disable_navigation": "Deaktiver navigeringsknapper",
-        "progress_bar": "Fremdriftslinje"
+        "progress_bar": "Fremdriftslinje",
+        "each_number_once": "Hvert nummer bare en gang"
     },
     "items": {
         "text": "Tekstboks",
         "media": "Media",
         "image": "Bilde",
         "camera": "Kamera",
+        "screen": "Skjerm",
         "video": "Video",
         "mirror": "Speil",
         "clock": "Klokke",
@@ -1057,7 +1085,8 @@
         "signal": "Signal",
         "message_template": "Mal for melding",
         "message_templates": "Mal for meldinger",
-        "inputs": "Innganger"
+        "inputs": "Innganger",
+        "data": "Data"
     },
     "draw": {
         "focus": "Fokus",
@@ -1343,10 +1372,12 @@
     },
     "variables": {
         "number": "Tall",
+        "random_number": "Tilfeldig tall",
         "text": "Tekst",
         "step": "Steg",
         "default_value": "Standard verdi",
         "value": "Verdi",
+        "randomize": "Tilfeldig tall",
         "set_state": "Sett status",
         "minimum": "Minimum",
         "maximum": "Maksimum"
