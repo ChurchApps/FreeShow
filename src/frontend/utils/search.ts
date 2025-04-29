@@ -6,7 +6,11 @@ import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces = false) {
-    let newValue = value.toLowerCase().replace(specialChars, "")
+    let newValue = value
+        .toLowerCase()
+        .replace(specialChars, "")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
     if (removeSpaces) newValue = newValue.replace(/\s+/g, "")
 
     return newValue

@@ -1,3 +1,4 @@
+import type { ICommonTagsResult } from "music-metadata"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -17,6 +18,7 @@ export enum ToMain {
     CHUMS_CONNECT = "CHUMS_CONNECT",
     CHUMS_PROJECTS = "CHUMS_PROJECTS",
     WEBSOCKET = "WEBSOCKET",
+    AUDIO_METADATA = "AUDIO_METADATA",
     // Main
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
@@ -45,6 +47,7 @@ export interface ToMainSendPayloads {
     [ToMain.CHUMS_CONNECT]: { success: boolean; isFirstConnection?: boolean }
     [ToMain.CHUMS_PROJECTS]: { shows: any; projects: any }
     [ToMain.WEBSOCKET]: "connected"
+    [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }

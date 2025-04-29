@@ -2,11 +2,12 @@
 // Here are all the global app variables
 
 import type { Family } from "css-fonts"
+import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
-import type { History } from "../types/History"
+import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
@@ -126,6 +127,7 @@ export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writab
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
 export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
+export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)
@@ -169,8 +171,8 @@ export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writab
 // ----- SAVED VARIABLES -----
 
 // HISTORY
-export const undoHistory: Writable<History[]> = writable([])
-export const redoHistory: Writable<History[]> = writable([])
+export const undoHistory: Writable<(History | HistoryNew)[]> = writable([])
+export const redoHistory: Writable<(History | HistoryNew)[]> = writable([])
 export const historyCacheCount: Writable<number> = writable(250)
 export const usageLog: Writable<any> = writable({ all: [] })
 
@@ -360,6 +362,7 @@ export const $ = {
     folders,
     timers,
     variables,
+    triggers,
     media,
     mediaFolders,
     overlayCategories,

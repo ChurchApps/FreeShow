@@ -53,6 +53,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
+import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -129,6 +130,8 @@ export const mainResponses: MainResponses = {
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
     [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
+    [Main.NOW_PLAYING]: (data) => setPlayingState(data),
+    [Main.NOW_PLAYING_UNSET]: (data) => unsetPlayingAudio(data),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
     [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),

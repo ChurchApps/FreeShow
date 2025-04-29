@@ -10,6 +10,7 @@
     import Center from "../../system/Center.svelte"
     import { onMount } from "svelte"
     import { getLayoutRef } from "../../helpers/show"
+    import { createStore, updateStore } from "../../helpers/historyStores"
 
     // const types = [
     //     { id: "http", name: "HTTP" },
@@ -36,10 +37,12 @@
 
         currentTrigger[key] = value
 
-        triggers.update((a) => {
-            a[triggerId] = currentTrigger
-            return a
-        })
+        if (existing) {
+            updateStore("triggers", triggerId, currentTrigger)
+        } else {
+            createStore("triggers", currentTrigger, triggerId)
+            existing = true
+        }
     }
 
     function changeTrigger(e: any) {

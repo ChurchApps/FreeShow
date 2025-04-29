@@ -66,7 +66,7 @@
                 slideData: clone(slideData),
                 currentSlide: clone(currentSlide),
                 lines: clone(lines),
-                currentStyle: clone(currentStyle),
+                currentStyle: clone(currentStyle)
             }
             return
         }
@@ -105,7 +105,7 @@
                     slideData: clone(slideData),
                     currentSlide: clone(currentSlide),
                     lines: clone(lines),
-                    currentStyle: clone(currentStyle),
+                    currentStyle: clone(currentStyle)
                 }
 
                 // wait until half transition duration of previous items have passed as it looks better visually

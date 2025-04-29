@@ -46,3 +46,11 @@ export interface History {
         lines?: number[]
     }
 }
+
+export type HistoryTypes = "store_create" | "store_update" | "store_delete"
+export interface HistoryNew {
+    version: number
+    time: number
+    type: HistoryTypes
+    value: any
+}

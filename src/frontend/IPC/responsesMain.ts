@@ -41,6 +41,7 @@ import {
     activeProject,
     activeShow,
     alertMessage,
+    audioData,
     chumsConnected,
     currentOutputSettings,
     dataPath,
@@ -214,6 +215,12 @@ export const mainResponses: MainResponses = {
     [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
+    [ToMain.AUDIO_METADATA]: (data) => {
+        audioData.update((a) => {
+            a[data.filePath] = { metadata: data.metadata }
+            return a
+        })
+    },
 
     // CONNECTION
     [ToMain.PCO_CONNECT]: (data) => {
@@ -231,8 +238,12 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
             const id = show.id
+
+            // don't add/update if already existing (to not mess up any set styles)
+            if (get(shows)[id]) return
+
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 
@@ -276,8 +287,12 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
             const id = show.id
+
+            // don't add/update if already existing (to not mess up any set styles)
+            if (get(shows)[id]) return
+
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 

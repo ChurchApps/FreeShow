@@ -116,6 +116,7 @@
         "grandiose": "github:vassbo/grandiose#5b1fc57",
         "jzz": "^1.9.3",
         "mp4box": "^0.5.4",
+        "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
         "pcm-convert": "^1.6.5",

@@ -18,7 +18,7 @@ import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearDrawing, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
-import { runActionId, toggleAction } from "./actions"
+import { runActionByName, runActionId, toggleAction } from "./actions"
 import {
     getOutput,
     getOutputGroupName,
@@ -280,7 +280,8 @@ export const API_ACTIONS = {
     emit_action: (data: API_emitter) => emitData(data),
 
     // ACTION
-    run_action: (data: API_id) => runActionId(data.id),
+    name_run_action: (data: API_strval) => runActionByName(data.value), // BC
+    run_action: (data: API_id) => runActionId(data.id), // BC
     toggle_action: (data: API_toggle) => toggleAction(data),
 
     // ADD
