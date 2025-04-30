@@ -1181,7 +1181,7 @@ export function getNumberVariables(variableUpdater = get(variables), _dynamicUpd
 // AUDIO METADATA
 
 function getMetadata(audioPath: string) {
-    return (get(audioData)[audioPath]?.metadata || {}) as ICommonTagsResult
+    return (get(audioData)[audioPath]?.metadata || {})
 }
 
 function getArtist(metadata: ICommonTagsResult) {

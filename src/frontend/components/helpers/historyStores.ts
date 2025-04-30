@@ -1,12 +1,14 @@
-import { get, Writable } from "svelte/store"
-import { $, StoreKey } from "../../stores"
+import type { Writable } from "svelte/store";
+import { get } from "svelte/store"
+import type { StoreKey } from "../../stores";
+import { $ } from "../../stores"
 import { clone } from "./array"
 import { historyNew } from "./history"
 
 type StoreValue<K extends StoreKey> = (typeof $)[K] extends Writable<infer T> ? T : never
 type StoreItem<K extends StoreKey> = StoreValue<K> extends Record<string, infer V> ? V : never
 
-export function createStore<T extends StoreKey>(id: T, initialValue: any, key: string, addToHistory: boolean = true) {
+export function createStore<T extends StoreKey>(id: T, initialValue: any, key: string, addToHistory = true) {
     if (!addToHistory) {
         createStoreHistory(id, initialValue, key)
         return
@@ -16,7 +18,7 @@ export function createStore<T extends StoreKey>(id: T, initialValue: any, key: s
     historyNew("store_create", historyValue)
 }
 
-export function updateStore<T extends StoreKey>(id: T, key: string, value: StoreItem<T>, addToHistory: boolean = true) {
+export function updateStore<T extends StoreKey>(id: T, key: string, value: StoreItem<T>, addToHistory = true) {
     if (!get($[id])) return
     value = clone(value)
 
@@ -30,7 +32,7 @@ export function updateStore<T extends StoreKey>(id: T, key: string, value: Store
     historyNew("store_update", historyValue)
 }
 
-export function deleteStore<T extends StoreKey>(id: T, key: string, addToHistory: boolean = true) {
+export function deleteStore<T extends StoreKey>(id: T, key: string, addToHistory = true) {
     if (!get($[id])) return
 
     if (!addToHistory) {

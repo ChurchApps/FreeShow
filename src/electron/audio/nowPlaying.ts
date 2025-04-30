@@ -63,7 +63,7 @@ function startServer() {
     })
 
     app.listen(PLAYING_DATA_PORT, () => {
-        console.log(`Serving audio name at PORT: ${PLAYING_DATA_PORT}`)
+        console.info(`Serving audio name at PORT: ${PLAYING_DATA_PORT}`)
     })
 }
 

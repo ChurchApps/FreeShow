@@ -29,6 +29,7 @@ function normalizeRoot(root: string, preferSharps: boolean): string {
 function transposeChord(chord: string, step: number, preferSharps = true): string {
     const match = chord.match(/^([A-G][b#]?)(.*)$/)
     if (!match) return chord
+    // eslint-disable-next-line prefer-const
     let [, root, rest] = match
     // Normalize to sharp or flat
     root = normalizeRoot(root, preferSharps)
@@ -40,7 +41,7 @@ function transposeChord(chord: string, step: number, preferSharps = true): strin
         i = scale.indexOf(root)
     }
     if (i === -1) return chord
-    let newIndex = (i + step + 12) % 12
+    const newIndex = (i + step + 12) % 12
     return scale[newIndex] + rest
 }
 

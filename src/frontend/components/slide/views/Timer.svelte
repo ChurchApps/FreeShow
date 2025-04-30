@@ -70,7 +70,7 @@
     else stopBlinking()
     onDestroy(stopBlinking)
 
-    let blinkingOff: boolean = false
+    let blinkingOff = false
     function startBlinking() {
         if (blinkingInterval) return
         blinkingInterval = setInterval(() => {

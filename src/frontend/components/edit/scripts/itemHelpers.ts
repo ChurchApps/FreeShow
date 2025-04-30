@@ -176,7 +176,7 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
     if (!items?.length || items.length < 2) return
 
     stageShows.update((a) => {
-        a[get(activeStage).id!].itemOrder = items.map((a) => a.id)
+        a[get(activeStage).id!].itemOrder = items.map((item) => item.id)
         return a
     })
 

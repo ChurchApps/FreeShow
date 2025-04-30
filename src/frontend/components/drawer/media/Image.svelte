@@ -3,7 +3,7 @@
     import { encodeFilePath } from "../../helpers/media"
 
     export let src: string
-    export let updater: number = 0
+    export let updater = 0
     export let alt: string
     export let transition = true
 

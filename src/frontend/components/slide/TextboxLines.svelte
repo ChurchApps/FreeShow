@@ -101,7 +101,7 @@
 
     // AUTO SIZE
 
-    let cssFontSize: number = 0
+    let cssFontSize = 0
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
         cssFontSize = fontSize

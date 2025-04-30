@@ -128,6 +128,7 @@
         setBoxInputValue(edits, "chords", "chords.size", "hidden", !enabled)
         setBoxInputValue(edits, "chords", "chords.offsetY", "hidden", !enabled)
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         let data = (typeof item?.chords === "boolean" ? (item as any)?.chordsData : item?.chords) || {}
         if (data.color) setBoxInputValue(edits, "chords", "chords.color", "value", data.color)
         if (data.size) setBoxInputValue(edits, "chords", "chords.size", "value", data.size)
