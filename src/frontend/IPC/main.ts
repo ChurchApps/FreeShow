@@ -1,6 +1,8 @@
 import { uid } from "uid"
-import { ToMain, ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
-import { MAIN, Main, MainReceiveValue, MainReturnPayloads, type MainSendValue } from "./../../types/IPC/Main"
+import type { ToMainReceiveValue, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { MainReceiveValue, MainReturnPayloads } from "./../../types/IPC/Main"
+import { MAIN, Main, type MainSendValue } from "./../../types/IPC/Main"
 import { mainResponses } from "./responsesMain"
 
 // @ts-ignore // T extends keyof typeof Main

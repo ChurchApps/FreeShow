@@ -1,4 +1,4 @@
-const { readdirSync, existsSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync } = require("fs")
+const { readdirSync, existsSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync, copyFile } = require("fs")
 const { join } = require("path")
 
 // app build file paths
@@ -42,4 +42,16 @@ function generateProdConfigs() {
     }
 }
 
+// copy the latest version of pdf worker file to ensure it's up to date with the package version
+function getPdfWorkerFile() {
+    const workerName = "pdf.worker.min.mjs"
+    const originPath = join(__dirname, "..", "node_modules", "pdfjs-dist", "build", workerName)
+    const outputPath = join(__dirname, "..", "public", "assets", workerName)
+
+    copyFile(originPath, outputPath, (err) => {
+        if (err) console.error("Could not copy PDF worker file:", err)
+    })
+}
+
 if (process.env.NODE_ENV === "production") generateProdConfigs()
+getPdfWorkerFile()

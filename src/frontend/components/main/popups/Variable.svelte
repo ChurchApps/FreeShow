@@ -10,17 +10,18 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import { createStore, updateStore } from "../../helpers/historyStores"
 
     let chosenType = ""
     const types = [
         { id: "number", name: "$:variables.number:$", icon: "number" },
         { id: "random_number", name: "$:variables.random_number:$", icon: "unknown" },
-        { id: "text", name: "$:variables.text:$", icon: "text" },
+        { id: "text", name: "$:variables.text:$", icon: "text" }
     ]
 
     const DEFAULT_VARIABLE = {
         name: "",
-        type: "number",
+        type: "number"
     }
 
     let existing: boolean = $selected.id === "variable" && $selected.data[0]?.id
@@ -55,10 +56,12 @@
 
         currentVariable[key] = value
 
-        variables.update((a) => {
-            a[variableId] = currentVariable
-            return a
-        })
+        if (existing) {
+            updateStore("variables", variableId, currentVariable)
+        } else {
+            createStore("variables", currentVariable, variableId)
+            existing = true
+        }
     }
 
     function updateSet(index: number, e: any, key: string) {

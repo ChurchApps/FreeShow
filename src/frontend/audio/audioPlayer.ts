@@ -4,11 +4,13 @@ import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { gain, media, outLocked, playingAudio, special, volume } from "../stores"
+import { dataPath, gain, media, outLocked, playingAudio, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
+import { sendMain } from "../IPC/main"
+import { Main } from "../../types/IPC/Main"
 
 type AudioMetadata = {
     name: string
@@ -92,6 +94,9 @@ export class AudioPlayer {
         }
 
         this.initAudio(path, waitToPlay)
+
+        const name = removeExtension(metadata.name || getFileName(path))
+        this.nowPlaying(path, name)
     }
 
     static async playStream(id: string, stream: MediaStream, metadata: AudioMetadata) {
@@ -201,6 +206,7 @@ export class AudioPlayer {
         })
 
         AudioAnalyser.detach(id)
+        sendMain(Main.NOW_PLAYING_UNSET, { dataPath: get(dataPath) })
     }
 
     private static stopStream(stream: MediaStream | undefined) {
@@ -267,6 +273,11 @@ export class AudioPlayer {
 
         const stillPlaying = this.getAllPlaying()
         if (!stillPlaying.length) checkNextAfterMedia(id, "audio")
+    }
+
+    // NowPlaying.txt
+    static nowPlaying(filePath: string, name: string) {
+        sendMain(Main.NOW_PLAYING, { dataPath: get(dataPath), filePath, name })
     }
 
     // GET

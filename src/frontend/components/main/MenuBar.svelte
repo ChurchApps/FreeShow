@@ -78,7 +78,7 @@
         <Button on:click={() => sendMain(Main.MAXIMIZE)} style="transform: rotate(180deg);" center>
             <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 0.8 : 0.9} white />
         </Button>
-        <Button id="close" on:click={initializeClosing} center>
+        <Button id="close" on:click={() => initializeClosing()} center>
             <Icon id="close" size={1.2} white />
         </Button>
     </div>

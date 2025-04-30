@@ -20,7 +20,7 @@
         text: { name: "items.text", icon: "text", disabled: true },
         item: { name: "tools.item", icon: "item", disabled: true },
         items: { name: "tools.items", icon: "items" },
-        slide: { name: "edit.options", icon: "options", overflow: true }, // tools.slide
+        slide: { name: "edit.options", icon: "options", overflow: true } // tools.slide
     }
 
     let selectedItemIds: string[] = []
@@ -44,8 +44,9 @@
             return
         }
 
-        if (activeItemId && active === "items") {
+        if (activeItemId && selectedItemIds.length === 1 && active === "items") {
             tabs.text.disabled = tabs.item.disabled = false
+            // WIP don't change if clicking in "Arrange items"
             if ($activeStage.items?.length) active = "text"
         } else if (!activeItemId) {
             tabs.text.disabled = tabs.item.disabled = true
@@ -60,7 +61,7 @@
             width: `${resolution.width / 2}px`,
             height: `${resolution.height / 2}px`,
             left: `${resolution.width / 4}px`,
-            top: `${resolution.height / 4}px`,
+            top: `${resolution.height / 4}px`
         }
 
         let stageId = $activeStage.id
@@ -97,7 +98,7 @@
                     id: "UPDATE",
                     newData: { data, key: "items", subkey, keys: activeItems },
                     oldData: { id: stageId },
-                    location: { page: "stage", id: "stage_item_content", override: stageId + "_reset_text" },
+                    location: { page: "stage", id: "stage_item_content", override: stageId + "_reset_text" }
                 })
             })
 
@@ -105,14 +106,14 @@
                 id: "UPDATE",
                 newData: { data: textStyles, key: "items", subkey: "style", keys: activeItems },
                 oldData: { id: stageId },
-                location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item_text" },
+                location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item_text" }
             })
         } else if (active === "item") {
             history({
                 id: "UPDATE",
                 newData: { data: itemStyles, key: "items", subkey: "style", keys: activeItems },
                 oldData: { id: stageId },
-                location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" },
+                location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" }
             })
         } else if (active === "slide") {
             history({ id: "UPDATE", newData: { data: {}, key: "settings" }, oldData: { id: stageId }, location: { page: "stage", id: "stage", override: "stage_reset" } })
@@ -162,7 +163,7 @@
             id: "UPDATE",
             newData: { data: itemStyles, key: "items", subkey: "style", keys: activeItems },
             oldData: { id: stageId },
-            location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" },
+            location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" }
         })
     }
 </script>

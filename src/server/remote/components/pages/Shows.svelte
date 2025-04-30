@@ -45,13 +45,19 @@
         firstMatch = filteredShows[0]?.id || null
     }
 
-    $: sva = searchValue
-        .toLowerCase()
-        .replace(/[.\/#!?$%\^&\*;:{}=\-_`~(),]/g, "")
-        .split(" ")
+    $: sva = formatSearch(searchValue).split(" ")
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
     const searchIncludes = (s: string, sv: string): boolean => filter(s).includes(sv)
     const searchEquals = (s: string, sv: string): boolean => filter(s) === sv
+
+    const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
+    function formatSearch(value: string) {
+        return value
+            .toLowerCase()
+            .replace(specialChars, "")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+    }
 
     let totalMatch: number = 0
     $: totalMatch = searchValue ? 0 : 0
@@ -62,8 +68,8 @@
             if (sv.length > 1) {
                 match[i] = 0
 
-                if (searchEquals(obj.name.toLowerCase(), sv)) match[i] = 100
-                else if (searchIncludes(obj.name.toLowerCase(), sv)) match[i] += 25
+                if (searchEquals(formatSearch(obj.name), sv)) match[i] = 100
+                else if (searchIncludes(formatSearch(obj.name), sv)) match[i] += 25
             }
         })
 

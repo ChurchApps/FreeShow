@@ -45,6 +45,10 @@
             }
         ],
         "@typescript-eslint/consistent-type-assertions": "error",
+        "@typescript-eslint/consistent-type-imports": ["error", {
+            "prefer": "type-imports",
+            "disallowTypeAnnotations": true
+        }],
         "@typescript-eslint/dot-notation": "error",
         "@typescript-eslint/indent": "off",
         "@typescript-eslint/member-delimiter-style": [

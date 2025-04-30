@@ -232,6 +232,7 @@
         font-weight: normal;
         font-style: normal;
         text-align: center;
+        text-transform: none;
 
         line-height: normal;
         letter-spacing: normal;

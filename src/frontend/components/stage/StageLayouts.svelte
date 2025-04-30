@@ -64,7 +64,7 @@
         </div>
     {:else}
         <Center faded>
-            <T id="empty.stage_shows" />
+            <T id="empty.layouts" />
         </Center>
     {/if}
     <!-- Add -->

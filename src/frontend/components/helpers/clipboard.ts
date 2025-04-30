@@ -60,6 +60,7 @@ import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
+import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -873,6 +874,7 @@ const deleteActions = {
             return a
         })
         activeStage.set({ ...get(activeStage), items: [] })
+        updateSortedStageItems()
     },
 }
 

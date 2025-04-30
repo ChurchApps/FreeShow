@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { History } from "../../../types/History"
+import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
 import { activePage, driveData, historyCacheCount, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
@@ -8,6 +8,7 @@ import { deselect } from "./select"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { removeTemplatesFromShow } from "./show"
+import { createStore, createStoreHistory, deleteStore, deleteStoreHistory, updateStore, updateStoreHistory } from "./historyStores"
 
 // override previous history
 const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "slideStyle", "STAGE"]
@@ -207,7 +208,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     // }
 
     if (shouldUndo) {
-        redoHistory.update((rh: History[]) => {
+        redoHistory.update((rh) => {
             rh.push(obj)
 
             // delete oldest if more than set value
@@ -216,7 +217,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
             return rh
         })
     } else {
-        undoHistory.update((uh: History[]) => {
+        undoHistory.update((uh: any) => {
             // if id and location is equal push new data to previous stored
             // not: project | newProject | newFolder | addShowToProject | slide
             if (
@@ -254,15 +255,52 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     console.info("REDO: ", [...get(redoHistory)])
 }
 
+export function historyNew(type: HistoryTypes, value: any) {
+    if (type === "store_create") {
+        createStoreHistory(value.id, value.value, value.key)
+    } else if (type === "store_update") {
+        // @ts-ignore
+        updateStoreHistory(value.id, value.key, value.value)
+    } else if (type === "store_delete") {
+        deleteStoreHistory(value.id, value.key)
+    } else {
+        console.error("Invalid history type")
+        return
+    }
+
+    const historyValue: HistoryNew = { version: 1, time: Date.now(), type, value }
+    undoHistory.update((a) => {
+        a.push(historyValue)
+        return a
+    })
+}
+
 export const undo = () => {
     if (!get(undoHistory).length) return
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
-    let lastUndo: History
-    undoHistory.update((uh: History[]) => {
+    let lastUndo: any
+    undoHistory.update((uh) => {
         lastUndo = uh.pop()!
         return uh
     })
+
+    if (lastUndo.version === 1) {
+        if (lastUndo.type === "store_create") {
+            deleteStore(lastUndo.value.id, lastUndo.value.key, false)
+        } else if (lastUndo.type === "store_update") {
+            // @ts-ignore
+            updateStore(lastUndo.value.id, lastUndo.value.key, lastUndo.value.oldValue, false)
+        } else if (lastUndo.type === "store_delete") {
+            createStore(lastUndo.value.id, lastUndo.value.oldValue, lastUndo.value.key, false)
+        }
+
+        redoHistory.update((rh) => {
+            rh.push(lastUndo)
+            return rh
+        })
+        return
+    }
 
     const oldData: any = clone(lastUndo!.oldData)
     lastUndo!.oldData = clone(lastUndo!.newData)
@@ -277,11 +315,30 @@ export const redo = () => {
     if (!get(redoHistory).length) return
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
-    let lastRedo: History
-    redoHistory.update((rh: History[]) => {
+    let lastRedo: any
+    redoHistory.update((rh) => {
         lastRedo = rh.pop()!
         return rh
     })
+
+    if (lastRedo.version === 1) {
+        if (lastRedo.type === "store_create") {
+            createStore(lastRedo.value.id, lastRedo.value.value, lastRedo.value.key, false)
+        } else if (lastRedo.type === "store_update") {
+            // @ts-ignore
+            updateStore(lastRedo.value.id, lastRedo.value.key, lastRedo.value.value, false)
+        } else if (lastRedo.type === "store_delete") {
+            deleteStore(lastRedo.value.id, lastRedo.value.key, false)
+        }
+
+        undoHistory.update((a) => {
+            // a[a.length - 1].time = Date.now()
+            lastRedo.time = Date.now()
+            a.push(lastRedo)
+            return a
+        })
+        return
+    }
 
     const oldData: any = clone(lastRedo!.oldData)
     lastRedo!.oldData = clone(lastRedo!.newData)

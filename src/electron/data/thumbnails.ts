@@ -1,4 +1,5 @@
-import { app, BrowserWindow, NativeImage, nativeImage, ResizeOptions } from "electron"
+import type { NativeImage, ResizeOptions } from "electron"
+import { app, BrowserWindow, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
 import { isProd, loadWindowContent } from ".."

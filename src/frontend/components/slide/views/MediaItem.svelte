@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { currentWindow, volume } from "../../../stores"
@@ -11,11 +12,27 @@
     export let mirror = true
     export let edit = false
 
+    $: shouldAutoUpdate = item.src?.includes("NowPlayingCover")
+
+    let updater = 0
+    let updateInterval: NodeJS.Timeout | null = null
+    $: if (shouldAutoUpdate && !updateInterval) {
+        updateInterval = setInterval(() => (updater = Date.now()), 1000)
+    }
+    onDestroy(() => {
+        if (updateInterval) clearInterval(updateInterval)
+    })
+
     let mediaItemPath = ""
     $: if (item?.type === "media") getMediaItemPath()
     async function getMediaItemPath() {
         mediaItemPath = ""
         if (!item.src) return
+
+        if (shouldAutoUpdate) {
+            mediaItemPath = item.src
+            return
+        }
 
         // only load thumbnails in main
         if ($currentWindow || preview) {
@@ -41,11 +58,13 @@
             <track kind="captions" />
         </video>
     {:else}
+        <!-- {#key updater} -->
         <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
         <!-- TODO: use custom transition... -->
         {#if item.fit === "blur"}
-            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaItemPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
         {/if}
-        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaItemPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+        <!-- {/key} -->
     {/if}
 {/if}

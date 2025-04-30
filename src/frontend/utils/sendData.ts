@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
-import { connections, currentWindow } from "../stores"
+import { connections, currentWindow, shows } from "../stores"
 import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
@@ -67,6 +67,11 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
 
         if (apiId === "get_thumbnail") msg.data.thumbnail = data
         else msg.data = data
+
+        if (id === "REMOTE" && apiId === "create_show") {
+            // update remote shows data, so the new show is properly added
+            setTimeout(() => window.api.send(id, { channel: "SHOWS", data: get(shows) }))
+        }
 
         msg.send = true
         if (data === undefined) msg.data = null

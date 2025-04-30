@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { StageLayout } from "../../../types/Stage"
     import { allOutputs, outputs, stageShows, variables } from "../../stores"
-    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
+    import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
@@ -28,6 +28,8 @@
             return a
         })
     }
+
+    $: stageItems = getSortedStageItems(id, $stageShows)
 </script>
 
 <div class="main" class:active style="width: {100 / columns}%" class:list>
@@ -35,9 +37,9 @@
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
-                    {#each Object.entries(layout.items) as [id, item]}
+                    {#each stageItems as item}
                         {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables)}
-                            <Stagebox {id} item={clone(item)} {ratio} stageLayout={layout} />
+                            <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}
                 </Zoomed>

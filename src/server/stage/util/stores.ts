@@ -11,6 +11,8 @@ export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY)
 
 export let errors: Writable<string[]> = writable([])
 
+export let updateTransposed: Writable<number> = writable(1)
+
 export let isConnected = writable(false)
 export let layouts: Writable<{ id: string; name: string; password: boolean }[] | null> = writable(null)
 export let selectedLayout = writable("")

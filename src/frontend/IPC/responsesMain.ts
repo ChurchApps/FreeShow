@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
+import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
@@ -16,6 +17,7 @@ import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
+import { convertCSV } from "../converters/csv"
 import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
@@ -39,6 +41,7 @@ import {
     activeProject,
     activeShow,
     alertMessage,
+    audioData,
     chumsConnected,
     currentOutputSettings,
     dataPath,
@@ -74,8 +77,8 @@ import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
-import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
-import { convertCSV } from "../converters/csv"
+import type { MainReturnPayloads } from "./../../types/IPC/Main"
+import { Main } from "./../../types/IPC/Main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -212,6 +215,12 @@ export const mainResponses: MainResponses = {
     [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
+    [ToMain.AUDIO_METADATA]: (data) => {
+        audioData.update((a) => {
+            a[data.filePath] = { metadata: data.metadata }
+            return a
+        })
+    },
 
     // CONNECTION
     [ToMain.PCO_CONNECT]: (data) => {
@@ -229,8 +238,12 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
             const id = show.id
+
+            // don't add/update if already existing (to not mess up any set styles)
+            if (get(shows)[id]) return
+
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 
@@ -274,8 +287,12 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
             const id = show.id
+
+            // don't add/update if already existing (to not mess up any set styles)
+            if (get(shows)[id]) return
+
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 

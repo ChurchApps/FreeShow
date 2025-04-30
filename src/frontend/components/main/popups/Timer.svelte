@@ -25,7 +25,7 @@
         start: 300,
         end: 0,
         event: "",
-        time: "12:00",
+        time: "12:00"
     }
     $: if (currentTimer?.id) {
         timer = getTimer(currentTimer)
@@ -36,7 +36,7 @@
     const timerTypes: any = [
         { id: "counter", name: "$:timer.from_to:$", translate: true, icon: "timer" },
         { id: "clock", name: "$:timer.to_time:$", translate: true, icon: "clock" },
-        { id: "event", name: "$:timer.to_event:$", translate: true, icon: "calendar" },
+        { id: "event", name: "$:timer.to_event:$", translate: true, icon: "calendar" }
     ]
 
     // counter
@@ -96,7 +96,7 @@
     let timerNames: any = {
         counter: $dictionary.timer?.counter || "Counter",
         clock: $dictionary.timer?.time || "Time",
-        event: $dictionary.timer?.event || "Event",
+        event: $dictionary.timer?.event || "Event"
     }
     $: if (timer.event && eventList.length) updateEventName()
     const updateEventName = () => (timerNames.event = eventList.find((a) => a.id === timer.event)?.name)
@@ -109,6 +109,8 @@
     function toggleOverflow(e: any) {
         timer.overflow = e.target.checked
     }
+
+    const isChecked = (e: any) => e.target.checked
 
     // timer
     function createTimer() {
@@ -148,6 +150,7 @@
         if (timer.overflow) {
             newTimer.overflow = timer.overflow
             newTimer.overflowColor = timer.overflowColor
+            newTimer.overflowBlink = timer.overflowBlink
         }
 
         return newTimer
@@ -223,6 +226,12 @@
                 <p><T id="timer.overflow_color" /></p>
                 <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
             </CombinedInput>
+            <CombinedInput textWidth={50}>
+                <p><T id="timer.overflow_blink" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={timer.overflowBlink} on:change={(e) => (timer.overflowBlink = isChecked(e))} />
+                </div>
+            </CombinedInput>
         {/if}
 
         <!-- <div class="preview">
@@ -251,6 +260,12 @@
                 <p><T id="timer.overflow_color" /></p>
                 <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
             </CombinedInput>
+            <CombinedInput textWidth={50}>
+                <p><T id="timer.overflow_blink" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={timer.overflowBlink} on:change={(e) => (timer.overflowBlink = isChecked(e))} />
+                </div>
+            </CombinedInput>
         {/if}
     {:else if timer.type === "event"}
         <CombinedInput style="margin-top: 10px;" textWidth={50}>
@@ -272,6 +287,12 @@
             <CombinedInput textWidth={50}>
                 <p><T id="timer.overflow_color" /></p>
                 <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
+            </CombinedInput>
+            <CombinedInput textWidth={50}>
+                <p><T id="timer.overflow_blink" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={timer.overflowBlink} on:change={(e) => (timer.overflowBlink = isChecked(e))} />
+                </div>
             </CombinedInput>
         {/if}
     {/if}

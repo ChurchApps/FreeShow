@@ -101,8 +101,10 @@
 
     // AUTO SIZE
 
+    let cssFontSize = 0
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
+        cssFontSize = fontSize
 
         // get first output style
         if (!outputStyle) {
@@ -187,7 +189,8 @@
         updateDynamic++
     }, 1000)
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
+    $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
+    $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
 <div
@@ -359,14 +362,14 @@
         font-size: var(--chord-size) !important;
         font-weight: bold;
 
-        /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
-        transform: translate(-50%, calc(-12px - var(--offsetY)));
+        /* transform: translate(0, calc(0% - var(--chord-size) * 0.8)); */
+        transform: translate(0, calc(-12px - var(--offsetY)));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
     }
     .align.isStage .break.chords :global(.chord) {
-        transform: translate(-50%, calc(-55% - 2px - var(--offsetY)));
+        transform: translate(0, calc(-55% - 2px - var(--offsetY)));
     }
     .break.chords {
         line-height: 0.5em;

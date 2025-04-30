@@ -73,7 +73,7 @@
 
         slide: "Added slide",
         showMedia: "Added media to show",
-        showAudio: "Added audio to show",
+        showAudio: "Added audio to show"
     }
 
     function callUndo(index) {
@@ -98,9 +98,16 @@
     }
 
     function getItemId(item) {
+        if (item.version === 1) return getName[item.type]?.(item.value) || item.type
         if (item.id === "UPDATE") return item.id + "_" + item.location?.id
 
         return item.id
+    }
+
+    const getName = {
+        store_create: (value: any) => `Created new ${value.id}`,
+        store_update: (value: any) => `Updated key ${value.key} in ${value.id}`,
+        store_delete: (value: any) => `Deleted key ${value.key} in ${value.id}`
     }
 </script>
 
@@ -121,7 +128,7 @@
             {@const itemId = getItemId(item)}
             <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
                 <p>
-                    <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                    <span style={item.version || historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                         {historyIdToString[itemId] || itemId}
                     </span>
                     <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>

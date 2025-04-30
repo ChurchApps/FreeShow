@@ -283,7 +283,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
-                await loadShows(showsList.map((a) => a.id))
+                await loadShows(
+                    showsList.map((a) => a.id),
+                    true
+                )
             }
 
             showsCache.update((a) => {
@@ -501,9 +504,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             Object.keys(a[showId].slides).forEach((currentSlideId) => {
                                 const currentSlide = a[showId].slides[currentSlideId]
 
-                                if (currentSlideId !== currentSlideId) {
+                                if (currentSlideId !== slideId) {
                                     // remove from other slides
-                                    const childIndex = currentSlide.children?.indexOf(currentSlideId) ?? -1
+                                    const childIndex = currentSlide.children?.indexOf(slideId) ?? -1
                                     if (childIndex >= 0) currentSlide.children!.splice(childIndex, 1)
                                     return
                                 }
@@ -522,7 +525,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                                     // add to layout
                                     newSlides = clone(layoutSlides).map((layoutSlideRef) => {
-                                        if (layoutSlideRef.id !== currentSlideId) return layoutSlideRef
+                                        if (layoutSlideRef.id !== slideId) return layoutSlideRef
 
                                         // clone layout data
                                         const newLayoutChildren = clone(layoutSlideRef.children || {})

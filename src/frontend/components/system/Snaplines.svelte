@@ -84,7 +84,7 @@
     .line {
         position: absolute;
         top: 0;
-        left: 0;
+        left: 0; /* stylelint-disable-line csstools/use-logical */
         z-index: 1000;
         background-color: var(--secondary);
     }

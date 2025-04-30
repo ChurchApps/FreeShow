@@ -62,7 +62,7 @@ export function formatText(text: string, showId = "") {
 
             // set changed children
             if (old.slides.length !== slidesNew.length) {
-                slidesNew[id] = slidesNew.shift()!
+                newSlides[id] = slidesNew.shift()!
 
                 if (slidesNew.length) {
                     // children
@@ -70,10 +70,10 @@ export function formatText(text: string, showId = "") {
                     slidesNew.forEach((slide) => {
                         const childId = uid()
                         newChildren.push(childId)
-                        slidesNew[childId] = slide
+                        newSlides[childId] = slide
                     })
 
-                    slidesNew[id].children = newChildren
+                    newSlides[id].children = newChildren
                 }
             }
         })
@@ -92,7 +92,7 @@ export function formatText(text: string, showId = "") {
         if (children.length) slidesNew[0].children = children
 
         slidesNew.forEach((slide) => {
-            slidesNew[slide.id || ""] = slide
+            newSlides[slide.id || ""] = slide
         })
 
         newLayoutSlides.push({ id: slidesNew[0].id })

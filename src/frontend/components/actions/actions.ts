@@ -1,18 +1,26 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { actionHistory, audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
-import { clone } from "../helpers/array"
-import { history } from "../helpers/history"
-import { _show } from "../helpers/shows"
-import { API_ACTIONS, API_toggle } from "./api"
-import { convertOldMidiToNewAction } from "./midi"
-import { getActiveOutputs } from "../helpers/output"
 import { newToast, wait } from "../../utils/common"
-import { actionData } from "./actionData"
+import { clone, keysToID } from "../helpers/array"
+import { history } from "../helpers/history"
+import { getActiveOutputs } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
+import { _show } from "../helpers/shows"
+import { actionData } from "./actionData"
+import type { API_toggle } from "./api"
+import { API_ACTIONS } from "./api"
+import { convertOldMidiToNewAction } from "./midi"
+import { sortByClosestMatch } from "./apiHelper"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
+}
+
+export function runActionByName(name: string) {
+    const sortedActions = sortByClosestMatch(keysToID(get(midiIn)), name)
+    if (!sortedActions.length) return
+    runAction(sortedActions[0])
 }
 
 export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
