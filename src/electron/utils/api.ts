@@ -158,13 +158,24 @@ export function emitOSC(msg: { signal: any; data: string }) {
     function sendMessage() {
         if (!OSC_SENDER) return
 
-        const message = new OSC.Message(msg.data)
+        const data = msg.data.split(" ")
+        const address = data.shift() || ""
+        const message = new OSC.Message(address, ...data.map(convertToType))
         console.info(`Emitting OSC at ${host}:${String(port)}:`, message.address)
 
         OSC_SENDER.send(message)
         // ensure message is sent
         setTimeout(() => OSC_SENDER.close(), 100)
     }
+}
+
+function convertToType(value: string) {
+    if (value === "true") return true
+    if (value === "false") return false
+    if (value === "") return value
+    const num = Number(value)
+    if (!isNaN(num)) return num
+    return value
 }
 
 // DATA

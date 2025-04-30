@@ -5,7 +5,7 @@ version=$(grep "\"version\"" package.json | cut -d ":" -f 2 | cut -d "\"" -f 2)
 sed -i "s/version:.*/version: ${version}/" config/building/snapcraft.yaml
 npm install
 npm run build
-npm run release
+npm run pack
 chmod +x scripts/snap/*.sh
 mkdir snap
 mv scripts/snap/gui snap

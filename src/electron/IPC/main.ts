@@ -2,7 +2,8 @@ import { ipcMain, type IpcMainEvent } from "electron"
 import { uid } from "uid"
 import { mainWindow } from ".."
 import { MAIN, Main, type MainReceiveValue, type ToMainSendValue2 } from "./../../types/IPC/Main"
-import { ToMain, ToMainReceiveValue, ToMainReturnPayloads, type ToMainSendValue } from "./../../types/IPC/ToMain"
+import type { ToMainReceiveValue, ToMainReturnPayloads } from "./../../types/IPC/ToMain"
+import { ToMain, type ToMainSendValue } from "./../../types/IPC/ToMain"
 import { mainResponses } from "./responsesMain"
 
 export function sendToMain<ID extends ToMain>(id: ID, value: ToMainSendValue<ID>, listenerId?: string) {
@@ -27,7 +28,7 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
     }
     if (!mainResponses[id]) return console.error(`No response for channel: ${id}`)
 
-    const handler = mainResponses[id ]
+    const handler = mainResponses[id]
     const data = msg.data
     const response = await (handler as any)(data, e)
 

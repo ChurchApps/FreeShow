@@ -1,7 +1,9 @@
+import type { ICommonTagsResult } from "music-metadata/lib/type"
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
+import type { Variable } from "../../../types/Main"
 import type { ProjectShowRef } from "../../../types/Projects"
 import type { LayoutRef, OutSlide, Show, Slide, SlideAction, SlideData } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
@@ -22,6 +24,7 @@ import {
     activeProject,
     activeShow,
     allOutputs,
+    audioData,
     currentWindow,
     driveData,
     focusMode,
@@ -1006,7 +1009,7 @@ export function getDynamicIds(noVariables = false) {
     if (noVariables) return [...mainValues, ...metaValues]
 
     // WIP sort by type & name
-    const variablesList = Object.values(get(variables)).filter((a) => a?.name)
+    const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
     const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
@@ -1101,7 +1104,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration }) ?? "").toString()
+        const audioPath = AudioPlayer.getAllPlaying()[0]
+
+        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioPath }) ?? "").toString()
 
         if (dynamicId === "show_name_next" && !value && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
@@ -1147,10 +1152,21 @@ const dynamicValues = {
     slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
     slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
 
-    // media
+    // video
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
     video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration > 0 ? videoDuration - videoTime : 0)),
     video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
+
+    // audio
+    audio_title: ({ audioPath }) => getMetadata(audioPath).title || removeExtension(getFileName(audioPath)) || "",
+    audio_subtitle: ({ audioPath }) => (getMetadata(audioPath).subtitle || []).join(", "),
+    audio_artist: ({ audioPath }) => getArtist(getMetadata(audioPath)),
+    audio_album: ({ audioPath }) => getMetadata(audioPath).album || "",
+    audio_genre: ({ audioPath }) => (getMetadata(audioPath).genre || []).join(", "),
+    audio_year: ({ audioPath }) => getMetadata(audioPath).date || "",
+    // audio_cover: ({audioPath}) => getMetadata(audioPath).picture?.[0].data, // buffer
+    // disk: {no: null, of: null}
+    // track: {no: null, of: null}
 }
 
 export function getVariableNameId(name: string) {
@@ -1160,4 +1176,15 @@ export function getVariableNameId(name: string) {
 export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
     const numberVariables = Object.values(variableUpdater).filter((a) => a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{")))
     return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+}
+
+// AUDIO METADATA
+
+function getMetadata(audioPath: string) {
+    return (get(audioData)[audioPath]?.metadata || {})
+}
+
+function getArtist(metadata: ICommonTagsResult) {
+    const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
+    return artists.join(", ")
 }

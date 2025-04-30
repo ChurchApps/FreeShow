@@ -7,7 +7,7 @@
     import Icon from "../../common/components/Icon.svelte"
     import { getStyles } from "../../common/util/style"
     import autosize, { type AutosizeTypes } from "../../common/util/autosize"
-    import { variables } from "../util/stores"
+    import { dictionary, updateTransposed, variables } from "../util/stores"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import { send } from "../util/socket"
 
@@ -160,7 +160,7 @@
 
     let defaultChords: any = {}
     let amountTransposed: number = 0
-    $: if (showId && chordLines.length) getTransposed()
+    $: if (showId && chordLines.length && $updateTransposed) getTransposed()
     function getTransposed() {
         const transposed = JSON.parse(localStorage.transposed || "{}")
         if (typeof transposed[showId] === "number") transpose(transposed[showId])
@@ -170,6 +170,8 @@
         else if (action === "up") amountTransposed++
         else if (action === "down") amountTransposed--
         else if (typeof action === "number") amountTransposed = action
+
+        if (typeof action !== "number") updateTransposed.set($updateTransposed + 1)
 
         // save
         const transposed = JSON.parse(localStorage.transposed || "{}")
@@ -226,7 +228,8 @@
     }, 1000)
     onDestroy(() => clearInterval(dynamicInterval))
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || "#FF851B"};`
+    $: chordFontSize = chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : 0
+    $: chordsStyle = `--chord-size: ${chordLines.length ? fontSize * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || "#FF851B"};`
 
     function press() {
         if (!item.button?.press) return
@@ -259,9 +262,9 @@
             {#if chordLines.length}
                 <div class="flex">
                     <p style="margin-inline-end: 8px;">Transpose</p>
-                    <Button on:click={() => transpose("down")} title="Down one" dark>{"-1"}</Button>
-                    <Button on:click={() => transpose("reset")} title="Reset" dark>{"0"}</Button>
-                    <Button on:click={() => transpose("up")} title="Up one" dark>{"+1"}</Button>
+                    <Button on:click={() => transpose("down")} title={$dictionary?.edit?.transpose_down} dark>{"-1"}</Button>
+                    <Button on:click={() => transpose("reset")} title={$dictionary?.actions?.reset} dark>{"0"}</Button>
+                    <Button on:click={() => transpose("up")} title={$dictionary?.edit?.transpose_up} dark>{"+1"}</Button>
                 </div>
             {/if}
         </div>
@@ -431,7 +434,7 @@
         font-size: var(--chord-size) !important;
         font-weight: bold;
 
-        transform: translate(-50%, calc(-55% - 2px - var(--offsetY)));
+        transform: translate(0, calc(-55% - 2px - var(--offsetY)));
         line-height: initial;
         z-index: 2;
     }

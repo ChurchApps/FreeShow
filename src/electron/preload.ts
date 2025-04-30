@@ -1,7 +1,8 @@
 // ----- FreeShow -----
 // Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
 
-import { IpcRendererEvent, contextBridge, ipcRenderer, webUtils } from "electron"
+import type { IpcRendererEvent } from "electron"
+import { contextBridge, ipcRenderer, webUtils } from "electron"
 import type { ValidChannels } from "../types/Channels"
 
 // const maxInterval: number = 500

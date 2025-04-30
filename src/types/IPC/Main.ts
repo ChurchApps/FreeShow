@@ -85,6 +85,8 @@ export enum Main {
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
     DOWNLOAD_MEDIA = "DOWNLOAD_MEDIA",
+    NOW_PLAYING = "NOW_PLAYING",
+    NOW_PLAYING_UNSET = "NOW_PLAYING_UNSET",
     // MEDIA_BASE64 = "MEDIA_BASE64",
     CAPTURE_SLIDE = "CAPTURE_SLIDE",
     ACCESS_CAMERA_PERMISSION = "ACCESS_CAMERA_PERMISSION",
@@ -156,6 +158,8 @@ export interface MainSendPayloads {
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_MEDIA]: LessonsData[]
+    [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string }
+    [Main.NOW_PLAYING_UNSET]: { dataPath: string }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.START_SLIDESHOW]: { path: string; program: string }

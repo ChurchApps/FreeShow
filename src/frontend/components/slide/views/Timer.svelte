@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeDrawerTab, activeTimers, drawer, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
@@ -60,6 +61,30 @@
         // open drawer if closed
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
     }
+
+    // BLINKING WHEN OVERFLOWING
+
+    // don't blink if paused?
+    let blinkingInterval: NodeJS.Timeout | null = null
+    $: if (overflow && timer.overflowBlink) startBlinking()
+    else stopBlinking()
+    onDestroy(stopBlinking)
+
+    let blinkingOff = false
+    function startBlinking() {
+        if (blinkingInterval) return
+        blinkingInterval = setInterval(() => {
+            blinkingOff = true
+            setTimeout(() => {
+                blinkingOff = false
+            }, 250)
+        }, 500)
+    }
+
+    function stopBlinking() {
+        if (blinkingInterval) clearInterval(blinkingInterval)
+        blinkingInterval = null
+    }
 </script>
 
 {#if item?.timer?.viewType === "line"}
@@ -69,11 +94,13 @@
 {:else}
     <div class="align autoFontSize" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
-            {#if overflow && negative}
-                <span>-</span>
-            {/if}
+            {#if !overflow || !blinkingOff}
+                {#if overflow && negative}
+                    <span>-</span>
+                {/if}
 
-            {timeValue}
+                {timeValue}
+            {/if}
         </div>
     </div>
 {/if}

@@ -118,6 +118,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
+    rearrange_stage: { label: "actions.rearrange", icon: "rearrange", items: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
@@ -133,6 +134,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     forward: { label: "actions.forward", icon: "up" },
     backward: { label: "actions.backward", icon: "down" },
     to_back: { label: "actions.to_back", icon: "to_back" },
+    to_front_stage: { label: "actions.to_front", icon: "to_front" },
+    forward_stage: { label: "actions.forward", icon: "up" },
+    backward_stage: { label: "actions.backward", icon: "down" },
+    to_back_stage: { label: "actions.to_back", icon: "to_back" },
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
@@ -281,9 +286,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
-    stage_item: ["delete"],
-    stage_slide_text_item: ["conditions", "SEPERATOR", "delete"],
-    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "delete"],
+    stage_item: ["rearrange_stage", "SEPERATOR", "delete"],
+    stage_slide_text_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "delete"],
+    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "delete"],
+    items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
     edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)

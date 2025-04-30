@@ -128,7 +128,8 @@
         setBoxInputValue(edits, "chords", "chords.size", "hidden", !enabled)
         setBoxInputValue(edits, "chords", "chords.offsetY", "hidden", !enabled)
 
-        let data = (typeof item?.chords === "boolean" ? (item )?.chordsData : item?.chords) || {}
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        let data = (typeof item?.chords === "boolean" ? (item as any)?.chordsData : item?.chords) || {}
         if (data.color) setBoxInputValue(edits, "chords", "chords.color", "value", data.color)
         if (data.size) setBoxInputValue(edits, "chords", "chords.size", "value", data.size)
         if (data.offsetY) setBoxInputValue(edits, "chords", "chords.offsetY", "value", data.offsetY)
@@ -207,7 +208,7 @@
             id: "UPDATE",
             newData: { data: value, key: "items", subkey: input.id, keys: activeItemIds },
             oldData: { id: $activeStage.id },
-            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") }
         })
     }
 
@@ -221,7 +222,7 @@
             id: "UPDATE",
             newData: { data: value, key: "items", subkey: id, keys: activeItemIds },
             oldData: { id: $activeStage.id },
-            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") }
         })
     }
 
@@ -237,7 +238,7 @@
             return
         }
 
-        let value: string = addStyleString(item.style, [input.key, input.value]) || ""
+        let value: string = addStyleString(item?.style || "", [input.key, input.value]) || ""
 
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
 
@@ -252,14 +253,14 @@
             let item = stageItems[itemId]
             if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
 
-            styles[itemId] = addStyleString(item.style, [input.key, input.value])
+            styles[itemId] = input.id === "CSS" ? value : addStyleString(item.style, [input.key, input.value])
         })
 
         history({
             id: "UPDATE",
             newData: { data: styles, key: "items", subkey: "style", keys: Object.keys(styles) },
             oldData: { id: $activeStage.id },
-            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") }
         })
 
         if (!timeout) {

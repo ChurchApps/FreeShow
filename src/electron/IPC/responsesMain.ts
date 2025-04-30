@@ -1,11 +1,15 @@
 import getFonts from "css-fonts"
-import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, screen, shell, systemPreferences } from "electron"
+import type { BrowserWindow, DesktopCapturerSource } from "electron"
+import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
-import { Main, MainResponses } from "../../types/IPC/Main"
+import type { MainResponses } from "../../types/IPC/Main"
+import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
+import { chumsDisconnect, chumsStartupLoad } from "../chums/connect"
+import { chumsLoadServices } from "../chums/request"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
@@ -16,7 +20,6 @@ import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { pcoDisconnect, pcoStartupLoad } from "../planningcenter/connect"
 import { pcoLoadServices } from "../planningcenter/request"
-import { chumsLoadServices } from "../chums/request"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain, forceCloseApp } from "../utils/close"
@@ -48,9 +51,9 @@ import {
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
-import checkForUpdates from "../utils/updater"
 import { correctSpelling } from "../utils/spellcheck"
-import { chumsDisconnect, chumsStartupLoad } from "../chums/connect"
+import checkForUpdates from "../utils/updater"
+import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -127,6 +130,8 @@ export const mainResponses: MainResponses = {
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
     [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
+    [Main.NOW_PLAYING]: (data) => setPlayingState(data),
+    [Main.NOW_PLAYING_UNSET]: (data) => unsetPlayingAudio(data),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
     [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),

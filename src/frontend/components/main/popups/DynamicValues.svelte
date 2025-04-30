@@ -20,7 +20,7 @@
     const values = getValues()
 
     function getValues() {
-        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "meta_"]
+        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_"]
 
         let list = getDynamicIds().map((id) => ({ id }))
         let newList: { [key: string]: typeof list } = {}
@@ -43,6 +43,7 @@
         if (id === "show_") return "guide_title.show"
         if (id === "slide_text_") return "edit.text"
         if (id === "video_") return "edit.video"
+        if (id === "audio_") return "tools.audio"
         if (id === "meta_") return "tools.metadata"
         if (id === "$") return "items.variable"
         return ""
@@ -70,7 +71,7 @@
         searchedValues = {
             search: Object.values(currentValuesList)
                 .flat()
-                .filter((a) => formatSearch(a.id).includes(searchValue)),
+                .filter((a) => formatSearch(a.id).includes(searchValue))
         }
 
         previousSearchValue = searchValue

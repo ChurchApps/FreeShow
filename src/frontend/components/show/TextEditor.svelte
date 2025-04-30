@@ -8,8 +8,10 @@
     import { formatText } from "./formatTextEditor"
     import { getPlainEditorText } from "./getTextEditor"
     import Notes from "./tools/Notes.svelte"
+    import { transposeText } from "../../utils/chordTranspose"
+    import type { Show } from "../../../types/Show"
 
-    export let currentShow: any
+    export let currentShow: Show | undefined
 
     let text = ""
     $: if (currentShow) text = getPlainEditorText()
@@ -20,6 +22,14 @@
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
 
         zoomOpened = false
+    }
+
+    // transpose chords
+    function transposeUp() {
+        formatText(transposeText(text, 1))
+    }
+    function transposeDown() {
+        formatText(transposeText(text, -1))
     }
 
     // shortcut
@@ -37,6 +47,8 @@
             nextScrollTimeout = null
         }, 500)
     }
+
+    $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a.items?.find((a) => a.lines?.find((a) => a.chords)))
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -44,6 +56,19 @@
 <Notes disabled={currentShow?.locked} style="padding: 30px;height: calc(100% - 28px);font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} />
 
 <div class="actions">
+    <div class="left">
+        {#if showHasChords}
+            <div class="transpose-toolbar">
+                <Button class="transpose-btn" on:click={transposeUp} title={$dictionary.edit?.transpose_up}>
+                    <Icon id="arrow_up" size={1.3} white />
+                </Button>
+                <Button class="transpose-btn" on:click={transposeDown} title={$dictionary.edit?.transpose_down}>
+                    <Icon id="arrow_down" size={1.3} white />
+                </Button>
+            </div>
+        {/if}
+    </div>
+
     <Button on:click={() => textEditActive.set(false)} style="cursor: pointer;" active>
         <Icon id="text" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if}
@@ -70,6 +95,15 @@
 </div>
 
 <style>
+    .left {
+        flex: 1;
+        height: 100%;
+    }
+
+    .transpose-toolbar {
+        display: flex;
+    }
+
     .actions {
         position: absolute;
         bottom: 0;

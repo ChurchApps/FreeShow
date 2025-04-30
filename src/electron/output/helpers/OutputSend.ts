@@ -1,4 +1,5 @@
-import { OUTPUT, ValidChannels } from "../../../types/Channels"
+import type { ValidChannels } from "../../../types/Channels"
+import { OUTPUT } from "../../../types/Channels"
 import type { Message } from "../../../types/Socket"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"

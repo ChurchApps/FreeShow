@@ -3,6 +3,7 @@
     import { encodeFilePath } from "../../helpers/media"
 
     export let src: string
+    export let updater = 0
     export let alt: string
     export let transition = true
 
@@ -17,7 +18,9 @@
     // retry on error
     let retryCount = 0
     $: if (src) retryCount = 0
-    function reload() {
+    function reload(e: any) {
+        e.target.style.display = "none"
+
         if (retryCount > 5) {
             loaded = true
             return
@@ -29,10 +32,15 @@
             retryCount++
         }, time)
     }
+
+    function hasLoaded(e: any) {
+        e.target.style.display = null
+        loaded = true
+    }
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} src={encodeFilePath(src)} {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={() => (loaded = true)} on:error={reload} />
+    <img style={$$props.style} src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
 {/key}
 
 <style>

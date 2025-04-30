@@ -63,10 +63,10 @@
                 x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
                 y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
                 width: e.clientX / ratio - target.offsetWidth,
-                height: e.clientY / ratio - target.offsetHeight,
+                height: e.clientY / ratio - target.offsetHeight
             },
             item: { type: "stage", ...item },
-            e: e,
+            e: e
         }
     }
 
@@ -367,6 +367,7 @@
         font-weight: normal;
         font-style: normal;
         text-align: center;
+        text-transform: none;
 
         line-height: normal;
         letter-spacing: normal;

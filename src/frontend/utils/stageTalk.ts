@@ -86,7 +86,7 @@ export const receiveSTAGE = {
         // add labels
         Object.keys(layout.items).map((itemId) => {
             const item = layout.items[itemId]
-            item.label = getCustomStageLabel(itemId, item)
+            item.label = getCustomStageLabel(item.type || itemId, item)
         })
 
         // if (show.disabled) return { id: connectionId, channel: "ERROR", data: "noShow" }

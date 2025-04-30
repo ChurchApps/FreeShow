@@ -1,14 +1,15 @@
 import { ipcMain } from "electron"
-import express, { Response } from "express"
+import type { Response } from "express"
+import express from "express"
 import http from "http"
 import { join } from "path"
 import { Server, type Socket } from "socket.io"
 import type { Main, MainSendPayloads } from "../types/IPC/Main"
 import type { Message, ServerData } from "../types/Socket"
 import { CaptureHelper } from "./capture/CaptureHelper"
+import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
-import { publishPort, unpublishPorts } from "./data/bonjour"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {

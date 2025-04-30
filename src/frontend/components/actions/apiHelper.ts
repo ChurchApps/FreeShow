@@ -107,6 +107,7 @@ export function selectProjectByIndex(index: number) {
     }
 
     activeProject.set(selectedProject.id)
+    if (get(activeShow)) activeShow.set({ ...get(activeShow)!, index: -1 })
 }
 
 export function selectProjectByName(value: string) {

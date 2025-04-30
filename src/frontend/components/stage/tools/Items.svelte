@@ -1,18 +1,27 @@
 <script lang="ts">
     import { uid } from "uid"
+    import { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
-    import { activeStage, dictionary, labelsDisabled, stageShows } from "../../../stores"
+    import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
+    import { getSortedStageItems, rearrangeStageItems, updateSortedStageItems } from "../../edit/scripts/itemHelpers"
+    import { getItemText } from "../../edit/scripts/textStyle"
+    import { boxes } from "../../edit/values/boxes"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { getFileName } from "../../helpers/media"
     import { checkWindowCapture, sortItemsByType } from "../../helpers/output"
+    import Button from "../../inputs/Button.svelte"
     import IconButton from "../../inputs/IconButton.svelte"
+    import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
     import { updateStageShow } from "../stage"
+    import { clone } from "../../helpers/array"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
         { id: "slide_text", icon: "text" },
         // { id: "slide_notes", icon: "notes" }, // added as dynamic value in textbox
-        { id: "current_output", icon: "screen", maxAmount: 1 },
+        { id: "current_output", icon: "screen", maxAmount: 1 }
     ]
 
     const normalItems: ItemRef[] = [
@@ -22,7 +31,7 @@
         { id: "media", icon: "image" },
         { id: "camera" },
         { id: "timer" },
-        { id: "clock" },
+        { id: "clock" }
     ]
 
     $: stageShow = $stageShows[$activeStage.id || ""] || {}
@@ -50,6 +59,8 @@
             return a
         })
 
+        updateSortedStageItems()
+
         // select item
         if (Object.keys($stageShows[stageId]?.items).length > 1) {
             activeStage.update((a) => {
@@ -69,6 +80,28 @@
             }, 500)
         }
     }
+
+    // ARRANGE
+
+    const getIdentifier = {
+        text: (item: StageItem) => {
+            let text = getItemText(item as Item)
+            return text.slice(0, 10)
+        },
+        media: (item: StageItem) => {
+            let path = item.src
+            return getFileName(path || "")
+        },
+        timer: (item: StageItem) => {
+            if (!item.timer?.id) return ""
+            let timerName = $timers[item.timer.id]?.name || ""
+            return timerName
+        },
+        clock: () => ""
+    }
+
+    $: allItems = getSortedStageItems($activeStage.id, $stageShows)
+    $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 </script>
 
 <div class="main">
@@ -104,6 +137,61 @@
                 <!-- {#if i === 0}<hr class="divider" />{/if} -->
             {/each}
         </div>
+
+        <h6><T id="edit.arrange_items" /></h6>
+        <div
+            class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
+            style="display: flex;flex-direction: column;"
+            on:mousedown={(e) => {
+                if (e.button !== 2) return
+                // select on right click for context menu
+                const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
+                activeStage.set({ ...$activeStage, items: [itemId] })
+            }}
+        >
+            {#if invertedItemList.length}
+                {#each invertedItemList as currentItem, i}
+                    {@const id = currentItem.id}
+                    {@const type = currentItem.type || "text"}
+                    <Button
+                        id="#{id}"
+                        class="item_button"
+                        style="width: 100%;justify-content: space-between;"
+                        active={$activeStage.items.includes(id)}
+                        dark
+                        on:click={(e) => {
+                            if (!e.target?.closest(".up")) {
+                                selected.set({ id: null, data: [] })
+                                activeStage.update((ae) => {
+                                    if (e.ctrlKey || e.metaKey) {
+                                        if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
+                                        else ae.items.push(id)
+                                    } else if (!ae.items.includes(id)) ae.items = [id]
+                                    else ae.items = []
+                                    return ae
+                                })
+                            }
+                        }}
+                    >
+                        <span style="display: flex;flex: 1;">
+                            <p style="margin-inline-end: 10px;">{i + 1}</p>
+                            <Icon id={type === "icon" ? id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
+                            <p style="margin-inline-start: 10px;">{$dictionary.items?.[type]}</p>
+                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
+                        </span>
+                        {#if i > 0}
+                            <Button class="up" on:click={() => rearrangeStageItems("forward", id)}>
+                                <Icon id="up" />
+                            </Button>
+                        {/if}
+                    </Button>
+                {/each}
+            {:else}
+                <Center faded>
+                    <T id="empty.general" />
+                </Center>
+            {/if}
+        </div>
     </Panel>
 </div>
 
@@ -135,6 +223,10 @@
         width: 100%;
         background-color: var(--primary);
         margin: 0;
+    }
+
+    .items p {
+        width: auto;
     }
 
     /*  */
