@@ -25,7 +25,7 @@
         ending: "date",
         count: 1,
         endingDate: "",
-        afterRepeats: 10,
+        afterRepeats: 10
     }
 
     interface EventWithData extends Event {
@@ -41,7 +41,7 @@
         from: "",
         to: "",
         repeat: false,
-        repeatData: defaultRepeatData,
+        repeatData: defaultRepeatData
     }
 
     let selectedType = "" // "event" | "action"
@@ -84,7 +84,7 @@
             location: "",
             repeat: false,
             repeatData: defaultRepeatData,
-            notes: "",
+            notes: ""
         }
 
         // update action
@@ -122,7 +122,7 @@
             updatedData[eventId] = {
                 ...data,
                 from: newFromTime,
-                to: newToTime,
+                to: newToTime
             }
         })
 
@@ -167,7 +167,7 @@
         { id: "day", name: "$:calendar.day:$" },
         { id: "week", name: "$:calendar.week:$" },
         { id: "month", name: "$:calendar.month:$" },
-        { id: "year", name: "$:calendar.year:$" },
+        { id: "year", name: "$:calendar.year:$" }
     ]
 
     // "repeat_on": "on",
@@ -184,7 +184,7 @@
     // "ending_never": "the end of time",
     const endings = [
         { id: "date", name: "$:calendar.ending_the:$" },
-        { id: "after", name: "$:calendar.ending_repeated:$" },
+        { id: "after", name: "$:calendar.ending_repeated:$" }
         // { id: "never", name: "$:calendar.ending_never:$" },
     ]
 
@@ -235,6 +235,8 @@
     // set show when selected
     $: if ($popupData.showId) setTimeout(setShow, 100)
     function setShow() {
+        if (!$popupData.event) return
+
         editEvent = $popupData.event
         actionData = { id: "start_show", data: { id: $popupData.showId } }
 
@@ -335,7 +337,7 @@
                 <Icon id="theme" size={1.2} right />
                 <T id="calendar.color" />
             </p>
-            <Color value={editEvent.color} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
+            <Color value={editEvent.color || ""} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
         </CombinedInput>
 
         <CombinedInput textWidth={30}>

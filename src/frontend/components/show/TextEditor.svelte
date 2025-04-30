@@ -24,12 +24,12 @@
         zoomOpened = false
     }
 
-    // Transpose handlers
+    // transpose chords
     function transposeUp() {
-        text = transposeText(text, 1)
+        formatText(transposeText(text, 1))
     }
     function transposeDown() {
-        text = transposeText(text, -1)
+        formatText(transposeText(text, -1))
     }
 
     // shortcut

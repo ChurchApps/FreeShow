@@ -101,8 +101,10 @@
 
     // AUTO SIZE
 
+    let cssFontSize: number = 0
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
+        cssFontSize = fontSize
 
         // get first output style
         if (!outputStyle) {
@@ -187,7 +189,8 @@
         updateDynamic++
     }, 1000)
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
+    $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
+    $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
 <div

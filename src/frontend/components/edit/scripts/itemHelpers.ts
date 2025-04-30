@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
-import { activeEdit, activeShow, outputs, overlays, refreshEditSlide, showsCache, templates, timers, variables } from "../../../stores"
+import { activeEdit, activeShow, activeStage, outputs, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -12,6 +12,7 @@ import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
+import type { StageItem } from "../../../../types/Stage"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
 
@@ -155,6 +156,77 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     })
 
     refreshEditSlide.set(true)
+}
+
+export function rearrangeStageItems(type: string, itemId: string = get(activeStage).items[0]) {
+    let items = getSortedStageItems()
+    if (!items?.length || !itemId) return
+
+    let startIndex = items.findIndex((a) => a.id === itemId)
+    if (startIndex < 0) return
+
+    const currentItem = items.splice(startIndex, 1)[0]
+
+    if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
+    else if (type === "backward") startIndex = Math.max(startIndex - 1, 0)
+    else if (type === "to_front") startIndex = items.length
+    else if (type === "to_back") startIndex = 0
+
+    items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
+    if (!items?.length || items.length < 2) return
+
+    stageShows.update((a) => {
+        a[get(activeStage).id!].itemOrder = items.map((a) => a.id)
+        return a
+    })
+
+    activeStage.update((a) => {
+        a.items = []
+        return a
+    })
+
+    refreshEditSlide.set(true)
+}
+
+export function getSortedStageItems(stageId = get(activeStage).id, _updater: any = null) {
+    if (!stageId) return []
+    const stageShow = clone(get(stageShows)[stageId])
+    if (!stageShow) return []
+
+    const itemOrder = stageShow.itemOrder || Object.keys(stageShow.items)
+    // if ((stageShow.itemOrder || [])?.length !== Object.keys(stageShow.items).length) {
+    if (!stageShow.itemOrder) {
+        stageShows.update((a) => {
+            a[stageId].itemOrder = itemOrder
+            return a
+        })
+    }
+
+    const sortedItems: (StageItem & { id: string })[] = []
+    itemOrder.forEach((itemId) => {
+        const item = stageShow.items[itemId]
+        if (!item) return
+        sortedItems.push({ ...item, id: itemId })
+    })
+
+    return sortedItems
+}
+
+export function updateSortedStageItems() {
+    const stageId = get(activeStage).id || ""
+    stageShows.update((a) => {
+        const stageLayout = a[stageId]
+        const currentItemIds = Object.keys(stageLayout.items)
+        let itemOrder = stageLayout.itemOrder || currentItemIds
+
+        // remove items not existing anymore
+        itemOrder = itemOrder.filter((id) => currentItemIds.includes(id))
+        // add any new items
+        const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
+
+        a[stageId].itemOrder = [...itemOrder, ...newItems]
+        return a
+    })
 }
 
 export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null) {

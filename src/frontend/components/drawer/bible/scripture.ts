@@ -346,8 +346,9 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
                     }
                 })
             } else {
-                // WIP bibles with custom html tags?
-                text = removeTags(formatBibleText(text))
+                // allow bibles with custom html tags
+                // text = removeTags(formatBibleText(text))
+                text = formatBibleText(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
 

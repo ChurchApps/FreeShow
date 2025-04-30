@@ -29,6 +29,7 @@ export interface StageLayout {
     items: {
         [key: string]: StageItem
     }
+    itemOrder?: string[] // sort item ids in chosen order
 }
 
 export interface StageItem {
@@ -64,6 +65,7 @@ export interface StageItem {
     // other items
     variable?: { id: string } // variable data
     device?: { name: string } // camera data
+    src?: string // media path
     tracker?: any // slide tracker data
     timer?: any // timer options
     clock?: any // clock options

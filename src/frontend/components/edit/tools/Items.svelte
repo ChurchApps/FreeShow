@@ -21,7 +21,7 @@
         { id: "media", icon: "image" },
         { id: "web" },
         { id: "timer" },
-        { id: "clock" },
+        { id: "clock" }
         // { id: "variable" },
     ]
 
@@ -33,7 +33,7 @@
         { id: "events", icon: "calendar" },
         { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
-        { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
+        { id: "captions", maxAmount: 1 } // max one because there can't be multiple translations at this point
     ]
 
     const getIdentifier = {
@@ -50,8 +50,9 @@
             return getFileName(path || "")
         },
         timer: (item: Item) => {
-            if (!item.timerId) return ""
-            let timerName = $timers[item.timerId]?.name || ""
+            const timerId = item.timer?.id || item.timerId
+            if (!timerId) return ""
+            let timerName = $timers[timerId]?.name || ""
             return timerName
         },
         clock: () => "",
@@ -62,7 +63,7 @@
         variable: (item: Item) => {
             let name = $variables[item.variable?.id]?.name || ""
             return name
-        },
+        }
     }
 
     export let allSlideItems: Item[]
@@ -134,6 +135,7 @@
         style="display: flex;flex-direction: column;"
         on:mousedown={(e) => {
             if (e.button !== 2) return
+            // select on right click for context menu
             const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
             activeEdit.set({ ...$activeEdit, items: [index] })
         }}

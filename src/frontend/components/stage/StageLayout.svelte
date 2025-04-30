@@ -17,7 +17,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
+    import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
     export let outputId = ""
     export let stageId = ""
@@ -118,6 +118,8 @@
 
     $: currentOutput = $outputs[outputId] || {}
     $: backgroundColor = currentOutput.transparent ? "transparent" : layout.settings?.color || "#000000"
+
+    $: stageItems = getSortedStageItems(stageLayoutId, $stageShows)
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -133,16 +135,16 @@
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
                 {#key stageLayoutId}
-                    {#each Object.entries(layout.items || {}) as [id, item]}
+                    {#each stageItems as item}
                         {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables))}
-                            <Stagebox {edit} stageLayout={edit ? null : layout} {id} item={clone(item)} {ratio} {preview} bind:mouse />
+                            <Stagebox {edit} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
                         {/if}
                     {/each}
                 {/key}
             </Zoomed>
         {:else if edit}
             <Center size={2} faded>
-                <T id="empty.stage_show" />
+                <T id="empty.layout" />
             </Center>
         {/if}
     </div>
