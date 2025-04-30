@@ -21,7 +21,7 @@ export class AudioMicrophone {
         }
 
         navigator.mediaDevices
-            .getUserMedia({ audio: { deviceId: { exact: id } } })
+            .getUserMedia({ audio: { deviceId: { exact: id }, echoCancellation: false } })
             .then((stream) => {
                 AudioPlayer.playStream(id, stream, metadata)
             })
