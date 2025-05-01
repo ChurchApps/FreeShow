@@ -13,6 +13,7 @@ import type { ChumsSongData } from "./types"
 export class ChumsExport {
   public static async sendSongsToChums(): Promise<void> {
     const missingIds = await this.getMissingSongIds()
+    if (missingIds.length === 0) return;
 
     // Get song data only for missing songs
     const songData = this.getChumsSongData(missingIds)
@@ -21,7 +22,6 @@ export class ChumsExport {
     // Send the missing songs in batches
     for (let i = 0; i < songData.length; i += batchSize) {
       const batch = songData.slice(i, i + batchSize)
-      console.log("Sending batch", batch)
       await ChumsConnect.apiRequest({
         api: "content",
         authenticated: true,
