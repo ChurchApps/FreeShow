@@ -32,7 +32,7 @@ layout:
         bind: $SNAP/usr/share/alsa
 parts:
     freeshow:
-        source: ../../dist/linux-unpacked/
+        source: dist/linux-unpacked/
         plugin: dump
         stage-packages:
             - libasound2t64
