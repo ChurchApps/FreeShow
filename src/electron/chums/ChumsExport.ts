@@ -44,10 +44,10 @@ export class ChumsExport {
       scope: "plans",
       endpoint: "/arrangements/freeShow/missing",
       method: "POST",
-      data: { freeShowIds }
+      data: { freeShowIds: freeShowIds }
     })
 
-    return missingSongsResponse.data || []
+    return missingSongsResponse || []
   }
 
   private static getAllFreeShowSongIds(): string[] {
