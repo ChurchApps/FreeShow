@@ -6,6 +6,10 @@ import path from "path"
 import { ChumsConnect } from "./ChumsConnect"
 import type { ChumsSongData } from "./types"
 
+/**
+ * Handles exporting FreeShow songs to Chums.
+ * Syncs local songs with Chums by identifying missing songs and sending them in batches.
+ */
 export class ChumsExport {
   public static async sendSongsToChums(): Promise<void> {
     const missingIds = await this.getMissingSongIds()

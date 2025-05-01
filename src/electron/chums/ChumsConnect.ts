@@ -7,6 +7,10 @@ import { getKey } from "../utils/keys"
 import { httpsRequest } from "../utils/requests"
 import { ChumsAuthData, ChumsRequestData, ChumsScopes, CONTENT_API_URL, DOING_API_URL, MEMBERSHIP_API_URL, CHUMS_API_URL } from "./types"
 
+/**
+ * Handles authentication and API communication with the Chums service.
+ * Manages OAuth flow, token refresh, and provides methods for making authenticated API requests.
+ */
 export class ChumsConnect {
   private static app = express()
   private static readonly CHUMS_PORT = 5502

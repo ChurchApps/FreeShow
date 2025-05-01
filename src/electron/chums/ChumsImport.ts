@@ -4,6 +4,10 @@ import type { Show, Slide, SlideData } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
 import { ChumsConnect } from "./ChumsConnect"
 
+/**
+ * Handles importing service plans and songs from Chums.
+ * Converts Chums service plans and songs into FreeShow shows and projects.
+ */
 export class ChumsImport {
   private static projects: any[] = []
   private static shows: Show[] = []
