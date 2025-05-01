@@ -72,9 +72,15 @@ export class ChumsExport {
             ccliNumber: showData[1].meta?.CCLI || ""
           }
 
-          // Add lyrics
+          // Add lyrics with group names
+          let currentGroup = ""
           Object.keys(showData[1].slides).forEach((slideKey: string) => {
             const slide = showData[1].slides?.[slideKey]
+            // Add group name if it's different from the current group
+            if (slide.group && slide.group !== currentGroup) {
+              songData.lyrics += `[${slide.group}]\n`
+              currentGroup = slide.group
+            }
             slide.items.forEach((item: any) => {
               item.lines.forEach((line: any) => {
                 songData.lyrics += line.text?.[0]?.value + "\n" || ""
