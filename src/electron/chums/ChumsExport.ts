@@ -8,10 +8,13 @@ import type { ChumsSongData } from "./types"
 
 export class ChumsExport {
   public static async sendSongsToChums(): Promise<void> {
-    const songData = this.getChumsSongData()
+    const missingIds = await this.getMissingSongIds()
+
+    // Get song data only for missing songs
+    const songData = this.getChumsSongData(missingIds)
     const batchSize = 10
 
-    // Send the data in batches
+    // Send the missing songs in batches
     for (let i = 0; i < songData.length; i += batchSize) {
       const batch = songData.slice(i, i + batchSize)
       console.log("Sending batch", batch)
@@ -25,14 +28,34 @@ export class ChumsExport {
       })
     }
 
-    sendToMain(ToMain.TOAST, "Synced song library to Chums")
+    sendToMain(ToMain.TOAST, `Synced ${missingIds.length} new songs to Chums`)
   }
 
-  private static getChumsSongData(): ChumsSongData[] {
+  private static async getMissingSongIds(): Promise<string[]> {
+    const freeShowIds = this.getAllFreeShowSongIds()
+
+    const missingSongsResponse = await ChumsConnect.apiRequest({
+      api: "content",
+      authenticated: true,
+      scope: "plans",
+      endpoint: "/arrangements/freeShow/missing",
+      method: "POST",
+      data: { freeShowIds }
+    })
+
+    return missingSongsResponse.data || []
+  }
+
+  private static getAllFreeShowSongIds(): string[] {
+    const shows = stores.SHOWS.store as { [key: string]: any }
+    return Object.keys(shows).filter(key => shows[key].category === "song")
+  }
+
+  private static getChumsSongData(freeShowIds: string[]): ChumsSongData[] {
     const songList: ChumsSongData[] = []
     const shows = stores.SHOWS.store as { [key: string]: any }
 
-    Object.keys(shows).forEach((key: string) => {
+    freeShowIds.forEach((key: string) => {
       const show = shows[key]
       if (show.category === "song") {
         const showData = this.loadShowData(show.name)
