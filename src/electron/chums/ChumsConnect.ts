@@ -8,14 +8,13 @@ import { httpsRequest } from "../utils/requests"
 import { ChumsAuthData, ChumsRequestData, ChumsScopes, CONTENT_API_URL, DOING_API_URL, MEMBERSHIP_API_URL, CHUMS_API_URL } from "./types"
 
 export class ChumsConnect {
-  private static instance: ChumsConnect
-  private app = express()
-  private readonly CHUMS_PORT = 5502
-  private CHUMS_ACCESS: ChumsAuthData = null
-  private readonly clientId: string
-  private readonly clientSecret: string
+  private static app = express()
+  private static readonly CHUMS_PORT = 5502
+  private static CHUMS_ACCESS: ChumsAuthData = null
+  private static readonly clientId: string = getKey("chums_id")
+  private static readonly clientSecret: string = getKey("chums_secret")
 
-  private readonly HTML_SUCCESS = `
+  private static readonly HTML_SUCCESS = `
     <head>
         <title>Success!</title>
     </head>
@@ -25,7 +24,7 @@ export class ChumsConnect {
     </body>
   `
 
-  private readonly HTML_ERROR = `
+  private static readonly HTML_ERROR = `
     <head>
         <title>Error!</title>
     </head>
@@ -35,19 +34,7 @@ export class ChumsConnect {
     </body>
   `
 
-  private constructor() {
-    this.clientId = getKey("chums_id")
-    this.clientSecret = getKey("chums_secret")
-  }
-
-  public static getInstance(): ChumsConnect {
-    if (!ChumsConnect.instance) {
-      ChumsConnect.instance = new ChumsConnect()
-    }
-    return ChumsConnect.instance
-  }
-
-  public async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
+  public static async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
     const storedAccess: any = this.CHUMS_ACCESS || stores.ACCESS.get(`chums_${scope}`)
 
     if (storedAccess?.created_at) {
@@ -65,13 +52,13 @@ export class ChumsConnect {
     return this.CHUMS_ACCESS
   }
 
-  public disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
+  public static disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
     stores.ACCESS.set(`chums_${scope}`, null)
     this.CHUMS_ACCESS = null
     return { success: true }
   }
 
-  public async apiRequest(data: ChumsRequestData): Promise<any> {
+  public static async apiRequest(data: ChumsRequestData): Promise<any> {
     let CHUMS_ACCESS: any = {}
     if (data.authenticated) {
       CHUMS_ACCESS = await this.connect(data.scope)
@@ -94,7 +81,7 @@ export class ChumsConnect {
     })
   }
 
-  private async authenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
+  private static async authenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
     const path = "/auth/complete"
     const redirect_uri = `http://localhost:${this.CHUMS_PORT}${path}`
 
@@ -153,12 +140,12 @@ export class ChumsConnect {
     })
   }
 
-  private hasExpired(access: ChumsAuthData): boolean {
+  private static hasExpired(access: ChumsAuthData): boolean {
     if (access === null) return true
     return (access.created_at + access.expires_in) * 1000 < Date.now()
   }
 
-  private refreshToken(access: ChumsAuthData): Promise<ChumsAuthData> {
+  private static refreshToken(access: ChumsAuthData): Promise<ChumsAuthData> {
     return new Promise((resolve) => {
       if (!access?.refresh_token) return resolve(null)
       console.info("Refreshing Chums OAuth token")

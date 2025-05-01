@@ -7,21 +7,7 @@ import { ChumsConnect } from "./ChumsConnect"
 import type { ChumsSongData } from "./types"
 
 export class ChumsExport {
-  private static instance: ChumsExport
-  private chumsConnect: ChumsConnect
-
-  private constructor() {
-    this.chumsConnect = ChumsConnect.getInstance()
-  }
-
-  public static getInstance(): ChumsExport {
-    if (!ChumsExport.instance) {
-      ChumsExport.instance = new ChumsExport()
-    }
-    return ChumsExport.instance
-  }
-
-  public async sendSongsToChums(): Promise<void> {
+  public static async sendSongsToChums(): Promise<void> {
     const songData = this.getChumsSongData()
     const batchSize = 10
 
@@ -29,7 +15,7 @@ export class ChumsExport {
     for (let i = 0; i < songData.length; i += batchSize) {
       const batch = songData.slice(i, i + batchSize)
       console.log("Sending batch", batch)
-      await this.chumsConnect.apiRequest({
+      await ChumsConnect.apiRequest({
         api: "content",
         authenticated: true,
         scope: "plans",
@@ -42,7 +28,7 @@ export class ChumsExport {
     sendToMain(ToMain.TOAST, "Synced song library to Chums")
   }
 
-  private getChumsSongData(): ChumsSongData[] {
+  private static getChumsSongData(): ChumsSongData[] {
     const songList: ChumsSongData[] = []
     const shows = stores.SHOWS.store as { [key: string]: any }
 
@@ -79,7 +65,7 @@ export class ChumsExport {
     return songList
   }
 
-  private loadShowData(showName: string): any {
+  private static loadShowData(showName: string): any {
     const showsPath = getDocumentsFolder()
     const showPath: string = path.join(showsPath, `${showName}.show`)
     const jsonData = readFile(showPath) || "{}"

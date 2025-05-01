@@ -5,28 +5,15 @@ import { sendToMain } from "../IPC/main"
 import { ChumsConnect } from "./ChumsConnect"
 
 export class ChumsImport {
-  private static instance: ChumsImport
-  private chumsConnect: ChumsConnect
-  private projects: any[] = []
-  private shows: Show[] = []
+  private static projects: any[] = []
+  private static shows: Show[] = []
 
-  private constructor() {
-    this.chumsConnect = ChumsConnect.getInstance()
-  }
-
-  public static getInstance(): ChumsImport {
-    if (!ChumsImport.instance) {
-      ChumsImport.instance = new ChumsImport()
-    }
-    return ChumsImport.instance
-  }
-
-  public async loadServices(): Promise<void> {
+  public static async loadServices(): Promise<void> {
     this.projects = []
     this.shows = []
 
     sendToMain(ToMain.TOAST, "Getting schedules from Chums")
-    const SERVICE_PLANS = await this.chumsConnect.apiRequest({
+    const SERVICE_PLANS = await ChumsConnect.apiRequest({
       api: "doing",
       authenticated: true,
       scope: "plans",
@@ -44,9 +31,9 @@ export class ChumsImport {
     sendToMain(ToMain.CHUMS_PROJECTS, { shows: this.shows, projects: this.projects })
   }
 
-  private async loadPlanItems(plan: any): Promise<void> {
+  private static async loadPlanItems(plan: any): Promise<void> {
     const projectItems: any[] = []
-    const planItems: any = await this.chumsConnect.apiRequest({
+    const planItems: any = await ChumsConnect.apiRequest({
       api: "doing",
       authenticated: false,
       scope: "plans",
@@ -94,10 +81,10 @@ export class ChumsImport {
     if (Object.keys(projectData).length) this.projects.push(projectData)
   }
 
-  private async loadArrangementKey(churchId: string, arrangementId: string) {
+  private static async loadArrangementKey(churchId: string, arrangementId: string) {
     let data: any = {}
     try {
-      data = await this.chumsConnect.apiRequest({
+      data = await ChumsConnect.apiRequest({
         api: "content",
         authenticated: false,
         scope: "plans",
@@ -113,7 +100,7 @@ export class ChumsImport {
     return this.getShow(data.arrangementKey, data.arrangement, data.song, data.songDetail, sections)
   }
 
-  private parseLyrics(lyrics: string): any[] {
+  private static parseLyrics(lyrics: string): any[] {
     if (!lyrics) return []
     if (!lyrics.startsWith("[")) return [{ label: "Lyrics", lyrics }]
 
@@ -131,7 +118,7 @@ export class ChumsImport {
     return sections
   }
 
-  private getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS: any, SECTIONS: any[]) {
+  private static getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS: any, SECTIONS: any[]) {
     const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
@@ -209,7 +196,7 @@ export class ChumsImport {
     return { showId, show, seconds: SONG_DETAILS.seconds || 0 }
   }
 
-  private getEmptyShow(id: string, title: string, description: string, seconds: number) {
+  private static getEmptyShow(id: string, title: string, description: string, seconds: number) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     const metadata = {
