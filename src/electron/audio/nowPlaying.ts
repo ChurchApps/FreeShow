@@ -12,16 +12,19 @@ let currentContent = ""
 export async function setPlayingState(data: { dataPath: string; filePath: string; name: string }) {
     const documentsPath = makeDir(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
 
-    // create playing data text file
-    const filePath = join(documentsPath, fileNameText)
-    const content = data.name
-    writeFile(filePath, content)
-
-    currentContent = content
-    startServer()
-
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
+
+    // title data
+    const content = metadata?.title || data.name
+    currentContent = content
+
+    // create playing data text file
+    const filePath = join(documentsPath, fileNameText)
+    writeFile(filePath, content)
+
+    // serve "text file" on local server
+    startServer()
 
     // create album art cover
     const filePathCover = join(documentsPath, fileNameImage)
@@ -62,8 +65,12 @@ function startServer() {
         res.send(currentContent)
     })
 
-    app.listen(PLAYING_DATA_PORT, () => {
+    const server = app.listen(PLAYING_DATA_PORT, () => {
         console.info(`Serving audio name at PORT: ${PLAYING_DATA_PORT}`)
+    })
+
+    server.once("error", (err: Error) => {
+        if ((err as any).code === "EADDRINUSE") server.close()
     })
 }
 

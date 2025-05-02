@@ -9,6 +9,8 @@ export const actionData = {
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", name: "preview._start", icon: "showIcon", input: "id" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
+    transpose_show_up: { name: "edit.transpose_up", icon: "up" },
+    transpose_show_down: { name: "edit.transpose_down", icon: "down" },
 
     // PRESENTATION
     next_slide: { SECTION: "preview.slide", name: "preview._next_slide", icon: "slide", incompatible: ["previous_slide", "random_slide", "index_select_slide", "name_select_slide", "id_select_group"] },

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { StageLayout } from "../../../types/Stage"
-    import { allOutputs, outputs, stageShows, variables } from "../../stores"
+    import { allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables } from "../../stores"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -38,7 +38,7 @@
             <SelectElem id="stage" data={{ id }}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables)}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $variables, $playingAudio, $playingAudioPaths })}
                             <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}

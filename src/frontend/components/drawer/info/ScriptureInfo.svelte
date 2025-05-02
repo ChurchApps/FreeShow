@@ -153,14 +153,16 @@
                 book: bibles[0].bookId ?? bibles[0].book,
                 chapter: bibles[0].chapter,
                 verses: bibles[0].activeVerses,
-                attributionString,
-            },
+                attributionString
+            }
         }
 
         // WIP add template background?
 
         return { show }
     }
+
+    // const getTextValue = (e: any) => e.target?.value || ""
 
     const checked = (e: any) => {
         let val = e.target.checked
@@ -198,7 +200,7 @@
                 chapter: Number(bibles[0].chapter) - 1,
                 verse: sorted[0],
                 reference: `${bibles[0].book} ${bibles[0].chapter}:${value}`,
-                text: getSplittedVerses(bibles[0].verses)[sorted[0]] || bibles[0].verses[sorted[0]] || "",
+                text: getSplittedVerses(bibles[0].verses)[sorted[0]] || bibles[0].verses[sorted[0]] || ""
             }
             // WIP multiple verses, play from another version
 
@@ -506,6 +508,13 @@
                     <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
                 </CombinedInput>
             {/if}
+
+            <!-- {#if $scriptureSettings.showVerse}
+                <CombinedInput>
+                    <p><T id="meta.text_divider" /></p>
+                    <TextInput value={$scriptureSettings.referenceDivider || ":"} on:change={(e) => update("referenceDivider", getTextValue(e))} />
+                </CombinedInput>
+            {/if} -->
 
             {#if showVersion || $scriptureSettings.showVerse}
                 <!-- {#if !$scriptureSettings.firstSlideReference} -->

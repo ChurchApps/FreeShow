@@ -8,6 +8,7 @@ import {
     $,
     activeProject,
     activeShow,
+    audioData,
     cachedShowsData,
     colorbars,
     customMessageCredits,
@@ -25,6 +26,7 @@ import {
     outputs,
     overlays,
     playerVideos,
+    playingAudio,
     projects,
     refreshSlideThumbnails,
     scriptures,
@@ -44,6 +46,7 @@ import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
+import { AudioPlayer } from "../audio/audioPlayer"
 
 export function storeSubscriber() {
     // load new show on show change
@@ -246,6 +249,14 @@ export function storeSubscriber() {
 
         // dynamic values
         send(OUTPUT, ["ACTIVE_PROJECT"], a)
+    })
+
+    // dynamic values
+    playingAudio.subscribe(() => {
+        send(OUTPUT, ["PLAYING_AUDIO"], AudioPlayer.getAllPlaying())
+    })
+    audioData.subscribe((a) => {
+        send(OUTPUT, ["AUDIO_DATA"], a)
     })
 
     colorbars.subscribe((a) => {

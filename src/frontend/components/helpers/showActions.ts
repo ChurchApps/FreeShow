@@ -111,7 +111,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts) return
+    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
 
     // set active layout from project if it exists
@@ -1104,7 +1104,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        const audioPath = AudioPlayer.getAllPlaying()[0]
+        const playingAudioIds = AudioPlayer.getAllPlaying()
+        const audioPath = playingAudioIds[playingAudioIds.length - 1] // get newest
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioPath }) ?? "").toString()
 
@@ -1181,7 +1182,7 @@ export function getNumberVariables(variableUpdater = get(variables), _dynamicUpd
 // AUDIO METADATA
 
 function getMetadata(audioPath: string) {
-    return (get(audioData)[audioPath]?.metadata || {})
+    return get(audioData)[audioPath]?.metadata || {}
 }
 
 function getArtist(metadata: ICommonTagsResult) {

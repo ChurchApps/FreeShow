@@ -572,6 +572,7 @@ function convertProToSlides(song: any) {
 
         arrGroups.forEach((groupId) => {
             const group = tempGroups[groupId]
+            if (!group) return
 
             const allSlides = group.slides.map((id, i) => createSlide(id, i === 0, { color: group.color, name: group.name }))
             if (allSlides.length > 1) {

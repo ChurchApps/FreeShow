@@ -51,6 +51,7 @@ import {
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
+import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 import { setCaret } from "../edit/scripts/textStyle"
 import { activeEdit } from "./../../stores"
 import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
@@ -60,7 +61,6 @@ import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -108,6 +108,12 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     }
 
     if (clip.id === null) return
+
+    // custom media paste: only paste on selected ones
+    if (clip.id === "media") {
+        mediaPaste(clip.data)
+        return
+    }
 
     if (!pasteActions[clip.id]) return
     pasteActions[clip.id](clip.data, extraData)
@@ -439,6 +445,16 @@ const copyActions = {
     },
     template: (data: any) => {
         return data.map((id: string) => clone(get(templates)[id]))
+    },
+    media: (data: any) => {
+        // copy style/filters of first selected media
+        const path = data[0]?.path
+        const mediaData = {}
+        Object.entries(clone(get(media)[path] || {})).forEach(([key, value]) => {
+            if (!mediaCopyKeys.includes(key)) return
+            mediaData[key] = value
+        })
+        return { origin: path, data: mediaData, type: data[0]?.type }
     },
 }
 
@@ -1021,6 +1037,25 @@ const duplicateActions = {
             return a
         })
     },
+}
+
+const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume"]
+function mediaPaste(data: any) {
+    if (!data || get(selected).id !== "media") return
+
+    media.update((a) => {
+        ;(get(selected).data || []).forEach(({ path, type }) => {
+            // only paste on media with same type & don't paste back on itself
+            if (type !== data.type || path === data.path) return
+
+            if (!a[path]) a[path] = {}
+            mediaCopyKeys.forEach((key) => {
+                if (data.data[key] === undefined) delete a[path][key]
+                else a[path][key] = data.data[key]
+            })
+        })
+        return a
+    })
 }
 
 // HELPER FUNCTIONS

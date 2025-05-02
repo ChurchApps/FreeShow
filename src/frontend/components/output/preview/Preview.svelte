@@ -158,7 +158,7 @@
     }
 
     // active menu
-    let activeClear: any = null
+    let activeClear: string | null = null
     let autoChange = true
     $: if (outputId) autoChange = true
     $: if (autoChange && ($outputs || $overlayTimers)) {
@@ -173,6 +173,17 @@
         else if (activeClear === "overlays" && isOutCleared("overlays")) autoChange = true
         else if (activeClear === "slide" && !(!isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")))) autoChange = true
         else if (activeClear === "background" && isOutCleared("background")) autoChange = true
+    }
+
+    // don't update instantly in case it changes back quickly like slide timers
+    let updatedActiveClear: string | null = null
+    let updateActiveClearTimeout: NodeJS.Timeout | null = null
+    $: if (activeClear !== undefined) updateActiveClear()
+    function updateActiveClear() {
+        if (updateActiveClearTimeout) clearTimeout(updateActiveClearTimeout)
+        updateActiveClearTimeout = setTimeout(() => {
+            updatedActiveClear = activeClear
+        })
     }
 
     function getActiveClear(slideTimer: any, audio: any, overlays: any, slide: any, background: any) {
@@ -245,22 +256,19 @@
     {/if}
 
     {#if $activePage === "show"}
-        <ClearButtons bind:autoChange bind:activeClear />
+        <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
-        {#if activeClear === "background"}
+        {#if updatedActiveClear === "background"}
             <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />
-        {:else if activeClear === "slide"}
+        {:else if updatedActiveClear === "slide"}
             <Show {currentOutput} {ref} {linesIndex} {maxLines} />
-        {:else if activeClear === "overlays"}
+        {:else if updatedActiveClear === "overlays"}
             <Overlay {currentOutput} />
-        {:else if activeClear === "audio" && Object.keys($playingAudio).length}
+        {:else if updatedActiveClear === "audio" && Object.keys($playingAudio).length}
             <Audio />
-        {:else if activeClear === "nextTimer"}
-            {#if timer}
-                <NextTimer {currentOutput} {timer} />
-            {:else}
-                <!-- overlay timer -->
-            {/if}
+        {:else if updatedActiveClear === "nextTimer"}
+            <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />
+            <!-- WIP display overlay timer time -->
         {/if}
     {/if}
 </div>

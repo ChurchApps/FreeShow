@@ -294,8 +294,8 @@
     const specificActivations = {
         timer_end: {
             name: "items.timer",
-            list: () => convertToOptions($timers),
-        },
+            list: () => convertToOptions($timers)
+        }
     }
     function getSpecificActivation(customActivation) {
         return [{ id: "", name: "$:actions.any:$" }, ...specificActivations[customActivation].list()]
@@ -377,6 +377,7 @@
                     changeAction(e, actionSelector.index)
                     actionSelector = null
                 }}
+                {mode}
                 list
                 full
             />
@@ -403,7 +404,7 @@
                             mode: "action",
                             revert: $activePopup,
                             value: action.keypressActivate,
-                            existingShortcuts,
+                            existingShortcuts
                         })
                         // popupData.set({ id: group.id, value: group.shortcut, existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut), mode: "global_group", trigger: (id) => changeGroup(id, group.id, "shortcut") })
                         activePopup.set("assign_shortcut")
@@ -511,12 +512,13 @@
                             actionNameIndex={i + 1}
                             on:change={(e) => changeAction(e, i)}
                             on:choose={() => (actionSelector = { id: actionId, index: i })}
+                            {mode}
                             choosePopup
                         />
                     {/key}
                 {/each}
                 {#if !action.triggers?.length || addTrigger}
-                    <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} on:choose={() => (actionSelector = { id: "" })} choosePopup />
+                    <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} on:choose={() => (actionSelector = { id: "" })} {mode} choosePopup />
                 {:else}
                     <CombinedInput textWidth={38} style="border-top: 2px solid var(--primary-lighter);">
                         <Button

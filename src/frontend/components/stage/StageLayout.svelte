@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, allOutputs, currentWindow, dictionary, outputs, stageShows, variables } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, dictionary, outputs, playingAudio, playingAudioPaths, stageShows, variables } from "../../stores"
     import { send } from "../../utils/request"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -136,7 +136,7 @@
                 {/if}
                 {#key stageLayoutId}
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, $variables))}
+                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $variables, $playingAudio, $playingAudioPaths }))}
                             <Stagebox {edit} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
                         {/if}
                     {/each}
