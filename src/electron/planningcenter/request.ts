@@ -1,4 +1,5 @@
 import path from "path"
+import crypto from "crypto"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../types/Show"
@@ -242,7 +243,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
     if (!sections.length) sections = sequence.map((id) => ({ label: id, lyrics: "" }))
 
     const show = getShow(songData, song, sections)
-    const showId = `pcosong_${songData.id}`
+    const showId = generateContentBasedShowId(songData, song)
 
     return {
         itemData: {
@@ -256,7 +257,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
 }
 
 function processGenericItem(item: any) {
-    const showId = `pcosong_${item.id}`
+    const showId = generateContentBasedShowId(item)
     const show = getShow(item, {}, [])
 
     return {
@@ -268,6 +269,43 @@ function processGenericItem(item: any) {
         itemShow: { id: showId, ...show },
         itemMedia: null,
     }
+}
+
+function generateContentBasedShowId(item: any, song: any = null): string {
+    if (song) {
+        return generateSongBasedShowId(item, song)
+    }
+
+    return generateGenericItemBasedShowId(item)
+}
+
+function generateSongBasedShowId(item: any, song: any): string {
+    const title: string = item.attributes.title || ""
+    const ccliNumber: number = item.attributes.ccli_number || 0
+    const lyrics: string = song.lyrics || ""
+    const arrangementName: string = song.name || ""
+
+    const hashInput = `${title}${ccliNumber}${lyrics}${arrangementName}`.toLowerCase()
+
+    return createPrefixedPCOHash(hashInput)
+}
+
+function generateGenericItemBasedShowId(item: any): string {
+    const title: string = item.attributes.title || ""
+    const itemType: string = item.attributes.item_type || ""
+
+    const hashInput = `${title}${itemType}`.toLowerCase()
+
+    return createPrefixedPCOHash(hashInput)
+}
+
+function createPrefixedPCOHash(hashInput: string): string {
+    // We could use SHA256, but MD5 is faster and shorter
+    // and we don't need the extra security for this use case
+    // if a hash collision occurs, it will be very rare, but it will just create a duplicate show
+    const hash = crypto.createHash("md5").update(hashInput).digest("hex")
+
+    return `pcosong_${hash}`
 }
 
 async function processMediaItem(item: any, itemsEndpoint: string, serviceType: any, dataPath: string) {
@@ -349,7 +387,8 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const metadata = {
         title,
         author: SONG_DATA.attributes.author || "",
-        publisher: SONG.name || "",
+        arrangement: SONG.name || "",
+        publisher: SONG_DATA.attributes.admin || "",
         copyright: SONG_DATA.attributes.copyright || "",
         CCLI: SONG_DATA.attributes.ccli_number || "",
         key: SONG.chord_chart_key || "",
