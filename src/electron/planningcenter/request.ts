@@ -242,7 +242,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
     if (!sections.length) sections = sequence.map((id) => ({ label: id, lyrics: "" }))
 
     const show = getShow(songData, song, sections)
-    const showId = `pcosong_${songData.id}`
+    const showId = generateArrangementBasedShowId(songData, songArrangement)
 
     return {
         itemData: {
@@ -256,7 +256,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
 }
 
 function processGenericItem(item: any) {
-    const showId = `pcosong_${item.id}`
+    const showId = generateGenericItemBasedShowId(item)
     const show = getShow(item, {}, [])
 
     return {
@@ -268,6 +268,20 @@ function processGenericItem(item: any) {
         itemShow: { id: showId, ...show },
         itemMedia: null,
     }
+}
+
+function generateArrangementBasedShowId(item: any, arrangement: any): string {
+    const ccliNumber: number = item.attributes.ccli_number || 0
+    const arrangementId: string = arrangement.id || 0
+
+    return `pcosong_${ccliNumber}_${arrangementId}`
+}
+
+function generateGenericItemBasedShowId(item: any): string {
+    const title: string = item.attributes.title || ""
+    const itemType: string = item.attributes.item_type || ""
+
+    return `pcosong_${title}_${itemType}`.toLowerCase()
 }
 
 async function processMediaItem(item: any, itemsEndpoint: string, serviceType: any, dataPath: string) {
@@ -349,7 +363,8 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const metadata = {
         title,
         author: SONG_DATA.attributes.author || "",
-        publisher: SONG.name || "",
+        arrangement: SONG.name || "",
+        publisher: SONG_DATA.attributes.admin || "",
         copyright: SONG_DATA.attributes.copyright || "",
         CCLI: SONG_DATA.attributes.ccli_number || "",
         key: SONG.chord_chart_key || "",
