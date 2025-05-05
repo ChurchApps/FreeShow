@@ -54,6 +54,7 @@ export function convertOpenLP(data: any) {
     function addShow(song: Song) {
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "openlyrics"
         show.name = checkName(song.title)
 
         show.meta = {

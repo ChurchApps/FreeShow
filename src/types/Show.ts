@@ -9,6 +9,7 @@ export interface Shows {
 export interface Show {
     name: string
     id?: string // this id should not be stored (but often used in the program as a temporary value)
+    origin?: string // "pco" | "chums" | "hymnary", etc.
     private?: boolean // hide from drawer
     locked?: boolean // disable edits
     category: null | ID

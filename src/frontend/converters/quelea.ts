@@ -59,6 +59,7 @@ export function convertQuelea(data: any) {
     function convertSong(song: Song) {
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "quelea"
         show.name = checkName(song.title)
 
         const { slides, layout }: any = createSlides(song)

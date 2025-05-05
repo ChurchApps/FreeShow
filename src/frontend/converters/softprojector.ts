@@ -54,6 +54,7 @@ export function convertSoftProjector(data: any) {
     function convertSong(song: Song) {
         const layoutID = uid()
         const show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "softprojector"
         show.name = checkName(song.title)
 
         show.meta = {

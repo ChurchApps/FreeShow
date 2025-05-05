@@ -117,7 +117,8 @@
         "quick_lyrics_example_tip": "Escreva a letra ou qualquer texto aqui",
         "quick_lyrics_example_text": "Linha",
         "empty": "Show vazio",
-        "exists": "Há um Show com o mesmo nome"
+        "exists": "Há um Show com o mesmo nome",
+        "slideshow": "Show de slide"
     },
     "preview": {
         "_previous_show": "Show anterior",
@@ -427,6 +428,7 @@
         "set_time": "Definir tempo",
         "assign_shortcut": "Atribuir atalho",
         "dynamic_values": "Valores dinâmicos",
+        "conditions": "Condições",
         "animate": "Animar",
         "translate": "Traduzir",
         "next_timer": "Temporizador do próximo slide",
@@ -441,6 +443,7 @@
         "edit_event": "Editar evento",
         "about": "Sobre",
         "history": "Histórico",
+        "action_history": "Histórico de ações",
         "manage_emitters": "Gerenciar emitters",
         "action": "Ação",
         "category_action": "Ação de categoria",
@@ -492,6 +495,7 @@
         "deleted_cache": "Cache de thumbnails foi excluído.",
         "no_songswords_easyworship": "Arquivo SongsWords.db não encontrado.",
         "delete_shows_empty": "Sem Shows para deletar.",
+        "reached_end": "Chegou ao fim!",
         "output_capture_enabled": "Captura de tela de saída habilitada, isso pode causar problemas de desempenho. Use somente se necessário!",
         "midi_no_project": "Trigger recebido para mudar de projeto, mas nenhum projeto foi encontrado no índice:",
         "midi_no_show": "Trigger recebido para iniciar slide, mas nenhum Show está ativo.",
@@ -610,6 +614,8 @@
         "bind_to": "Saída específica",
         "remove_binding": "Remover saída específica",
         "dynamic_values": "Valores dinâmicos",
+        "dynamic_value": "Valor dinãmico",
+        "conditions": "Condições",
         "rearrange": "Rearranjar",
         "to_front": "Para primeiro plano",
         "forward": "Para frente",
@@ -694,6 +700,7 @@
         "id_select_group": "Reproduzir grupo específico",
         "id_change_stage_layout": "Mudar layout do palco",
         "start_camera": "Iniciar câmera",
+        "start_screen": "Iniciar tela",
         "id_select_overlay": "Iniciar sobreposição",
         "change_volume": "Mudar volume",
         "start_audio_stream": "Iniciar transmissão de áudio",
@@ -715,6 +722,7 @@
         "custom_activation": "Ativação personalizada",
         "set_custom_activation": "Definir ativação personalizada",
         "any": "Qualquer um",
+        "override_category_action": "Ignorar ação de categoria",
         "activate_on_startup": "Ativar ao iniciar",
         "activate_save": "Ativar ao salvar",
         "activate_slide_clicked": "Ativar ao clicar no slide",
@@ -729,6 +737,18 @@
         "activate_show_created": "Ativar quando um Show é criado",
         "activate_show_opened": "Ativar quando um Show for aberto",
         "activate_audio_playlist_ended": "Ativar quando uma playlist de áudio termina"
+    },
+    "conditions": {
+        "show_item": "Mostrar item se",
+        "all_conditions": "Todas as condições a seguir são cumpridas",
+        "some_conditions": "Algumas das condições a seguir são cumpridas",
+        "none_conditions": "Nenhuma das condições a seguir são cumpridas",
+        "has": "possui",
+        "has_not": "não possui",
+        "is": "é",
+        "is_not": "não é",
+        "value": "valor",
+        "empty": "vazio"
     },
     "recording": {
         "remove": "Remover gravação",
@@ -800,6 +820,8 @@
         "columns": "Colunas"
     },
     "context": {
+        "to_dictionary": "Adicionar ao dicionário",
+        "correct": "Substituir com esta palavra",
         "enabledTabs": "Alternar guias",
         "setTag": "Adicionar tag",
         "filterByTags": "Filtrar por tags",
@@ -811,6 +833,7 @@
         "changeIcon": "Alterar ícone",
         "changeGroup": "Alterar grupo",
         "createNew": "Criar novo",
+        "create_slideshow": "Criar Show de slides",
         "selectAll": "Selecionar tudo",
         "force_outputs": "Forçar saídas",
         "align_with_screen": "Alinhar com a tela",
@@ -873,6 +896,7 @@
         "invert_items": "Inverter items",
         "list": "Lista",
         "chords": "Acordes",
+        "vertical_offset": "Vertical offset",
         "transpose": "Transpor",
         "auto_size": "Tamanho automático",
         "no_wrap": "Texto em linha única",
@@ -937,18 +961,22 @@
         "bottom_top": "Baixo para cima",
         "left_right": "Esquerda para direita",
         "right_left": "Direita para esquerda",
+        "press_action": "Ação ao pressionar",
+        "release_action": "Ação ao liberar",
         "max_events": "Máximo de eventos",
         "start_days_from_today": "Começa em dias a partir de hoje",
         "just_one_day": "Dia único",
         "enable_start_date": "Habilitar data de início",
         "disable_navigation": "Desativar controles de navegação",
-        "progress_bar": "Barra de progresso"
+        "progress_bar": "Barra de progresso",
+        "each_number_once": "Cada número é único"
     },
     "items": {
         "text": "Caixa de texto",
         "media": "Mídia",
         "image": "Imagem",
         "camera": "Câmera",
+        "screen": "Tela",
         "video": "Vídeo",
         "mirror": "Espelho",
         "clock": "Relógio",
@@ -1057,7 +1085,8 @@
         "signal": "Sinal",
         "message_template": "Modelo de mensagem",
         "message_templates": "Modelos de mensagem",
-        "inputs": "Entradas"
+        "inputs": "Entradas",
+        "data": "Dados"
     },
     "draw": {
         "focus": "Foco",
@@ -1343,10 +1372,12 @@
     },
     "variables": {
         "number": "Número",
+        "random_number": "Número aleatório",
         "text": "Texto",
         "step": "Passo",
         "default_value": "Valor padrão",
         "value": "Valor",
+        "randomize": "Randomizar",
         "set_state": "Definir estado",
         "minimum": "Mínimo",
         "maximum": "Máximo"

@@ -64,6 +64,7 @@ export function convertProPresenter(data: any) {
             const layoutID = uid()
             const show = new ShowObj(false, categoryId, layoutID)
             let showId = song["@uuid"] || song.uuid?.string || song._id || uid()
+            show.origin = "propresenter"
             show.name = checkName(song.name === "Untitled" ? name : song.name || song.title || name, showId)
 
             // propresenter often uses the same id for duplicated songs

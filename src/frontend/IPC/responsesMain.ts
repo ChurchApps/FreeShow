@@ -243,7 +243,7 @@ export const mainResponses: MainResponses = {
             if (get(shows)[id]) return
 
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 
@@ -292,7 +292,7 @@ export const mainResponses: MainResponses = {
             if (get(shows)[id]) return
 
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+            tempShows.push({ id, show: { ...show, origin: "chums", name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 
