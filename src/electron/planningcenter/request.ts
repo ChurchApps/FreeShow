@@ -1,5 +1,4 @@
 import path from "path"
-import crypto from "crypto"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../types/Show"
@@ -243,7 +242,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
     if (!sections.length) sections = sequence.map((id) => ({ label: id, lyrics: "" }))
 
     const show = getShow(songData, song, sections)
-    const showId = generateContentBasedShowId(songData, song)
+    const showId = generateArrangementBasedShowId(songData, songArrangement)
 
     return {
         itemData: {
@@ -257,7 +256,7 @@ async function processSongItem(item: any, itemsEndpoint: string) {
 }
 
 function processGenericItem(item: any) {
-    const showId = generateContentBasedShowId(item)
+    const showId = generateGenericItemBasedShowId(item)
     const show = getShow(item, {}, [])
 
     return {
@@ -271,41 +270,18 @@ function processGenericItem(item: any) {
     }
 }
 
-function generateContentBasedShowId(item: any, song: any = null): string {
-    if (song) {
-        return generateSongBasedShowId(item, song)
-    }
-
-    return generateGenericItemBasedShowId(item)
-}
-
-function generateSongBasedShowId(item: any, song: any): string {
-    const title: string = item.attributes.title || ""
+function generateArrangementBasedShowId(item: any, arrangement: any): string {
     const ccliNumber: number = item.attributes.ccli_number || 0
-    const lyrics: string = song.lyrics || ""
-    const arrangementName: string = song.name || ""
+    const arrangementId: string = arrangement.id || 0
 
-    const hashInput = `${title}${ccliNumber}${lyrics}${arrangementName}`.toLowerCase()
-
-    return createPrefixedPCOHash(hashInput)
+    return `pcosong_${ccliNumber}_${arrangementId}`
 }
 
 function generateGenericItemBasedShowId(item: any): string {
     const title: string = item.attributes.title || ""
     const itemType: string = item.attributes.item_type || ""
 
-    const hashInput = `${title}${itemType}`.toLowerCase()
-
-    return createPrefixedPCOHash(hashInput)
-}
-
-function createPrefixedPCOHash(hashInput: string): string {
-    // We could use SHA256, but MD5 is faster and shorter
-    // and we don't need the extra security for this use case
-    // if a hash collision occurs, it will be very rare, but it will just create a duplicate show
-    const hash = crypto.createHash("md5").update(hashInput).digest("hex")
-
-    return `pcosong_${hash}`
+    return `pcosong_${title}_${itemType}`.toLowerCase()
 }
 
 async function processMediaItem(item: any, itemsEndpoint: string, serviceType: any, dataPath: string) {
