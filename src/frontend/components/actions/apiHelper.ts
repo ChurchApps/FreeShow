@@ -9,6 +9,7 @@ import {
     activeEdit,
     activePage,
     activeProject,
+    audioPlaylists,
     dictionary,
     gain,
     groupNumbers,
@@ -50,6 +51,7 @@ import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
 import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import { AudioPlaylist } from "../../audio/audioPlaylist"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -204,6 +206,18 @@ export function toggleLock(value?: boolean) {
 export function moveStageConnection(id: string) {
     if (!id) return
     send(STAGE, ["SWITCH"], { id })
+}
+
+// AUDIO
+
+export function startPlaylistByName(name: string) {
+    if (get(outLocked)) return
+
+    const sortedPlaylists = sortByClosestMatch(keysToID(get(audioPlaylists)), name)
+    const playlistId = sortedPlaylists[0]?.id
+    if (!playlistId) return
+
+    AudioPlaylist.start(playlistId)
 }
 
 /// EDIT
@@ -365,7 +379,7 @@ export function startScripture(data: API_scripture) {
     const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
 
     if (get(activePage) !== "edit") activePage.set("show")
-    setDrawerTabData("scripture", data.id)
+    if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
     openScripture.set({ ...ref })

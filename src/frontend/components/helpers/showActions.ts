@@ -34,6 +34,8 @@ import {
     outputs,
     outputSlideCache,
     overlays,
+    playingAudio,
+    playingMetronome,
     projects,
     shows,
     showsCache,
@@ -50,7 +52,7 @@ import {
 } from "./../../stores"
 import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, refreshOut, setOutput } from "./output"
+import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getGroupName, getLayoutRef, initializeMetadata } from "./show"
@@ -1027,9 +1029,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 
     const currentShow = _show(showId).get()
-    if (type === "show" && !currentShow) return text
+    if (type === "show" && !currentShow) return ""
 
-    getDynamicIds().forEach((dynamicId) => {
+    const customIds = ["slide_text_current", "active_layers"]
+    ;[...getDynamicIds(), ...customIds].forEach((dynamicId) => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
         if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
         if (!textHasValue) return
@@ -1107,6 +1110,17 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const playingAudioIds = AudioPlayer.getAllPlaying()
         const audioPath = playingAudioIds[playingAudioIds.length - 1] // get newest
 
+        // custom - only from external source (Companion)
+        if (dynamicId === "slide_text_current") {
+            return getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : (show as any).slides?.[ref[slideIndex]?.id]).join("<br>")
+        } else if (dynamicId === "active_layers") {
+            const backgroundActive = !isOutCleared("background")
+            const slideActive = !isOutCleared("slide")
+            const overlaysActive = !isOutCleared("overlays")
+            const audioActive = Object.keys(get(playingAudio)).length || get(playingMetronome)
+            return [backgroundActive ? "background" : "", slideActive ? "slide" : "", overlaysActive ? "overlays" : "", audioActive ? "audio" : ""].filter(Boolean).join(", ")
+        }
+
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioPath }) ?? "").toString()
 
         if (dynamicId === "show_name_next" && !value && get(currentWindow) === "output") {
@@ -1168,6 +1182,7 @@ const dynamicValues = {
     // audio_cover: ({audioPath}) => getMetadata(audioPath).picture?.[0].data, // buffer
     // disk: {no: null, of: null}
     // track: {no: null, of: null}
+    audio_volume: () => AudioPlayer.getVolume() * 100,
 }
 
 export function getVariableNameId(name: string) {

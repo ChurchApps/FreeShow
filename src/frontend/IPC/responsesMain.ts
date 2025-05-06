@@ -79,6 +79,7 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
+import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -220,6 +221,15 @@ export const mainResponses: MainResponses = {
             a[data.filePath] = { metadata: data.metadata }
             return a
         })
+    },
+
+    // Companion dynamic value variables
+    [ToMain.GET_DYNAMIC_VALUES]: (data) => {
+        const variableData: { [key: string]: string } = {}
+        data.forEach((key) => {
+            variableData[key] = getDynamicValue(key).replaceAll("<br>", "\n")
+        })
+        return variableData
     },
 
     // CONNECTION

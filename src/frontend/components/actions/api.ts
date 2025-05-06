@@ -66,6 +66,7 @@ import {
     selectSlideByName,
     setShowAPI,
     setTemplate,
+    startPlaylistByName,
     startScripture,
     stopAudio,
     toggleLock,
@@ -112,7 +113,7 @@ export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
 export type API_media = { path: string; index?: number; data?: any }
-export type API_scripture = { id: string; reference: string }
+export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
@@ -175,7 +176,7 @@ export const API_ACTIONS = {
     // PROJECT
     id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
-    name_select_project: (data: API_strval) => selectProjectByName(data.value),
+    name_select_project: (data: API_strval) => selectProjectByName(data.value), // BC
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
@@ -195,7 +196,7 @@ export const API_ACTIONS = {
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
     previous_slide: () => previousSlideIndividual({ key: "ArrowLeft" }), // BC
-    random_slide: () => randomSlide(), // BC
+    random_slide: () => randomSlide(),
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
     id_select_group: (data: API_id) => gotoGroup(data.id), // BC
@@ -228,9 +229,9 @@ export const API_ACTIONS = {
     id_select_overlay: (data: API_id) => selectOverlayById(data.id),
 
     // SCRIPTURE
-    start_scripture: (data: API_scripture) => startScripture(data),
-    scripture_next: () => triggerFunction("scripture_next"),
-    scripture_previous: () => triggerFunction("scripture_previous"),
+    start_scripture: (data: API_scripture) => startScripture(data), // BC
+    scripture_next: () => triggerFunction("scripture_next"), // BC
+    scripture_previous: () => triggerFunction("scripture_previous"), // BC
 
     // OUTPUT
     lock_output: (data: API_boolval) => toggleLock(data.value), // BC
@@ -239,7 +240,7 @@ export const API_ACTIONS = {
     // WIP disable stage ?
     // WIP disable NDI ?
     id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
-    change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
+    change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC
 
@@ -256,18 +257,19 @@ export const API_ACTIONS = {
     change_volume: (data: API_volume) => updateVolumeValues(data.volume ?? data.gain, data.gain !== undefined), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
-    playlist_next: () => AudioPlaylist.next(),
+    name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC
+    playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
 
     // TIMERS
     // play / pause playing timers
     // control timer time
     // start specific timer (by name / index)
-    name_start_timer: (data: API_strval) => startTimerByName(data.value),
+    name_start_timer: (data: API_strval) => startTimerByName(data.value), // BC
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
-    pause_timers: () => pauseAllTimers(),
-    stop_timers: () => stopTimers(),
+    pause_timers: () => pauseAllTimers(), // BC
+    stop_timers: () => stopTimers(), // BC
     edit_timer: (data: API_edit_timer) => editTimer(data),
 
     // FUNCTIONS
@@ -279,7 +281,7 @@ export const API_ACTIONS = {
     sync_pco: () => pcoSync(),
 
     // EMIT
-    send_midi: (data: API_midi) => sendMidi(data),
+    send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
     emit_action: (data: API_emitter) => emitData(data),
 

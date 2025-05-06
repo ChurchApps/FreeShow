@@ -354,6 +354,7 @@
 
     .clickable {
         cursor: pointer;
+        user-select: none;
     }
     .clickable:active {
         filter: brightness(0.8);

@@ -144,9 +144,9 @@
     else recentlyUsedList = []
 
     function lastUsed() {
-        const ONE_WEEK = 604800000
-        // get all projects used within the last week
-        recentlyUsedList = keysToID($projects).filter((a) => a.used && Date.now() - a.used < ONE_WEEK)
+        const FIVE_DAYS = 432000000
+        // get all projects used within the last five days
+        recentlyUsedList = keysToID($projects).filter((a) => a.used && Date.now() - a.used < FIVE_DAYS)
         // last used first
         recentlyUsedList = sortByTimeNew(recentlyUsedList, "used").reverse()
 

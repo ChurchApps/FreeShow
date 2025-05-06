@@ -311,7 +311,7 @@ export function getDynamicValue(id: string, type: "default" | "stage" = "default
         showId: outSlide?.id || get(activeShow)?.id,
         layoutId: outSlide?.layout || _show().get("settings.activeLayout"),
         slideIndex: outSlide?.index ?? get(activeEdit).slide ?? -1,
-        type: type === "stage" ? "stage" : get(activeEdit).type || "show",
+        type: type === "stage" ? "stage" : get(activeEdit).type || "show_custom",
         id: get(activeEdit).id,
     }
 
