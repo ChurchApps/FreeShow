@@ -1,6 +1,6 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
-import { STAGE } from "../../../types/Channels"
+import { OUTPUT, STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { AudioPlayer } from "../../audio/audioPlayer"
@@ -9,6 +9,7 @@ import {
     activeEdit,
     activePage,
     activeProject,
+    activeTimers,
     audioPlaylists,
     dictionary,
     gain,
@@ -50,7 +51,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 
 // WIP combine with click() in ShowButton.svelte
@@ -409,6 +410,18 @@ export function playMedia(data: API_media) {
     setOutput("background", { path: data.path, ...mediaStyle })
 }
 
+export function videoSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+
+    let activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    let timeValues: any = {}
+    activeOutputIds.forEach((id) => {
+        timeValues[id] = data.seconds
+    })
+
+    send(OUTPUT, ["TIME"], timeValues)
+}
+
 // AUDIO
 
 export function playAudio(data: API_media) {
@@ -423,6 +436,11 @@ export function stopAudio(data: API_media) {
     if (get(outLocked)) return
     AudioPlayer.stop(data.path)
 }
+export function audioSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+    const audioPath = AudioPlayer.getAllPlaying()[0]
+    AudioPlayer.setTime(audioPath, data.seconds)
+}
 
 let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local", changeGain = false) {
@@ -434,6 +452,28 @@ export function updateVolumeValues(value: number | undefined | "local", changeGa
 
     if (changeGain) gain.set(Number(Number(value).toFixed(2)))
     else volume.set(Number(Number(value).toFixed(2)))
+}
+
+// TIMERS
+
+export function timerSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+
+    const timerId = data.id || get(activeTimers)[0]?.id
+    const timer = get(timers)[timerId]
+    const time = data.seconds
+    if (!timer) return
+
+    activeTimers.update((a) => {
+        let index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...timer, id: timerId, currentTime: time, paused: true })
+        else {
+            a[index].currentTime = time
+            delete a[index].startTime
+        }
+
+        return a
+    })
 }
 
 // SPECIAL

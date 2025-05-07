@@ -42,6 +42,7 @@ import {
 import {
     addGroup,
     addToProject,
+    audioSeekTo,
     changeShowLayout,
     changeVariable,
     editTimer,
@@ -69,8 +70,10 @@ import {
     startPlaylistByName,
     startScripture,
     stopAudio,
+    timerSeekTo,
     toggleLock,
     updateVolumeValues,
+    videoSeekTo,
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -112,6 +115,7 @@ export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
+export type API_seek = { id?: string; seconds: number }
 export type API_media = { path: string; index?: number; data?: any }
 export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
@@ -216,12 +220,8 @@ export const API_ACTIONS = {
     start_camera: (data: API_camera) => startCamera(data),
     start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
+    video_seekto: (data: API_seek) => videoSeekTo(data), // BC
     // play / pause playing
-    // control time
-    // folder_select_media
-    // index_select_camera
-    // index_select_screen...
-    // path_select_media (can be url)
 
     // OVERLAYS
     index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
@@ -251,9 +251,7 @@ export const API_ACTIONS = {
     play_audio: (data: API_media) => playAudio(data),
     pause_audio: (data: API_media) => pauseAudio(data),
     stop_audio: (data: API_media) => stopAudio(data),
-    // control audio time
-    // start specific folder (playlist)
-    // folder_select_audio: () => ,
+    audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
     change_volume: (data: API_volume) => updateVolumeValues(data.volume ?? data.gain, data.gain !== undefined), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
@@ -262,14 +260,13 @@ export const API_ACTIONS = {
     start_metronome: (data: API_metronome) => startMetronome(data),
 
     // TIMERS
-    // play / pause playing timers
     // control timer time
-    // start specific timer (by name / index)
     name_start_timer: (data: API_strval) => startTimerByName(data.value), // BC
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
     pause_timers: () => pauseAllTimers(), // BC
     stop_timers: () => stopTimers(), // BC
+    timer_seekto: (data: API_seek) => timerSeekTo(data), // BC
     edit_timer: (data: API_edit_timer) => editTimer(data),
 
     // FUNCTIONS

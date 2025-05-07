@@ -292,7 +292,7 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
     return true
 }
 
-function getVariableValue(variableId: string) {
+export function getVariableValue(variableId: string) {
     const variable = get(variables)[variableId]
     if (!variable) return ""
 
