@@ -27,6 +27,7 @@ import {
     audioData,
     currentWindow,
     driveData,
+    dynamicValueData,
     focusMode,
     media,
     midiIn,
@@ -1019,8 +1020,10 @@ export function getDynamicIds(noVariables = false) {
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
+    const isOutputWindow = get(currentWindow) === "output"
+
     if (type === "stage") {
-        const stageLayoutId: string = get(currentWindow) === "output" ? Object.values(get(outputs))[0]?.stageOutput || id : id
+        const stageLayoutId: string = isOutputWindow ? Object.values(get(outputs))[0]?.stageOutput || id : id
         const stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
         const outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
         const outSlide = get(outputs)[outputId]?.out?.slide
@@ -1071,7 +1074,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
 
-        if (dynamicId.includes("video_") && get(currentWindow) === "output") {
+        if (dynamicId.includes("video_") && isOutputWindow) {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
@@ -1104,8 +1107,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const videoDuration: number = get(videosData)[outputId]?.duration || 0
 
         const activeAudio = get(playingAudio)[AudioPlayer.getAllPlaying()[0]]?.audio
-        const audioTime = activeAudio?.currentTime || 0
-        const audioDuration = activeAudio?.duration || 0
+        const audioTime = (isOutputWindow ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
+        const audioDuration = (isOutputWindow ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
         let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId)
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
@@ -1132,8 +1135,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
 
-        if (dynamicId === "show_name_next" && !value && get(currentWindow) === "output") {
+        if (dynamicId === "show_name_next" && !value && isOutputWindow) {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
+        }
+
+        // send data to output
+        const sendToOutput = ["audio_time", "audio_countdown", "audio_duration"]
+        if (sendToOutput.includes(dynamicId) && !get(currentWindow)) {
+            send(OUTPUT, ["DYNAMIC_VALUE_DATA"], { audioTime, audioDuration })
         }
 
         return value

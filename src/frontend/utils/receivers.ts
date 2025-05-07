@@ -22,6 +22,7 @@ import {
     drawSettings,
     drawTool,
     driveData,
+    dynamicValueData,
     events,
     gain,
     media,
@@ -272,6 +273,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     // dynamic values
     PLAYING_AUDIO: (a: any) => playingAudioPaths.set(a),
     AUDIO_DATA: (a: any) => audioData.set(a),
+    DYNAMIC_VALUE_DATA: (a: any) => dynamicValueData.set(a),
 
     COLORBARS: (a: any) => colorbars.set(a),
 }

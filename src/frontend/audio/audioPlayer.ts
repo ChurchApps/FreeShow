@@ -6,7 +6,7 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
-import { dataPath, gain, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { dataPath, dictionary, gain, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
@@ -277,7 +277,9 @@ export class AudioPlayer {
 
     // NowPlaying.txt
     static nowPlaying(filePath: string, name: string) {
-        sendMain(Main.NOW_PLAYING, { dataPath: get(dataPath), filePath, name })
+        const audioLang = get(dictionary).audio || {}
+        const unknownLang = [audioLang.unknown_artist || "", audioLang.unknown_title || "", audioLang.unknown_album || ""]
+        sendMain(Main.NOW_PLAYING, { dataPath: get(dataPath), filePath, name, unknownLang })
     }
 
     // GET

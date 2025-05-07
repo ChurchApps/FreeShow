@@ -4,6 +4,7 @@ import { OUTPUT, STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { AudioPlaylist } from "../../audio/audioPlaylist"
 import {
     activeDrawerTab,
     activeEdit,
@@ -12,6 +13,7 @@ import {
     activeTimers,
     audioPlaylists,
     dictionary,
+    folders,
     gain,
     groupNumbers,
     groups,
@@ -51,8 +53,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
-import { AudioPlaylist } from "../../audio/audioPlaylist"
+import type { API_add_to_project, API_create_project, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -559,4 +560,32 @@ export function addToProject(data: API_add_to_project) {
     })
 
     return get(projects)
+}
+
+// CREATE
+
+export function createProject(data: API_create_project) {
+    const parentFolder = get(folders)[get(projects)[get(activeProject) || ""]?.parent] ? get(projects)[get(activeProject) || ""]?.parent || "/" : "/"
+    history({ id: "UPDATE", save: false, newData: { replace: { parent: parentFolder, name: data.name } }, oldData: { id: data.id }, location: { page: "show", id: "project" } })
+}
+
+// DELETE
+
+export function deleteProject(id: string) {
+    history({ id: "UPDATE", save: false, newData: { id }, location: { page: "show", id: "project" } })
+}
+
+export function removeProjectItem(data: API_id_index) {
+    const projectItems = get(projects)[data.id]?.shows
+    if (!projectItems.length) return
+
+    projectItems.splice(data.index, 1)
+
+    history({ id: "UPDATE", newData: { key: "shows", data: projectItems }, oldData: { id: data.id }, location: { page: "show", id: "project_key" } })
+}
+
+// EDIT
+
+export function renameProject(data: any) {
+    history({ id: "UPDATE", save: false, newData: { key: "name", data: data.name }, oldData: { id: data.id }, location: { page: "show", id: "project_key" } })
 }

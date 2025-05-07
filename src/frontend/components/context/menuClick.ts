@@ -90,6 +90,7 @@ import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
 import { ShowObj } from "../../classes/Show"
+import { getActionTriggerId } from "../actions/actions"
 
 interface ObjData {
     sel: Selected | null
@@ -994,7 +995,7 @@ const actions = {
                 const slideActions = layoutActions.slideActions || []
 
                 const actionId = obj.menu.id
-                const actionIndex = slideActions.findIndex((a) => a.id === actionId)
+                const actionIndex = slideActions.findIndex((a) => a.id === actionId || getActionTriggerId(a.triggers?.[0]) === actionId)
                 if (actionIndex > -1) slideActions.splice(actionIndex, 1)
 
                 layoutActions.slideActions = slideActions

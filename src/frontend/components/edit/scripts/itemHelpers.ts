@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
-import { activeEdit, activeShow, activeStage, outputs, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+import { activeEdit, activeShow, activeStage, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
-import { getActiveOutputs } from "../../helpers/output"
+import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
 import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
@@ -233,6 +233,8 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     // check bindings
     if (item.bindings?.length && !item.bindings.includes(outputId)) return false
 
+    if (type === "stage") allItems = getTempItems(item, allItems)
+
     if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
@@ -245,6 +247,28 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (!isConditionMet(condition, itemsText, type)) return false
 
     return true
+}
+
+// get "temp" items (scripture) if stage
+function getTempItems(item: Item, allItems: Item[]) {
+    const stageOutputId = getStageOutputId(get(outputs))
+    const currentOutput = get(outputs)[stageOutputId] || get(allOutputs)[stageOutputId] || {}
+    const slideOffset = item.type ? Number((item as StageItem).slideOffset || 0) : 0
+    const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageOutputId] || null : null)
+
+    if (currentSlide?.id !== "temp") return allItems
+    return getTempSlides()
+
+    function getTempSlides() {
+        if (slideOffset < 0) {
+            let includeLength = (currentSlide.previousSlides || [])?.length
+            return currentSlide.previousSlides?.[includeLength - (slideOffset + 1 + includeLength)]
+        }
+        if (slideOffset > 0) {
+            return currentSlide.nextSlides?.[slideOffset - 1]
+        }
+        return currentSlide.tempItems
+    }
 }
 
 function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage") {

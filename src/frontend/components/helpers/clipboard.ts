@@ -73,7 +73,10 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
     if (get(selected).id) copyData = get(selected)
     else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
 
-    if (!copyData?.id || !copyActions[copyData.id]) return
+    if (!copyData?.id || !copyActions[copyData.id]) {
+        if (copyData?.id) console.info("No copy action:", copyData)
+        return
+    }
 
     const copyObj = clone(copyData)
     if (getData && copyActions[copyData.id]) copyData.data = copyActions[copyData.id](copyData.data)
@@ -115,7 +118,10 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
         return
     }
 
-    if (!pasteActions[clip.id]) return
+    if (!pasteActions[clip.id]) {
+        if (clip.id) console.info("No paste action:", clip.id)
+        return
+    }
     pasteActions[clip.id](clip.data, extraData)
 
     console.info("PASTED:", clip)
@@ -456,6 +462,15 @@ const copyActions = {
         })
         return { origin: path, data: mediaData, type: data[0]?.type }
     },
+    // project items
+    show: (data: any) => {
+        const projectItems: any[] = []
+        clone(data).forEach((item) => {
+            delete item.index
+            projectItems.push(item)
+        })
+        return projectItems
+    },
 }
 
 const pasteActions = {
@@ -592,6 +607,14 @@ const pasteActions = {
             delete newSlide.isDefault
             newSlide.name += " (2)"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
+        })
+    },
+    // project items
+    show: (data: any) => {
+        projects.update((a) => {
+            if (!a[get(activeProject) || ""]?.shows) return a
+            a[get(activeProject) || ""].shows.push(...data)
+            return a
         })
     },
 }

@@ -45,6 +45,8 @@ import {
     audioSeekTo,
     changeShowLayout,
     changeVariable,
+    createProject,
+    deleteProject,
     editTimer,
     getClearedState,
     getPDFThumbnails,
@@ -56,6 +58,8 @@ import {
     playAudio,
     playMedia,
     rearrangeGroups,
+    removeProjectItem,
+    renameProject,
     selectOverlayById,
     selectOverlayByIndex,
     selectOverlayByName,
@@ -108,6 +112,7 @@ type API_index = { index: number }
 type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
+export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
 export type API_id_value = { id: string; value: string }
@@ -171,6 +176,11 @@ export type API_add_to_project = { projectId: string; id: string; data?: any }
 // CREATE
 
 export type API_create_show = { text: string; name?: string; category?: string }
+export type API_create_project = { name: string; id?: string }
+
+// EDIT
+
+export type API_rename = { id: string; name: string }
 
 /// ACTIONS ///
 
@@ -292,6 +302,14 @@ export const API_ACTIONS = {
 
     // CREATE
     create_show: (data: API_create_show) => convertText({ noFormatting: true, open: false, ...data }),
+    create_project: (data: API_create_project) => createProject(data),
+
+    // DELETE
+    delete_project: (data: API_id) => deleteProject(data.id),
+    remove_project_item: (data: API_id_index) => removeProjectItem(data),
+
+    // EDIT
+    rename_project: (data: API_rename) => renameProject(data),
 
     // GET
     get_shows: () => getShows(),

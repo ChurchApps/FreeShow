@@ -3,28 +3,31 @@ import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, deleteFile, doesPathExist, getDocumentsFolder, makeDir, writeFile } from "../utils/files"
-import express from "express"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
 
-let currentContent = ""
-export async function setPlayingState(data: { dataPath: string; filePath: string; name: string }) {
+// let currentContent = ""
+export async function setPlayingState(data: { dataPath: string; filePath: string; name: string; unknownLang: string[] }) {
     const documentsPath = makeDir(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
 
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
+    const artist = (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
+    const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
+    const album = metadata?.album || data.unknownLang[2] || "Unknown Album"
 
-    // title data
-    const content = metadata?.title || data.name
-    currentContent = content
+    // format: Artist - Title - Album
+    const content = `${artist} - ${title} - ${album}`
+    // currentContent = content
 
     // create playing data text file
     const filePath = join(documentsPath, fileNameText)
     writeFile(filePath, content)
 
+    // (no point in this at the moment)
     // serve "text file" on local server
-    startServer()
+    // startServer()
 
     // create album art cover
     const filePathCover = join(documentsPath, fileNameImage)
@@ -40,6 +43,12 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
     writeFile(filePathCover, buffer)
 }
 
+// same as frontend function
+function getArtist(metadata: ICommonTagsResult) {
+    const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
+    return artists.join(", ")
+}
+
 // remove now playing when not playing
 export function unsetPlayingAudio(data: { dataPath: string }) {
     const documentsPath = join(data.dataPath, dataFolderNames.audio)
@@ -53,26 +62,26 @@ export function unsetPlayingAudio(data: { dataPath: string }) {
     }
 }
 
-const app = express()
-let started = false
-const PLAYING_DATA_PORT = 5502
-function startServer() {
-    if (started) return
-    started = true
+// const app = express()
+// let started = false
+// const PLAYING_DATA_PORT = 5502
+// function startServer() {
+//     if (started) return
+//     started = true
 
-    app.all("/", (_req, res) => {
-        res.setHeader("content-type", "text/plain")
-        res.send(currentContent)
-    })
+//     app.all("/", (_req, res) => {
+//         res.setHeader("content-type", "text/plain")
+//         res.send(currentContent)
+//     })
 
-    const server = app.listen(PLAYING_DATA_PORT, () => {
-        console.info(`Serving audio name at PORT: ${PLAYING_DATA_PORT}`)
-    })
+//     const server = app.listen(PLAYING_DATA_PORT, () => {
+//         console.info(`Serving audio name at PORT: ${PLAYING_DATA_PORT}`)
+//     })
 
-    server.once("error", (err: Error) => {
-        if ((err as any).code === "EADDRINUSE") server.close()
-    })
-}
+//     server.once("error", (err: Error) => {
+//         if ((err as any).code === "EADDRINUSE") server.close()
+//     })
+// }
 
 async function getAudioMetadata(filePath: string): Promise<ICommonTagsResult | null> {
     if (!filePath) return null
