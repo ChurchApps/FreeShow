@@ -800,7 +800,7 @@ const slideDrop = {
                 if (existingRunActionIndex > -1) return
 
                 const id = uid()
-                let newAction: SlideAction = { id, triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } }
+                const newAction: SlideAction = { id, triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } }
                 if (keys?.shiftKey) newAction.customData = { run_action: { overrideCategoryAction: true } }
                 newActions.push(newAction)
                 return

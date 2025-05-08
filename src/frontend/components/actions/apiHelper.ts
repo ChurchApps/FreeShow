@@ -414,8 +414,8 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    let activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
-    let timeValues: any = {}
+    const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    const timeValues: any = {}
     activeOutputIds.forEach((id) => {
         timeValues[id] = data.seconds
     })
@@ -461,13 +461,13 @@ export function timerSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
     const timerId = data.id || get(activeTimers)[0]?.id
-    const timer = get(timers)[timerId]
+    const currentTimer = get(timers)[timerId]
     const time = data.seconds
-    if (!timer) return
+    if (!currentTimer) return
 
     activeTimers.update((a) => {
-        let index = a.findIndex((timer) => timer.id === timerId)
-        if (index < 0) a.push({ ...timer, id: timerId, currentTime: time, paused: true })
+        const index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...currentTimer, id: timerId, currentTime: time, paused: true })
         else {
             a[index].currentTime = time
             delete a[index].startTime

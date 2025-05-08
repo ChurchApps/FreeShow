@@ -261,7 +261,7 @@ function getTempItems(item: Item, allItems: Item[]) {
 
     function getTempSlides() {
         if (slideOffset < 0) {
-            let includeLength = (currentSlide.previousSlides || [])?.length
+            const includeLength = (currentSlide.previousSlides || [])?.length
             return currentSlide.previousSlides?.[includeLength - (slideOffset + 1 + includeLength)]
         }
         if (slideOffset > 0) {

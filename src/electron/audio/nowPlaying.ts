@@ -46,7 +46,7 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
 // same as frontend function
 function getArtist(metadata: ICommonTagsResult) {
     const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
-    return artists.join(", ")
+    return [...new Set(artists)].join(", ")
 }
 
 // remove now playing when not playing

@@ -81,7 +81,7 @@ const drawerPages: { [key: string]: DrawerTabIds } = {
     variables: "functions",
     triggers: "functions",
 }
-export function openDrawer(id: string, openPopup: boolean = false) {
+export function openDrawer(id: string, openPopup = false) {
     activePage.set("show")
 
     // set sub tab

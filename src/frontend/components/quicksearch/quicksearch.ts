@@ -41,7 +41,7 @@ interface QuickSearchValue {
 
 const MAX_RESULTS = 10
 export function quicksearch(searchValue: string) {
-    let values: QuickSearchValue[] = []
+    const values: QuickSearchValue[] = []
     const shouldReturn = () => values.length >= MAX_RESULTS
     const trimValues = () => values.slice(0, MAX_RESULTS)
     const sort = (array: any[]) => sortByClosestMatch(array, searchValue)
@@ -84,7 +84,7 @@ export function quicksearch(searchValue: string) {
 
     return trimValues()
 
-    function addValues(items: any[], type: keyof typeof actions, icon: string = "") {
+    function addValues(items: any[], type: keyof typeof actions, icon = "") {
         const newValues: QuickSearchValue[] = items.map((a) => ({ type, icon: a.icon || icon, id: a.id, name: a.name }))
         values.push(...newValues)
     }
