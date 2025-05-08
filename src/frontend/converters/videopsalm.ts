@@ -133,6 +133,7 @@ export function convertVideopsalm(data: any) {
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
+            show.origin = "videopsalm"
             const showId = song.Guid || uid()
             const name = title || get(dictionary).main?.unnamed || "Unnamed"
             show.name = checkName(name, showId) || ""

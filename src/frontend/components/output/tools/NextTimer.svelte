@@ -66,22 +66,20 @@
 
 <svelte:window on:mouseup={mouseup} />
 
-{#if currentOutput?.out?.transition}
-    <!-- <span class="name">
-    <p><T id="transition.{currentOutput?.out?.transition.type || 'fade'}" /></p>
+<!-- <span class="name">
+    <p><T id="transition.{currentOutput?.out?.transition?.type || 'fade'}" /></p>
   </span> -->
-    {#if timer.timer}
-        <span class="group">
-            <!-- padding: 0.3em; -->
-            <Button style="flex: 0;" center title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playPause(timer.paused)}>
-                <Icon id={timer.paused ? "play" : "pause"} size={1.2} white={timer.paused} />
-            </Button>
-            <span style="color: var(--secondary);padding: 0 10px;">{round(timer.time)}</span>
-            <Slider style="flex: 1;" bind:value={timer.time} step={step ? 1 : 0.01} max={timer.max} on:input={transitionChange} on:mousedown={transitionChange} />
-            <!-- <input type="range" bind:value={timer.time} step={0.5} max={timer.max} name="" id="" on:input={transitionChange} /> -->
-            <span style="padding: 0 10px;">{round(currentOutput?.out?.transition.duration)}</span>
-        </span>
-    {/if}
+{#if timer.timer}
+    <span class="group">
+        <!-- padding: 0.3em; -->
+        <Button style="flex: 0;" center title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playPause(timer.paused)}>
+            <Icon id={timer.paused ? "play" : "pause"} size={1.2} white={timer.paused} />
+        </Button>
+        <span style="color: var(--secondary);padding: 0 10px;">{round(timer.time)}</span>
+        <Slider style="flex: 1;" bind:value={timer.time} step={step ? 1 : 0.01} max={timer.max} on:input={transitionChange} on:mousedown={transitionChange} />
+        <!-- <input type="range" bind:value={timer.time} step={0.5} max={timer.max} name="" id="" on:input={transitionChange} /> -->
+        <span style="padding: 0 10px;">{round(currentOutput?.out?.transition?.duration || 0)}</span>
+    </span>
 {/if}
 
 <style>

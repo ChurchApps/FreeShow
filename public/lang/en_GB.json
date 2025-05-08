@@ -117,7 +117,8 @@
         "quick_lyrics_example_tip": "Enter lyrics or any text here",
         "quick_lyrics_example_text": "Line",
         "empty": "Empty show",
-        "exists": "Found an existing show with the same name"
+        "exists": "Found an existing show with the same name",
+        "slideshow": "Slideshow"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -427,6 +428,7 @@
         "set_time": "Set time",
         "assign_shortcut": "Assign shortcut",
         "dynamic_values": "Dynamic values",
+        "conditions": "Conditions",
         "animate": "Animate",
         "translate": "Localisation ",
         "next_timer": "Next slide timer",
@@ -441,6 +443,7 @@
         "edit_event": "Edit event",
         "about": "About",
         "history": "History",
+        "action_history": "Action history",
         "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
@@ -492,6 +495,7 @@
         "deleted_cache": "Deleted media thumbnail cache.",
         "no_songswords_easyworship": "Missing SongsWords.db file.",
         "delete_shows_empty": "No shows to delete.",
+        "reached_end": "Reached the end!",
         "output_capture_enabled": "Output screen capture enabled, this may cause performance issues. Only use if needed!",
         "midi_no_project": "Received trigger to change project, but no project found at index:",
         "midi_no_show": "Received trigger to start slide, but no show active.",
@@ -610,6 +614,8 @@
         "bind_to": "Specific outputs",
         "remove_binding": "Remove specific outputs",
         "dynamic_values": "Dynamic values",
+        "dynamic_value": "Dynamic value",
+        "conditions": "Conditions",
         "rearrange": "Rearrange",
         "to_front": "Move to front",
         "forward": "Move forward",
@@ -694,6 +700,7 @@
         "id_select_group": "Play specific group",
         "id_change_stage_layout": "Change stage connections layout",
         "start_camera": "Start camera",
+        "start_screen": "Start screen",
         "id_select_overlay": "Start overlay",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
@@ -715,6 +722,7 @@
         "custom_activation": "Custom activation",
         "set_custom_activation": "Set custom activation",
         "any": "Any",
+        "override_category_action": "Override category action",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
         "activate_slide_clicked": "Activate on slide click",
@@ -729,6 +737,18 @@
         "activate_show_created": "Activate when show is created",
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
+    },
+    "conditions": {
+        "show_item": "Show item if",
+        "all_conditions": "All of the following conditions are met",
+        "some_conditions": "Some of the following conditions are met",
+        "none_conditions": "None of the following conditions are met",
+        "has": "has",
+        "has_not": "has not",
+        "is": "is",
+        "is_not": "is not",
+        "value": "value",
+        "empty": "empty"
     },
     "recording": {
         "remove": "Remove recording",
@@ -800,6 +820,8 @@
         "columns": "Columns"
     },
     "context": {
+        "to_dictionary": "Add to dictionary",
+        "correct": "Replace with this word",
         "enabledTabs": "Toggle tabs",
         "setTag": "Set tag",
         "filterByTags": "Filter by tags",
@@ -811,6 +833,7 @@
         "changeIcon": "Change icon",
         "changeGroup": "Change group",
         "createNew": "Create new",
+        "create_slideshow": "Create slideshow",
         "selectAll": "Select all",
         "force_outputs": "Force outputs",
         "align_with_screen": "Align with screen",
@@ -873,6 +896,7 @@
         "invert_items": "Invert items",
         "list": "List",
         "chords": "Chords",
+        "vertical_offset": "Vertical offset",
         "transpose": "Transpose",
         "auto_size": "Auto size",
         "no_wrap": "Text on one line",
@@ -937,18 +961,22 @@
         "bottom_top": "Bottom to top",
         "left_right": "Left to right",
         "right_left": "Right to left",
+        "press_action": "Press action",
+        "release_action": "Release action",
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
-        "progress_bar": "Progress bar"
+        "progress_bar": "Progress bar",
+        "each_number_once": "Each number only once"
     },
     "items": {
         "text": "Textbox",
         "media": "Media",
         "image": "Image",
         "camera": "Camera",
+        "screen": "Screen",
         "video": "Video",
         "mirror": "Mirror",
         "clock": "Clock",
@@ -1057,7 +1085,8 @@
         "signal": "Signal",
         "message_template": "Message template",
         "message_templates": "Message templates",
-        "inputs": "Inputs"
+        "inputs": "Inputs",
+        "data": "Data"
     },
     "draw": {
         "focus": "Focus",
@@ -1343,10 +1372,12 @@
     },
     "variables": {
         "number": "Number",
+        "random_number": "Random number",
         "text": "Text",
         "step": "Step",
         "default_value": "Default value",
         "value": "Value",
+        "randomize": "Randomise",
         "set_state": "Set state",
         "minimum": "Minimum",
         "maximum": "Maximum"

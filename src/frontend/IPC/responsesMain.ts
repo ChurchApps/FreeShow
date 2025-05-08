@@ -6,13 +6,16 @@ import type { Show } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
+import { getCurrentTimerValue } from "../components/drawer/timers/timers"
+import { getDynamicValue, getVariableValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
-import { checkName } from "../components/helpers/show"
+import { checkName, getLabelId } from "../components/helpers/show"
+import { joinTimeBig } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
@@ -40,6 +43,7 @@ import {
     activePopup,
     activeProject,
     activeShow,
+    activeTimers,
     alertMessage,
     audioData,
     chumsConnected,
@@ -69,8 +73,10 @@ import {
     textCache,
     theme,
     themes,
+    timers,
     undoHistory,
     usageLog,
+    variables,
     windowState,
 } from "../stores"
 import { newToast } from "../utils/common"
@@ -222,6 +228,35 @@ export const mainResponses: MainResponses = {
         })
     },
 
+    // Companion dynamic value variables
+    [ToMain.GET_DYNAMIC_VALUES]: (data) => {
+        const variableData: { [key: string]: string } = {}
+        data.forEach((key) => {
+            variableData[key] = getDynamicValue(key).replaceAll("<br>", "\n")
+        })
+
+        // get "actual" variables
+        Object.entries(get(variables)).forEach(([id, a]) => {
+            variableData[`variable_${getLabelId(a.name, false)}`] = getVariableValue(id)
+        })
+
+        // get timers
+        Object.entries(get(timers)).forEach(([id, a]) => {
+            const labelId = getLabelId(a.name, false)
+            const currentTime = getCurrentTimerValue(a, { id }, new Date())
+            const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`
+            variableData[`timer_${labelId}`] = timeValue
+            variableData[`timer_${labelId}_seconds`] = currentTime.toString()
+        })
+
+        // timer status
+        const anyActiveTimers = !!get(activeTimers).length
+        const anyPlaying = get(activeTimers).find((a) => !a.paused)
+        variableData.timer_status = anyPlaying ? "Playing" : anyActiveTimers ? "Paused" : "Stopped"
+
+        return variableData
+    },
+
     // CONNECTION
     [ToMain.PCO_CONNECT]: (data) => {
         if (!data.success) return
@@ -243,7 +278,7 @@ export const mainResponses: MainResponses = {
             if (get(shows)[id]) return
 
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 
@@ -292,7 +327,7 @@ export const mainResponses: MainResponses = {
             if (get(shows)[id]) return
 
             delete show.id
-            tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+            tempShows.push({ id, show: { ...show, origin: "chums", name: checkName(show.name, id) } })
         })
         setTempShows(tempShows)
 

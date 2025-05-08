@@ -47,6 +47,7 @@ export function convertOpenSong(data: any) {
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
+            show.origin = "opensong"
             show.name = checkName(song.title)
             show.meta = {
                 number: song.hymn_number || "",

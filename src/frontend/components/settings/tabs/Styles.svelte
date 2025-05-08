@@ -60,7 +60,7 @@
     }
 
     const defaultStyle = {
-        name: $dictionary.example?.default || "Default",
+        name: $dictionary.example?.default || "Default"
     }
 
     $: stylesList = sortByName(keysToID($styles))
@@ -72,6 +72,10 @@
     $: currentStyle = $styles[styleId] || clone(defaultStyle)
 
     $: activeStyle.set(styleId || "")
+    $: if ($activeStyle) updateStyleId()
+    function updateStyleId() {
+        styleId = $activeStyle
+    }
 
     $: styleTemplate = $templates[currentStyle.template || ""] || {}
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
@@ -83,7 +87,7 @@
               { id: "", name: "$:example.default:$ (1)" },
               { id: "_2", name: "2" },
               { id: "_3", name: "3" },
-              { id: "_4", name: "4" },
+              { id: "_4", name: "4" }
           ]
         : []
 
@@ -424,7 +428,7 @@
                 active: currentStyle.templateScripture || "",
                 types: scriptureTemplateTypes,
                 values: scriptureTemplateTypes.map((a) => currentStyle["templateScripture" + a.id] || ""),
-                trigger: (id, type) => updateStyle(id, "templateScripture" + type),
+                trigger: (id, type) => updateStyle(id, "templateScripture" + type)
             })
             activePopup.set("select_template")
         }}

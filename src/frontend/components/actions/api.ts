@@ -5,6 +5,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
+import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
 import { syncDrive } from "../../utils/drive"
 import { pcoSync } from "../../utils/startup"
@@ -18,6 +19,7 @@ import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearDrawing, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
+import { getPlainEditorText } from "../show/getTextEditor"
 import { runActionByName, runActionId, toggleAction } from "./actions"
 import {
     getOutput,
@@ -40,8 +42,11 @@ import {
 import {
     addGroup,
     addToProject,
+    audioSeekTo,
     changeShowLayout,
     changeVariable,
+    createProject,
+    deleteProject,
     editTimer,
     getClearedState,
     getPDFThumbnails,
@@ -53,6 +58,8 @@ import {
     playAudio,
     playMedia,
     rearrangeGroups,
+    removeProjectItem,
+    renameProject,
     selectOverlayById,
     selectOverlayByIndex,
     selectOverlayByName,
@@ -64,10 +71,13 @@ import {
     selectSlideByName,
     setShowAPI,
     setTemplate,
+    startPlaylistByName,
     startScripture,
     stopAudio,
+    timerSeekTo,
     toggleLock,
     updateVolumeValues,
+    videoSeekTo,
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -102,6 +112,7 @@ type API_index = { index: number }
 type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
+export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
 export type API_id_value = { id: string; value: string }
@@ -109,8 +120,9 @@ export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
+export type API_seek = { id?: string; seconds: number }
 export type API_media = { path: string; index?: number; data?: any }
-export type API_scripture = { id: string; reference: string }
+export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
@@ -164,6 +176,11 @@ export type API_add_to_project = { projectId: string; id: string; data?: any }
 // CREATE
 
 export type API_create_show = { text: string; name?: string; category?: string }
+export type API_create_project = { name: string; id?: string }
+
+// EDIT
+
+export type API_rename = { id: string; name: string }
 
 /// ACTIONS ///
 
@@ -173,7 +190,7 @@ export const API_ACTIONS = {
     // PROJECT
     id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
-    name_select_project: (data: API_strval) => selectProjectByName(data.value),
+    name_select_project: (data: API_strval) => selectProjectByName(data.value), // BC
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
@@ -187,11 +204,13 @@ export const API_ACTIONS = {
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),
+    transpose_show_up: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), 1), data.id),
+    transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
     previous_slide: () => previousSlideIndividual({ key: "ArrowLeft" }), // BC
-    random_slide: () => randomSlide(), // BC
+    random_slide: () => randomSlide(),
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
     id_select_group: (data: API_id) => gotoGroup(data.id), // BC
@@ -211,12 +230,8 @@ export const API_ACTIONS = {
     start_camera: (data: API_camera) => startCamera(data),
     start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
+    video_seekto: (data: API_seek) => videoSeekTo(data), // BC
     // play / pause playing
-    // control time
-    // folder_select_media
-    // index_select_camera
-    // index_select_screen...
-    // path_select_media (can be url)
 
     // OVERLAYS
     index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
@@ -224,9 +239,9 @@ export const API_ACTIONS = {
     id_select_overlay: (data: API_id) => selectOverlayById(data.id),
 
     // SCRIPTURE
-    start_scripture: (data: API_scripture) => startScripture(data),
-    scripture_next: () => triggerFunction("scripture_next"),
-    scripture_previous: () => triggerFunction("scripture_previous"),
+    start_scripture: (data: API_scripture) => startScripture(data), // BC
+    scripture_next: () => triggerFunction("scripture_next"), // BC
+    scripture_previous: () => triggerFunction("scripture_previous"), // BC
 
     // OUTPUT
     lock_output: (data: API_boolval) => toggleLock(data.value), // BC
@@ -235,7 +250,7 @@ export const API_ACTIONS = {
     // WIP disable stage ?
     // WIP disable NDI ?
     id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
-    change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
+    change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC
 
@@ -246,24 +261,22 @@ export const API_ACTIONS = {
     play_audio: (data: API_media) => playAudio(data),
     pause_audio: (data: API_media) => pauseAudio(data),
     stop_audio: (data: API_media) => stopAudio(data),
-    // control audio time
-    // start specific folder (playlist)
-    // folder_select_audio: () => ,
+    audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
     change_volume: (data: API_volume) => updateVolumeValues(data.volume ?? data.gain, data.gain !== undefined), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
-    playlist_next: () => AudioPlaylist.next(),
+    name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC
+    playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
 
     // TIMERS
-    // play / pause playing timers
     // control timer time
-    // start specific timer (by name / index)
-    name_start_timer: (data: API_strval) => startTimerByName(data.value),
+    name_start_timer: (data: API_strval) => startTimerByName(data.value), // BC
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
-    pause_timers: () => pauseAllTimers(),
-    stop_timers: () => stopTimers(),
+    pause_timers: () => pauseAllTimers(), // BC
+    stop_timers: () => stopTimers(), // BC
+    timer_seekto: (data: API_seek) => timerSeekTo(data), // BC
     edit_timer: (data: API_edit_timer) => editTimer(data),
 
     // FUNCTIONS
@@ -275,7 +288,7 @@ export const API_ACTIONS = {
     sync_pco: () => pcoSync(),
 
     // EMIT
-    send_midi: (data: API_midi) => sendMidi(data),
+    send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
     emit_action: (data: API_emitter) => emitData(data),
 
@@ -289,6 +302,14 @@ export const API_ACTIONS = {
 
     // CREATE
     create_show: (data: API_create_show) => convertText({ noFormatting: true, open: false, ...data }),
+    create_project: (data: API_create_project) => createProject(data),
+
+    // DELETE
+    delete_project: (data: API_id) => deleteProject(data.id),
+    remove_project_item: (data: API_id_index) => removeProjectItem(data),
+
+    // EDIT
+    rename_project: (data: API_rename) => renameProject(data),
 
     // GET
     get_shows: () => getShows(),

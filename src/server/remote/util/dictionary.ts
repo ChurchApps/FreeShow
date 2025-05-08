@@ -16,6 +16,7 @@ export const DEFAULT_DICTIONARY = {
     },
     new: {
         show: "New show",
+        project: "New project",
     },
     tabs: {
         scripture: "Scriptures",
@@ -27,6 +28,8 @@ export const DEFAULT_DICTIONARY = {
         add: "Add",
     },
     actions: {
+        rename: "Rename",
+        delete: "Delete",
         done: "Done",
         back: "Back",
     },

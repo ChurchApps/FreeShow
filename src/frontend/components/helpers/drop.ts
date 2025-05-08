@@ -56,10 +56,12 @@ export function ondrop(e: any, id: string) {
     console.info("DRAG: ", sel)
     console.info("DROP: ", dropdata)
 
+    const keys = { shiftKey: e.shiftKey }
+
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }
 
-        const hist = dropActions[id](dropData, h) as History | undefined
+        const hist = dropActions[id](dropData, h, keys) as History | undefined
         if (hist && hist.id) history(hist)
         deselect()
         return

@@ -74,6 +74,7 @@ export function convertVerseVIEW(data: any) {
             for (const song of songs) {
                 const layoutID = uid()
                 const show = new ShowObj(false, categoryId, layoutID)
+                show.origin = "verseview"
 
                 show.name = checkName(song.name)
 

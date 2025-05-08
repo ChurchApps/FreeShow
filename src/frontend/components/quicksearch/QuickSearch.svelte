@@ -3,13 +3,13 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
     import { dictionary, quickSearchActive } from "../../stores"
-    import TextInput from "../inputs/TextInput.svelte"
-    import { quicksearch, selectQuicksearchValue } from "./quicksearch"
-    import Icon from "../helpers/Icon.svelte"
-    import Button from "../inputs/Button.svelte"
-    import Center from "../system/Center.svelte"
-    import T from "../helpers/T.svelte"
     import { formatSearch } from "../../utils/search"
+    import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import Button from "../inputs/Button.svelte"
+    import TextInput from "../inputs/TextInput.svelte"
+    import Center from "../system/Center.svelte"
+    import { quicksearch, selectQuicksearchValue } from "./quicksearch"
 
     let values: any[] = []
     let searchValue = ""
@@ -50,7 +50,12 @@
                 {#if values.length}
                     <div class="values">
                         {#each values as value, i}
-                            <Button style="gap: 10px;font-size: 1em;" active={i === selectedIndex} on:click={() => selectQuicksearchValue(value)} bold={false}>
+                            <Button
+                                style="gap: 10px;font-size: 1em;{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
+                                active={i === selectedIndex}
+                                on:click={() => selectQuicksearchValue(value)}
+                                bold={false}
+                            >
                                 <Icon id={value.icon || value.type} />
                                 <p title={value.name}>{value.name}</p>
                             </Button>
@@ -83,7 +88,8 @@
         gap: 10px;
 
         background-color: var(--primary);
-        border-radius: var(--border-radius);
+        /* border-radius: var(--border-radius); */
+        border-radius: 4px;
         padding: 10px;
 
         box-shadow: 0 0 3px rgb(0 0 0 / 0.4);

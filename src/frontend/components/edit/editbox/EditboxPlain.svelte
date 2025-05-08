@@ -20,7 +20,7 @@
     const actions = {
         transition: { label: "popup.transition", icon: "transition" },
         showTimer: { label: "actions.show_timer", icon: "time_in" },
-        hideTimer: { label: "actions.hide_timer", icon: "time_out" },
+        hideTimer: { label: "actions.hide_timer", icon: "time_out" }
     }
 
     // bindings
@@ -50,7 +50,7 @@
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
                 newData: { key: "items", subkey: "conditions", data: [{}], indexes: [index] },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemcondition_" + index },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemcondition_" + index }
             })
 
             return
@@ -59,7 +59,7 @@
         history({
             id: "setItems",
             newData: { style: { key: "conditions", values: [{}] } },
-            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemcondition_" + slideRef.id + "_items_" + index },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemcondition_" + slideRef.id + "_items_" + index }
         })
     }
 
@@ -89,7 +89,7 @@
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
                 newData: { key: "items", subkey: "actions", data: [actions], indexes: [index] },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemaction_" + index },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemaction_" + index }
             })
 
             return
@@ -98,7 +98,7 @@
         history({
             id: "setItems",
             newData: { style: { key: "actions", values: [actions] } },
-            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemaction_" + slideRef.id + "_items_" + index },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemaction_" + slideRef.id + "_items_" + index }
         })
     }
 
@@ -148,7 +148,7 @@
 
     <!-- button -->
     {#if item?.button?.press || item?.button?.release}
-        <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end;">
+        <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="button" white />
             </span>

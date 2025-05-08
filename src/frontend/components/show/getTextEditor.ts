@@ -5,7 +5,8 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
-export function getPlainEditorText(showId = "active") {
+export function getPlainEditorText(showId = "") {
+    if (!showId) showId = "active"
     const ref = getLayoutRef(showId)
     const slides = _show(showId).get("slides")
 

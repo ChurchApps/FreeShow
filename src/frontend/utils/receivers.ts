@@ -14,6 +14,7 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
+    audioData,
     closeAd,
     colorbars,
     customMessageCredits,
@@ -21,6 +22,7 @@ import {
     drawSettings,
     drawTool,
     driveData,
+    dynamicValueData,
     events,
     gain,
     media,
@@ -30,6 +32,7 @@ import {
     outputs,
     overlays,
     playerVideos,
+    playingAudioPaths,
     playingVideos,
     popupData,
     previewBuffers,
@@ -266,6 +269,11 @@ export const receiveOUTPUTasOUTPUT: any = {
 
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
+
+    // dynamic values
+    PLAYING_AUDIO: (a: any) => playingAudioPaths.set(a),
+    AUDIO_DATA: (a: any) => audioData.set(a),
+    DYNAMIC_VALUE_DATA: (a: any) => dynamicValueData.set(a),
 
     COLORBARS: (a: any) => colorbars.set(a),
 }

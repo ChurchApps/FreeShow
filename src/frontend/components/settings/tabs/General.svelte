@@ -15,9 +15,10 @@
         defaultProjectName: (e: any) => updateSpecial(e.target.value || "", "default_project_name"),
         timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
+        startupProjectsList: (e: any) => updateSpecial(e.target.checked, "startupProjectsList"),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
-        clearMediaOnFinish: (e: any) => updateSpecial(e.target.checked, "clearMediaOnFinish"),
+        clearMediaOnFinish: (e: any) => updateSpecial(e.target.checked, "clearMediaOnFinish")
     }
 
     function updateSpecial(value, key) {
@@ -35,7 +36,7 @@
         { id: "5min", name: "5 $:settings.minutes:$" },
         { id: "10min", name: "10 $:settings.minutes:$" },
         { id: "15min", name: "15 $:settings.minutes:$" },
-        { id: "30min", name: "30 $:settings.minutes:$" },
+        { id: "30min", name: "30 $:settings.minutes:$" }
     ]
 
     function reset() {
@@ -93,6 +94,13 @@
     <p><T id="settings.disable_labels" /></p>
     <div class="alignRight">
         <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.startup_projects_list" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.startupProjectsList} on:change={inputs.startupProjectsList} />
     </div>
 </CombinedInput>
 

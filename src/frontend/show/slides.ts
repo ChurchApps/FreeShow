@@ -227,7 +227,7 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
     const newLayout: (SlideData & { id: string })[] = []
 
     // find parent
-    if (moved[0].type !== "parent") {
+    if (moved[0]?.type !== "parent") {
         while (ref[index].type !== "parent" && index > 0) index--
     }
 

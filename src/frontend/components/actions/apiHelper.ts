@@ -1,15 +1,19 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
-import { STAGE } from "../../../types/Channels"
+import { OUTPUT, STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { AudioPlaylist } from "../../audio/audioPlaylist"
 import {
     activeDrawerTab,
     activeEdit,
     activePage,
     activeProject,
+    activeTimers,
+    audioPlaylists,
     dictionary,
+    folders,
     gain,
     groupNumbers,
     groups,
@@ -49,7 +53,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -204,6 +208,18 @@ export function toggleLock(value?: boolean) {
 export function moveStageConnection(id: string) {
     if (!id) return
     send(STAGE, ["SWITCH"], { id })
+}
+
+// AUDIO
+
+export function startPlaylistByName(name: string) {
+    if (get(outLocked)) return
+
+    const sortedPlaylists = sortByClosestMatch(keysToID(get(audioPlaylists)), name)
+    const playlistId = sortedPlaylists[0]?.id
+    if (!playlistId) return
+
+    AudioPlaylist.start(playlistId)
 }
 
 /// EDIT
@@ -365,7 +381,7 @@ export function startScripture(data: API_scripture) {
     const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
 
     if (get(activePage) !== "edit") activePage.set("show")
-    setDrawerTabData("scripture", data.id)
+    if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
     openScripture.set({ ...ref })
@@ -395,6 +411,18 @@ export function playMedia(data: API_media) {
     setOutput("background", { path: data.path, ...mediaStyle })
 }
 
+export function videoSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+
+    let activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    let timeValues: any = {}
+    activeOutputIds.forEach((id) => {
+        timeValues[id] = data.seconds
+    })
+
+    send(OUTPUT, ["TIME"], timeValues)
+}
+
 // AUDIO
 
 export function playAudio(data: API_media) {
@@ -409,6 +437,11 @@ export function stopAudio(data: API_media) {
     if (get(outLocked)) return
     AudioPlayer.stop(data.path)
 }
+export function audioSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+    const audioPath = AudioPlayer.getAllPlaying()[0]
+    AudioPlayer.setTime(audioPath, data.seconds)
+}
 
 let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local", changeGain = false) {
@@ -420,6 +453,28 @@ export function updateVolumeValues(value: number | undefined | "local", changeGa
 
     if (changeGain) gain.set(Number(Number(value).toFixed(2)))
     else volume.set(Number(Number(value).toFixed(2)))
+}
+
+// TIMERS
+
+export function timerSeekTo(data: API_seek) {
+    if (get(outLocked)) return
+
+    const timerId = data.id || get(activeTimers)[0]?.id
+    const timer = get(timers)[timerId]
+    const time = data.seconds
+    if (!timer) return
+
+    activeTimers.update((a) => {
+        let index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...timer, id: timerId, currentTime: time, paused: true })
+        else {
+            a[index].currentTime = time
+            delete a[index].startTime
+        }
+
+        return a
+    })
 }
 
 // SPECIAL
@@ -505,4 +560,32 @@ export function addToProject(data: API_add_to_project) {
     })
 
     return get(projects)
+}
+
+// CREATE
+
+export function createProject(data: API_create_project) {
+    const parentFolder = get(folders)[get(projects)[get(activeProject) || ""]?.parent] ? get(projects)[get(activeProject) || ""]?.parent || "/" : "/"
+    history({ id: "UPDATE", save: false, newData: { replace: { parent: parentFolder, name: data.name } }, oldData: { id: data.id }, location: { page: "show", id: "project" } })
+}
+
+// DELETE
+
+export function deleteProject(id: string) {
+    history({ id: "UPDATE", save: false, newData: { id }, location: { page: "show", id: "project" } })
+}
+
+export function removeProjectItem(data: API_id_index) {
+    const projectItems = get(projects)[data.id]?.shows
+    if (!projectItems.length) return
+
+    projectItems.splice(data.index, 1)
+
+    history({ id: "UPDATE", newData: { key: "shows", data: projectItems }, oldData: { id: data.id }, location: { page: "show", id: "project_key" } })
+}
+
+// EDIT
+
+export function renameProject(data: any) {
+    history({ id: "UPDATE", save: false, newData: { key: "name", data: data.name }, oldData: { id: data.id }, location: { page: "show", id: "project_key" } })
 }

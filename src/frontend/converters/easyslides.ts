@@ -36,6 +36,7 @@ export function convertEasyslides(data: any) {
     function convertSong(song: Song) {
         const layoutID = uid()
         const show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "easyslides"
         show.name = checkName(song.Title1)
 
         const { slides, layout }: any = createSlides(song)

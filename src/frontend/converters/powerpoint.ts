@@ -29,6 +29,7 @@ export function convertPowerpoint(files: any[]) {
             const layoutID = uid()
             const show: Show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(name)
+            show.origin = "powerpoint"
 
             const meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]
             if (meta) {

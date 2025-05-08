@@ -10,6 +10,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audio
 import { sendMain } from "../../IPC/main"
 import {
     activeRename,
+    allOutputs,
     categories,
     currentOutputSettings,
     currentWindow,
@@ -47,10 +48,10 @@ import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, removeExtension } from "./media"
+import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
-import { getLayoutRef } from "./show"
 
 export function displayOutputs(e: any = {}, auto = false) {
     const forceKey = e.ctrlKey || e.metaKey
@@ -1078,13 +1079,35 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     const maxStyleLines = Number(styleLines || 0)
 
     // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
-    const amountOfLinesToShow: number = getFewestOutputLines()
+    const outputsList = get(currentWindow) === "output" ? get(allOutputs) : get(outputs)
+    const amountOfLinesToShow: number = getFewestOutputLines(outputsList)
     if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
     const linesIndex = Math.ceil(maxLines * progress) - 1
-    const start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+    let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+
+    // current style lines does not match another output lines index
+    // e.g. styles set to 5 lines & 2 lines, with slide text of 6 lines
+    const highestLinePos = getHighestOutputLinePos()
+    const isEnding = maxLines && highestLinePos + amountOfLinesToShow >= maxLines
+    const overflow = maxLines % maxStyleLines
+    if (isEnding && overflow > 0) start = maxLines - overflow
+
+    // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
     return { start, end: start + maxStyleLines } // , index: linesIndex, max: maxStyleLines
+}
+
+function getHighestOutputLinePos() {
+    const outputsList = get(currentWindow) === "output" ? get(allOutputs) : get(outputs)
+    const outputIds = getActiveOutputs(outputsList, true, true, true)
+    let highestLine = 0
+    outputIds.forEach((outputId) => {
+        const outputSlide = outputsList[outputId]?.out?.slide
+        const line = Number(outputSlide?.line || 0)
+        if (line > highestLine) highestLine = line
+    })
+    return highestLine
 }
 
 // METADATA

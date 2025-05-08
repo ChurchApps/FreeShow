@@ -1,4 +1,5 @@
 import { get, Writable, writable } from "svelte/store"
+import type { Bible } from "../../../types/Bible"
 import type { OutData } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
 import type { Overlays, Show, TrimmedShow } from "../../../types/Show"
@@ -49,7 +50,7 @@ export let overlays: Writable<Overlays> = writable({})
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})
 export let groupsCache: Writable<any> = writable({})
-export let scriptureCache: Writable<any> = writable({})
+export let scriptureCache: Writable<{ [key: string]: Bible }> = writable({})
 
 export let playingAudioData: Writable<any> = writable({})
 export let playingAudioTime: Writable<number> = writable(0)

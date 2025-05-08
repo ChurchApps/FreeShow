@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
     import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -33,7 +34,7 @@
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),
         audio: () => clearAudio("", { clearPlaylist: true, commonClear: true }),
-        nextTimer: () => clearTimers(),
+        nextTimer: () => clearTimers()
     }
 
     function clear(key: string) {
@@ -43,6 +44,7 @@
         clearActions[key]()
     }
 
+    let dispatch = createEventDispatcher()
     function openPreview(key: string) {
         if (activeClear === key) {
             autoChange = true
@@ -51,7 +53,7 @@
         }
 
         autoChange = false
-        activeClear = key
+        dispatch("update", key)
     }
 
     $: outputContent = getOutputContent("", $outputs)
@@ -159,7 +161,7 @@
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
                 <Button
-                    disabled={$outLocked || slideTimerCleared}
+                    disabled={$outLocked || (slideTimerCleared && activeClear !== "nextTimer")}
                     on:click={() => clear("nextTimer")}
                     title={$dictionary.clear?.[Object.keys($overlayTimers).length ? "timer" : "nextTimer"] + ($special.disablePresenterControllerKeys ? " [F5]" : "")}
                     dark
@@ -169,7 +171,7 @@
                     <Icon id="clock" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button disabled={slideTimerCleared} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                    <Button disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
                 {/if}
             </div>
         {/if}

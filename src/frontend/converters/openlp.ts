@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Chords, Line } from "../../types/Show"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface Song {
     title: string
@@ -23,6 +24,7 @@ interface Song {
     lyrics: {
         name: string
         lines: string[]
+        chords: Chords[][]
     }[]
 }
 
@@ -52,6 +54,7 @@ export function convertOpenLP(data: any) {
     function addShow(song: Song) {
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "openlyrics"
         show.name = checkName(song.title)
 
         show.meta = {
@@ -97,7 +100,11 @@ function createSlides({ verseOrder, lyrics }: Song) {
         const items = [
             {
                 style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                lines: verse.lines.map((a: any) => ({ align: "", text: [{ style: "", value: formatText(a) }] })),
+                lines: verse.lines.map((a, i) => {
+                    const line: Line = { align: "", text: [{ style: "", value: formatText(a) }] }
+                    if (verse.chords?.[i]?.length) line.chords = verse.chords[i]
+                    return line
+                }),
             },
         ]
 
@@ -169,7 +176,10 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a: { [key: string]: string }) => ({ name: a["@type"] + a["@label"], lines: a["#cdata"].split("\n") }))
+        lyrics = lyrics.map((a) => {
+            const { lines, chords } = extractChordLines(a["#cdata"] || "")
+            return { name: a["@type"] + a["@label"], lines, chords }
+        })
 
         return lyrics
     }
@@ -242,15 +252,16 @@ function XMLtoObject(xml: string) {
         lyrics = song.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => ({ name: a["@name"], lines: getLines(a.lines || "") }))
+        lyrics = lyrics.map((a) => {
+            const { lines, chords } = getLines(a.lines || "")
+            return { name: a["@name"], lines, chords }
+        })
 
         return lyrics
     }
 
     function getLines(lines: string | any) {
         if (lines.tag) lines = lines.tag.tag?.["#text"]
-
-        let newLines: string[] = []
 
         // might be <lines break="optional">
         if (lines["#text"]) lines = lines["#text"]
@@ -268,8 +279,45 @@ function XMLtoObject(xml: string) {
         lines = lines.replaceAll("&#8232;", "")
         // find line breaks
         lines = lines.replaceAll('xmlns="http://openlyrics.info/namespace/2009/song"', "").replaceAll("<br/>", "\n").replaceAll("<br />", "\n")
-        newLines = lines.split("\n")
 
-        return newLines
+        return extractChordLines(lines)
     }
+}
+
+function extractChordLines(lines: string) {
+    // CHORDS
+    let chords: Chords[][] = []
+    const newLines: string[] = lines
+        .split("\n")
+        .map((lineText: string) => {
+            let newText = ""
+            const lineChords: Chords[] = []
+
+            // WIP duplicate of VideoPsalm
+            lineText.split("]").forEach((t) => {
+                let chordStart = t.indexOf("[")
+                if (chordStart < 0) chordStart = t.length
+
+                const chordText = t.slice(0, chordStart)
+                newText += chordText
+
+                const chord = t.slice(chordStart + 1)
+                if (!chord) return
+                // only: [Gm], not: [info] [x4]
+                if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
+                else {
+                    const chordId = uid(5)
+                    lineChords.push({ id: chordId, pos: newText.length, key: chord })
+                }
+            })
+
+            if (!newText.length) return ""
+
+            chords.push(lineChords)
+
+            return newText
+        })
+        .filter(Boolean)
+
+    return { lines: newLines, chords }
 }
