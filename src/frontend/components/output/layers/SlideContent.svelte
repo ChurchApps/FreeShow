@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { playingAudio, playingAudioPaths, variables } from "../../../stores"
+    import { activeTimers, playingAudio, playingAudioPaths, variables } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
@@ -29,7 +29,7 @@
     let show = false
 
     let filteredItems: Item[] = []
-    $: filterItems(currentItems, { $variables, $playingAudio, $playingAudioPaths })
+    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths })
     function filterItems(currentItems: Item[], _updater: any) {
         const data = { outputId, slideIndex: outSlide?.index }
         const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, data))

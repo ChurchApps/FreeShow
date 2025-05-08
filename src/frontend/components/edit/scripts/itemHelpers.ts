@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
 import { activeEdit, activeShow, activeStage, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
-import { createNewTimer } from "../../drawer/timers/timers"
+import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
@@ -277,17 +277,19 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
     const conditionValues: boolean[] = condition.values.map((cVal) => {
         const element = cVal.element || "text"
         const elementId = cVal.elementId || ""
-        const operator = cVal.operator || "is"
+
+        let operator = cVal.operator || "is"
+        if (element === "timer") operator = cVal.operator || "isAbove"
+
         const data = cVal.data || "value"
-        const dataValue = cVal.value ?? ""
+        let dataValue: string | number = cVal.value ?? ""
+        if (data === "seconds") dataValue = (cVal.seconds || 0).toString()
 
         let value = ""
         if (element === "text") value = itemsText
+        else if (element === "timer") value = getTimerValue(elementId)
         else if (element === "variable") value = getVariableValue(elementId)
         else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
-
-        // only value data at the moment
-        if (data !== "value") return true
 
         if (operator === "is") {
             return value === dataValue
@@ -297,6 +299,10 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
             return value.includes(dataValue)
         } else if (operator === "hasNot") {
             return !value.includes(dataValue)
+        } else if (operator === "isAbove") {
+            return Number(value) > Number(dataValue)
+        } else if (operator === "isBelow") {
+            return Number(value) < Number(dataValue)
         }
 
         return true
@@ -314,6 +320,11 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
     }
 
     return true
+}
+
+function getTimerValue(timerId: string) {
+    const timer = get(timers)[timerId]
+    return getCurrentTimerValue(timer, { id: timerId }, new Date()).toString()
 }
 
 export function getVariableValue(variableId: string) {

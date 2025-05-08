@@ -470,7 +470,7 @@
                             <!-- <p title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
                             <Dropdown style="width: 100%;" value={variablesList.find((a) => a.id === input.value)?.name || "—"} options={variablesList} on:click={(e) => valueChange(e, input)} />
                         {:else}
-                            <Button on:click={() => openDrawer("variables")} style="width: 100%;" center>
+                            <Button on:click={() => openDrawer("variables", true)} style="width: 100%;" center>
                                 <Icon id="add" right />
                                 <T id="new.variable" />
                             </Button>

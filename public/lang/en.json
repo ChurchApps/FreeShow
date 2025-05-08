@@ -750,7 +750,10 @@
         "has_not": "has not",
         "is": "is",
         "is_not": "is not",
+        "is_above": "is above",
+        "is_below": "is below",
         "value": "value",
+        "seconds": "seconds",
         "empty": "empty"
     },
     "recording": {

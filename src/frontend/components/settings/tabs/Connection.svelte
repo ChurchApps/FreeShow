@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, chumsConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, chumsConnected, popupData, ports, remotePassword, serverData, activeTriggerFunction } from "../../../stores"
     import { pcoSync, chumsSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -89,7 +89,13 @@
     let initialServerState = JSON.stringify($disabledServers)
     $: if (JSON.stringify($disabledServers) !== initialServerState) restart()
 
-    $: console.log($connections)
+    $: if ($activeTriggerFunction.includes("open_connection_") && ip !== "localhost") openConnection()
+    function openConnection() {
+        const id = $activeTriggerFunction.slice(16)
+        popupData.set({ ip, id })
+        activePopup.set("connect")
+        activeTriggerFunction.set("")
+    }
 
     const servers = [
         { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
@@ -97,7 +103,7 @@
         { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
         { id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
-        { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" }
         // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera

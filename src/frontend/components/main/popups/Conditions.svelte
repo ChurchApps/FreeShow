@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Condition } from "../../../../types/Show"
-    import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, variables } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -12,6 +12,7 @@
     import { clone, convertToOptions } from "../../helpers/array"
     import { getLayoutRef } from "../../helpers/show"
     import { getDynamicIds } from "../../helpers/showActions"
+    import NumberInput from "../../inputs/NumberInput.svelte"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -37,32 +38,43 @@
     const scenarios = [
         { id: "all", name: "$:conditions.all_conditions:$" },
         { id: "some", name: "$:conditions.some_conditions:$" },
-        { id: "none", name: "$:conditions.none_conditions:$" },
+        { id: "none", name: "$:conditions.none_conditions:$" }
     ]
 
     const conditionValues = {
         element: [
             { id: "text", name: "$:edit.text:$" },
+            { id: "timer", name: "$:items.timer:$" },
             { id: "variable", name: "$:items.variable:$" },
-            { id: "dynamicValue", name: "$:actions.dynamic_value:$" },
+            { id: "dynamicValue", name: "$:actions.dynamic_value:$" }
         ],
         operator: [
             { id: "is", name: "$:conditions.is:$" },
             { id: "isNot", name: "$:conditions.is_not:$" },
             { id: "has", name: "$:conditions.has:$" },
-            { id: "hasNot", name: "$:conditions.has_not:$" },
+            { id: "hasNot", name: "$:conditions.has_not:$" }
         ],
-        data: [{ id: "value", name: "$:conditions.value:$" }], // { id: "state" }
+        data: [{ id: "value", name: "$:conditions.value:$" }] // { id: "state" }
     }
 
     const customOperators = {
-        // text: [{ id: "has_text", name: "$:conditions.has_text:$" }],
+        timer: [
+            { id: "isAbove", name: "$:conditions.is_above:$" },
+            { id: "isBelow", name: "$:conditions.is_below:$" },
+            { id: "is", name: "$:conditions.is:$" },
+            { id: "isNot", name: "$:conditions.is_not:$" }
+        ]
+        // text: [{ id: "has_text", name: "$:conditions.has_text:$" }, ...conditions.operator],
+    }
+    const customData = {
+        timer: [{ id: "seconds", name: "$:conditions.seconds:$" }]
     }
     const noData: string[] = [] // ["has_text"]
 
     const elementOptions = {
+        timer: convertToOptions($timers),
         variable: convertToOptions($variables),
-        dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a })),
+        dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a }))
     }
 
     // UPDATE
@@ -79,7 +91,7 @@
         if (!conditions[conditionType]) conditions[conditionType] = clone(DEFAULT_CONDITION)
         if (!conditions[conditionType].values[index]) conditions[conditionType].values[index] = {}
 
-        const value = e.detail?.id ?? e.target?.value
+        const value = e.detail?.id ?? e.target?.value ?? e
         conditions[conditionType].values[index][conditionId] = value
 
         // remove following values
@@ -94,6 +106,11 @@
 
             delete conditions[conditionType].values[index][key]
         })
+
+        // change data type
+        if (conditionId === "element") {
+            if (value === "timer") conditions[conditionType].values[index].data = "seconds"
+        }
 
         updateItem()
     }
@@ -164,22 +181,27 @@
 
     {#each showItemValues as input, i}
         {@const elementId = input.element ?? conditionValues.element[0]?.id}
-        {@const operatorOptions = [...(customOperators[elementId] || []), ...conditionValues.operator]}
+        {@const operatorOptions = customOperators[elementId] ? customOperators[elementId] : conditionValues.operator}
         {@const operatorId = input.operator ? input.operator : operatorOptions[0]?.id}
 
         <CombinedInput>
             {#each Object.entries(conditionValues) as [conditionId, condition]}
                 {#if conditionId !== "data" || !noData.includes(operatorId)}
-                    {@const options = conditionId === "operator" ? operatorOptions : condition}
+                    {@const options = conditionId === "operator" ? operatorOptions : conditionId === "data" && customData[elementId] ? customData[elementId] : condition}
                     {@const value = options.find((a) => a.id === input[conditionId]) || options[0]}
+
                     <Dropdown style="min-width: 150px;" value={value.name} {options} on:click={(e) => setValue("showItem", e, conditionId, i)} />
 
                     {#if conditionId === "element" && elementOptions[value.id]}
                         <Dropdown style="min-width: 150px;" value={elementOptions[value.id].find((a) => a.id === input.elementId)?.name || "—"} options={elementOptions[value.id]} on:click={(e) => setValue("showItem", e, "elementId", i)} />
                     {/if}
 
-                    {#if conditionId === "data" && value.id === "value"}
-                        <TextInput placeholder={$dictionary.conditions?.empty} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("showItem", e, "value", i)} />
+                    {#if conditionId === "data"}
+                        {#if value.id === "value"}
+                            <TextInput placeholder={$dictionary.conditions?.empty} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("showItem", e, "value", i)} />
+                        {:else if value.id === "seconds"}
+                            <NumberInput value={typeof input.seconds === "number" ? input.seconds : 0} on:change={(e) => setValue("showItem", Number(e.detail), "seconds", i)} />
+                        {/if}
                     {/if}
                 {/if}
             {/each}
