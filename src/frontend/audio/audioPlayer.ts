@@ -1,16 +1,16 @@
 // const captureFrameRate = 24
 
 import { get } from "svelte/store"
+import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { dataPath, gain, media, outLocked, playingAudio, special, volume } from "../stores"
+import { sendMain } from "../IPC/main"
+import { dataPath, dictionary, gain, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
+import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioPlaylist } from "./audioPlaylist"
-import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { sendMain } from "../IPC/main"
-import { Main } from "../../types/IPC/Main"
 
 type AudioMetadata = {
     name: string
@@ -277,7 +277,9 @@ export class AudioPlayer {
 
     // NowPlaying.txt
     static nowPlaying(filePath: string, name: string) {
-        sendMain(Main.NOW_PLAYING, { dataPath: get(dataPath), filePath, name })
+        const audioLang = get(dictionary).audio || {}
+        const unknownLang = [audioLang.unknown_artist || "", audioLang.unknown_title || "", audioLang.unknown_album || ""]
+        sendMain(Main.NOW_PLAYING, { dataPath: get(dataPath), filePath, name, unknownLang })
     }
 
     // GET
@@ -287,10 +289,12 @@ export class AudioPlayer {
     }
 
     static getAllPlaying() {
-        return Object.keys(get(playingAudio)).filter((id) => {
-            const audioData = get(playingAudio)[id]
-            return audioData.audio && !audioData.paused
-        })
+        return get(playingAudioPaths).length
+            ? get(playingAudioPaths)
+            : Object.keys(get(playingAudio)).filter((id) => {
+                  const audioData = get(playingAudio)[id]
+                  return audioData.audio && !audioData.paused
+              })
     }
 
     static getAudio(id: string): HTMLAudioElement | null {

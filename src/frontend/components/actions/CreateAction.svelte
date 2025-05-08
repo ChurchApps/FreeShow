@@ -52,12 +52,13 @@
         "change_output_style",
         "start_trigger",
         "send_midi",
-        "run_action",
+        "run_action"
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition"]
     // remove run action if creating an action (not "template" or "slide")
-    if (!$popupData.mode) removeActions.push("run_action")
+    if (!mode) removeActions.push("run_action")
+    else removeActions.push("toggle_action")
 
     let usedSections: string[] = []
 
@@ -94,7 +95,7 @@
                 return true
             }),
         // custom special
-        ...(list && !full ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "popup.action" }]),
+        ...((list && !full) || mode ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "popup.action" }])
     ].map((a, i) => {
         if (i === 0) usedSections = []
 

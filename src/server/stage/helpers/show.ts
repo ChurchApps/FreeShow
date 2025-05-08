@@ -11,7 +11,7 @@ export function getLayoutRef(showId: string, layoutId: string = "", _updater?: S
 
 let cached: { [key: string]: string } = {}
 export function getDynamicValue(value: string) {
-    return cached[value] || value
+    return cached[value] ?? value
 }
 export async function replaceDynamicValues(value: string, _updater: number = 0) {
     const newValue = await awaitRequest("API:get_dynamic_value", { value, ref: { type: "stage" } })

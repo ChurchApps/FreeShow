@@ -5,7 +5,7 @@ import OSC from "osc-js"
 import { Server, type Socket } from "socket.io"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
+import { requestToMain, sendToMain } from "../IPC/main"
 import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
@@ -52,7 +52,12 @@ function connected(socket: Socket) {
             return
         }
 
-        const returnData = await receivedData(parsedData, log)
+        let returnData
+        if (parsedData.isVariable) {
+            returnData = { isVariable: true, values: await requestToMain(ToMain.GET_DYNAMIC_VALUES, parsedData.keys || []) }
+        } else {
+            returnData = await receivedData(parsedData, log)
+        }
         if (!returnData) return
 
         socket.emit("data", returnData)

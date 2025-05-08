@@ -62,6 +62,7 @@
 
     // extract shortcuts in brackets "[]"
     function extractShortcuts(input: string) {
+        if (typeof input !== "string") return []
         const match = input.match(/^(.+?)\s*(?:\[(.*?)\])?$/)
         return match ? match.slice(1).filter(Boolean) : [input]
     }

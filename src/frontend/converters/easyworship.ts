@@ -69,6 +69,7 @@ export function convertEasyWorship(data: any) {
 
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
+        show.origin = "easyworship"
         if (song) {
             show.meta = {
                 title: song?.title || "",

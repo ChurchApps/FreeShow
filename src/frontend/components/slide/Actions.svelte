@@ -31,7 +31,7 @@
         e.preventDefault()
 
         let slideActions = clone(actions.slideActions)
-        let actionIndex = slideActions.findIndex((a) => a.id === id || a.triggers?.[0] === id)
+        let actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 
@@ -53,7 +53,7 @@
     const actionsList = [
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward" },
         { id: "animate", title: $dictionary.popup?.animate, icon: "stars" },
-        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" },
+        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" }
     ]
 
     // WIP MIDI convert into new

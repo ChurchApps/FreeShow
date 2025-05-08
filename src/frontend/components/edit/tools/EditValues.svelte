@@ -46,7 +46,7 @@
         dropdown: Dropdown,
         checkbox: Checkbox,
         date: DateInput,
-        time: TimeInput,
+        time: TimeInput
     }
 
     let dispatch = createEventDispatcher()
@@ -99,19 +99,19 @@
             { id: "style", icon: "bold", toggle: true, key: "font-weight", value: "bold" },
             { id: "style", icon: "italic", toggle: true, key: "font-style", value: "italic" },
             { id: "style", icon: "underline", toggle: true, key: "text-decoration", value: "underline" },
-            { id: "style", icon: "strikethrough", toggle: true, key: "text-decoration", value: "line-through" },
+            { id: "style", icon: "strikethrough", toggle: true, key: "text-decoration", value: "line-through" }
         ],
         "align-x": [
             { id: "style", icon: "alignLeft", title: "left", key: "text-align", value: "left" },
             { default: true, id: "style", icon: "alignCenter", title: "center", key: "text-align", value: "center" },
             { id: "style", icon: "alignRight", title: "right", key: "text-align", value: "right" },
-            { id: "style", icon: "alignJustify", title: "justify", key: "text-align", value: "justify" },
+            { id: "style", icon: "alignJustify", title: "justify", key: "text-align", value: "justify" }
         ],
         "align-y": [
             { id: "style", icon: "alignTop", title: "top", key: "align-items", value: "flex-start" },
             { default: true, id: "style", icon: "alignMiddle", title: "center", key: "align-items", value: "center" },
-            { id: "style", icon: "alignBottom", title: "bottom", key: "align-items", value: "flex-end" },
-        ],
+            { id: "style", icon: "alignBottom", title: "bottom", key: "align-items", value: "flex-end" }
+        ]
     }
 
     function toggle(input: EditInput) {
@@ -194,18 +194,18 @@
     const closed = {
         // content
         text: {
-            "style_letter-spacing": 1,
+            "style_letter-spacing": 1
         },
         lines: {
             // "style_line-height": 1.2,
-            "specialStyle.lineGap": 1,
+            "specialStyle.lineGap": 1
         },
         align: {
-            "style_text-align": "left",
+            "style_text-align": "left"
         },
         outline: {
             // "style_-webkit-text-stroke-color": "#000000",
-            "style_-webkit-text-stroke-width": 2,
+            "style_-webkit-text-stroke-width": 2
         },
         shadow: {
             // "style_text-shadow_3": "#000000",
@@ -217,27 +217,27 @@
             "style_box-shadow_4": "rgb(0 0 0 / 0.5)",
             "style_box-shadow_0": 2,
             "style_box-shadow_1": 2,
-            "style_box-shadow_2": 8,
+            "style_box-shadow_2": 8
             // "style_box-shadow_3": 0,
         },
         list: {
-            "list.enabled": true,
+            "list.enabled": true
         },
         chords: {
-            "chords.enabled": true,
+            "chords.enabled": true
         },
         // media
         filters: {
-            "filter_hue-rotate": 100,
+            "filter_hue-rotate": 100
         },
         special: {
-            "scrolling.type": "left_right",
+            "scrolling.type": "left_right"
         },
 
         // item
         transform: {
             // transform_scaleX: -1,
-            transform_perspective: 1,
+            transform_perspective: 1
         },
         // style: {
         //     // WIP opacity does not get applied here
@@ -246,11 +246,11 @@
         //     style_padding: 10,
         // },
         border: {
-            "style_border-width": 5,
+            "style_border-width": 5
         },
         backdrop_filters: {
-            "backdrop-filter_grayscale": 1,
-        },
+            "backdrop-filter_grayscale": 1
+        }
     }
 
     const ALWAYS_CLOSED = ["CSS", "position"]
@@ -329,7 +329,7 @@
             let input = currentEdit[i]
             if (!input) return
 
-            let newValue: any = Object.keys(closedVal).find((styleId) => {
+            const currentKey = Object.keys(closedVal).find((styleId) => {
                 let dataId: string = styleId.split("_")[0]
                 let key: string | undefined = styleId.split("_")[1]
                 let valueIndex: string | undefined = styleId.split("_")[2]
@@ -337,7 +337,8 @@
                 if (valueIndex) return input.valueIndex === Number(valueIndex) && input.key === key
                 else if (key) return input.key === key
                 else return input.id === dataId
-            })?.[1]
+            })
+            let newValue: any = closedVal[currentKey]
 
             if (newValue === undefined) return setStyle(i + 1)
 
@@ -421,7 +422,7 @@
         { id: "", name: "—" },
         ...Object.entries($midiIn)
             .map(([id, a]) => ({ id, name: a.name }))
-            .sort((a, b) => a.name?.localeCompare(b.name)),
+            .sort((a, b) => a.name?.localeCompare(b.name))
     ]
 </script>
 
@@ -469,7 +470,7 @@
                             <!-- <p title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
                             <Dropdown style="width: 100%;" value={variablesList.find((a) => a.id === input.value)?.name || "—"} options={variablesList} on:click={(e) => valueChange(e, input)} />
                         {:else}
-                            <Button on:click={() => openDrawer("variables")} style="width: 100%;" center>
+                            <Button on:click={() => openDrawer("variables", true)} style="width: 100%;" center>
                                 <Icon id="add" right />
                                 <T id="new.variable" />
                             </Button>

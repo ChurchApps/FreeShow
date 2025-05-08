@@ -117,7 +117,8 @@
         "quick_lyrics_example_tip": "在这里输入歌词或任何文本",
         "quick_lyrics_example_text": "行",
         "empty": "空白节目",
-        "exists": "检测到存在同名节目"
+        "exists": "检测到存在同名节目",
+        "slideshow": "幻灯片"
     },
     "preview": {
         "_previous_show": "上一个节目",
@@ -427,6 +428,7 @@
         "set_time": "设置时间",
         "assign_shortcut": "分配快捷键",
         "dynamic_values": "动态值",
+        "conditions": "条件",
         "animate": "动画",
         "translate": "本地化",
         "next_timer": "下一张幻灯片计时器",
@@ -441,6 +443,7 @@
         "edit_event": "编辑事件",
         "about": "关于",
         "history": "历史记录",
+        "action_history": "动作历史",
         "manage_emitters": "管理发射器",
         "action": "动作",
         "category_action": "分类动作",
@@ -492,6 +495,7 @@
         "deleted_cache": "已删除媒体缩略图缓存。",
         "no_songswords_easyworship": "缺少 SongsWords.db 文件。",
         "delete_shows_empty": "没有节目可删除。",
+        "reached_end": "播放完毕！",
         "output_capture_enabled": "已启用输出屏幕捕获，这可能会导致性能问题。仅在需要时使用！",
         "midi_no_project": "收到更改项目的触发信号，但未在指定索引处未找到项目：",
         "midi_no_show": "接收到开始播放幻灯片的指令，但当前没有正在进行的节目。",
@@ -610,6 +614,8 @@
         "bind_to": "指定输出",
         "remove_binding": "移除指定输出",
         "dynamic_values": "动态值",
+        "dynamic_value": "动态值",
+        "conditions": "条件",
         "rearrange": "重新排列",
         "to_front": "移到最前",
         "forward": "向前移动",
@@ -694,6 +700,7 @@
         "id_select_group": "播放指定的分组",
         "id_change_stage_layout": "修改舞台连接布局",
         "start_camera": "启动相机",
+        "start_screen": "开始屏幕",
         "id_select_overlay": "启动叠加",
         "change_volume": "修改音量",
         "start_audio_stream": "开始音频流",
@@ -715,6 +722,7 @@
         "custom_activation": "自定义激活",
         "set_custom_activation": "设置自定义激活",
         "any": "任意",
+        "override_category_action": "覆盖分类动作",
         "activate_on_startup": "启动时激活",
         "activate_save": "保存时激活",
         "activate_slide_clicked": "单击幻灯片时激活",
@@ -729,6 +737,18 @@
         "activate_show_created": "创建节目时激活",
         "activate_show_opened": "节目打开时激活",
         "activate_audio_playlist_ended": "音频播放列表结束时激活"
+    },
+    "conditions": {
+        "show_item": "显示项目如果",
+        "all_conditions": "满足以下所有条件",
+        "some_conditions": "满足以下部分条件",
+        "none_conditions": "未满足以下任何条件​",
+        "has": "有",
+        "has_not": "没有",
+        "is": "是",
+        "is_not": "不是",
+        "value": "值",
+        "empty": "空"
     },
     "recording": {
         "remove": "移除录制",
@@ -800,6 +820,8 @@
         "columns": "列"
     },
     "context": {
+        "to_dictionary": "添加到词典",
+        "correct": "替换成此单词",
         "enabledTabs": "切换标签",
         "setTag": "设置标签",
         "filterByTags": "按标签过滤",
@@ -811,6 +833,7 @@
         "changeIcon": "修改图标",
         "changeGroup": "修改分组",
         "createNew": "创建新的",
+        "create_slideshow": "创建幻灯片",
         "selectAll": "选择全部",
         "force_outputs": "强制输出",
         "align_with_screen": "对齐屏幕",
@@ -873,6 +896,7 @@
         "invert_items": "反转元素",
         "list": "列表",
         "chords": "合弦",
+        "vertical_offset": "垂直偏移",
         "transpose": "转置",
         "auto_size": "自动调整大小",
         "no_wrap": "文本单行显示",
@@ -937,18 +961,22 @@
         "bottom_top": "从下到上",
         "left_right": "从左到右",
         "right_left": "从右到左",
+        "press_action": "按下动作",
+        "release_action": "释放动作",
         "max_events": "最大事件数",
         "start_days_from_today": "从今天开始天数",
         "just_one_day": "仅一天",
         "enable_start_date": "启用开始日期",
         "disable_navigation": "禁用导航控制",
-        "progress_bar": "进度条"
+        "progress_bar": "进度条",
+        "each_number_once": "数字不重复"
     },
     "items": {
         "text": "文本框",
         "media": "媒体",
         "image": "图片",
         "camera": "相机",
+        "screen": "屏幕",
         "video": "视频",
         "mirror": "镜像",
         "clock": "时间",
@@ -1057,7 +1085,8 @@
         "signal": "信号",
         "message_template": "消息模板",
         "message_templates": "消息模板",
-        "inputs": "输入"
+        "inputs": "输入",
+        "data": "数据"
     },
     "draw": {
         "focus": "聚焦",
@@ -1343,10 +1372,12 @@
     },
     "variables": {
         "number": "数字",
+        "random_number": "随机数",
         "text": "文本",
         "step": "步骤",
         "default_value": "默认值",
         "value": "值",
+        "randomize": "随机",
         "set_state": "设置状态",
         "minimum": "最小值",
         "maximum": "最大值"

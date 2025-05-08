@@ -158,7 +158,7 @@ export interface MainSendPayloads {
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_MEDIA]: LessonsData[]
-    [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string }
+    [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string; unknownLang: string[] }
     [Main.NOW_PLAYING_UNSET]: { dataPath: string }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }

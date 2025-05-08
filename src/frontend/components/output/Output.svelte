@@ -4,15 +4,16 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
+    import { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
-    import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import { decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, OutputMetadata, setTemplateStyle } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
@@ -24,7 +25,6 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
-    import { OutData } from "../../../types/Output"
 
     export let outputId = ""
     export let style = ""
@@ -156,7 +156,13 @@
     // lines
     let lines: { [key: string]: { start: number | null; end: number | null } } = {}
     $: currentLineId = slide?.id
-    $: if (currentLineId) lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
+    const updateLinesTime = $currentWindow === "output" ? 50 : 10
+    $: if (currentLineId) {
+        // don't update until all outputs has updated their "line" value
+        setTimeout(() => {
+            lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
+        }, updateLinesTime)
+    }
 
     // metadata
     let metadata: OutputMetadata = {}

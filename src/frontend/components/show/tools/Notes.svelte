@@ -6,8 +6,6 @@
     export let placeholder = ""
     export let disabled = false
     export let lines = 4
-    // convert from old value
-    value = value?.replaceAll("<br>", "\n")
 
     const TIME = 100
     let dispatch = createEventDispatcher()

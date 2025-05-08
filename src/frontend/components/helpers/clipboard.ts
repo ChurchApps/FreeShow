@@ -51,6 +51,7 @@ import {
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
+import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 import { setCaret } from "../edit/scripts/textStyle"
 import { activeEdit } from "./../../stores"
 import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
@@ -60,7 +61,6 @@ import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -73,7 +73,10 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
     if (get(selected).id) copyData = get(selected)
     else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
 
-    if (!copyData?.id || !copyActions[copyData.id]) return
+    if (!copyData?.id || !copyActions[copyData.id]) {
+        if (copyData?.id) console.info("No copy action:", copyData)
+        return
+    }
 
     const copyObj = clone(copyData)
     if (getData && copyActions[copyData.id]) copyData.data = copyActions[copyData.id](copyData.data)
@@ -109,7 +112,16 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 
     if (clip.id === null) return
 
-    if (!pasteActions[clip.id]) return
+    // custom media paste: only paste on selected ones
+    if (clip.id === "media") {
+        mediaPaste(clip.data)
+        return
+    }
+
+    if (!pasteActions[clip.id]) {
+        if (clip.id) console.info("No paste action:", clip.id)
+        return
+    }
     pasteActions[clip.id](clip.data, extraData)
 
     console.info("PASTED:", clip)
@@ -440,6 +452,25 @@ const copyActions = {
     template: (data: any) => {
         return data.map((id: string) => clone(get(templates)[id]))
     },
+    media: (data: any) => {
+        // copy style/filters of first selected media
+        const path = data[0]?.path
+        const mediaData = {}
+        Object.entries(clone(get(media)[path] || {})).forEach(([key, value]) => {
+            if (!mediaCopyKeys.includes(key)) return
+            mediaData[key] = value
+        })
+        return { origin: path, data: mediaData, type: data[0]?.type }
+    },
+    // project items
+    show: (data: any) => {
+        const projectItems: any[] = []
+        clone(data).forEach((item) => {
+            delete item.index
+            projectItems.push(item)
+        })
+        return projectItems
+    },
 }
 
 const pasteActions = {
@@ -576,6 +607,14 @@ const pasteActions = {
             delete newSlide.isDefault
             newSlide.name += " (2)"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
+        })
+    },
+    // project items
+    show: (data: any) => {
+        projects.update((a) => {
+            if (!a[get(activeProject) || ""]?.shows) return a
+            a[get(activeProject) || ""].shows.push(...data)
+            return a
         })
     },
 }
@@ -1021,6 +1060,25 @@ const duplicateActions = {
             return a
         })
     },
+}
+
+const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume"]
+function mediaPaste(data: any) {
+    if (!data || get(selected).id !== "media") return
+
+    media.update((a) => {
+        ;(get(selected).data || []).forEach(({ path, type }) => {
+            // only paste on media with same type & don't paste back on itself
+            if (type !== data.type || path === data.path) return
+
+            if (!a[path]) a[path] = {}
+            mediaCopyKeys.forEach((key) => {
+                if (data.data[key] === undefined) delete a[path][key]
+                else a[path][key] = data.data[key]
+            })
+        })
+        return a
+    })
 }
 
 // HELPER FUNCTIONS

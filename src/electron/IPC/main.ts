@@ -50,7 +50,7 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
     let timeout: NodeJS.Timeout | null = null
     const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {
-            throw new Error(`IPC Message Timed Out: ${id}`)
+            console.error(`IPC Message Timed Out: ${id}`)
         }, waitingTimeout)
 
         ipcMain.on(MAIN, receive)

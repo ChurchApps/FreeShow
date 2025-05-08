@@ -19,6 +19,7 @@ export enum ToMain {
     CHUMS_PROJECTS = "CHUMS_PROJECTS",
     WEBSOCKET = "WEBSOCKET",
     AUDIO_METADATA = "AUDIO_METADATA",
+    GET_DYNAMIC_VALUES = "GET_DYNAMIC_VALUES",
     // Main
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
@@ -48,6 +49,7 @@ export interface ToMainSendPayloads {
     [ToMain.CHUMS_PROJECTS]: { shows: any; projects: any }
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
+    [ToMain.GET_DYNAMIC_VALUES]: string[]
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
@@ -62,6 +64,7 @@ export interface ToMainSendPayloads {
 
 export interface ToMainReturnPayloads {
     [ToMain.API]: Promise<any>
+    [ToMain.GET_DYNAMIC_VALUES]: Promise<{ [key: string]: string }>
 }
 
 ///////////

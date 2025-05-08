@@ -208,7 +208,7 @@ const loadActions = {
                     const label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
                     const icon = actionData[triggerId]?.icon || "actions"
 
-                    return { id: action.id, label, translate: false, icon, type: "action" }
+                    return { id: action.id || triggerId, label, translate: false, icon, type: "action" }
                 }),
                 "label"
             )

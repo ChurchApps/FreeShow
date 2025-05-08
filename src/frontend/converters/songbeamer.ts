@@ -100,6 +100,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
 
     const layoutId = uid()
     let show = new ShowObj(false, categoryId, layoutId)
+    show.origin = "songbeamer"
 
     text = text.replaceAll("\r", "").replaceAll(/\n\s+\n/g, "\n\n")
     const sections: string[] = text.split(/(?:^|\n)--(?:-|A)?\s*\n/)

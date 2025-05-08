@@ -55,6 +55,7 @@ import {
     remotePassword,
     resized,
     serverData,
+    showRecentlyUsedProjects,
     showsPath,
     slidesOptions,
     sorted,
@@ -322,6 +323,12 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v.autoUpdates !== false) sendMain(Main.AUTO_UPDATE)
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
+        if (v.startupProjectsList) {
+            // skip the "Recently used" list, and open "all projects"
+            // let "activeProject" setting update first
+            setTimeout(() => projectView.set(true))
+            showRecentlyUsedProjects.set(false)
+        }
 
         special.set(v)
     },

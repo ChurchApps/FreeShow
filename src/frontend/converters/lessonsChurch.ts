@@ -133,6 +133,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
     function createShow() {
         const layoutId = uid()
         const show = new ShowObj(false, "lessons", layoutId)
+        show.origin = "lessons"
         const showId = getLabelId(lesson.lessonTitle, false) || uid()
 
         let name = lesson.lessonTitle

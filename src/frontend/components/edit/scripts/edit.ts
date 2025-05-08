@@ -69,10 +69,19 @@ export function getBackgroundOpacity(itemEditValues, data) {
 }
 
 const drawerPages: { [key: string]: DrawerTabIds } = {
+    online: "media",
+    screens: "media",
+    cameras: "media",
+
+    microphones: "audio",
+    audio_streams: "audio",
+
+    actions: "functions",
     timer: "functions",
     variables: "functions",
+    triggers: "functions",
 }
-export function openDrawer(id: string) {
+export function openDrawer(id: string, openPopup: boolean = false) {
     activePage.set("show")
 
     // set sub tab
@@ -92,6 +101,8 @@ export function openDrawer(id: string) {
     if (get(drawer).height <= 40) {
         drawer.set({ height: 300, stored: get(drawer).height })
     }
+
+    if (!openPopup) return
 
     // create new popup
     let popupId = id

@@ -10,7 +10,6 @@
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
     import Checkbox from "../../../inputs/Checkbox.svelte"
-
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import Dropdown from "../../../inputs/Dropdown.svelte"
     import NumberInput from "../../../inputs/NumberInput.svelte"
@@ -28,6 +27,7 @@
     let values = {
         text: $quickTextCache.length > 20 ? $quickTextCache : "",
         name: "",
+        origin: ""
     }
 
     // CATEGORY
@@ -37,13 +37,13 @@
         ...sortObject(
             Object.keys($categories).map((key: string) => ({
                 id: key,
-                ...$categories[key],
+                ...$categories[key]
             })),
             "name"
         ).map((cat) => ({
             id: cat.id,
-            name: cat.default ? `$:${cat.name}:$` : cat.name,
-        })),
+            name: cat.default ? `$:${cat.name}:$` : cat.name
+        }))
     ]
 
     let selectedCategory: any = cats[0]
@@ -62,12 +62,13 @@
         { id: "text", name: "create_show.quick_lyrics", title: $dictionary.create_show?.quick_lyrics_tip, icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
         { id: "web", name: "create_show.web", title: $dictionary.create_show?.search_web, icon: "search" },
-        { id: "empty", name: "create_show.empty", title: $dictionary.new?.empty_show, icon: "add" },
+        { id: "empty", name: "create_show.empty", title: $dictionary.new?.empty_show, icon: "add" }
     ]
     let selectedOption = ""
     function selectOption(id: string) {
         if (id === "empty") {
             values.text = ""
+            values.origin = ""
             textToShow()
         } else {
             selectedOption = id
@@ -95,6 +96,7 @@
         }
 
         values.text = data.lyrics
+        if (data.source) values.origin = data.source.toLowerCase()
         selectedOption = "text"
     }
 
@@ -113,14 +115,14 @@
         let category = selectedCategory?.id?.length ? selectedCategory.id : null
 
         if (sections.length) {
-            convertText({ name: values.name, category, text })
+            convertText({ name: values.name, category, text, origin: values.origin })
         } else {
             let show = new ShowObj(false, category)
             show.name = checkName(values.name)
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
 
-        values = { name: "", text: "" }
+        values = { name: "", text: "", origin: "" }
         quickTextCache.set("")
         activePopup.set(null)
     }

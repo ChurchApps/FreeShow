@@ -4,7 +4,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { History } from "../../../types/History"
 import type { DropData, Selected } from "../../../types/Main"
-import type { Item, Show, Slide } from "../../../types/Show"
+import type { Item, Show, Slide, SlideAction } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import {
@@ -54,10 +54,11 @@ function getId(drag: Selected): string {
 }
 
 type Data = { drag: Selected; drop: DropData }
+type Keys = { shiftKey: boolean }
 
 export const dropActions = {
-    slides: ({ drag, drop }: Data, history: History) => dropActions.slide({ drag, drop }, history),
-    slide: ({ drag, drop }: Data, history: History) => {
+    slides: ({ drag, drop }: Data, history: History, keys?: Keys) => dropActions.slide({ drag, drop }, history, keys),
+    slide: ({ drag, drop }: Data, history: History, keys?: Keys) => {
         const customId: string = drag.showId || drag.data[0]?.showId
         const showId = customId || get(activeShow)?.id || ""
         if (!showId || get(shows)[showId]?.locked) return
@@ -66,7 +67,7 @@ export const dropActions = {
 
         const id: string = getId(drag)
         if (slideDrop[id]) {
-            history = slideDrop[id]({ drag, drop }, history)
+            history = slideDrop[id]({ drag, drop }, history, keys)
             return history
         }
 
@@ -782,14 +783,14 @@ const slideDrop = {
         history.newData = { key: "actions", data, indexes: [drop.index] }
         return history
     },
-    action: ({ drag, drop }: Data, history: History) => {
+    action: ({ drag, drop }: Data, history: History, keys?: Keys) => {
         history.id = "SHOW_LAYOUT"
 
         const ref = getLayoutRef()[drop.index!]
         const actionsData: any = ref?.data?.actions || {}
 
         const slideActions = actionsData.slideActions || []
-        const newActions: any[] = []
+        const newActions: SlideAction[] = []
 
         drag.data.forEach((action) => {
             if (!action?.triggers) return
@@ -798,7 +799,10 @@ const slideDrop = {
                 const existingRunActionIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
                 if (existingRunActionIndex > -1) return
 
-                newActions.push({ id: uid(), triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } })
+                const id = uid()
+                let newAction: SlideAction = { id, triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } }
+                if (keys?.shiftKey) newAction.customData = { run_action: { overrideCategoryAction: true } }
+                newActions.push(newAction)
                 return
             }
 

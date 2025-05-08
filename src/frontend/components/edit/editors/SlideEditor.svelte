@@ -123,7 +123,7 @@
         history({
             id: "setStyle",
             newData: { style: { key: "style", values } },
-            location: { page: "edit", show: historyShow, slide: slideId, items: activeItems },
+            location: { page: "edit", show: historyShow, slide: slideId, items: activeItems }
         })
 
         if (!items[0]?.auto) return
@@ -346,7 +346,9 @@
                 {:else if Slide?.notes}
                     <div class="notes" style="opacity: 0.8;">
                         <Icon id="notes" right white />
-                        {@html Slide.notes.replaceAll("\n", "&nbsp;")}
+                        <div style="list-style: inside;">
+                            {@html Slide.notes.replaceAll("\n", "&nbsp;")}
+                        </div>
                     </div>
                 {/if}
             </div>

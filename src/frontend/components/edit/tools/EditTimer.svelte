@@ -32,7 +32,7 @@
     {#if timersList.length > (isStage ? 1 : 0)}
         <Dropdown style="width: 100%;" options={timersList} value={name || "—"} on:click={changeTimer} />
     {:else}
-        <Button on:click={() => openDrawer("timer")} style="width: 100%;" center>
+        <Button on:click={() => openDrawer("timer", true)} style="width: 100%;" center>
             <Icon id="add" right />
             <T id="new.timer" />
         </Button>

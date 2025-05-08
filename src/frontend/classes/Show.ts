@@ -6,6 +6,7 @@ import { activeShow, dictionary, templates } from "../stores"
 
 export class ShowObj implements Show {
     name: string
+    origin?: string
     private?: boolean
     reference?: any
     category: any

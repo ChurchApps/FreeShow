@@ -86,6 +86,7 @@ export const nextActionEventPaused: Writable<boolean> = writable(false)
 // AUDIO
 export const audioChannels: Writable<AudioChannel[]> = writable([])
 export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
+export const playingAudioPaths: Writable<string[]> = writable([])
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
@@ -167,6 +168,7 @@ export const errorHasOccured: Writable<boolean> = writable(false)
 export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
+export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 
 // ----- SAVED VARIABLES -----
 

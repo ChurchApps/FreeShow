@@ -17,8 +17,6 @@
     $: outputId = getActiveOutputs($outputs, false, true, true)[0]
     $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
 
-    $: console.log(outputId, outputStyle, mediaStyle)
-
     // get styling
     let mediaStyle: MediaStyle = {}
     $: mediaId = $activeEdit.id && $activeEdit.type === "media" ? $activeEdit.id : $activeShow?.id && ($activeShow.type === "image" || $activeShow.type === "video") ? $activeShow.id : ""

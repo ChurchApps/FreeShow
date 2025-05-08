@@ -369,6 +369,7 @@
                     changeAction(e)
                     actionSelector = null
                 }}
+                mode="calendar"
                 list
                 full
             />
@@ -377,7 +378,7 @@
 
             {#key actionDataString}
                 <!-- TODO: only choose actual "Actions" -->
-                <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} on:choose={() => (actionSelector = { id: actionData?.id || "" })} choosePopup />
+                <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} on:choose={() => (actionSelector = { id: actionData?.id || "" })} mode="calendar" choosePopup />
             {/key}
         {/if}
     {/if}

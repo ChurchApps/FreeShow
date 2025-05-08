@@ -215,7 +215,10 @@
         "bpm": "BPM",
         "beats": "Beats",
         "type_music": "Music",
-        "type_effect": "Effect"
+        "type_effect": "Effect",
+        "unknown_artist": "Unknown Artist",
+        "unknown_title": "Unknown Title",
+        "unknown_album": "Unknown Album"
     },
     "menu": {
         "show": "Show",
@@ -747,7 +750,10 @@
         "has_not": "has not",
         "is": "is",
         "is_not": "is not",
+        "is_above": "is above",
+        "is_below": "is below",
         "value": "value",
+        "seconds": "seconds",
         "empty": "empty"
     },
     "recording": {
@@ -1183,6 +1189,7 @@
         "full_colors": "High contrast group colors",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
+        "startup_projects_list": "Show the projects list on startup",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
         "clear_media_when_finished": "Clear media when finished",
