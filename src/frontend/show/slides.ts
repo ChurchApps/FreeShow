@@ -10,6 +10,8 @@ import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide } from "../stores"
 
+type GroupData = { globalGroup?: string; group?: string; color?: string }
+
 export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; menu: { id: string } }) {
     const ref = getLayoutRef()
 
@@ -80,7 +82,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 
 function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]) {
     // slides next to each other will be one group
-    const groups: { globalGroup: string; slides: LayoutRef[] }[] = [] // { globalGroup: newGroup, slides: [] }
+    const groups: { slides: LayoutRef[]; groupData: GroupData }[] = []
     const parentIndexes = slides.map((index) => ref[index].parent?.layoutIndex ?? index)
 
     let previousParentIndex = -1
@@ -96,7 +98,10 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
         parentIndex = slideRef.layoutIndex >= selectedIndexWithinGroup ? selectedIndexWithinGroup : parentIndex
 
         if (parentIndex === previousParentIndex) groups[groups.length - 1].slides.push(slideRef)
-        else groups.push({ globalGroup, slides: [slideRef] })
+        else {
+            let groupData: GroupData = { globalGroup }
+            groups.push({ slides: [slideRef], groupData })
+        }
 
         previousParentIndex = parentIndex
     })
@@ -104,10 +109,10 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
     return groups
 }
 
-function combineGroups(groups: { globalGroup: string; slides: LayoutRef[] }[], selectedSlides: number[]) {
+function combineGroups(groups: { slides: LayoutRef[]; groupData: GroupData }[], selectedSlides: number[]) {
     let previousSlide: LayoutRef | null = null
 
-    const newGroups: { globalGroup: string; slides: LayoutRef[] }[] = []
+    const newGroups: { slides: LayoutRef[]; groupData: GroupData }[] = []
     groups.forEach((group) => {
         const firstSlide = group.slides[0]
         const lastSlide = group.slides[group.slides.length - 1]
@@ -123,28 +128,28 @@ function combineGroups(groups: { globalGroup: string; slides: LayoutRef[] }[], s
     return newGroups
 }
 
-function updateChildren(groups: { globalGroup: string; slides: LayoutRef[] }[]) {
+function updateChildren(groups: { slides: LayoutRef[]; groupData: GroupData }[]) {
     groups.forEach(updateGroup)
 
-    function updateGroup({ slides, globalGroup }) {
+    function updateGroup({ slides, groupData }) {
         const newChildren = clone(slides)
             .slice(1)
             .map(({ id }) => id)
         const layoutRef = clone(slides)
         layoutRef[0].children = newChildren
-        if (globalGroup) layoutRef[0].globalGroup = globalGroup
+        if (groupData) layoutRef[0] = { ...layoutRef[0], ...groupData }
     }
 
     return groups
 }
 
-function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], newData: { slides: { [key: string]: Slide }; layout: SlideData[] }) {
+function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], newData: { slides: { [key: string]: Slide }; layout: SlideData[] }) {
     const newParents: { id: string; data: SlideData; parent: string; pos: number }[] = []
     const layouts: (Layout & { layoutId: string })[] = _show().layouts("active").get(null, true)
     const activeLayout: string = _show().get("settings.activeLayout")
 
     // , group = ""
-    groups.forEach(({ globalGroup = "", slides }) => {
+    groups.forEach(({ slides, groupData }) => {
         const firstSlideChildren = slides.filter((slide, i) => (i === 0 ? slides[0].id === slide.id : slides[0].children?.includes(slide.id)))
         const hasChanged = slides[0].clone || slides[0].type === "child" || firstSlideChildren.length !== slides.length
 
@@ -201,8 +206,9 @@ function updateValues(groups: { globalGroup: string; slides: LayoutRef[] }[], ne
             }
 
             function setAsParent() {
-                const newValues: { group: string; color: string; globalGroup?: string } = { group: "", color: "" }
-                if (globalGroup) newValues.globalGroup = globalGroup
+                // const newValues: { group: string; color: string; globalGroup?: string } = { group: groupData.group || "", color: groupData.color || "" }
+                const newValues: GroupData = {}
+                if (groupData.globalGroup) newValues.globalGroup = groupData.globalGroup
                 changeValues(newData.slides[slideId], newValues)
             }
 

@@ -83,7 +83,7 @@
                     id: "UPDATE",
                     newData: { data: children.filter((a: string) => a !== ref.id), key: "slides", keys: [ref.parent.id], subkey: "children" },
                     oldData: { id: $activeShow?.id },
-                    location: { page: "show", id: "show_key" },
+                    location: { page: "show", id: "show_key" }
                 })
 
                 let currentLayouts: SlideData[][] = _show().layouts().get("slides")
@@ -136,7 +136,7 @@
                 if (index > -1) a[index].name = groupName
                 return a
             })
-        },
+        }
     }
 
     function rename() {
@@ -171,7 +171,7 @@
 {/if}
 
 <div bind:this={element}>
-    <TextInput autofocus value={groupName} on:change={(e) => changeValue(e)} />
+    <TextInput value={groupName} on:change={(e) => changeValue(e)} autoselect />
 </div>
 
 <Button style="height: auto;margin-top: 10px;" on:click={rename} center dark>

@@ -32,7 +32,7 @@
         media: (id: string) => getFileName(id),
         audio: (id: string) => getFileName(id),
         overlay: (id: string) => $overlays[id]?.name || "",
-        template: (id: string) => $templates[id]?.name || "",
+        template: (id: string) => $templates[id]?.name || ""
     }
 
     $: if ($activeEdit) updateEditHistory()
@@ -84,6 +84,8 @@
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 </script>
+
+<!-- WIP history keyboard navigation up/down? -->
 
 {#if $focusMode}
     <Button on:click={() => activePage.set("show")} center dark>

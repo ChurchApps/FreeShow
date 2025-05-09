@@ -99,7 +99,7 @@
 
     $: textAnimation = animationStyle.text || ""
 
-    // AUTO SIZE
+    // FONT SIZE
 
     let cssFontSize = 0
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
@@ -115,6 +115,7 @@
         if (!outputStyle) return ""
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
+        cssFontSize = fontSize * customFontSizeRatio
         return `font-size: ${fontSize * customFontSizeRatio}px;`
     }
 
@@ -162,7 +163,8 @@
     }
 
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
-    $: listStyle = item?.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+    // font-size: inherit;
+    $: listStyle = item?.list?.enabled ? `;font-size: ${fontSize || cssFontSize || 100}px;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
     const dispatch = createEventDispatcher()
     const previousValue: { [key: string]: string } = {}
