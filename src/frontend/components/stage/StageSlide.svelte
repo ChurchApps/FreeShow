@@ -12,7 +12,6 @@
 
     export let layout: StageLayout
     export let id: string
-    export let index: number
     export let columns = 1
     export let active = false
     export let list = false
@@ -44,7 +43,8 @@
                     {/each}
                 </Zoomed>
                 <div class="label" title={layout.name}>
-                    <span style="position: absolute;display: contents;">{index + 1}</span>
+                    <!-- no need to display index number -->
+                    <!-- <span style="position: absolute;display: contents;">{index + 1}</span> -->
                     <span class="text">
                         <!-- {#if show.name}
               {show.name}

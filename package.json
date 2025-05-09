@@ -115,6 +115,7 @@
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:vassbo/grandiose#5b1fc57",
         "jzz": "^1.9.3",
+        "mdb-reader": "^1.2.1",
         "mp4box": "^0.5.4",
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",

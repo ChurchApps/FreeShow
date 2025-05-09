@@ -5,6 +5,7 @@
         activeRecording,
         activeShow,
         categories,
+        disabledServers,
         effectsLibrary,
         events,
         forceClock,
@@ -24,7 +25,7 @@
         templateCategories,
         timers,
         topContextActive,
-        undoHistory,
+        undoHistory
     } from "../../stores"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -68,7 +69,7 @@
             const categoryStores = {
                 category_shows: () => $categories,
                 category_overlays: () => $overlayCategories,
-                category_templates: () => $templateCategories,
+                category_templates: () => $templateCategories
             }
 
             const isArchive = !!categoryStores[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
@@ -91,6 +92,9 @@
             }
 
             menu.label = enabled ? "actions.enable" : "actions.disable"
+        },
+        move_connections: () => {
+            hide = $disabledServers.stage === true
         },
         slide_transition: () => {
             if ($selected.id === "slide" && $activeShow) {
@@ -227,7 +231,7 @@
                 menu.label = "actions.start_recording"
                 menu.icon = "record"
             }
-        },
+        }
         // bind_item: () => {
         //     if (item is bound) enabled = true
         // }

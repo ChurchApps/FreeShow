@@ -155,6 +155,7 @@
     }
 
     // ZOOM
+    let scrollElem: HTMLDivElement | undefined
     let zoom = 1
 
     // shortcut
@@ -165,6 +166,20 @@
         if (!e.target.closest(".editArea")) return
 
         zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
+
+        // always center scroll when zooming
+        if (zoom < 1) {
+            // allow elem to update after zooming
+            setTimeout(() => {
+                const elem = scrollElem?.querySelector(".droparea")
+                if (!elem) return
+
+                const centerX = (elem.scrollWidth - elem.clientWidth) / 2
+                const centerY = (elem.scrollHeight - elem.clientHeight) / 2
+
+                elem.scrollTo({ left: centerX, top: centerY })
+            })
+        }
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY >= 100 || e.deltaY <= -100) return
@@ -259,7 +274,7 @@
 <div class="editArea">
     <!-- zoom: {1 / zoom}; -->
     <!-- width: {100 / zoom}%;height: {100 / zoom}%; -->
-    <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
+    <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed

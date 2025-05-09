@@ -85,6 +85,7 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
+import { convertMediaShout } from "../converters/mediashout"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -416,6 +417,7 @@ export const mainResponses: MainResponses = {
             videopsalm: () => convertVideopsalm(data),
             openlp: () => convertOpenLP(data),
             opensong: () => convertOpenSong(data),
+            mediashout: () => convertMediaShout(data),
             quelea: () => convertQuelea(data),
             softprojector: () => convertSoftProjector(data),
             songbeamer: () => convertSongbeamerFiles(a.custom),
