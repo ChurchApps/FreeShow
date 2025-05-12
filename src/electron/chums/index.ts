@@ -5,20 +5,21 @@ import type { ChumsScopes } from "./types"
 import { stores } from "../data/store"
 
 export function chumsConnect(scope: ChumsScopes) {
-    return ChumsConnect.connect(scope)
+  return ChumsConnect.connect(scope)
 }
 
 export function chumsDisconnect(scope?: ChumsScopes) {
-    return ChumsConnect.disconnect(scope)
+  return ChumsConnect.disconnect(scope)
 }
 
 export function chumsLoadServices() {
-    return ChumsImport.loadServices()
+  return ChumsImport.loadServices()
 }
 
-export function chumsStartupLoad(scope: ChumsScopes = "plans") {
-    if (!stores.ACCESS.get(`chums_${scope}`)) return
-    if (!ChumsConnect.connect(scope)) return
-    ChumsExport.sendSongsToChums()
-    ChumsImport.loadServices()
+export async function chumsStartupLoad(scope: ChumsScopes = "plans") {
+  if (!stores.ACCESS.get(`chums_${scope}`)) return
+  const connected = await ChumsConnect.connect(scope)
+  if (!connected) return
+  await ChumsExport.sendSongsToChums()
+  await ChumsImport.loadServices()
 }
