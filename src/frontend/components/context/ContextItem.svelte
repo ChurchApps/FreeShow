@@ -80,18 +80,20 @@
             enabled = !!$shows[$selected.data[0].id].locked
         },
         disable: () => {
+            let isEnabled = false
             if ($selected.id === "slide" && $activeShow) {
                 let ref = getLayoutRef()
-                enabled = ref[$selected.data[0]?.index]?.data?.disabled || false
+                isEnabled = ref[$selected.data[0]?.index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
-                enabled = $stageShows[$selected.data[0]?.id]?.disabled
+                isEnabled = $stageShows[$selected.data[0]?.id]?.disabled
             } else if ($selected.id === "action") {
                 let action = $midiIn[$selected.data[0]?.id] || {}
                 if (!action.customActivation) disabled = true
-                else enabled = action.enabled === false
+                else isEnabled = action.enabled === false
             }
 
-            menu.label = enabled ? "actions.enable" : "actions.disable"
+            enabled = isEnabled
+            menu.label = isEnabled ? "actions.enable" : "actions.disable"
         },
         move_connections: () => {
             hide = $disabledServers.stage === true
@@ -182,10 +184,13 @@
         },
         effects_library_add: () => {
             // WIP don't show this if not an effect
+            let isEnabled = false
             let path = $selected.data[0]?.path || $selected.data[0]?.id
             let existing = $effectsLibrary.find((a) => a.path === path)
-            if (path && existing) enabled = true
-            menu.label = enabled ? "media.effects_library_remove" : "media.effects_library_add"
+            if (path && existing) isEnabled = true
+
+            enabled = isEnabled
+            menu.label = isEnabled ? "media.effects_library_remove" : "media.effects_library_add"
         },
         lock_to_output: () => {
             let id = $selected.data[0]
@@ -211,9 +216,12 @@
             disabled = alwaysOnTopState.length === previewOutputs.length
         },
         hide_from_preview: () => {
+            let isEnabled = false
             let outputId = contextElem?.id || ""
-            if ($outputs[outputId]?.hideFromPreview) enabled = true
-            menu.label = enabled ? "context.enable_preview" : "context.hide_from_preview"
+            if ($outputs[outputId]?.hideFromPreview) isEnabled = true
+
+            enabled = isEnabled
+            menu.label = isEnabled ? "context.enable_preview" : "context.hide_from_preview"
         },
         place_under_slide: () => {
             let id = $selected.data[0]
@@ -226,7 +234,7 @@
             if ($activeRecording) {
                 menu.label = "actions.stop_recording"
                 menu.icon = "stop"
-                enabled = true
+                // enabled = true
             } else {
                 menu.label = "actions.start_recording"
                 menu.icon = "record"
@@ -279,6 +287,7 @@
 <div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
+        {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}
         <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
                 {#if menu?.label}
@@ -326,7 +335,7 @@
 
     .enabled {
         color: var(--secondary);
-        background-color: rgb(255 255 255 / 0.1);
+        background-color: rgb(255 255 255 / 0.05);
     }
 
     .hide {

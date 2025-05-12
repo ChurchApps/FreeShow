@@ -365,6 +365,8 @@ function splitTextToLines(text: string) {
 
 const latin1 = {
     "92": "'",
+    "93": "‘", // “
+    "94": "’", // ”
     "96": "–",
     e6: "æ",
     f8: "ø",

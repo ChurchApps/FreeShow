@@ -6,6 +6,7 @@ import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMe
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { customActionActivation } from "../actions/actions"
+import { getItemText } from "../edit/scripts/textStyle"
 import { clone, keysToID } from "./array"
 import { history } from "./history"
 import { _updaters } from "./historyHelpers"
@@ -14,7 +15,6 @@ import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayouts
 import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
 import { _show } from "./shows"
-import { getItemText } from "../edit/scripts/textStyle"
 
 // TODO: move history switch to actions
 

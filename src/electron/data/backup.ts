@@ -16,8 +16,11 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     let shows: TrimmedShows | null = null
     // let bibles = null
 
+    // no need to backup shows on auto backup (as that just takes a lot of space)
+    const isAutoBackup = !!customTriggers.isAutoBackup
+
     const backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
-    const backupFolder = createFolder(path.join(backupPath, getTimePointString()))
+    const backupFolder = createFolder(path.join(backupPath, getTimePointString() + (isAutoBackup ? "_auto" : "")))
 
     // CONFIGS
     await Promise.all(storesToSave.map(syncStores))
@@ -27,7 +30,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     // if (bibles) await syncBibles()
 
     // SHOWS
-    await syncAllShows()
+    if (!isAutoBackup) await syncAllShows()
 
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
@@ -40,6 +43,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
         const store = stores[id]
         const name = id + ".json"
 
+        if (id === "SHOWS" && isAutoBackup) return
         if (id === "SHOWS") shows = store.store as TrimmedShows
         // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 

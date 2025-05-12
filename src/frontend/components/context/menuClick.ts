@@ -751,7 +751,7 @@ const actions = {
         let id = uid()
 
         // find existing with the same name
-        const existing = Object.values(get(projectTemplates)).find((a) => a.name === project.name)
+        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
         if (existing) id = existing[0]
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })

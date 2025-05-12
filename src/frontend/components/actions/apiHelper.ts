@@ -24,7 +24,6 @@ import {
     overlays,
     playingAudio,
     playingMetronome,
-    playScripture,
     projects,
     refreshEditSlide,
     selected,
@@ -384,8 +383,7 @@ export function startScripture(data: API_scripture) {
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
-    openScripture.set({ ...ref })
-    setTimeout(() => playScripture.set(true), 500)
+    openScripture.set({ ...ref, play: true })
 }
 
 // MEDIA

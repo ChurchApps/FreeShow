@@ -76,7 +76,7 @@ export const _updaters = {
             }
 
             // find any stage output window linked to this stage layout
-            const outputId = Object.values(get(outputs)).find((output) => output.stageOutput === id)?.[0] || ""
+            const outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
             // get first stage layout

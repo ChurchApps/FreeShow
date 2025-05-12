@@ -8,6 +8,7 @@
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     let list: string[] = []
@@ -161,20 +162,24 @@
 
 <svelte:window on:keydown={keydown} />
 
-{#if list.length}
+{#if list.length > 1}
     <p><T id="popup.change_name" />:</p>
-    <ul style="list-style-position: inside;">
+    <ul style="list-style-position: inside;margin-bottom: 10px;">
         {#each list as text}
             <li style="font-weight: bold;">{text}</li>
         {/each}
     </ul>
 {/if}
 
-<div bind:this={element}>
-    <TextInput value={groupName} on:change={(e) => changeValue(e)} autoselect />
-</div>
+<CombinedInput>
+    <div bind:this={element} style="width: 100%;">
+        <TextInput value={groupName} on:change={(e) => changeValue(e)} autoselect />
+    </div>
+</CombinedInput>
 
-<Button style="height: auto;margin-top: 10px;" on:click={rename} center dark>
-    <Icon id="edit" right />
-    <T id="actions.rename" />
-</Button>
+<CombinedInput style="margin-top: 10px;">
+    <Button on:click={rename} style="width: 100%;" center dark>
+        <Icon id="edit" right />
+        <T id="actions.rename" />
+    </Button>
+</CombinedInput>
