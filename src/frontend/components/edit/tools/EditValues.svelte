@@ -584,7 +584,6 @@
                                 {value}
                                 fontStyleValue={input.styleValue || ""}
                                 disabled={typeof input.disabled === "string" ? item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value : input.disabled}
-                                enableNoColor={input.enableNoColor}
                                 disableHold
                                 on:click={(e) => valueChange(e, input)}
                                 on:fontStyle={(e) => valueChange(e, { ...input, key: "font" })}

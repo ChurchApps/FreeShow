@@ -275,6 +275,7 @@ export type Popups =
     | "player"
     | "rename"
     | "color"
+    | "color_gradient"
     | "find_replace"
     | "timer"
     | "variable"
