@@ -31,7 +31,12 @@
 
     // $: if (data) dataChanged()
     function dataChanged() {
-        setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", !data["background-color"])
+        // gradient
+        const styles = getStyles(item?.style)
+        const isGradient = styles.background?.includes("gradient")
+        if (isGradient) data["background-color"] = styles.background
+
+        setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
 
         data = stylePosToPercentage(data)
     }
@@ -61,6 +66,13 @@
             let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
             input.value = addFilterString(oldString || "", [input.key, input.value])
             input.key = input.id
+        }
+
+        if (input.id === "style" && input.key === "background-color") {
+            // set "background" value instead of "background-color"
+            if (input.value.includes("gradient")) input.key = "background"
+            // reset "background" value
+            else updateStyle({ detail: { ...input, key: "background", value: "" } })
         }
 
         // background opacity
@@ -147,7 +159,7 @@
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
                 newData: { key: "items", subkey: "style", data: Object.values(values)[0], indexes: allItems },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: true },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: true }
             })
             return
         }
@@ -157,7 +169,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key: "style", values: values[slide] } },
-                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slideitem_" + slide + "_items_" + slideItems[i].join(",") },
+                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slideitem_" + slide + "_items_" + slideItems[i].join(",") }
             })
         })
     }

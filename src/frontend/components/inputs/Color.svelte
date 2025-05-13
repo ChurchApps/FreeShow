@@ -1,10 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
-    import { dictionary, special } from "../../stores"
+    import { activePopup, dictionary, popupData, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { defaultColors, getContrast } from "../helpers/color"
+    import { defaultColors, defaultGradients, getContrast } from "../helpers/color"
+    import Button from "./Button.svelte"
 
     export let value = "#FFF"
     export let visible = false
@@ -12,6 +13,7 @@
     export let showDisabled = false
     export let custom = false
     export let rightAlign = false
+    export let allowGradients = false
     export let height = 0
     export let width = 0
 
@@ -55,19 +57,35 @@
     $: customColors = ($special.customColors || []).map((value) => ({ name: "", value }))
     $: colors = custom ? customColors : showDisabled ? defaultColors : [...defaultColors, ...customColors]
     $: if (!showDisabled) colors = colors.filter((a) => !$special.disabledColors?.includes(a.value))
+
+    // GRADIENTS
+
+    const modes = ["normal", "gradient"]
+    $: selectedMode = allowGradients ? getCurrentMode(value) : "normal"
+    function getCurrentMode(value: string) {
+        if (value.includes("gradient")) return "gradient"
+        return "normal"
+    }
+
+    $: customGradients = ($special.customColorsGradient || []).map((value) => ({ name: "", value }))
+    $: gradientColors = custom ? customGradients : showDisabled ? defaultGradients : [...defaultGradients, ...customGradients]
+    $: if (!showDisabled) gradientColors = gradientColors.filter((a) => !$special.disabledColorsGradient?.includes(a.value))
+
+    $: disabledColors = (allowGradients ? $special.disabledColorsGradient : $special.disabledColors) || []
+    $: colorsList = allowGradients ? gradientColors : colors
 </script>
 
 <!-- on:mouseup={() => (mousePressed = false)} -->
 <svelte:window on:mousedown={mousedown} />
 
 {#if visible}
-    {#if colors.length || (!showDisabled && !custom)}
-        <div class="picker" class:visible class:clipRight>
+    {#if colorsList.length || (!showDisabled && !custom)}
+        <div class="picker" style="padding: 10px;" class:visible class:clipRight>
             <div class="colors">
-                {#each colors as color}
-                    <div class="pickColor" class:disabled={$special.disabledColors?.includes(color.value)} class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value, true)}>
+                {#each colorsList as color}
+                    <div class="pickColor" class:disabled={disabledColors.includes(color.value)} class:active={value === color.value} title={color.name} style="background: {color.value};" on:click={() => change(color.value, true)}>
                         {#if showDisabled || custom}
-                            <div class="hover" class:visible={!custom && $special.disabledColors?.includes(color.value)}>
+                            <div class="hover" class:visible={!custom && disabledColors.includes(color.value)}>
                                 <Icon id={custom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
                             </div>
                         {/if}
@@ -76,10 +94,23 @@
             </div>
 
             {#if !showDisabled && !custom}
-                <div class="color" style="margin-top: 10px;background-color: {value};">
-                    <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
-                    <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
-                </div>
+                {#if allowGradients}
+                    <Button
+                        style="width: 100%;margin-top: 10px;background: {value};"
+                        on:click={() => {
+                            popupData.set({ value, trigger: (newValue) => change(newValue, true) })
+                            activePopup.set("color_gradient")
+                        }}
+                        center
+                    >
+                        <p style="color: {getContrast(value)};width: 100%;justify-content: center;font-weight: normal;"><T id="actions.choose_custom" /></p>
+                    </Button>
+                {:else}
+                    <div class="color" style="margin-top: 10px;background: {value};">
+                        <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
+                        <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
+                    </div>
+                {/if}
             {/if}
         </div>
     {/if}
@@ -88,48 +119,96 @@
         bind:this={colorElem}
         id={pickerId}
         class="color"
-        style="--outline-color: {getContrast(value)};{(height ? 'height: ' + height + 'px;' : '') + (width ? 'width: ' + width + 'px;' : '') + 'background-color: ' + value + ';' + ($$props.style || '')}"
+        style="--outline-color: {getContrast(value)};{(height ? 'height: ' + height + 'px;' : '') + (width ? 'width: ' + width + 'px;' : '') + 'background: ' + value + ';' + ($$props.style || '')}"
         on:click={togglePicker}
     >
         {#if pickerOpen}
             <div class="picker" class:clipRight bind:this={colorElem}>
-                {#if enableNoColor || colors.length}
-                    <div class="colors">
-                        {#if enableNoColor}
-                            <div
-                                class="pickColor noColor"
-                                class:active={!value}
-                                title={$dictionary.settings?.remove}
-                                on:click={() => {
-                                    change("", true)
-                                    setTimeout(() => {
-                                        pickerOpen = false
-                                    }, 10)
-                                }}
+                {#if allowGradients}
+                    <div style="display: flex;min-height: auto;background-color: var(--primary-darkest);">
+                        {#each modes as type}
+                            <Button
+                                on:click={() => (selectedMode = type)}
+                                style="flex: 1;border-bottom: 2px solid {selectedMode === type ? 'var(--secondary)' : 'var(--primary-lighter)'} !important;white-space: nowrap;padding: 0.2em !important;"
+                                bold={false}
+                                center
                             >
-                                <Icon id="close" white />
-                            </div>
-                        {/if}
-                        {#each colors as color}
-                            <div
-                                class="pickColor"
-                                class:active={value === color.value}
-                                title={color.name}
-                                style="background-color: {color.value};"
-                                on:click={() => {
-                                    change(color.value, true)
-                                    setTimeout(() => {
-                                        pickerOpen = false
-                                    }, 10)
-                                }}
-                            />
+                                <!-- <Icon id={type === "media" ? "image" : type} right /> -->
+                                <T id="color.{type}" />
+                            </Button>
                         {/each}
                     </div>
                 {/if}
 
-                <div class="color" style="margin-top: 10px;padding: 5px;background-color: {value};">
-                    <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
-                    <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
+                <div style="padding: 10px;">
+                    {#if selectedMode === "gradient"}
+                        <div class="colors" style="min-height: initial;">
+                            {#each gradientColors as color}
+                                <div
+                                    class="pickColor"
+                                    class:active={value === color.value}
+                                    title={color.name}
+                                    style="background: {color.value};"
+                                    on:click={() => {
+                                        change(color.value, true)
+                                        setTimeout(() => {
+                                            pickerOpen = false
+                                        }, 10)
+                                    }}
+                                />
+                            {/each}
+                        </div>
+
+                        <Button
+                            style="width: 100%;margin-top: 10px;background: {value};"
+                            on:click={() => {
+                                popupData.set({ value, trigger: (newValue) => change(newValue, true) })
+                                activePopup.set("color_gradient")
+                            }}
+                            center
+                        >
+                            <p style="color: {getContrast(value)};width: 100%;justify-content: center;font-weight: normal;"><T id="actions.choose_custom" /></p>
+                        </Button>
+                    {:else}
+                        {#if enableNoColor || colors.length}
+                            <div class="colors">
+                                {#if enableNoColor}
+                                    <div
+                                        class="pickColor noColor"
+                                        class:active={!value}
+                                        title={$dictionary.settings?.remove}
+                                        on:click={() => {
+                                            change("", true)
+                                            setTimeout(() => {
+                                                pickerOpen = false
+                                            }, 10)
+                                        }}
+                                    >
+                                        <Icon id="close" white />
+                                    </div>
+                                {/if}
+                                {#each colors as color}
+                                    <div
+                                        class="pickColor"
+                                        class:active={value === color.value}
+                                        title={color.name}
+                                        style="background-color: {color.value};"
+                                        on:click={() => {
+                                            change(color.value, true)
+                                            setTimeout(() => {
+                                                pickerOpen = false
+                                            }, 10)
+                                        }}
+                                    />
+                                {/each}
+                            </div>
+                        {/if}
+
+                        <div class="color" style="margin-top: 10px;padding: 5px;background: {value};">
+                            <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
+                            <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
+                        </div>
+                    {/if}
                 </div>
             </div>
         {/if}
@@ -166,10 +245,12 @@
         inset-inline-start: -1px;
         transform: translateY(100%);
 
+        /* border-radius: var(--border-radius); */
+        border-radius: 4px;
+
         background-color: var(--primary-darker);
         border: 2px solid var(--primary-lighter);
         z-index: 5;
-        padding: 10px;
         width: 200px;
     }
     .picker.clipRight {

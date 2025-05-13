@@ -13,7 +13,7 @@ const borderOptions = [
 
 export const itemEdits: { [key: string]: EditInput[] } = {
     default: [
-        { name: "background_color", id: "style", key: "background-color", input: "color", value: "", enableNoColor: true },
+        { name: "background_color", id: "style", key: "background-color", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },
         { name: "background_opacity", id: "background-opacity", input: "number", value: 0, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
         { name: "opacity", id: "style", key: "opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
         { name: "padding", id: "style", key: "padding", input: "number", value: 0, extension: "px", values: { max: 300 } },

@@ -409,6 +409,7 @@
         "select_template": "Select template",
         "rename": "Rename",
         "color": "Color",
+        "color_gradient": "Gradient color",
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Timer",
@@ -1381,6 +1382,16 @@
         "circ": "Circular",
         "cubic": "Cubic",
         "sine": "Flow"
+    },
+    "color": {
+        "normal": "Normal",
+        "gradient": "Gradient",
+        "linear": "Linear",
+        "radial": "Radial",
+        "angle": "Angle",
+        "shape": "Shape",
+        "circle": "Circle",
+        "ellipse": "Ellipse"
     },
     "variables": {
         "number": "Number",
