@@ -1,6 +1,27 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
-import { actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activeTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, midiIn, outputs, overlays, selected, shows, sorted } from "../../stores"
+import {
+    actionTags,
+    activeActionTagFilter,
+    activeEdit,
+    activeMediaTagFilter,
+    activeTagFilter,
+    activeVariableTagFilter,
+    contextData,
+    drawerTabsData,
+    globalTags,
+    groups,
+    media,
+    mediaTags,
+    midiIn,
+    outputs,
+    overlays,
+    selected,
+    shows,
+    sorted,
+    variables,
+    variableTags,
+} from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -65,6 +86,20 @@ const loadActions = {
         let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
         sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("action_tags", sortedTags.length)
+        return sortedTags
+    },
+    variable_tag_set: () => {
+        const selectedTags = get(variables)[get(selected).data[0]?.id]?.tags || []
+        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        sortedTags.push(create)
+        return sortedTags
+    },
+    variable_tag_filter: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeVariableTagFilter).includes(a.id), translate: false }))
+        sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        setContextData("variable_tags", sortedTags.length)
         return sortedTags
     },
 

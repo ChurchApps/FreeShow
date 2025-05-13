@@ -3,7 +3,7 @@ import type { Show } from "../../../types/Show"
 import type { StageLayout } from "../../../types/Stage"
 import { openLayout, setError } from "./helpers"
 import { send } from "./socket"
-import { _, _set, _update, activeTimers, events, progressData, stream, timeFormat, timers, variables } from "./stores"
+import { _, _set, _update, activeTimers, events, outputSlideCache, progressData, stream, timeFormat, timers, variables } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -56,6 +56,7 @@ export const receiver = {
         let outputId = data?.id
         if (outputId) send("REQUEST_PROGRESS", { outputId })
     },
+    OUT_SLIDE_CACHE: (data: any) => outputSlideCache.set(data),
     BACKGROUND: (data: any) => _set("background", data),
 
     SHOW_DATA: (data: { id: string; show: Show }) => {

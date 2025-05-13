@@ -890,6 +890,8 @@
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
         "max_lines_per_slide": "Max lines per slide",
+        "break_long_lines": "Break long lines",
+        "break_long_lines_tip": "Break line if longer than the set words",
         "media_fit": "Media fit",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",

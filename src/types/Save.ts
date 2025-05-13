@@ -28,6 +28,7 @@ export type SaveListSyncedSettings =
     | "videoMarkers"
     | "mediaTags"
     | "actionTags"
+    | "variableTags"
     | "customizedIcons"
     | "companion"
     | "globalTags"

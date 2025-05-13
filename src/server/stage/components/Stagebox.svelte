@@ -10,7 +10,7 @@
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { activeTimers, background, output, progressData, stream, timers, variables } from "../util/stores"
+    import { activeTimers, background, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
@@ -22,7 +22,7 @@
     export let item: any // Item | StageItem
 
     $: currentOutput = $output
-    $: currentSlide = currentOutput?.out?.slide || null
+    $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
 
     $: currentBackground = $background
 

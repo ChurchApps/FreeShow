@@ -209,6 +209,7 @@ export interface Variable {
     id?: string
     name: string
     type: "number" | "random_number" | "text"
+    tags?: string[]
 
     // number
     number?: number

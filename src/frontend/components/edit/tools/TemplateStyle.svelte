@@ -24,7 +24,7 @@
     function setValues() {
         settings = {
             backgroundColor: template?.settings?.backgroundColor || "",
-            ...(template.settings || {}),
+            ...(template.settings || {})
         }
     }
 
@@ -81,7 +81,7 @@
                     action: "select_template",
                     active: settings.firstSlideTemplate || "",
                     hideIds: [templateId],
-                    trigger: (id) => setValue(id, "firstSlideTemplate"),
+                    trigger: (id) => setValue(id, "firstSlideTemplate")
                 })
                 activePopup.set("select_template")
             }}
@@ -109,6 +109,11 @@
     <CombinedInput>
         <p title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
         <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+    </CombinedInput>
+
+    <CombinedInput>
+        <p title={$dictionary.edit?.break_long_lines_tip}><T id="edit.break_long_lines" /></p>
+        <NumberInput value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
     </CombinedInput>
 </div>
 

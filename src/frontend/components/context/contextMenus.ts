@@ -51,6 +51,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     manage_action_tags: { label: "popup.manage_tags", icon: "edit" },
     action_tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_action_tag_set"] },
     action_tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_action_tag_filter"] },
+    manage_variable_tags: { label: "popup.manage_tags", icon: "edit" },
+    variable_tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_variable_tag_set"] },
+    variable_tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_variable_tag_filter"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -259,7 +262,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"
     global_timer: ["edit", "SEPERATOR", "play", "SEPERATOR", "duplicate", "delete"], // , "reset"
     // VARIABLE
-    variable: ["edit", "SEPERATOR", "delete"],
+    variables: ["manage_variable_tags", "variable_tag_filter"],
+    variable: ["edit", "SEPERATOR", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],
     // AUDIO STREAM
@@ -286,9 +290,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
-    stage_item: ["rearrange_stage", "SEPERATOR", "delete"],
-    stage_slide_text_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "delete"],
-    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "delete"],
+    stage_item: ["rearrange_stage", "SEPERATOR", "duplicate", "delete"],
+    stage_item_output: ["rearrange_stage", "SEPERATOR", "delete"],
+    stage_slide_text_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
+    stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT

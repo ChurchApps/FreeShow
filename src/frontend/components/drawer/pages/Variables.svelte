@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
+    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -16,7 +16,9 @@
     console.log(searchValue)
 
     const typeOrder = { number: 1, text: 2 }
-    $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    $: sortedVariables = sortByName(keysToID($variables), "name", true)
+        .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+        .filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 
     function updateVariable(e: any, id: string, key: string) {
         let value = e?.target?.value ?? e
@@ -37,7 +39,7 @@
     const typeNames = {
         number: "variables.number",
         randomNumber: "variables.random_number",
-        text: "variables.text",
+        text: "variables.text"
     }
 
     $: numberVariables = sortedVariables.filter((a) => a.type === "number")
@@ -50,7 +52,7 @@
 
 <svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
 
-<div class="variables">
+<div class="variables context #variables">
     {#if sortedVariables.length}
         <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}

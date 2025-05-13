@@ -1,14 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout, LayoutRef, Line, Show, Slide, SlideData } from "../../types/Show"
-import { getItemText } from "../components/edit/scripts/textStyle"
+import { getItemText, getLineText } from "../components/edit/scripts/textStyle"
 import { changeValues, clone, removeDuplicates, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/layout"
 import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
-import { activeEdit, activeShow, refreshEditSlide } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide, showsCache } from "../stores"
 
 type GroupData = { globalGroup?: string; group?: string; color?: string }
 
@@ -829,4 +829,44 @@ export function mergeTextboxes(customSlideIndex = -1) {
 
     // update
     history({ id: "UPDATE", newData: { data: slide, key: "slides", keys: [slideRef.id] }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
+}
+
+// BREAK LONG LINES
+
+export function breakLongLines(showId: string, breakPoint: number) {
+    const slides = get(showsCache)[showId]?.slides
+    if (!slides || !breakPoint) return slides
+
+    Object.values(slides).forEach((slide) => {
+        slide.items.forEach((item) => {
+            do {
+                let newLines: Line[] = []
+                item.lines?.forEach((line) => {
+                    // merge all text styles into one, if multiple!
+                    let lineText = line.text[0]
+                    if (!lineText) return
+
+                    lineText.value = getLineText(line)
+
+                    const textWords = lineText.value.split(" ")
+                    if (textWords.length > breakPoint) {
+                        const centerPoint = Math.floor(textWords.length / 2)
+                        const firstPart = textWords.slice(0, centerPoint).join(" ")
+                        const secondPart = textWords.slice(centerPoint).join(" ")
+                        const firstLine = { ...clone(line), text: [{ ...lineText, value: firstPart }] }
+                        const secondLine = { ...clone(line), text: [{ ...lineText, value: secondPart }] }
+                        newLines.push(firstLine)
+                        newLines.push(secondLine)
+                        return
+                    }
+
+                    newLines.push(line)
+                })
+
+                item.lines = newLines
+            } while (item.lines.find((a) => a.text[0]?.value?.split(" ").length > breakPoint))
+        })
+    })
+
+    return slides
 }

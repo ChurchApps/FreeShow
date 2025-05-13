@@ -551,6 +551,9 @@ export async function getPDFThumbnails({ path }: API_media) {
 // ADD
 
 export function addToProject(data: API_add_to_project) {
+    // open altered project in the app
+    activeProject.set(data.projectId)
+
     projects.update((a) => {
         if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
@@ -574,6 +577,9 @@ export function deleteProject(id: string) {
 }
 
 export function removeProjectItem(data: API_id_index) {
+    // open altered project in the app
+    activeProject.set(data.id)
+
     const projectItems = get(projects)[data.id]?.shows
     if (!projectItems.length) return
 

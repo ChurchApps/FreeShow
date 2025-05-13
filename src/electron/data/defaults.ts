@@ -137,6 +137,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     videoMarkers: {},
     mediaTags: {},
     actionTags: {},
+    variableTags: {},
     customizedIcons: { disabled: [], svg: [] },
     companion: {},
     globalTags: {},

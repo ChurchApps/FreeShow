@@ -92,7 +92,7 @@ export function checkInput(e: any) {
 export function selectProjectShow(select: number | "next" | "previous") {
     const items = get(projects)[get(activeProject) || ""]?.shows
     const index: null | number = (get(focusMode) ? get(activeFocus).index : get(activeShow)?.index) ?? null
-    const newIndex: number | null = !isNaN((select as any) || 0) ? select || 0 : getProjectIndex[select](index, items)
+    const newIndex: number | null = !isNaN((select as any) || 0) ? Number(select || 0) : getProjectIndex[select](index, items)
 
     if (newIndex === null || !items[newIndex]) return
 

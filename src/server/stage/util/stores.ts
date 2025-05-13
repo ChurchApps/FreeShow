@@ -19,6 +19,7 @@ export let selectedLayout = writable("")
 export let stageLayout: Writable<StageLayout | null> = writable(null)
 
 export let output: Writable<Output | null> = writable(null)
+export let outputSlideCache: Writable<any> = writable({})
 export let background: Writable<any> = writable({})
 export let stream: Writable<any> = writable({})
 // export let videoTime: Writable<number> = writable(0)

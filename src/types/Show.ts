@@ -447,7 +447,8 @@ export interface TemplateSettings {
     backgroundPath?: string
     overlayId?: string
     firstSlideTemplate?: string
-    maxLinesPerSlide?: number
+    maxLinesPerSlide?: number // auto break slides if more than set lines
+    breakLongLines?: number // auto break lines if longer than set words
     actions?: any[]
 }
 
