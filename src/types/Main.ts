@@ -269,6 +269,7 @@ export type Popups =
     | "select_template"
     | "delete_duplicated_shows"
     | "icon"
+    | "manage_groups"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"

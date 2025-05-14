@@ -49,6 +49,7 @@ import {
     projects,
     projectTemplates,
     projectView,
+    quickSearchActive,
     refreshEditSlide,
     scriptures,
     selected,
@@ -157,6 +158,7 @@ const actions = {
     docs: () => sendMain(Main.URL, "https://freeshow.app/docs"),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
+    quick_search: () => quickSearchActive.set(true),
     quick_start_guide: () => guideActive.set(true),
 
     // main
@@ -905,9 +907,6 @@ const actions = {
             activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
             refreshEditSlide.set(true)
-        } else if (obj.sel.id === "global_group") {
-            settingsTab.set("groups")
-            activePage.set("settings")
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(midiIn)[firstActionId]
@@ -933,6 +932,14 @@ const actions = {
             settingsTab.set("display_settings")
             activePage.set("settings")
         }
+    },
+    manage_groups: () => {
+        // settingsTab.set("general")
+        // activePage.set("settings")
+        activePopup.set("manage_groups")
+    },
+    manage_metadata: () => {
+        activePopup.set("manage_metadata")
     },
 
     // chords

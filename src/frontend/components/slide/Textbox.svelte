@@ -325,7 +325,7 @@
             {chords}
             {linesStart}
             {linesEnd}
-            {fontSize}
+            fontSize={smallFontSize ? 20 : fontSize}
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}

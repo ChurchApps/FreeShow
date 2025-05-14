@@ -1,7 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special, styles } from "../../../stores"
+    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
+    import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -163,7 +164,7 @@
                 <Button
                     disabled={$outLocked || (slideTimerCleared && activeClear !== "nextTimer")}
                     on:click={() => clear("nextTimer")}
-                    title={$dictionary.clear?.[Object.keys($overlayTimers).length ? "timer" : "nextTimer"] + ($special.disablePresenterControllerKeys ? " [F5]" : "")}
+                    title={$dictionary.clear?.[Object.keys($overlayTimers).length ? "timer" : "nextTimer"] + (presentationControllersKeysDisabled() ? " [F5]" : "")}
                     dark
                     red
                     center

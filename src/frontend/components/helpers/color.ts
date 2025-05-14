@@ -41,9 +41,14 @@ export const defaultGradients = [
     // Multiple
     { name: "Pink to Purple", value: "linear-gradient(120deg,rgba(255,128,212, 1) 0%,rgba(193,47,106, 1) 62%,rgba(167,19,45, 1) 100%)" },
     { name: "Blue to Purple", value: "linear-gradient(120deg, #7FDBFF 0%, #c74076 62%, #b91533 100%)" },
-    { name: "Orange to Purple", value: "linear-gradient(120deg, #FF851B 0%, #c74076 62%, #b91533 100%)" },
+    { name: "Red to Purple", value: "linear-gradient(145deg, #FF4136 0%, #B10DC9 100%)" },
+    { name: "Green to Purple", value: "linear-gradient(145deg, #3D9970 0%, #B10DC9 100%)" },
+    { name: "Orange to Red", value: "linear-gradient(120deg, #FF851B 0%, #b91533 70%)" },
+    { name: "Green To Blue", value: "linear-gradient(145deg, #01FF70 0%, #24ffd3 40%, #39CCCC 80%)" },
+    { name: "Red to Cyan", value: " linear-gradient(145deg, #FF4136 0%, #f69351 20%, #2aeaba 70%, #7FDBFF 100%)" },
+    { name: "Red, White, Blue", value: "linear-gradient(90deg, #FF4136 10%, #ff94cd 30%, #FFFFFF 50%, #7FDBFF 70%, #0074D9 90%)" },
     // Radial
-    { name: "Purple Circle", value: "radial-gradient(circle, #A73537 0%, #AB087D 50%, #7C1DE8 100%)" },
+    { name: "Purple Circle", value: "radial-gradient(circle, #4998d4 10%, #7a2ad5 50%, #a808aa 90%)" },
     { name: "Blue Circle", value: "radial-gradient(circle, #39CCCC 0%, #0074D9 50%, #001f3f 100%)" },
 ]
 
@@ -78,7 +83,6 @@ export function getContrast(hex: string) {
 
 // GRADIENT
 
-// split gradient value
 export function splitGradientValue(gradientStr: string) {
     const result = {
         type: "",
@@ -87,30 +91,21 @@ export function splitGradientValue(gradientStr: string) {
         colors: [] as { color: string; pos: number }[],
     }
 
-    // remove whitespace and the trailing semicolon if present
+    // remove trailing ;
     gradientStr = gradientStr.trim().replace(/;$/, "")
 
-    // get type
+    // get gradient type
     const typeMatch = gradientStr.match(/^([a-zA-Z-]+)\(/)
     if (!typeMatch) return result
     result.type = typeMatch[1]
 
-    // const gradientRegex = /^(\w+-gradient)\(([^)]+)\)$/
-    // const match = gradientStr.match(gradientRegex)
-    // if (!match) return result
-    // result.type = match[1] // e.g. "linear-gradient"
-    // const inner = match[2] // everything inside the parentheses
+    const inner = gradientStr.slice(gradientStr.indexOf("(") + 1, -1)
 
-    // extract inside of parentheses
-    const openParenIndex = gradientStr.indexOf("(")
-    const content = gradientStr.slice(openParenIndex + 1, -1) // remove outer parentheses
-
-    // split components (angle + color stops)
+    // Split components safely accounting for nested parentheses
     const parts: string[] = []
-    let buffer = ""
-    let depth = 0
-
-    for (let char of content) {
+    let buffer = "",
+        depth = 0
+    for (const char of inner) {
         if (char === "(") depth++
         if (char === ")") depth--
         if (char === "," && depth === 0) {
@@ -122,57 +117,44 @@ export function splitGradientValue(gradientStr: string) {
     }
     if (buffer) parts.push(buffer.trim())
 
-    // Linear-gradient: look for angle
+    // linear-gradient: optional angle
     if (result.type === "linear-gradient") {
-        const angleRegex = /^(\d+(?:\.\d+)?)(deg)?$/i
-        if (angleRegex.test(parts[0])) {
-            result.deg = parseFloat(parts[0])
+        const angle = parts[0].match(/^(\d+(?:\.\d+)?)deg$/i)
+        if (angle) {
+            result.deg = parseFloat(angle[1])
             parts.shift()
         } else {
-            result.deg = 180 // default
+            result.deg = 180
         }
     }
 
-    // Radial-gradient: look for shape/size
+    // radial-gradient: optional shape
     if (result.type === "radial-gradient") {
-        const shapeKeywords = ["circle", "ellipse"]
-        if (shapeKeywords.includes(parts[0].toLowerCase())) {
-            result.shape = parts[0].toLowerCase()
+        const shape = parts[0].toLowerCase()
+        if (shape === "circle" || shape === "ellipse") {
+            result.shape = shape
             parts.shift()
         } else {
-            result.shape = "ellipse" // CSS default
+            result.shape = "ellipse"
         }
     }
 
-    // Normalize rgb(...) to rgba(...)
-    function normalizeColor(colorStr) {
-        if (/^rgb\(/i.test(colorStr)) {
-            const inside = colorStr.slice(4, -1).trim()
-            const values = inside.includes(",") ? inside.split(",") : inside.split(/\s+/)
-            if (values.length === 3) {
-                return `rgba(${values.join(",")}, 1)`
-            } else if (values.length === 4) {
-                return `rgba(${values.join(",")})`
-            }
-        }
-        return colorStr.trim()
+    // Normalize rgb to rgba
+    const normalizeColor = (str: string) => {
+        const rgbMatch = str.match(/^rgb\(([^)]+)\)$/i)
+        if (!rgbMatch) return str.trim()
+        const vals = rgbMatch[1].split(/[\s,]+/).map((s) => s.trim())
+        return vals.length === 3 ? `rgba(${vals.join(",")}, 1)` : `rgba(${vals.join(",")})`
     }
 
     // Parse color stops
-    for (const part of parts) {
-        const lastSpaceIndex = part.lastIndexOf(" ")
-        let color,
-            pos = 0
-
-        if (lastSpaceIndex !== -1 && /[\d.]+%$/.test(part.slice(lastSpaceIndex + 1))) {
-            color = part.slice(0, lastSpaceIndex).trim()
-            pos = parseFloat(part.slice(lastSpaceIndex + 1))
-        } else {
-            color = part.trim()
+    for (const stop of parts) {
+        const match = stop.match(/^(.*?)(?:\s+([\d.]+)%)?$/)
+        if (match) {
+            const color = normalizeColor(match[1])
+            const pos = match[2] ? parseFloat(match[2]) : 0
+            result.colors.push({ color, pos })
         }
-
-        color = normalizeColor(color)
-        result.colors.push({ color, pos })
     }
 
     return result

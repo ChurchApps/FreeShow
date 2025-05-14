@@ -25,6 +25,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
     paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document", external: true },
+    quick_search: { label: "main.quick_search", icon: "search", shortcuts: ["Ctrl+G"] },
     quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode", shortcuts: ["Ctrl+Shift+F"] },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
@@ -92,6 +93,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     remove_slide: { label: "actions.remove_group", icon: "remove", shortcuts: ["Del"] },
     delete_slide: { label: "actions.delete_slide", icon: "delete" },
     delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
+    manage_groups: { label: "popup.manage_groups", icon: "edit" },
+    manage_metadata: { label: "popup.manage_metadata", icon: "edit" },
     slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "SEPERATOR", "LOAD_slide_groups"] }, // "remove_group" (currently broken & probably not needed)
     editSlideText: { label: "menu.edit", icon: "edit" }, // actions.edit_slide_text
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
@@ -169,7 +172,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     file: ["save", "import", "export_more", "SEPERATOR", "quit"],
     edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
-    help: ["shortcuts", "docs", "quick_start_guide", "about"],
+    help: ["quick_search", "shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
     default: ["save", "settings", "history", "SEPERATOR", "about", "quit"],
     rename: ["rename"],
@@ -275,7 +278,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     slideChild: ["edit", "SEPERATOR", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideFocus: ["editSlideText"],
     group: ["rename", "recolor", "SEPERATOR", "selectAll", "SEPERATOR", "duplicate", "delete_group"],
-    global_group: ["edit"],
+    global_group: ["manage_groups"],
+    metadata_tools: ["manage_metadata"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics"],

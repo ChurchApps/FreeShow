@@ -108,6 +108,8 @@ export const mainResponses: MainResponses = {
     [Main.LOG_ERROR]: (data) => logError(data),
     [Main.OPEN_LOG]: () => openSystemFolder(error_log.path),
     [Main.OPEN_CACHE]: () => openSystemFolder(getThumbnailFolderPath()),
+    [Main.OPEN_APPDATA]: () => openSystemFolder(path.dirname(config.path)),
+    [Main.OPEN_FOLDER_PATH]: (path) => openSystemFolder(path),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS

@@ -14,7 +14,7 @@
     import IconButton from "../../inputs/IconButton.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
-    import { updateStageShow } from "../stage"
+    import { getCustomStageLabel, updateStageShow } from "../stage"
     import { clone } from "../../helpers/array"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
@@ -34,15 +34,18 @@
         { id: "clock" }
     ]
 
-    $: stageShow = $stageShows[$activeStage.id || ""] || {}
+    $: stageId = $activeStage.id || ""
+    $: stageShow = $stageShows[stageId] || {}
     $: sortedItems = sortItemsByType(Object.values(stageShow.items || {}) as any)
+
+    // check slide text state
+    $: slideTextItems = Object.values(stageShow.items || {}).filter((a) => a.type === "slide_text")
 
     const resolution = { width: 1920, height: 1080 }
     const DEFAULT_STYLE = `width: ${resolution.width / 2}px;height: ${resolution.height / 2}px;inset-inline-start: ${resolution.width / 4}px;top: ${resolution.height / 4}px;`
 
     let timeout: NodeJS.Timeout | null = null
     function addItem(itemType: string) {
-        const stageId = $activeStage.id
         if (!stageId) return
 
         let itemId = uid(5)
@@ -51,7 +54,6 @@
 
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: "" }] }]
             else if (itemType === "slide_text") {
-                let slideTextItems = Object.values(a[stageId].items).filter((a) => a.type === "slide_text")
                 item.slideOffset = slideTextItems.length
             }
 
@@ -100,7 +102,7 @@
         clock: () => ""
     }
 
-    $: allItems = getSortedStageItems($activeStage.id, $stageShows)
+    $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 </script>
 
@@ -110,11 +112,15 @@
 
         <div class="grid">
             {#each dynamicItems as item}
+                {@const title = item.id === "slide_text" && slideTextItems.length === 1 ? $dictionary.stage?.next_slide_text : $dictionary.items?.[item.name || item.id]}
+                {@const icon = item.icon || item.id}
+                {@const disabled = item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
+
                 {#if item.id === "current_output"}
                     <hr class="divider" />
                 {/if}
 
-                <IconButton style="min-width: 100%;" name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount} on:click={() => addItem(item.id)} />
+                <IconButton style="min-width: 100%;" name title="{title}{item.id === 'slide_text' && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : ''}" {icon} {disabled} on:click={() => addItem(item.id)} />
             {/each}
         </div>
 
@@ -176,7 +182,7 @@
                         <span style="display: flex;flex: 1;">
                             <p style="margin-inline-end: 10px;">{i + 1}</p>
                             <Icon id={type === "icon" ? id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
-                            <p style="margin-inline-start: 10px;">{$dictionary.items?.[type]}</p>
+                            <p style="margin-inline-start: 10px;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || $dictionary.items?.[type]}</p>
                             {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
                         </span>
                         {#if i > 0}

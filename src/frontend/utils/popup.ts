@@ -61,6 +61,7 @@ import { activePopup, popupData } from "../stores"
 import Conditions from "../components/main/popups/Conditions.svelte"
 import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 import ColorGradient from "../components/main/popups/ColorGradient.svelte"
+import ManageGroups from "../components/main/popups/ManageGroups.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -73,6 +74,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     select_template: SelectTemplate,
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
+    manage_groups: ManageGroups,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,

@@ -324,6 +324,7 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
 
 function getTimerValue(timerId: string) {
     const timer = get(timers)[timerId]
+    if (!timer) return "0"
     return getCurrentTimerValue(timer, { id: timerId }, new Date()).toString()
 }
 

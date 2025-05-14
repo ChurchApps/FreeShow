@@ -17,7 +17,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     // let bibles = null
 
     // no need to backup shows on auto backup (as that just takes a lot of space)
-    const isAutoBackup = !!customTriggers.isAutoBackup
+    const isAutoBackup = !!customTriggers?.isAutoBackup
 
     const backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
     const backupFolder = createFolder(path.join(backupPath, getTimePointString() + (isAutoBackup ? "_auto" : "")))
@@ -35,7 +35,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
-    else if (!customTriggers?.silent) openSystemFolder(backupFolder)
+    else if (!isAutoBackup) openSystemFolder(backupFolder)
 
     /// //
 

@@ -1,10 +1,9 @@
 <script lang="ts">
     import { settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
-    import Cloud from "./tabs/Cloud.svelte"
     import Connection from "./tabs/Connection.svelte"
+    import Files from "./tabs/Files.svelte"
     import General from "./tabs/General.svelte"
-    import Groups from "./tabs/Groups.svelte"
     import Other from "./tabs/Other.svelte"
     import Outputs from "./tabs/Outputs.svelte"
     import Styles from "./tabs/Styles.svelte"
@@ -20,18 +19,16 @@
     <div class="scroll">
         {#if $settingsTab === "general"}
             <General />
+        {:else if $settingsTab === "files"}
+            <Files />
         {:else if $settingsTab === "theme"}
             <Theme />
-        {:else if $settingsTab === "groups"}
-            <Groups />
         {:else if $settingsTab === "styles"}
             <Styles />
         {:else if $settingsTab === "display_settings"}
             <Outputs />
         {:else if $settingsTab === "connection"}
             <Connection />
-        {:else if $settingsTab === "cloud"}
-            <Cloud />
         {:else if $settingsTab === "other"}
             <Other />
         {/if}

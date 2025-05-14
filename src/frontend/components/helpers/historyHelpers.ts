@@ -608,8 +608,8 @@ export const projectReplacers = [
     { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
-export function getProjectName() {
-    let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
+export function getProjectName(updater = get(special)) {
+    let name = updater.default_project_name ?? DEFAULT_PROJECT_NAME
 
     const date = new Date()
     projectReplacers.forEach((a) => {

@@ -67,6 +67,8 @@ export enum Main {
     LOG_ERROR = "LOG_ERROR",
     OPEN_LOG = "OPEN_LOG",
     OPEN_CACHE = "OPEN_CACHE",
+    OPEN_APPDATA = "OPEN_APPDATA",
+    OPEN_FOLDER_PATH = "OPEN_FOLDER_PATH",
     GET_STORE_VALUE = "GET_STORE_VALUE",
     SET_STORE_VALUE = "SET_STORE_VALUE",
     DELETE_SHOWS = "DELETE_SHOWS",
@@ -143,6 +145,7 @@ export interface MainSendPayloads {
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
     [Main.LOG_ERROR]: ErrorLog
+    [Main.OPEN_FOLDER_PATH]: string
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string }
     [Main.SET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
     [Main.DELETE_SHOWS]: { shows: { id: string; name: string }[]; path: string }

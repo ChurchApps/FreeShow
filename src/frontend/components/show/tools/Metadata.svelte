@@ -105,7 +105,7 @@
         // get only numbers at the start or end
         number: () => values.number || currentShow.name.match(/^\d+/)?.[0] || currentShow.name.match(/\d+$/)?.[0],
         // remove numbers
-        title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim(),
+        title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim()
     }
     function autofill(key: string) {
         if (!autofillValues[key]) return
@@ -126,7 +126,7 @@
 
 <Panel flex column={!tempHide}>
     {#if metadata.autoMedia !== true}
-        <div class="gap" style={slideBackgrounds.length ? "" : "margin-bottom: 10px;"}>
+        <div class="gap context #metadata_tools" style={slideBackgrounds.length ? "" : "margin-bottom: 10px;"}>
             {#each Object.entries(values) as [key, value]}
                 <CombinedInput textWidth={40}>
                     {#if $dictionary.meta?.[key]}
@@ -143,11 +143,6 @@
                     {/if}
                 </CombinedInput>
             {/each}
-
-            <Button on:click={() => activePopup.set("manage_metadata")} center dark>
-                <Icon id="edit" right />
-                <T id="popup.manage_metadata" />
-            </Button>
         </div>
     {/if}
 
@@ -186,7 +181,7 @@
                             trigger: (id) => {
                                 metadata.display = id
                                 updateData(metadata, "metadata")
-                            },
+                            }
                         })
                         activePopup.set("metadata_display")
                     }}
@@ -228,7 +223,7 @@
                                 trigger: (id) => {
                                     metadata.template = id
                                     updateData(metadata, "metadata")
-                                },
+                                }
                             })
                             activePopup.set("select_template")
                         }}
@@ -271,7 +266,7 @@
                                 if (currentShow.message) message = currentShow.message
                                 message.template = id
                                 updateData(message, "message")
-                            },
+                            }
                         })
                         activePopup.set("select_template")
                     }}
