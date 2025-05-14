@@ -161,12 +161,14 @@ export class ChumsConnect {
         refresh_token: access.refresh_token,
       }
 
+      console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
       httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
         if (err || data === null) {
           sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
           resolve(null)
           return
         }
+        console.log("DATA", data)
 
         stores.ACCESS.set(`chums_${data.scope}`, data)
         sendToMain(ToMain.CHUMS_CONNECT, { success: true })
