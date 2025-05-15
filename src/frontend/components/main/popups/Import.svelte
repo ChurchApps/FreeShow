@@ -14,7 +14,7 @@
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
         { name: "$formats.project", extensions: ["project", "shows", "json", "zip"], id: "freeshow_project" }, // , "fsproject", "fsp"
         { name: "$formats.template", extensions: ["fstemplate", "fst", "template", "json"], id: "freeshow_template" },
-        { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" },
+        { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" }
         // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
@@ -31,7 +31,7 @@
             tutorial:
                 "This will import the plain text as a show." +
                 ($os.platform === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") +
-                " Or you can import directly as PDF or images if you don't need animations.",
+                " Or you can import directly as PDF or images if you don't need animations."
         },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json", "proBundle"], id: "propresenter" },
@@ -39,28 +39,28 @@
             name: "EasyWorship",
             extensions: ["db"],
             id: "easyworship",
-            tutorial: "Import the SongsWords.db file from the Data folder - Often located in the Documents folder<br>Optionally select Songs.db to import title/metadata",
+            tutorial: "Import the SongsWords.db file from the Data folder - Often located in the Documents folder<br>Optionally select Songs.db to import title/metadata"
         },
         {
             name: "VideoPsalm",
             extensions: ["json", "vpc"],
             id: "videopsalm",
-            tutorial: "Find the .vpc or .json file(s) often located in Documents\\VideoPsalm\\Songbooks",
+            tutorial: "Find the .vpc or .json file(s) often located in Documents\\VideoPsalm\\Songbooks"
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
-        { name: "MediaShout", extensions: ["ssc", "xml"], id: "mediashout" }, // SSC (Songs5.mdb)
+        { name: "MediaShout", extensions: ["ssc", "xml", "mdb"], id: "mediashout" }, // SSC (Songs5.mdb)
         { name: "Quelea", extensions: ["xml", "qsp"], id: "quelea" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "Songbeamer", id: "songbeamer", extensions: [], popup: "songbeamer_import" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
-        { name: "VerseVIEW", extensions: ["xml"], id: "verseview" },
+        { name: "VerseVIEW", extensions: ["xml"], id: "verseview" }
     ]
 
     const media_formats = [
         { name: "PDF", extensions: ["pdf"], id: "pdf" },
         { name: "PowerPoint/Keynote", extensions: presentationExtensions, id: "powerkey" },
-        { name: "Lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
+        { name: "Lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" }
     ]
 
     function displayTutorial(format: any) {

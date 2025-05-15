@@ -8,6 +8,7 @@
     import Color from "../../inputs/Color.svelte"
     import T from "../../helpers/T.svelte"
     import { getLayoutRef } from "../../helpers/show"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     let value = "#FFFFFF"
     $: console.log(value)
@@ -75,7 +76,7 @@
                 a[$activeProject || ""].shows[$selected.data[0].index].color = value
                 return a
             })
-        },
+        }
     }
 
     function updateColor() {
@@ -86,9 +87,9 @@
 
 <Color {value} on:input={(e) => (value = e.detail)} visible />
 
-<br />
-
-<Button on:click={updateColor} dark center>
-    <Icon id="save" size={1.2} right />
-    <T id="actions.save" />
-</Button>
+<CombinedInput style="margin-top: 10px;">
+    <Button on:click={updateColor} style="width: 100%;" dark center>
+        <Icon id="save" size={1.2} right />
+        <T id="actions.save" />
+    </Button>
+</CombinedInput>

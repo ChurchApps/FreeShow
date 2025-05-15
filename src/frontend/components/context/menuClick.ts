@@ -22,6 +22,7 @@ import {
     activeStage,
     activeTagFilter,
     activeTimers,
+    activeVariableTagFilter,
     audioFolders,
     categories,
     currentOutputSettings,
@@ -48,6 +49,7 @@ import {
     projects,
     projectTemplates,
     projectView,
+    quickSearchActive,
     refreshEditSlide,
     scriptures,
     selected,
@@ -63,6 +65,7 @@ import {
     templates,
     themes,
     toggleOutputEnabled,
+    variables,
 } from "../../stores"
 import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -155,6 +158,7 @@ const actions = {
     docs: () => sendMain(Main.URL, "https://freeshow.app/docs"),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
+    quick_search: () => quickSearchActive.set(true),
     quick_start_guide: () => guideActive.set(true),
 
     // main
@@ -234,28 +238,28 @@ const actions = {
 
         if (obj.sel && deleteAction(obj.sel)) return
 
-        if (obj.contextElem?.classList.value.includes("#project_template")) {
+        if (obj.contextElem?.classList.contains("#project_template")) {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#video_subtitle")) {
+        if (obj.contextElem?.classList.contains("#video_subtitle")) {
             deleteAction({ id: "video_subtitle", data: { index: obj.contextElem.id } })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#video_marker")) {
+        if (obj.contextElem?.classList.contains("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
         // delete slide item using context menu, or menubar action
-        if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
+        if (obj.contextElem?.classList.contains("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#stage_item")) {
+        if (obj.contextElem?.classList.contains("stage_item")) {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#event")) {
+        if (obj.contextElem?.classList.contains("#event")) {
             deleteAction({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
@@ -263,7 +267,7 @@ const actions = {
         console.error("COULD NOT DELETE", obj)
     },
     delete_all: (obj: ObjData) => {
-        if (obj.contextElem?.classList.value.includes("#event")) {
+        if (obj.contextElem?.classList.contains("#event")) {
             const group = get(events)[obj.contextElem.id].group
             if (!group) return
 
@@ -278,8 +282,13 @@ const actions = {
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
 
-        if (obj.contextElem?.classList.value.includes("#event")) {
+        if (obj.contextElem?.classList.contains("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        if (obj.contextElem?.classList.contains("stage_item")) {
+            duplicate({ id: "stage_item", data: get(activeStage) })
             return
         }
     },
@@ -419,6 +428,11 @@ const actions = {
             })
         })
     },
+    manage_variable_tags: () => {
+        closeContextMenu()
+        popupData.set({ type: "variable" })
+        activePopup.set("manage_tags")
+    },
     action_tag_filter: (obj: ObjData) => {
         const tagId = obj.menu.id || ""
 
@@ -428,6 +442,41 @@ const actions = {
         else activeTags.splice(currentIndex, 1)
 
         activeActionTagFilter.set(activeTags || [])
+    },
+    variable_tag_set: (obj: ObjData) => {
+        const tagId = obj.menu.id || ""
+        if (tagId === "create") {
+            actions.manage_variable_tags()
+            return
+        }
+
+        const disable = get(variables)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+
+        obj.sel?.data?.forEach(({ id }) => {
+            const tags = get(variables)[id]?.tags || []
+
+            const existingIndex = tags.indexOf(tagId)
+            if (disable) {
+                if (existingIndex > -1) tags.splice(existingIndex, 1)
+            } else {
+                if (existingIndex < 0) tags.push(tagId)
+            }
+
+            variables.update((a) => {
+                if (a[id]) a[id].tags = tags
+                return a
+            })
+        })
+    },
+    variable_tag_filter: (obj: ObjData) => {
+        const tagId = obj.menu.id || ""
+
+        const activeTags = get(activeVariableTagFilter)
+        const currentIndex = activeTags.indexOf(tagId)
+        if (currentIndex < 0) activeTags.push(tagId)
+        else activeTags.splice(currentIndex, 1)
+
+        activeVariableTagFilter.set(activeTags || [])
     },
 
     addToProject: (obj: ObjData) => {
@@ -684,7 +733,7 @@ const actions = {
             return
         }
 
-        if (obj.contextElem?.classList.value.includes("project")) {
+        if (obj.contextElem?.classList.contains("project")) {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
@@ -751,7 +800,7 @@ const actions = {
         let id = uid()
 
         // find existing with the same name
-        const existing = Object.values(get(projectTemplates)).find((a) => a.name === project.name)
+        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
         if (existing) id = existing[0]
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
@@ -858,9 +907,6 @@ const actions = {
             activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
             refreshEditSlide.set(true)
-        } else if (obj.sel.id === "global_group") {
-            settingsTab.set("groups")
-            activePage.set("settings")
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(midiIn)[firstActionId]
@@ -878,14 +924,22 @@ const actions = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.contextElem?.classList.value.includes("#event")) {
+        } else if (obj.contextElem?.classList.contains("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
-        } else if (obj.contextElem?.classList.value.includes("output_button")) {
+        } else if (obj.contextElem?.classList.contains("output_button")) {
             currentOutputSettings.set(obj.contextElem.id)
             settingsTab.set("display_settings")
             activePage.set("settings")
         }
+    },
+    manage_groups: () => {
+        // settingsTab.set("general")
+        // activePage.set("settings")
+        activePopup.set("manage_groups")
+    },
+    manage_metadata: () => {
+        activePopup.set("manage_metadata")
     },
 
     // chords

@@ -219,7 +219,7 @@ export const previewShortcuts = {
         setTimeout(clearAll)
     },
     ".": () => {
-        if (!get(special).disablePresenterControllerKeys) clearAll()
+        if (!presentationControllersKeysDisabled()) clearAll()
     },
     F1: () => {
         if (!get(outLocked)) clearBackground()
@@ -227,7 +227,7 @@ export const previewShortcuts = {
     F2: () => {
         // return if "rename" is selected
         if (get(outLocked) || (get(selected).id && get(selected).id !== "scripture")) return false
-        if (get(special).disablePresenterControllerKeys) return false
+        if (presentationControllersKeysDisabled()) return false
 
         clearSlide()
         return true
@@ -239,13 +239,13 @@ export const previewShortcuts = {
         if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })
     },
     F5: () => {
-        if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)
+        if (!presentationControllersKeysDisabled()) nextSlideIndividual(null)
         else setOutput("transition", null)
     },
     PageDown: (e: KeyboardEvent) => {
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
-        if (get(special).disablePresenterControllerKeys) return
+        if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         nextSlideIndividual(e)
@@ -253,7 +253,7 @@ export const previewShortcuts = {
     PageUp: (e: KeyboardEvent) => {
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
-        if (get(special).disablePresenterControllerKeys) return
+        if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         previousSlideIndividual(e)
@@ -322,7 +322,7 @@ export const previewShortcuts = {
     Home: (e: KeyboardEvent) => {
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
-        if (get(special).disablePresenterControllerKeys) return
+        if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         nextSlideIndividual(e, true)
@@ -330,11 +330,16 @@ export const previewShortcuts = {
     End: (e: KeyboardEvent) => {
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
-        if (get(special).disablePresenterControllerKeys) return
+        if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         nextSlideIndividual(e, false, true)
     },
+}
+
+export function presentationControllersKeysDisabled() {
+    return false // always active at the moment
+    // return !!get(special).disablePresenterControllerKeys
 }
 
 export function closeContextMenu() {

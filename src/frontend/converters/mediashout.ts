@@ -96,6 +96,12 @@ export function convertMediaShout(data: any) {
             return
         }
 
+        if (typeof content === "object") {
+            const songs = mdbConvert(content, categoryId)
+            tempShows.push(...songs)
+            return
+        }
+
         let cues = xml2json(content)?.MediaShout5_Document?.Cues
         if (!Array.isArray(cues)) cues = [cues]
         const cues2: any[] = cues.map((a) => Object.values(a))?.flat(2)
@@ -116,6 +122,7 @@ export function convertMediaShout(data: any) {
 function convertToShow(song: MediaShout5Song, { name, categoryId }) {
     const layoutID = uid()
     const show = new ShowObj(false, categoryId, layoutID)
+    show.origin = "mediashout"
     show.name = name
 
     const { slides, layout, media } = convertToSlides(song)
@@ -162,4 +169,108 @@ function convertItem(text: string) {
     function getLine(lineText: string) {
         return { align: "", text: [{ value: lineText, style: "" }] }
     }
+}
+
+// MDB
+
+interface MDBContents {
+    CCLI: any[]
+    Groups: any[]
+    Keys: any[]
+    PlayOrder: any[]
+    SongGroups: any[]
+    SongThemes: any[]
+    Songs: MDBSong[]
+    Themes: any[]
+    Verses: MDBVerse[]
+}
+
+interface MDBSong {
+    Record: number
+    Author: string
+    CCLI: string
+    CP: boolean
+    Copyright: string
+    Cue: string
+    Hymnal: string
+    ImportDate: string
+    ModificationTime: string
+    Notes: string
+    Protection: null
+    Reserved: null
+    SamePageSongGUID: null
+    SamePageSongID: number
+    SongID: string
+    SongSource: string
+    Title: string
+    WTSongID: string
+    WTSongViewID: string
+}
+
+interface MDBVerse {
+    Record: number
+    Number: number
+    Text: string
+    Type: number
+}
+
+function mdbConvert(content: MDBContents, categoryId: string) {
+    const songs = content.Songs.map((song) => getSong(song, content, categoryId))
+    return songs
+}
+
+function getSong(song: MDBSong, content: MDBContents, categoryId: string) {
+    let layoutId = uid()
+    let showId = song.SongID
+    const show = new ShowObj(false, categoryId, layoutId)
+    show.origin = "mediashout"
+    show.name = checkName(song.Title, showId)
+    show.timestamps.modified = new Date(song.ModificationTime).getTime()
+
+    show.meta = {
+        title: song.Title,
+        author: song.Author,
+        copyright: song.Copyright,
+        CCLI: song.CCLI,
+    }
+
+    const DBnum = song.Record
+    const songVerses: MDBVerse[] = []
+    // remove from list while searching, so the list becomes smaller and smaller
+    for (let i = 0; i < content.Verses.length; i++) {
+        if (content.Verses[i].Record === DBnum) {
+            songVerses.push(content.Verses.splice(i, 1)[0])
+        }
+    }
+
+    const sortedVerses = songVerses.sort((a, b) => a.Number - b.Number)
+
+    const { slides, layout, media } = convertToSlidesMDB(sortedVerses)
+    if (!Object.keys(slides).length) return
+
+    layout.notes = song.Notes || ""
+
+    show.slides = slides
+    show.layouts = { [layoutId]: layout }
+    show.media = media
+
+    return { show, id: showId }
+}
+
+function convertToSlidesMDB(verses: MDBVerse[]) {
+    const slides: { [key: string]: Slide } = {}
+    const layout: Layout = { name: get(dictionary).example?.default || "", slides: [], notes: "" }
+    const media: any = {}
+
+    verses.forEach((verse) => {
+        const isRTF = verse.Type === 102
+        if (!verse.Text || isRTF) return
+        // const text = RTFToText(verse.Text)
+        const text = verse.Text
+        slides[uid()] = newSlide({ group: "", globalGroup: "verse", items: [convertItem(text)] })
+    })
+
+    layout.slides = Object.keys(slides).map((id) => ({ id }))
+
+    return { slides, layout, media }
 }

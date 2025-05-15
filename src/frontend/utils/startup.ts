@@ -82,7 +82,7 @@ function autoBackup() {
             a.autoBackupPrevious = now - 3600000
             return a
         })
-        save(false, { backup: true, silent: true })
+        save(false, { backup: true, isAutoBackup: true })
     }
 }
 

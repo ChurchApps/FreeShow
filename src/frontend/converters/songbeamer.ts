@@ -155,7 +155,7 @@ function getTags(tags: string[]) {
 }
 function getOrCreateTag(name: string) {
     // get existing with same name
-    const existing = Object.values(get(globalTags)).find((tag) => tag.name.toLowerCase() === name.toLowerCase())
+    const existing = Object.entries(get(globalTags)).find(([_id, tag]) => tag.name.toLowerCase() === name.toLowerCase())
     if (existing) return existing[0]
 
     const tagId = uid(5)

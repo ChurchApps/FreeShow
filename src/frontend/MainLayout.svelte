@@ -24,6 +24,7 @@
     import Resizeable from "./components/system/Resizeable.svelte"
     import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
+    import SettingsTools from "./components/settings/SettingsTools.svelte"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -101,6 +102,8 @@
                     <DrawSettings />
                 {:else if page === "stage" && $activeStage.id}
                     <StageTools />
+                {:else if page === "settings"}
+                    <SettingsTools />
                 {/if}
             </div>
         </Resizeable>

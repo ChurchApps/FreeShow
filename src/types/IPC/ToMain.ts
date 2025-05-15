@@ -51,7 +51,7 @@ export interface ToMainSendPayloads {
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]
     ///
-    [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
+    [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string | object; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }
     [ToMain.REFRESH_SHOWS2]: TrimmedShows

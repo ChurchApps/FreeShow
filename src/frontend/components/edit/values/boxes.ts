@@ -32,7 +32,6 @@ export type EditInput = {
     valueIndex?: number
     values?: any
     popup?: string
-    enableNoColor?: boolean
     slider?: boolean // include number slider
     sliderValues?: any // custom number slider values
     styleValue?: string // custom css styling
@@ -132,13 +131,13 @@ export const boxes: Box = {
                     },
                 },
                 // probably not needed as we have line and item background color
-                // { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
+                // { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
                 { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
             ],
             lines: [
                 { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
-                { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
+                { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },
                 { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
             ],
             list: [
@@ -343,7 +342,7 @@ export const boxes: Box = {
             style: [
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
-                // { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
+                // { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { enableNoColor: true } },
                 // { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
             ],
 
@@ -550,7 +549,7 @@ export const boxes: Box = {
         icon: "visualizer",
         edit: {
             default: [
-                { name: "color", id: "visualizer.color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
+                { name: "color", id: "visualizer.color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
                 { name: "padding", id: "visualizer.padding", input: "number", value: 0 },
             ],
         },

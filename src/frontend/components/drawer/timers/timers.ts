@@ -120,6 +120,7 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
 
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime = 0
+    if (!timer) return currentTime
 
     if (timer.type === "counter") {
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime

@@ -29,7 +29,11 @@
     }
 
     function removeProjectItem(index: number) {
-        send("API:remove_project_item", { id: $activeProject?.id, index })
+        const projectId = $activeProject?.id
+        if (!projectId) return
+
+        project.set(projectId)
+        send("API:remove_project_item", { id: projectId, index })
     }
 </script>
 
@@ -127,7 +131,15 @@
                 {/each}
 
                 {#if ($active.type || "show") === "show" && $activeShow && !$activeProject.shows.find((show) => show.id === $activeShow?.id)}
-                    <Button on:click={() => send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow.id })} style="width: 100%;" dark center>
+                    <Button
+                        on:click={() => {
+                            project.set($activeProject.id || "")
+                            send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow.id })
+                        }}
+                        style="width: 100%;"
+                        dark
+                        center
+                    >
                         <Icon id="add" right />
                         <p style="font-size: 0.8em;">{translate("context.addToProject", $dictionary)}</p>
                     </Button>
@@ -137,7 +149,15 @@
             <Center faded>{translate("empty.general", $dictionary)}</Center>
 
             {#if ($active.type || "show") === "show" && $activeShow}
-                <Button on:click={() => send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow.id })} style="width: 100%;" dark center>
+                <Button
+                    on:click={() => {
+                        project.set($activeProject.id || "")
+                        send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow.id })
+                    }}
+                    style="width: 100%;"
+                    dark
+                    center
+                >
                     <Icon id="add" right />
                     <p style="font-size: 0.8em;">{translate("context.addToProject", $dictionary)}</p>
                 </Button>

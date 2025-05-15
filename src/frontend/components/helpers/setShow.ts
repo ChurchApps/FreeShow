@@ -18,6 +18,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
             value.category = showRef.category || null
             value.timestamps = showRef.timestamps || {}
             value.quickAccess = showRef.quickAccess || {}
+            if (showRef.origin) value.origin = showRef.origin
             if (showRef.private) value.private = true
             if (showRef.locked) value.locked = true
 
@@ -58,6 +59,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 quickAccess: value.quickAccess,
             }
 
+            if (value.origin) a[id].origin = value.origin
             if (value.private) a[id].private = true
             if (value.locked) a[id].locked = true
         }

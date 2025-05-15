@@ -261,7 +261,7 @@ function getTempItems(item: Item, allItems: Item[]) {
 
     function getTempSlides() {
         if (slideOffset < 0) {
-            let includeLength = (currentSlide.previousSlides || [])?.length
+            const includeLength = (currentSlide.previousSlides || [])?.length
             return currentSlide.previousSlides?.[includeLength - (slideOffset + 1 + includeLength)]
         }
         if (slideOffset > 0) {
@@ -324,6 +324,7 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
 
 function getTimerValue(timerId: string) {
     const timer = get(timers)[timerId]
+    if (!timer) return "0"
     return getCurrentTimerValue(timer, { id: timerId }, new Date()).toString()
 }
 
@@ -332,6 +333,7 @@ export function getVariableValue(variableId: string) {
     if (!variable) return ""
 
     if (variable.type === "text") {
+        if (variable.enabled === false) return ""
         return variable.text || ""
     } else {
         return (variable.number ?? 0).toString()

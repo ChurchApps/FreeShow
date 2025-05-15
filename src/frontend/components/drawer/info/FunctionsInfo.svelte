@@ -26,7 +26,7 @@
     <div class="scroll">
         {#if updated && $actionHistory.length}
             <p style="text-align: center;padding: 10px;">
-                {$actionHistory[0].action}
+                {$actionHistory[0].action[0].toUpperCase() + $actionHistory[0].action.slice(1).replaceAll("_", " ")}
                 {#if $actionHistory[0].count > 1}<span style="opacity: 0.5;">({$actionHistory[0].count})</span>{/if}
             </p>
         {/if}

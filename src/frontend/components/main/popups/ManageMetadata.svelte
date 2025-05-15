@@ -49,7 +49,7 @@
     $: emptyEntry = customMetadataValues.find((a) => a === "") !== undefined
 </script>
 
-<p style="opacity: 0.6;font-size: 0.9em;text-align: center;padding-bottom: 10px;"><T id="tips.global_options" /></p>
+<!-- <p style="opacity: 0.6;font-size: 0.9em;text-align: center;padding-bottom: 10px;"><T id="tips.global_options" /></p> -->
 
 <div>
     {#each defaultMetadata as key}

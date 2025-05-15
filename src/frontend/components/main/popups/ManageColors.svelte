@@ -1,7 +1,9 @@
 <script lang="ts">
-    import { special } from "../../../stores"
+    import { activePopup, popupData, special } from "../../../stores"
     import { getContrast } from "../../helpers/color"
     import T from "../../helpers/T.svelte"
+    import HRule from "../../input/HRule.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
 
     function toggleColor(e, key = "customColors") {
@@ -41,6 +43,29 @@
     <p><T id="actions.add_color" /></p>
     <input class="colorpicker" type="color" on:change={toggleColor} on:input={setPreviewColor} />
 </div>
+
+<HRule title="color.gradient" />
+
+<Color value="" on:input={(e) => toggleColor(e, "disabledColorsGradient")} allowGradients visible showDisabled />
+
+<Color value="" on:input={(e) => toggleColor(e, "customColorsGradient")} allowGradients visible custom />
+
+<Button
+    style="width: 100%;margin-top: 10px;border: 2px solid var(--primary-darker);"
+    on:click={() => {
+        popupData.set({
+            value: "",
+            trigger: (newValue) => {
+                toggleColor({ detail: newValue }, "customColorsGradient")
+                setTimeout(() => activePopup.set("manage_colors"))
+            }
+        })
+        activePopup.set("color_gradient")
+    }}
+    center
+>
+    <p style="width: 100%;justify-content: center;font-weight: normal;"><T id="actions.add_color" /></p>
+</Button>
 
 <style>
     .info {

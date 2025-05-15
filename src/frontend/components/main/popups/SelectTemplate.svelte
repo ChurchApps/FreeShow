@@ -13,6 +13,10 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Icon from "../../helpers/Icon.svelte"
+
+    let revert = $popupData.revert
 
     $: hideIds = $popupData.hideIds || []
     $: sortedTemplates = sortByName(keysToID($templates).filter((a) => !hideIds.includes(a.id)))
@@ -73,8 +77,8 @@
 
             if ($popupData.doubleClick && !keyboard && previousValue !== template.id) return
 
-            if (!$popupData.revert) setTimeout(() => popupData.set({}), 500) // revert after closing
-            activePopup.set($popupData.revert || null)
+            if (!revert) setTimeout(() => popupData.set({}), 500) // revert after closing
+            activePopup.set(revert || null)
         })
     }
 
@@ -91,6 +95,12 @@
 </script>
 
 <svelte:window on:keydown={chooseTemplate} />
+
+{#if revert}
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
+        <Icon id="back" size={2} white />
+    </Button>
+{/if}
 
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">
     <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />

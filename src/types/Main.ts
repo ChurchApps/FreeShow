@@ -209,6 +209,7 @@ export interface Variable {
     id?: string
     name: string
     type: "number" | "random_number" | "text"
+    tags?: string[]
 
     // number
     number?: number
@@ -268,12 +269,14 @@ export type Popups =
     | "select_template"
     | "delete_duplicated_shows"
     | "icon"
+    | "manage_groups"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"
     | "player"
     | "rename"
     | "color"
+    | "color_gradient"
     | "find_replace"
     | "timer"
     | "variable"

@@ -46,11 +46,10 @@
 <div class="main">
     {#if sortedStageSlides.length}
         <div class="grid">
-            {#each sortedStageSlides as show, index}
+            {#each sortedStageSlides as show}
                 <StageSlide
                     id={show.id}
                     layout={show}
-                    {index}
                     active={$activeStage.id === show.id}
                     on:click={(e) => {
                         if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))

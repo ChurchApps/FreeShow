@@ -148,6 +148,11 @@ export function deleteAction(clip: Clipboard | { id: null; data: Clipboard; inde
 }
 
 export function duplicate(clip: Clipboard | null = null) {
+    // "select" stage items
+    if (!clip?.id && get(activePage) === "stage" && get(activeStage)?.items) {
+        clip = { id: "stage_item", data: get(activeStage) }
+    }
+
     if (clip?.id && duplicateActions[clip.id]) {
         duplicateActions[clip.id](clip.data)
 
@@ -948,6 +953,19 @@ const duplicateActions = {
         const stageId = data[0].id
         const stage = get(stageShows)[stageId]
         history({ id: "UPDATE", newData: { data: clone(stage) }, location: { page: "stage", id: "stage" } })
+    },
+    stage_item: (data: any) => {
+        const stageId: string = data.id || ""
+        const selectedItemIds: string[] = data.items || []
+        const stage = clone(get(stageShows)[stageId])
+
+        selectedItemIds.forEach((itemId) => {
+            const item = clone(stage.items[itemId])
+            stage.items[uid(5)] = item
+        })
+
+        history({ id: "UPDATE", newData: { data: stage.items, key: "items" }, oldData: { id: stageId }, location: { page: "stage", id: "stage_item_content" } })
+        updateSortedStageItems()
     },
     layout: (data: any) => {
         const layoutId = data?.[0] || get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout

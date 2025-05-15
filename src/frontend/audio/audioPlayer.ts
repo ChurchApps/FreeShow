@@ -206,7 +206,7 @@ export class AudioPlayer {
         })
 
         AudioAnalyser.detach(id)
-        sendMain(Main.NOW_PLAYING_UNSET, { dataPath: get(dataPath) })
+        if (!AudioPlayer.getAllPlaying().length) sendMain(Main.NOW_PLAYING_UNSET, { dataPath: get(dataPath) })
     }
 
     private static stopStream(stream: MediaStream | undefined) {
@@ -288,12 +288,12 @@ export class AudioPlayer {
         return get(playingAudio)[id] || null
     }
 
-    static getAllPlaying() {
+    static getAllPlaying(removePaused: boolean = true) {
         return get(playingAudioPaths).length
             ? get(playingAudioPaths)
             : Object.keys(get(playingAudio)).filter((id) => {
                   const audioData = get(playingAudio)[id]
-                  return audioData.audio && !audioData.paused
+                  return audioData.audio && (!removePaused || !audioData.paused)
               })
     }
 

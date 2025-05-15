@@ -32,11 +32,11 @@
         playlist: (c: { id: string; name: string }) => audioPlaylists.update((a) => setName(a, c)),
         overlays: (c: { id: string; name: string }) => overlayCategories.update((a) => setName(a, c)),
         templates: (c: { id: string; name: string }) => templateCategories.update((a) => setName(a, c)),
-        scripture: (c: { id: string; name: string }) => scriptures.update((a) => setName(a, c, "customName")),
+        scripture: (c: { id: string; name: string }) => scriptures.update((a) => setName(a, c, "customName"))
     }
     const setName = <T,>(a: T, { name, id }, nameKey = "name"): T => {
         // api scriptures
-        if (!a[id]) id = Object.values(a as any).find((a: any) => a.id === id)?.[0]
+        if (!a[id]) id = Object.entries(a as any).find(([_, a]: any) => a.id === id)?.[0]
         if (!a[id]) return a
 
         if (a[id].default) delete a[id].default

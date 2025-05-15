@@ -28,13 +28,13 @@
         title={path}
         bold={false}
         on:click={(e) => {
-            if ($outLocked || e.ctrlKey || e.metaKey) return
+            if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
             if (playlist) AudioPlaylist.start(active || "", path, { pauseIfPlaying: true })
             else AudioPlayer.start(path, { name }, { playMultiple: e.altKey })
         }}
         on:dblclick={(e) => {
-            if (e.ctrlKey || e.metaKey) return
+            if (e.ctrlKey || e.metaKey || e.shiftKey) return
 
             if ($focusMode) activeFocus.set({ id: path, type: "audio" })
             else activeShow.set({ id: path, name, type: "audio" })

@@ -10,7 +10,7 @@ export function importProject(files: { content: string; name?: string; extension
         const { project, parentFolder, shows, overlays, media } = JSON.parse(content)
 
         // find any parent folder with the same name as previous parent, or place at root
-        if (parentFolder) project.parent = Object.values(get(folders)).find((folder) => folder.name === parentFolder)?.[0] || "/"
+        if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
         const projectId = project.id || ""
         delete project.id
 

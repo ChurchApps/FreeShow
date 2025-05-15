@@ -141,9 +141,8 @@ export function clearOverlays(specificOutputId = "") {
         let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
         outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
         setOutput("overlays", outOverlays, false, outputId)
+        lockedOverlays.set(outOverlays)
     })
-
-    lockedOverlays.set([])
 }
 
 export function clearTimers(specificOutputId = "") {

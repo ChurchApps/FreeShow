@@ -32,6 +32,7 @@ export function trimShow(showCache: Show) {
         timestamps: showCache.timestamps,
         quickAccess: showCache.quickAccess || {},
     }
+    if (showCache.origin) show.origin = showCache.origin
     if (showCache.private) show.private = true
     if (showCache.locked) show.locked = true
 
