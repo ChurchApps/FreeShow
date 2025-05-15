@@ -132,22 +132,50 @@ export class BlackmagicReceiver {
     }
 
     static stopReceiver(data: any) {
-        if (data?.id) {
-            if (data.outputId) this.sendToOutputs.splice(this.sendToOutputs.indexOf(data.outputId), 1)
-            else this.sendToOutputs = [] // error
+    if (data?.id) {
+        try {
+            if (data.outputId) {
+                const index = this.sendToOutputs.indexOf(data.outputId);
+                if (index >= 0) {
+                    this.sendToOutputs.splice(index, 1);
+                }
+            } else {
+                this.sendToOutputs = []; // error
+            }
 
             if (!this.sendToOutputs.length) {
-                clearInterval(this.BMD_RECEIVERS[data.id].interval)
-                this.BMD_RECEIVERS[data.id].receiver?.stop()
-                delete this.BMD_RECEIVERS[data.id]
+                try {
+                    clearInterval(this.BMD_RECEIVERS[data.id].interval);
+                    const receiver = this.BMD_RECEIVERS[data.id].receiver;
+                    if (receiver) {
+                        receiver.stop();
+                    }
+                } catch (err) {
+                    console.error(`Error stopping receiver: ${err.message}`);
+                }
+                delete this.BMD_RECEIVERS[data.id];
             }
-            return
+        } catch (err) {
+            console.error(`Error in stopReceiver for ID ${data.id}: ${err.message}`);
         }
-
-        Object.values(this.BMD_RECEIVERS).forEach(({ receiver, interval }) => {
-            clearInterval(interval)
-            receiver?.stop()
-        })
-        this.BMD_RECEIVERS = {}
+        return;
     }
+
+    // Stop all receivers
+    try {
+        Object.entries(this.BMD_RECEIVERS).forEach(([id, { receiver, interval }]) => {
+            try {
+                clearInterval(interval);
+                if (receiver) {
+                    receiver.stop();
+                }
+            } catch (err) {
+                console.error(`Error stopping receiver ${id}: ${err.message}`);
+            }
+        });
+        this.BMD_RECEIVERS = {};
+    } catch (err) {
+        console.error(`Error stopping all receivers: ${err.message}`);
+    }
+}
 }

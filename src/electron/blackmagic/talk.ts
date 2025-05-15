@@ -26,6 +26,7 @@ export const bmResponses: any = {
     RECEIVE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
     RECEIVE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
     STOP_RECEIVER: (data: any) => BlackmagicReceiver.stopReceiver(data),
+    RESET_DEVICE: (data: any) => BlackmagicManager.resetDevice(data.deviceId)
 }
 
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
