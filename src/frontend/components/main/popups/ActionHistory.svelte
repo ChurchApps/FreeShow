@@ -17,7 +17,7 @@
         {#each $actionHistory as item}
             <p>
                 <span>
-                    {item.action}
+                    {item.action[0].toUpperCase() + item.action.slice(1).replaceAll("_", " ")}
                     {#if item.count > 1}<span style="opacity: 0.5;">({item.count})</span>{/if}
                 </span>
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>

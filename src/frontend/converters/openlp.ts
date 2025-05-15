@@ -286,7 +286,7 @@ function XMLtoObject(xml: string) {
 
 function extractChordLines(lines: string) {
     // CHORDS
-    let chords: Chords[][] = []
+    const chords: Chords[][] = []
     const newLines: string[] = lines
         .split("\n")
         .map((lineText: string) => {

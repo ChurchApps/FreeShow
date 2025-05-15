@@ -1,4 +1,6 @@
 import https from "https"
+import { createLog, logError } from "../IPC/responsesMain"
+import type { ErrorLog } from "../../types/Main"
 
 export function httpsRequest(hostname: string, path: string, method: "POST" | "GET", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void) {
     const dataString = Object.keys(content).length ? JSON.stringify(content) : ""
@@ -59,7 +61,15 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
 
         if (dataString.length) request.write(dataString)
         request.end()
-    } catch (err) {
+    } catch (err: any) {
+        const error: ErrorLog = {
+            ...createLog(err),
+            type: "Failed HTTPS Request",
+            source: hostname + path,
+            message: err.message.toString() + "\n" + JSON.stringify(content || {}),
+        }
+
+        logError(error, "request")
         console.error("HTTP Request Error:", err)
     }
 }

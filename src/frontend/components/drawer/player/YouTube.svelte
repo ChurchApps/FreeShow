@@ -1,9 +1,9 @@
 <script>
-    import YouTube from "svelte-youtube"
+    import { createEventDispatcher, onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { createEventDispatcher, onDestroy } from "svelte"
+    import YouTubePlayer from "./YouTubePlayer.svelte"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -26,9 +26,9 @@
             loop: videoData.loop,
             fs: 0,
             rel: 0,
-            controls: $special.hideCursor ? 0 : 1,
+            controls: $special.hideCursor ? 0 : 1
             // cc_load_policy: true
-        },
+        }
     }
 
     let dispatch = createEventDispatcher()
@@ -145,7 +145,7 @@
         loopStop = true
         setTimeout(() => (loopStop = false), 50)
 
-        // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
+        // unstarted (-1), ended (0), playing (1), paused (2), buffering (3), cued (5)
         videoData.paused = player.getPlayerState() === 1 ? false : true
         if (preview) videoTime = player.getCurrentTime()
     }
@@ -163,7 +163,7 @@
 
 <div class="main" class:hide={!id}>
     {#if id}
-        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
+        <YouTubePlayer class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
     {/if}
 </div>
 

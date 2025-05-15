@@ -11,7 +11,7 @@
         if (method === "existing") {
             sendMain(Main.UPDATE_DATA_PATH, { reset: false, dataPath: $dataPath })
         } else {
-            save(false, { backup: true, changeUserData: { reset: false, dataPath: $dataPath } })
+            save(false, { backup: true, isAutoBackup: true, changeUserData: { reset: false, dataPath: $dataPath } })
         }
 
         special.update((a) => {

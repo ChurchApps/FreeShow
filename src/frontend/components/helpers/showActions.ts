@@ -92,7 +92,7 @@ export function checkInput(e: any) {
 export function selectProjectShow(select: number | "next" | "previous") {
     const items = get(projects)[get(activeProject) || ""]?.shows
     const index: null | number = (get(focusMode) ? get(activeFocus).index : get(activeShow)?.index) ?? null
-    const newIndex: number | null = !isNaN((select as any) || 0) ? select || 0 : getProjectIndex[select](index, items)
+    const newIndex: number | null = !isNaN((select as any) || 0) ? Number(select || 0) : getProjectIndex[select](index, items)
 
     if (newIndex === null || !items[newIndex]) return
 
@@ -1025,8 +1025,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "stage") {
         const stageLayoutId: string = isOutputWindow ? Object.values(get(outputs))[0]?.stageOutput || id : id
         const stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
-        const outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
-        const outSlide = get(outputs)[outputId]?.out?.slide
+        const outputId = stageOutput || getActiveOutputs(isOutputWindow ? get(allOutputs) : get(outputs), false, true, true)[0]
+        const outSlide = (isOutputWindow ? get(allOutputs) : get(outputs))[outputId]?.out?.slide
         showId = outSlide?.id
         slideIndex = outSlide?.index ?? -1
     }
@@ -1106,7 +1106,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const videoTime: number = get(videosTime)[outputId] || 0
         const videoDuration: number = get(videosData)[outputId]?.duration || 0
 
-        const activeAudio = get(playingAudio)[AudioPlayer.getAllPlaying()[0]]?.audio
+        const playingAudioIds = AudioPlayer.getAllPlaying(false)
+        const activeAudio = get(playingAudio)[playingAudioIds[0]]?.audio
         const audioTime = (isOutputWindow ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
         const audioDuration = (isOutputWindow ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
@@ -1114,7 +1115,6 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        const playingAudioIds = AudioPlayer.getAllPlaying()
         const audioPath = playingAudioIds[playingAudioIds.length - 1] // get newest
 
         // custom - only from external source (Companion)
@@ -1128,8 +1128,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return [backgroundActive ? "background" : "", slideActive ? "slide" : "", overlaysActive ? "overlays" : "", audioActive ? "audio" : ""].filter(Boolean).join(", ")
         } else if (dynamicId === "active_styles") {
             const activeOutputIds = getActiveOutputs(get(outputs), false, true, true)
-            const outputStyeIds = activeOutputIds.map((id) => get(outputs)[id].style || "").filter(Boolean)
-            const outputStyleNames = outputStyeIds.map((id) => get(styles)[id]?.name).filter(Boolean)
+            const outputStyeIds = activeOutputIds.map((oId) => get(outputs)[oId].style || "").filter(Boolean)
+            const outputStyleNames = outputStyeIds.map((styleId) => get(styles)[styleId]?.name).filter(Boolean)
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
         }
 
@@ -1223,5 +1223,5 @@ function getMetadata(audioPath: string) {
 
 function getArtist(metadata: ICommonTagsResult) {
     const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
-    return artists.join(", ")
+    return [...new Set(artists)].join(", ")
 }

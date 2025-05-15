@@ -85,6 +85,8 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
+import { convertMediaShout } from "../converters/mediashout"
+import { getSlidesText } from "../components/edit/scripts/textStyle"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -312,23 +314,38 @@ export const mainResponses: MainResponses = {
         chumsConnected.set(true)
         if (data.isFirstConnection) newToast("$main.finished")
     },
-    [ToMain.CHUMS_PROJECTS]: (data) => {
+    [ToMain.CHUMS_PROJECTS]: async (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
         createCategory("Chums")
 
         // CREATE SHOWS
+        let replaceIds: { [key: string]: string } = {}
         const tempShows: { id: string; show: Show }[] = []
-        data.shows.forEach((show) => {
+        for (let show of data.shows) {
             const id = show.id
 
             // don't add/update if already existing (to not mess up any set styles)
             if (get(shows)[id]) return
 
+            // replace with existing Chums show, that has the same name (but different ID), if it's without content
+            for (let [id, currentShow] of Object.entries(get(shows))) {
+                if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
+                await loadShows([id])
+
+                const loadedShow = get(showsCache)[id]
+                if (!getSlidesText(loadedShow.slides)) {
+                    replaceIds[show.id] = id
+                    break
+                }
+            }
+
+            if (replaceIds[show.id]) continue
+
             delete show.id
             tempShows.push({ id, show: { ...show, origin: "chums", name: checkName(show.name, id) } })
-        })
+        }
         setTempShows(tempShows)
 
         data.projects.forEach((chumsProject) => {
@@ -346,6 +363,8 @@ export const mainResponses: MainResponses = {
                 parent: folderId || "/",
                 shows: chumsProject.items || [],
             }
+
+            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = chumsProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
@@ -416,6 +435,7 @@ export const mainResponses: MainResponses = {
             videopsalm: () => convertVideopsalm(data),
             openlp: () => convertOpenLP(data),
             opensong: () => convertOpenSong(data),
+            mediashout: () => convertMediaShout(data),
             quelea: () => convertQuelea(data),
             softprojector: () => convertSoftProjector(data),
             songbeamer: () => convertSongbeamerFiles(a.custom),

@@ -28,6 +28,7 @@ export type SaveListSyncedSettings =
     | "videoMarkers"
     | "mediaTags"
     | "actionTags"
+    | "variableTags"
     | "customizedIcons"
     | "companion"
     | "globalTags"
@@ -106,4 +107,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }
+export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }

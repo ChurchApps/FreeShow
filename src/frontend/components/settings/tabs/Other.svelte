@@ -5,14 +5,11 @@
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import FolderPicker from "../../inputs/FolderPicker.svelte"
 
     onMount(() => {
         // getCacheSize()
@@ -50,20 +47,7 @@
 
     async function toggle(e: any, key: string) {
         let checked = e.target.checked
-
-        if (key === "customUserDataLocation") {
-            let existingData = false
-            if (checked) {
-                existingData = (await requestMain(Main.DOES_PATH_EXIST, { path: "data_config", dataPath: $dataPath }))?.exists
-                if (existingData) activePopup.set("user_data_overwrite")
-            }
-            if (!existingData) {
-                updateSpecial(checked, key)
-                save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
-            }
-        } else {
-            updateSpecial(checked, key)
-        }
+        updateSpecial(checked, key)
     }
 
     // hardware acceleration
@@ -163,38 +147,11 @@
     //     cacheSize = "0 Bytes"
     // }
 
-    // open log
-    function openLog() {
-        sendMain(Main.OPEN_LOG)
-    }
-    function openCache() {
-        sendMain(Main.OPEN_CACHE)
-    }
-
     // bundle media files
     function bundleMediaFiles() {
         if (!$showsPath) return
         sendMain(Main.BUNDLE_MEDIA_FILES, { showsPath: $showsPath, dataPath: $dataPath })
     }
-
-    // backup
-    function backup() {
-        save(false, { backup: true })
-    }
-
-    function restore() {
-        if (!$showsPath) return
-
-        showsCache.set({})
-        sendMain(Main.RESTORE, { showsPath: $showsPath })
-    }
-
-    const autobackupList = [
-        { id: "never", name: "$:settings.never:$" },
-        { id: "daily", name: "$:interval.daily:$" },
-        { id: "weekly", name: "$:interval.weekly:$" },
-        { id: "mothly", name: "$:interval.mothly:$" },
-    ]
 
     // usage log
 
@@ -209,58 +166,6 @@
         usageLog.set({ all: [] })
     }
 </script>
-
-<CombinedInput textWidth={30}>
-    <p><T id="settings.data_location" /></p>
-    <span class="path" title={$dataPath || ""}>
-        <FolderPicker style="width: 100%;" id="DATA" center={false} path={$dataPath}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p>
-                {#if $dataPath}
-                    {$dataPath}
-                {:else}
-                    <T id="inputs.change_folder" />
-                {/if}
-            </p>
-        </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
-            <Icon id="launch" white />
-        </Button>
-    </span>
-</CombinedInput>
-
-<CombinedInput textWidth={30}>
-    <p><T id="settings.show_location" /></p>
-    <span class="path" title={$showsPath || ""}>
-        <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
-        <!-- title={$dictionary.inputs?.change_folder} -->
-        <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p>
-                {#if $showsPath}
-                    {$showsPath}
-                {:else}
-                    <T id="inputs.change_folder" />
-                {/if}
-            </p>
-        </FolderPicker>
-        <Button
-            title={$dictionary.main?.system_open}
-            on:click={() => {
-                if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
-            }}
-        >
-            <Icon id="launch" white />
-        </Button>
-    </span>
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.user_data_location" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
-    </div>
-</CombinedInput>
 
 <CombinedInput>
     <p><T id="settings.auto_updates" /></p>
@@ -283,22 +188,15 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
+<CombinedInput style="border-top: 1px solid var(--primary-lighter);">
     <p><T id="settings.popup_before_close" /></p>
     <div class="alignRight">
         <Checkbox disabled={!$dataPath} checked={$special.showClosePopup || false} on:change={(e) => toggle(e, "showClosePopup")} />
     </div>
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.disable_presenter_controller_keys" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$special.disablePresenterControllerKeys || false} on:change={(e) => toggle(e, "disablePresenterControllerKeys")} />
-    </div>
-</CombinedInput>
-
 <!-- disableHardwareAcceleration -->
-<CombinedInput>
+<CombinedInput style="border-bottom: 3px solid var(--primary-lighter);">
     <p><T id="settings.disable_hardware_acceleration" /></p>
     <div class="alignRight">
         <Checkbox checked={disableHardwareAcceleration} on:change={toggleHardwareAcceleration} />
@@ -383,7 +281,7 @@
     </Button>
 </CombinedInput> -->
 
-<CombinedInput title={$dictionary.media?.bundle_media_files_tip}>
+<CombinedInput title={$dictionary.media?.bundle_media_files_tip} style="border-top: 1px solid var(--primary-lighter);">
     <Button style="width: 100%;" on:click={bundleMediaFiles}>
         <Icon id="image" style="margin-inline-start: 0.5em;" right />
         <p><T id="media.bundle_media_files" /></p>
@@ -408,51 +306,14 @@
     {/if}
 {/if}
 
-<CombinedInput>
-    <Button style="width: 50%;" on:click={openLog}>
-        <Icon id="document" style="margin-inline-start: 0.5em;" right />
-        <p><T id="actions.open_error_log" /></p>
-    </Button>
-    <Button on:click={openCache}>
-        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-        <p><T id="actions.open_cache_folder" /></p>
-    </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 50%;" on:click={backup}>
-        <Icon id="export" style="margin-inline-start: 0.5em;" right />
-        <p><T id="settings.backup_all" /></p>
-    </Button>
-    <Button on:click={restore}>
-        <Icon id="import" style="margin-inline-start: 0.5em;" right />
-        <p><T id="settings.restore" /></p>
-    </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.auto_backup" /></p>
-    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "weekly"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} up />
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center red>
+<div class="filler" />
+<div class="bottom">
+    <Button style="width: 100%;padding: 12px;border-top: 2px solid var(--primary-lighter);" on:click={() => activePopup.set("reset_all")} center red>
         <Icon id="reset" right /><T id="settings.reset_all" />
     </Button>
-</CombinedInput>
-
-<div class="filler" />
+</div>
 
 <style>
-    .path {
-        display: flex;
-        align-items: center;
-        max-width: 70%;
-    }
-    .path :global(button) {
-        white-space: nowrap;
-    }
-
     /* hr {
         margin: 20px 0;
         border: none;
@@ -461,6 +322,16 @@
     } */
 
     .filler {
-        height: 18px;
+        height: 58px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        inset-inline-start: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
     }
 </style>

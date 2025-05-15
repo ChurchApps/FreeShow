@@ -7,6 +7,7 @@
         activeActionTagFilter,
         activeEdit,
         activePopup,
+        activeVariableTagFilter,
         audioFolders,
         audioPlaylists,
         categories,
@@ -23,6 +24,8 @@
         shows,
         templateCategories,
         templates,
+        variables,
+        variableTags
     } from "../../stores"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -54,7 +57,7 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledShows ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[])
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -71,7 +74,7 @@
                 { id: "screens", name: "live.screens", default: true, icon: "screen" },
                 { id: "cameras", name: "live.cameras", default: true, icon: "camera" },
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
+                ...(sortObject(keysToID($mediaFolders), "name") as Button[])
             ]
         } else if (id === "overlays") {
             let categoriesList = keysToID($overlayCategories).filter((a) => !a.isArchive)
@@ -81,7 +84,7 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledOverlays ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[])
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -94,7 +97,7 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledTemplates ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[])
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -112,14 +115,14 @@
                 { id: "audio_streams", name: "live.audio_streams", default: true, icon: "audio_stream" },
                 ...getAudioPlaylists($audioPlaylists),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(keysToID($audioFolders), "name") as Button[]),
+                ...(sortObject(keysToID($audioFolders), "name") as Button[])
             ]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
         } else if (id === "calendar") {
             buttons = [
                 { id: "event", name: "menu._title_calendar", default: true, icon: "calendar" },
-                { id: "action", name: "calendar.schedule_action", default: true, icon: "actions" },
+                { id: "action", name: "calendar.schedule_action", default: true, icon: "actions" }
                 // WIP very few tabs
             ]
         } else if (id === "functions") {
@@ -135,14 +138,28 @@
                             ...a,
                             icon: "tag",
                             openTrigger: (id) => activeActionTagFilter.set([id]),
-                            count: Object.values($midiIn).filter((b) => b.tags?.includes(a.id)).length,
-                        })),
-                    },
+                            count: Object.values($midiIn).filter((b) => b.tags?.includes(a.id)).length
+                        }))
+                    }
                 },
                 { id: "SEPERATOR", name: "" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
-                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
-                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
+                {
+                    id: "variables",
+                    name: "tabs.variables",
+                    default: true,
+                    icon: "variable",
+                    openTrigger: () => activeVariableTagFilter.set([]),
+                    submenu: {
+                        options: sortObject(sortByName(keysToID($variableTags)), "color").map((a) => ({
+                            ...a,
+                            icon: "tag",
+                            openTrigger: (id) => activeVariableTagFilter.set([id]),
+                            count: Object.values($variables).filter((b) => b.tags?.includes(a.id)).length
+                        }))
+                    }
+                },
+                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" }
                 // WIP effects
                 // { id: "SEPERATOR", name: "" },
                 // { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
@@ -150,7 +167,7 @@
         } else {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "SEPERATOR", name: "" },
+                { id: "SEPERATOR", name: "" }
             ]
         }
     }
@@ -162,6 +179,10 @@
             a[id] = { activeSubTab: tabId, enabled: a[id]?.enabled !== false }
             return a
         })
+
+        // tag submenus will close on keyboard navigation
+        activeActionTagFilter.set([])
+        activeVariableTagFilter.set([])
     }
 
     $: if (id === "scripture" && $scriptures) buttons = getBibleVersions()

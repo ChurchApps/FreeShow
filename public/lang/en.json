@@ -409,6 +409,7 @@
         "select_template": "Select template",
         "rename": "Rename",
         "color": "Color",
+        "color_gradient": "Gradient color",
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Timer",
@@ -456,6 +457,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Shortcuts",
         "icon": "Icons",
+        "manage_groups": "Manage groups",
         "manage_icons": "Manage icons",
         "manage_colors": "Manage colors",
         "manage_metadata": "Manage metadata",
@@ -677,6 +679,8 @@
         "open_log_file": "Open log file",
         "open_error_log": "Open error log",
         "open_cache_folder": "Open cache folder",
+        "open_app_data_folder": "Open app data folder",
+        "open_user_data_folder": "Open user data folder",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
         "start_timer": "Start timer",
         "pause_timers": "Pause active timers",
@@ -890,6 +894,8 @@
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
         "max_lines_per_slide": "Max lines per slide",
+        "break_long_lines": "Break long lines",
+        "break_long_lines_tip": "Break line if longer than the set words",
         "media_fit": "Media fit",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",
@@ -1134,6 +1140,7 @@
     },
     "settings": {
         "general": "General",
+        "files": "Files",
         "theme": "Theme",
         "groups": "Groups",
         "styles": "Styles",
@@ -1379,6 +1386,16 @@
         "circ": "Circular",
         "cubic": "Cubic",
         "sine": "Flow"
+    },
+    "color": {
+        "normal": "Normal",
+        "gradient": "Gradient",
+        "linear": "Linear",
+        "radial": "Radial",
+        "angle": "Angle",
+        "shape": "Shape",
+        "circle": "Circle",
+        "ellipse": "Ellipse"
     },
     "variables": {
         "number": "Number",

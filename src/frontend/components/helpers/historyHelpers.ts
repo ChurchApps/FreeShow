@@ -76,7 +76,7 @@ export const _updaters = {
             }
 
             // find any stage output window linked to this stage layout
-            const outputId = Object.values(get(outputs)).find((output) => output.stageOutput === id)?.[0] || ""
+            const outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
             // get first stage layout
@@ -385,6 +385,7 @@ export const _updaters = {
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps, quickAccess: data.data.quickAccess || {} }
+                if (data.data.origin) a[id].origin = data.data.origin
                 if (data.data.private) a[id].private = true
                 if (data.data.locked) a[id].locked = true
 
@@ -608,8 +609,8 @@ export const projectReplacers = [
     { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
-export function getProjectName() {
-    let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
+export function getProjectName(updater = get(special)) {
+    let name = updater.default_project_name ?? DEFAULT_PROJECT_NAME
 
     const date = new Date()
     projectReplacers.forEach((a) => {

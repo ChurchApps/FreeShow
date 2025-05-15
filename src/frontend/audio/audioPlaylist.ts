@@ -32,6 +32,7 @@ export class AudioPlaylist {
     }
 
     static stop() {
+        activePlaylist.set(null)
         const activeAudio = AudioPlaylist.getPlayingPath()
         clearAudio(activeAudio)
     }

@@ -78,7 +78,7 @@
                 <p class:hide class:start={i === 0} class:end={i + 1 === numbers}>{i + 1 === numbers ? "-∞" : Math.round(getDBFromPercentage(i / (numbers - 1)))}</p>
             {/each}
         </div> -->
-        <div class="lines" style="padding: 0 5px;">
+        <div class="lines" style="padding: 0 6px;">
             {#each numbers as i}
                 <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -80 ? "-∞" : i}</p>
             {/each}
@@ -137,7 +137,7 @@
         align-items: center;
         flex: 2;
 
-        font-size: 0.8em;
+        font-size: 0.7em;
     }
     /* .lines p.hide {
         flex: 1;

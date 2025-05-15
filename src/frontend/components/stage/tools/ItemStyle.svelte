@@ -34,7 +34,12 @@
     $: if (itemEdit?.CSS && item?.style) itemEdit.CSS[0].value = item.style
 
     function dataChanged() {
-        setBoxInputValue({ icon: "", edit: itemEdit }, "default", "background-opacity", "hidden", !data["background-color"])
+        // gradient
+        const styles = getStyles(item?.style)
+        const isGradient = styles.background?.includes("gradient")
+        if (isGradient) data["background-color"] = styles.background
+
+        setBoxInputValue({ icon: "", edit: itemEdit }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
 
         data = stylePosToPercentage(data)
     }
@@ -49,6 +54,13 @@
             let oldString = data[input.id]
             input.value = addFilterString(oldString || "", [input.key, input.value])
             input.key = input.id
+        }
+
+        if (input.id === "style" && input.key === "background-color") {
+            // set "background" value instead of "background-color"
+            if (input.value.includes("gradient")) input.key = "background"
+            // reset "background" value
+            else updateStyle({ detail: { ...input, key: "background", value: "" } })
         }
 
         // background opacity

@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Slide, SlideData, Template } from "../../../types/Show"
-import { removeItemValues, splitItemInTwo } from "../../show/slides"
+import { breakLongLines, removeItemValues, splitItemInTwo } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { customActionActivation } from "../actions/actions"
+import { getItemText } from "../edit/scripts/textStyle"
 import { clone, keysToID } from "./array"
 import { history } from "./history"
 import { _updaters } from "./historyHelpers"
@@ -14,7 +15,6 @@ import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayouts
 import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
 import { _show } from "./shows"
-import { getItemText } from "../edit/scripts/textStyle"
 
 // TODO: move history switch to actions
 
@@ -363,6 +363,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         quickAccess: show.quickAccess || a[id]?.quickAccess,
                     }
 
+                    if (show.origin) a[id].origin = ""
+                    else if (a[id].origin) delete a[id].origin
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
                     if (show.locked) a[id].locked = true
@@ -755,6 +757,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 const template = clone(get(templates)[templateId])
                 if (template?.settings?.maxLinesPerSlide) splitToMaxLines(template.settings.maxLinesPerSlide)
+                if (template?.settings?.breakLongLines) {
+                    slides = breakLongLines(data.remember.showId, template.settings.breakLongLines)
+                    show.slides = slides
+                }
                 updateSlidesWithTemplate(template)
 
                 if (get(activePage) === "edit") refreshEditSlide.set(true)

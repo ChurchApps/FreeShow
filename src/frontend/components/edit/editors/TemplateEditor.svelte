@@ -50,6 +50,7 @@
     }
 
     // ZOOM
+    let scrollElem: HTMLDivElement | undefined
     let zoom = 1
     let width = 0
     let height = 0
@@ -62,6 +63,19 @@
         if (!e.target.closest(".editArea")) return
 
         zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
+
+        // always center scroll when zooming
+        if (zoom < 1) {
+            // allow elem to update after zooming
+            setTimeout(() => {
+                if (!scrollElem) return
+
+                const centerX = (scrollElem.scrollWidth - scrollElem.clientWidth) / 2
+                const centerY = (scrollElem.scrollHeight - scrollElem.clientHeight) / 2
+
+                scrollElem.scrollTo({ left: centerX, top: centerY })
+            })
+        }
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY >= 100 || e.deltaY <= -100) return
@@ -82,7 +96,7 @@
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
 
 <div class="editArea">
-    <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
+    <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide && !Slide.isDefault}
             <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
         {:else}

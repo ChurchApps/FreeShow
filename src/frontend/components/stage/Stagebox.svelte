@@ -186,13 +186,15 @@
             return a
         })
     }
+
+    $: contextId = item.type === "slide_text" ? "stage_slide_text_item" : item.type === "text" ? "stage_text_item" : item.type === "current_output" ? "stage_item_output" : "stage_item"
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
     {id}
-    class="stage_item item {edit ? `context #${item.type === 'slide_text' ? 'stage_slide_text_item' : item.type === 'text' ? 'stage_text_item' : 'stage_item'}` : ''}"
+    class="stage_item item {edit ? `context #${contextId}` : ''}"
     class:border={currentShow?.settings?.labels}
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}

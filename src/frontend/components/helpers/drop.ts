@@ -56,7 +56,7 @@ export function ondrop(e: any, id: string) {
     console.info("DRAG: ", sel)
     console.info("DROP: ", dropdata)
 
-    const keys = { shiftKey: e.shiftKey }
+    const keys = { shiftKey: e?.shiftKey }
 
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }

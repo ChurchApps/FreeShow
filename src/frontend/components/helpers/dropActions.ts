@@ -10,8 +10,10 @@ import { changeLayout, changeSlideGroups } from "../../show/slides"
 import {
     activeDrawerTab,
     activePage,
+    activePopup,
     activeProject,
     activeShow,
+    alertMessage,
     audioFolders,
     audioPlaylists,
     audioStreams,
@@ -177,6 +179,12 @@ export const dropActions = {
             const indexes: number[] = []
             // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
+                if (_show().get()?.locked) {
+                    alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
                 const showTemplateId: string = _show().get("settings.template") || ""
                 if (showTemplateId === templateId) {
                     newToast("$toast.template_applied_globally")
@@ -206,19 +214,41 @@ export const dropActions = {
             }
 
             // create slide from template if dropping on a slide
-            // WIP add to correct index
             if (drop.trigger) {
-                const slides: Slide[] = []
+                if (_show().get()?.locked) {
+                    alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
+                const showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
+                const slides: { [key: string]: Slide } = _show(showId).get().slides
+                let layout = _show(showId).layouts("active").get()[0].slides
+                const oldData = clone({ slides, layout })
+                const ref = getLayoutRef(showId)
+
+                let dropIndex = ref[drop.index ?? -1]?.parent?.index ?? ref[drop.index ?? -1]?.index ?? -2
+                if (drop.trigger?.includes("end")) dropIndex++
+                if (dropIndex < 0) dropIndex = layout.length
+
+                // const slides: Slide[] = []
                 drag.data.forEach((id) => {
                     const template = clone(get(templates)[id])
-                    slides.push({ group: template.name, color: template.color, items: template.items, settings: { template: id }, notes: "" })
+                    const slideId = uid()
+                    const slide = { group: template.name, color: template.color, items: template.items, settings: { template: id }, notes: "" }
+
+                    // slides.push(slide)
+                    slides[slideId] = slide
+                    layout = addToPos(layout, [{ id: slideId }], dropIndex)
                 })
 
                 history({
-                    id: "SLIDES",
-                    newData: { data: slides },
-                    location: { page: "show", show: get(activeShow)! },
+                    id: "slide",
+                    newData: { slides, layout },
+                    oldData,
+                    location: { page: "show", show: get(activeShow)!, layout: _show(showId).get("settings.activeLayout") },
                 })
+                // history({ id: "SLIDES", newData: { data: slides }, location: { page: "show", show: get(activeShow)! } })
                 return
             }
 
@@ -800,7 +830,7 @@ const slideDrop = {
                 if (existingRunActionIndex > -1) return
 
                 const id = uid()
-                let newAction: SlideAction = { id, triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } }
+                const newAction: SlideAction = { id, triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } }
                 if (keys?.shiftKey) newAction.customData = { run_action: { overrideCategoryAction: true } }
                 newActions.push(newAction)
                 return

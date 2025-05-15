@@ -76,6 +76,7 @@ export const chumsConnected: Writable<boolean> = writable(false)
 export const activeTagFilter: Writable<string[]> = writable([])
 export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activeActionTagFilter: Writable<string[]> = writable([])
+export const activeVariableTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -257,6 +258,7 @@ export const drawer: Writable<{ height: number; stored: null | number }> = writa
 export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const actionTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const variableTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}

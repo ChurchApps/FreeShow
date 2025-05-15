@@ -79,7 +79,7 @@ function checkStores(dataPath: string) {
 }
 
 const DEFAULTS = {
-    error_log: {} as { renderer: ErrorLog[]; main: ErrorLog[] },
+    error_log: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] },
     settings: defaultSettings,
     synced_settings: defaultSyncedSettings,
     themes: {} as { [key: string]: Themes },

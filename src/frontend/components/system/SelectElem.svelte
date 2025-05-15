@@ -69,7 +69,7 @@
                 // open show
                 activeShow.set(data)
             }
-        },
+        }
     }
 
     function convertDataToSlide(slideRef: { index?: number; id?: string }[]) {
@@ -111,7 +111,7 @@
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
         if ($selected.id !== id) {
-            if (remainSelected(e)) return
+            if (remainSelected(e, dragged)) return
             selected.set({ id, data: [] })
         }
 
@@ -214,8 +214,8 @@
         selected.set({ id: null, data: [] })
     }
 
-    function remainSelected(e: any) {
-        if ($selected.id === "slide" && e.button === 0 && e.target.closest("#template")) return true
+    function remainSelected(e: any, dragged = false) {
+        if (!dragged && $selected.id === "slide" && e.button === 0 && e.target.closest("#template")) return true
         if ($selected.id === id) return true
         return false
     }

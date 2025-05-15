@@ -107,6 +107,7 @@ export function focusArea(e: any) {
 
 // auto save
 let autosaveTimeout: NodeJS.Timeout | null = null
+export let previousAutosave: number = 0
 export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
@@ -117,6 +118,7 @@ export function startAutosave() {
         return
     }
 
+    previousAutosave = Date.now()
     autosaveTimeout = setTimeout(() => {
         save(false, { autosave: true })
         startAutosave()

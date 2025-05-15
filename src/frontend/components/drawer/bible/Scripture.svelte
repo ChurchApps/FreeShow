@@ -84,6 +84,8 @@
             activeVerses = $openScripture.verses
             if (bibles[0]) bibles[0].activeVerses = activeVerses
 
+            if ($openScripture.play) setTimeout(() => playScripture.set(true))
+
             openScripture.set(null)
         }, 100)
     }
@@ -111,12 +113,11 @@
     async function loadAPIBible(bibleId: string, load: string, index = 0) {
         error = null
         let data: any = null
-        console.log($scriptures)
         // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
         if (typeof bookId === "number") bookId = bookIds[bookId] || "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
-        let objectId = Object.values($scriptures).find((a) => a.id === bibleId)?.[0] || ""
+        let objectId = Object.entries($scriptures).find(([_id, a]) => a.id === bibleId)?.[0] || ""
         if (load === "books" && $scriptures[objectId]?.books2) {
             // load books cache
             data = $scriptures[objectId].books2
@@ -133,7 +134,6 @@
             }
         }
 
-        console.log("LOADED", data)
         if (!data) return
 
         let hasId = false
@@ -366,7 +366,7 @@
         bookName: "",
         book: "",
         chapter: "",
-        verses: [],
+        verses: []
     }
 
     $: if (searchValue) updateSearch()

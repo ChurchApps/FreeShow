@@ -3,7 +3,7 @@
     import { get } from "svelte/store"
     import { uid } from "uid"
     import type { Tag } from "../../../../types/Show"
-    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData } from "../../../stores"
+    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData, variableTags } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -17,6 +17,7 @@
         show: () => globalTags,
         media: () => mediaTags,
         action: () => actionTags,
+        variable: () => variableTags
     }
 
     let type: string = $popupData.type || "show"

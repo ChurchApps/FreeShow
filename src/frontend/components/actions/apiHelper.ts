@@ -24,7 +24,6 @@ import {
     overlays,
     playingAudio,
     playingMetronome,
-    playScripture,
     projects,
     refreshEditSlide,
     selected,
@@ -229,7 +228,10 @@ export function editTimer(data: API_edit_timer) {
 
     timers.update((a) => {
         if (!a[data.id]) return a
+
+        if (data.key === "start" || data.key === "end") data.value = Number(data.value)
         a[data.id][data.key] = data.value
+
         return a
     })
 }
@@ -384,8 +386,7 @@ export function startScripture(data: API_scripture) {
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
-    openScripture.set({ ...ref })
-    setTimeout(() => playScripture.set(true), 500)
+    openScripture.set({ ...ref, play: true })
 }
 
 // MEDIA
@@ -414,8 +415,8 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    let activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
-    let timeValues: any = {}
+    const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    const timeValues: any = {}
     activeOutputIds.forEach((id) => {
         timeValues[id] = data.seconds
     })
@@ -461,13 +462,13 @@ export function timerSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
     const timerId = data.id || get(activeTimers)[0]?.id
-    const timer = get(timers)[timerId]
+    const currentTimer = get(timers)[timerId]
     const time = data.seconds
-    if (!timer) return
+    if (!currentTimer) return
 
     activeTimers.update((a) => {
-        let index = a.findIndex((timer) => timer.id === timerId)
-        if (index < 0) a.push({ ...timer, id: timerId, currentTime: time, paused: true })
+        const index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...currentTimer, id: timerId, currentTime: time, paused: true })
         else {
             a[index].currentTime = time
             delete a[index].startTime
@@ -553,6 +554,9 @@ export async function getPDFThumbnails({ path }: API_media) {
 // ADD
 
 export function addToProject(data: API_add_to_project) {
+    // open altered project in the app
+    activeProject.set(data.projectId)
+
     projects.update((a) => {
         if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
@@ -576,6 +580,9 @@ export function deleteProject(id: string) {
 }
 
 export function removeProjectItem(data: API_id_index) {
+    // open altered project in the app
+    activeProject.set(data.id)
+
     const projectItems = get(projects)[data.id]?.shows
     if (!projectItems.length) return
 

@@ -205,6 +205,9 @@
 
         fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
 
+        // smaller in general if bullet list, because they are not accounted for
+        if (item?.list?.enabled) fontSize *= 0.9
+
         if (item.type === "slide_tracker") return
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
     }
@@ -322,7 +325,7 @@
             {chords}
             {linesStart}
             {linesEnd}
-            {fontSize}
+            fontSize={smallFontSize ? 20 : fontSize}
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}

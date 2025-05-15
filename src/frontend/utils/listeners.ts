@@ -24,6 +24,7 @@ import {
     midiIn,
     openedFolders,
     outputs,
+    outputSlideCache,
     overlays,
     playerVideos,
     playingAudio,
@@ -198,6 +199,10 @@ export function storeSubscriber() {
     // used by stage output
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
+    })
+    outputSlideCache.subscribe((a) => {
+        send(OUTPUT, ["OUT_SLIDE_CACHE"], a)
+        send(STAGE, ["OUT_SLIDE_CACHE"], a)
     })
 
     customMessageCredits.subscribe((data) => {

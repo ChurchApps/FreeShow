@@ -76,6 +76,8 @@ body {
     flex-direction: column;
     color: var(--text);
     box-sizing: border-box;
+    /* gradient color background transition not easily possible */
+    /* https://stackoverflow.com/questions/6542212/use-css3-transitions-with-gradient-backgrounds */
     transition: background-color 0.5s;
 
     font-family: var(--font-family);

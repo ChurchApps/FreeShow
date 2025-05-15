@@ -13,8 +13,9 @@ import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, r
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompress, isZip } from "./zip"
+import MDBReader from "mdb-reader"
 
-type FileData = { content: Buffer | string; name?: string; extension?: string }
+type FileData = { content: Buffer | string | object; name?: string; extension?: string }
 
 const specialImports = {
     powerpoint: async (files: string[]) => {
@@ -68,6 +69,26 @@ const specialImports = {
 
         return data
     },
+    mdb: async (files: string[]) => {
+        const data: FileData[] = []
+
+        await Promise.all(files.map(async (filePath) => await mdbToFile(filePath)))
+
+        async function mdbToFile(filePath: string) {
+            const buffer = await readFileBufferAsync(filePath)
+            const reader = new MDBReader(buffer)
+            const tableNames = reader.getTableNames()
+
+            const dbData: any = {}
+            for (const tableName of tableNames) {
+                dbData[tableName] = reader.getTable(tableName).getData()
+            }
+
+            data.push({ content: dbData })
+        }
+
+        return data
+    },
 }
 
 // protobufjs (.pro) import can't handle close to 1000 files at once
@@ -82,6 +103,9 @@ export async function importShow(id: string, files: string[] | null, importSetti
     const sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
     if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
+    const mdbFile = id === "mediashout" && files.find((a) => a.endsWith(".mdb"))
+    if (mdbFile) files = files.filter((a) => a.endsWith(".mdb"))
+    if (mdbFile) importId = "mdb"
 
     if (id === "freeshow_project") {
         await importProject(files, importSettings.path)
@@ -207,7 +231,7 @@ async function importProject(files: string[], dataPath: string) {
             if (!file) return
             replacedMedia[filePath] = newMediaPath
 
-            if (doesPathExist(newMediaPath)) return
+            if (doesPathExist(newMediaPath) || typeof file === "object") return
             writeFile(newMediaPath, file)
         })
 
@@ -246,6 +270,6 @@ async function decodeProto(filePath: string, fileContent: Buffer | null = null) 
 }
 
 async function checkSpecial(file: FileData) {
-    if (file.extension === "pro" && typeof file.content !== "string") return await decodeProto("", file.content)
+    if (file.extension === "pro" && Buffer.isBuffer(file.content)) return await decodeProto("", file.content)
     return
 }

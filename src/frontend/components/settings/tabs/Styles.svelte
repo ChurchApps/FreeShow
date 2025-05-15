@@ -189,7 +189,7 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
+<CombinedInput style="border-top: 1px solid var(--primary-lighter);">
     <p><T id="popup.transition" /></p>
     <Button
         on:click={() => {
@@ -386,7 +386,7 @@
     {/if}
 </CombinedInput>
 
-<CombinedInput>
+<CombinedInput style="border-top: 1px solid var(--primary-lighter);">
     <p><T id="settings.override_with_template" /></p>
     <Button
         on:click={() => {
