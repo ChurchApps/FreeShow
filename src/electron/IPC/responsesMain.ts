@@ -311,11 +311,10 @@ export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
 
 // ERROR LOGGER
 const maxLogLength = 250
-export function logError(log: ErrorLog, electron = false) {
+export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "renderer") {
     if (!isProd) log.dev = true
 
     const storedLog = error_log.store
-    const key: "main" | "renderer" = electron ? "main" : "renderer"
 
     let previousLog = storedLog[key] || []
     previousLog.push(log)
@@ -333,11 +332,11 @@ const ERROR_FILTER = [
 export function catchErrors() {
     process.on("uncaughtException", (err) => {
         if (ERROR_FILTER.find((a) => err.message.includes(a))) return
-        logError(createLog(err), true)
+        logError(createLog(err), "main")
     })
 }
 
-function createLog(err: Error) {
+export function createLog(err: Error) {
     return {
         time: new Date(),
         os: process.platform || "Unknown",

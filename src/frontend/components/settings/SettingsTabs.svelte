@@ -5,7 +5,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const tabs: SettingsTabs[] = ["general", "files", "display_settings", "styles", "connection", "theme", "other"]
+    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "theme", "other"]
 
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return

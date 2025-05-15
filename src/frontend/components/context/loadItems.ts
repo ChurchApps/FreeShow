@@ -114,6 +114,9 @@ const loadActions = {
 
         const currentGroup: string = currentSlide.globalGroup || ""
         items = Object.entries(get(groups)).map(([id, a]) => {
+            // strange bug, where name is { "isTrusted": true }, maybe an old issue
+            // https://www.reddit.com/r/freeshowapp/comments/1j0w6mt/freeshow_keeps_on_freezing
+            if (typeof a.name !== "string") a.name = ""
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
 

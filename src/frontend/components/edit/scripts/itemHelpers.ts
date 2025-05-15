@@ -333,6 +333,7 @@ export function getVariableValue(variableId: string) {
     if (!variable) return ""
 
     if (variable.type === "text") {
+        if (variable.enabled === false) return ""
         return variable.text || ""
     } else {
         return (variable.number ?? 0).toString()

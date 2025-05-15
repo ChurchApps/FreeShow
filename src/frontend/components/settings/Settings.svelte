@@ -19,16 +19,16 @@
     <div class="scroll">
         {#if $settingsTab === "general"}
             <General />
+        {:else if $settingsTab === "display_settings"}
+            <Outputs />
+        {:else if $settingsTab === "styles"}
+            <Styles />
+        {:else if $settingsTab === "connection"}
+            <Connection />
         {:else if $settingsTab === "files"}
             <Files />
         {:else if $settingsTab === "theme"}
             <Theme />
-        {:else if $settingsTab === "styles"}
-            <Styles />
-        {:else if $settingsTab === "display_settings"}
-            <Outputs />
-        {:else if $settingsTab === "connection"}
-            <Connection />
         {:else if $settingsTab === "other"}
             <Other />
         {/if}

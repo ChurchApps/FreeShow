@@ -1025,8 +1025,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "stage") {
         const stageLayoutId: string = isOutputWindow ? Object.values(get(outputs))[0]?.stageOutput || id : id
         const stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
-        const outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
-        const outSlide = get(outputs)[outputId]?.out?.slide
+        const outputId = stageOutput || getActiveOutputs(isOutputWindow ? get(allOutputs) : get(outputs), false, true, true)[0]
+        const outSlide = (isOutputWindow ? get(allOutputs) : get(outputs))[outputId]?.out?.slide
         showId = outSlide?.id
         slideIndex = outSlide?.index ?? -1
     }

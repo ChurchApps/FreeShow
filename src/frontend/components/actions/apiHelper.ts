@@ -228,7 +228,10 @@ export function editTimer(data: API_edit_timer) {
 
     timers.update((a) => {
         if (!a[data.id]) return a
+
+        if (data.key === "start" || data.key === "end") data.value = Number(data.value)
         a[data.id][data.key] = data.value
+
         return a
     })
 }

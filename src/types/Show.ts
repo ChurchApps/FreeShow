@@ -62,6 +62,7 @@ export interface TrimmedShows {
 }
 export interface TrimmedShow {
     name: string
+    origin?: string
     category: null | ID
     timestamps: {
         created: number

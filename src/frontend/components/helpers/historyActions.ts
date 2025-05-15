@@ -363,6 +363,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         quickAccess: show.quickAccess || a[id]?.quickAccess,
                     }
 
+                    if (show.origin) a[id].origin = ""
+                    else if (a[id].origin) delete a[id].origin
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
                     if (show.locked) a[id].locked = true

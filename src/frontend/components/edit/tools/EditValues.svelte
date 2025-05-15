@@ -294,7 +294,8 @@
             if (Number(currentValue) == currentValue && typeof currentValue !== "boolean" && currentValue.toString().length) currentValue = Number(currentValue)
 
             if (defaultInput.input === "dropdown") {
-                if (!currentValue.includes(defaultValue)) return true
+                // if checkbox is not value and it's not unset!
+                if (!currentValue.includes(defaultValue) && currentValue !== "—") return true
             } else if (defaultValue !== currentValue) return true
 
             return false
