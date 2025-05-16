@@ -1,6 +1,7 @@
 import macadam from "macadam"
 import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
 import { DeviceConfig, DeviceData } from "./TypeData"
+import { BlackmagicSender } from "./BlackmagicSender";
 
 // https://github.com/Streampunk/macadam
 export class BlackmagicManager {
@@ -69,7 +70,7 @@ export class BlackmagicManager {
         //         } as any,
         //     ]
         // }
-
+        
         let deviceInfo: any = macadam.getDeviceInfo()
         if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
         return deviceInfo
@@ -112,4 +113,55 @@ export class BlackmagicManager {
         if (!pixelFormat.includes("8")) return false
         return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
     }
+    
+    /**
+ * Resets a Blackmagic device that has been marked as unstable
+ * @param deviceId The ID of the device to reset
+ * @returns Object with success status and message
+ */
+static resetDevice(deviceId: string): { success: boolean; message: string } {
+  try {
+    // First check if device exists
+    const device = this.getDeviceById(deviceId);
+    if (!device) {
+      return { 
+        success: false, 
+        message: `Device ${deviceId} not found in available devices` 
+      };
+    }
+    
+    // Check if the device was marked as unstable in BlackmagicSender
+    const wasUnstable = BlackmagicSender.isDeviceStable(deviceId) === false;
+    
+    // Reset the device in BlackmagicSender
+    const resetResult = BlackmagicSender.resetProblematicDevice(deviceId);
+    
+    // If it wasn't previously marked as unstable, inform the user
+    if (!wasUnstable && !resetResult) {
+      return { 
+        success: true, 
+        message: `Device ${deviceId} (${device.displayName}) was not marked as unstable` 
+      };
+    }
+    
+    // If it was reset, try to reinitialize it
+    if (resetResult) {
+      return { 
+        success: true, 
+        message: `Device ${deviceId} (${device.displayName}) has been reset and can be used again` 
+      };
+    }
+    
+    return { 
+      success: false, 
+      message: `Failed to reset device ${deviceId}` 
+    };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return { 
+      success: false, 
+      message: `Error resetting device: ${errorMessage}` 
+    };
+  }
+}
 }
