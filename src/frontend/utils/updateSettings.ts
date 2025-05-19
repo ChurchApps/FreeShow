@@ -224,10 +224,11 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     showsPath: (v: any) => {
         if (!v) sendMain(Main.SHOWS_PATH)
-        else showsPath.set(v)
-
-        // LOAD SHOWS FROM FOLDER
-        sendMain(Main.SHOWS, { showsPath: v })
+        else {
+            showsPath.set(v)
+            // LOAD SHOWS FROM FOLDER
+            sendMain(Main.SHOWS, { showsPath: v })
+        }
     },
     dataPath: (v: any) => {
         if (!v) sendMain(Main.DATA_PATH)

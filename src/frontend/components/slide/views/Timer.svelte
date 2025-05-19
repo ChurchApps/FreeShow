@@ -34,7 +34,7 @@
 
     $: overflow = getTimerOverflow(currentTime)
     $: negative = (timer?.start || 0) > (timer?.end || 0) || currentTime < 0
-    function getTimerOverflow(time) {
+    function getTimerOverflow(time: number, offset: number = 0) {
         if (!timer.overflow) return false
 
         if (currentTime < 0) return true
@@ -44,11 +44,11 @@
         let end: number = timer.end!
 
         if (start < end) {
-            if (time > end) return true
+            if (time + offset > end) return true
             return false
         }
 
-        if (time < end) return true
+        if (time - offset < end) return true
         return false
     }
 
@@ -66,7 +66,8 @@
 
     // don't blink if paused?
     let blinkingInterval: NodeJS.Timeout | null = null
-    $: if (overflow && timer.overflowBlink) startBlinking()
+    $: blinkingOverflow = getTimerOverflow(currentTime, timer.overflowBlinkOffset || 0)
+    $: if (blinkingOverflow && timer.overflowBlink) startBlinking()
     else stopBlinking()
     onDestroy(stopBlinking)
 
@@ -94,7 +95,7 @@
 {:else}
     <div class="align autoFontSize" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
-            {#if !overflow || !blinkingOff}
+            {#if !blinkingOverflow || !blinkingOff}
                 {#if overflow && negative}
                     <span>-</span>
                 {/if}

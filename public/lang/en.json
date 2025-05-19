@@ -538,6 +538,7 @@
         "simple": "Simple view",
         "list": "List view",
         "lyrics": "Lyrics view",
+        "change_view": "Change slide view",
         "text": "Text edit",
         "update": "Update show",
         "locked": "This show has been locked!",

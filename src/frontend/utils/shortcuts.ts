@@ -51,6 +51,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { changeSlidesView } from "../show/slides"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -77,6 +78,7 @@ const ctrlKeys = {
 
 const shiftCtrlKeys = {
     f: () => menuClick("focus_mode"),
+    v: () => changeSlidesView(),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]

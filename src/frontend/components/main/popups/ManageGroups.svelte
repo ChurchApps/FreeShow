@@ -88,7 +88,7 @@
                 <!-- color -->
                 <Color style="flex: 0;min-width: 20%;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
                 <!-- shortcut -->
-                <span style="width: 20%;display: flex;">
+                <span style="width: 20%;overflow: hidden;display: flex;">
                     <Button
                         on:click={() => {
                             popupData.set({
@@ -101,7 +101,7 @@
                             })
                             activePopup.set("assign_shortcut")
                         }}
-                        style="width: 100%;"
+                        style="width: 100%;overflow: hidden;"
                         bold={!group.shortcut}
                     >
                         <div style="display: flex;align-items: center;padding: 0;">
@@ -122,13 +122,13 @@
                     {/if}
                 </span>
                 <!-- template -->
-                <span style="width: 25%;display: flex;">
+                <span style="width: 25%;overflow: hidden;display: flex;">
                     <Button
                         on:click={() => {
                             popupData.set({ action: "select_template", active: group.template || "", revert: $activePopup, trigger: (id) => changeGroup(id, group.id, "template") })
                             activePopup.set("select_template")
                         }}
-                        style="width: 100%;"
+                        style="width: 100%;overflow: hidden;"
                         bold={!group.template}
                     >
                         <div style="display: flex;align-items: center;padding: 0;">

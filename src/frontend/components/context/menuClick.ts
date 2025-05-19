@@ -238,28 +238,28 @@ const actions = {
 
         if (obj.sel && deleteAction(obj.sel)) return
 
-        if (obj.contextElem?.classList.contains("#project_template")) {
+        if (obj.contextElem?.classList.value.includes("#project_template")) {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
             return
         }
-        if (obj.contextElem?.classList.contains("#video_subtitle")) {
+        if (obj.contextElem?.classList.value.includes("#video_subtitle")) {
             deleteAction({ id: "video_subtitle", data: { index: obj.contextElem.id } })
             return
         }
-        if (obj.contextElem?.classList.contains("#video_marker")) {
+        if (obj.contextElem?.classList.value.includes("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
         // delete slide item using context menu, or menubar action
-        if (obj.contextElem?.classList.contains("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
+        if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
         }
-        if (obj.contextElem?.classList.contains("stage_item")) {
+        if (obj.contextElem?.classList.value.includes("stage_item")) {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
             return
         }
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             deleteAction({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
@@ -267,7 +267,7 @@ const actions = {
         console.error("COULD NOT DELETE", obj)
     },
     delete_all: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             const group = get(events)[obj.contextElem.id].group
             if (!group) return
 
@@ -282,12 +282,12 @@ const actions = {
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
 
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
 
-        if (obj.contextElem?.classList.contains("stage_item")) {
+        if (obj.contextElem?.classList.value.includes("stage_item")) {
             duplicate({ id: "stage_item", data: get(activeStage) })
             return
         }
@@ -733,7 +733,7 @@ const actions = {
             return
         }
 
-        if (obj.contextElem?.classList.contains("project")) {
+        if (obj.contextElem?.classList.value.includes("project")) {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
@@ -924,10 +924,10 @@ const actions = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.contextElem?.classList.contains("#event")) {
+        } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
-        } else if (obj.contextElem?.classList.contains("output_button")) {
+        } else if (obj.contextElem?.classList.value.includes("output_button")) {
             currentOutputSettings.set(obj.contextElem.id)
             settingsTab.set("display_settings")
             activePage.set("settings")

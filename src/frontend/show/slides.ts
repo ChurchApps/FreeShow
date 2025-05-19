@@ -8,7 +8,12 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
-import { activeEdit, activeShow, refreshEditSlide, showsCache } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
+
+const slidesViews = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
+export function changeSlidesView() {
+    slidesOptions.set({ ...get(slidesOptions), mode: slidesViews[get(slidesOptions).mode] })
+}
 
 type GroupData = { globalGroup?: string; group?: string; color?: string }
 

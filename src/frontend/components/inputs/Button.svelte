@@ -95,7 +95,7 @@
     {#if showTooltip}
         <div class="tooltip" transition:fade={{ duration: 200 }} style="left: {mouse.x}px;top: {mouse.y}px;{tooltipStyle};zoom: {1 / zoom};">
             {titleContent[0]}
-            {#if titleContent[1]}<span style="display: block;font-weight: bold;text-transform: uppercase;">{titleContent[1].replace("Ctrl", ctrl)}</span>{/if}
+            {#if titleContent[1]}<span style="display: block;font-weight: bold;text-transform: uppercase;">{titleContent[1].replace("Ctrl", ctrl).replaceAll("+", " + ")}</span>{/if}
         </div>
     {/if}
     <slot />

@@ -38,6 +38,7 @@
         shift: "SEPERATOR",
 
         "actions.focus_mode": `${ctrl} + shift + f`,
+        "show.change_view": `${ctrl} + shift + v`,
 
         clear: "SEPERATOR",
 
@@ -68,7 +69,7 @@
         "actions.change_slide": "← / →",
         "actions.change_project_item": "↑ / ↓",
         "actions.change_drawer_item": `${ctrl} + ← / →`,
-        "actions.change_drawer_category": `${ctrl} + ↑ / ↓`,
+        "actions.change_drawer_category": `${ctrl} + ↑ / ↓`
     }
 </script>
 
