@@ -1,5 +1,11 @@
 {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
     "editor.formatOnSave": true,
-    "prettier.configPath": "config/formatting/.prettierrc.yaml"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.singleQuote": false,
+    "prettier.semi": true,
+    "typescript.preferences.quoteStyle": "double",
+    "typescript.preferences.importModuleSpecifier": "non-relative"
 }

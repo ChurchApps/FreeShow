@@ -15,6 +15,7 @@ export class ChumsImport {
     public static async loadServices(): Promise<void> {
         this.projects = []
         this.shows = []
+        console.log("Loading services from Chums")
 
         const SERVICE_PLANS = await ChumsConnect.apiRequest({
             api: "doing",
