@@ -5,7 +5,7 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "prettier.singleQuote": false,
-    "prettier.semi": true,
+    "prettier.semi": false,
     "typescript.preferences.quoteStyle": "double",
     "typescript.preferences.importModuleSpecifier": "non-relative"
 }
