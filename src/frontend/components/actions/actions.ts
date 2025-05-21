@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { actionHistory, audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
+import { actionHistory, audioPlaylists, audioStreams, actions, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 import { clone, keysToID } from "../helpers/array"
 import { history } from "../helpers/history"
@@ -14,11 +14,11 @@ import { convertOldMidiToNewAction } from "./midi"
 import { sortByClosestMatch } from "./apiHelper"
 
 export function runActionId(id: string) {
-    runAction(get(midiIn)[id])
+    runAction(get(actions)[id])
 }
 
 export function runActionByName(name: string) {
-    const sortedActions = sortByClosestMatch(keysToID(get(midiIn)), name)
+    const sortedActions = sortByClosestMatch(keysToID(get(actions)), name)
     if (!sortedActions.length) return
     runAction(sortedActions[0])
 }
@@ -112,7 +112,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
 export function toggleAction(data: API_toggle) {
     if (!data.id) return
 
-    midiIn.update((a) => {
+    actions.update((a) => {
         if (!a[data.id]) return a
 
         const previousValue = a[data.id].enabled ?? true
@@ -124,7 +124,7 @@ export function toggleAction(data: API_toggle) {
 
 export function checkStartupActions() {
     // WIP only for v1.1.7 (can be removed)
-    midiIn.update((a) => {
+    actions.update((a) => {
         Object.keys(a).forEach((actionId) => {
             const action = a[actionId]
             if (action.startupEnabled && !action.customActivation) {
@@ -140,8 +140,8 @@ export function checkStartupActions() {
 
 export function customActionActivation(id: string) {
     let actionTriggered = false
-    Object.keys(get(midiIn)).forEach((actionId) => {
-        const action = get(midiIn)[actionId]
+    Object.keys(get(actions)).forEach((actionId) => {
+        const action = get(actions)[actionId]
         const customActivation = id.split("___")[0]
         const specificActivation = id.split("___")[1]
 
@@ -184,10 +184,10 @@ export function slideHasAction(actions: any, key: string) {
 }
 
 export function getActionIcon(id: string) {
-    const actions = get(midiIn)[id]?.triggers || {}
-    if (actions.length > 1) return "actions"
+    const actionTriggers = get(actions)[id]?.triggers || {}
+    if (actionTriggers.length > 1) return "actions"
 
-    const trigger = getActionTriggerId(actions[0])
+    const trigger = getActionTriggerId(actionTriggers[0])
     return actionData[trigger]?.icon || "actions"
 }
 
@@ -200,12 +200,12 @@ export function getActionTriggerId(id: string) {
 // extra names
 
 const namedObjects = {
-    run_action: () => get(midiIn),
+    run_action: () => get(actions),
     start_show: () => get(shows),
     start_trigger: () => get(triggers),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
-    id_select_stage_layout: () => get(stageShows),
+    id_select_stage_layout: () => get(stageShows)
 }
 export function getActionName(actionId: string, actionValue: any) {
     if (actionId === "change_output_style") {

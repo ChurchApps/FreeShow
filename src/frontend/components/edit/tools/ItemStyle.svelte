@@ -12,6 +12,7 @@
     import { setBoxInputValue } from "../values/boxes"
     import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
+    import { wait } from "../../../utils/common"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -58,7 +59,7 @@
 
     $: if (item) itemEditValues = getBackgroundOpacity(itemEditValues, data)
 
-    function updateStyle(e: any) {
+    async function updateStyle(e: any) {
         let input = e.detail
         input = percentageToAspectRatio(input)
 
@@ -72,7 +73,10 @@
             // set "background" value instead of "background-color"
             if (input.value.includes("gradient")) input.key = "background"
             // reset "background" value
-            else updateStyle({ detail: { ...input, key: "background", value: "" } })
+            else {
+                updateStyle({ detail: { ...input, key: "background", value: "" } })
+                await wait(10)
+            }
         }
 
         // background opacity

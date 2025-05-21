@@ -11,7 +11,7 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, MidiIn, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Emitter, ID, Action, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
@@ -187,7 +187,7 @@ export const groups: Writable<ShowGroups> = writable({}) // {default}
 export const categories: Writable<Categories> = writable({}) // {default}
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
     text: { type: "fade", duration: 500, easing: "sine" },
-    media: { type: "fade", duration: 800, easing: "sine" },
+    media: { type: "fade", duration: 800, easing: "sine" }
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
 export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
@@ -293,8 +293,7 @@ export const outputs: Writable<Outputs> = writable({}) // {default}
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // MIDI
-// this is repurposed as "actions"
-export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
+export const actions: Writable<{ [key: string]: Action }> = writable({}) // {}
 export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
 
 // CONNECTIONS
@@ -406,7 +405,7 @@ export const $ = {
     outLocked,
     ports,
     maxConnections,
-    remotePassword,
+    remotePassword
 }
 
 // DEBUG STORE UPDATES

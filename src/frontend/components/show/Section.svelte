@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, dictionary, labelsDisabled, midiIn, projects, special } from "../../stores"
+    import { actions, activeProject, activeShow, dictionary, labelsDisabled, projects, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -44,9 +44,9 @@
 
     $: actionOptions = [
         { id: "", name: "—" },
-        ...Object.entries($midiIn)
+        ...Object.entries($actions)
             .map(([id, a]) => ({ id, name: a.name }))
-            .sort((a, b) => a.name?.localeCompare(b.name)),
+            .sort((a, b) => a.name?.localeCompare(b.name))
     ]
     function updateTrigger(e: any) {
         special.update((a) => {
@@ -79,7 +79,7 @@
 
         <CombinedInput>
             <p><T id="settings.section_trigger_action" /></p>
-            <Dropdown disabled={localAction && $midiIn[localAction]} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
+            <Dropdown disabled={localAction && $actions[localAction]} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
         </CombinedInput>
 
         <h5><T id="groups.current" /></h5>

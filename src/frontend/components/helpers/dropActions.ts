@@ -27,7 +27,7 @@ import {
     shows,
     showsCache,
     templates,
-    timers,
+    timers
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -205,7 +205,7 @@ export const dropActions = {
                     id: "slideStyle",
                     oldData,
                     newData,
-                    location: { page: "edit", show: get(activeShow)!, slide: slideId },
+                    location: { page: "edit", show: get(activeShow)!, slide: slideId }
                 })
 
                 // update
@@ -246,7 +246,7 @@ export const dropActions = {
                     id: "slide",
                     newData: { slides, layout },
                     oldData,
-                    location: { page: "show", show: get(activeShow)!, layout: _show(showId).get("settings.activeLayout") },
+                    location: { page: "show", show: get(activeShow)!, layout: _show(showId).get("settings.activeLayout") }
                 })
                 // history({ id: "SLIDES", newData: { data: slides }, location: { page: "show", show: get(activeShow)! } })
                 return
@@ -310,7 +310,7 @@ export const dropActions = {
                     id: "UPDATE",
                     oldData: { id },
                     newData: { key: "category", data: drop.data === "unlabeled" ? null : drop.data },
-                    location: { page: "drawer", id: drag.id + "_category" },
+                    location: { page: "drawer", id: drag.id + "_category" }
                 })
             })
 
@@ -347,7 +347,7 @@ export const dropActions = {
                 name: slide.group || "",
                 color: slide.color || "",
                 category: activeTab === "all" || activeTab === "unlabeled" ? null : activeTab,
-                items: slide.items,
+                items: slide.items
             }
             history({ id: "UPDATE", newData: { data }, location: { page: "drawer", id: drop.id.slice(0, -1) } })
         })
@@ -388,7 +388,7 @@ export const dropActions = {
 
         h.newData = { key: "songs", data: songs }
         return h
-    },
+    }
 }
 
 function dropFileInDrawerNavigation(drag) {
@@ -419,7 +419,7 @@ export function addDrawerFolder(file: any, type: "media" | "audio") {
     history({
         id: "UPDATE",
         newData: { data: { name: getFileName(path), icon: "folder", path } },
-        location: { page: "drawer", id: "category_" + type },
+        location: { page: "drawer", id: "category_" + type }
     })
 }
 
@@ -431,7 +431,7 @@ const files = {
     project: [...fileDropExtensions, ...projectExtra],
     slides: fileDropExtensions,
     slide: fileDropExtensions,
-    templates: mediaExtensions,
+    templates: mediaExtensions
 }
 
 const slideDrop = {
@@ -448,7 +448,7 @@ const slideDrop = {
                     data.push({
                         path: window.api.showFilePath(a),
                         name: removeExtension(a.name),
-                        type: getMediaType(extension),
+                        type: getMediaType(extension)
                     })
                 }
             })
@@ -510,7 +510,7 @@ const slideDrop = {
                     data.push({
                         path: window.api.showFilePath(a),
                         name: removeExtension(a.name),
-                        type: getMediaType(extension),
+                        type: getMediaType(extension)
                     })
                 }
             })
@@ -675,13 +675,14 @@ const slideDrop = {
         return history
     },
     scripture: ({ drag, drop }: Data, history: History) => {
-        if (!drag.data[0]?.bibles) return
+        const bibles = drag.data[0]?.bibles
+        if (!bibles?.[0]) return
 
         let newSlides: any[] = getSlides(drag.data[0])
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         newSlides = newSlides.map((items) => {
-            const firstTextItem = items.find((a) => a.lines)
-            return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: { template: slideTemplate }, notes: "", items }
+            const referenceText = getReferenceText(bibles, drag.data[0]?.sorted, items)
+            return { group: referenceText, color: null, settings: { template: slideTemplate }, notes: "", items }
         })
 
         // set to correct order
@@ -853,7 +854,7 @@ const slideDrop = {
         actionsData.slideActions = [...slideActions, ...newActions]
         history.newData = { key: "actions", data: actionsData, indexes: [drop.index] }
         return history
-    },
+    }
 }
 
 // HELPERS
@@ -879,7 +880,7 @@ function createSlideAction(triggerId: string, slideIndex: number, data: any, rem
 // WIP duplicate of ScriptureInfo.svelte createSlides()
 function createScriptureShow(drag, drop) {
     const bibles = drag.data[0]?.bibles
-    if (!bibles) return
+    if (!bibles?.[0]) return
 
     const slides: any = {}
     const layouts: any[] = []
@@ -887,8 +888,9 @@ function createScriptureShow(drag, drop) {
     const newSlides = getSlides(drag.data[0])
     newSlides.forEach((items) => {
         const id = uid()
-        const firstTextItem = items.find((a) => a.lines)
-        slides[id] = { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+        const referenceText = getReferenceText(bibles, drag.data[0]?.sorted, items)
+
+        slides[id] = { group: referenceText, color: null, settings: {}, notes: "", items }
         layouts.push({ id })
     })
 
@@ -914,11 +916,24 @@ function createScriptureShow(drag, drop) {
     const versions = bibles.map((a) => a.version).join(" + ")
     show.reference = {
         type: "scripture",
-        data: { collection: get(drawerTabsData).scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
+        data: { collection: get(drawerTabsData).scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses }
     }
 
     let index = drop.index
     if (drop.trigger?.includes("end")) index++
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index } }, location: { page: "show", id: "show" } })
+}
+
+function getReferenceText(bibles, range: string[], items: Item[]) {
+    const referenceTextItem = items.find((a) => a.lines?.find((a) => a.text?.find((a) => a.value.includes(":") && a.value.length < 25)))
+    if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
+
+    const referenceDivider = get(scriptureSettings).referenceDivider || ":"
+    const reference = bibles[0].book + " " + bibles[0].chapter + referenceDivider + joinRange(range)
+    if (reference) return reference
+
+    // this is probably never called
+    const firstTextItem = items.find((a) => a.lines)
+    return firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || ""
 }

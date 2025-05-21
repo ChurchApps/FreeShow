@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        actions,
         activeEdit,
         activeProject,
         activeRecording,
@@ -10,7 +11,6 @@
         events,
         forceClock,
         media,
-        midiIn,
         os,
         outputs,
         overlayCategories,
@@ -87,7 +87,7 @@
             } else if ($selected.id === "stage") {
                 isEnabled = $stageShows[$selected.data[0]?.id]?.disabled
             } else if ($selected.id === "action") {
-                let action = $midiIn[$selected.data[0]?.id] || {}
+                let action = $actions[$selected.data[0]?.id] || {}
                 if (!action.customActivation) disabled = true
                 else isEnabled = action.enabled === false
             }

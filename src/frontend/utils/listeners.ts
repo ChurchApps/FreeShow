@@ -21,7 +21,7 @@ import {
     gain,
     groups,
     media,
-    midiIn,
+    actions,
     openedFolders,
     outputs,
     outputSlideCache,
@@ -41,7 +41,7 @@ import {
     timers,
     transitionData,
     variables,
-    volume,
+    volume
 } from "../stores"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
@@ -270,7 +270,7 @@ export function storeSubscriber() {
 
     //
 
-    midiIn.subscribe(midiInListen)
+    actions.subscribe(midiInListen)
 
     activeShow.subscribe((data) => {
         if (!data?.id) return
@@ -329,7 +329,7 @@ const initalOutputData = {
     SHOWS_DATA: "shows",
 
     // received by Output
-    VOLUME: "volume",
+    VOLUME: "volume"
 }
 
 export function sendInitialOutputData() {

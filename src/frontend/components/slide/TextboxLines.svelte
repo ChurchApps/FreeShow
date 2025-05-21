@@ -154,7 +154,7 @@
             })
 
             chords.forEach((chord, i) => {
-                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                html += `<span class="chord end" style="transform: translate(${80 * (i + 1)}px, calc(${isStage ? "-55% - 2px" : "-12px"} - var(--offsetY)));">${chord.key}</span>`
             })
 
             if (!html) return
@@ -370,6 +370,9 @@
         /* WIP chords goes over other (stage) items */
         z-index: 2;
     }
+    /* .align.isStage .break.chords :global(.chord.end) {
+        line-height: 0px;
+    } */
     .align.isStage .break.chords :global(.chord) {
         transform: translate(0, calc(-55% - 2px - var(--offsetY)));
     }

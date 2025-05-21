@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeActionTagFilter, activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
+    import { actions, activeActionTagFilter, activePopup, dictionary, labelsDisabled, popupData, runningActions } from "../../../stores"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
@@ -18,15 +18,15 @@
         activePopup.set("action")
     }
 
-    $: actions = sortByName(keysToID($midiIn), "name", true)
+    $: actionsList = sortByName(keysToID($actions), "name", true)
         .map(convertOldMidiToNewAction)
         .filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 </script>
 
 <div class="context #actions" style="position: relative;height: 100%;overflow-y: auto;">
-    {#if actions.length}
+    {#if actionsList.length}
         <div class="actions">
-            {#each actions as action}
+            {#each actionsList as action}
                 <div class="action context #action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
