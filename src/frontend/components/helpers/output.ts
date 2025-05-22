@@ -277,7 +277,7 @@ function startOverlayTimer(outputId: string, overlayId: string, outData: string[
     if (!outData.includes(overlayId)) return
 
     const overlay = get(overlays)[overlayId]
-    if (!overlay.displayDuration) return
+    if (!overlay?.displayDuration) return
 
     overlayTimers.update((a) => {
         const id = outputId + overlayId

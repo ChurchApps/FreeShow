@@ -150,6 +150,7 @@
         "background": "Clear background",
         "slide": "Clear slide",
         "overlays": "Clear overlays",
+        "overlay": "Clear overlay",
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",

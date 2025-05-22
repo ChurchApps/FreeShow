@@ -176,7 +176,7 @@
                 </div>
             {/if}
         {:else}
-            <div class="header">
+            <div class="header context #projectsTab">
                 <!-- <Icon id="folder" white right /> -->
                 <p><T id="remote.projects" /></p>
             </div>

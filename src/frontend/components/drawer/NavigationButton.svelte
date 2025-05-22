@@ -81,8 +81,7 @@
             right
         />
         {#if isSubmenu}
-            <span style="width: 100%;text-align: start;"
-                >actionsactions
+            <span style="width: 100%;text-align: start;">
                 <p style="margin: 3px;font-size: 0.9em;">
                     {#if category.name}
                         {category.name}

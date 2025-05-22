@@ -70,13 +70,6 @@
         sliderValue = e.target.value
     }
 
-    function keydown(e: KeyboardEvent) {
-        // if (e.target.closest("input") || e.target.closest(".edit")) return
-        if ($outLocked || isMic || $focusMode || document.activeElement !== document.body) return
-
-        if (e.key === " ") AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
-    }
-
     let mediaElem: HTMLElement | undefined
     let canvas: HTMLCanvasElement | undefined
     $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
@@ -156,8 +149,6 @@
 
     let fullLength = false
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if !$focusMode}
     <!-- analyzer -->

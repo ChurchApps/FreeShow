@@ -26,7 +26,8 @@ export const actionData = {
     clear_all: { name: "clear.all", icon: "clear", incompatible: ["restore_output", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
     clear_background: { slideId: "clearBackground", name: "clear.background", icon: "background", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_slide: { name: "clear.slide", icon: "slide", red: true, incompatible: ["restore_output", "clear_all"] },
-    clear_overlays: { slideId: "clearOverlays", name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_overlays: { slideId: "clearOverlays", name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all", "clear_overlay"] },
+    clear_overlay: { name: "clear.overlay", icon: "overlays", input: "id", red: true, incompatible: ["restore_output", "clear_all", "clear_overlays"] },
     clear_audio: { slideId: "clearAudio", name: "clear.audio", icon: "audio", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_next_timer: { name: "clear.nextTimer", icon: "timer", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_drawing: { name: "clear.drawing", icon: "paint", red: true },
@@ -80,5 +81,5 @@ export const actionData = {
 
     // SPECIAL
     // SECTION: "edit.special",
-    wait: { canAddMultiple: true, name: "animate.wait", icon: "time_in", input: "number" },
+    wait: { canAddMultiple: true, name: "animate.wait", icon: "time_in", input: "number" }
 }

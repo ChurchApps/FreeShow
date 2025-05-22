@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { StageLayout } from "../../../types/Stage"
-    import { activeTimers, allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables } from "../../stores"
+    import { activeTimers, allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables, videosTime } from "../../stores"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -29,15 +29,18 @@
     }
 
     $: stageItems = getSortedStageItems(id, $stageShows)
+
+    $: videoTime = $videosTime[stageOutputId] || 0
 </script>
 
+<!-- WIP duplicate of StageLayout.svelte (pretty much) -->
 <div class="main" class:active style="width: {100 / columns}%" class:list>
     <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths })}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })}
                             <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}

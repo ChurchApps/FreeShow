@@ -73,20 +73,6 @@
         else activeShow.set({ id: path, type: type as ShowType })
     }
 
-    function keydown(e: KeyboardEvent) {
-        if (e.key !== " ") return
-        if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
-
-        let show = $activeShow
-        if (show && (show.type === "show" || show.type === undefined)) return
-
-        if (show?.id !== path) return
-
-        // play / pause video
-        e.preventDefault()
-        playPause()
-    }
-
     function playPause() {
         videoData.paused = !videoData.paused
         sendToOutput()
@@ -94,8 +80,6 @@
 
     let changeValue = 0
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if background}
     {#if !big}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { dictionary, selected, variables } from "../../../stores"
+    import { dictionary, drawerTabsData, selected, variables } from "../../../stores"
     import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -59,6 +59,11 @@
         if (existing) {
             updateStore("variables", variableId, currentVariable)
         } else {
+            // set tag
+            if ($drawerTabsData.functions?.activeSubTab === "variables" && $drawerTabsData.functions?.activeSubmenu) {
+                currentVariable.tags = [$drawerTabsData.functions?.activeSubmenu]
+            }
+
             createStore("variables", currentVariable, variableId)
             existing = true
         }

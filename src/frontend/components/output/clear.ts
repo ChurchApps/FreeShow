@@ -22,7 +22,7 @@ import {
     slideTimers,
     topContextActive,
     videosData,
-    videosTime,
+    videosTime
 } from "../../stores"
 import { customActionActivation } from "../actions/actions"
 import { clone } from "../helpers/array"
@@ -132,6 +132,18 @@ export function clearSlide(shouldClearAll = false) {
     setOutput("slide", null)
     stopSlideRecording()
     customActionActivation("slide_cleared")
+}
+
+export function clearOverlay(overlayId: string) {
+    const outputIds: string[] = getActiveOutputs()
+
+    outputIds.forEach((outputId) => {
+        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
+        outOverlays = outOverlays.filter((id) => id !== overlayId)
+        lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
+
+        setOutput("overlays", outOverlays, false, outputId)
+    })
 }
 
 export function clearOverlays(specificOutputId = "") {

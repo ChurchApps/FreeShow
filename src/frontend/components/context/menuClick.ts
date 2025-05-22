@@ -94,6 +94,7 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
+import { translate } from "../../utils/language"
 
 interface ObjData {
     sel: Selected | null
@@ -117,7 +118,7 @@ export function menuClick(id: string, enabled = true, menu: ContextMenuItem | nu
 const clickActions = {
     // file
     save: () => save(),
-    import: () => activePopup.set("import"),
+    import_more: () => activePopup.set("import"),
     export_more: () => activePopup.set("export"),
     settings: () => {
         if (get(activePage) === "stage") settingsTab.set("connection")
@@ -738,6 +739,14 @@ const clickActions = {
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
 
+            return
+        }
+    },
+    import: (obj: ObjData) => {
+        if (obj.contextElem?.classList.value.includes("#projectsTab")) {
+            const extensions = ["project", "shows", "json", "zip"]
+            const name = translate("formats.project")
+            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
             return
         }
     },
