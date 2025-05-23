@@ -26,7 +26,7 @@ import {
     folders,
     media,
     mediaFolders,
-    midiIn,
+    actions,
     outputs,
     overlayCategories,
     overlays,
@@ -46,7 +46,7 @@ import {
     timers,
     triggers,
     variables,
-    videoMarkers,
+    videoMarkers
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
@@ -358,7 +358,7 @@ const selectActions = {
         selected.set({ id: "template", data: newSelection })
     },
     media: () => selectAllMedia.set(true),
-    audio: () => selectAllAudio.set(true),
+    audio: () => selectAllAudio.set(true)
 }
 
 const copyActions = {
@@ -475,7 +475,7 @@ const copyActions = {
             projectItems.push(item)
         })
         return projectItems
-    },
+    }
 }
 
 const pasteActions = {
@@ -621,7 +621,7 @@ const pasteActions = {
             a[get(activeProject) || ""].shows.push(...data)
             return a
         })
-    },
+    }
 }
 
 const deleteActions = {
@@ -644,7 +644,7 @@ const deleteActions = {
                 id: "UPDATE",
                 oldData: { id: editId },
                 newData: { key: "items", data: currentItems },
-                location: { page: "edit", id: get(activeEdit).type + "_items", override },
+                location: { page: "edit", id: get(activeEdit).type + "_items", override }
             })
 
             return finish()
@@ -659,8 +659,8 @@ const deleteActions = {
                 show: get(activeShow)!,
                 items: get(activeEdit).items,
                 layout,
-                slide,
-            },
+                slide
+            }
         })
 
         finish()
@@ -679,7 +679,7 @@ const deleteActions = {
     action: (data: any) => {
         // WIP history
         data.forEach((selData) => {
-            midiIn.update((a) => {
+            actions.update((a) => {
                 delete a[selData.id]
                 return a
             })
@@ -787,7 +787,7 @@ const deleteActions = {
         })
 
         if (data.type === "in") {
-            midiIn.update((a) => {
+            actions.update((a) => {
                 delete a[id]
                 return a
             })
@@ -919,7 +919,7 @@ const deleteActions = {
         })
         activeStage.set({ ...get(activeStage), items: [] })
         updateSortedStageItems()
-    },
+    }
 }
 
 const duplicateActions = {
@@ -1053,9 +1053,9 @@ const duplicateActions = {
         })
     },
     action: (data: any) => {
-        midiIn.update((a) => {
+        actions.update((a) => {
             data.forEach(({ id }) => {
-                const newAction = clone(get(midiIn)[id])
+                const newAction = clone(get(actions)[id])
                 newAction.name += " 2"
 
                 const newId = uid()
@@ -1077,7 +1077,7 @@ const duplicateActions = {
 
             return a
         })
-    },
+    }
 }
 
 const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume"]

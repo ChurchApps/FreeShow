@@ -80,16 +80,16 @@ export class EditboxHelper {
                     if (pos > 0)
                         firstLines[firstLines.length - 1].text.push({
                             style: text.style,
-                            value: text.value.slice(0, pos),
+                            value: text.value.slice(0, pos)
                         })
                     secondLines[secondLines.length - 1].text.push({
                         style: text.style,
-                        value: text.value.slice(pos > 0 ? pos : 0, text.value.length),
+                        value: text.value.slice(pos > 0 ? pos : 0, text.value.length)
                     })
                 } else {
                     firstLines[firstLines.length - 1].text.push({
                         style: text.style,
-                        value: text.value,
+                        value: text.value
                     })
                 }
                 textPos += text.value.length
@@ -104,8 +104,8 @@ export class EditboxHelper {
         const defaultLine = [
             {
                 align: lines[0].align || "",
-                text: [{ style: lines[0].text[0]?.style || "", value: "" }],
-            },
+                text: [{ style: lines[0].text[0]?.style || "", value: "" }]
+            }
         ]
         if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
         if (!secondLines.length) secondLines = defaultLine
@@ -124,13 +124,14 @@ export class EditboxHelper {
         currentStyle = ""
         let html = ""
         let firstTextStyleArchive = ""
-        const lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+        const lineStyleBg = item.specialStyle?.lineBg ? `background: ${item.specialStyle.lineBg};` : ""
+        const lineStyleRadius = item.specialStyle?.lineRadius ? `border-radius: ${item.specialStyle.lineRadius}px;` : ""
         const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
         item?.lines?.forEach((line, i) => {
-            const align = line.align.replaceAll(lineBg, "") + ";"
-            currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
-            const style = align || lineBg || listStyle ? 'style="' + align + lineBg + listStyle + '"' : ""
+            const align = line.align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
+            const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line

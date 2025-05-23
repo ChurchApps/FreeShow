@@ -44,13 +44,15 @@ import {
     spellcheck,
     styles,
     topContextActive,
-    volume,
+    videosData,
+    volume
 } from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { changeSlidesView } from "../show/slides"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -72,11 +74,12 @@ const ctrlKeys = {
     y: () => redo(),
     z: () => undo(),
     Z: () => redo(),
-    "?": () => activePopup.set("shortcuts"),
+    "?": () => activePopup.set("shortcuts")
 }
 
 const shiftCtrlKeys = {
     f: () => menuClick("focus_mode"),
+    v: () => changeSlidesView()
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -121,7 +124,7 @@ const keys = {
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
-    F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null),
+    F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null)
 }
 
 export function keydown(e: KeyboardEvent) {
@@ -208,7 +211,7 @@ export const previewCtrlShortcuts = {
     l: () => outLocked.set(!get(outLocked)),
     r: () => {
         if (!get(outLocked)) refreshOut()
-    },
+    }
 }
 
 export const previewShortcuts = {
@@ -334,7 +337,7 @@ export const previewShortcuts = {
 
         e.preventDefault()
         nextSlideIndividual(e, false, true)
-    },
+    }
 }
 
 export function presentationControllersKeysDisabled() {
@@ -374,6 +377,7 @@ function createNew() {
 
 function playMedia(e: Event) {
     if (get(outLocked)) return
+    // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
     const item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
     const type: ShowType | undefined = item?.type
@@ -382,14 +386,29 @@ function playMedia(e: Event) {
 
     const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
-
-    if (currentOutput.out?.background?.path === item.id) return
+    const alreadyPlaying = currentOutput.out?.background?.path === item.id
 
     if (type === "video" || type === "image" || type === "player") {
+        if (alreadyPlaying) {
+            // play / pause video
+            // WIP duplicate of MediaControls.svelte
+            let dataValues: any = {}
+            const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+            const videoData = get(videosData)[outputId] || {}
+            activeOutputIds.forEach((id) => {
+                dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted, paused: !videoData.paused }
+                let keyOutput = get(outputs)[id].keyOutput
+                if (keyOutput) dataValues[keyOutput] = videoData
+            })
+
+            send(OUTPUT, ["DATA"], dataValues)
+            return
+        }
+
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
-        AudioPlayer.start(item.id, { name: (item as any).name || "" })
+        AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     }
 }

@@ -13,14 +13,14 @@ import {
     groups,
     media,
     mediaTags,
-    midiIn,
+    actions,
     outputs,
     overlays,
     selected,
     shows,
     sorted,
     variables,
-    variableTags,
+    variableTags
 } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
@@ -75,7 +75,7 @@ const loadActions = {
         return sortedTags
     },
     action_tag_set: () => {
-        const selectedTags = get(midiIn)[get(selected).data[0]?.id]?.tags || []
+        const selectedTags = get(actions)[get(selected).data[0]?.id]?.tags || []
         const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
@@ -137,7 +137,7 @@ const loadActions = {
             { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
             { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
             "SEPERATOR",
-            { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
+            { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false }
         ]
 
         return slideActions
@@ -152,7 +152,7 @@ const loadActions = {
         const itemActions = [
             // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
             { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
-            { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
+            { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false }
         ]
 
         return itemActions
@@ -181,7 +181,7 @@ const loadActions = {
                 id: bg,
                 label: removeExtension(showMedia[bg].name!),
                 translate: false,
-                icon: "image",
+                icon: "image"
             })
         }
 
@@ -208,7 +208,7 @@ const loadActions = {
                         id,
                         label: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
                         translate: false,
-                        icon: "music",
+                        icon: "music"
                     }
                 }),
                 "label"
@@ -225,7 +225,7 @@ const loadActions = {
                     id: mic.id,
                     label: mic.name,
                     translate: false,
-                    icon: "microphone",
+                    icon: "microphone"
                 })),
                 "label"
             )
@@ -296,7 +296,7 @@ const loadActions = {
 
         return contextOutputList
     },
-    bind_item: () => loadActions.bind_slide([], true),
+    bind_item: () => loadActions.bind_slide([], true)
 }
 
 function setContextData(key: string, data: boolean | string | number) {
@@ -313,7 +313,7 @@ function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media")
         { id: "name", label: "sort.name", icon: "text", enabled: type === "name" },
         { id: "name_des", label: "sort.name_des", icon: "text", enabled: type === "name_des" },
         { id: "created", label: "info.created", icon: "calendar", enabled: type === "created" },
-        { id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" },
+        { id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" }
     ]
     if (id === "shows") {
         items.push({ id: "used", label: "info.used", icon: "calendar", enabled: type === "used" })

@@ -48,7 +48,7 @@ export function startTimerById(id: string) {
     const timer = get(timers)[id]
     if (!timer) return
 
-    playPauseGlobal(id, timer)
+    playPauseGlobal(id, timer, true)
 }
 
 export function stopTimers() {

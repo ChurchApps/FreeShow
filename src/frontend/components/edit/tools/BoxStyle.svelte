@@ -57,7 +57,7 @@
     const formatting = {
         b: () => ({ id: "style", key: "font-weight", value: "bold" }),
         i: () => ({ id: "style", key: "font-style", value: "italic" }),
-        u: () => ({ id: "style", key: "text-decoration", value: "underline" }),
+        u: () => ({ id: "style", key: "text-decoration", value: "underline" })
     }
     function keydown(e: KeyboardEvent) {
         if (!selection || (!e.ctrlKey && !e.metaKey) || !formatting[e.key]) return
@@ -133,11 +133,12 @@
 
         // lines
         setBoxInputValue(box, "lines", "specialStyle.lineGap", "value", item?.specialStyle?.lineGap || 0)
+        setBoxInputValue(box, "lines", "specialStyle.lineRadius", "value", item?.specialStyle?.lineRadius || 0)
         let lineBg = item?.specialStyle?.lineBg || ""
         setBoxInputValue(box, "lines", "specialStyle.lineBg", "value", lineBg)
         let backgroundValue = splitRgb(lineBg)
         setBoxInputValue(box, "lines", "specialStyle.opacity", "value", backgroundValue.a)
-        setBoxInputValue(box, "lines", "specialStyle.opacity", "hidden", !lineBg)
+        setBoxInputValue(box, "lines", "specialStyle.opacity", "hidden", lineBg.includes("gradient") || !lineBg)
 
         // list
         setBoxInputValue(box, "list", "list.enabled", "value", item?.list?.enabled || false)
@@ -281,7 +282,7 @@
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
         // WIP duplicate of ItemStyle.svelte
-        const lineStyleChanged = input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg")
+        const lineStyleChanged = input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg" && !input.value.includes("gradient"))
         if (lineStyleChanged) setBackgroundOpacity()
         function setBackgroundOpacity() {
             let backgroundColor = input.id === "specialStyle.lineBg" ? input.value || "" : item?.specialStyle?.lineBg || "rgb(0 0 0);"
@@ -342,7 +343,7 @@
         history({
             id: "setItems",
             newData: { style: { key: input.id, values: [value] } },
-            location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems },
+            location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems }
         })
 
         // update values
@@ -525,7 +526,7 @@
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
                 newData: { key: "items", data: currentItems, indexes: allItems },
-                location: { page: "edit", id: $activeEdit.type + "_items", override },
+                location: { page: "edit", id: $activeEdit.type + "_items", override }
             })
 
             return
@@ -539,7 +540,7 @@
                     id: "setItems",
                     // oldData: { style: { key: "style", values: [oldData] } },
                     newData: { style: { key: "style", values: values[slide] } },
-                    location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
+                    location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") }
                 })
             })
 
@@ -561,7 +562,7 @@
                 // WIP
                 id: input.key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
                 newData: { style: { key, values: values[slide] } },
-                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
+                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") }
             })
         })
     }

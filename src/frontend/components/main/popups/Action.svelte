@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { activePopup, activeShow, dictionary, drawerTabsData, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
+    import { actions, activePopup, activeShow, dictionary, drawerTabsData, popupData, showsCache, templates, timers } from "../../../stores"
     import { translate } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -46,7 +46,7 @@
                 let existingAction = slideActions.find((a) => a.id === id)
                 if (existingAction) showMidi = existingAction
             }
-            action = $midiIn[id] || showMidi || action
+            action = $actions[id] || showMidi || action
 
             action = convertOldMidiToNewAction(action)
         }
@@ -68,21 +68,21 @@
         let changed = false
         indexes.forEach((i) => {
             let layoutSlide = ref[i] || {}
-            let actions = layoutSlide.data?.actions || {}
-            let slideActions = actions.slideActions || []
+            let slideDataActions = layoutSlide.data?.actions || {}
+            let slideActions = slideDataActions.slideActions || []
             let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
 
             // if actionId is set remove action regardless, else remove if empty
             if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) {
-                newActions.push(actions)
+                newActions.push(slideDataActions)
                 return
             }
 
             slideActions.splice(existingActionIndex, 1)
-            actions.slideActions = slideActions
+            slideDataActions.slideActions = slideActions
 
             changed = true
-            newActions.push(actions)
+            newActions.push(slideDataActions)
         })
 
         if (!changed) return
@@ -206,17 +206,17 @@
 
             let templateSettings = template?.settings || {}
 
-            let actions = templateSettings.actions || []
-            let existingIndex = actions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
-            if (existingIndex > -1) actions[existingIndex] = action
-            else actions.push(action)
+            let templateActions = templateSettings.actions || []
+            let existingIndex = templateActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            if (existingIndex > -1) templateActions[existingIndex] = action
+            else templateActions.push(action)
 
-            templateSettings.actions = actions
+            templateSettings.actions = templateActions
             let newData = { key: "settings", data: templateSettings }
             history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
         } else if (mode !== "slide") {
-            let exists = !!$midiIn[id]
-            midiIn.update((a) => {
+            let exists = !!$actions[id]
+            actions.update((a) => {
                 if (mode === "slide_midi") {
                     let shows = a[id]?.shows || []
                     let showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
@@ -259,20 +259,20 @@
         let newActions: any[] = []
         let changed = false
         indexes.forEach((i) => {
-            let actions = clone(ref[i]?.data?.actions) || {}
-            if (!actions.slideActions) actions.slideActions = []
+            let slideDataActions = clone(ref[i]?.data?.actions) || {}
+            if (!slideDataActions.slideActions) slideDataActions.slideActions = []
 
-            let currentSlideActionIndex = actions.slideActions.findIndex((a) => a.id === id)
+            let currentSlideActionIndex = slideDataActions.slideActions.findIndex((a) => a.id === id)
             if (currentSlideActionIndex < 0) {
-                newActions.push(actions)
+                newActions.push(slideDataActions)
                 return
             }
 
-            if (remove) actions.slideActions.splice(currentSlideActionIndex, 1)
-            else actions.slideActions[currentSlideActionIndex] = { ...action, id }
+            if (remove) slideDataActions.slideActions.splice(currentSlideActionIndex, 1)
+            else slideDataActions.slideActions[currentSlideActionIndex] = { ...action, id }
 
             changed = true
-            newActions.push(actions)
+            newActions.push(slideDataActions)
         })
 
         if (!changed) return
@@ -302,7 +302,7 @@
     }
 
     // keys
-    $: existingShortcuts = Object.values($midiIn)
+    $: existingShortcuts = Object.values($actions)
         .map((a) => a.keypressActivate || "")
         .filter(Boolean)
 
@@ -396,7 +396,7 @@
             <CombinedInput textWidth={38}>
                 <p><T id="midi.activate_keypress" /></p>
                 <Button
-                    disabled={!$midiIn[id]}
+                    disabled={!$actions[id]}
                     on:click={() => {
                         popupData.set({
                             ...$popupData,
@@ -442,7 +442,7 @@
 
             <CombinedInput textWidth={38} style={activationMenuOpened && customActionActivations.find((a) => a.id === customActivation)?.inputs ? "border-bottom: 4px solid var(--primary-lighter);" : ""}>
                 <p><T id="actions.custom_activation" /></p>
-                <Button disabled={!$midiIn[id] || action.enabled === false} on:click={() => (actionActivationSelector = true)} title={$dictionary.actions?.set_custom_activation} bold={!customActivation}>
+                <Button disabled={!$actions[id] || action.enabled === false} on:click={() => (actionActivationSelector = true)} title={$dictionary.actions?.set_custom_activation} bold={!customActivation}>
                     <div style="display: flex;align-items: center;padding: 0;">
                         <Icon id="trigger" style="margin-inline-start: 0.5em;" right />
                         <p>
@@ -537,7 +537,7 @@
             </div>
         {/if}
 
-        {#if action.midiEnabled && customActivation !== "midi_signal_received" && !actionSelector && !actionActivationSelector}
+        {#if mode === "slide_midi" || (action.midiEnabled && customActivation !== "midi_signal_received" && !actionSelector && !actionActivationSelector)}
             {#if mode === "slide_midi"}
                 <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
             {:else}

@@ -15,10 +15,8 @@
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
     onMount(() => {
-        if (!$dataPath) {
-            sendMain(Main.DATA_PATH)
-            sendMain(Main.SHOWS_PATH)
-        }
+        if (!$dataPath) sendMain(Main.DATA_PATH)
+        if (!$showsPath) sendMain(Main.SHOWS_PATH)
 
         // check time format (based on browser language)
         const locale = navigator.language
@@ -39,7 +37,7 @@
     }
 
     const inputs = {
-        timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
+        timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12")
     }
 </script>
 

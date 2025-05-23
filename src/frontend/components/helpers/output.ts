@@ -17,7 +17,7 @@ import {
     dictionary,
     disabledServers,
     lockedOverlays,
-    midiIn,
+    actions,
     outputDisplay,
     outputs,
     outputSlideCache,
@@ -34,7 +34,7 @@ import {
     theme,
     themes,
     transitionData,
-    usageLog,
+    usageLog
 } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { newToast } from "../../utils/common"
@@ -129,7 +129,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // run category action if show slide is not currently outputted, and it does not have a custom override action
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
-                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
+                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!])
             }
 
             if (overrideCategoryAction) resetActionTrigger = true
@@ -201,7 +201,7 @@ function appendShowUsage(showId: string) {
         a.all.push({
             name: show.name,
             time: Date.now(),
-            metadata,
+            metadata
         })
         return a
     })
@@ -277,7 +277,7 @@ function startOverlayTimer(outputId: string, overlayId: string, outData: string[
     if (!outData.includes(overlayId)) return
 
     const overlay = get(overlays)[overlayId]
-    if (!overlay.displayDuration) return
+    if (!overlay?.displayDuration) return
 
     overlayTimers.update((a) => {
         const id = outputId + overlayId
@@ -291,7 +291,7 @@ function startOverlayTimer(outputId: string, overlayId: string, outData: string[
                 if (!get(outputs)[outputId]?.out?.overlays?.includes(overlayId)) return
 
                 setOutput("overlays", overlayId, true, outputId)
-            }, overlay.displayDuration! * 1000),
+            }, overlay.displayDuration! * 1000)
         }
 
         return a
@@ -528,7 +528,7 @@ export function shouldBeCaptured(outputId: string, startup = false) {
     const captures = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
-        stage: stageHasOutput(outputId),
+        stage: stageHasOutput(outputId)
     }
 
     // alert user that screen recording starts
@@ -560,7 +560,7 @@ export const defaultOutput: Output = {
     name: "Output",
     color: "#F0008C",
     bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
-    screen: null,
+    screen: null
 }
 
 export function keyOutput(keyId: string, delOutput = false) {
@@ -628,7 +628,7 @@ export function enableStageOutput(options: any = {}) {
             color: "#555555",
             bounds,
             screen: null,
-            ...options,
+            ...options
         }
 
         send(OUTPUT, ["CREATE"], { ...a[id], id })
@@ -704,7 +704,7 @@ export async function clearPlayingVideo(clearOutput = "") {
                 duration: 0,
                 paused: !!clearOutput,
                 muted: false,
-                loop: false,
+                loop: false
             }
 
             // if (!AudioAnalyser.shouldAnalyse()) {
@@ -785,7 +785,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                     ?.map((line) => line.text?.filter((a) => !a.customType).map((text) => getStyles(text.style).color || "#FFFFFF"))
                     .flat()
                     .filter(Boolean)
-            ),
+            )
         ] as string[]
 
         item.lines?.forEach((line, j) => {
@@ -1016,12 +1016,12 @@ export function getOutputTransitions(slideData: SlideData | null, styleTransitio
 
     const slideTransitions = {
         text: slideData?.transition?.type ? slideData.transition : null,
-        media: slideData?.mediaTransition?.type ? slideData.mediaTransition : null,
+        media: slideData?.mediaTransition?.type ? slideData.mediaTransition : null
     }
 
     const styleTransitions = {
         text: styleTransition?.text || null,
-        media: styleTransition?.media || null,
+        media: styleTransition?.media || null
     }
 
     transitions.text = slideTransitions.text || styleTransitions.text || transitionDataUpdater.text || {}

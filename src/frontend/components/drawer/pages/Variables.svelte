@@ -13,12 +13,11 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
-    console.log(searchValue)
 
     const typeOrder = { number: 1, text: 2 }
-    $: sortedVariables = sortByName(keysToID($variables), "name", true)
-        .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-        .filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: filteredVariablesSearch = searchValue.length > 1 ? filteredVariablesTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredVariablesTags
 
     function updateVariable(e: any, id: string, key: string) {
         let value = e?.target?.value ?? e
@@ -42,9 +41,9 @@
         text: "variables.text"
     }
 
-    $: numberVariables = sortedVariables.filter((a) => a.type === "number")
-    $: randomNumberVariables = sortedVariables.filter((a) => a.type === "random_number")
-    $: otherVariables = sortedVariables.filter((a) => a.type !== "number" && a.type !== "random_number")
+    $: numberVariables = filteredVariablesSearch.filter((a) => a.type === "number")
+    $: randomNumberVariables = filteredVariablesSearch.filter((a) => a.type === "random_number")
+    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number")
 
     const minDefault = 0
     const maxDefault = 1000
@@ -53,7 +52,7 @@
 <svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
 
 <div class="variables context #variables">
-    {#if sortedVariables.length}
+    {#if filteredVariablesSearch.length}
         <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
                 {@const number = Number(variable.number) || 0}

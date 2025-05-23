@@ -15,6 +15,7 @@ export class ChumsImport {
     public static async loadServices(): Promise<void> {
         this.projects = []
         this.shows = []
+        console.log("Loading services from Chums")
 
         const SERVICE_PLANS = await ChumsConnect.apiRequest({
             api: "doing",
@@ -24,7 +25,6 @@ export class ChumsImport {
         })
 
         if (!SERVICE_PLANS[0]?.id) return
-        sendToMain(ToMain.TOAST, "Getting schedules from Chums")
 
         await Promise.all(
             SERVICE_PLANS.map(async (plan: any) => {
@@ -32,6 +32,7 @@ export class ChumsImport {
             })
         )
 
+        sendToMain(ToMain.TOAST, "Loaded " + this.projects.length + " service(s) from Chums");
         sendToMain(ToMain.CHUMS_PROJECTS, { shows: this.shows, projects: this.projects })
     }
 

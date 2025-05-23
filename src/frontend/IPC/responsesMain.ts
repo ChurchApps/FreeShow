@@ -327,7 +327,7 @@ export const mainResponses: MainResponses = {
             const id = show.id
 
             // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) return
+            if (get(shows)[id]) continue
 
             // replace with existing Chums show, that has the same name (but different ID), if it's without content
             for (let [id, currentShow] of Object.entries(get(shows))) {

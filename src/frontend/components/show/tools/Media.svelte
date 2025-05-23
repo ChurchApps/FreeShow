@@ -119,6 +119,7 @@
     function setBG(id: string, key: string, value: boolean) {
         showsCache.update((a) => {
             let bgs = a[$activeShow!.id].media
+            if (!bgs[id]) return a // old media
             if (value) delete bgs[id][key]
             else bgs[id][key] = value
             return a

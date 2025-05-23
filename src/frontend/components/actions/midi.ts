@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
-import type { Layout, Midi } from "../../../types/Show"
+import type { Layout, Action } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
-import { midiIn, shows } from "../../stores"
+import { actions, shows } from "../../stores"
 import { newToast } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { setOutput } from "../helpers/output"
@@ -12,7 +12,7 @@ import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
 
 export function midiInListen() {
-    Object.entries(get(midiIn)).forEach(([id, action]) => {
+    Object.entries(get(actions)).forEach(([id, action]) => {
         action = convertOldMidiToNewAction(action)
         if (!action.midi) return
 
@@ -45,7 +45,7 @@ export function midiInListen() {
 
             if (!found) {
                 // remove from midi
-                midiIn.update((a) => {
+                actions.update((a) => {
                     delete a[id]
                     return a
                 })
@@ -82,14 +82,14 @@ export const defaultMidiActionChannels = {
     // select by index (use velocity to set index, starting at 0)
     index_select_project: { type: "noteon", values: { note: 0, velocity: -1, channel: 5 } },
     index_select_project_show: { type: "noteon", values: { note: 1, velocity: -1, channel: 5 } },
-    index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } },
+    index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } }
 }
 
 export function receivedMidi(msg) {
-    const msgAction = get(midiIn)[msg.id]
+    const msgAction = get(actions)[msg.id]
     if (!msgAction) return
 
-    const action: Midi = convertOldMidiToNewAction(msgAction)
+    const action: Action = convertOldMidiToNewAction(msgAction)
     if (action.enabled === false) return
 
     // get index

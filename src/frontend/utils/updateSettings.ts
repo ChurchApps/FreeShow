@@ -44,7 +44,7 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
-    midiIn,
+    actions,
     openedFolders,
     outLocked,
     overlayCategories,
@@ -72,7 +72,7 @@ import {
     version,
     videoMarkers,
     videosData,
-    videosTime,
+    videosTime
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -224,10 +224,11 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     showsPath: (v: any) => {
         if (!v) sendMain(Main.SHOWS_PATH)
-        else showsPath.set(v)
-
-        // LOAD SHOWS FROM FOLDER
-        sendMain(Main.SHOWS, { showsPath: v })
+        else {
+            showsPath.set(v)
+            // LOAD SHOWS FROM FOLDER
+            sendMain(Main.SHOWS, { showsPath: v })
+        }
     },
     dataPath: (v: any) => {
         if (!v) sendMain(Main.DATA_PATH)
@@ -299,7 +300,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     volume: (v: any) => volume.set(v),
     gain: (v: any) => gain.set(v),
     emitters: (v: any) => emitters.set(v),
-    midiIn: (v: any) => midiIn.set(v),
+    midiIn: (v: any) => actions.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
     mediaTags: (v: any) => mediaTags.set(v),
     actionTags: (v: any) => actionTags.set(v),
@@ -333,5 +334,5 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         }
 
         special.set(v)
-    },
+    }
 }

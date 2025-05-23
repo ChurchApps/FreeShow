@@ -16,7 +16,7 @@ export interface ContextMenuItem {
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // MENU
     save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
-    import: { label: "actions.import", icon: "import", shortcuts: ["Ctrl+I"] },
+    import_more: { label: "actions.import", icon: "import", shortcuts: ["Ctrl+I"] },
     export_more: { label: "actions.export", icon: "export", shortcuts: ["Ctrl+E"] },
     undo: { label: "actions.undo", icon: "undo", shortcuts: ["Ctrl+Z"] },
     redo: { label: "actions.redo", icon: "redo", shortcuts: ["Ctrl+Y"] },
@@ -40,6 +40,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
     delete: { label: "actions.delete", icon: "delete", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete" },
+    import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
@@ -164,12 +165,12 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
     reset_theme: { label: "settings.reset_theme", icon: "reset" },
-    reset: { label: "actions.reset", icon: "reset" },
+    reset: { label: "actions.reset", icon: "reset" }
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
     // MENU
-    file: ["save", "import", "export_more", "SEPERATOR", "quit"],
+    file: ["save", "import_more", "export_more", "SEPERATOR", "quit"],
     edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["quick_search", "shortcuts", "docs", "quick_start_guide", "about"],
@@ -244,6 +245,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPERATOR", "sort_projects_by"],
+    projectsTab: ["import"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
@@ -311,5 +313,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
-    output_screen_stage: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
+    output_screen_stage: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"]
 }

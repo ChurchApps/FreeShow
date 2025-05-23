@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -118,7 +118,7 @@
     function actionKeyActivate(key: string) {
         let actionTriggered = false
 
-        Object.values($midiIn).forEach((action) => {
+        Object.values($actions).forEach((action) => {
             if (action.keypressActivate?.toUpperCase() === key) {
                 runAction(action)
                 actionTriggered = true

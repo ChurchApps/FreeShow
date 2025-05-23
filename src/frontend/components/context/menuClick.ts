@@ -5,10 +5,12 @@ import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, Slide, SlideData } from "../../../types/Show"
+import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
+    actions,
     activeActionTagFilter,
     activeDrawerTab,
     activeEdit,
@@ -39,7 +41,6 @@ import {
     guideActive,
     media,
     mediaFolders,
-    midiIn,
     outLocked,
     outputs,
     overlayCategories,
@@ -65,13 +66,14 @@ import {
     templates,
     themes,
     toggleOutputEnabled,
-    variables,
+    variables
 } from "../../stores"
 import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
+import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
 import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
@@ -92,8 +94,7 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
-import { ShowObj } from "../../classes/Show"
-import { getActionTriggerId } from "../actions/actions"
+import { translate } from "../../utils/language"
 
 interface ObjData {
     sel: Selected | null
@@ -104,20 +105,20 @@ interface ObjData {
 }
 
 export function menuClick(id: string, enabled = true, menu: ContextMenuItem | null = null, contextElem: HTMLElement | null = null, actionItem: HTMLElement | null = null, sel: Selected | null = null) {
-    if (!actions[id]) return console.error("MISSING CONTEXT: ", id)
+    if (!clickActions[id]) return console.error("MISSING CONTEXT: ", id)
 
     if (sel?.id) sel.id = sel.id.split("___")[0] as SelectIds // different selection ID, same action (currently used to seperate scripture navigation buttons)
 
     const obj = { sel, actionItem, enabled, contextElem, menu }
     console.info("MENU CLICK: " + id, obj)
 
-    actions[id](obj)
+    clickActions[id](obj)
 }
 
-const actions = {
+const clickActions = {
     // file
     save: () => save(),
-    import: () => activePopup.set("import"),
+    import_more: () => activePopup.set("import"),
     export_more: () => activePopup.set("export"),
     settings: () => {
         if (get(activePage) === "stage") settingsTab.set("connection")
@@ -223,8 +224,8 @@ const actions = {
         removeSlide(obj.sel?.data || [], "remove")
         if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
-    delete_slide: (obj: ObjData) => actions.delete(obj),
-    delete_group: (obj: ObjData) => actions.delete(obj),
+    delete_slide: (obj: ObjData) => clickActions.delete(obj),
+    delete_group: (obj: ObjData) => clickActions.delete(obj),
     delete: (obj: ObjData) => {
         // delete shows from project
         if (obj.sel?.id === "show") {
@@ -232,34 +233,34 @@ const actions = {
             setTimeout(() => {
                 const sel: Selected = { ...obj.sel!, id: "show_drawer" }
                 selected.set(sel)
-                actions.delete({ ...obj, sel })
+                clickActions.delete({ ...obj, sel })
             })
         }
 
         if (obj.sel && deleteAction(obj.sel)) return
 
-        if (obj.contextElem?.classList.contains("#project_template")) {
+        if (obj.contextElem?.classList.value.includes("#project_template")) {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
             return
         }
-        if (obj.contextElem?.classList.contains("#video_subtitle")) {
+        if (obj.contextElem?.classList.value.includes("#video_subtitle")) {
             deleteAction({ id: "video_subtitle", data: { index: obj.contextElem.id } })
             return
         }
-        if (obj.contextElem?.classList.contains("#video_marker")) {
+        if (obj.contextElem?.classList.value.includes("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
         // delete slide item using context menu, or menubar action
-        if (obj.contextElem?.classList.contains("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
+        if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
         }
-        if (obj.contextElem?.classList.contains("stage_item")) {
+        if (obj.contextElem?.classList.value.includes("stage_item")) {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
             return
         }
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             deleteAction({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
@@ -267,7 +268,7 @@ const actions = {
         console.error("COULD NOT DELETE", obj)
     },
     delete_all: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             const group = get(events)[obj.contextElem.id].group
             if (!group) return
 
@@ -282,12 +283,12 @@ const actions = {
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
 
-        if (obj.contextElem?.classList.contains("#event")) {
+        if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
 
-        if (obj.contextElem?.classList.contains("stage_item")) {
+        if (obj.contextElem?.classList.value.includes("stage_item")) {
             duplicate({ id: "stage_item", data: get(activeStage) })
             return
         }
@@ -313,7 +314,7 @@ const actions = {
     tag_set: (obj: ObjData) => {
         const tagId = obj.menu.id
         if (tagId === "create") {
-            actions.manage_show_tags()
+            clickActions.manage_show_tags()
             return
         }
 
@@ -365,7 +366,7 @@ const actions = {
     media_tag_set: (obj: ObjData) => {
         const tagId = obj.menu.id || ""
         if (tagId === "create") {
-            actions.manage_media_tags()
+            clickActions.manage_media_tags()
             return
         }
 
@@ -406,14 +407,14 @@ const actions = {
     action_tag_set: (obj: ObjData) => {
         const tagId = obj.menu.id || ""
         if (tagId === "create") {
-            actions.manage_action_tags()
+            clickActions.manage_action_tags()
             return
         }
 
-        const disable = get(midiIn)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+        const disable = get(actions)[get(selected).data[0]?.id]?.tags?.includes(tagId)
 
         obj.sel?.data?.forEach(({ id }) => {
-            const tags = get(midiIn)[id]?.tags || []
+            const tags = get(actions)[id]?.tags || []
 
             const existingIndex = tags.indexOf(tagId)
             if (disable) {
@@ -422,7 +423,7 @@ const actions = {
                 if (existingIndex < 0) tags.push(tagId)
             }
 
-            midiIn.update((a) => {
+            actions.update((a) => {
                 if (a[id]) a[id].tags = tags
                 return a
             })
@@ -446,7 +447,7 @@ const actions = {
     variable_tag_set: (obj: ObjData) => {
         const tagId = obj.menu.id || ""
         if (tagId === "create") {
-            actions.manage_variable_tags()
+            clickActions.manage_variable_tags()
             return
         }
 
@@ -489,7 +490,7 @@ const actions = {
             obj.sel.data = obj.sel.data.map(({ path, name }) => ({
                 id: path,
                 name,
-                type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length)),
+                type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
             }))
 
         projects.update((a) => {
@@ -585,7 +586,7 @@ const actions = {
         const categoryStores = {
             category_shows: () => categories.update(toggleArchive),
             category_overlays: () => overlayCategories.update(toggleArchive),
-            category_templates: () => templateCategories.update(toggleArchive),
+            category_templates: () => templateCategories.update(toggleArchive)
         }
 
         if (!categoryStores[obj.sel?.id || ""]) return
@@ -733,11 +734,19 @@ const actions = {
             return
         }
 
-        if (obj.contextElem?.classList.contains("project")) {
+        if (obj.contextElem?.classList.value.includes("project")) {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
 
+            return
+        }
+    },
+    import: (obj: ObjData) => {
+        if (obj.contextElem?.classList.value.includes("#projectsTab")) {
+            const extensions = ["project", "shows", "json", "zip"]
+            const name = translate("formats.project")
+            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
             return
         }
     },
@@ -857,9 +866,9 @@ const actions = {
         }
 
         if (obj.sel?.id === "action") {
-            const enabledState = get(midiIn)[obj.sel.data[0].id].enabled
+            const enabledState = get(actions)[obj.sel.data[0].id].enabled
             const value = enabledState === undefined ? false : !enabledState
-            midiIn.update((a) => {
+            actions.update((a) => {
                 obj.sel!.data.forEach((b) => {
                     const action = a[b.id]
                     if (action && (action.keypressActivate || action.customActivation)) {
@@ -909,7 +918,7 @@ const actions = {
             refreshEditSlide.set(true)
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
-            const action = get(midiIn)[firstActionId]
+            const action = get(actions)[firstActionId]
             const mode = action.shows?.length ? "slide_midi" : ""
             popupData.set({ id: firstActionId, mode })
             activePopup.set("action")
@@ -924,10 +933,10 @@ const actions = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.contextElem?.classList.contains("#event")) {
+        } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
-        } else if (obj.contextElem?.classList.contains("output_button")) {
+        } else if (obj.contextElem?.classList.value.includes("output_button")) {
             currentOutputSettings.set(obj.contextElem.id)
             settingsTab.set("display_settings")
             activePage.set("settings")
@@ -943,7 +952,7 @@ const actions = {
     },
 
     // chords
-    chord_list: (obj: ObjData) => actions.keys(obj),
+    chord_list: (obj: ObjData) => clickActions.keys(obj),
     keys: (obj: ObjData) => {
         if (get(selected).id !== "chord") return
         const data = get(selected).data[0]
@@ -1271,7 +1280,7 @@ const actions = {
                 id: "UPDATE",
                 oldData: { id: get(activeEdit).id },
                 newData: { key: "items", subkey: "bindings", data: newValues1, indexes: items },
-                location: { page: "edit", id: get(activeEdit).type + "_items", override: true },
+                location: { page: "edit", id: get(activeEdit).type + "_items", override: true }
             })
 
             return
@@ -1295,7 +1304,7 @@ const actions = {
         history({
             id: "setItems",
             newData: { style: { key: "bindings", values: newValues } },
-            location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") },
+            location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") }
         })
         // _show().slides([slideID!]).set({ key: "items", value: items })
     },
@@ -1426,7 +1435,7 @@ const actions = {
 
             return
         }
-    },
+    }
 }
 
 function changeSlideAction(obj: ObjData, id: string) {
@@ -1660,7 +1669,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
             id: "UPDATE",
             oldData: { id: editing.id },
             newData: { key: "items", data: newItems, indexes: items },
-            location: { page: "edit", id: editing.type + "_items", override },
+            location: { page: "edit", id: editing.type + "_items", override }
         })
 
         refreshEditSlide.set(true)
@@ -1674,7 +1683,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
         slideIds = [
             _show()
                 .slides([ref[get(activeEdit).slide!]?.id])
-                .get()[0]?.id,
+                .get()[0]?.id
         ]
     }
 
@@ -1716,7 +1725,7 @@ const formatting = {
             .trim()
             .trim()
             .replace(/[.,!]*$/g, "")
-            .trim(),
+            .trim()
 }
 
 // SORT

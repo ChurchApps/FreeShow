@@ -6,7 +6,10 @@
     export let item: Item
 
     $: lineGap = item?.specialStyle?.lineGap
+    $: lineRadius = item?.specialStyle?.lineRadius || 0
     $: lineBg = item?.specialStyle?.lineBg
+    $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
+    $: lineStyle = (lineRadius ? `border-radius: ${lineRadius}px;` : "") + (lineBg ? `background: ${lineBg};` : "")
 
     // AUTO SIZE
 
@@ -72,9 +75,9 @@
 <div class="item" style={getCustomStyle(item.style)} bind:this={itemElem}>
     {#if item.lines}
         <div class="align" style={item.align}>
-            <div class="lines" style={lineGap ? `gap: ${lineGap}px;` : ""}>
+            <div class="lines" style={lineStyleBox}>
                 {#each item.lines as line}
-                    <div class="break" style="{lineBg ? `background-color: ${lineBg};` : ''}{line.align}">
+                    <div class="break" style="{lineStyle}{line.align}">
                         {#each line.text || [] as text}
                             <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}

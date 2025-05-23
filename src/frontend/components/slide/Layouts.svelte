@@ -1,6 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { uid } from "uid"
+    import { changeSlidesView } from "../../show/slides"
     import { activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -52,8 +53,6 @@
 
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     }
-
-    const slidesViews = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
 
     function changeName(e: any) {
         let currentLayout = e.detail?.id?.slice("layout_".length)
@@ -205,7 +204,7 @@
 
         <div class="seperator" />
 
-        <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
+        <Button class="context #slideViews" on:click={changeSlidesView} title="{$dictionary.show?.change_view}: {$dictionary.show?.[$slidesOptions.mode]} [Ctrl+Shift+V]">
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>
         <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
