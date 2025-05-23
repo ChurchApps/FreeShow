@@ -5,9 +5,13 @@ import { stores } from "../data/store";
 import { readFile } from "./files";
 import type { TrimmedShow, Show, Slide } from '../../types/Show';
 import type { Media as ItemMedia } from '../../types/Show';
+import crypto from "crypto";
 
-// Helper function to convert local file path to HTTP URL
-function getMediaUrl(filePath: string, serverPort: number = 5511): string {
+// Media registry to track allowed media files
+const mediaRegistry = new Map<string, string>(); // token -> filePath
+
+// Helper function to register media file and get secure token
+function registerMediaFile(filePath: string): string {
     if (!filePath) return "";
 
     // If it's already a URL, return as is
@@ -15,9 +19,30 @@ function getMediaUrl(filePath: string, serverPort: number = 5511): string {
         return filePath;
     }
 
-    // Convert local file path to HTTP URL
-    const encodedPath = encodeURIComponent(filePath);
-    return `http://localhost:${serverPort}/media/${encodedPath}`;
+    // Check if this file is already registered
+    for (const [token, registeredPath] of mediaRegistry.entries()) {
+        if (registeredPath === filePath) {
+            return `http://localhost:5511/media/${token}`;
+        }
+    }
+
+    // Generate a secure token for this file
+    const token = crypto.randomBytes(32).toString('hex');
+    mediaRegistry.set(token, filePath);
+
+    console.log("REGISTERED MEDIA FILE:", filePath, "->", token);
+
+    return `http://localhost:5511/media/${token}`;
+}
+
+// Helper function to get file path from token (for the server)
+export function getMediaFileFromToken(token: string): string | null {
+    return mediaRegistry.get(token) || null;
+}
+
+// Helper function to convert local file path to HTTP URL
+function getMediaUrl(filePath: string): string {
+    return registerMediaFile(filePath);
 }
 
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {

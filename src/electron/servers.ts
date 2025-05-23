@@ -10,7 +10,7 @@ import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
-import { handleShowSlideHtmlRequest } from "./utils/HtmlSlideHelper";
+import { handleShowSlideHtmlRequest, getMediaFileFromToken } from "./utils/HtmlSlideHelper";
 import fs from "fs"
 import path from "path"
 
@@ -46,12 +46,31 @@ function createServers() {
             app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
 
             // Serve media files
-            app.get('/media/*', (req, res) => {
-                // Decode the file path from the URL
-                const encodedPath = req.url.substring('/media/'.length);
-                const filePath = decodeURIComponent(encodedPath);
+            app.get('/media/:token', (req, res) => {
+                const token = req.params.token;
 
-                console.log("SERVING MEDIA FILE:", filePath);
+                console.log("SERVING MEDIA TOKEN:", token);
+
+                // Get the actual file path from the secure token
+                const filePath = getMediaFileFromToken(token);
+
+                if (!filePath) {
+                    console.error("Invalid or expired media token:", token);
+                    res.status(404).send('Media not found');
+                    return;
+                }
+
+                console.log("RESOLVED TO FILE:", filePath);
+
+                // SECURITY: Validate file extension
+                const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.webm', '.ogv', '.mov', '.avi', '.bmp', '.tiff', '.svg'];
+                const ext = path.extname(filePath).toLowerCase();
+
+                if (!allowedExtensions.includes(ext)) {
+                    console.error("Unauthorized file type:", ext);
+                    res.status(403).send('File type not allowed');
+                    return;
+                }
 
                 // Check if file exists
                 if (!fs.existsSync(filePath)) {
@@ -61,13 +80,15 @@ function createServers() {
                 }
 
                 // Get file extension to set proper content type
-                const ext = path.extname(filePath).toLowerCase();
                 const mimeTypes: { [key: string]: string } = {
                     '.png': 'image/png',
                     '.jpg': 'image/jpeg',
                     '.jpeg': 'image/jpeg',
                     '.gif': 'image/gif',
                     '.webp': 'image/webp',
+                    '.bmp': 'image/bmp',
+                    '.tiff': 'image/tiff',
+                    '.svg': 'image/svg+xml',
                     '.mp4': 'video/mp4',
                     '.webm': 'video/webm',
                     '.ogv': 'video/ogg',
