@@ -325,6 +325,18 @@
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
     // || styleTemplate.settings?.backgroundColor
+
+    function handleOpenInBrowserClick() {
+        // The props showId and layoutSlide are available in this component's scope.
+        if (!showId || !layoutSlide || !layoutSlide.id) {
+            console.error("Missing showId or slideId for opening in browser");
+            return;
+        }
+        const slideId = layoutSlide.id;
+        const url = `http://localhost:5511/show/${showId}/${slideId}`;
+        console.log(`Requesting to open URL: ${url}`); // For debugging
+        sendMain(Main.URL, url);
+    }
 </script>
 
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
@@ -464,6 +476,9 @@
                         <!-- font-size: 0.8em; -->
                         <span style="position: absolute;display: contents;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
+                        <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
+                            <Icon id="open_in_new" />
+                        </button>
                     </div>
                 {/if}
             </SelectElem>
@@ -667,12 +682,29 @@
     }
 
     .label .text {
-        width: 100%;
-        margin: 0 15px;
+        flex-grow: 1; /* Allow text to take available space */
+        margin-right: 5px; /* Space between text and button */
+        /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */
+        margin-left: 15px; /* Keep existing left margin if needed */
+        margin-right: 15px; /* Keep existing right margin if needed, or adjust for button */
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .open-in-browser-btn {
+        background: none;
+        border: none;
+        color: inherit; /* Or a specific color if needed */
+        cursor: pointer;
+        padding: 0 4px; /* Adjust as needed */
+        margin-left: auto; /* Pushes it to the right if label is flex */
+        display: flex; /* To align icon nicely if needed */
+        align-items: center;
+    }
+    .open-in-browser-btn:hover {
+        opacity: 0.7;
     }
 
     hr {
