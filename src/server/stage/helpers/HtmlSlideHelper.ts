@@ -7,6 +7,52 @@ import type { TrimmedShow, Show, Slide } from '../../../types/Show';
 import type { Media as ItemMedia } from '../../../types/Show';
 import { getMediaUrl } from './MediaHelper';
 
+// Helper function to parse CSS styles from a style string
+function getStyles(styleString: string): { [key: string]: string } {
+    const styles: { [key: string]: string } = {};
+    if (!styleString?.length) return styles;
+
+    styleString.split(";").forEach((s) => {
+        if (!s.length) return;
+        const key = s.slice(0, s.indexOf(":")).trim();
+        const value = s.slice(s.indexOf(":") + 1).trim();
+        if (key && value) {
+            styles[key] = value;
+        }
+    });
+
+    return styles;
+}
+
+// Helper function to apply default positioning if not specified
+function applyDefaultPositioning(itemStyle: string, styles: { [key: string]: string }): string {
+    let result = itemStyle;
+
+    if (!styles['left'] && !styles['inset-inline-start']) {
+        result += "left: 50px;";
+    }
+    if (!styles['top']) {
+        result += "top: 50px;";
+    }
+    if (!styles['width']) {
+        result += "width: 400px;";
+    }
+    if (!styles['height']) {
+        result += "height: 150px;";
+    }
+
+    return result;
+}
+
+// Helper function to apply custom styling to text segments (matching desktop app behavior)
+function getCustomStyle(style: string): string {
+    if (!style) return "";
+
+    // For now, return the style as-is since we don't have output resolution context
+    // In the desktop app, this function also handles percentage positioning and alpha values
+    return style;
+}
+
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {
     const showName = showData.name || showId;
     let html = `<!DOCTYPE html><html><head><title>Show - ${showName} - Slide ${slideId}</title>`;
@@ -30,12 +76,35 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             z-index: 10;
         }
         .text-item {
-            color: white;
-            font-size: 100px;
-            line-height: 1.1;
-            text-shadow: 3px 3px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000, 0px 0px 10px #000000;
-            font-family: "CMGSans", sans-serif;
             z-index: 20;
+        }
+        .text-item .align {
+            height: 100%;
+            display: flex;
+            text-align: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .text-item .lines {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            justify-content: center;
+        }
+        .text-item .break {
+            width: 100%;
+            font-size: 0;
+            overflow-wrap: break-word;
+        }
+        .text-item .break span {
+            font-size: 100px;
+            min-height: 50px;
+            color: white;
+            font-family: "CMGSans", sans-serif;
+            line-height: 1.1;
+            text-shadow: 2px 2px 10px #000000;
+            -webkit-text-stroke-color: #000000;
             font-weight: bold;
         }
         .media-item {
@@ -250,47 +319,104 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     if (slideData.items) {
         for (const item of slideData.items) {
             let itemStyle = "position: absolute;";
+            let itemStyles: { [key: string]: string } = {};
 
             // Apply the item's style property which contains positioning and other CSS
             if (item.style) {
                 itemStyle += item.style;
+                itemStyles = getStyles(item.style);
             }
 
             // Add default positioning if not specified in style
-            if (!item.style || (!item.style.includes('left:') && !item.style.includes('left '))) {
-                itemStyle += "left: 50px;";
-            }
-            if (!item.style || (!item.style.includes('top:') && !item.style.includes('top '))) {
-                itemStyle += "top: 50px;";
-            }
-            if (!item.style || (!item.style.includes('width:') && !item.style.includes('width '))) {
-                itemStyle += "width: 400px;";
-            }
-            if (!item.style || (!item.style.includes('height:') && !item.style.includes('height '))) {
-                itemStyle += "height: 150px;";
-            }
-
-            if (item.align) {
-                itemStyle += `text-align: ${item.align};`;
-            }
+            itemStyle = applyDefaultPositioning(itemStyle, itemStyles);
 
             if (item.lines) {
                 // This is a text item - ensure it appears above background media
                 if (!itemStyle.includes('z-index')) {
                     itemStyle += "z-index: 100;";
                 }
+
+                // Create the text item with proper structure matching desktop app
                 bodyContent += `<div class="slide-item text-item" style="${itemStyle}">`;
-                let currentText = "";
-                for (const line of item.lines) {
-                    for (const textSegment of line.text) {
-                        currentText += textSegment.value;
+
+                // Add align div with proper alignment styles - matching desktop app behavior
+                let alignStyle = "height: 100%; display: flex; text-align: center; align-items: center;";
+
+                // Parse item.align to extract alignment properties
+                if (item.align) {
+                    const alignStyles = getStyles(item.align);
+
+                    // Apply align-items (vertical alignment)
+                    if (alignStyles['align-items']) {
+                        alignStyle = alignStyle.replace('align-items: center;', `align-items: ${alignStyles['align-items']};`);
                     }
-                    currentText += "<br>";
+
+                    // Apply justify-content if specified (for container alignment)
+                    if (alignStyles['justify-content']) {
+                        alignStyle += `justify-content: ${alignStyles['justify-content']};`;
+                    }
+
+                    // Apply text-align if specified at item level
+                    if (alignStyles['text-align']) {
+                        alignStyle = alignStyle.replace('text-align: center;', `text-align: ${alignStyles['text-align']};`);
+                    }
                 }
-                if (currentText.endsWith("<br>")) {
-                    currentText = currentText.substring(0, currentText.length - 4);
+
+                bodyContent += `<div class="align" style="${alignStyle}">`;
+
+                // Add lines container
+                let linesStyle = "width: 100%; display: flex; flex-direction: column; text-align: center; justify-content: center;";
+                bodyContent += `<div class="lines" style="${linesStyle}">`;
+
+                // Process each line
+                for (const line of item.lines) {
+                    // Add line alignment if specified - this overrides item-level text alignment
+                    let lineStyle = "width: 100%; font-size: 0; overflow-wrap: break-word;";
+                    if (line.align) {
+                        const lineAlignStyles = getStyles(line.align);
+                        if (lineAlignStyles['text-align']) {
+                            lineStyle += `text-align: ${lineAlignStyles['text-align']};`;
+                        }
+                        // Apply any other line-specific styles
+                        Object.entries(lineAlignStyles).forEach(([key, value]) => {
+                            if (key !== 'text-align') {
+                                lineStyle += `${key}: ${value};`;
+                            }
+                        });
+                    }
+
+                    bodyContent += `<div class="break" style="${lineStyle}">`;
+
+                    // Process each text segment in the line
+                    for (const textSegment of line.text) {
+                        // Start with default text styling
+                        let spanStyle = "font-size: 100px; min-height: 50px; color: white; font-family: 'CMGSans', sans-serif; line-height: 1.1; text-shadow: 2px 2px 10px #000000; -webkit-text-stroke-color: #000000; font-weight: bold;";
+
+                        // Apply individual text segment styles - this is where custom styling happens
+                        if (textSegment.style) {
+                            // Use the custom style function to process the style
+                            const customStyle = getCustomStyle(textSegment.style);
+                            spanStyle += customStyle;
+
+                            // Handle font size specifically if it's in the style
+                            const segmentStyles = getStyles(textSegment.style);
+                            if (segmentStyles['font-size']) {
+                                // Override the default font-size with the custom one
+                                spanStyle = spanStyle.replace('font-size: 100px;', `font-size: ${segmentStyles['font-size']};`);
+                            }
+                        }
+
+                        const textValue = textSegment.value?.replaceAll("\n", "<br>") || "<br>";
+                        bodyContent += `<span style="${spanStyle}">${textValue}</span>`;
+                    }
+
+                    bodyContent += `</div>`; // Close break div
                 }
-                bodyContent += `<div>${currentText}</div></div>`;
+
+                bodyContent += `</div>`; // Close lines div
+                bodyContent += `</div>`; // Close align div
+                bodyContent += `</div>`; // Close text-item div
+
             } else if (item.type === "media" && (item.src || item.media)) {
                 const mediaObject = item.media as ItemMedia | undefined;
                 const pathValue = item.src ?? mediaObject?.path ?? "";
