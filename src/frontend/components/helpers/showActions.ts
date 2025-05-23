@@ -384,6 +384,8 @@ export function goToPreviousProjectItem(key = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
+            if (newShow.type === "section" && get(activePage) === "edit") activeEdit.set({ items: [] })
+
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
                 let actionId = newShow.data?.settings?.triggerAction
                 if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction

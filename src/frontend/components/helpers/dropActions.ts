@@ -347,7 +347,7 @@ export const dropActions = {
                 name: slide.group || "",
                 color: slide.color || "",
                 category: activeTab === "all" || activeTab === "unlabeled" ? null : activeTab,
-                items: slide.items
+                items: slides[ref.id].items
             }
             history({ id: "UPDATE", newData: { data }, location: { page: "drawer", id: drop.id.slice(0, -1) } })
         })
@@ -468,6 +468,10 @@ const slideDrop = {
         data = data.map((a) => {
             const path = a.path || a.id
 
+            // project item
+            a.path = path
+            delete a.id
+
             let backgroundData = backgroundTypeData
             const mediaStyle = getMediaStyle(get(media)[path], undefined)
             if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
@@ -482,7 +486,7 @@ const slideDrop = {
 
             if (drop.trigger?.includes("end")) drop.index!--
             history.location!.layoutSlide = drop.index
-            const newData = { ...data[0], path: data[0].path || data[0].id }
+            const newData = data[0]
             delete newData.index
             delete newData.id
             history.newData = newData

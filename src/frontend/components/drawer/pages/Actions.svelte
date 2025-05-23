@@ -11,22 +11,21 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
-    console.log(searchValue)
 
     function addMidi() {
         popupData.set({})
         activePopup.set("action")
     }
 
-    $: actionsList = sortByName(keysToID($actions), "name", true)
-        .map(convertOldMidiToNewAction)
-        .filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
 <div class="context #actions" style="position: relative;height: 100%;overflow-y: auto;">
-    {#if actionsList.length}
+    {#if filteredActionsSearch.length}
         <div class="actions">
-            {#each actionsList as action}
+            {#each filteredActionsSearch as action}
                 <div class="action context #action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
