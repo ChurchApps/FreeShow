@@ -10,7 +10,8 @@ import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
-import { handleShowSlideHtmlRequest, getMediaFileFromToken } from "./utils/HtmlSlideHelper";
+import { handleShowSlideHtmlRequest } from "../server/stage/helpers/HtmlSlideHelper";
+import { getMediaFileFromToken } from "../server/stage/helpers/MediaHelper";
 import fs from "fs"
 import path from "path"
 

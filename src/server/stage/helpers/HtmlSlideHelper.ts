@@ -1,49 +1,11 @@
 import type { Request, Response } from "express";
 import path from "path";
 import { app as electronApp } from "electron";
-import { stores } from "../data/store";
-import { readFile } from "./files";
-import type { TrimmedShow, Show, Slide } from '../../types/Show';
-import type { Media as ItemMedia } from '../../types/Show';
-import crypto from "crypto";
-
-// Media registry to track allowed media files
-const mediaRegistry = new Map<string, string>(); // token -> filePath
-
-// Helper function to register media file and get secure token
-function registerMediaFile(filePath: string): string {
-    if (!filePath) return "";
-
-    // If it's already a URL, return as is
-    if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
-        return filePath;
-    }
-
-    // Check if this file is already registered
-    for (const [token, registeredPath] of mediaRegistry.entries()) {
-        if (registeredPath === filePath) {
-            return `http://localhost:5511/media/${token}`;
-        }
-    }
-
-    // Generate a secure token for this file
-    const token = crypto.randomBytes(32).toString('hex');
-    mediaRegistry.set(token, filePath);
-
-    console.log("REGISTERED MEDIA FILE:", filePath, "->", token);
-
-    return `http://localhost:5511/media/${token}`;
-}
-
-// Helper function to get file path from token (for the server)
-export function getMediaFileFromToken(token: string): string | null {
-    return mediaRegistry.get(token) || null;
-}
-
-// Helper function to convert local file path to HTTP URL
-function getMediaUrl(filePath: string): string {
-    return registerMediaFile(filePath);
-}
+import { stores } from "../../../electron/data/store";
+import { readFile } from "../../../electron/utils/files";
+import type { TrimmedShow, Show, Slide } from '../../../types/Show';
+import type { Media as ItemMedia } from '../../../types/Show';
+import { getMediaUrl } from './MediaHelper';
 
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {
     const showName = showData.name || showId;
@@ -272,4 +234,4 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
         console.error("Error processing show/slide for HTML generation:", error);
         res.status(500).send("Error generating slide HTML");
     }
-}
+} 
