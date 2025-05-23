@@ -46,12 +46,13 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             width: 100%;
             height: 100%;
             z-index: 1;
+            background-color: #000000;
         }
         .background-media img,
         .background-media video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
         }
     `;
     let bodyContent = "";
