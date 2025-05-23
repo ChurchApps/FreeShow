@@ -22,18 +22,22 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         .slide-item { 
             box-sizing: border-box; 
             position: absolute;
+            z-index: 10;
         }
         .text-item {
             color: white;
             font-size: 100px;
             line-height: 1.1;
-            text-shadow: 2px 2px 10px #000000;
+            text-shadow: 3px 3px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000, 0px 0px 10px #000000;
             font-family: "CMGSans", sans-serif;
+            z-index: 20;
+            font-weight: bold;
         }
         .media-item {
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 15;
         }
         .background-media {
             position: absolute;
@@ -41,7 +45,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            z-index: 1;
         }
         .background-media img,
         .background-media video {
@@ -52,7 +56,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     `;
     let bodyContent = "";
 
-    let slideContainerStyle = "position: relative; width: 100%; height: 100%;";
+    let slideContainerStyle = "position: relative; width: 100%; height: 100%; z-index: 0;";
 
     // Handle background media from layout data
     let backgroundMediaHtml = "";
@@ -114,7 +118,11 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 itemStyle += `text-align: ${item.align};`;
             }
 
-            if (item.type === "text" && item.lines) {
+            if (item.lines) {
+                // This is a text item - ensure it appears above background media
+                if (!itemStyle.includes('z-index')) {
+                    itemStyle += "z-index: 100;";
+                }
                 bodyContent += `<div class="slide-item text-item" style="${itemStyle}">`;
                 let currentText = "";
                 for (const line of item.lines) {
