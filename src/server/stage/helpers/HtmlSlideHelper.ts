@@ -109,9 +109,11 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 const slideContainer = document.querySelector('.slide-container');
                 if (!slideContainer) return;
                 
+                console.log(\`Updating to slide \${newSlideId}\`);
+                
                 // Get current background video element and its state
                 const currentVideo = document.querySelector('.background-media video');
-                let videoElement = null;
+                let preserveVideo = false;
                 let videoState = null;
                 
                 if (currentVideo) {
@@ -123,8 +125,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                         loop: currentVideo.loop,
                         volume: currentVideo.volume
                     };
-                    // Keep reference to the actual video element
-                    videoElement = currentVideo.cloneNode(true);
+                    console.log('Current video state:', videoState);
                 }
                 
                 // Load new slide content
@@ -134,26 +135,39 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                     return;
                 }
                 
-                // Update the slide container with new content
-                slideContainer.innerHTML = newContent;
+                // Parse the new content to check if it has the same video
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newContent;
+                const newVideoElement = tempDiv.querySelector('.background-media video');
                 
-                // Check if new slide has the same background video
-                const newVideo = document.querySelector('.background-media video');
-                if (newVideo && videoState && newVideo.src === videoState.src) {
-                    // Same video - restore the playing video element
-                    console.log('Same background video detected, preserving playback');
-                    newVideo.currentTime = videoState.currentTime;
-                    newVideo.muted = videoState.muted;
-                    newVideo.loop = videoState.loop;
-                    newVideo.volume = videoState.volume;
+                // Check if the new slide has the same video source
+                if (currentVideo && newVideoElement && currentVideo.src === newVideoElement.src) {
+                    preserveVideo = true;
+                    console.log('Same video detected - preserving playback');
                     
-                    if (!videoState.paused) {
-                        newVideo.play().catch(err => console.error('Error resuming video:', err));
+                    // Remove only the non-video content, keep the video playing
+                    const currentBackgroundMedia = document.querySelector('.background-media');
+                    const slideItems = document.querySelectorAll('.slide-item');
+                    
+                    // Remove old slide items
+                    slideItems.forEach(item => item.remove());
+                    
+                    // Add new slide items from the new content
+                    const newSlideItems = tempDiv.querySelectorAll('.slide-item');
+                    newSlideItems.forEach(item => {
+                        slideContainer.appendChild(item.cloneNode(true));
+                    });
+                    
+                } else {
+                    // Different video or no current video - replace all content
+                    console.log('Different or no video - replacing all content');
+                    slideContainer.innerHTML = newContent;
+                    
+                    // Start the new video if it exists
+                    const newVideo = document.querySelector('.background-media video');
+                    if (newVideo) {
+                        newVideo.play().catch(err => console.error('Error starting video:', err));
                     }
-                } else if (newVideo) {
-                    // Different video - let it start fresh
-                    console.log('Different background video, starting fresh');
-                    newVideo.play().catch(err => console.error('Error starting new video:', err));
                 }
                 
                 // Update current index and navigation info
