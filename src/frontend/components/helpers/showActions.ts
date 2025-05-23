@@ -30,7 +30,7 @@ import {
     dynamicValueData,
     focusMode,
     media,
-    midiIn,
+    actions,
     outLocked,
     outputs,
     outputSlideCache,
@@ -49,7 +49,7 @@ import {
     triggers,
     variables,
     videosData,
-    videosTime,
+    videosTime
 } from "./../../stores"
 import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
@@ -73,7 +73,7 @@ const getProjectIndex = {
         if (index === null) return items.length - 1
         index = items.findIndex((_a, i) => i + 1 === index)
         return index === null || index < 0 ? null : index
-    },
+    }
 }
 
 export function checkInput(e: any) {
@@ -294,7 +294,7 @@ const triggerActionsBeforeOutput = {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
         if (!Array.isArray(layers)) return false
         return !layers.includes("background")
-    },
+    }
 }
 function shouldTriggerBefore(action: any) {
     return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
@@ -358,8 +358,8 @@ export function goToNextProjectItem(key = "") {
 
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
                 let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(midiIn)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(midiIn)[actionId])
+                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
+                if (actionId) runAction(get(actions)[actionId])
                 return
             }
 
@@ -384,10 +384,12 @@ export function goToPreviousProjectItem(key = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
+            if (newShow.type === "section" && get(activePage) === "edit") activeEdit.set({ items: [] })
+
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
                 let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(midiIn)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(midiIn)[actionId])
+                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
+                if (actionId) runAction(get(actions)[actionId])
                 return
             }
 
@@ -678,7 +680,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     loop,
                     muted,
                     ...mediaStyle,
-                    ignoreLayer: mediaStyle.videoType === "foreground",
+                    ignoreLayer: mediaStyle.videoType === "foreground"
                 }
 
                 // outBackground.set(bgData)
@@ -999,7 +1001,7 @@ const customTriggers = {
                     resolve("error")
                 })
         })
-    },
+    }
 }
 
 // DYNAMIC VALUES
@@ -1203,7 +1205,7 @@ const dynamicValues = {
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
-    audio_volume: () => AudioPlayer.getVolume() * 100,
+    audio_volume: () => AudioPlayer.getVolume() * 100
 }
 
 export function getVariableNameId(name: string) {

@@ -15,7 +15,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false) => 
         const dontReplace: string[] = ["text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform"]
 
         // remove text
-        if (!key.includes("color") && !dontReplace.includes(key) && removeTxt && style.length > replaced.length && replaced.length > 0) style = replaced
+        if (!key.includes("color") && !key.includes("background") && !dontReplace.includes(key) && removeTxt && style.length > replaced.length && replaced.length > 0) style = replaced
 
         if (key === "transform") styles = { ...styles, ...getFilters(style) }
 

@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
+import { Main } from "../../../../types/IPC/Main"
 import type { StringObject } from "../../../../types/Main"
+import type { Item } from "../../../../types/Show"
+import { sendMain } from "../../../IPC/main"
 import { dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getKey } from "../../../values/keys"
 import { clone, removeDuplicates } from "../../helpers/array"
-import { sendMain } from "../../../IPC/main"
-import { Main } from "../../../../types/IPC/Main"
 
 const api = "https://contentapi.churchapps.org/bibles/"
 const tempCache: any = {}
@@ -22,7 +23,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         books: `${api}${active}/books`,
         chapters: `${api}${active}/${ref.bookId}/chapters`,
         verses: `${api}${active}/chapters/${ref.chapterId}/verses`,
-        versesText: `${api}${active}/verses/${versesId}`,
+        versesText: `${api}${active}/verses/${versesId}`
     }
 
     if (fetchTimeout[active]) clearTimeout(fetchTimeout[active])
@@ -237,10 +238,10 @@ export function getVersePartLetter(subverse: number) {
 
 export const textKeys = {
     showVersion: "[version]",
-    showVerse: "[reference]",
+    showVerse: "[reference]"
 }
 export function getSlides({ bibles, sorted }, onlyOne = false, disableReference = false) {
-    const slides: any[][] = [[]]
+    const slides: Item[][] = [[]]
 
     const template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
     const templateTextItems = template.filter((a) => a.lines)
@@ -292,7 +293,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
                 slideArr.lines![lineIndex].text.push({
                     value,
                     style: verseNumberStyle,
-                    customType: "disableTemplate", // dont let template style verse numbers
+                    customType: "disableTemplate" // dont let template style verse numbers
                 })
             }
 
@@ -446,15 +447,15 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
         if (lines.length) {
             // add reference to the main text if just one item or it's enabled!
             if (combineWithText) {
-                if (!slides[slideIndex][itemIndex]) slides[slideIndex][itemIndex] = { lines: [] }
-                if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][itemIndex].lines.push(...lines)
+                if (!slides[slideIndex][itemIndex]) slides[slideIndex][itemIndex] = { lines: [], style: "" }
+                if (get(scriptureSettings).referenceAtBottom && slides[slideIndex][itemIndex].lines) slides[slideIndex][itemIndex].lines!.push(...lines)
                 else slides[slideIndex][itemIndex].lines = [...lines, ...(slides[slideIndex][itemIndex].lines || [])]
             } else {
                 slides[slideIndex].push({
                     lines,
                     style: metaTemplate?.style || "top: 910px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
-                    actions: metaTemplate?.actions || {},
+                    actions: metaTemplate?.actions || {}
                 })
             }
         }
@@ -494,8 +495,8 @@ function stripMarkdown(input: string) {
 // hard coded custom Bible data
 const bibleData = {
     "eea18ccd2ca05dde-01": {
-        nameLocal: "Bibel 2011 Bokmål", // med gammeltestamentlige apokryfer
-    },
+        nameLocal: "Bibel 2011 Bokmål" // med gammeltestamentlige apokryfer
+    }
 }
 // ChurchAppsApiBible
 export function customBibleData(data: any) {
@@ -593,7 +594,7 @@ export const bookIds: string[] = [
     "2JN",
     "3JN",
     "JUD",
-    "REV",
+    "REV"
 ]
 
 const colorCodesFull = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]

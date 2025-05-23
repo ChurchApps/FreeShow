@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import type { Item } from "../../../types/Show"
+    import type { Item, Transition } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
     import { send } from "../../utils/request"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
@@ -25,6 +25,7 @@
     export let filter = ""
     export let backdropFilter = ""
     export let key = false
+    export let transition: Transition | null = null
     export let disableListTransition = false
     export let smallFontSize = false
     export let animationStyle: any = {}
@@ -288,18 +289,27 @@
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables, $outputs)
+
+    // initialize default filter values to get the transition working (should use animation)
+    // https://stackoverflow.com/questions/68632554/css-backdrop-filter-does-not-work-with-transition
+    let noTransition = !transition || (transition.type || "none") === "none" || transition.duration === 0
+    // const defaultValues = "opacity(1) saturate(1) contrast(1) brightness(1) blur(0px) invert(0) hue-rotate(0deg)"
+    // let foregroundFiltersValues = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
+    // let foregroundFiltersDefault = `${filter ? "filter: " + defaultValues + ";" : ""}${backdropFilter ? "backdrop-filter: " + defaultValues + ";" : ""}`
+    // let foregroundFilters = foregroundFiltersValues ? (noTransition ? foregroundFiltersValues : foregroundFiltersDefault) : ""
+    // setTimeout(() => (foregroundFilters = foregroundFiltersValues))
+    let foregroundFilters = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
-        ? 'backdrop-filter: ' + backdropFilter + ';'
-        : ''}{animationStyle.item || ''}{cssVariables}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}"
     class:white={key && !lines?.length}
     class:key
     class:isStage
     class:isDisabledVariable
+    class:noTransition
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
     bind:this={itemElem}

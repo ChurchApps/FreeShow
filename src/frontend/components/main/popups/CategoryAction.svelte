@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { categories, midiIn, popupData } from "../../../stores"
-    import T from "../../helpers/T.svelte"
+    import { actions, categories, popupData } from "../../../stores"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import T from "../../helpers/T.svelte"
 
     let selectedCategory = $popupData?.id
     onMount(() => {
@@ -14,9 +14,9 @@
 
     let actionOptions = [
         { id: "", name: "—" },
-        ...Object.entries($midiIn)
+        ...Object.entries($actions)
             .map(([id, a]) => ({ id, name: a.name }))
-            .sort((a, b) => a.name?.localeCompare(b.name)),
+            .sort((a, b) => a.name?.localeCompare(b.name))
     ]
 
     function updateValue(e: any) {

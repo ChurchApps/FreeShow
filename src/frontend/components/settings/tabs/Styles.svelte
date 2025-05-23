@@ -299,7 +299,7 @@
     </span> -->
 </CombinedInput>
 
-<h3><T id="preview.slide" /></h3>
+<!-- LAYERS -->
 <CombinedInput>
     <p><T id="settings.active_layers" /></p>
     <span class="flex">
@@ -352,6 +352,8 @@
 </CombinedInput>
 <!-- WIP toggle meta -->
 
+<h3><T id="preview.slide" /></h3>
+
 <CombinedInput>
     <p><T id="settings.lines" /></p>
     <Button
@@ -359,6 +361,7 @@
             popupData.set({ active: maxLines, trigger: (value) => updateStyle(value, "lines") })
             activePopup.set("max_lines")
         }}
+        disabled={!activeLayers.includes("slide")}
         title={$dictionary.popup?.max_lines}
         bold={!maxLines}
     >
@@ -379,6 +382,7 @@
             on:click={() => {
                 updateStyle("", "lines")
             }}
+            disabled={!activeLayers.includes("slide")}
             redHover
         >
             <Icon id="close" size={1.2} white />
@@ -393,6 +397,7 @@
             popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.template || "", trigger: (id) => updateStyle(id, "template") })
             activePopup.set("select_template")
         }}
+        disabled={!activeLayers.includes("slide")}
         bold={!currentStyle.template}
     >
         <div style="display: flex;align-items: center;padding: 0;">
@@ -412,6 +417,7 @@
             on:click={() => {
                 updateStyle("", "template")
             }}
+            disabled={!activeLayers.includes("slide")}
             redHover
         >
             <Icon id="close" size={1.2} white />
@@ -432,6 +438,7 @@
             })
             activePopup.set("select_template")
         }}
+        disabled={!activeLayers.includes("slide")}
         bold={!(currentStyle.templateScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4)}
     >
         <div style="display: flex;align-items: center;padding: 0;">
@@ -460,6 +467,7 @@
                 if (currentStyle.templateScripture_3) updateStyle("", "templateScripture_3")
                 if (currentStyle.templateScripture_4) updateStyle("", "templateScripture_4")
             }}
+            disabled={!activeLayers.includes("slide")}
             redHover
         >
             <Icon id="close" size={1.2} white />
@@ -476,6 +484,7 @@
             popupData.set({ action: "style_metadata", id: styleId })
             activePopup.set("metadata_display")
         }}
+        disabled={!activeLayers.includes("overlays")}
         title={$dictionary.popup?.metadata_display}
         bold={false}
     >
@@ -492,7 +501,7 @@
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>
         <p><T id="meta.text_divider" /></p>
-        <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
+        <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} disabled={!activeLayers.includes("overlays")} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="meta.meta_template" /></p>
@@ -501,6 +510,7 @@
                 popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.metadataTemplate || "metadata", trigger: (id) => updateStyle(id, "metadataTemplate") })
                 activePopup.set("select_template")
             }}
+            disabled={!activeLayers.includes("overlays")}
             bold={false}
         >
             <div style="display: flex;align-items: center;padding: 0;">
@@ -514,6 +524,7 @@
                 on:click={() => {
                     updateStyle("", "metadataTemplate")
                 }}
+                disabled={!activeLayers.includes("overlays")}
                 redHover
             >
                 <Icon id="close" size={1.2} white />
@@ -532,6 +543,7 @@
             popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.messageTemplate || "message", trigger: (id) => updateStyle(id, "messageTemplate") })
             activePopup.set("select_template")
         }}
+        disabled={!activeLayers.includes("overlays")}
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
@@ -545,6 +557,7 @@
             on:click={() => {
                 updateStyle("", "messageTemplate")
             }}
+            disabled={!activeLayers.includes("overlays")}
             redHover
         >
             <Icon id="close" size={1.2} white />

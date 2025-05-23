@@ -75,6 +75,11 @@
 
             // WIP option to turn off "content refresh" if slide content is identical to previous content ?
 
+            // this will reset transitions...
+            // currentSlide = null
+            // // timeout to allow component text to clear before removing component (needed for videoTime condition updates)
+            // setTimeout(() => (slide = clone(out.slide || null)))
+
             slide = clone(out.slide || null)
         }
         if (!type || type === "background") background = clone(out.background || null)

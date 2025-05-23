@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeTimers, playingAudio, playingAudioPaths, variables } from "../../../stores"
+    import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
@@ -29,8 +29,10 @@
     let show = false
 
     let filteredItems: Item[] = []
-    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths })
+    $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
+    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })
     function filterItems(currentItems: Item[], _updater: any) {
+        // if (!currentItems.length) return
         const data = { outputId, slideIndex: outSlide?.index }
         const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, data))
         if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
@@ -140,6 +142,7 @@
                 let:customItem
                 let:customLines
                 let:customOut
+                let:transition
             >
                 <Textbox
                     filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
@@ -149,6 +152,7 @@
                     chords={customItem.chords?.enabled}
                     animationStyle={animationData.style || {}}
                     item={customItem}
+                    {transition}
                     {ratio}
                     {outputId}
                     ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}

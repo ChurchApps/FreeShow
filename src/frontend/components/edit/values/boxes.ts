@@ -57,7 +57,7 @@ export const mediaFitOptions: any[] = [
     { id: "contain", name: "$:media.contain:$" },
     { id: "cover", name: "$:media.cover:$" },
     { id: "fill", name: "$:media.fill:$" },
-    { id: "blur", name: "$:media.blur_fill:$" },
+    { id: "blur", name: "$:media.blur_fill:$" }
     // { id: "scale-down", name: "Scale down" },
 ]
 
@@ -71,18 +71,18 @@ export const trackerEdits = [
             options: [
                 { id: "number", name: "$:variables.number:$" },
                 { id: "bar", name: "$:edit.progress_bar:$" },
-                { id: "group", name: "$:tools.groups:$" },
-            ],
-        },
+                { id: "group", name: "$:tools.groups:$" }
+            ]
+        }
     },
     {
         name: "edit.accent_color",
         input: "color",
         id: "tracker.accent",
-        value: "#F0008C",
+        value: "#F0008C"
     },
     { name: "edit.sub_indexes", input: "checkbox", id: "tracker.childProgress", value: false },
-    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false },
+    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false }
 ]
 
 const now = new Date(2025, 0, 10)
@@ -105,11 +105,11 @@ export const boxes: Box = {
                     values: {
                         options: [
                             { id: "shrinkToFit", name: "$:edit.shrink_to_fit:$" },
-                            { id: "growToFit", name: "$:edit.grow_to_fit:$" },
-                        ],
-                    },
+                            { id: "growToFit", name: "$:edit.grow_to_fit:$" }
+                        ]
+                    }
                 },
-                { input: "font-style" },
+                { input: "font-style" }
             ],
             align: [{ input: "align-x" }, { input: "align-y" }],
             text: [
@@ -126,19 +126,20 @@ export const boxes: Box = {
                             { id: "none", name: "$:main.none:$" },
                             { id: "uppercase", name: "$:edit.uppercase:$" },
                             { id: "lowercase", name: "$:edit.lowercase:$" },
-                            { id: "capitalize", name: "$:edit.capitalize:$" },
-                        ],
-                    },
+                            { id: "capitalize", name: "$:edit.capitalize:$" }
+                        ]
+                    }
                 },
                 // probably not needed as we have line and item background color
                 // { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
-                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
+                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false }
             ],
             lines: [
                 { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
+                { name: "line_radius", id: "specialStyle.lineRadius", input: "number", value: 0, values: { max: 100 } },
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },
-                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
+                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } }
             ],
             list: [
                 { name: "list", id: "list.enabled", input: "checkbox", value: false },
@@ -163,34 +164,34 @@ export const boxes: Box = {
                             { id: "upper-alpha", name: "$:list.upper-alpha:$" }, // same as latin
                             { id: "lower-roman", name: "$:list.lower-roman:$" },
                             { id: "upper-roman", name: "$:list.upper-roman:$" },
-                            { id: "lower-greek", name: "$:list.lower-greek:$" },
+                            { id: "lower-greek", name: "$:list.lower-greek:$" }
                             // special
                             // {id: "bengali", name: "$:list.bengali:$" },
                             // {id: "cambodian", name: "$:list.cambodian:$" },
                             // {id: "devanagari", name: "$:list.devanagari:$" },
-                        ],
+                        ]
                     },
                     // disabled: "list.interval", // WIP still disabled when set back to 0
-                    hidden: true,
-                },
+                    hidden: true
+                }
                 // { name: "one_at_a_time", id: "one_at_a_time", input: "checkbox", value: false },
                 // { name: "interval", id: "list.interval", input: "number", value: 0, hidden: true }, // slide timers can be user for this
             ],
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
             ],
             shadow: [
                 { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
                 { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
             ],
             chords: [
                 { name: "chords", id: "chords.enabled", input: "checkbox", value: false },
                 { name: "color", id: "chords.color", input: "color", value: "#FF851B", hidden: true },
                 { name: "size", id: "chords.size", input: "number", value: 60, hidden: true },
-                { name: "vertical_offset", id: "chords.offsetY", input: "number", value: 0, values: { min: -1000 }, hidden: true },
+                { name: "vertical_offset", id: "chords.offsetY", input: "number", value: 0, values: { min: -1000 }, hidden: true }
             ],
             special: [
                 {
@@ -204,16 +205,16 @@ export const boxes: Box = {
                             { id: "top_bottom", name: "$:edit.top_bottom:$" },
                             { id: "bottom_top", name: "$:edit.bottom_top:$" },
                             { id: "left_right", name: "$:edit.left_right:$" },
-                            { id: "right_left", name: "$:edit.right_left:$" },
-                        ],
-                    },
+                            { id: "right_left", name: "$:edit.right_left:$" }
+                        ]
+                    }
                 },
                 { name: "scrolling_speed", id: "scrolling.speed", input: "number", value: 30, values: { min: 1, max: 100 } },
                 { name: "press_action", id: "button.press", input: "action", value: "" },
-                { name: "release_action", id: "button.release", input: "action", value: "" },
+                { name: "release_action", id: "button.release", input: "action", value: "" }
             ],
-            CSS: [{ id: "text", input: "CSS" }],
-        },
+            CSS: [{ id: "text", input: "CSS" }]
+        }
     },
     // list has moved to textbox, but some might still have the old item
     list: {
@@ -242,19 +243,19 @@ export const boxes: Box = {
                             { id: "upper-alpha", name: "$:list.upper-alpha:$" }, // same as latin
                             { id: "lower-roman", name: "$:list.lower-roman:$" },
                             { id: "upper-roman", name: "$:list.upper-roman:$" },
-                            { id: "lower-greek", name: "$:list.lower-greek:$" },
+                            { id: "lower-greek", name: "$:list.lower-greek:$" }
                             // special
                             // {id: "bengali", name: "$:list.bengali:$" },
                             // {id: "cambodian", name: "$:list.cambodian:$" },
                             // {id: "devanagari", name: "$:list.devanagari:$" },
-                        ],
+                        ]
                     },
-                    disabled: "list.interval",
+                    disabled: "list.interval"
                 },
                 // { name: "one_at_a_time", id: "one_at_a_time", input: "checkbox", value: false },
-                { name: "interval", id: "list.interval", input: "number", value: 0 },
-            ],
-        },
+                { name: "interval", id: "list.interval", input: "number", value: 0 }
+            ]
+        }
     },
     media: {
         icon: "image",
@@ -265,7 +266,7 @@ export const boxes: Box = {
                 // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false }, // , hidden: true
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
-                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
+                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
                 // WIP crop image
                 // object-position: 20px 20px;
                 // transform: scale(1.2) translate(0, 5%);
@@ -280,15 +281,15 @@ export const boxes: Box = {
                 { name: "filter.brightness", id: "filter", key: "brightness", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
                 { name: "filter.contrast", id: "filter", key: "contrast", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
                 { name: "filter.saturate", id: "filter", key: "saturate", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { max: 2 } },
-                { name: "filter.opacity", id: "filter", key: "opacity", input: "number", slider: true, value: 1, values: { max: 1, step: 0.1, decimals: 2, inputMultiplier: 100 }, sliderValues: { step: 0.01 } },
-            ],
+                { name: "filter.opacity", id: "filter", key: "opacity", input: "number", slider: true, value: 1, values: { max: 1, step: 0.1, decimals: 2, inputMultiplier: 100 }, sliderValues: { step: 0.01 } }
+            ]
             // shadow: [
             //   { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
             //   { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
             //   { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
             //   { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             // ],
-        },
+        }
     },
     camera: {
         icon: "camera",
@@ -297,9 +298,9 @@ export const boxes: Box = {
                 { name: "choose_camera", id: "device", input: "popup", popup: "choose_camera", icon: "camera" },
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions.filter((a) => a.id !== "blur") } },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
-                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
-            ],
-        },
+                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
+            ]
+        }
     },
     timer: {
         icon: "timer",
@@ -315,12 +316,12 @@ export const boxes: Box = {
                         options: [
                             { id: "time", name: "$:timer.time:$" },
                             { id: "line", name: "$:timer.line:$" },
-                            { id: "circle", name: "$:list.circle:$" },
-                        ],
-                    },
+                            { id: "circle", name: "$:list.circle:$" }
+                        ]
+                    }
                 },
                 { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
-                { name: "timer.hours", id: "timer.showHours", input: "checkbox", value: true },
+                { name: "timer.hours", id: "timer.showHours", input: "checkbox", value: true }
             ],
             // font: [
             //     { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
@@ -336,28 +337,28 @@ export const boxes: Box = {
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
                 { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: true },
-                { input: "font-style" },
+                { input: "font-style" }
             ],
             align: [{ input: "align-x" }], // , { input: "align-y" }
             style: [
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" }
                 // { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { enableNoColor: true } },
                 // { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
             ],
 
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
             ],
             shadow: [
                 { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
                 { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
             ],
-            CSS: [{ id: "text", input: "CSS" }],
-        },
+            CSS: [{ id: "text", input: "CSS" }]
+        }
     },
     clock: {
         icon: "clock",
@@ -372,9 +373,9 @@ export const boxes: Box = {
                         options: [
                             { id: "digital", name: "$:clock.digital:$" },
                             { id: "analog", name: "$:clock.analog:$" },
-                            { id: "custom", name: "$:clock.custom:$" },
-                        ],
-                    },
+                            { id: "custom", name: "$:clock.custom:$" }
+                        ]
+                    }
                 },
                 {
                     name: "sort.date",
@@ -389,23 +390,23 @@ export const boxes: Box = {
                             { id: "ll", name: `${dayjs(now).format("ll")}` }, // Jan 10, 2025
                             { id: "DD/MM/YYYY", name: `${dayjs(now).format("DD/MM/YYYY")}` }, // 10/01/2025
                             { id: "MM/DD/YYYY", name: `${dayjs(now).format("MM/DD/YYYY")}` }, // 01/10/2025
-                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` }, // 2025-01-10
-                        ],
-                    },
+                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` } // 2025-01-10
+                        ]
+                    }
                 },
                 {
                     name: "clock.show_time",
                     input: "checkbox",
                     id: "clock.showTime",
                     value: true,
-                    hidden: true,
+                    hidden: true
                 },
                 {
                     name: "clock.seconds",
                     input: "checkbox",
                     id: "clock.seconds",
                     value: false,
-                    hidden: true,
+                    hidden: true
                 },
                 {
                     name: "actions.format",
@@ -413,7 +414,7 @@ export const boxes: Box = {
                     input: "text",
                     id: "clock.customFormat",
                     value: "hh:mm a",
-                    hidden: true,
+                    hidden: true
                     // input_placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
                 },
                 {
@@ -421,26 +422,26 @@ export const boxes: Box = {
                     input: "tip",
                     values: { subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>' },
                     hidden: true,
-                    disabled: "clock",
-                },
+                    disabled: "clock"
+                }
             ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }
             ],
             style: [{ input: "font-style" }, { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }],
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
             ],
             shadow: [
                 { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
                 { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
             ],
-            CSS: [{ id: "text", input: "CSS" }],
-        },
+            CSS: [{ id: "text", input: "CSS" }]
+        }
     },
     events: {
         icon: "calendar",
@@ -451,12 +452,12 @@ export const boxes: Box = {
                 { name: "just_one_day", id: "events.justOneDay", input: "checkbox", value: false },
                 { name: "enable_start_date", id: "events.enableStartDate", input: "checkbox", value: false },
                 { name: "calendar.from_date", id: "events.startDate", hidden: true, input: "date" },
-                { name: "calendar.from_time", id: "events.startTime", hidden: true, input: "time" },
+                { name: "calendar.from_time", id: "events.startTime", hidden: true, input: "time" }
             ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "size", id: "style", key: "font-size", input: "number", value: 80, extension: "px" }, // , disabled: "item.autoSize"
+                { name: "size", id: "style", key: "font-size", input: "number", value: 80, extension: "px" } // , disabled: "item.autoSize"
                 // { name: "auto_size", id: "auto", input: "checkbox", value: false },
             ],
             text: [
@@ -475,24 +476,24 @@ export const boxes: Box = {
                             { id: "none", name: "$:main.none:$" },
                             { id: "uppercase", name: "$:edit.uppercase:$" },
                             { id: "lowercase", name: "$:edit.lowercase:$" },
-                            { id: "capitalize", name: "$:edit.capitalize:$" },
-                        ],
-                    },
-                },
+                            { id: "capitalize", name: "$:edit.capitalize:$" }
+                        ]
+                    }
+                }
             ],
             // align: [{ input: "align-x" //, value: "left" }, { input: "align-y" }],
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
             ],
             shadow: [
                 { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
                 { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
             ],
-            CSS: [{ id: "text", input: "CSS" }],
-        },
+            CSS: [{ id: "text", input: "CSS" }]
+        }
     },
     // variable has moved to textbox, but some might still have the old item
     variable: {
@@ -503,19 +504,19 @@ export const boxes: Box = {
                     name: "popup.variable",
                     input: "selectVariable",
                     id: "variable.id",
-                    value: "",
-                },
-            ],
-        },
+                    value: ""
+                }
+            ]
+        }
     },
     web: {
         icon: "web",
         edit: {
             default: [
                 { name: "inputs.url", id: "web.src", input: "text", value: "" },
-                { name: "disable_navigation", id: "web.noNavigation", input: "checkbox", value: false },
-            ],
-        },
+                { name: "disable_navigation", id: "web.noNavigation", input: "checkbox", value: false }
+            ]
+        }
     },
     // mirror other shows content on the same slide index
     mirror: {
@@ -527,10 +528,10 @@ export const boxes: Box = {
                 { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
                 { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
                 { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
-                { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 },
-            ],
+                { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 }
+            ]
             // template, item index
-        },
+        }
     },
     slide_tracker: {
         icon: "percentage",
@@ -541,18 +542,18 @@ export const boxes: Box = {
                 { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
                 { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
-                { input: "font-style" },
-            ],
-        },
+                { input: "font-style" }
+            ]
+        }
     },
     visualizer: {
         icon: "visualizer",
         edit: {
             default: [
                 { name: "color", id: "visualizer.color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
-                { name: "padding", id: "visualizer.padding", input: "number", value: 0 },
-            ],
-        },
+                { name: "padding", id: "visualizer.padding", input: "number", value: 0 }
+            ]
+        }
     },
     captions: {
         icon: "captions",
@@ -563,19 +564,19 @@ export const boxes: Box = {
                 // { name: "captions.translate", id: "captions.translate", input: "dropdown", value: "en-US", values: { options: captionTranslateLanguages } },
                 { name: "captions.showtime", id: "captions.showtime", input: "number", value: 5, values: { min: 1, max: 60 } },
                 // label?
-                { name: "captions.powered_by", values: { subtext: "CAPTION.Ninja" }, input: "tip" },
+                { name: "captions.powered_by", values: { subtext: "CAPTION.Ninja" }, input: "tip" }
             ],
             // WIP custom inputs for the css
             // https://github.com/steveseguin/captionninja?tab=readme-ov-file#changing-the-font-size-and-more
-            CSS: [{ id: "captions.style", input: "CSS" }],
-        },
+            CSS: [{ id: "captions.style", input: "CSS" }]
+        }
     },
     icon: {
         icon: "star",
         edit: {
-            default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }],
-        },
-    },
+            default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }]
+        }
+    }
     // item: {
     //   icon: "item",
     //   edit: {

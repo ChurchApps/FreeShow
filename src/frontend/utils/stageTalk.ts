@@ -7,7 +7,7 @@ import { getActiveOutputs } from "../components/helpers/output"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { dictionary, events, groups, media, midiIn, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { dictionary, events, groups, media, actions, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData, setConnectedState } from "./sendData"
@@ -181,8 +181,8 @@ export const receiveSTAGE = {
     },
 
     RUN_ACTION: (a: { id: string }) => {
-        runAction(get(midiIn)[a.id])
-    },
+        runAction(get(actions)[a.id])
+    }
 
     // REQUEST_VIDEO_DATA: (data: any) => {
     //     if (!data) data = {}

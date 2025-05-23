@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { getContrast } from "../helpers/color"
@@ -176,7 +176,7 @@
                 </div>
             {/if}
         {:else}
-            <div class="header">
+            <div class="header context #projectsTab">
                 <!-- <Icon id="folder" white right /> -->
                 <p><T id="remote.projects" /></p>
             </div>
@@ -255,8 +255,8 @@
                                             {/if}
                                         </p>
 
-                                        {#if triggerAction && $midiIn[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" title={$midiIn[triggerAction].name}>
+                                        {#if triggerAction && $actions[triggerAction]}
+                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}

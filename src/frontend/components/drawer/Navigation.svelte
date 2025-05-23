@@ -3,6 +3,7 @@
     import type { Category } from "../../../types/Tabs"
     import { sendMain } from "../../IPC/main"
     import {
+        actions,
         actionTags,
         activeActionTagFilter,
         activeEdit,
@@ -17,7 +18,6 @@
         labelsDisabled,
         media,
         mediaFolders,
-        midiIn,
         overlayCategories,
         overlays,
         scriptures,
@@ -138,7 +138,7 @@
                             ...a,
                             icon: "tag",
                             openTrigger: (id) => activeActionTagFilter.set([id]),
-                            count: Object.values($midiIn).filter((b) => b.tags?.includes(a.id)).length
+                            count: Object.values($actions).filter((b) => b.tags?.includes(a.id)).length
                         }))
                     }
                 },

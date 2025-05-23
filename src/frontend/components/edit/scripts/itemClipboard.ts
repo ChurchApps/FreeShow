@@ -106,7 +106,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             history({
                 id: "setItems",
                 newData: { style: { key, values: [style.keys[key]] } },
-                location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
+                location: { page: "edit", show: get(activeShow)!, slide: slide.id, items }
             })
         })
 
@@ -134,7 +134,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             history({
                 id: type === "text" ? "textStyle" : "setStyle",
                 newData: { style: { key: type === "text" ? "text" : "style", values } },
-                location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
+                location: { page: "edit", show: get(activeShow)!, slide: slide.id, items }
             })
         }
 
@@ -210,7 +210,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
         history({
             id: "setStyle",
             newData: { style: { key: "style", values } },
-            location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
+            location: { page: "edit", show: get(activeShow)!, slide: slide.id, items }
         })
 
         function updateItemStyle(item, i) {
@@ -256,7 +256,7 @@ export async function setSlideStyle(style: StyleClipboard, slides: any) {
             id: "slideStyle",
             oldData,
             newData: { style: style.keys?.settings || {} },
-            location: { page: "edit", show: get(activeShow)!, slide: slide.id },
+            location: { page: "edit", show: get(activeShow)!, slide: slide.id }
         })
     }
 }
@@ -279,6 +279,9 @@ export function getItemKeys(isBox = false) {
         itemKeys.push(...values.map((a) => a.key || ""))
         // WIP transform not working with this
     })
+
+    // gradient
+    if (!isBox) itemKeys.push("background")
 
     if (isBox) itemKeys = itemKeys.filter((a) => !itemAndBoxKeys.includes(a))
     return itemKeys

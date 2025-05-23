@@ -14,7 +14,7 @@
         media: { name: "tools.media", icon: "media", remove: true },
         metadata: { name: "tools.metadata", icon: "info", overflow: true },
         recording: { name: "example.recording", icon: "record", overflow: true, tooltip: $dictionary.recording?.tip },
-        notes: { name: "tools.notes", icon: "notes", overflow: true },
+        notes: { name: "tools.notes", icon: "notes", overflow: true }
     }
     let active: string = Object.keys(tabs)[0]
 
@@ -41,7 +41,7 @@
     }
 
     // media
-    // || $midiIn
+    // || $actions
     $: if (show) checkMedia()
     function checkMedia() {
         let refs = _show().layouts().ref()
@@ -53,7 +53,7 @@
         else if (refs.find((ref) => ref.find((slide) => slide.data.mics))) disableMedia = false
         else if (refs.find((ref) => ref.find((slide) => slide.data.actions?.slideActions?.length))) disableMedia = false
         // else if (Object.keys(show?.midi || {}).length) disableMedia = false
-        // else if (Object.values($midiIn).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) disableMedia = false
+        // else if (Object.values($actions).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) disableMedia = false
 
         tabs.media.remove = disableMedia
         // could change page back, but could be useful to keep it open in some cases

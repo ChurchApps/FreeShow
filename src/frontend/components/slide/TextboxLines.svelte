@@ -95,7 +95,10 @@
     }
 
     $: lineGap = item?.specialStyle?.lineGap
+    $: lineRadius = item?.specialStyle?.lineRadius || 0
     $: lineBg = item?.specialStyle?.lineBg
+    $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
+    $: lineStyle = (lineRadius ? `border-radius: ${lineRadius}px;` : "") + (lineBg ? `background: ${lineBg};` : "")
 
     $: textAnimation = animationStyle.text || ""
 
@@ -154,7 +157,7 @@
             })
 
             chords.forEach((chord, i) => {
-                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                html += `<span class="chord end" style="transform: translate(${80 * (i + 1)}px, calc(${isStage ? "-55% - 2px" : "-12px"} - var(--offsetY)));">${chord.key}</span>`
             })
 
             if (!html) return
@@ -205,10 +208,7 @@
     class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
     style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
 >
-    <div
-        class="lines"
-        style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
-    >
+    <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
         {#each lines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                 {#if chords && chordLines[i]}
@@ -218,7 +218,7 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}{listStyle}">
+                <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}">
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
@@ -370,6 +370,9 @@
         /* WIP chords goes over other (stage) items */
         z-index: 2;
     }
+    /* .align.isStage .break.chords :global(.chord.end) {
+        line-height: 0px;
+    } */
     .align.isStage .break.chords :global(.chord) {
         transform: translate(0, calc(-55% - 2px - var(--offsetY)));
     }

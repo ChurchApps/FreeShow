@@ -90,7 +90,7 @@
             currentSlide: clone(currentSlide),
             inTransition,
             outTransition,
-            transitionBetween,
+            transitionBetween
         }
 
         currentlyTransitioning[stateId] = state
@@ -109,6 +109,6 @@
 
 {#each Object.values(currentOut) as transitioning}
     <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} outTransition={transitionEnabled ? (transitioningBetween ? transitioning.transitionBetween : transitioning.outTransition) : null}>
-        <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} />
+        <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} transition={transitionEnabled ? transitioning.inTransition : null} />
     </OutputTransition>
 {/each}

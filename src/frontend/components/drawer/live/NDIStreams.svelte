@@ -21,11 +21,11 @@
             if (!msg || sources.length) return
 
             sources = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
-        },
+        }
     }
 
-    send(NDI, ["RECEIVE_LIST"])
     receive(NDI, receiveNDI, "NDI_CAPTURE")
+    send(NDI, ["RECEIVE_LIST"])
     onDestroy(() => destroy(NDI, "NDI_CAPTURE"))
 </script>
 

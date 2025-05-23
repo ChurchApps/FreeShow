@@ -3,8 +3,7 @@
     import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
-    import { activePopup, dictionary, midiIn, popupData, storedEditMenuState, variables } from "../../../stores"
-    import { mediaExtensions } from "../../../values/extensions"
+    import { activePopup, dictionary, actions, popupData, storedEditMenuState, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -27,6 +26,7 @@
     import { getOriginalValue, openDrawer, removeExtension } from "../scripts/edit"
     import type { EditInput } from "../values/boxes"
     import EditTimer from "./EditTimer.svelte"
+    import { mediaExtensions } from "../../../values/extensions"
 
     export let edits: { [key: string]: EditInput[] }
     export let defaultEdits: { [key: string]: EditInput[] } = {}
@@ -421,7 +421,7 @@
 
     $: actionOptions = [
         { id: "", name: "—" },
-        ...Object.entries($midiIn)
+        ...Object.entries($actions)
             .map(([id, a]) => ({ id, name: a.name }))
             .sort((a, b) => a.name?.localeCompare(b.name))
     ]

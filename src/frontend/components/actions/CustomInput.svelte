@@ -1,6 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import { Main } from "../../../types/IPC/Main"
+    import { requestMain } from "../../IPC/main"
+    import { actions, activePopup, audioPlaylists, audioStreams, dictionary, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
     import { convertToOptions, keysToID, sortByName } from "../helpers/array"
@@ -10,13 +12,11 @@
     import Dropdown from "../inputs/Dropdown.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
     import TextInput from "../inputs/TextInput.svelte"
+    import ChooseEmitter from "./ChooseEmitter.svelte"
     import MidiValues from "./MidiValues.svelte"
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
-    import ChooseEmitter from "./ChooseEmitter.svelte"
-    import { requestMain } from "../../IPC/main"
-    import { Main } from "../../../types/IPC/Main"
 
     export let inputId: string
     export let value
@@ -73,6 +73,7 @@
     const getOptions = {
         id_select_project: () => convertToOptions($projects),
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
+        clear_overlay: () => convertToOptions($overlays),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
         stage_outputs: () => [{ id: null, name: "—" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
@@ -82,9 +83,9 @@
         id_start_timer: () => convertToOptions($timers),
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
-        run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
+        run_action: () => convertToOptions($actions).filter((a) => a.name && a.id !== mainId),
         set_template: () => convertToOptions($templates),
-        toggle_output: () => convertToOptions($outputs),
+        toggle_output: () => convertToOptions($outputs)
     }
 
     $: options = getOptions[actionId]?.() || []

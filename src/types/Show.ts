@@ -54,7 +54,7 @@ export interface Show {
     slides: { [key: ID]: Slide }
     layouts: { [key: ID]: Layout }
     media: { [key: ID]: Media }
-    midi?: { [key: ID]: Midi }
+    midi?: { [key: ID]: Action }
 }
 
 export interface TrimmedShows {
@@ -179,6 +179,7 @@ export interface Timer {
     overflow?: boolean
     overflowColor?: string
     overflowBlink?: boolean
+    overflowBlinkOffset?: number // start blinking before the time
     // format?: string
     // paused?: boolean
 }
@@ -356,14 +357,19 @@ export interface Media {
     cloud?: { [key: string]: string }
 }
 
-export interface Midi {
+export interface Action {
     name: string
     triggers: string[]
     actionValues?: any[]
     tags?: string[]
     // action?: string
     // actionData?: any
-    shows?: any[] // play specific show slide directly from midi input
+    // play specific show slide directly from midi input
+    shows?: {
+        id: string
+        // layoutId: string
+        // index: number
+    }[]
     customActivation?: string
     keypressActivate?: string
     enabled?: boolean // should customActivation trigger
@@ -384,15 +390,6 @@ export interface MidiValues {
         velocity: number
         channel: number
     }
-}
-
-export interface MidiIn extends Midi {
-    enabled?: boolean
-    shows: {
-        id: string
-        // layoutId: string
-        // index: number
-    }[]
 }
 
 export type EmitterTypes = "osc" | "http" | "midi"

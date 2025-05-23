@@ -17,7 +17,7 @@ import { changeStageOutputLayout, displayOutputs, startCamera, startScreen, togg
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
-import { clearAll, clearBackground, clearDrawing, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { runActionByName, runActionId, toggleAction } from "./actions"
@@ -37,7 +37,7 @@ import {
     getShow,
     getShowLayout,
     getShows,
-    getSlide,
+    getSlide
 } from "./apiGet"
 import {
     addGroup,
@@ -77,7 +77,7 @@ import {
     timerSeekTo,
     toggleLock,
     updateVolumeValues,
-    videoSeekTo,
+    videoSeekTo
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -222,6 +222,7 @@ export const API_ACTIONS = {
     clear_background: () => clearBackground(), // BC
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC
+    clear_overlay: (data: API_id) => clearOverlay(data.id),
     clear_audio: () => clearAudio(), // BC
     clear_next_timer: () => clearTimers(), // BC
     clear_drawing: () => clearDrawing(),
@@ -340,7 +341,7 @@ export const API_ACTIONS = {
     get_thumbnail: (data: API_media) => getThumbnail(data),
     get_slide_thumbnail: (data: API_slide_thumbnail) => getSlideThumbnail(data),
     get_pdf_thumbnails: (data: API_media) => getPDFThumbnails(data),
-    get_cleared: () => getClearedState(),
+    get_cleared: () => getClearedState()
 }
 
 /// RECEIVER / SENDER ///

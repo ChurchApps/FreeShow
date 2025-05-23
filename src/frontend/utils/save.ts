@@ -46,7 +46,7 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
-    midiIn,
+    actions,
     openedFolders,
     outLocked,
     outputs,
@@ -88,7 +88,7 @@ import {
     variableTags,
     variables,
     videoMarkers,
-    volume,
+    volume
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
@@ -146,7 +146,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
         effectsLibrary: get(effectsLibrary),
-        special: get(special),
+        special: get(special)
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
@@ -163,7 +163,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         triggers: get(triggers),
         audioStreams: get(audioStreams),
         audioPlaylists: get(audioPlaylists),
-        midiIn: get(midiIn),
+        midiIn: get(actions),
         emitters: get(emitters),
         playerVideos: get(playerVideos),
         videoMarkers: get(videoMarkers),
@@ -173,7 +173,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
-        customMetadata: get(customMetadata),
+        customMetadata: get(customMetadata)
     }
 
     const allSavedData: SaveData = {
@@ -204,7 +204,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         USAGE: get(usageLog),
         // SAVE INFO DATA
         closeWhenFinished,
-        customTriggers,
+        customTriggers
     }
 
     deletedShows.set([])
@@ -305,7 +305,7 @@ const customSavedListener = {
         })
 
         return data
-    },
+    }
 }
 
 const saveList: { [key in SaveList]: any } = {
@@ -362,7 +362,7 @@ const saveList: { [key in SaveList]: any } = {
     transitionData,
     volume: null,
     gain: null,
-    midiIn,
+    midiIn: actions,
     emitters,
     videoMarkers,
     mediaTags,
@@ -377,5 +377,5 @@ const saveList: { [key in SaveList]: any } = {
     special,
     companion: null,
     globalTags,
-    customMetadata: null,
+    customMetadata: null
 }

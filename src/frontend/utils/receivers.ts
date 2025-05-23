@@ -26,7 +26,7 @@ import {
     events,
     gain,
     media,
-    midiIn,
+    actions,
     ndiData,
     outputDisplay,
     outputs,
@@ -51,7 +51,7 @@ import {
     videosData,
     videosTime,
     visualizerData,
-    volume,
+    volume
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -97,7 +97,7 @@ const receiveOUTPUTasMAIN: any = {
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
-    ACTION_MAIN: (a: { id: string }) => runAction(get(midiIn)[a.id]),
+    ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
     AUDIO_MAIN: (data: any) => {
         if (!data.id) return
 
@@ -183,7 +183,7 @@ const receiveOUTPUTasMAIN: any = {
             previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
         }
     },
-    MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
+    MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows))
 }
 
 let previousOutputs = ""
@@ -277,7 +277,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     AUDIO_DATA: (a: any) => audioData.set(a),
     DYNAMIC_VALUE_DATA: (a: any) => dynamicValueData.set(a),
 
-    COLORBARS: (a: any) => colorbars.set(a),
+    COLORBARS: (a: any) => colorbars.set(a)
 }
 
 // NDI
@@ -291,7 +291,7 @@ const receiveNDI: any = {
 
             return a
         })
-    },
+    }
 }
 
 // CLOUD
@@ -394,5 +394,5 @@ const receiveCLOUD = {
         // hide sync popup on startup/close sync
         // popupData.set({})
         // activePopup.set(null)
-    },
+    }
 }

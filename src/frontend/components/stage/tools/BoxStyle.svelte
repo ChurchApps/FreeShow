@@ -38,6 +38,7 @@
 
             removeInput(edits.default, "textFit")
             removeInput(edits.text, "nowrap")
+            removeInput(edits.lines, "specialStyle.lineRadius") // no need for radius without bg color
             removeInput(edits.lines, "specialStyle.lineBg")
             removeInput(edits.lines, "specialStyle.opacity")
 

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, dictionary, midiIn, popupData } from "../../../stores"
+    import { actions, activePopup, dictionary, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
 
     let id = $popupData.id
     let index = $popupData.index
@@ -16,8 +16,8 @@
     let existingShortcuts = $popupData.existingShortcuts || []
 
     let layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
-    let actions = mode === "slide_shortcut" ? layoutRef[index].data?.actions || {} : {}
-    let currentShortcut = mode === "slide_shortcut" ? (actions.slide_shortcut || {}).key : value
+    let slideDataActions = mode === "slide_shortcut" ? layoutRef[index].data?.actions || {} : {}
+    let currentShortcut = mode === "slide_shortcut" ? (slideDataActions.slide_shortcut || {}).key : value
 
     onMount(() => {
         if (mode === "action") popupData.set({ ...$popupData, mode: "" })
@@ -46,10 +46,10 @@
         currentShortcut = key
 
         if (mode === "slide_shortcut") {
-            actions.slide_shortcut = { key }
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [index] } })
+            slideDataActions.slide_shortcut = { key }
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideDataActions, indexes: [index] } })
         } else if (mode === "action") {
-            midiIn.update((a) => {
+            actions.update((a) => {
                 if (a[id]) a[id].keypressActivate = key
                 return a
             })

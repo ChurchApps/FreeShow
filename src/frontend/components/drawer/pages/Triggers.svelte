@@ -9,9 +9,9 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
-    console.log(searchValue)
 
-    $: globalList = sortByName(keysToID($triggers))
+    $: sortedTriggers = sortByName(keysToID($triggers))
+    $: filteredTriggersSearch = searchValue.length > 1 ? sortedTriggers.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTriggers
 
     let status = { id: "", type: "" }
     async function buttonClick(id) {
@@ -46,9 +46,9 @@
     }
 </script>
 
-{#if globalList.length}
-    <div class="triggers" class:center={globalList.length <= 10}>
-        {#each globalList as trigger}
+{#if filteredTriggersSearch.length}
+    <div class="triggers" class:center={filteredTriggersSearch.length <= 10}>
+        {#each filteredTriggersSearch as trigger}
             <SelectElem class={status.id === trigger.id ? status.type || "pending" : ""} id="trigger" data={trigger} draggable>
                 <Button style="flex: 1;padding: 0;" class="context #trigger" title={formatTriggerValue(trigger.value)} on:click={() => buttonClick(trigger.id)}>
                     <p>

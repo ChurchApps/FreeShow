@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, playingAudio, playingAudioPaths, stageShows, variables } from "../../stores"
+    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, playingAudio, playingAudioPaths, stageShows, variables, videosTime } from "../../stores"
     import { send } from "../../utils/request"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -68,7 +68,7 @@
     $: stageLayoutId = stageId || $activeStage.id
     $: layout = $stageShows[stageLayoutId || ""] || {}
 
-    // get video time
+    // get video time (pre 1.4.0)
     $: if ($currentWindow === "output" && Object.keys(layout.items || {}).find((id) => id.includes("video"))) requestVideoData()
     let interval: NodeJS.Timeout | null = null
     function requestVideoData() {
@@ -134,6 +134,8 @@
     $: backgroundColor = currentOutput.transparent ? "transparent" : layout.settings?.color || "#000000"
 
     $: stageItems = getSortedStageItems(stageLayoutId, $stageShows)
+
+    $: videoTime = $videosTime[outputId] || 0
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -150,7 +152,7 @@
                 {/if}
                 {#key stageLayoutId}
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths }))}
+                        {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }))}
                             <Stagebox {edit} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
                         {/if}
                     {/each}
