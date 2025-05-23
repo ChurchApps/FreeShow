@@ -6,7 +6,21 @@ import { readFile } from "./files";
 import type { TrimmedShow, Show, Slide } from '../../types/Show';
 import type { Media as ItemMedia } from '../../types/Show';
 
-export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string): string {
+// Helper function to convert local file path to HTTP URL
+function getMediaUrl(filePath: string, serverPort: number = 5511): string {
+    if (!filePath) return "";
+
+    // If it's already a URL, return as is
+    if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
+        return filePath;
+    }
+
+    // Convert local file path to HTTP URL
+    const encodedPath = encodeURIComponent(filePath);
+    return `http://localhost:${serverPort}/media/${encodedPath}`;
+}
+
+export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {
     const showName = showData.name || showId;
     let html = `<!DOCTYPE html><html><head><title>Show - ${showName} - Slide ${slideId}</title>`;
     let styles = `
@@ -34,16 +48,54 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             align-items: center;
             justify-content: center;
         }
+        .background-media {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .background-media img,
+        .background-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
     `;
     let bodyContent = "";
 
     let slideContainerStyle = "position: relative; width: 100%; height: 100%;";
 
+    // Handle background media from layout data
+    let backgroundMediaHtml = "";
+    if (layoutSlideData?.background && showData.media?.[layoutSlideData.background]) {
+        const backgroundMedia = showData.media[layoutSlideData.background];
+        const backgroundPath = backgroundMedia.path || backgroundMedia.id || "";
+
+        if (backgroundPath) {
+            console.log("BACKGROUND MEDIA FOUND:", backgroundMedia);
+            const mediaUrl = getMediaUrl(backgroundPath);
+            const isImage = backgroundPath.endsWith(".png") || backgroundPath.endsWith(".jpg") || backgroundPath.endsWith(".jpeg") || backgroundPath.endsWith(".gif") || backgroundPath.endsWith(".webp");
+            const isVideo = backgroundPath.endsWith(".mp4") || backgroundPath.endsWith(".webm") || backgroundPath.endsWith(".ogv");
+
+            if (isImage) {
+                backgroundMediaHtml = `<div class="background-media"><img src="${mediaUrl}" alt="Background Image"></div>`;
+            } else if (isVideo) {
+                const muted = backgroundMedia.muted !== false ? "muted" : "";
+                const loop = backgroundMedia.loop !== false ? "loop" : "";
+                backgroundMediaHtml = `<div class="background-media"><video src="${mediaUrl}" ${muted} ${loop} autoplay></video></div>`;
+            }
+        }
+    }
+
+    // Handle slide background color
     if (slideData.settings?.color) {
         slideContainerStyle += `background-color: ${slideData.settings.color};`;
-    } else {
-        slideContainerStyle += `background-color: #000000;`; // Default black background
+    } else if (!backgroundMediaHtml) {
+        slideContainerStyle += `background-color: #000000;`; // Default black background only if no media
     }
+
     styles += ` .slide-container { ${slideContainerStyle} }`;
 
     if (slideData.items) {
@@ -94,14 +146,15 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 const fitMode = item.fit ?? 'contain';
 
                 if (pathValue) {
+                    const mediaUrl = getMediaUrl(pathValue);
                     bodyContent += `<div class="slide-item media-item" style="${itemStyle}">`;
                     const isImage = item.type === "media" && (pathValue.endsWith(".png") || pathValue.endsWith(".jpg") || pathValue.endsWith(".jpeg") || pathValue.endsWith(".gif") || pathValue.endsWith(".webp"));
                     const isVideo = item.type === "media" && (pathValue.endsWith(".mp4") || pathValue.endsWith(".webm") || pathValue.endsWith(".ogv"));
 
                     if (isImage) {
-                        bodyContent += `<img src="${pathValue}" alt="Slide Image" style="width: 100%; height: 100%; object-fit: ${fitMode};">`;
+                        bodyContent += `<img src="${mediaUrl}" alt="Slide Image" style="width: 100%; height: 100%; object-fit: ${fitMode};">`;
                     } else if (isVideo) {
-                        bodyContent += `<video src="${pathValue}" controls style="width: 100%; height: 100%; object-fit: ${fitMode};"></video>`;
+                        bodyContent += `<video src="${mediaUrl}" controls style="width: 100%; height: 100%; object-fit: ${fitMode};"></video>`;
                     }
                     bodyContent += `</div>`;
                 }
@@ -109,7 +162,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         }
     }
 
-    html += `<style>${styles}</style></head><body><div class="slide-container">${bodyContent}</div></body></html>`;
+    html += `<style>${styles}</style></head><body><div class="slide-container">${backgroundMediaHtml}${bodyContent}</div></body></html>`;
     return html;
 }
 
@@ -175,7 +228,20 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
             return;
         }
 
-        const htmlResponse = generateSlideHtmlResponse(showData, slideData, showId, slideId);
+        // Get layout data to find background media
+        const activeLayoutId = showData.settings?.activeLayout;
+        let layoutSlideData: any = undefined;
+
+        if (activeLayoutId && showData.layouts?.[activeLayoutId]) {
+            const layout = showData.layouts[activeLayoutId];
+            console.log("ACTIVE LAYOUT:", layout);
+
+            // Find the layout slide that corresponds to our slideId
+            layoutSlideData = layout.slides?.find((layoutSlide: any) => layoutSlide.id === slideId);
+            console.log("LAYOUT SLIDE DATA:", layoutSlideData);
+        }
+
+        const htmlResponse = generateSlideHtmlResponse(showData, slideData, showId, slideId, layoutSlideData);
         res.send(htmlResponse);
     } catch (error) {
         console.error("Error processing show/slide for HTML generation:", error);

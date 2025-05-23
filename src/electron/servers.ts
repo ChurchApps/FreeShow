@@ -11,6 +11,8 @@ import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
 import { handleShowSlideHtmlRequest } from "./utils/HtmlSlideHelper";
+import fs from "fs"
+import path from "path"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -42,6 +44,51 @@ function createServers() {
 
         if (id === "STAGE") {
             app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
+
+            // Serve media files
+            app.get('/media/*', (req, res) => {
+                // Decode the file path from the URL
+                const encodedPath = req.url.substring('/media/'.length);
+                const filePath = decodeURIComponent(encodedPath);
+
+                console.log("SERVING MEDIA FILE:", filePath);
+
+                // Check if file exists
+                if (!fs.existsSync(filePath)) {
+                    console.error("Media file not found:", filePath);
+                    res.status(404).send('Media file not found');
+                    return;
+                }
+
+                // Get file extension to set proper content type
+                const ext = path.extname(filePath).toLowerCase();
+                const mimeTypes: { [key: string]: string } = {
+                    '.png': 'image/png',
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.gif': 'image/gif',
+                    '.webp': 'image/webp',
+                    '.mp4': 'video/mp4',
+                    '.webm': 'video/webm',
+                    '.ogv': 'video/ogg',
+                    '.mov': 'video/quicktime',
+                    '.avi': 'video/x-msvideo'
+                };
+
+                const contentType = mimeTypes[ext] || 'application/octet-stream';
+                res.setHeader('Content-Type', contentType);
+
+                // Stream the file
+                const fileStream = fs.createReadStream(filePath);
+                fileStream.pipe(res);
+
+                fileStream.on('error', (error) => {
+                    console.error("Error streaming media file:", error);
+                    if (!res.headersSent) {
+                        res.status(500).send('Error streaming media file');
+                    }
+                });
+            });
         }
 
         // The join import from 'path' is still needed for this part
