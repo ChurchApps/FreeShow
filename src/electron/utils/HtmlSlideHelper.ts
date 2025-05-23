@@ -9,7 +9,32 @@ import type { Media as ItemMedia } from '../../types/Show';
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string): string {
     const showName = showData.name || showId;
     let html = `<!DOCTYPE html><html><head><title>Show - ${showName} - Slide ${slideId}</title>`;
-    let styles = `body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; } .slide-item { box-sizing: border-box; border: 1px solid #eee; /* Light border for visibility */ } `;
+    let styles = `
+        body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: sans-serif; 
+        } 
+        .slide-item { 
+            box-sizing: border-box; 
+            position: absolute;
+        }
+        .text-item {
+            color: white;
+            font-size: 100px;
+            line-height: 1.1;
+            text-shadow: 2px 2px 10px #000000;
+            font-family: "CMGSans", sans-serif;
+        }
+        .media-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    `;
     let bodyContent = "";
 
     let slideContainerStyle = "position: relative; width: 100%; height: 100%;";
@@ -22,8 +47,29 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     styles += ` .slide-container { ${slideContainerStyle} }`;
 
     if (slideData.items) {
+        console.log("SLIDE ITEMS:", JSON.stringify(slideData.items, null, 2));
         for (const item of slideData.items) {
+            console.log("PROCESSING ITEM:", JSON.stringify(item, null, 2));
             let itemStyle = "position: absolute;";
+
+            // Apply the item's style property which contains positioning and other CSS
+            if (item.style) {
+                itemStyle += item.style;
+            }
+
+            // Add default positioning if not specified in style
+            if (!item.style || (!item.style.includes('left:') && !item.style.includes('left '))) {
+                itemStyle += "left: 50px;";
+            }
+            if (!item.style || (!item.style.includes('top:') && !item.style.includes('top '))) {
+                itemStyle += "top: 50px;";
+            }
+            if (!item.style || (!item.style.includes('width:') && !item.style.includes('width '))) {
+                itemStyle += "width: 400px;";
+            }
+            if (!item.style || (!item.style.includes('height:') && !item.style.includes('height '))) {
+                itemStyle += "height: 150px;";
+            }
 
             if (item.align) {
                 itemStyle += `text-align: ${item.align};`;
