@@ -1,20 +1,16 @@
-import { app as electronApp, ipcMain } from "electron"
-import type { Request, Response } from "express"
+import { ipcMain, type IpcMainEvent } from "electron"
+import type { Response } from "express"
 import express from "express"
 import http from "http"
-import path, { join } from "path"
+import { join } from "path"
 import { Server, type Socket } from "socket.io"
 import type { Main, MainSendPayloads } from "../types/IPC/Main"
 import type { Message, ServerData } from "../types/Socket"
 import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
-// import { stores } from "./data/store" // No longer directly used here
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
-// import { readFile } from "./utils/files" // No longer directly used here
-// import { generateSlideHtmlResponse } from "./utils/HtmlSlideHelper"; // generateSlideHtmlResponse is used by handleShowSlideHtmlRequest
 import { handleShowSlideHtmlRequest } from "./utils/HtmlSlideHelper";
-// import type { TrimmedShow, Show, Slide } from "../types/Show"; // Types are used in HtmlSlideHelper
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -129,7 +125,7 @@ function createBridge(id: ServerName, server: ServerValues) {
 
     // SEND DATA FROM APP TO CLIENT
     ioServers[id] = server.io
-    ipcMain.on(id, (_e, msg: Message) => {
+    ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
         if (msg.id) server.io.to(msg.id).emit(id, msg)
         else server.io.emit(id, msg)
     })
