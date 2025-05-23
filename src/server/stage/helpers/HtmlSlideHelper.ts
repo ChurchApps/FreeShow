@@ -7,6 +7,9 @@ import type { TrimmedShow, Show, Slide } from '../../../types/Show';
 import type { Media as ItemMedia } from '../../../types/Show';
 import { getMediaUrl } from './MediaHelper';
 
+// Desktop app constants
+const DEFAULT_FONT_SIZE = 100;
+
 // Helper function to parse CSS styles from a style string
 function getStyles(styleString: string): { [key: string]: string } {
     const styles: { [key: string]: string } = {};
@@ -24,26 +27,6 @@ function getStyles(styleString: string): { [key: string]: string } {
     return styles;
 }
 
-// Helper function to apply default positioning if not specified
-function applyDefaultPositioning(itemStyle: string, styles: { [key: string]: string }): string {
-    let result = itemStyle;
-
-    if (!styles['left'] && !styles['inset-inline-start']) {
-        result += "left: 50px;";
-    }
-    if (!styles['top']) {
-        result += "top: 50px;";
-    }
-    if (!styles['width']) {
-        result += "width: 400px;";
-    }
-    if (!styles['height']) {
-        result += "height: 150px;";
-    }
-
-    return result;
-}
-
 // Helper function to apply custom styling to text segments (matching desktop app behavior)
 function getCustomStyle(style: string): string {
     if (!style) return "";
@@ -51,6 +34,50 @@ function getCustomStyle(style: string): string {
     // For now, return the style as-is since we don't have output resolution context
     // In the desktop app, this function also handles percentage positioning and alpha values
     return style;
+}
+
+// Helper function to scale positioning and sizing based on viewport (matching desktop app behavior)
+function scaleStyleForViewport(style: string): string {
+    if (!style) return "";
+
+    const styles = getStyles(style);
+    let scaledStyle = "";
+
+    // Scale positioning and sizing from 1920x1080 base to viewport size
+    // This matches the desktop app's percentageStylePos function
+    Object.entries(styles).forEach(([key, value]) => {
+        if (key === 'left' || key === 'width') {
+            // Scale based on viewport width (1920px base)
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+                scaledStyle += `${key}: ${(numValue / 1920) * 100}vw;`;
+            } else {
+                scaledStyle += `${key}: ${value};`;
+            }
+        } else if (key === 'top' || key === 'height') {
+            // Scale based on viewport height (1080px base)
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+                scaledStyle += `${key}: ${(numValue / 1080) * 100}vh;`;
+            } else {
+                scaledStyle += `${key}: ${value};`;
+            }
+        } else if (key === 'font-size') {
+            // Font size will be handled separately with proper scaling
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+                // Scale font size based on viewport size (matching desktop app behavior)
+                // Use the smaller dimension to maintain aspect ratio
+                scaledStyle += `${key}: min(${(numValue / 1920) * 100}vw, ${(numValue / 1080) * 100}vh);`;
+            } else {
+                scaledStyle += `${key}: ${value};`;
+            }
+        } else {
+            scaledStyle += `${key}: ${value};`;
+        }
+    });
+
+    return scaledStyle;
 }
 
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {
@@ -98,8 +125,8 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             overflow-wrap: break-word;
         }
         .text-item .break span {
-            font-size: 100px;
-            min-height: 50px;
+            font-size: min(${(DEFAULT_FONT_SIZE / 1920) * 100}vw, ${(DEFAULT_FONT_SIZE / 1080) * 100}vh);
+            min-height: min(${(50 / 1920) * 100}vw, ${(50 / 1080) * 100}vh);
             color: white;
             font-family: "CMGSans", sans-serif;
             line-height: 1.1;
@@ -323,12 +350,24 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
 
             // Apply the item's style property which contains positioning and other CSS
             if (item.style) {
-                itemStyle += item.style;
+                // Scale the positioning for viewport (matching desktop app behavior)
+                itemStyle += scaleStyleForViewport(item.style);
                 itemStyles = getStyles(item.style);
             }
 
-            // Add default positioning if not specified in style
-            itemStyle = applyDefaultPositioning(itemStyle, itemStyles);
+            // Add default positioning if not specified in style (but scale it too)
+            if (!itemStyles['left'] && !itemStyles['inset-inline-start']) {
+                itemStyle += "left: " + ((50 / 1920) * 100) + "vw;";
+            }
+            if (!itemStyles['top']) {
+                itemStyle += "top: " + ((50 / 1080) * 100) + "vh;";
+            }
+            if (!itemStyles['width']) {
+                itemStyle += "width: " + ((400 / 1920) * 100) + "vw;";
+            }
+            if (!itemStyles['height']) {
+                itemStyle += "height: " + ((150 / 1080) * 100) + "vh;";
+            }
 
             if (item.lines) {
                 // This is a text item - ensure it appears above background media
@@ -389,8 +428,8 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
 
                     // Process each text segment in the line
                     for (const textSegment of line.text) {
-                        // Start with default text styling
-                        let spanStyle = "font-size: 100px; min-height: 50px; color: white; font-family: 'CMGSans', sans-serif; line-height: 1.1; text-shadow: 2px 2px 10px #000000; -webkit-text-stroke-color: #000000; font-weight: bold;";
+                        // Start with default text styling using viewport-based sizing
+                        let spanStyle = `font-size: min(${(DEFAULT_FONT_SIZE / 1920) * 100}vw, ${(DEFAULT_FONT_SIZE / 1080) * 100}vh); min-height: min(${(50 / 1920) * 100}vw, ${(50 / 1080) * 100}vh); color: white; font-family: 'CMGSans', sans-serif; line-height: 1.1; text-shadow: 2px 2px 10px #000000; -webkit-text-stroke-color: #000000; font-weight: bold;`;
 
                         // Apply individual text segment styles - this is where custom styling happens
                         if (textSegment.style) {
@@ -398,11 +437,15 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                             const customStyle = getCustomStyle(textSegment.style);
                             spanStyle += customStyle;
 
-                            // Handle font size specifically if it's in the style
+                            // Handle font size specifically with proper scaling
                             const segmentStyles = getStyles(textSegment.style);
                             if (segmentStyles['font-size']) {
-                                // Override the default font-size with the custom one
-                                spanStyle = spanStyle.replace('font-size: 100px;', `font-size: ${segmentStyles['font-size']};`);
+                                const fontSize = Number(segmentStyles['font-size']);
+                                if (!isNaN(fontSize)) {
+                                    // Override the default font-size with the custom one, properly scaled
+                                    const scaledFontSize = `min(${(fontSize / 1920) * 100}vw, ${(fontSize / 1080) * 100}vh)`;
+                                    spanStyle = spanStyle.replace(/font-size: [^;]+;/, `font-size: ${scaledFontSize};`);
+                                }
                             }
                         }
 
