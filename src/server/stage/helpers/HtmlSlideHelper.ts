@@ -10,6 +10,11 @@ import { getMediaUrl } from './MediaHelper';
 export function generateSlideHtmlResponse(showData: Show, slideData: Slide, showId: string, slideId: string, layoutSlideData?: any): string {
     const showName = showData.name || showId;
     let html = `<!DOCTYPE html><html><head><title>Show - ${showName} - Slide ${slideId}</title>`;
+
+    // Get all slide IDs for navigation
+    const slideIds = Object.keys(showData.slides || {});
+    const currentSlideIndex = slideIds.indexOf(slideId);
+
     let styles = `
         body { 
             margin: 0; 
@@ -54,7 +59,177 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             height: 100%;
             object-fit: cover;
         }
+        .navigation-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            font-family: monospace;
+        }
     `;
+
+    // Add JavaScript for navigation
+    const navigationScript = `
+        <script>
+            const showId = '${showId}';
+            const slideIds = ${JSON.stringify(slideIds)};
+            let currentIndex = ${currentSlideIndex};
+            
+            // Function to fetch slide content via AJAX
+            async function loadSlideContent(slideId) {
+                try {
+                    const response = await fetch(\`/show/\${showId}/\${slideId}\`);
+                    if (!response.ok) {
+                        throw new Error(\`HTTP error! status: \${response.status}\`);
+                    }
+                    const html = await response.text();
+                    
+                    // Parse the HTML to extract just the slide content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newSlideContainer = doc.querySelector('.slide-container');
+                    
+                    if (newSlideContainer) {
+                        return newSlideContainer.innerHTML;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error loading slide content:', error);
+                    return null;
+                }
+            }
+            
+            // Function to update slide content while preserving background video
+            async function updateSlideContent(newSlideId, newIndex) {
+                const slideContainer = document.querySelector('.slide-container');
+                if (!slideContainer) return;
+                
+                // Get current background video element and its state
+                const currentVideo = document.querySelector('.background-media video');
+                let videoElement = null;
+                let videoState = null;
+                
+                if (currentVideo) {
+                    videoState = {
+                        src: currentVideo.src,
+                        currentTime: currentVideo.currentTime,
+                        paused: currentVideo.paused,
+                        muted: currentVideo.muted,
+                        loop: currentVideo.loop,
+                        volume: currentVideo.volume
+                    };
+                    // Keep reference to the actual video element
+                    videoElement = currentVideo.cloneNode(true);
+                }
+                
+                // Load new slide content
+                const newContent = await loadSlideContent(newSlideId);
+                if (!newContent) {
+                    console.error('Failed to load slide content');
+                    return;
+                }
+                
+                // Update the slide container with new content
+                slideContainer.innerHTML = newContent;
+                
+                // Check if new slide has the same background video
+                const newVideo = document.querySelector('.background-media video');
+                if (newVideo && videoState && newVideo.src === videoState.src) {
+                    // Same video - restore the playing video element
+                    console.log('Same background video detected, preserving playback');
+                    newVideo.currentTime = videoState.currentTime;
+                    newVideo.muted = videoState.muted;
+                    newVideo.loop = videoState.loop;
+                    newVideo.volume = videoState.volume;
+                    
+                    if (!videoState.paused) {
+                        newVideo.play().catch(err => console.error('Error resuming video:', err));
+                    }
+                } else if (newVideo) {
+                    // Different video - let it start fresh
+                    console.log('Different background video, starting fresh');
+                    newVideo.play().catch(err => console.error('Error starting new video:', err));
+                }
+                
+                // Update current index and navigation info
+                currentIndex = newIndex;
+                updateNavigationInfo();
+                
+                // Update browser URL without page reload
+                const newUrl = \`/show/\${showId}/\${newSlideId}\`;
+                window.history.pushState({slideId: newSlideId, index: newIndex}, '', newUrl);
+                
+                console.log(\`Loaded slide \${newIndex + 1} (\${newSlideId}) dynamically\`);
+            }
+            
+            function navigateToSlide(direction) {
+                const newIndex = currentIndex + direction;
+                if (newIndex >= 0 && newIndex < slideIds.length) {
+                    const newSlideId = slideIds[newIndex];
+                    updateSlideContent(newSlideId, newIndex);
+                }
+            }
+            
+            function jumpToSlide(index) {
+                if (index >= 0 && index < slideIds.length) {
+                    const newSlideId = slideIds[index];
+                    updateSlideContent(newSlideId, index);
+                }
+            }
+            
+            document.addEventListener('keydown', function(event) {
+                switch(event.key) {
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        navigateToSlide(-1);
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        navigateToSlide(1);
+                        break;
+                    case 'Home':
+                        event.preventDefault();
+                        jumpToSlide(0);
+                        break;
+                    case 'End':
+                        event.preventDefault();
+                        jumpToSlide(slideIds.length - 1);
+                        break;
+                }
+            });
+            
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.slideId) {
+                    const slideIndex = slideIds.indexOf(event.state.slideId);
+                    if (slideIndex !== -1) {
+                        updateSlideContent(event.state.slideId, slideIndex);
+                    }
+                }
+            });
+            
+            // Update navigation info
+            function updateNavigationInfo() {
+                const info = document.querySelector('.navigation-info');
+                if (info) {
+                    info.innerHTML = \`Slide \${currentIndex + 1} of \${slideIds.length}<br>← → to navigate\`;
+                }
+            }
+            
+            // Initialize navigation info and set initial history state
+            document.addEventListener('DOMContentLoaded', function() {
+                updateNavigationInfo();
+                // Set initial history state
+                window.history.replaceState({slideId: '${slideId}', index: currentIndex}, '', window.location.href);
+            });
+        </script>
+    `;
+
     let bodyContent = "";
 
     let slideContainerStyle = "position: relative; width: 100%; height: 100%; z-index: 0;";
@@ -65,20 +240,31 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         const backgroundMedia = showData.media[layoutSlideData.background];
         const backgroundPath = backgroundMedia.path || backgroundMedia.id || "";
 
+        console.log("SLIDE ID:", slideId);
+        console.log("LAYOUT SLIDE DATA:", layoutSlideData);
+        console.log("BACKGROUND MEDIA FOUND:", backgroundMedia);
+        console.log("BACKGROUND PATH:", backgroundPath);
+
         if (backgroundPath) {
-            console.log("BACKGROUND MEDIA FOUND:", backgroundMedia);
             const mediaUrl = getMediaUrl(backgroundPath);
+            console.log("MEDIA URL:", mediaUrl);
             const isImage = backgroundPath.endsWith(".png") || backgroundPath.endsWith(".jpg") || backgroundPath.endsWith(".jpeg") || backgroundPath.endsWith(".gif") || backgroundPath.endsWith(".webp");
             const isVideo = backgroundPath.endsWith(".mp4") || backgroundPath.endsWith(".webm") || backgroundPath.endsWith(".ogv");
 
             if (isImage) {
                 backgroundMediaHtml = `<div class="background-media"><img src="${mediaUrl}" alt="Background Image"></div>`;
+                console.log("GENERATED BACKGROUND IMAGE HTML");
             } else if (isVideo) {
                 const muted = backgroundMedia.muted !== false ? "muted" : "";
                 const loop = backgroundMedia.loop !== false ? "loop" : "";
                 backgroundMediaHtml = `<div class="background-media"><video src="${mediaUrl}" ${muted} ${loop} autoplay></video></div>`;
+                console.log("GENERATED BACKGROUND VIDEO HTML:", backgroundMediaHtml);
             }
         }
+    } else {
+        console.log("NO BACKGROUND MEDIA - SLIDE ID:", slideId);
+        console.log("LAYOUT SLIDE DATA:", layoutSlideData);
+        console.log("SHOW MEDIA:", Object.keys(showData.media || {}));
     }
 
     // Handle slide background color
@@ -158,7 +344,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         }
     }
 
-    html += `<style>${styles}</style></head><body><div class="slide-container">${backgroundMediaHtml}${bodyContent}</div></body></html>`;
+    html += `<style>${styles}</style>${navigationScript}</head><body><div class="slide-container">${backgroundMediaHtml}${bodyContent}</div><div class="navigation-info"></div></body></html>`;
     return html;
 }
 
@@ -215,6 +401,9 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
         console.log("FILE CONTENT", fileContent);
 
         console.log("SLIDES ARE", showData.slides);
+        console.log("CURRENT SLIDE DATA:", showData.slides[slideId] as Slide | undefined);
+        console.log("SLIDE SETTINGS:", showData.slides[slideId]?.settings);
+        console.log("SLIDE BACKGROUND:", (showData.slides[slideId] as any)?.background);
 
         const slideData = showData.slides[slideId] as Slide | undefined;
 
@@ -228,13 +417,74 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
         const activeLayoutId = showData.settings?.activeLayout;
         let layoutSlideData: any = undefined;
 
+        console.log("ACTIVE LAYOUT ID:", activeLayoutId);
+        console.log("AVAILABLE LAYOUTS:", Object.keys(showData.layouts || {}));
+
         if (activeLayoutId && showData.layouts?.[activeLayoutId]) {
             const layout = showData.layouts[activeLayoutId];
             console.log("ACTIVE LAYOUT:", layout);
+            console.log("LAYOUT SLIDES:", layout.slides);
 
             // Find the layout slide that corresponds to our slideId
             layoutSlideData = layout.slides?.find((layoutSlide: any) => layoutSlide.id === slideId);
-            console.log("LAYOUT SLIDE DATA:", layoutSlideData);
+            console.log("LAYOUT SLIDE DATA FOR", slideId, ":", layoutSlideData);
+
+            // If layout slide exists but has no background, check if layout has a global background
+            if (layoutSlideData && !layoutSlideData.background && (layout as any).background) {
+                layoutSlideData.background = (layout as any).background;
+                console.log("Applied layout global background to slide:", layoutSlideData);
+            }
+
+            // If not found by ID, try to find by index or other methods
+            if (!layoutSlideData && layout.slides) {
+                console.log("Layout slide not found by ID, trying alternative methods...");
+
+                // Try finding by index
+                const slideKeys = Object.keys(showData.slides || {});
+                const slideIndex = slideKeys.indexOf(slideId);
+                if (slideIndex !== -1 && layout.slides[slideIndex]) {
+                    layoutSlideData = layout.slides[slideIndex];
+                    console.log("Found layout slide by index:", layoutSlideData);
+                }
+
+                // If still not found, check if there's a default background for all slides
+                if (!layoutSlideData && (layout as any).background) {
+                    layoutSlideData = { background: (layout as any).background };
+                    console.log("Using layout default background:", layoutSlideData);
+                }
+            }
+
+            // If we have a layout slide but no background, try to use the first available media as background
+            if (layoutSlideData && !layoutSlideData.background && showData.media) {
+                const mediaKeys = Object.keys(showData.media);
+                if (mediaKeys.length > 0) {
+                    layoutSlideData.background = mediaKeys[0];
+                    console.log("Using first available media as background:", mediaKeys[0]);
+                }
+            }
+        } else {
+            console.log("NO ACTIVE LAYOUT FOUND");
+
+            // Check if there's a global background in show settings
+            if ((showData.settings as any)?.background) {
+                layoutSlideData = { background: (showData.settings as any).background };
+                console.log("Using show default background:", layoutSlideData);
+            }
+
+            // If no layout and no show background, try to use the first available media
+            if (!layoutSlideData && showData.media) {
+                const mediaKeys = Object.keys(showData.media);
+                if (mediaKeys.length > 0) {
+                    layoutSlideData = { background: mediaKeys[0] };
+                    console.log("Using first available media as fallback background:", mediaKeys[0]);
+                }
+            }
+        }
+
+        // Also check if the slide itself has a background property
+        if (!layoutSlideData && (slideData as any)?.background) {
+            layoutSlideData = { background: (slideData as any).background };
+            console.log("Using slide's own background:", layoutSlideData);
         }
 
         const htmlResponse = generateSlideHtmlResponse(showData, slideData, showId, slideId, layoutSlideData);
