@@ -37,7 +37,10 @@
     if (autoStage) itemStyle = itemStyle + newSizes
 
     $: lineGap = item?.specialStyle?.lineGap
+    $: lineRadius = item?.specialStyle?.lineRadius || 0
     $: lineBg = item?.specialStyle?.lineBg
+    $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
+    $: lineStyle = (lineRadius ? `border-radius: ${lineRadius}px;` : "") + (lineBg ? `background: ${lineBg};` : "")
 
     // AUTO SIZE
 
@@ -272,7 +275,7 @@
 
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
-            <div class="lines" style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{chordsStyle}">
+            <div class="lines" style="{style ? lineStyleBox : ''}{chordsStyle}">
                 {#each item.lines as line, i}
                     {#if !maxLines || i < maxLines}
                         <!-- WIP chords are way bigger than stage preview for some reason -->
@@ -281,7 +284,7 @@
                                 {@html chordLines[i]}
                             </div>
                         {/if}
-                        <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                        <div class="break" style="{style ? lineStyle : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 {#key updateDynamic}

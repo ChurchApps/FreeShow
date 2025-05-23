@@ -58,10 +58,9 @@
     $: {
         // style hash
         let s = ""
-        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         clone(item?.lines)?.forEach((line) => {
-            let align = line.align.replaceAll(lineBg, "") + ";"
-            s += align + lineBg // + line.chords?.map((a) => a.key)
+            let align = line.align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             console.assert(Array.isArray(line?.text), "Text is not an array!")
             line?.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
@@ -84,6 +83,11 @@
     }
 
     $: lineGap = item?.specialStyle?.lineGap
+    $: lineRadius = item?.specialStyle?.lineRadius || 0
+    $: lineBg = item?.specialStyle?.lineBg
+    $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
+    $: lineStyleRadius = lineRadius ? `border-radius: ${lineRadius}px;` : ""
+    $: lineStyleBg = lineBg ? `background: ${lineBg};` : ""
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
@@ -250,11 +254,15 @@
 
             // WIP I guess this (undo/redo) is also controlled by the default text input method..
 
-            // fix lineBg style
-            const lineBgStyle = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-            if (lineBgStyle) {
+            // fix lineBg/Radius style
+            if (lineStyleBg) {
                 newLines.forEach((line) => {
-                    line.align = (line.align || "").replace(lineBgStyle, "")
+                    line.align = (line.align || "").replace(lineStyleBg, "")
+                })
+            }
+            if (lineStyleRadius) {
+                newLines.forEach((line) => {
+                    line.align = (line.align || "").replace(lineStyleRadius, "")
                 })
             }
 
@@ -343,13 +351,12 @@
         let pos = -1
         currentStyle = ""
         let updateHTML = false
-        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
 
         new Array(...textElem.children).forEach((line, i) => {
             let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
-            align = align.replaceAll(lineBg, "") + ";"
+            align = align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             pos++
-            currentStyle += align + lineBg
+            currentStyle += align + lineStyleBg + lineStyleRadius
 
             let newLine = { align, text: [] as any[] }
             let lineChords: any[] = []
@@ -650,7 +657,7 @@
                 contenteditable
                 on:keydown={textElemKeydown}
                 bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />

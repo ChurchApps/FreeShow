@@ -14,7 +14,7 @@
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
-        note = $projects[$activeProject!].shows[section.index]?.notes || ""
+        note = $projects[$activeProject || ""]?.shows[section.index]?.notes || ""
     }
 
     function edit(e: any) {

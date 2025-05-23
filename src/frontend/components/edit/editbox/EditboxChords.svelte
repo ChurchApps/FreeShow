@@ -110,12 +110,16 @@
             chordLines[i] = html
         })
     }
+
+    $: lineRadius = item?.specialStyle?.lineRadius || 0
+    $: lineBg = item?.specialStyle?.lineBg
+    $: lineStyle = (lineRadius ? `border-radius: ${lineRadius}px;` : "") + (lineBg ? `background: ${lineBg};` : "")
 </script>
 
 {#if item?.lines}
     <div class="edit chords" on:mousedown={chordClick}>
         {#each item.lines as line, i}
-            <div class="break chordsBreak" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
+            <div class="break chordsBreak" style="{lineStyle}{line.align || ''}">
                 {@html chordLines[i]}
             </div>
         {/each}

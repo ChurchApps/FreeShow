@@ -142,6 +142,7 @@
                 let:customItem
                 let:customLines
                 let:customOut
+                let:transition
             >
                 <Textbox
                     filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
@@ -151,6 +152,7 @@
                     chords={customItem.chords?.enabled}
                     animationStyle={animationData.style || {}}
                     item={customItem}
+                    {transition}
                     {ratio}
                     {outputId}
                     ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}

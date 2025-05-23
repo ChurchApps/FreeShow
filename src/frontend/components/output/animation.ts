@@ -50,10 +50,11 @@ const animations = {
                 key = "transform"
                 initialValue = "transform: scale(1.3) translate(-50%, -50%);"
                 // WIP not properly centered due to -50%
-                const randomNumber = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
-                const randomTranslate1 = randomNumBetween(-8, 8) / 2
-                const randomTranslate2 = randomNumBetween(-8, 8) / 2
-                value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslate1}% + ${randomNumber * 4}%), calc(-50% + ${randomTranslate2}% + ${randomNumber * 4}%));`
+                const randomScale = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
+                const randomTranslateX = randomNumBetween(-8, 8) / 2
+                const randomTranslateY = randomNumBetween(-8, 8) / 2
+                // value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslateX}% + ${randomNumber * 4}%), calc(-50% + ${randomTranslateY}% + ${randomNumber * 4}%));`
+                value = `translate(-50%, -50%) scale(${randomScale}) translate(${randomTranslateX}%, ${randomTranslateY}%)`
             }
         }
 
@@ -92,7 +93,7 @@ const animations = {
 
         animationData.styles[id].push(style)
         animationData.style[id] = animationData.styles[id].join("") + currentStyle
-    },
+    }
 }
 
 function removePreviousKeys(array: string[] | undefined, key: string | undefined) {

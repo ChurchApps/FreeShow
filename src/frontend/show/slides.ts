@@ -567,7 +567,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             if (start < 0 || currentIndex < start) {
                 firstLines[firstLines.length - 1].text.push({
                     style: text.style,
-                    value: text.value,
+                    value: text.value
                 })
 
                 textPos += text.value.length
@@ -580,12 +580,12 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             if (pos > 0) {
                 firstLines[firstLines.length - 1].text.push({
                     style: text.style,
-                    value: text.value.slice(0, pos),
+                    value: text.value.slice(0, pos)
                 })
             }
             secondLines[secondLines.length - 1].text.push({
                 style: text.style,
-                value: text.value.slice(0, text.value.length),
+                value: text.value.slice(0, text.value.length)
             })
 
             textPos += text.value.length
@@ -595,8 +595,8 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     const defaultLine = [
         {
             align: lines[0].align || "",
-            text: [{ style: lines[0].text[0]?.style || "", value: "" }],
-        },
+            text: [{ style: lines[0].text[0]?.style || "", value: "" }]
+        }
     ]
     if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
     if (!secondLines.length) secondLines = defaultLine
@@ -840,10 +840,11 @@ export function mergeTextboxes(customSlideIndex = -1) {
 
 export function breakLongLines(showId: string, breakPoint: number) {
     const slides = get(showsCache)[showId]?.slides
-    if (!slides || !breakPoint) return slides
+    if (!slides || !Number(breakPoint)) return slides
 
     Object.values(slides).forEach((slide) => {
         slide.items.forEach((item) => {
+            let freezeStop = 0
             do {
                 let newLines: Line[] = []
                 item.lines?.forEach((line) => {
@@ -854,7 +855,7 @@ export function breakLongLines(showId: string, breakPoint: number) {
                     lineText.value = getLineText(line)
 
                     const textWords = lineText.value.split(" ")
-                    if (textWords.length > breakPoint) {
+                    if (textWords.length > Number(breakPoint)) {
                         const centerPoint = Math.floor(textWords.length / 2)
                         const firstPart = textWords.slice(0, centerPoint).join(" ")
                         const secondPart = textWords.slice(centerPoint).join(" ")
@@ -869,7 +870,8 @@ export function breakLongLines(showId: string, breakPoint: number) {
                 })
 
                 item.lines = newLines
-            } while (item.lines.find((a) => a.text[0]?.value?.split(" ").length > breakPoint))
+                freezeStop++
+            } while (item.lines.find((a) => a.text[0]?.value?.split(" ").length > breakPoint) && freezeStop < 500)
         })
     })
 
