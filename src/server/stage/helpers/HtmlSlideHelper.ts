@@ -164,8 +164,16 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             const slideIds = ${JSON.stringify(slideIds)};
             let currentIndex = ${currentSlideIndex};
             
+            // Cache for slide content to avoid repeated requests
+            const slideContentCache = new Map();
+            
             // Function to fetch slide content via AJAX
             async function loadSlideContent(slideId) {
+                // Check cache first
+                if (slideContentCache.has(slideId)) {
+                    return slideContentCache.get(slideId);
+                }
+                
                 try {
                     const response = await fetch(\`/show/\${showId}/\${slideId}\`);
                     if (!response.ok) {
@@ -179,12 +187,28 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                     const newSlideContainer = doc.querySelector('.slide-container');
                     
                     if (newSlideContainer) {
-                        return newSlideContainer.innerHTML;
+                        const content = newSlideContainer.innerHTML;
+                        // Cache the content
+                        slideContentCache.set(slideId, content);
+                        return content;
                     }
                     return null;
                 } catch (error) {
                     return null;
                 }
+            }
+            
+            // Preload adjacent slides for smoother navigation
+            function preloadAdjacentSlides() {
+                const preloadIndexes = [currentIndex - 1, currentIndex + 1];
+                preloadIndexes.forEach(index => {
+                    if (index >= 0 && index < slideIds.length) {
+                        const slideId = slideIds[index];
+                        if (!slideContentCache.has(slideId)) {
+                            loadSlideContent(slideId); // Fire and forget
+                        }
+                    }
+                });
             }
             
             // Function to update slide content while preserving background video
@@ -194,7 +218,6 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 
                 // Get current background video element and its state
                 const currentVideo = document.querySelector('.background-media video');
-                let preserveVideo = false;
                 let videoState = null;
                 
                 if (currentVideo) {
@@ -221,10 +244,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 
                 // Check if the new slide has the same video source
                 if (currentVideo && newVideoElement && currentVideo.src === newVideoElement.src) {
-                    preserveVideo = true;
-                    
                     // Remove only the non-video content, keep the video playing
-                    const currentBackgroundMedia = document.querySelector('.background-media');
                     const slideItems = document.querySelectorAll('.slide-item');
                     
                     // Remove old slide items
@@ -240,10 +260,20 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                     // Different video or no current video - replace all content
                     slideContainer.innerHTML = newContent;
                     
-                    // Start the new video if it exists
+                    // Start the new video if it exists and restore state if same video
                     const newVideo = document.querySelector('.background-media video');
                     if (newVideo) {
-                        newVideo.play().catch(err => {});
+                        // If it's the same video source, try to restore playback position
+                        if (videoState && newVideo.src === videoState.src) {
+                            newVideo.currentTime = videoState.currentTime;
+                            newVideo.muted = videoState.muted;
+                            newVideo.volume = videoState.volume;
+                            if (!videoState.paused) {
+                                newVideo.play().catch(err => {});
+                            }
+                        } else {
+                            newVideo.play().catch(err => {});
+                        }
                     }
                 }
                 
@@ -253,6 +283,9 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 // Update browser URL without page reload
                 const newUrl = \`/show/\${showId}/\${newSlideId}\`;
                 window.history.pushState({slideId: newSlideId, index: newIndex}, '', newUrl);
+                
+                // Preload adjacent slides
+                setTimeout(preloadAdjacentSlides, 100);
             }
             
             function navigateToSlide(direction) {
@@ -301,10 +334,19 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 }
             });
             
-            // Initialize history state
+            // Initialize history state and preload adjacent slides
             document.addEventListener('DOMContentLoaded', function() {
                 // Set initial history state
                 window.history.replaceState({slideId: '${slideId}', index: currentIndex}, '', window.location.href);
+                
+                // Cache current slide content
+                const slideContainer = document.querySelector('.slide-container');
+                if (slideContainer) {
+                    slideContentCache.set('${slideId}', slideContainer.innerHTML);
+                }
+                
+                // Preload adjacent slides after a short delay
+                setTimeout(preloadAdjacentSlides, 500);
             });
         </script>
     `;

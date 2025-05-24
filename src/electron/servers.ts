@@ -11,9 +11,7 @@ import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
 import { handleShowSlideHtmlRequest } from "../server/stage/helpers/HtmlSlideHelper";
-import { getMediaFileFromToken } from "../server/stage/helpers/MediaHelper";
-import fs from "fs"
-import path from "path"
+import { handleMediaRequest } from "../server/stage/helpers/MediaHelper";
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -47,70 +45,7 @@ function createServers() {
             app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
 
             // Serve media files
-            app.get('/media/:token', (req, res) => {
-                const token = req.params.token;
-
-                console.log("SERVING MEDIA TOKEN:", token);
-
-                // Get the actual file path from the secure token
-                const filePath = getMediaFileFromToken(token);
-
-                if (!filePath) {
-                    console.error("Invalid or expired media token:", token);
-                    res.status(404).send('Media not found');
-                    return;
-                }
-
-                console.log("RESOLVED TO FILE:", filePath);
-
-                // SECURITY: Validate file extension
-                const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.webm', '.ogv', '.mov', '.avi', '.bmp', '.tiff', '.svg'];
-                const ext = path.extname(filePath).toLowerCase();
-
-                if (!allowedExtensions.includes(ext)) {
-                    console.error("Unauthorized file type:", ext);
-                    res.status(403).send('File type not allowed');
-                    return;
-                }
-
-                // Check if file exists
-                if (!fs.existsSync(filePath)) {
-                    console.error("Media file not found:", filePath);
-                    res.status(404).send('Media file not found');
-                    return;
-                }
-
-                // Get file extension to set proper content type
-                const mimeTypes: { [key: string]: string } = {
-                    '.png': 'image/png',
-                    '.jpg': 'image/jpeg',
-                    '.jpeg': 'image/jpeg',
-                    '.gif': 'image/gif',
-                    '.webp': 'image/webp',
-                    '.bmp': 'image/bmp',
-                    '.tiff': 'image/tiff',
-                    '.svg': 'image/svg+xml',
-                    '.mp4': 'video/mp4',
-                    '.webm': 'video/webm',
-                    '.ogv': 'video/ogg',
-                    '.mov': 'video/quicktime',
-                    '.avi': 'video/x-msvideo'
-                };
-
-                const contentType = mimeTypes[ext] || 'application/octet-stream';
-                res.setHeader('Content-Type', contentType);
-
-                // Stream the file
-                const fileStream = fs.createReadStream(filePath);
-                fileStream.pipe(res);
-
-                fileStream.on('error', (error) => {
-                    console.error("Error streaming media file:", error);
-                    if (!res.headersSent) {
-                        res.status(500).send('Error streaming media file');
-                    }
-                });
-            });
+            app.get('/media/:token', handleMediaRequest);
         }
 
         // The join import from 'path' is still needed for this part
