@@ -303,7 +303,7 @@ function webFiles(
     files.push(
       {
         src: `src/server/${id}/html/navigation.js`,
-        dest
+        dest: `${dest}/html`
       },
       {
         src: `src/server/${id}/html/show.css`,
