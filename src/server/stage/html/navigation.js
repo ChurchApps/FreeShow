@@ -347,18 +347,11 @@ async function updateSlideContent(
         timerDuration >
         0
       ) {
-        // Update the timer duration for the new slide and start it
-        window.nextTimer =
+        // Update the global timer duration for the new slide
+        nextTimer =
           timerDuration
-        setTimeout(
-          () => {
-            navigateToSlide(
-              1
-            )
-          },
-          timerDuration *
-            1000
-        )
+        // Use the proper startSlideTimer function
+        startSlideTimer()
       }
     }
   )
@@ -382,10 +375,10 @@ async function fetchSlideTimerInfo(
     const html =
       await response.text()
 
-    // Extract nextTimer value from the script
+    // Extract nextTimer value from the initializeNavigation call
     const timerMatch =
       html.match(
-        /const nextTimer = (\d+(?:\.\d+)?);/
+        /nextTimer:\s*(\d+(?:\.\d+)?)/
       )
     return timerMatch
       ? parseFloat(
