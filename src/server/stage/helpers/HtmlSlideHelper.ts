@@ -91,78 +91,12 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     // Get the nextTimer value from layout data (matching desktop app behavior)
     const nextTimer = layoutSlideData?.nextTimer || 0;
 
-    let styles = `
-        body { 
-            margin: 0; 
-            padding: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            overflow: hidden; 
-            font-family: sans-serif; 
-        } 
-        .slide-item { 
-            box-sizing: border-box; 
-            position: absolute;
-            z-index: 10;
-        }
-        .text-item {
-            z-index: 20;
-        }
-        .text-item .align {
-            height: 100%;
-            display: flex;
-            text-align: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        .text-item .lines {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-            justify-content: center;
-        }
-        .text-item .break {
-            width: 100%;
-            font-size: 0;
-            overflow-wrap: break-word;
-        }
-        .text-item .break span {
-            font-size: min(${(DEFAULT_FONT_SIZE / 1920) * 100}vw, ${(DEFAULT_FONT_SIZE / 1080) * 100}vh);
-            min-height: min(${(50 / 1920) * 100}vw, ${(50 / 1080) * 100}vh);
-            color: white;
-            font-family: "CMGSans", sans-serif;
-            line-height: 1.1;
-            text-shadow: 2px 2px 10px #000000;
-            -webkit-text-stroke-color: #000000;
-            font-weight: bold;
-        }
-        .media-item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 15;
-        }
-        .background-media {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            background-color: #000000;
-        }
-        .background-media img,
-        .background-media video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    `;
+    // Link to external CSS file
+    const cssLink = `<link rel="stylesheet" href="/html/show.css">`;
 
     // Add JavaScript for navigation and timer functionality
     const navigationScript = `
-        <script src="/navigation.js"></script>
+        <script src="/html/navigation.js"></script>
         <script>
             // Initialize navigation with slide data
             initializeNavigation({
@@ -205,8 +139,6 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     } else if (!backgroundMediaHtml) {
         slideContainerStyle += `background-color: #000000;`; // Default black background only if no media
     }
-
-    styles += ` .slide-container { ${slideContainerStyle} }`;
 
     if (slideData.items) {
         for (const item of slideData.items) {
@@ -347,7 +279,10 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         }
     }
 
-    html += `<style>${styles}</style>${navigationScript}</head><body><div class="slide-container">${backgroundMediaHtml}${bodyContent}</div></body></html>`;
+    // Create slide container with dynamic background color if needed
+    const slideContainerClass = slideContainerStyle ? `class="slide-container" style="${slideContainerStyle}"` : `class="slide-container"`;
+
+    html += `${cssLink}${navigationScript}</head><body><div ${slideContainerClass}>${backgroundMediaHtml}${bodyContent}</div></body></html>`;
     return html;
 }
 

@@ -302,8 +302,12 @@ function webFiles(
   ) {
     files.push(
       {
-        src: `src/server/${id}/navigation.js`,
+        src: `src/server/${id}/html/navigation.js`,
         dest
+      },
+      {
+        src: `src/server/${id}/html/show.css`,
+        dest: `${dest}/html`
       }
     )
   }
