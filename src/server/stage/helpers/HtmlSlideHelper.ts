@@ -377,6 +377,30 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
             // Find the layout slide that corresponds to our slideId
             layoutSlideData = layout.slides?.find((layoutSlide: any) => layoutSlide.id === slideId);
 
+            // If not found directly, check if this is a child slide
+            if (!layoutSlideData) {
+                // Look for parent slide that has this slideId as a child
+                for (const parentLayoutSlide of layout.slides || []) {
+                    if (showData.slides[parentLayoutSlide.id]?.children?.includes(slideId)) {
+                        // This is a child slide - inherit layout data from parent
+                        layoutSlideData = { ...parentLayoutSlide };
+
+                        // Check if there's specific child data in the parent's children object
+                        if (parentLayoutSlide.children?.[slideId]) {
+                            // Merge parent layout data with child-specific data
+                            layoutSlideData = { ...layoutSlideData, ...parentLayoutSlide.children[slideId] };
+                        }
+
+                        // If child doesn't have its own background, inherit from parent
+                        if (!layoutSlideData.background && parentLayoutSlide.background) {
+                            layoutSlideData.background = parentLayoutSlide.background;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
             // If layout slide exists but has no background, check if layout has a global background
             if (layoutSlideData && !layoutSlideData.background && (layout as any).background) {
                 layoutSlideData.background = (layout as any).background;
