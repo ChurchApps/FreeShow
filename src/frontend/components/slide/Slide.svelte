@@ -476,10 +476,11 @@
                         <!-- font-size: 0.8em; -->
                         <span style="position: absolute;display: contents;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
-                        
+                        <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
                             <Icon id="open_in_new" />
                         </button>
+                        -->
                         
                     </div>
                 {/if}
