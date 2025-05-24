@@ -15,15 +15,11 @@ export function registerMediaFile(filePath: string): string {
         return filePath;
     }
 
-    // Check if this file is already registered
-    for (const [token, registeredPath] of mediaRegistry.entries()) {
-        if (registeredPath === filePath) {
-            return `http://localhost:5511/media/${token}`;
-        }
-    }
+    // Generate a consistent token based on the file path using SHA-256
+    // This ensures the same file always gets the same token
+    const token = crypto.createHash('sha256').update(filePath).digest('hex');
 
-    // Generate a secure token for this file
-    const token = crypto.randomBytes(32).toString('hex');
+    // Always register/update the mapping (in case of server restart)
     mediaRegistry.set(token, filePath);
 
     console.log("REGISTERED MEDIA FILE:", filePath, "->", token);
