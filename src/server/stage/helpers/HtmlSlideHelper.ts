@@ -88,6 +88,9 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     const slideIds = Object.keys(showData.slides || {});
     const currentSlideIndex = slideIds.indexOf(slideId);
 
+    // Get the nextTimer value from layout data (matching desktop app behavior)
+    const nextTimer = layoutSlideData?.nextTimer || 0;
+
     let styles = `
         body { 
             margin: 0; 
@@ -157,15 +160,38 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
         }
     `;
 
-    // Add JavaScript for navigation
+    // Add JavaScript for navigation and timer functionality
     const navigationScript = `
         <script>
             const showId = '${showId}';
             const slideIds = ${JSON.stringify(slideIds)};
             let currentIndex = ${currentSlideIndex};
+            const nextTimer = ${nextTimer}; // Timer duration in seconds
+            
+            // Timer management - simplified to just auto-advance
+            let slideTimer = null;
             
             // Cache for slide content to avoid repeated requests
             const slideContentCache = new Map();
+            
+            // Simple timer function - just auto-advance after duration
+            function startSlideTimer() {
+                if (nextTimer <= 0) return;
+                
+                clearSlideTimer();
+                
+                slideTimer = setTimeout(() => {
+                    // Timer ended - advance to next slide (matching desktop app behavior)
+                    navigateToSlide(1);
+                }, nextTimer * 1000);
+            }
+            
+            function clearSlideTimer() {
+                if (slideTimer) {
+                    clearTimeout(slideTimer);
+                    slideTimer = null;
+                }
+            }
             
             // Function to fetch slide content via AJAX
             async function loadSlideContent(slideId) {
@@ -215,6 +241,9 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
             async function updateSlideContent(newSlideId, newIndex) {
                 const slideContainer = document.querySelector('.slide-container');
                 if (!slideContainer) return;
+                
+                // Clear any existing timer when changing slides
+                clearSlideTimer();
                 
                 // Get current background video element and its state
                 const currentVideo = document.querySelector('.background-media video');
@@ -286,6 +315,34 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 
                 // Preload adjacent slides
                 setTimeout(preloadAdjacentSlides, 100);
+                
+                // Start timer for new slide if it has nextTimer configured
+                fetchSlideTimerInfo(newSlideId).then(timerDuration => {
+                    if (timerDuration > 0) {
+                        // Update the timer duration for the new slide and start it
+                        window.nextTimer = timerDuration;
+                        setTimeout(() => {
+                            navigateToSlide(1);
+                        }, timerDuration * 1000);
+                    }
+                });
+            }
+            
+            // Function to fetch timer info for a specific slide
+            async function fetchSlideTimerInfo(slideId) {
+                try {
+                    // We'll extract timer info from the slide HTML response
+                    const response = await fetch(\`/show/\${showId}/\${slideId}\`);
+                    if (!response.ok) return 0;
+                    
+                    const html = await response.text();
+                    
+                    // Extract nextTimer value from the script
+                    const timerMatch = html.match(/const nextTimer = (\\d+(?:\\.\\d+)?);/);
+                    return timerMatch ? parseFloat(timerMatch[1]) : 0;
+                } catch (error) {
+                    return 0;
+                }
             }
             
             function navigateToSlide(direction) {
@@ -347,6 +404,19 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                 
                 // Preload adjacent slides after a short delay
                 setTimeout(preloadAdjacentSlides, 500);
+                
+                // Start timer for current slide if configured
+                if (nextTimer > 0) {
+                    // Small delay to ensure page is fully loaded
+                    setTimeout(() => {
+                        startSlideTimer();
+                    }, 100);
+                }
+            });
+            
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', function() {
+                clearSlideTimer();
             });
         </script>
     `;
