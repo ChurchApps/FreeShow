@@ -3,12 +3,39 @@ import path from "path";
 import { app as electronApp } from "electron";
 import { stores } from "../../../electron/data/store";
 import { readFile } from "../../../electron/utils/files";
-import type { TrimmedShow, Show, Slide } from '../../../types/Show';
+import type { TrimmedShow, Show, Slide, SlideData } from '../../../types/Show';
 import type { Media as ItemMedia } from '../../../types/Show';
 import { getMediaUrl } from './MediaHelper';
 
 // Desktop app constants
 const DEFAULT_FONT_SIZE = 100;
+
+// Helper function to get layout slides in the correct order (matching desktop app behavior)
+export function getLayoutSlides(showData: Show, layoutId?: string): SlideData[] {
+    const layoutSlides: SlideData[] = [];
+    const activeLayoutId = layoutId || showData.settings?.activeLayout;
+
+    if (showData.layouts && activeLayoutId && showData.layouts[activeLayoutId]) {
+        showData.layouts[activeLayoutId].slides?.forEach((ls) => {
+            if (ls && showData.slides[ls.id]) {
+                const slide: Slide = showData.slides[ls.id];
+                const newLS = { ...ls };
+                delete newLS.children;
+                layoutSlides.push({ ...newLS, color: slide.color });
+
+                if (slide.children) {
+                    slide.children.forEach((id: string) => {
+                        if (ls.children?.[id]) {
+                            const slideData: any = ls.children[id];
+                            if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id });
+                        } else layoutSlides.push({ id, color: slide.color, parent: ls.id });
+                    });
+                }
+            }
+        });
+    }
+    return layoutSlides;
+}
 
 // Helper function to parse CSS styles from a style string
 function getStyles(styleString: string): { [key: string]: string } {
@@ -84,8 +111,9 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
     const showName = showData.name || showId;
     let html = `<!DOCTYPE html><html><head><title>Show - ${showName} - Slide ${slideId}</title>`;
 
-    // Get all slide IDs for navigation
-    const slideIds = Object.keys(showData.slides || {});
+    // Get all slide IDs in the correct layout order (matching desktop app behavior)
+    const layoutSlides = getLayoutSlides(showData);
+    const slideIds = layoutSlides.map(slide => slide.id);
     const currentSlideIndex = slideIds.indexOf(slideId);
 
     // Get the nextTimer value from layout data (matching desktop app behavior)
