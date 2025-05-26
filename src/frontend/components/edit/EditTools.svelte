@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Item, Slide } from "../../../types/Show"
+    import type { Item, ItemType, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
@@ -28,7 +28,7 @@
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
         slide: { name: "tools.slide", icon: "options", overflow: true },
-        filters: { name: "edit.filters", icon: "filter", overflow: true },
+        filters: { name: "edit.filters", icon: "filter", overflow: true }
     }
     let active: string = Object.keys(tabs)[0]
     $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
@@ -140,7 +140,7 @@
 
         setNewStyle()
         function setNewStyle() {
-            if (active === "text") return setBoxStyle(styles, slides, itemType )
+            if (active === "text") return setBoxStyle(styles, slides, itemType as ItemType)
             if (active === "item") return setItemStyle(styles, slides)
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
@@ -177,7 +177,7 @@
             history({
                 id: "setStyle",
                 newData: { style: { key: "style", values: [DEFAULT_ITEM_STYLE] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
+                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items }
             })
             return
         }
@@ -188,6 +188,7 @@
 
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } })
             history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: undefined, indexes } })
             return
         }
 
@@ -196,7 +197,7 @@
                 id: "slideStyle",
                 oldData: { style: _show().slides([slide]).get("settings")[0] },
                 newData: { style: {} },
-                location: { page: "edit", show: $activeShow!, slide },
+                location: { page: "edit", show: $activeShow!, slide }
             })
             return
         }
@@ -225,8 +226,8 @@
                     page: "edit",
                     show: $activeShow!,
                     slide,
-                    items: $activeEdit.items,
-                },
+                    items: $activeEdit.items
+                }
             })
         }
 
@@ -238,7 +239,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key, values: [undefined] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key },
+                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key }
             })
         })
 
@@ -274,7 +275,7 @@
                     id: "UPDATE",
                     oldData: { id: $activeEdit.id },
                     newData: { key: "items", subkey: "style", data: values, indexes: selectedItems },
-                    location: { page: "edit", id: $activeEdit.type + "_items", override: true },
+                    location: { page: "edit", id: $activeEdit.type + "_items", override: true }
                 })
                 return
             }
@@ -285,7 +286,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key: "style", values } },
-                location: { page: "edit", show: $activeShow!, slide: slideId, items: selectedItems, override: "slideitem_" + slideId + "_items_" + selectedItems.join(",") },
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: selectedItems, override: "slideitem_" + slideId + "_items_" + selectedItems.join(",") }
             })
         }
     }

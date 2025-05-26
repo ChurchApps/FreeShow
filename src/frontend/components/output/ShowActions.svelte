@@ -21,7 +21,7 @@
     $: slideData = $showsCache && outSlide && outSlide.id !== "temp" ? getLayoutRef(outSlide.id)[outSlide.index!]?.data : null
     $: customTransition = slideData ? slideData.transition || slideData.mediaTransition : null
 
-    $: layoutLength = getLayoutRef("active", $showsCache).length
+    $: layoutLength = [$activeShow, getLayoutRef("active", $showsCache).length][1]
 
     // NEW
 

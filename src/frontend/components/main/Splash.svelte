@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, version } from "../../stores"
+    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, shows, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -22,15 +22,18 @@
 
 <Center>
     <h1>FreeShow</h1>
-    <p style="opacity: 0.8;">v{$version}</p>
-    <p style="padding: 30px">
-        <Link url="https://freeshow.app/docs">
-            <T id="main.docs" />
-            <Icon id="launch" white />
-        </Link>
-    </p>
+    <p style="opacity: 0.7;">v{$version}</p>
+    <!-- shows up for new users (can be found in "About" menu) -->
+    {#if Object.keys($shows).length < 20}
+        <p style="padding-top: 30px">
+            <Link url="https://freeshow.app/docs">
+                <T id="main.docs" />
+                <Icon id="launch" white />
+            </Link>
+        </p>
+    {/if}
 
-    <span class="buttons">
+    <span style="padding-top: 30px" class="buttons">
         <Button on:click={createProject} title={$dictionary.tooltip?.project} dark>
             <Icon id="project" right />
             <p><T id="new.project" /></p>

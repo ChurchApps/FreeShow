@@ -315,6 +315,7 @@ export type Popups =
     | "manage_emitters"
     | "action"
     | "category_action"
+    | "custom_action"
     | "user_data_overwrite"
     | "connect"
     | "cloud_update"

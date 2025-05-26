@@ -22,6 +22,7 @@ export interface Show {
         activeLayout: ID
         // resolution?: Resolution
         template: null | ID
+        customAction?: string // special custom trigger
     }
     timestamps: {
         created: number
