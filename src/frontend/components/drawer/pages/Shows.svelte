@@ -2,7 +2,7 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
-    import { formatSearch, showSearch } from "../../../utils/search"
+    import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -27,40 +27,34 @@
         active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
-    export let resetSearchList = false
-    let previousSearchValue = ""
+    let previousSearchTokens: string[] = []
+    let previousFilteredShows: any[] = clone(filteredStored)
+
     $: {
         if (searchValue.length > 1) {
-            let currentShowsList = filterByTags(filteredShows, $activeTagFilter)
-            // reset if search value changed
-            let reset = resetSearchList || !formattedSearch.includes(previousSearchValue) // || formattedSearch.split(" ").filter(Boolean).length !== previousSearchValue.split(" ").filter(Boolean).length
-            if (reset) {
-                currentShowsList = filterByTags(clone(filteredStored), $activeTagFilter)
-                resetSearchList = false
-            }
+            const currentTokens = tokenize(formattedSearch)
+            const isNarrowing = isRefinement(currentTokens, previousSearchTokens)
 
-            filteredShows = showSearch(formattedSearch, currentShowsList)
+            const baseList = isNarrowing ? previousFilteredShows : clone(filteredStored)
+            const tagFiltered = filterByTags(baseList, $activeTagFilter)
+
+            filteredShows = showSearch(formattedSearch, tagFiltered)
+
             if (searchValue.length > 15 && filteredShows.length > 50) filteredShows = filteredShows.slice(0, 50)
             if (searchValue.length > 30 && filteredShows.length > 30) filteredShows = filteredShows.slice(0, 30)
+
             firstMatch = filteredShows[0] || null
+            previousFilteredShows = filteredShows
+            previousSearchTokens = currentTokens
 
             // scroll to top
             document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
-
-            previousSearchValue = formattedSearch
         } else {
             filteredShows = filterByTags(clone(filteredStored), $activeTagFilter)
             firstMatch = null
-            previousSearchValue = ""
+            previousSearchTokens = []
+            previousFilteredShows = clone(filteredStored)
         }
-    }
-
-    // reduce lag by only refreshing full list when not typing for 200 ms
-    let isTyping: NodeJS.Timeout | null = null
-    $: if (searchValue) typing()
-    function typing() {
-        if (isTyping) clearTimeout(isTyping)
-        isTyping = setTimeout(() => (resetSearchList = true), 200)
     }
 
     function filterByTags(shows, tags: string[]) {

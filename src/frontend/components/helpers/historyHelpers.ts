@@ -31,7 +31,7 @@ import {
     stageShows,
     styles,
     theme,
-    themes,
+    themes
 } from "../../stores"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
@@ -57,7 +57,7 @@ const getDefaultCategoryUpdater = (tabId: string) => ({
         }
 
         // TODO: set overlays/templates to unlabeled??
-    },
+    }
 })
 
 export const _updaters = {
@@ -88,7 +88,7 @@ export const _updaters = {
                 a[outputId].stageOutput = stageOutput.id
                 return a
             })
-        },
+        }
     },
 
     project: {
@@ -130,7 +130,7 @@ export const _updaters = {
                 activeProject.set(null)
                 projectView.set(true)
             }
-        },
+        }
     },
     project_folder: {
         store: folders,
@@ -201,16 +201,17 @@ export const _updaters = {
 
                 return items
             }
-        },
+        }
     },
     project_template: {
         store: projectTemplates,
-        empty: EMPTY_PROJECT,
+        cloudCombine: true,
+        empty: EMPTY_PROJECT
     },
 
     project_key: {
         store: projects,
-        timestamp: true,
+        timestamp: true
     },
     project_folder_key: { store: folders, timestamp: true },
 
@@ -236,7 +237,7 @@ export const _updaters = {
             setTimeout(() => {
                 document.getElementById("sectionTitle")?.querySelector("input")?.focus()
             }, 10)
-        },
+        }
     },
 
     category_shows: {
@@ -247,7 +248,7 @@ export const _updaters = {
 
             setDrawerTabData("shows", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
-        },
+        }
     },
     category_overlays: {
         store: overlayCategories,
@@ -257,7 +258,7 @@ export const _updaters = {
 
             setDrawerTabData("overlays", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
-        },
+        }
     },
     category_templates: {
         store: templateCategories,
@@ -267,7 +268,7 @@ export const _updaters = {
 
             setDrawerTabData("templates", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
-        },
+        }
     },
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
@@ -287,7 +288,7 @@ export const _updaters = {
 
             return data
         },
-        deselect: (id: string) => clearOverlayOutput(id),
+        deselect: (id: string) => clearOverlayOutput(id)
     },
     overlay_items: { store: overlays, empty: [] },
     overlay_name: { store: overlays, empty: "" },
@@ -306,7 +307,7 @@ export const _updaters = {
             activeRename.set("template_" + id)
 
             return data
-        },
+        }
     },
     template_items: { store: templates, empty: [] },
     template_name: { store: templates, empty: "" },
@@ -325,7 +326,7 @@ export const _updaters = {
             if (data.data?.repeat === true && data.previousData?.repeat === false) {
                 // TODO: delete repeated...
             }
-        },
+        }
     },
 
     stage_item_style: { store: stageShows, empty: "" },
@@ -425,7 +426,7 @@ export const _updaters = {
                 delete a[id]
                 return a
             })
-        },
+        }
     },
 
     show_layout: {
@@ -450,7 +451,7 @@ export const _updaters = {
 
             const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((layoutId) => layoutId !== subkey)[0]
             if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
-        },
+        }
     },
 
     show_key: { store: showsCache },
@@ -466,7 +467,7 @@ export const _updaters = {
         },
         deselect: () => {
             activeTagFilter.set([])
-        },
+        }
     },
     tag_key: { store: globalTags },
 
@@ -506,14 +507,14 @@ export const _updaters = {
                 if (data.subkey) updateTransparentColors(id)
                 updateThemeValues(get(themes)[id])
             }, 100)
-        },
+        }
     },
     settings_style: {
         store: styles,
         select: (id: string, data, initializing: boolean) => {
             if (!initializing || data.key) return
             activeRename.set("style_" + id)
-        },
+        }
     },
     settings_output: {
         store: outputs,
@@ -545,8 +546,8 @@ export const _updaters = {
                     return a
                 })
             }, 100)
-        },
-    },
+        }
+    }
 }
 
 function updateTransparentColors(id: string) {
@@ -569,8 +570,8 @@ const converts = {
     secondary: [{ id: "secondary-opacity", opacity: 0.5 }],
     text: [
         { id: "hover", opacity: 0.05 },
-        { id: "focus", opacity: 0.1 },
-    ],
+        { id: "focus", opacity: 0.1 }
+    ]
 }
 function makeTransparent(value: string, amount = 0.5) {
     const rgb = hexToRgb(value)
@@ -584,7 +585,7 @@ function hexToRgb(hex: string) {
         ? {
               r: parseInt(result[1], 16),
               g: parseInt(result[2], 16),
-              b: parseInt(result[3], 16),
+              b: parseInt(result[3], 16)
           }
         : null
 }
@@ -606,7 +607,7 @@ export const projectReplacers = [
     { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
     { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
     { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
-    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
+    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) }
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 export function getProjectName(updater = get(special)) {

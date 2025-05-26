@@ -226,12 +226,12 @@
                     if (action.midi?.defaultValues) delete action.midi.defaultValues
                 }
 
-                a[id] = clone(action)
-
                 // set tag
                 if (!exists && $drawerTabsData.functions?.activeSubTab === "actions" && $drawerTabsData.functions?.activeSubmenu) {
-                    a[id].tags = [$drawerTabsData.functions?.activeSubmenu]
+                    action.tags = [$drawerTabsData.functions?.activeSubmenu]
                 }
+
+                a[id] = clone(action)
 
                 return a
             })

@@ -33,6 +33,7 @@
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
         .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
+    $: templates = sortByName(keysToID($projectTemplates)).filter((a) => !a.deleted)
 
     $: {
         let sortType = $sorted.projects?.type || "name"
@@ -198,9 +199,9 @@
             </Autoscroll>
         </div>
 
-        {#if Object.keys($projectTemplates).length}
+        {#if templates.length}
             <div class="projectTemplates">
-                {#each sortByName(keysToID($projectTemplates)) as project}
+                {#each templates as project}
                     <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
                 {/each}
             </div>

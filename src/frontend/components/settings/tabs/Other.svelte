@@ -62,16 +62,16 @@
 
     // shows in folder
     let hiddenShows: string[] = []
-    let brokenShows = 0
+    // let brokenShows = 0
 
-    $: if (hiddenShows?.length) getBrokenShows()
-    function getBrokenShows() {
-        brokenShows = 0
+    // $: if (hiddenShows?.length) getBrokenShows()
+    // function getBrokenShows() {
+    //     brokenShows = 0
 
-        Object.entries($shows).forEach(([id, { name }]) => {
-            if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
-        })
-    }
+    //     Object.entries($shows).forEach(([id, { name }]) => {
+    //         if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
+    //     })
+    // }
 
     // get all shows inside current shows folder (and remove missing)
     // function refreshShows() {
@@ -114,6 +114,7 @@
     function getDuplicatedShows() {
         let names: { [key: string]: string[] } = {}
         Object.entries($shows).forEach(([id, show]) => {
+            if (!show?.name) return
             // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
             let trimmedName = show.name
                 .toLowerCase()

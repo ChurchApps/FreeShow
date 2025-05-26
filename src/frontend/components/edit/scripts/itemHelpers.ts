@@ -40,7 +40,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
 
     const newData: Item = {
         style: getDefaultStyles(type, template),
-        type,
+        type
     }
     if (id) newData.id = id
 
@@ -48,8 +48,9 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
-        newData.timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
-        if (get(timers)[newData.timerId || ""]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
+        const timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
+        newData.timer = { id: timerId, ...get(timers)[timerId] }
+        if (get(timers)[timerId]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
     } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", showTime: true, seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
@@ -349,7 +350,7 @@ export function getDynamicValue(id: string, type: "default" | "stage" = "default
         layoutId: outSlide?.layout || _show().get("settings.activeLayout"),
         slideIndex: outSlide?.index ?? get(activeEdit).slide ?? -1,
         type: type === "stage" ? "stage" : get(activeEdit).type || "show_custom",
-        id: get(activeEdit).id,
+        id: get(activeEdit).id
     }
 
     const value = replaceDynamicValues(id.includes("{") ? id : dynamicValueText(id), { ...ref })

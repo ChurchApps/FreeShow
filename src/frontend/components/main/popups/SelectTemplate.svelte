@@ -38,12 +38,10 @@
 
     let searchedTemplates = clone(defaultTemplates)
     let searchValue = ""
-    let previousSearchValue = ""
+    // let previousSearchValue = ""
     function search(e: any = null) {
-        if (searchValue !== previousSearchValue) {
-            preloader = true
-            setTimeout(() => (preloader = false), 20)
-        }
+        // preloader = true
+        // setTimeout(() => (preloader = false), 20)
 
         searchValue = formatSearch(e?.target?.value || "")
 
@@ -52,13 +50,13 @@
             return
         }
 
-        let currentTemplatesList = searchedTemplates
+        let currentTemplatesList = clone(defaultTemplates) // searchedTemplates
         // reset if search value changed
-        if (!searchValue.includes(previousSearchValue)) currentTemplatesList = clone(defaultTemplates)
+        // if (!searchValue.includes(previousSearchValue)) currentTemplatesList = clone(defaultTemplates)
 
         searchedTemplates = currentTemplatesList.filter((a) => formatSearch(a.name || "").includes(searchValue))
 
-        previousSearchValue = searchValue
+        // previousSearchValue = searchValue
     }
 
     function selectTemplate(template: any, keyboard = false) {

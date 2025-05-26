@@ -1,6 +1,6 @@
 import { ipcMain, type IpcMainEvent } from "electron"
 import { uid } from "uid"
-import { mainWindow } from ".."
+import { isProd, mainWindow } from ".."
 import { MAIN, Main, type MainReceiveValue, type ToMainSendValue2 } from "./../../types/IPC/Main"
 import type { ToMainReceiveValue, ToMainReturnPayloads } from "./../../types/IPC/ToMain"
 import { ToMain, type ToMainSendValue } from "./../../types/IPC/ToMain"
@@ -50,7 +50,7 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
     let timeout: NodeJS.Timeout | null = null
     const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {
-            console.error(`IPC Message Timed Out: ${id}`)
+            if (!isProd) console.error(`IPC Message Timed Out: ${id}`)
         }, waitingTimeout)
 
         ipcMain.on(MAIN, receive)
