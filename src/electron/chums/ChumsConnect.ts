@@ -170,6 +170,7 @@ export class ChumsConnect {
                 }
                 console.log("DATA", data)
 
+                this.CHUMS_ACCESS = data
                 stores.ACCESS.set(`chums_${data.scope}`, data)
                 sendToMain(ToMain.CHUMS_CONNECT, { success: true })
                 resolve(data)
