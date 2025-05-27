@@ -16,7 +16,7 @@ export let errors: Writable<string[]> = writable([])
 export let password = writable({
     required: true,
     remember: false,
-    stored: "",
+    stored: ""
 })
 
 export let isConnected = writable(false)
@@ -45,6 +45,7 @@ export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
+export let scriptureViewList = writable(false)
 export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})
@@ -90,7 +91,7 @@ export const _ = {
     scriptureCache,
     playingAudioData,
     playingAudioTime,
-    pdfPages,
+    pdfPages
 }
 
 /////

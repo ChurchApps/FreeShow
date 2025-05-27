@@ -1223,15 +1223,16 @@ export function decodeExif(data: any) {
 }
 
 export function getSlideFilter(slideData: SlideData | null) {
-    let slideFilter = ""
+    return slideData?.filter ? "filter: " + slideData.filter + ";" : ""
+    // let slideFilter = ""
 
-    if (!slideData) return slideFilter
-    if (Array.isArray(slideData.filterEnabled) && !slideData.filterEnabled?.includes("background")) return slideFilter
+    // if (!slideData) return slideFilter
+    // if (Array.isArray(slideData.filterEnabled) && !slideData.filterEnabled?.includes("background")) return slideFilter
 
-    if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
-    if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
+    // if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
+    // if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
 
-    return slideFilter
+    // return slideFilter
 }
 
 export function getBlending() {

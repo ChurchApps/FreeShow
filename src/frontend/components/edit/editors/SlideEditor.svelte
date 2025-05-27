@@ -9,7 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
@@ -221,14 +221,7 @@
         chordsMode = !chordsMode
     }
 
-    $: slideFilter = ""
-    $: if (!Array.isArray(layoutSlide.filterEnabled) || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
-    else slideFilter = ""
-    function getSlideFilter() {
-        slideFilter = ""
-        if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
-        if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
-    }
+    $: slideFilter = getSlideFilter(layoutSlide)
 
     onMount(() =>
         // timeout to prevent number 2 from getting typed if changing with shortcuts
@@ -320,17 +313,9 @@
 
                     {#key $activeEdit.slide || $activeEdit.id}
                         {#each Slide.items as item, index}
-                            <Editbox
-                                filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
-                                backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
-                                {item}
-                                {chordsMode}
-                                {chordsAction}
-                                ref={{ showId: currentShowId, id: Slide.id }}
-                                {index}
-                                {ratio}
-                                bind:mouse
-                            />
+                            <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
+                            <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
+                            <Editbox backdropFilter={layoutSlide["backdrop-filter"] || ""} {item} {chordsMode} {chordsAction} ref={{ showId: currentShowId, id: Slide.id }} {index} {ratio} bind:mouse />
                         {/each}
                     {/key}
                 </Zoomed>

@@ -195,10 +195,10 @@
 
         <!-- RIGHT BUTTONS -->
 
-        <div class="seperator" />
-
         <!-- action button -->
-        {#if Object.keys($actions).length}
+        {#if Object.keys($actions).length && !reference}
+            <div class="seperator" />
+
             <Button class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
                 <Icon size={1.1} id={customAction ? getActionIcon(customAction) : "actions"} white={!customAction} right={!!customAction} />
                 {#if customAction}<p>{$actions[customAction].name}</p>{/if}

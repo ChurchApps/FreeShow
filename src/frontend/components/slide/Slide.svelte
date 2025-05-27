@@ -26,7 +26,7 @@
         slidesOptions,
         special,
         styles,
-        textEditActive,
+        textEditActive
     } from "../../stores"
     import { wait } from "../../utils/common"
     import { slideHasAction } from "../actions/actions"
@@ -38,7 +38,7 @@
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
@@ -288,14 +288,7 @@
         if (viewMode !== "grid" && viewMode !== "simple" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
 
-    $: slideFilter = ""
-    $: if (!Array.isArray(layoutSlide.filterEnabled) || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
-    else slideFilter = ""
-    function getSlideFilter() {
-        slideFilter = ""
-        if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
-        if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
-    }
+    $: slideFilter = getSlideFilter(layoutSlide)
 
     function getOutputColor(color: string) {
         if (output?.cached) {
@@ -329,13 +322,13 @@
     function handleOpenInBrowserClick() {
         // The props showId and layoutSlide are available in this component's scope.
         if (!showId || !layoutSlide || !layoutSlide.id) {
-            console.error("Missing showId or slideId for opening in browser");
-            return;
+            console.error("Missing showId or slideId for opening in browser")
+            return
         }
-        const slideId = layoutSlide.id;
-        const url = `http://localhost:5511/show/${showId}/${slideId}`;
-        console.log(`Requesting to open URL: ${url}`); // For debugging
-        sendMain(Main.URL, url);
+        const slideId = layoutSlide.id
+        const url = `http://localhost:5511/show/${showId}/${slideId}`
+        console.log(`Requesting to open URL: ${url}`) // For debugging
+        sendMain(Main.URL, url)
     }
 </script>
 
@@ -411,9 +404,10 @@
                     {#if slide.items}
                         {#each itemsList as item, i}
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                                <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
+                                <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox
-                                    filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
-                                    backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
+                                    backdropFilter={layoutSlide["backdrop-filter"] || ""}
                                     disableListTransition
                                     {item}
                                     itemIndex={i}
@@ -422,7 +416,7 @@
                                     ref={{
                                         showId,
                                         slideId: layoutSlide.id,
-                                        id: layoutSlide.id,
+                                        id: layoutSlide.id
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
@@ -481,7 +475,6 @@
                             <Icon id="open_in_new" />
                         </button>
                         -->
-                        
                     </div>
                 {/if}
             </SelectElem>

@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Item, ItemType, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, isDev, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -186,7 +187,7 @@
             let indexes = [$activeEdit.slide]
             if (typeof indexes[0] !== "number") return
 
-            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } }) // pre 1.4.4
             history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
             history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: undefined, indexes } })
             return
@@ -298,6 +299,41 @@
 
     $: currentCopied = $copyPasteEdit[type]
     $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""]))
+
+    function copyToCreateData() {
+        const slide = $activeEdit?.type === "overlay" ? $overlays[$activeEdit.id || ""] : $activeEdit?.type === "template" ? $templates[$activeEdit.id || ""] : null
+        if (!slide) return
+
+        const newSlide = {
+            isDefault: true,
+            name: slide.name,
+            color: slide.color || null,
+            category: slide.category,
+            items: trimItems(clone(slide.items))
+            // settings
+        } as typeof slide
+
+        navigator.clipboard.writeText(JSON.stringify(newSlide))
+        newToast("Copied!")
+
+        function trimItems(items: Item[]) {
+            items.forEach((item) => {
+                if (item.type === "text") delete item.type
+                if (item.auto === false) delete item.auto
+
+                item.lines?.forEach((line, lineIndex) => {
+                    line.align = line.align.replaceAll(";;", ";")
+                    if (line.align === ";") line.align = ""
+
+                    line.text.forEach((text) => {
+                        text.value = text.value ? (lineIndex + 1).toString() : ""
+                        text.style = text.style.replace("color:#FFFFFF;", "")
+                    })
+                })
+            })
+            return items
+        }
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -375,6 +411,13 @@
                     <Icon id="reset" right />
                     <T id="actions.reset" />
                 </Button>
+
+                {#if isDev && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
+                    <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
+                        <Icon id="copy" right />
+                        DEV: Copy to "createData"
+                    </Button>
+                {/if}
             {/if}
         </span>
     {:else if !isLocked}

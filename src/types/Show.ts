@@ -274,7 +274,7 @@ export interface SlideData {
     color?: null | string
     nextTimer?: number // next slide timer
     transition?: Transition
-    filterEnabled?: ["background", "foreground"]
+    // filterEnabled?: ["background", "foreground"] // pre 1.4.4
     filter?: string
     end?: boolean // go to start
     timer?: number

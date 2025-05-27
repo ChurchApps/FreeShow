@@ -64,8 +64,8 @@
 
 <div style="min-width: calc(100vw - var(--navigation-width) * 2 - 40px);">
     <CombinedInput style="margin-bottom: 10px;">
-        <p><T id="settings.group_numbers" /></p>
-        <div class="alignRight">
+        <p style="flex: 1;"><T id="settings.group_numbers" /></p>
+        <div style="flex: 0;padding: 0 10px;" class="alignRight">
             <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
         </div>
     </CombinedInput>

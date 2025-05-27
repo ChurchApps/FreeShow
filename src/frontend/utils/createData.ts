@@ -21,17 +21,17 @@ export function createData(paths: MainFilePaths) {
                 textCurrent: {
                     type: "slide_text",
                     style: "width:1870px;height:680px;inset-inline-start:25px;top:25px;font-family: Arial;font-weight:bold;",
-                    align: "",
+                    align: ""
                 },
                 textNext: {
                     type: "slide_text",
                     slideOffset: 1,
                     lineCount: 2,
                     style: "width:1870px;height:330px;inset-inline-start:25px;top:725px;font-family: Arial;font-weight:bold;color:#aaaaaa;",
-                    align: "",
-                },
-            },
-        },
+                    align: ""
+                }
+            }
+        }
     })
 
     setExampleOverlays()
@@ -45,7 +45,7 @@ export function createData(paths: MainFilePaths) {
             name: get(dictionary).example?.example || "Example",
             created: new Date("2022-01-01").getTime(),
             parent: "default",
-            shows: [{ id: "default" }, { id: "section", type: "section", name: get(dictionary).example?.example || "Example", notes: get(dictionary).example?.example_note || "Write notes here" }],
+            shows: [{ id: "default" }, { id: "section", type: "section", name: get(dictionary).example?.example || "Example", notes: get(dictionary).example?.example_note || "Write notes here" }]
         }
         return a
     })
@@ -94,9 +94,9 @@ export function setExampleOverlays() {
                 {
                     style: "top:870px;inset-inline-start:1248px;height:170px;width:630px;",
                     align: "align-items:flex-end;",
-                    lines: [{ align: "text-align: end;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#F0008C;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: end;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#F0008C;" }] }]
+                }
+            ]
         }
         a.visual = {
             isDefault: true,
@@ -107,15 +107,28 @@ export function setExampleOverlays() {
             items: [
                 { style: "top:35px;inset-inline-start:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
                 { style: "top:80px;inset-inline-start:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
-                { style: "top:80px;inset-inline-start:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] },
-            ],
+                { style: "top:80px;inset-inline-start:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }
+            ]
         }
         a.clock = {
             isDefault: true,
             name: get(dictionary).example?.clock || "Clock",
             color: "dodgerblue",
             category: "visuals",
-            items: [{ style: "top:70px;inset-inline-start:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }],
+            items: [{ style: "top:70px;inset-inline-start:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }]
+        }
+        a.clock_analog = {
+            isDefault: true,
+            name: "Clock (Analog)",
+            color: "dodgerblue",
+            category: "visuals",
+            items: [
+                {
+                    style: "top:72.50px;inset-inline-start:50px;height:936.40px;width:936.40px;font-family:CMGSans;color:#FFFFFF;left:492.00px;border-radius:500px;background:;border-width:2px;background-color:rgb(0 0 0 / 0.5);",
+                    type: "clock",
+                    clock: { type: "analog", dateFormat: "none", showTime: true, seconds: false }
+                }
+            ]
         }
         a.name = {
             isDefault: true,
@@ -130,20 +143,20 @@ export function setExampleOverlays() {
                     style: "top:935px;inset-inline-start:130px;height:75px;width:700px;background-color: #0b57a2;padding: 0 10px;",
                     actions: {
                         showTimer: 1,
-                        transition: { type: "slide", duration: 500, easing: "cubic" },
+                        transition: { type: "slide", duration: 500, easing: "cubic" }
                     },
                     type: "text",
-                    lines: [{ align: "text-align: start", text: [{ value: "Name Surname", style: "font-family: Arial;font-size: 70px;text-shadow: 0 0 #000000;" }] }],
+                    lines: [{ align: "text-align: start", text: [{ value: "Name Surname", style: "font-family: Arial;font-size: 70px;text-shadow: 0 0 #000000;" }] }]
                 },
                 {
                     style: "top:875px;inset-inline-start:130px;height:60px;width:700px;background-color: #006fcf;padding: 0 10px;",
                     actions: {
-                        transition: { type: "slide", duration: 500, easing: "cubic" },
+                        transition: { type: "slide", duration: 500, easing: "cubic" }
                     },
                     type: "text",
-                    lines: [{ align: "text-align: start", text: [{ value: "Title", style: "font-family: Arial;font-size: 40px;font-weight: bold;text-transform:uppercase;text-shadow: 0 0 #000000;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: start", text: [{ value: "Title", style: "font-family: Arial;font-size: 40px;font-weight: bold;text-transform:uppercase;text-shadow: 0 0 #000000;" }] }]
+                }
+            ]
         }
         a.rounded = {
             isDefault: true,
@@ -155,8 +168,8 @@ export function setExampleOverlays() {
                 { style: "top:0px;inset-inline-start:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 100%, transparent 50px, black 0px);" },
                 { style: "top:0px;inset-inline-end:0px;height:50px;width:50px;background:radial-gradient(circle at 0 100%, transparent 50px, black 0px);" },
                 { style: "bottom:0px;inset-inline-end:0px;height:50px;width:50px;background:radial-gradient(circle at 0 0, transparent 50px, black 0px);" },
-                { style: "bottom:0px;inset-inline-start:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" },
-            ],
+                { style: "bottom:0px;inset-inline-start:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" }
+            ]
         }
         a.vignette = {
             isDefault: true,
@@ -164,8 +177,16 @@ export function setExampleOverlays() {
             color: "#dddddd",
             category: "visuals",
             locked: true,
-            items: [{ style: "top: -180px;inset-inline-start: -200px;width: 2320px;height: 1440px;border-radius: 500px;box-shadow: inset 0px 0px 248px 0px #FFFFFF;" }],
+            items: [{ style: "top: -180px;inset-inline-start: -200px;width: 2320px;height: 1440px;border-radius: 500px;box-shadow: inset 0px 0px 248px 0px #FFFFFF;" }]
         }
+        // this requires a variable
+        // a.progress = {
+        //     isDefault: true,
+        //     name: "Slide Progress",
+        //     color: null,
+        //     category: "visuals",
+        //     items: [{ style: "left: 0px;width: calc(1920px * (var(--variable-slide) / var(--variable-slides)));height:20px;top:1060px;background-color:#FF851B;", lines: [{ align: "", text: [{ value: "", style: "" }] }] }]
+        // }
         return a
     })
 }
@@ -186,9 +207,9 @@ export function setExampleTemplates() {
                 {
                     style: "top: 910px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                }
+            ]
         }
         // message
         a.message = {
@@ -200,9 +221,9 @@ export function setExampleTemplates() {
                 {
                     style: "top: 50px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                }
+            ]
         }
         // presentation
         a.header = {
@@ -214,9 +235,9 @@ export function setExampleTemplates() {
                 {
                     style: "top:428.50px;inset-inline-start:208.50px;height:220px;width:1500px;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 180px;font-weight: bold;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 180px;font-weight: bold;" }] }]
+                }
+            ]
         }
         a.text = {
             isDefault: true,
@@ -227,14 +248,14 @@ export function setExampleTemplates() {
                 {
                     style: "top:35px;inset-inline-start:50.5px;height:220px;width:1820px;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 120px;font-weight: bold;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 120px;font-weight: bold;" }] }]
                 },
                 {
                     style: "top:290px;inset-inline-start:50.5px;height:750px;width:1820px;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: get(dictionary).example?.text || "Text", style: "font-size: 80px;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: start;", text: [{ value: get(dictionary).example?.text || "Text", style: "font-size: 80px;" }] }]
+                }
+            ]
         }
 
         // lyrics
@@ -247,9 +268,9 @@ export function setExampleTemplates() {
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "Big", style: "font-size: 120px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "Big", style: "font-size: 120px;" }] }]
+                }
+            ]
         }
         a.default = {
             isDefault: true,
@@ -260,9 +281,9 @@ export function setExampleTemplates() {
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "Default", style: "font-size: 100px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "Default", style: "font-size: 100px;" }] }]
+                }
+            ]
         }
         a.small = {
             isDefault: true,
@@ -273,9 +294,9 @@ export function setExampleTemplates() {
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "Small", style: "font-size: 80px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "Small", style: "font-size: 80px;" }] }]
+                }
+            ]
         }
         a.bigBold = {
             isDefault: true,
@@ -292,13 +313,13 @@ export function setExampleTemplates() {
                             text: [
                                 {
                                     value: mergeTranslations("big", "bold", "Big Bold"),
-                                    style: "font-size: 120px;font-weight: bold;",
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+                                    style: "font-size: 120px;font-weight: bold;"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
         a.defaultBold = {
             isDefault: true,
@@ -315,13 +336,13 @@ export function setExampleTemplates() {
                             text: [
                                 {
                                     value: mergeTranslations("default", "bold", "Default Bold"),
-                                    style: "font-size: 100px;font-weight: bold;",
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+                                    style: "font-size: 100px;font-weight: bold;"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
         a.smallBold = {
             isDefault: true,
@@ -338,13 +359,13 @@ export function setExampleTemplates() {
                             text: [
                                 {
                                     value: mergeTranslations("small", "bold", "Small Bold"),
-                                    style: "font-size: 80px;font-weight: bold;",
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+                                    style: "font-size: 80px;font-weight: bold;"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
         a.blur_box = {
             isDefault: true,
@@ -359,10 +380,10 @@ export function setExampleTemplates() {
                         { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                         { align: "", text: [{ value: "2", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                         { align: "", text: [{ value: "3", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
-                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
-                    ],
-                },
-            ],
+                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] }
+                    ]
+                }
+            ]
         }
         a.faded = {
             isDefault: true,
@@ -374,7 +395,7 @@ export function setExampleTemplates() {
                     style: "top:0px;inset-inline-start:0px;height:1080px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
                     align: "",
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
-                    lines: [],
+                    lines: []
                 },
                 {
                     style: "top:310px;inset-inline-start:0px;height:460px;width:1920px;",
@@ -384,10 +405,10 @@ export function setExampleTemplates() {
                         { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
                         { align: "", text: [{ value: "2", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
                         { align: "", text: [{ value: "3", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
-                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
-                    ],
-                },
-            ],
+                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] }
+                    ]
+                }
+            ]
         }
         a.box = {
             isDefault: true,
@@ -401,10 +422,10 @@ export function setExampleTemplates() {
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                         { align: "", text: [{ value: "2", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
-                        { align: "", text: [{ value: "3", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
-                    ],
-                },
-            ],
+                        { align: "", text: [{ value: "3", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] }
+                    ]
+                }
+            ]
         }
         a.trendy = {
             isDefault: true,
@@ -418,10 +439,27 @@ export function setExampleTemplates() {
                     specialStyle: { lineGap: 20, lineBg: "#000000" },
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
-                        { align: "", text: [{ value: "2", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] }
+                    ]
+                }
+            ]
+        }
+        a.trendy_curved = {
+            isDefault: true,
+            name: "Trendy Curved",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 100px;text-shadow: 0px 0px 0px #000000;white-space: nowrap;line-height: 1.7em;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 100px;text-shadow: 0px 0px 0px #000000;white-space: nowrap;line-height: 1.7em;" }] }
                     ],
-                },
-            ],
+                    style: "top:310.50px;left:50.00px;height:460.36px;width:1820px;padding:50px;border-radius:50px;",
+                    align: "",
+                    specialStyle: { lineBg: "rgb(0 0 0 / 1);", lineGap: 15, lineRadius: 30 }
+                }
+            ]
         }
         a.fade = {
             isDefault: true,
@@ -436,10 +474,10 @@ export function setExampleTemplates() {
                         { align: "", text: [{ value: "1", style: "font-size: 100px;" }] },
                         { align: "", text: [{ value: "2", style: "font-size: 100px;" }] },
                         { align: "", text: [{ value: "3", style: "font-size: 100px;" }] },
-                        { align: "", text: [{ value: "4", style: "font-size: 100px;" }] },
-                    ],
-                },
-            ],
+                        { align: "", text: [{ value: "4", style: "font-size: 100px;" }] }
+                    ]
+                }
+            ]
         }
 
         // lower thirds
@@ -454,9 +492,9 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
+                }
+            ]
         }
         a.lowerThirdColor = {
             isDefault: true,
@@ -469,9 +507,9 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
+                }
+            ]
         }
         a.lowerThirdPastel = {
             isDefault: true,
@@ -484,9 +522,9 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;color: #000000;" }] }],
-                },
-            ],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;color: #000000;" }] }]
+                }
+            ]
         }
 
         // scripture
@@ -500,14 +538,14 @@ export function setExampleTemplates() {
                     // auto: true,
                     style: "top: 30px;inset-inline-start: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;" }] }]
                 },
                 {
                     style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
+                }
+            ]
         }
         a.scripture_2 = {
             isDefault: true,
@@ -519,20 +557,20 @@ export function setExampleTemplates() {
                     // auto: true,
                     style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 70px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 70px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 475px;inset-inline-start: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 70px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 70px;" }] }]
                 },
                 {
                     style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
+                }
+            ]
         }
         a.scripture_3 = {
             isDefault: true,
@@ -544,26 +582,26 @@ export function setExampleTemplates() {
                     // auto: true,
                     style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 320px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 600px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "3", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "3", style: "font-size: 60px;" }] }]
                 },
                 {
                     style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
+                }
+            ]
         }
         a.scripture_4 = {
             isDefault: true,
@@ -575,32 +613,32 @@ export function setExampleTemplates() {
                     // auto: true,
                     style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 250px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 460px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "3", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "3", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
                     style: "top: 670px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
-                    lines: [{ align: "text-align: start;", text: [{ value: "4", style: "font-size: 60px;" }] }],
+                    lines: [{ align: "text-align: start;", text: [{ value: "4", style: "font-size: 60px;" }] }]
                 },
                 {
                     style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
+                }
+            ]
         }
         // blue theme
         a.blueHeader = {
@@ -613,19 +651,19 @@ export function setExampleTemplates() {
                 {
                     style: "inset-inline-start:720px;top:640px;width:1130px;height:210px;",
                     align: "",
-                    lines: [{ align: "text-align: start", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }],
+                    lines: [{ align: "text-align: start", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }]
                 },
                 {
                     style: "inset-inline-start:720px;top:850px;width:1130px;height:60px;",
                     align: "",
-                    lines: [{ align: "text-align: start", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }],
+                    lines: [{ align: "text-align: start", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }]
                 },
                 {
                     style: "inset-inline-start:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "", style: "" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "", style: "" }] }]
+                }
+            ]
         }
         a.blueMain = {
             isDefault: true,
@@ -642,20 +680,20 @@ export function setExampleTemplates() {
                         { align: "text-align: start", text: [{ value: "2", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
                         { align: "text-align: start", text: [{ value: "3", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
                         { align: "text-align: start", text: [{ value: "4", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
-                        { align: "text-align: start", text: [{ value: "5", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
-                    ],
+                        { align: "text-align: start", text: [{ value: "5", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] }
+                    ]
                 },
                 {
                     style: "inset-inline-start:0px;top:0px;width:500px;height:1080px;background-color: #2957ff;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "", style: "" }] }],
-                },
+                    lines: [{ align: "", text: [{ value: "", style: "" }] }]
+                }
                 // {
                 //   style: "left:500px;top:0px;width:1420px;height:1080px;background-color: #ffffff;",
                 //   align: "",
                 //   lines: [{ align: "", text: [{ value: "", style: "" }] }],
                 // },
-            ],
+            ]
         }
         a.bullets = {
             isDefault: true,
@@ -672,31 +710,31 @@ export function setExampleTemplates() {
                             text: [
                                 {
                                     value: "• Bullet 1",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
-                                },
-                            ],
+                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
+                                }
+                            ]
                         },
                         {
                             align: "text-align: start",
                             text: [
                                 {
                                     value: "• Bullet 2",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
-                                },
-                            ],
+                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
+                                }
+                            ]
                         },
                         {
                             align: "text-align: start",
                             text: [
                                 {
                                     value: "• Bullet 3",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
         return a
     })
@@ -709,12 +747,12 @@ export function createDefaultShow() {
         category: "presentation",
         settings: {
             activeLayout: "default",
-            template: "header",
+            template: "header"
         },
         timestamps: {
             created: new Date().getTime(), // new Date("2022-01-01").getTime(),
             modified: null,
-            used: null,
+            used: null
         },
         quickAccess: {},
         meta: {},
@@ -728,19 +766,19 @@ export function createDefaultShow() {
                     {
                         style: "top:428.50px;inset-inline-start:208.50px;height:220px;width:1500px;",
                         align: "",
-                        lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }],
-                    },
-                ],
-            },
+                        lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }]
+                    }
+                ]
+            }
         },
         layouts: {
             default: {
                 name: get(dictionary).example?.default || "",
                 notes: "",
-                slides: [{ id: "one" }],
-            },
+                slides: [{ id: "one" }]
+            }
         },
-        media: {},
+        media: {}
     })
 }
 
@@ -755,14 +793,14 @@ export function createDoubleTemplate() {
                 {
                     style: "top: 550px;inset-inline-start: 30px;width: 1860px;height: 500px;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "2", style: "font-size: 80px;color: #dddddd;" }] }],
+                    lines: [{ align: "", text: [{ value: "2", style: "font-size: 80px;color: #dddddd;" }] }]
                 },
                 {
                     style: "top: 30px;inset-inline-start: 30px;width: 1860px;height: 500px;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "1", style: "font-size: 80px;" }] }],
-                },
-            ],
+                    lines: [{ align: "", text: [{ value: "1", style: "font-size: 80px;" }] }]
+                }
+            ]
         }
 
         return a
