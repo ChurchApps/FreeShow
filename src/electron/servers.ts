@@ -40,10 +40,10 @@ function createServers() {
         const server = http.createServer(app)
 
         if (id === "STAGE") {
-            app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
+            // app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
 
             // Serve media files
-            app.get('/media/:token', handleMediaRequest);
+            // app.get('/media/:token', handleMediaRequest);
         }
 
         // The join import from 'path' is still needed for this part
