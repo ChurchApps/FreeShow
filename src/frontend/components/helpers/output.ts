@@ -451,39 +451,62 @@ export function getStageResolution(outputId = "", _updater = get(outputs)): Reso
 }
 
 // calculate actual output resolution based on style aspect ratio
-const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
+export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
 export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false) {
     const currentOutput = _updater[outputId]
     const outputRes = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
 
+    const styleRatio = getResolution(null, null, false, outputId)
+    const styleAspectRatio = styleRatio.width / styleRatio.height
+
+    const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
+
     // set the width OR height based on the relative size
     const outputAspectRatio = outputRes.width / outputRes.height
-    if (outputRes.width < outputRes.height) {
+    if (outputAspectRatio < 1 && styleAspectRatio > 1 && styleAspectRatio === defaultRatio) {
+        outputRes.height = DEFAULT_BOUNDS.height
         outputRes.width = Math.round(DEFAULT_BOUNDS.height * outputAspectRatio)
     } else {
+        outputRes.width = DEFAULT_BOUNDS.width
         outputRes.height = Math.round(DEFAULT_BOUNDS.width / outputAspectRatio)
     }
 
     if (!scaled) return outputRes
 
-    const styleRatio = getResolution(null, null, false, outputId)
-    const styleAspectRatio = styleRatio.width / styleRatio.height
+    // return styleRatio
 
     // output window size is narrow
-    if (outputRes.width < outputRes.height) {
+    //  && outputAspectRatio > 1
+    if (styleAspectRatio < 1) {
         outputRes.width = Math.round(outputRes.height * styleAspectRatio)
     } else {
         outputRes.height = Math.round(outputRes.width / styleAspectRatio)
     }
 
+    // WIP: correct values....
+    // const outputRes2 = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
+    // const newAspectRatio = outputRes.width / outputRes.height
+    // if (outputRes2.width < outputRes2.height) {
+    //     outputRes2.height = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.width * newAspectRatio : outputRes2.width / newAspectRatio)
+    //     // outputRes2.width = outputRes2.width
+    // } else {
+    //     outputRes2.width = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.height / newAspectRatio : outputRes2.height * newAspectRatio)
+    // }
+
+    // if (newStyleAspectRatio < 1) {
+    //     outputRes2.height = Math.round(outputRes.width / newStyleAspectRatio)
+    // } else {
+    //     outputRes2.width = Math.round(outputRes.height * newStyleAspectRatio)
+    // }
+
     return outputRes
 }
 
 export function stylePosToPercentage(stylesData: { [key: string]: any }) {
-    if (stylesData.left) stylesData.left = (Number(stylesData.left) / 1920) * 100
-    if (stylesData.top) stylesData.top = (Number(stylesData.top) / 1080) * 100
-    if (stylesData.width) stylesData.width = (Number(stylesData.width) / 1920) * 100
-    if (stylesData.height) stylesData.height = (Number(stylesData.height) / 1080) * 100
+    if (stylesData.left) stylesData.left = (Number(stylesData.left) / DEFAULT_BOUNDS.width) * 100
+    if (stylesData.top) stylesData.top = (Number(stylesData.top) / DEFAULT_BOUNDS.height) * 100
+    if (stylesData.width) stylesData.width = (Number(stylesData.width) / DEFAULT_BOUNDS.width) * 100
+    if (stylesData.height) stylesData.height = (Number(stylesData.height) / DEFAULT_BOUNDS.height) * 100
 
     return stylesData
 }
@@ -492,8 +515,9 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     let stylesData = getStyles(style, true)
     stylesData = stylePosToPercentage(stylesData)
 
-    const width = resolution.width || 1920
-    const height = resolution.height || 1080
+    const aspectRatio = resolution.width / resolution.height
+    const width = DEFAULT_BOUNDS.width
+    const height = DEFAULT_BOUNDS.width / aspectRatio
 
     if (stylesData.left) style += "left: " + width * (Number(stylesData.left) / 100) + "px;"
     if (stylesData.top) style += "top: " + height * (Number(stylesData.top) / 100) + "px;"
@@ -506,8 +530,8 @@ export function percentageStylePos(style: string, resolution: Resolution) {
 export function percentageToAspectRatio(input: EditInput) {
     if (input.id !== "style") return input
 
-    if (input.key === "left" || input.key === "width") input.value = 1920 * (trimPixelValue(input.value) / 100) + "px"
-    else if (input.key === "top" || input.key === "height") input.value = 1080 * (trimPixelValue(input.value) / 100) + "px"
+    if (input.key === "left" || input.key === "width") input.value = DEFAULT_BOUNDS.width * (trimPixelValue(input.value) / 100) + "px"
+    else if (input.key === "top" || input.key === "height") input.value = DEFAULT_BOUNDS.height * (trimPixelValue(input.value) / 100) + "px"
 
     return input
 }

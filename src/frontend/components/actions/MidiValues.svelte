@@ -27,6 +27,9 @@
         change()
     }
     function setMidi(key: string, value: any) {
+        // fix: https://github.com/ChurchApps/FreeShow/issues/1672
+        if (value === "input") return
+
         midi[key] = value
         change()
     }

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Draw, DrawLine } from "../../../types/Draw"
-    import { draw, drawSettings, paintCache } from "../../stores"
+    import { draw, drawSettings, outputs, paintCache } from "../../stores"
+    import { getActiveOutputs, getOutputResolution } from "../helpers/output"
 
     export let settings: { [key: string]: any } = {}
 
@@ -9,6 +10,10 @@
     let ctx: CanvasRenderingContext2D | null = null
 
     let lines: DrawLine[] = []
+
+    // WIP only works when output resolution ratio is the same as the style ratio
+    $: outputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: resolution = getOutputResolution(outputId, $outputs)
 
     onMount(() => {
         if (canvas) ctx = canvas.getContext("2d")
@@ -44,7 +49,7 @@
     function clear() {
         if (!ctx) return
 
-        ctx.clearRect(0, 0, 1920, 1080)
+        ctx.clearRect(0, 0, resolution.width, resolution.height)
         lines = []
         paintCache.set([])
 
@@ -90,7 +95,7 @@
             x: x,
             y: y,
             size: settings.size || 10,
-            color: settings.color || "#ffffff",
+            color: settings.color || "#ffffff"
         }
         lines.push(line)
         paintCache.set(lines)
@@ -115,7 +120,7 @@
     }
 </script>
 
-<canvas bind:this={canvas} width={1920} height={1080} />
+<canvas bind:this={canvas} width={resolution.width} height={resolution.height} />
 
 <style>
     canvas {

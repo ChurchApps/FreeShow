@@ -901,6 +901,7 @@
         "break_long_lines": "Break long lines",
         "break_long_lines_tip": "Break line if longer than the set words",
         "media_fit": "Media fit",
+        "cropping": "Cropping",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",
         "size": "Size",

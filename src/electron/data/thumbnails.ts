@@ -281,7 +281,7 @@ export function captureSlide(data: { output: { [key: string]: Output }; resoluti
                     window.destroy()
                     OutputHelper.deleteOutput(OUTPUT_ID)
                 }, 3000)
-            }, 1000)
+            }, 3000)
         })
     })
 }

@@ -4,12 +4,12 @@
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
     import { outputs, styles } from "../../../stores"
-    import { encodeFilePath, getExtension } from "../../helpers/media"
+    import { videoExtensions } from "../../../values/extensions"
+    import { cropImageToBase64, encodeFilePath, getExtension } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
-    import { videoExtensions } from "../../../values/extensions"
     import NdiStream from "../live/NDIStream.svelte"
 
     export let name = ""
@@ -101,6 +101,13 @@
         // sometimes the img elem loaded before "loaded" was set to false, causing it to load twice!
         readyToLoad = true
     })
+
+    let croppedImage = ""
+    $: if (mediaStyle.cropping) cropImage()
+    async function cropImage() {
+        croppedImage = await cropImageToBase64(path, mediaStyle.cropping)
+        if (croppedImage) useOriginal = true
+    }
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -119,10 +126,10 @@
             {:else if type !== "video" || (thumbnailPath && retryCount <= MAX_RETRIES)}
                 {#key retryCount}
                     {#if mediaStyle.fit === "blur"}
-                        <img src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleBlurString} loading="lazy" class:loading={!loaded} class="hideError" />
+                        <img src={type !== "video" && useOriginal ? croppedImage || encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleBlurString} loading="lazy" class:loading={!loaded} class="hideError" />
                     {/if}
                     <img
-                        src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath}
+                        src={type !== "video" && useOriginal ? croppedImage || encodeFilePath(path) : thumbnailPath}
                         alt={name}
                         style={mediaStyleString}
                         loading="lazy"

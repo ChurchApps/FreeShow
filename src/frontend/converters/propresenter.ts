@@ -97,14 +97,14 @@ export function convertProPresenter(data: any) {
                 publisher: song["@CCLIPublisher"] || song.ccli?.publisher,
                 copyright: song.copyrights_info,
                 CCLI: song["@CCLISongNumber"] || song.ccli?.songNumber,
-                year: song["@CCLICopyrightYear"] || song.ccli?.copyrightYear,
+                year: song["@CCLICopyrightYear"] || song.ccli?.copyrightYear
             })
 
             layouts.forEach((layout: any, i: number) => {
                 show.layouts[i === 0 ? layoutID : layout.id] = {
                     name: layout.name || get(dictionary).example?.default || "",
                     notes: i === 0 ? song["@notes"] || "" : "",
-                    slides: layout.slides,
+                    slides: layout.slides
                 }
             })
 
@@ -134,8 +134,8 @@ function convertJSONBundleToSlides(song: any) {
         const items = [
             {
                 style: itemStyle,
-                lines: lyrics.split("<br>").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
-            },
+                lines: lyrics.split("<br>").map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
+            }
         ]
 
         slides[id] = newSlide({ items })
@@ -175,8 +175,8 @@ function convertJSONToSlides(song: any) {
         const items = [
             {
                 style: itemStyle,
-                lines: text.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
-            },
+                lines: text.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
+            }
         ]
 
         slides[id] = newSlide({ items })
@@ -225,6 +225,7 @@ function convertToSlides(song: any, extension: string) {
         let slideIndex = -1
         groupSlides.forEach((slide) => {
             const items = getSlideItems(slide)
+            console.log(slide, items)
             if (!items?.length) return
             slideIndex++
 
@@ -244,7 +245,7 @@ function convertToSlides(song: any, extension: string) {
             if (isFirstSlide) {
                 slides[slideId] = makeParentSlide(slides[slideId], {
                     label: group["@name"] || slides[slideId]["@label"] || "",
-                    color: group["@color"] || slides[slideId]["@highlightColor"],
+                    color: group["@color"] || slides[slideId]["@highlightColor"]
                 })
 
                 const groupId = group["@uuid"]
@@ -305,6 +306,12 @@ function getSlideItems(slide: any) {
     if (!itemStrings && Array.isArray(textElement)) itemStrings = textElement.map((a) => a.NSString)
     if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
     else if (itemStrings["#text"]) itemStrings = [itemStrings]
+
+    const rtf = itemStrings.find((a) => a["@rvXMLIvarName"] === "RTFData")
+    const plain = itemStrings.find((a) => a["@rvXMLIvarName"] === "PlainText")
+    // rtf includes line breaks
+    if (rtf) itemStrings = [rtf]
+    else if (plain) itemStrings = [plain]
 
     itemStrings.forEach((content: any) => {
         if (!content) return
@@ -400,7 +407,7 @@ const latin1 = {
     f1: "ñ",
     d1: "Ñ",
     a1: "¡",
-    bf: "¿",
+    bf: "¿"
 }
 
 function decodeBase64(text: string) {
@@ -611,10 +618,10 @@ function convertProToSlides(song: any) {
             color: null,
             settings: {
                 background: tempSlide.backgroundColor,
-                resolution: tempSlide.size,
+                resolution: tempSlide.size
             },
             notes: "",
-            items: tempSlide.items.map(convertItem),
+            items: tempSlide.items.map(convertItem)
         }
 
         if (isParent) {
@@ -646,7 +653,7 @@ function convertItem(item: any) {
 
     const newItem: Item = {
         style,
-        lines: text.split("\n").map(getLine),
+        lines: text.split("\n").map(getLine)
     }
 
     return newItem
@@ -663,7 +670,7 @@ function getArrangements(arrangements: any) {
     arrangements.forEach((arr) => {
         newArrangements.push({
             name: arr.name,
-            groups: arr.groupIdentifiers?.map((a) => a.string) || [],
+            groups: arr.groupIdentifiers?.map((a) => a.string) || []
         })
     })
 
@@ -678,7 +685,7 @@ function getGroups(cueGroups) {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
-            slides: cueIdentifiers?.map((a) => a.string) || [],
+            slides: cueIdentifiers?.map((a) => a.string) || []
         }
     })
 
@@ -698,7 +705,7 @@ function getSlides(cues: any) {
             media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
-            items: baseSlide.elements?.map(getItem) || [],
+            items: baseSlide.elements?.map(getItem) || []
             // .filter((a) => a.text || a.bounds?.size?.width)
         }
     })
@@ -732,7 +739,7 @@ function getColorValue(color: { red: number; green: number; blue: number; alpha:
         red: color.red || 0,
         green: color.green || 0,
         blue: color.blue || 0,
-        alpha: color.alpha || 1,
+        alpha: color.alpha || 1
     }
 
     return "rgb(" + [color.red.toFixed(2), color.green.toFixed(2), color.blue.toFixed(2)].join(" ") + " / " + color.alpha.toFixed(1) + ")"

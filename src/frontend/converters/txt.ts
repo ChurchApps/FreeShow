@@ -174,6 +174,46 @@ export function trimNameFromString(text: string) {
     return name
 }
 
+function isChordLine(line: string): boolean {
+    return /^[A-G][#b]?m?(maj|min|dim|aug|sus)?(\s+[A-G][#b]?m?(maj|min|dim|aug|sus)?)*\s*$/.test(line.trim())
+}
+// convert chord lines into line text
+function preprocessLines(lines: string[]): string[] {
+    const output: string[] = []
+    for (let i = 0; i < lines.length; i++) {
+        const chordLine = lines[i]
+        const lyricLine = lines[i + 1]
+
+        if (isChordLine(chordLine) && lyricLine && !isChordLine(lyricLine)) {
+            const combinedLine = insertChordsIntoLyrics(chordLine, lyricLine)
+            output.push(combinedLine)
+            i++ // Skip the lyric line
+        } else {
+            output.push(chordLine)
+        }
+    }
+    return output
+}
+function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
+    const result = lyricLine.split("")
+    const chordRegex = /[A-G][#b]?m?(maj|min|dim|aug|sus)?/g
+    let match: RegExpExecArray | null
+
+    while ((match = chordRegex.exec(chordLine)) !== null) {
+        const chord = match[0]
+        const pos = match.index
+
+        if (pos < result.length) {
+            result[pos] = `[${chord}]` + result[pos]
+        } else {
+            // Append if the lyric is shorter than the chord line
+            result.push(" ".repeat(pos - result.length) + `[${chord}]`)
+        }
+    }
+
+    return result.join("")
+}
+
 // TODO: this sometimes splits all slides up with no children (when adding [group])
 // , existingSlides = {}
 function createSlides(labeled: { type: string; text: string }[], noFormatting) {
@@ -228,7 +268,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         let allLines: string[] = [slideTextAndNotes.shift() || ""]
         if (allLines[0].endsWith("\n")) allLines[0] = allLines[0].slice(0, -1)
 
-        while (!slideTextAndNotes[0]) slideTextAndNotes.shift()
+        while (slideTextAndNotes[0] === "") slideTextAndNotes.shift()
         let slideNotes = slideTextAndNotes.join("\n").slice(1)
 
         const slideLines = allLines[0].split("\n").filter(Boolean)
@@ -255,7 +295,10 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         }
 
         function createSlide(lines: string, slideIndex: number) {
-            let items: Item[] = linesToItems(lines)
+            // preprocess inline chord lines
+            let preprocessedLines = preprocessLines(lines.split("\n")).join("\n")
+
+            let items: Item[] = linesToItems(preprocessedLines)
             if (!items.length) return
 
             // get active show

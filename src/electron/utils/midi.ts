@@ -64,6 +64,8 @@ let openedPorts: { [key: string]: any } = {}
 export async function receiveMidi(data: any) {
     // console.log("INPUT", data.input)
     if (!data.input || openedPorts[data.id]) return
+    // fix: https://github.com/ChurchApps/FreeShow/issues/1672
+    if (data.input === "input") return
 
     try {
         // connect to the input and listen for notes!
