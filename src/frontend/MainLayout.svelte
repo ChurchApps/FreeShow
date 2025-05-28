@@ -25,6 +25,7 @@
     import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
     import SettingsTools from "./components/settings/SettingsTools.svelte"
+    import TextEditTools from "./components/edit/TextEditTools.svelte"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -94,7 +95,9 @@
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
                     {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}
-                        {#if !$focusMode && (($activeEdit.type || "show") !== "show" || !$textEditActive)}
+                        {#if ($activeEdit.type || "show") === "show" && $textEditActive}
+                            <TextEditTools />
+                        {:else if !$focusMode}
                             <EditTools />
                         {/if}
                     {/if}

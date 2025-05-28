@@ -9,7 +9,7 @@ export const exportFormats: Option[] = [
     { name: "$:formats.show:$", id: "show" }, // (json) - can also just be copied from the Shows folder
     { name: "$:edit.text:$", id: "txt" },
     { name: "PDF", id: "pdf" },
-    { name: "$:items.image:$", id: "image" },
+    { name: "$:items.image:$", id: "image" }
     // {name: "CSV", id: "csv"} // probably not needed
     // {name: "ChordPro", id: "chordpro"}
 ]
@@ -17,7 +17,7 @@ export const exportFormats: Option[] = [
 export const exportTypes: Option[] = [
     { name: "$:export.current_project:$", id: "project", icon: "project" },
     { name: "$:export.selected_shows:$", id: "selected_shows", icon: "slide" }, // selected or currently opened
-    { name: "$:export.all_shows:$", id: "all_shows", icon: "shows" },
+    { name: "$:export.all_shows:$", id: "all_shows", icon: "shows" }
     // {name: "export.all_projects", id: "all_projects"}
 ]
 
@@ -38,7 +38,7 @@ export const getShowIdsFromType = {
     },
     all_shows: () => {
         return Object.keys(get(shows))
-    },
+    }
 }
 
 export function getActiveShowId() {
@@ -53,13 +53,22 @@ export async function convertShowSlidesToImages(showId: string) {
     const layoutRef = getLayoutRef(showId)
     const layoutId = show.settings.activeLayout
 
+    let currentBackground = ""
     const thumbnails: string[] = []
     const batchSize = 8
     for (let i = 0; i < layoutRef.length; i += batchSize) {
         const batch = layoutRef.slice(i, i + batchSize)
         await Promise.all(
             batch.map(async (ref, j) => {
-                const thumbnail = await getSlideThumbnail({ showId, layoutId, index: ref.layoutIndex })
+                if (ref.data.disabled) return
+
+                let background = ref.data.background || ""
+                let backgroundImage = show.media[background]?.path || currentBackground
+                if (ref.data.actions?.clearBackground) backgroundImage = ""
+                if (!background || show.media[background]?.loop !== false) currentBackground = backgroundImage
+
+                let overlays = ref.data.overlays
+                const thumbnail = await getSlideThumbnail({ showId, layoutId, index: ref.layoutIndex }, { backgroundImage, overlays }, true)
                 thumbnails[i + j] = thumbnail
             })
         )

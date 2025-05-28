@@ -32,12 +32,14 @@
         // prevVal = value
     } else if ($activeRename === null) edit = false
 
+    const HOLD_TIME = 700
+
     let timeout: NodeJS.Timeout | null = null
     function mousedown(e: any) {
         if (e.target === nameElem && allowEdit) {
             timeout = setTimeout(() => {
                 click(e)
-            }, 500)
+            }, HOLD_TIME)
 
             return
         }

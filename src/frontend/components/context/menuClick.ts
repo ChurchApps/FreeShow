@@ -940,6 +940,8 @@ const clickActions = {
             currentOutputSettings.set(obj.contextElem.id)
             settingsTab.set("display_settings")
             activePage.set("settings")
+        } else if (obj.contextElem?.classList.value.includes("#edit_custom_action")) {
+            activePopup.set("custom_action")
         }
     },
     manage_groups: () => {

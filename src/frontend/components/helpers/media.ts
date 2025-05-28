@@ -4,7 +4,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Subtitle } from "../../../types/Main"
-import type { Styles } from "../../../types/Settings"
+import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
 import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
@@ -96,7 +96,7 @@ export async function getThumbnail(data: API_media) {
     return await toDataURL(path)
 }
 
-export async function getSlideThumbnail(data: API_slide_thumbnail) {
+export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide: boolean = false) {
     const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
     const outSlide = get(outputs)[outputId]?.out?.slide
 
@@ -109,6 +109,14 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
     const output = clone(get(outputs)[outputId])
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
+
+    if (plainSlide) {
+        output.style = ""
+        output.out = { slide: output.out.slide }
+    }
+
+    if (extraOutData.backgroundImage) output.out.background = { path: extraOutData.backgroundImage }
+    if (extraOutData.overlays) output.out.overlays = extraOutData.overlays
 
     let resolution: any = getOutputResolution(outputId)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
@@ -242,6 +250,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         fromTime: 0,
         toTime: 0,
         videoType: "",
+        cropping: {}
     }
 
     if (!mediaObj && !currentStyle) return mediaStyle
@@ -258,7 +267,7 @@ export const mediaSize = {
     big: 900, // stage & editor
     slideSize: 500, // slide + remote
     drawerSize: 250, // drawer media
-    small: 100, // show tools
+    small: 100 // show tools
 }
 
 export async function loadThumbnail(input: string, size: number) {
@@ -449,4 +458,35 @@ function getNewSize(contentSize: { width: number; height: number }, newSize: { w
     if (!height) height = newSize.width ? Math.floor(width / ratio) : contentSize.height
 
     return { width, height }
+}
+
+// CROP
+
+export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | undefined): Promise<string> {
+    return new Promise((resolve) => {
+        if (!crop) return resolve("")
+        if (!crop.bottom && !crop.left && !crop.right && !crop.top) return resolve("")
+
+        const img = new Image()
+
+        // needed if loading from local path
+        img.src = imagePath.startsWith("file://") ? imagePath : `file://${imagePath}`
+        img.onload = () => {
+            const cropWidth = img.width - (crop.left || 0) - (crop.right || 0)
+            const cropHeight = img.height - (crop.top || 0) - (crop.bottom || 0)
+
+            if (cropWidth <= 0 || cropHeight <= 0) return resolve("")
+
+            const canvas = document.createElement("canvas")
+            canvas.width = cropWidth
+            canvas.height = cropHeight
+
+            const ctx = canvas.getContext("2d")!
+            ctx.drawImage(img, crop.left || 0, crop.top || 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+
+            const base64 = canvas.toDataURL("image/png")
+            resolve(base64)
+        }
+        img.onerror = () => resolve("")
+    })
 }

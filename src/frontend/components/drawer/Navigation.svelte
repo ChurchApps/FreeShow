@@ -43,6 +43,21 @@
     $: unlabeledOverlays = !!Object.values($overlays).filter((a) => a.category === null || !$overlayCategories[a.category]).length
     $: unlabeledTemplates = !!Object.values($templates).filter((a) => a.category === null || !$templateCategories[a.category]).length
 
+    $: actionsTagsOnly = Object.values($actions).map((a) => a.tags || [])
+    $: variablesTagsOnly = Object.values($variables).map((a) => a.tags || [])
+    $: sortedActions = sortObject(sortByName(keysToID($actionTags)), "color").map((a) => ({
+        ...a,
+        icon: "tag",
+        openTrigger: (id) => activeActionTagFilter.set([id]),
+        count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
+    }))
+    $: sortedVariables = sortObject(sortByName(keysToID($variableTags)), "color").map((a) => ({
+        ...a,
+        icon: "tag",
+        openTrigger: (id) => activeVariableTagFilter.set([id]),
+        count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
+    }))
+
     interface Button extends Category {
         id: string
         url?: string
@@ -133,14 +148,7 @@
                     default: true,
                     icon: "actions",
                     openTrigger: () => activeActionTagFilter.set([]),
-                    submenu: {
-                        options: sortObject(sortByName(keysToID($actionTags)), "color").map((a) => ({
-                            ...a,
-                            icon: "tag",
-                            openTrigger: (id) => activeActionTagFilter.set([id]),
-                            count: Object.values($actions).filter((b) => b.tags?.includes(a.id)).length
-                        }))
-                    }
+                    submenu: { options: sortedActions }
                 },
                 { id: "SEPERATOR", name: "" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
@@ -150,14 +158,7 @@
                     default: true,
                     icon: "variable",
                     openTrigger: () => activeVariableTagFilter.set([]),
-                    submenu: {
-                        options: sortObject(sortByName(keysToID($variableTags)), "color").map((a) => ({
-                            ...a,
-                            icon: "tag",
-                            openTrigger: (id) => activeVariableTagFilter.set([id]),
-                            count: Object.values($variables).filter((b) => b.tags?.includes(a.id)).length
-                        }))
-                    }
+                    submenu: { options: sortedVariables }
                 },
                 { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" }
                 // WIP effects

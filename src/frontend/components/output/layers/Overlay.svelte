@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { Item, Overlay, Transition } from "../../../../types/Show"
+    import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
+    import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
@@ -30,13 +32,15 @@
             show = true
         })
     }
+
+    $: videoTime = $videosTime[outputId] || 0
 </script>
 
 {#key show}
     {#each currentItems as item}
         {#if show}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
-                {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                {#if (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, { outputId, type: "default" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })}
                     <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {outputId} />
                 {/if}
             </SlideItemTransition>

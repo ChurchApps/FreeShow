@@ -288,6 +288,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
     meta_message: ["dynamic_values"],
+    edit_custom_action: ["edit"],
 
     // MEDIA
     video_subtitle: ["rename", "delete"],

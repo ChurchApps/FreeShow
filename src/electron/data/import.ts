@@ -51,7 +51,7 @@ const specialImports = {
 
         function sqlToFile(filePath: string) {
             const exporter = new SqliteToJson({
-                client: new sqlite3.Database(filePath),
+                client: new sqlite3.Database(filePath)
             })
 
             return new Promise((resolve) => {
@@ -88,7 +88,7 @@ const specialImports = {
         }
 
         return data
-    },
+    }
 }
 
 // protobufjs (.pro) import can't handle close to 1000 files at once
@@ -120,7 +120,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
             length: fileContents.length,
             encoding,
             category: importSettings.category.id,
-            translationMethod: importSettings.translation,
+            translationMethod: importSettings.translation
         }
 
         sendToMain(ToMain.IMPORT2, { channel: id, data: [], custom })
@@ -231,7 +231,8 @@ async function importProject(files: string[], dataPath: string) {
             if (!file) return
             replacedMedia[filePath] = newMediaPath
 
-            if (doesPathExist(newMediaPath) || typeof file === "object") return
+            if (doesPathExist(newMediaPath)) return
+            // @ts-ignore
             writeFile(newMediaPath, file)
         })
 

@@ -45,7 +45,7 @@ import {
     selectFiles,
     selectFilesDialog,
     selectFolder,
-    writeFile,
+    writeFile
 } from "../utils/files"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
@@ -193,7 +193,7 @@ export const mainResponses: MainResponses = {
     // Chums CONNECTION
     [Main.CHUMS_LOAD_SERVICES]: () => chumsLoadServices(),
     [Main.CHUMS_STARTUP_LOAD]: () => chumsStartupLoad(),
-    [Main.CHUMS_DISCONNECT]: () => chumsDisconnect(),
+    [Main.CHUMS_DISCONNECT]: () => chumsDisconnect()
 }
 
 /// ///////
@@ -243,8 +243,13 @@ export const openURL = (url: string) => {
 }
 
 async function loadFonts() {
-    const fonts = await getFonts()
-    return { fonts }
+    try {
+        const fonts = await getFonts()
+        return { fonts }
+    } catch (err) {
+        console.error("Something went wrong when loading fonts.")
+        return { fonts: [] }
+    }
 }
 
 async function searchLyrics({ artist, title }: { artist: string; title: string }) {
@@ -267,13 +272,19 @@ function getPermission(id: "camera" | "microphone" | "screen") {
 
 function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: string; id: string }[]> {
     return new Promise((resolve) => {
-        desktopCapturer.getSources({ types: [type] }).then((sources) => {
-            let screens: { name: string; id: string }[] = []
-            sources.map((source) => screens.push({ name: source.name, id: source.id }))
-            if (type === "window") screens = addFreeShowWindows(screens, sources)
+        desktopCapturer
+            .getSources({ types: [type] })
+            .then((sources) => {
+                let screens: { name: string; id: string }[] = []
+                sources.map((source) => screens.push({ name: source.name, id: source.id }))
+                if (type === "window") screens = addFreeShowWindows(screens, sources)
 
-            resolve(screens)
-        })
+                resolve(screens)
+            })
+            .catch((err) => {
+                console.error("Could not get screens:", err)
+                resolve([])
+            })
     })
 
     function addFreeShowWindows(screens: { name: string; id: string }[], sources: DesktopCapturerSource[]) {
@@ -327,7 +338,7 @@ export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "
 }
 
 const ERROR_FILTER = [
-    "ENOENT: no such file or directory", // file/folder does not exist
+    "ENOENT: no such file or directory" // file/folder does not exist
 ]
 export function catchErrors() {
     process.on("uncaughtException", (err) => {
@@ -344,7 +355,7 @@ export function createLog(err: Error) {
         type: "Uncaught Exception",
         source: "See stack",
         message: err.message,
-        stack: err.stack,
+        stack: err.stack
     } as ErrorLog
 }
 

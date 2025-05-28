@@ -4,6 +4,8 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { MainReceiveValue, MainReturnPayloads } from "./../../types/IPC/Main"
 import { MAIN, Main, type MainSendValue } from "./../../types/IPC/Main"
 import { mainResponses } from "./responsesMain"
+import { isDev } from "../stores"
+import { get } from "svelte/store"
 
 // @ts-ignore // T extends keyof typeof Main
 export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
@@ -25,7 +27,7 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
     let timeout: NodeJS.Timeout | null = null
     const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {
-            throw new Error(`IPC Message Timed Out: ${id}`)
+            if (get(isDev)) throw new Error(`IPC Message Timed Out: ${id}`)
         }, waitingTimeout)
 
         window.api.receive(

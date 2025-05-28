@@ -1,7 +1,8 @@
 <script lang="ts">
-    import type { Item, Slide } from "../../../types/Show"
+    import type { Item, ItemType, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, isDev, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -28,7 +29,7 @@
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
         slide: { name: "tools.slide", icon: "options", overflow: true },
-        filters: { name: "edit.filters", icon: "filter", overflow: true },
+        filters: { name: "edit.filters", icon: "filter", overflow: true }
     }
     let active: string = Object.keys(tabs)[0]
     $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
@@ -140,7 +141,7 @@
 
         setNewStyle()
         function setNewStyle() {
-            if (active === "text") return setBoxStyle(styles, slides, itemType )
+            if (active === "text") return setBoxStyle(styles, slides, itemType as ItemType)
             if (active === "item") return setItemStyle(styles, slides)
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
@@ -177,7 +178,7 @@
             history({
                 id: "setStyle",
                 newData: { style: { key: "style", values: [DEFAULT_ITEM_STYLE] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
+                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items }
             })
             return
         }
@@ -186,8 +187,9 @@
             let indexes = [$activeEdit.slide]
             if (typeof indexes[0] !== "number") return
 
-            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } }) // pre 1.4.4
             history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: undefined, indexes } })
             return
         }
 
@@ -196,7 +198,7 @@
                 id: "slideStyle",
                 oldData: { style: _show().slides([slide]).get("settings")[0] },
                 newData: { style: {} },
-                location: { page: "edit", show: $activeShow!, slide },
+                location: { page: "edit", show: $activeShow!, slide }
             })
             return
         }
@@ -225,8 +227,8 @@
                     page: "edit",
                     show: $activeShow!,
                     slide,
-                    items: $activeEdit.items,
-                },
+                    items: $activeEdit.items
+                }
             })
         }
 
@@ -238,7 +240,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key, values: [undefined] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key },
+                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key }
             })
         })
 
@@ -274,7 +276,7 @@
                     id: "UPDATE",
                     oldData: { id: $activeEdit.id },
                     newData: { key: "items", subkey: "style", data: values, indexes: selectedItems },
-                    location: { page: "edit", id: $activeEdit.type + "_items", override: true },
+                    location: { page: "edit", id: $activeEdit.type + "_items", override: true }
                 })
                 return
             }
@@ -285,7 +287,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key: "style", values } },
-                location: { page: "edit", show: $activeShow!, slide: slideId, items: selectedItems, override: "slideitem_" + slideId + "_items_" + selectedItems.join(",") },
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: selectedItems, override: "slideitem_" + slideId + "_items_" + selectedItems.join(",") }
             })
         }
     }
@@ -297,6 +299,41 @@
 
     $: currentCopied = $copyPasteEdit[type]
     $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""]))
+
+    function copyToCreateData() {
+        const slide = $activeEdit?.type === "overlay" ? $overlays[$activeEdit.id || ""] : $activeEdit?.type === "template" ? $templates[$activeEdit.id || ""] : null
+        if (!slide) return
+
+        const newSlide = {
+            isDefault: true,
+            name: slide.name,
+            color: slide.color || null,
+            category: slide.category,
+            items: trimItems(clone(slide.items))
+            // settings
+        } as typeof slide
+
+        navigator.clipboard.writeText(JSON.stringify(newSlide))
+        newToast("Copied!")
+
+        function trimItems(items: Item[]) {
+            items.forEach((item) => {
+                if (item.type === "text") delete item.type
+                if (item.auto === false) delete item.auto
+
+                item.lines?.forEach((line, lineIndex) => {
+                    line.align = line.align.replaceAll(";;", ";")
+                    if (line.align === ";") line.align = ""
+
+                    line.text.forEach((text) => {
+                        text.value = text.value ? (lineIndex + 1).toString() : ""
+                        text.style = text.style.replace("color:#FFFFFF;", "")
+                    })
+                })
+            })
+            return items
+        }
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -374,6 +411,13 @@
                     <Icon id="reset" right />
                     <T id="actions.reset" />
                 </Button>
+
+                {#if isDev && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
+                    <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
+                        <Icon id="copy" right />
+                        DEV: Copy to "createData"
+                    </Button>
+                {/if}
             {/if}
         </span>
     {:else if !isLocked}

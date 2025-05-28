@@ -6,7 +6,7 @@
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { allOutputs, currentWindow, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { allOutputs, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -120,7 +120,7 @@
             if (!outputData || fadingOut) return
 
             videoData = { ...outputData, duration: videoData.duration || 0 }
-        },
+        }
     }
 
     let listenerId = ""
@@ -234,7 +234,7 @@
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
-        {#if $special.hideCursor}<div class="overlay" />{/if}
+        {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}
         <Player {outputId} {id} bind:videoData bind:videoTime title={data.title} startAt={data.startAt} on:loaded on:ended={videoEnded} />
     {/if}
 </OutputTransition>

@@ -360,7 +360,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         name: show.name || a[id]?.name || "",
                         category: show.category === undefined ? a[id]?.category : show.category,
                         timestamps: show.timestamps || a[id]?.timestamps,
-                        quickAccess: show.quickAccess || a[id]?.quickAccess,
+                        quickAccess: show.quickAccess || a[id]?.quickAccess
                     }
 
                     if (show.origin) a[id].origin = ""
@@ -461,7 +461,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             } else {
                 data.previousData = {
                     slides: clone(_show(showId).get("slides")),
-                    layouts: clone(_show(showId).get("layouts")),
+                    layouts: clone(_show(showId).get("layouts"))
                 }
             }
 
@@ -806,6 +806,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             function updateSlidesWithTemplate(template: Template) {
+                // const slidesWithTextboxes = Object.values(slides).reduce((count, slide) => (getSlideText(slide).length ? count + 1 : count), 0)
                 Object.entries(slides).forEach(([id, slide]) => {
                     if ((slideId && slideId !== id) || !slide) return
 
@@ -844,7 +845,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         // WIP text style (font size) won't update first time
                     }
 
+                    // WIP only add empty textboxes if less than five slides has textboxes already (so intro, break etc. does not get empty textboxes if not wanted)
+                    // && slidesWithTextboxes < 5
                     const changeOverflowItems = !!(slide.settings?.template || createItems)
+
                     let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems)
 
                     // remove items if not in template (and textbox is empty)
@@ -993,7 +997,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (deleting) obj.oldData = clone(data)
             else obj.newData = clone(data)
-        },
+        }
     }
 
     // function initialize(value, { key, index = null }) {

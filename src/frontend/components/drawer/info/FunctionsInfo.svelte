@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { actionHistory, activePopup, activeTimers, drawerTabsData } from "../../../stores"
+    import { actionHistory, actions, activePopup, activeTimers, drawerTabsData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -32,10 +32,12 @@
         {/if}
     </div>
 
-    <Button style="width: 100%;" on:click={() => activePopup.set("action_history")} center dark>
-        <Icon id="history" right />
-        <T id="popup.action_history" />
-    </Button>
+    {#if Object.keys($actions).length}
+        <Button style="width: 100%;" on:click={() => activePopup.set("action_history")} center dark>
+            <Icon id="history" right />
+            <T id="popup.action_history" />
+        </Button>
+    {/if}
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_emitters")} center dark>
         <Icon id="emitter" right />
         <T id="popup.manage_emitters" />

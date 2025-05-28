@@ -69,7 +69,7 @@ export function getFilterStyle(): StyleClipboard {
     const ref = getLayoutRef()
     const slideData = ref[get(activeEdit).slide!].data
 
-    const filterKeys = ["filterEnabled", "backdrop-filter", "filter"]
+    const filterKeys = ["backdrop-filter", "filter"]
 
     const keys: { [key: string]: number | string } = {}
     filterKeys.forEach((key) => {
@@ -263,8 +263,8 @@ export async function setSlideStyle(style: StyleClipboard, slides: any) {
 
 export function setFilterStyle(style: StyleClipboard, indexes: number[]) {
     Object.entries(style.keys).forEach(([key, data]) => {
-        if (key === "filterEnabled") history({ id: "SHOW_LAYOUT", newData: { key, data: data || ["background"], dataIsArray: true, indexes } })
-        else history({ id: "SHOW_LAYOUT", newData: { key, data, indexes } })
+        // if (key === "filterEnabled") history({ id: "SHOW_LAYOUT", newData: { key, data: data || ["background"], dataIsArray: true, indexes } }) else
+        history({ id: "SHOW_LAYOUT", newData: { key, data, indexes } })
     })
 }
 

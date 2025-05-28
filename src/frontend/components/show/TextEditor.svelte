@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { getQuickExample } from "../../converters/txt"
-    import { dictionary, labelsDisabled, textEditActive, textEditZoom } from "../../stores"
+    import { dictionary, includeEmptySlides, labelsDisabled, textEditActive, textEditZoom } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -13,8 +13,10 @@
 
     export let currentShow: Show | undefined
 
+    $: allowEmpty = $includeEmptySlides
+
     let text = ""
-    $: if (currentShow) text = getPlainEditorText()
+    $: if (currentShow) text = getPlainEditorText("", allowEmpty)
 
     // menu
     let zoomOpened = false

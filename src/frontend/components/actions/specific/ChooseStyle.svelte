@@ -19,9 +19,9 @@
     let outputsOptions = [
         { id: "active", name: "$:actions.active_outputs:$" },
         { id: "all", name: "$:actions.all_outputs:$" },
-        { id: "specific", name: "$:actions.specific_outputs:$" },
+        { id: "specific", name: "$:actions.specific_outputs:$" }
     ]
-    let outputsList = getList($outputs).filter((a) => !a.isKeyOutput)
+    let outputsList = getList($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput)
     let stylesList = getList($styles)
 
     function getList(list) {

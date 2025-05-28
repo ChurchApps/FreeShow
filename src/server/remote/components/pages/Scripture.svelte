@@ -6,7 +6,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureViewList } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
 
@@ -116,6 +116,10 @@
                 {#if depth === 0}
                     <Button on:click={() => (openScriptureSearch = true)} center dark>
                         <Icon id="search" />
+                    </Button>
+                {:else if depth === 2}
+                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
                     </Button>
                 {/if}
             </div>

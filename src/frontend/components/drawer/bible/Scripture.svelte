@@ -14,6 +14,7 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
+    import { formatSearch } from "../../../utils/search"
 
     export let active: string | null
     export let bibles: Bible[]
@@ -486,7 +487,7 @@
             return
         }
 
-        let searchValue = formatText(contentSearch)
+        let searchValue = formatSearch(contentSearch)
 
         if (tempCache[firstBibleId]?.[searchValue]?.length) {
             contentSearchMatches = tempCache[firstBibleId][searchValue]
@@ -502,7 +503,7 @@
         // if new search includes previous search, then just search through previously filtered data
         // Bible.API will only give a fixed result, so search that again when "cachedSearches" is more than 5
         if (previousSearch && searchValue.includes(previousSearch) && (!bible.api || cachedSearches < 5) && contentSearchMatches?.length) {
-            matches = contentSearchMatches.filter((a) => formatText(a.text).includes(searchValue))
+            matches = contentSearchMatches.filter((a) => formatSearch(a.text).includes(searchValue))
             cachedSearches++
         } else if (bible.api) {
             let bibleId: string = getBibleId(0, bible)
@@ -520,11 +521,6 @@
         if (!tempCache[firstBibleId]) tempCache[firstBibleId] = {}
         tempCache[firstBibleId][searchValue] = matches
 
-        function formatText(text: string) {
-            if (!text) return ""
-            return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
-        }
-
         function bibleContentSearch(searchValue: string): Promise<any[]> {
             let matches: any[] = []
             let extraMatches: any[] = []
@@ -534,7 +530,7 @@
                 allBooks.forEach((book, bookIndex) => {
                     book.chapters.forEach((chapter, chapterIndex) => {
                         chapter.verses.forEach((verse) => {
-                            let verseValue = formatText(verse.text || verse.value || "")
+                            let verseValue = formatSearch(verse.text || verse.value || "")
                             if (verseValue.includes(searchValue)) {
                                 matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
                             } else {
