@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item, ItemType, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, isDev, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -412,7 +412,7 @@
                     <T id="actions.reset" />
                 </Button>
 
-                {#if isDev && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
+                {#if false && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
                     <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
                         <Icon id="copy" right />
                         DEV: Copy to "createData"
