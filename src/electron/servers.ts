@@ -10,8 +10,6 @@ import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
-import { handleShowSlideHtmlRequest } from "../server/stage/helpers/HtmlSlideHelper";
-import { handleMediaRequest } from "../server/stage/helpers/MediaHelper";
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
