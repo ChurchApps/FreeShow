@@ -16,6 +16,8 @@ export function formatText(text: string, showId = "") {
     const show: Show = clone(_show(showId).get())
     if (!show) return
 
+    // const allowEmpty = get(includeEmptySlides)
+
     const newSlidesText = text.split("\n\n")
 
     const slides: Slide[] = newSlidesText.map(getSlide)

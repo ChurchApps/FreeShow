@@ -6,6 +6,7 @@ import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces = false) {
+    if (typeof value !== "string") return value
     let newValue = value
         .toLowerCase()
         .replace(specialChars, "")
@@ -14,6 +15,15 @@ export function formatSearch(value: string, removeSpaces = false) {
     if (removeSpaces) newValue = newValue.replace(/\s+/g, "")
 
     return newValue
+}
+
+export function tokenize(str: string): string[] {
+    return str.toLowerCase().split(/\s+/).filter(Boolean)
+}
+
+// check if all old tokens are still in new tokens
+export function isRefinement(newTokens: string[], oldTokens: string[]): boolean {
+    return oldTokens.every((token) => newTokens.includes(token))
 }
 
 export function showSearch(searchValue: string, shows: ShowList[]) {

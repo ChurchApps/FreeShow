@@ -62,14 +62,14 @@ export function convertOpenLP(data: any) {
             author: song.authors?.find((a) => a.type?.includes("words"))?.name || "",
             artist: song.authors?.find((a) => a.type?.includes("music"))?.name || "",
             CCLI: song.ccli || "",
-            copyright: song.copyright || "",
+            copyright: song.copyright || ""
         }
         if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
         show.timestamps = {
             created: song.created ? new Date(song.created).getTime() : new Date().getTime(),
             modified: new Date(song.modified).getTime(),
-            used: null,
+            used: null
         }
         if (!show.timestamps.modified) show.timestamps.modified = show.timestamps.created
 
@@ -104,8 +104,8 @@ function createSlides({ verseOrder, lyrics }: Song) {
                     const line: Line = { align: "", text: [{ style: "", value: formatText(a) }] }
                     if (verse.chords?.[i]?.length) line.chords = verse.chords[i]
                     return line
-                }),
-            },
+                })
+            }
         ]
 
         slides[id] = {
@@ -113,7 +113,7 @@ function createSlides({ verseOrder, lyrics }: Song) {
             color: null,
             settings: {},
             notes: "",
-            items,
+            items
         }
 
         const globalGroup = OLPgroups[verse.name.replace(/[0-9]/g, "").toUpperCase()]
@@ -156,7 +156,7 @@ function getSong(song: any, content: any) {
         ccli: song.ccli_number,
         authors: getAuthors(),
         verseOrder: song.verse_order || "",
-        lyrics: getLyrics(),
+        lyrics: getLyrics()
     }
 
     return newSong
@@ -213,7 +213,7 @@ function XMLtoObject(xml: string) {
         ccli: properties.ccliNo || "",
         authors: getAuthors(),
         verseOrder: formatVerseOrder(properties.verseOrder || ""),
-        lyrics: getLyrics(),
+        lyrics: getLyrics()
     }
 
     return newSong
@@ -221,6 +221,7 @@ function XMLtoObject(xml: string) {
     function getTitle() {
         let currentSongTitle = properties.titles?.title || []
         if (Array.isArray(currentSongTitle)) currentSongTitle = currentSongTitle[0]
+        if (!currentSongTitle) return ""
 
         const title = typeof currentSongTitle["#text"] != "undefined" ? currentSongTitle["#text"] : currentSongTitle
 
@@ -274,6 +275,8 @@ function XMLtoObject(xml: string) {
             }
             lines = convertedLines.join("\n")
         }
+
+        if (typeof lines !== "string") lines = ""
 
         // remove unused line seperator char
         lines = lines.replaceAll("&#8232;", "")

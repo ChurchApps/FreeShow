@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { getActionIcon } from "../actions/actions"
-    import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
+    import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -33,6 +33,7 @@
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
         .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
+    $: templates = sortByName(keysToID($projectTemplates)).filter((a) => !a.deleted)
 
     $: {
         let sortType = $sorted.projects?.type || "name"
@@ -155,6 +156,21 @@
             showRecentlyUsedProjects.set(false)
         }
     }
+
+    // most recently interacted with folder (to put new project inside)
+    // if no project is opened this will also select an opened folder if any
+    let interactedFolder = ""
+    let previouslyOpened: string[] = []
+    $: if ($openedFolders) checkInteraction()
+    function checkInteraction() {
+        if ($openedFolders.length > previouslyOpened.length) {
+            $openedFolders.forEach((folderId) => {
+                if (!previouslyOpened.includes(folderId)) interactedFolder = folderId
+            })
+        }
+        previouslyOpened = clone($openedFolders)
+    }
+    $: if (!$folders[interactedFolder]) interactedFolder = ""
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -198,9 +214,9 @@
             </Autoscroll>
         </div>
 
-        {#if Object.keys($projectTemplates).length}
+        {#if templates.length}
             <div class="projectTemplates">
-                {#each sortByName(keysToID($projectTemplates)) as project}
+                {#each templates as project}
                     <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
                 {/each}
             </div>
@@ -209,7 +225,12 @@
         <div id="projectsButtons" class="tabs">
             <Button
                 style="flex: 0;padding: 0.2em 1.3em;"
-                on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project_folder" } })}
+                on:click={() =>
+                    history({
+                        id: "UPDATE",
+                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
+                        location: { page: "show", id: "project_folder" }
+                    })}
                 center
                 title={$dictionary.new?.folder}
             >
@@ -218,7 +239,12 @@
             <div class="seperator"></div>
             <Button
                 style="flex: 1;"
-                on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project" } })}
+                on:click={() =>
+                    history({
+                        id: "UPDATE",
+                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
+                        location: { page: "show", id: "project" }
+                    })}
                 center
                 title={$dictionary.new?.project}
             >

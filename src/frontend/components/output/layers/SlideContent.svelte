@@ -144,9 +144,10 @@
                 let:customOut
                 let:transition
             >
+                <!-- filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""} -->
+                <!-- backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""} -->
                 <Textbox
-                    filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
-                    backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""}
+                    backdropFilter={current.slideData?.["backdrop-filter"] || ""}
                     key={isKeyOutput}
                     disableListTransition={mirror}
                     chords={customItem.chords?.enabled}

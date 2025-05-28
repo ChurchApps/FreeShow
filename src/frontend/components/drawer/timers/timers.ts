@@ -14,7 +14,7 @@ export function getShowTimers(showRef: any) {
 
     const timerItems = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
 
-    if (timerItems.length) list = timerItems.map((a) => a.timerId)
+    if (timerItems.length) list = timerItems.map((a) => a.timer?.id || a.timerId)
 
     return list
 }

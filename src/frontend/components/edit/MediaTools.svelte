@@ -12,11 +12,11 @@
     import Tabs from "../main/Tabs.svelte"
     import { addFilterString } from "./scripts/textStyle"
     import EditValues from "./tools/EditValues.svelte"
-    import { mediaEdits, mediaFilters, videoEdit } from "./values/media"
+    import { croppingEdit, mediaEdits, mediaFilters, videoEdit } from "./values/media"
 
     let tabs: TabsObj = {
         media: { name: "items.media", icon: "image" },
-        filters: { name: "edit.filters", icon: "filter" },
+        filters: { name: "edit.filters", icon: "filter" }
         // options: { name: "", icon: "options" },
     }
     let active: string = Object.keys(tabs)[0]
@@ -28,13 +28,20 @@
     let edits = clone(mediaEdits.media?.edit)!
     let filterEdits = clone(mediaFilters.media?.edit)!
 
-    $: isVideo = getMediaType(getExtension(mediaId)) === "video"
+    $: mediaType = getMediaType(getExtension(mediaId))
+
+    $: isVideo = mediaType === "video"
+    $: isImage = mediaType === "image"
     $: if (isVideo) addVideoOptions()
+    else if (isImage) addImageOptions()
     else edits = clone(mediaEdits.media?.edit)!
     function addVideoOptions() {
         if (!edits) return
-
         edits.video = clone(videoEdit)
+    }
+    function addImageOptions() {
+        if (!edits) return
+        edits.cropping = clone(croppingEdit)
     }
 
     $: if (mediaId && isVideo) getVideoDuration()
@@ -65,6 +72,12 @@
             edits.video[2].value = currentMedia.fromTime || 0
             edits.video[3].value = currentMedia.toTime || edits.video[3].value
         }
+        if (edits.cropping) {
+            edits.cropping[0].value = currentMedia.cropping?.top || 0
+            edits.cropping[1].value = currentMedia.cropping?.right || 0
+            edits.cropping[2].value = currentMedia.cropping?.bottom || 0
+            edits.cropping[3].value = currentMedia.cropping?.left || 0
+        }
 
         // update filters
         let filters = getFilters(currentMedia.filter || "")
@@ -77,7 +90,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]
@@ -99,7 +112,7 @@
         if (value?.id !== undefined) value = value.id
         if (input.id === "filter") value = addFilterString(currentMedia?.filter || "", [input.key, value])
 
-        updateStore("media", { keys: [mediaId, input.id], value })
+        updateStore("media", { keys: [mediaId, ...input.id.split(".")], value })
 
         // update output filters
         let currentOutput = $outputs[getActiveOutputs()[0]] || {}

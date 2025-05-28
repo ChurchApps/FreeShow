@@ -165,12 +165,17 @@ function webServer(id, options = {}) {
 
 function webFiles(id) {
     const dest = `build/electron/${id}`
-    return [
+    const files = [
         { src: `src/server/${id}/index.html`, dest },
         { src: `src/server/${id}/manifest.json`, dest },
         { src: `src/server/icon.png`, dest },
         { src: `src/server/sw.js`, dest },
     ]
+
+    if (id === "stage") {
+        files.push({ src: `src/server/${id}/html/navigation.js`, dest: `${dest}/html` }, { src: `src/server/${id}/html/show.css`, dest: `${dest}/html` })
+    }
+    return files
 }
 
 // HELPERS

@@ -452,6 +452,7 @@
         "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
+        "custom_action": "Custom action",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
@@ -551,7 +552,8 @@
         "delete_manual": "Manual check",
         "delete_match": "Delete if exact match",
         "delete_keep_last_modified": "Delete all except last modified",
-        "delete_keep_first_created": "Delete all except first created"
+        "delete_keep_first_created": "Delete all except first created",
+        "custom_action_tip": "Assign a custom action for this show to trigger when this button is clicked."
     },
     "actions": {
         "rename": "Rename",
@@ -899,6 +901,7 @@
         "break_long_lines": "Break long lines",
         "break_long_lines_tip": "Break line if longer than the set words",
         "media_fit": "Media fit",
+        "cropping": "Cropping",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",
         "size": "Size",

@@ -58,7 +58,10 @@
     const removeActions = ["change_transition"]
     // remove run action if creating an action (not "template" or "slide")
     if (!mode) removeActions.push("run_action")
+    // remove toggle action from anything other than drawer actions
     else removeActions.push("toggle_action")
+    // slide action only
+    if (mode !== "slide") removeActions.push("start_slide_timers")
 
     let usedSections: string[] = []
 
@@ -144,7 +147,7 @@
     let searchedActions = clone(ACTIONS) // initially empty
     $: if (ACTIONS) search()
     let searchValue = ""
-    let previousSearchValue = ""
+    // let previousSearchValue = ""
     function search(e: any = null) {
         searchValue = formatSearch(e?.target?.value || "")
 
@@ -153,13 +156,13 @@
             return
         }
 
-        let currentActionsList = searchedActions
+        let currentActionsList = clone(ACTIONS) // searchedActions
         // reset if search value changed
-        if (!searchValue.includes(previousSearchValue)) currentActionsList = clone(ACTIONS)
+        // if (!searchValue.includes(previousSearchValue)) currentActionsList = clone(ACTIONS)
 
         searchedActions = currentActionsList.filter((a) => formatSearch(a.name || "").includes(searchValue))
 
-        previousSearchValue = searchValue
+        // previousSearchValue = searchValue
     }
 
     function chooseAction(e: KeyboardEvent) {

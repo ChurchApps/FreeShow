@@ -1,4 +1,4 @@
-import { ipcMain } from "electron"
+import { ipcMain, type IpcMainEvent } from "electron"
 import type { Response } from "express"
 import express from "express"
 import http from "http"
@@ -10,6 +10,8 @@ import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
+import { handleShowSlideHtmlRequest } from "../server/stage/helpers/HtmlSlideHelper";
+import { handleMediaRequest } from "../server/stage/helpers/MediaHelper";
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -39,7 +41,16 @@ function createServers() {
         const app = express()
         const server = http.createServer(app)
 
+        if (id === "STAGE") {
+            app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
+
+            // Serve media files
+            app.get('/media/:token', handleMediaRequest);
+        }
+
+        // The join import from 'path' is still needed for this part
         app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
+        // The join import from 'path' is still needed for this part
         app.use(express.static(join(__dirname, id.toLowerCase())))
 
         servers[id] = {
@@ -118,7 +129,7 @@ function createBridge(id: ServerName, server: ServerValues) {
 
     // SEND DATA FROM APP TO CLIENT
     ioServers[id] = server.io
-    ipcMain.on(id, (_e, msg: Message) => {
+    ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
         if (msg.id) server.io.to(msg.id).emit(id, msg)
         else server.io.emit(id, msg)
     })

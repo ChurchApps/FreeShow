@@ -140,6 +140,7 @@
                 delete a[path].flipped
                 delete a[path].flippedY
                 delete a[path].filter
+                delete a[path].cropping
             } else if (key === "tags") {
                 a[path].tags = []
             } else {
@@ -194,7 +195,7 @@
                     </div>
                 </div>
             {/if}
-            {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY}
+            {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY || Object.keys(mediaStyle.cropping || {}).length}
                 <div style="max-width: 100%;">
                     <div class="button">
                         <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("filters")}>

@@ -1,16 +1,11 @@
 <script lang="ts">
-    import { onMount } from "svelte"
-    import { actions, categories, popupData } from "../../../stores"
+    import { actions, activeShow, showsCache } from "../../../stores"
+    import T from "../../helpers/T.svelte"
+    import { _show } from "../../helpers/shows"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import T from "../../helpers/T.svelte"
 
-    let selectedCategory = $popupData?.id
-    onMount(() => {
-        popupData.set({})
-    })
-
-    let currentAction = $categories[selectedCategory]?.action
+    let currentAction = _show().get("settings.customAction") || ""
 
     let actionOptions = [
         { id: "", name: "—" },
@@ -22,10 +17,10 @@
     function updateValue(e: any) {
         let id = e.detail?.id
 
-        categories.update((a) => {
-            if (!a[selectedCategory]) return a
+        showsCache.update((a) => {
+            if (!a[$activeShow?.id || ""]) return a
 
-            a[selectedCategory].action = id
+            a[$activeShow!.id].settings.customAction = id
             return a
         })
 
@@ -33,7 +28,7 @@
     }
 </script>
 
-<p class="tip"><T id="category.action_tip" /></p>
+<p class="tip"><T id="show.custom_action_tip" /></p>
 
 <div style="min-height: 200px;">
     <CombinedInput textWidth={30}>

@@ -58,7 +58,7 @@
 
     let searchedValues = clone(defaultValues)
     let searchValue = ""
-    let previousSearchValue = ""
+    // let previousSearchValue = ""
     let resetInput = false
     function search(e: any = null) {
         searchValue = formatSearch((e?.target?.value || "").replaceAll(" ", "_"))
@@ -68,9 +68,9 @@
             return
         }
 
-        let currentValuesList = searchedValues
+        let currentValuesList = clone(defaultValues) // searchedValues
         // reset if search value changed
-        if (!searchValue.includes(previousSearchValue)) currentValuesList = clone(defaultValues)
+        // if (!searchValue.includes(previousSearchValue)) currentValuesList = clone(defaultValues)
 
         searchedValues = {
             search: Object.values(currentValuesList)
@@ -78,7 +78,7 @@
                 .filter((a) => formatSearch(a.id).includes(searchValue))
         }
 
-        previousSearchValue = searchValue
+        // previousSearchValue = searchValue
     }
 
     function applyValue(e: any, id = "") {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { outputs } from "../../stores"
-    import { getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
+    import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
     import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
     export let lines: [string, number][]
@@ -49,13 +49,14 @@
         // percentage scale
         let outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
         let outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)
-        let width = outputResolution.width
-        let height = outputResolution.height
+        const aspectRatio = outputResolution.width / outputResolution.height
+        const width = DEFAULT_BOUNDS.width
+        const height = DEFAULT_BOUNDS.width / aspectRatio
 
-        if (styles.left) styles.left = 1920 * (Number(styles.left) / width)
-        if (styles.top) styles.top = 1080 * (Number(styles.top) / height)
-        if (styles.width) styles.width = 1920 * (Number(styles.width) / width)
-        if (styles.height) styles.height = 1080 * (Number(styles.height) / height)
+        if (styles.left) styles.left = DEFAULT_BOUNDS.width * (Number(styles.left) / width)
+        if (styles.top) styles.top = DEFAULT_BOUNDS.height * (Number(styles.top) / height)
+        if (styles.width) styles.width = DEFAULT_BOUNDS.width * (Number(styles.width) / width)
+        if (styles.height) styles.height = DEFAULT_BOUNDS.height * (Number(styles.height) / height)
 
         // finalize values
         Object.keys(styles).forEach((key) => {

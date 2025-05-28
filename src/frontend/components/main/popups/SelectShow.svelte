@@ -1,15 +1,14 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { activePopup, dictionary, popupData, shows, sortedShowsList } from "../../../stores"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import Center from "../../system/Center.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
+    import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { formatSearch, showSearch } from "../../../utils/search"
+    import TextInput from "../../inputs/TextInput.svelte"
+    import Center from "../../system/Center.svelte"
 
     $: sortedShows = $sortedShowsList
     $: privateShows = sortByName(keysToID($shows).filter((a) => a.private === true))
@@ -21,24 +20,33 @@
 
     let searchedShows = clone(defaultShows)
     let searchValue = ""
-    let previousSearchValue = ""
+    let previousSearchTokens: string[] = []
+    let previousFilteredShows = clone(defaultShows)
+
     function search(e: any = null) {
         searchValue = formatSearch(e?.target?.value || "")
 
         if (searchValue.length < 2) {
             searchedShows = clone(defaultShows)
+            previousSearchTokens = []
+            previousFilteredShows = clone(defaultShows)
             return
         }
 
-        let currentShowsList = searchedShows
-        // reset if search value changed
-        if (!searchValue.includes(previousSearchValue)) currentShowsList = clone(defaultShows)
+        const currentTokens = tokenize(searchValue)
+        const narrowing = isRefinement(currentTokens, previousSearchTokens)
+        const baseList = narrowing ? previousFilteredShows : clone(defaultShows)
 
-        searchedShows = showSearch(searchValue, currentShowsList)
+        searchedShows = showSearch(searchValue, baseList)
+
         if (searchValue.length > 15 && searchedShows.length > 50) searchedShows = searchedShows.slice(0, 50)
         if (searchValue.length > 30 && searchedShows.length > 30) searchedShows = searchedShows.slice(0, 30)
 
-        previousSearchValue = searchValue
+        previousSearchTokens = currentTokens
+        previousFilteredShows = searchedShows
+
+        // scroll to top
+        document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
     function selectShow(show: any) {
@@ -59,12 +67,13 @@
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">
     <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
 </CombinedInput>
-<CombinedInput>
+<!-- probably not needed as private shows rarely need to be auto played (one could unprivate, add it, then make it private again) -->
+<!-- <CombinedInput>
     <p><T id="actions.view_private" /></p>
     <div class="alignRight">
         <Checkbox checked={showPrivate} on:change={() => (showPrivate = !showPrivate)} />
     </div>
-</CombinedInput>
+</CombinedInput> -->
 
 <div class="list">
     {#if sortedShows.length}

@@ -56,6 +56,8 @@
 
         currentVariable[key] = value
 
+        if (key === "type") return
+
         if (existing) {
             updateStore("variables", variableId, currentVariable)
         } else {

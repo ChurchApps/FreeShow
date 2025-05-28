@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Cropping, Resolution } from "../../../types/Settings"
     import { draw, outputs, styles } from "../../stores"
-    import { getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
+    import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
 
     export let id = ""
     $: outputId = id || getActiveOutputs($outputs, true, true, true)[0]
@@ -31,13 +31,18 @@
     $: if (!isStage) resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
     $: outputRes = isStage ? resolution : getOutputResolution(outputId, $outputs)
 
+    $: stylesRatio = getResolution(null, $styles, false, outputId)
+    $: styleAspectRatio = stylesRatio.width / stylesRatio.height
+    const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
+
     let elemWidth = 0
     let elemHeight = 0
 
     let slideWidth = 0
     let slideHeight = 0
     export let ratio = 1
-    $: ratio = Math.max(0.01, outputRes.width < outputRes.height ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
+    $: shouldUseHeightRatio = outputRes.width < outputRes.height && stylesRatio.width > stylesRatio.height && styleAspectRatio === defaultRatio
+    $: ratio = Math.max(0.01, shouldUseHeightRatio ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
     $: croppedStyle = getCropping(cropping)
     function getCropping(cropping) {
@@ -90,7 +95,7 @@
                 style="zoom: {ratio};{drawZoom === 1
                     ? ''
                     : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` +
-                      ($draw ? `inset-inline-start: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
+                      ($draw ? `inset-inline-start: ${($draw.x / outputRes.width - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / outputRes.height - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
             >
                 <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / 1920 - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / 1080 - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
                 <slot {ratio} />

@@ -17,9 +17,11 @@
 
     $: currentSlideData = ref?.[currentSlide]?.data || null
 
+    $: hasItems = !!($showsCache[currentShow]?.slides?.[ref?.[currentSlide]?.id]?.items || []).length
+
     // update
     $: if (currentSlideData !== null) {
-        edits.default[0].value = currentSlideData.filterEnabled || ["background"]
+        // edits.default[0].value = currentSlideData.filterEnabled || ["background"]
 
         // update filters
         let filters = getFilters(currentSlideData.filter || "")
@@ -31,13 +33,19 @@
         })
 
         // update backdrop filters
-        let backdropFilters = getFilters(currentSlideData["backdrop-filter"] || "")
-        let defaultBackdropFilters = slideFilters.media?.edit?.backdrop_filters || []
-        edits.backdrop_filters.forEach((filter) => {
-            let value = backdropFilters[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
-            let index = edits.backdrop_filters.findIndex((a) => a.key === filter.key)
-            edits.backdrop_filters[index].value = value
-        })
+        if (hasItems) {
+            edits.backdrop_filters = clone(slideFilters.media?.edit || {}).backdrop_filters
+
+            let backdropFilters = getFilters(currentSlideData["backdrop-filter"] || "")
+            let defaultBackdropFilters = slideFilters.media?.edit?.backdrop_filters || []
+            edits.backdrop_filters.forEach((filter) => {
+                let value = backdropFilters[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
+                let index = edits.backdrop_filters.findIndex((a) => a.key === filter.key)
+                edits.backdrop_filters[index].value = value
+            })
+        } else {
+            delete edits.backdrop_filters
+        }
     }
 
     export function valueChanged(input: any) {
@@ -46,12 +54,11 @@
 
         let override = [currentShow, currentSlide, input.id, input.key].join("_")
 
-        if (input.id !== "filter" && input.id !== "backdrop-filter") {
-            // change filter enabled
-            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data, dataIsArray: true, indexes }, location: { page: "edit", override } })
-
-            return
-        }
+        // if (input.id !== "filter" && input.id !== "backdrop-filter") {
+        //     // change filter enabled
+        //     history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data, dataIsArray: true, indexes }, location: { page: "edit", override } })
+        //     return
+        // }
 
         data = addFilterString(currentSlideData[input.id] || "", [input.key, data])
 
@@ -59,4 +66,4 @@
     }
 </script>
 
-<EditValues {edits} noClosing on:change={(e) => valueChanged(e.detail)} />
+<EditValues {edits} customLabels={["preview.background", "preview.foreground"]} noClosing on:change={(e) => valueChanged(e.detail)} />

@@ -72,7 +72,14 @@
         loaded = true
 
         videoData.paused = false
-        seekTo(videoTime)
+        // if live, it should not start from the beginning
+        if (videoTime > 0) seekTo(videoTime)
+        else
+            setTimeout(() => {
+                videoTime = player.getCurrentTime()
+                // player.getDuration()
+            }, 3000)
+
         dispatch("loaded", true)
     }
 

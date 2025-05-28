@@ -236,7 +236,7 @@
             {#if eventList.length}
                 <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
             {:else}
-                <div style="padding: 0 10px;display: flex;align-items: center;"><T id="timer.no_events" /></div>
+                <div style="padding: 0 10px;display: flex;align-items: center;opacity: 0.5;"><T id="timer.no_events" /></div>
             {/if}
         </CombinedInput>
     {/if}
@@ -267,7 +267,7 @@
     {/if}
 
     <CombinedInput style="margin-top: 10px;" textWidth={50}>
-        <Button style="width: 100%;" center dark on:click={() => (currentTimer?.id ? editTimer() : createTimer())}>
+        <Button style="width: 100%;" disabled={timer?.type === "event" && !timer?.event} center dark on:click={() => (currentTimer?.id ? editTimer() : createTimer())}>
             <Icon id={currentTimer?.id ? "edit" : "add"} right />
             {#if currentTimer?.id}
                 <!-- <T id="edit.update" /> -->

@@ -5,7 +5,7 @@ import { ShowObj } from "../classes/Show"
 import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
-import { checkName, getLabelId } from "../components/helpers/show"
+import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activePopup, activeProject, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
@@ -51,6 +51,38 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // text = text.replaceAll("\r", "").replaceAll("\n\n \n\n", "__BREAK__").replaceAll("\n \n", "\n\n").replaceAll("__BREAK__", "\n\n \n\n")
     let sections = (text as string).split("\n\n").filter(Boolean)
 
+    // example: Artist=Casting Crowns, CCLI=123456
+    const metadataKeys = getCustomMetadata()
+    let plainTextMetadata: { [key: string]: string } = {}
+    let plainNotes = ""
+    sections.forEach((section, i) => {
+        const lines = section.split("\n")
+        const newLines: string[] = []
+        lines.forEach((line) => {
+            if (!line.includes("=")) {
+                newLines.push(line)
+                return
+            }
+
+            const meta = line.split("=")
+            const metaKey = meta[0].toLowerCase().replaceAll(" ", "")
+            if (metaKey === "notes") {
+                plainNotes = meta[1]
+                return
+            }
+
+            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase() === metaKey || get(dictionary).meta?.[key]?.toLowerCase() === metaKey)
+            if (!metadataKey) {
+                newLines.push(line)
+                return
+            }
+
+            plainTextMetadata[metadataKey] = meta[1]
+        })
+        sections[i] = newLines.join("\n")
+    })
+    if (sections[0] === "") sections.splice(0, 1)
+
     // get ccli
     let ccli = ""
     if (sections[sections.length - 1].includes("www.ccli.com")) {
@@ -91,7 +123,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
                 author: meta[0],
                 // composer: meta[0],
                 // publisher: meta[0],
-                copyright: meta[2],
+                copyright: meta[2]
             }
         } else {
             show.meta = {
@@ -101,10 +133,14 @@ export function convertText({ name = "", origin = "", category = null, text, noF
                 author: meta[2],
                 composer: meta[3],
                 publisher: meta[1],
-                copyright: meta[4],
+                copyright: meta[4]
             }
         }
+    } else if (Object.keys(plainTextMetadata).length) {
+        show.meta = plainTextMetadata
     }
+
+    if (plainNotes) show.layouts[layoutID].notes = plainNotes
 
     const showId = uid()
     if (returnData) return { id: showId, show }
@@ -136,6 +172,46 @@ export function trimNameFromString(text: string) {
     if (name.length > 38) name = name.slice(0, 30)
 
     return name
+}
+
+function isChordLine(line: string): boolean {
+    return /^[A-G][#b]?m?(maj|min|dim|aug|sus)?(\s+[A-G][#b]?m?(maj|min|dim|aug|sus)?)*\s*$/.test(line.trim())
+}
+// convert chord lines into line text
+function preprocessLines(lines: string[]): string[] {
+    const output: string[] = []
+    for (let i = 0; i < lines.length; i++) {
+        const chordLine = lines[i]
+        const lyricLine = lines[i + 1]
+
+        if (isChordLine(chordLine) && lyricLine && !isChordLine(lyricLine)) {
+            const combinedLine = insertChordsIntoLyrics(chordLine, lyricLine)
+            output.push(combinedLine)
+            i++ // Skip the lyric line
+        } else {
+            output.push(chordLine)
+        }
+    }
+    return output
+}
+function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
+    const result = lyricLine.split("")
+    const chordRegex = /[A-G][#b]?m?(maj|min|dim|aug|sus)?/g
+    let match: RegExpExecArray | null
+
+    while ((match = chordRegex.exec(chordLine)) !== null) {
+        const chord = match[0]
+        const pos = match.index
+
+        if (pos < result.length) {
+            result[pos] = `[${chord}]` + result[pos]
+        } else {
+            // Append if the lyric is shorter than the chord line
+            result.push(" ".repeat(pos - result.length) + `[${chord}]`)
+        }
+    }
+
+    return result.join("")
 }
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
@@ -185,8 +261,17 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         if (!autoGroups && !hasTextGroup && group) group = "verse"
         const color: string | null = null
 
-        let allLines: string[] = [slideText]
-        const slideLines = slideText.split("\n").filter(Boolean)
+        // split slide notes from text ("---")
+        let slideTextAndNotes = slideText.split("---")
+
+        while (new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
+        let allLines: string[] = [slideTextAndNotes.shift() || ""]
+        if (allLines[0].endsWith("\n")) allLines[0] = allLines[0].slice(0, -1)
+
+        while (slideTextAndNotes[0] === "") slideTextAndNotes.shift()
+        let slideNotes = slideTextAndNotes.join("\n").slice(1)
+
+        const slideLines = allLines[0].split("\n").filter(Boolean)
 
         // split lines into a set amount of lines
         if (Number(get(splitLines)) && slideLines.length > get(splitLines)) {
@@ -210,7 +295,10 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         }
 
         function createSlide(lines: string, slideIndex: number) {
-            let items: Item[] = linesToItems(lines)
+            // preprocess inline chord lines
+            let preprocessedLines = preprocessLines(lines.split("\n")).join("\n")
+
+            let items: Item[] = linesToItems(preprocessedLines)
             if (!items.length) return
 
             // get active show
@@ -277,7 +365,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
             }
 
             // a.text.split("\n").forEach((text: string) => {})
-            const slide: Slide = { group, color, settings: {}, notes: "", items }
+            const slide: Slide = { group, color, settings: {}, notes: slideNotes, items }
             if (group) slide.globalGroup = group
             slides[id] = slide
         }

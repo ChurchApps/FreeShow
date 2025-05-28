@@ -2,7 +2,8 @@
     import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { changeSlidesView } from "../../show/slides"
-    import { activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
+    import { actions, activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
+    import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { keysToID, sortByName } from "../helpers/array"
@@ -101,6 +102,17 @@
     $: multipleLayouts = sortedLayouts.length > 1
 
     const openTab = (id: string) => openToolsTab.set(id)
+
+    $: customActionId = currentShow?.settings?.customAction
+    $: customAction = customActionId && $actions[customActionId] ? customActionId : ""
+    function runCustomAction() {
+        if (!customAction) {
+            activePopup.set("custom_action")
+            return
+        }
+
+        runAction($actions[customAction])
+    }
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -179,6 +191,18 @@
                     {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
                 </Button>
             </span>
+        {/if}
+
+        <!-- RIGHT BUTTONS -->
+
+        <!-- action button -->
+        {#if Object.keys($actions).length && !reference}
+            <div class="seperator" />
+
+            <Button class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
+                <Icon size={1.1} id={customAction ? getActionIcon(customAction) : "actions"} white={!customAction} right={!!customAction} />
+                {#if customAction}<p>{$actions[customAction].name}</p>{/if}
+            </Button>
         {/if}
 
         <div class="seperator" />

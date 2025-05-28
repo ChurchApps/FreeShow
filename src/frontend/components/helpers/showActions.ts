@@ -926,7 +926,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         }
     } else if (type === "timer") {
         const slide = _show(slideOut.id).get("slides")[layoutSlide.id]
-        const slideTimer = slide?.items?.find((a) => a.type === "timer" && a.timerId === endedId)
+        const slideTimer = slide?.items?.find((a) => a.type === "timer" && (a.timer?.id || a.timerId) === endedId)
         if (!slideTimer) return false
     }
 
@@ -962,7 +962,9 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
     const items = [...slideItems, ...allOverlayItems]
 
     items.forEach((item) => {
-        if (item.type === "timer" && item.timerId) playPauseGlobal(item.timerId, get(timers)[item.timerId], true)
+        if (item.type !== "timer") return
+        const timerId = item.timer?.id || item.timerId || ""
+        playPauseGlobal(timerId, get(timers)[timerId], true)
     })
 }
 

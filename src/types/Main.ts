@@ -1,6 +1,7 @@
 import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { ShowRef } from "./Projects"
+import type { Cropping } from "./Settings"
 
 export interface OS {
     platform: NodeJS.Platform
@@ -151,6 +152,7 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+    cropping?: Partial<Cropping>
 
     ignoreLayer?: boolean // foreground background type
 }
@@ -315,6 +317,7 @@ export type Popups =
     | "manage_emitters"
     | "action"
     | "category_action"
+    | "custom_action"
     | "user_data_overwrite"
     | "connect"
     | "cloud_update"

@@ -34,6 +34,7 @@
     export let styles: { [key: string]: string } = {}
     export let lineAlignStyle: { [key: string]: string } = {}
     export let alignStyle: { [key: string]: string } = {}
+    export let customLabels: string[] = []
     export let noClosing = false
     export let sessionId = ""
     export let isStage = false
@@ -58,10 +59,10 @@
         if (input.input === "checkbox") value = e.target?.checked
         else if (input.input === "dropdown" || input.input === "selectVariable" || input.input === "action") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
-        else if (input.input === "multiselect" && Array.isArray(input.value)) {
-            if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
-            else value = [...input.value, value]
-        }
+        // else if (input.input === "multiselect" && Array.isArray(input.value)) {
+        //     if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
+        //     else value = [...input.value, value]
+        // }
 
         // closed update
         if (!value && value !== "" && e.detail !== undefined) value = e.detail
@@ -430,6 +431,7 @@
 {#each Object.keys(edits || {}) as section, i}
     <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
         {#if !noClosing && section !== "default" && !$storedEditMenuState[sessionId]?.includes(section)}
+            <!-- closed -->
             <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
                 {#if section === "CSS"}
                     <Icon id="code" right />
@@ -441,8 +443,11 @@
             </Button>
         {:else}
             {#if section !== "default"}
+                <!-- opened -->
                 <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
-                    {#if section[0] === section[0].toUpperCase()}
+                    {#if customLabels[i]}
+                        <T id={customLabels[i]} />
+                    {:else if section[0] === section[0].toUpperCase()}
                         {section}
                     {:else}
                         <T id="edit.{section}" />
@@ -459,6 +464,7 @@
                     {/if}
                 </h6>
             {/if}
+
             {#each edits[section] as input}
                 {#if input.input === "editTimer"}
                     {#if item}
@@ -518,7 +524,7 @@
                             </span>
                         </MediaPicker>
                     </CombinedInput>
-                {:else if input.input === "multiselect"}
+                    <!-- {:else if input.input === "multiselect"}
                     <div class="line">
                         {#each input.values as option}
                             <Button
@@ -534,7 +540,7 @@
                                 <T id={option.name} />
                             </Button>
                         {/each}
-                    </div>
+                    </div> -->
                 {:else if lineInputs[input.input]}
                     <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
                     <CombinedInput>

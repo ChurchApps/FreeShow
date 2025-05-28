@@ -10,7 +10,7 @@ export const defaultGroups = {
     outro: { name: "outro", default: true, color: "#a525f5" },
     pre_chorus: { name: "pre_chorus", default: true, color: "#8825f5" },
     tag: { name: "tag", default: true, color: "#7525f5" },
-    verse: { name: "verse", default: true, color: "#5825f5", shortcut: "V" },
+    verse: { name: "verse", default: true, color: "#5825f5", shortcut: "V" }
 }
 
 export const defaultSettings: { [key in SaveListSettings]: any } = {
@@ -25,8 +25,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             bounds: { x: 0, y: 0, width: 1920, height: 1080 },
             screen: null,
             style: "default",
-            show: {},
-        },
+            show: {}
+        }
     },
     sorted: {},
     styles: {},
@@ -47,7 +47,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         leftPanel: 290,
         rightPanel: 290,
         leftPanelDrawer: 290,
-        rightPanelDrawer: 290,
+        rightPanelDrawer: 290
     },
     slidesOptions: { columns: 4, mode: "grid" },
     mediaOptions: { columns: 5, mode: "grid" },
@@ -65,7 +65,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     theme: "default",
     transitionData: {
         text: { type: "fade", duration: 500, easing: "sine" },
-        media: { type: "fade", duration: 800, easing: "sine" },
+        media: { type: "fade", duration: 800, easing: "sine" }
     },
     volume: 1,
     gain: 1,
@@ -73,30 +73,30 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     calendarAddShow: "",
     metronome: {},
     effectsLibrary: [],
-    special: {},
+    special: {}
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     categories: {
         song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true },
+        presentation: { name: "category.presentation", icon: "presentation", default: true }
     },
     drawSettings: {},
     overlayCategories: {
         offers: { name: "category.offers", icon: "cash", default: true },
         notice: { name: "category.notice", icon: "info", default: true },
-        visuals: { name: "category.visuals", icon: "star", default: true },
+        visuals: { name: "category.visuals", icon: "star", default: true }
     },
     templateCategories: {
         song: { name: "category.song", icon: "song", default: true },
         presentation: { name: "category.presentation", icon: "presentation", default: true },
-        scripture: { name: "category.scripture", icon: "scripture", default: true },
+        scripture: { name: "category.scripture", icon: "scripture", default: true }
     },
     timers: {
-        default: { name: "05:00", type: "counter", start: 300, end: 0 },
+        default: { name: "05:00", type: "counter", start: 300, end: 0 }
     },
     variables: {
-        default: { name: "Counter", type: "number" },
+        default: { name: "Counter", type: "number" }
     },
     triggers: {},
     audioStreams: {},
@@ -106,7 +106,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
             name: "King James (Authorised) Version",
             api: true,
             id: "de4e12af7f28f599-02",
-            copyright: "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent",
+            copyright: "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
         },
         asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01", copyright: "PUBLIC DOMAIN" },
         web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04", copyright: "PUBLIC DOMAIN" },
@@ -115,9 +115,8 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
             name: "Berean Study Bible",
             api: true,
             id: "bba9f40183526463-01",
-            copyright:
-                "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain",
-        },
+            copyright: "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain"
+        }
     },
     scriptureSettings: {
         template: "scripture",
@@ -125,14 +124,18 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         verseNumbers: false,
         showVersion: false,
         showVerse: true,
-        referenceDivider: ":",
+        referenceDivider: ":"
     },
     groups: defaultGroups,
     midiIn: {},
     emitters: {},
     playerVideos: {
         chosen: { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" },
+        story: { name: "The Jesus Story", type: "youtube", id: "2Yvs-Pz8KK0" },
+        legacy: { name: "The Legacy of Adam", type: "youtube", id: "aPgbA6rVhWs" },
+        gospel: { name: "The Gospel Film", type: "youtube", id: "mIeRU12STNw" },
         jesus: { name: "Jesus, Only Jesus", type: "vimeo", id: "426363743" },
+        messiah: { name: "Messiah", type: "vimeo", id: "144160599" }
     },
     videoMarkers: {},
     mediaTags: {},
@@ -141,5 +144,5 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     customizedIcons: { disabled: [], svg: [] },
     companion: {},
     globalTags: {},
-    customMetadata: { disabled: [], custom: [] },
+    customMetadata: { disabled: [], custom: [] }
 }

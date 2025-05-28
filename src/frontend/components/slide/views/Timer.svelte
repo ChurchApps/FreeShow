@@ -117,7 +117,7 @@
     .line {
         height: 100%;
         background-color: white;
-        transition: 0.5s width;
+        transition: 1s width linear;
     }
 
     .circle {

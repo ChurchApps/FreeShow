@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, ItemType, Slide } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
+    import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes, timers } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
@@ -172,7 +172,9 @@
     $: if (id === "timer" && item) {
         setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
         setBoxInputValue(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
-        setBoxInputValue(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time")
+        const timer = $timers[item.timer?.id || ""]
+        const timerLength = Math.abs((timer?.start || 0) - (timer?.end || 0))
+        setBoxInputValue(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time" || timerLength < 3600)
         setBoxInputValue(box, "font", "auto", "value", item.auto ?? true)
     }
     $: if (id === "clock" && item) {

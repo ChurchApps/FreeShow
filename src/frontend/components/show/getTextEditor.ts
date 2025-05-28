@@ -5,7 +5,7 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
-export function getPlainEditorText(showId = "") {
+export function getPlainEditorText(showId = "", allowEmpty: boolean = false) {
     if (!showId) showId = "active"
     const ref = getLayoutRef(showId)
     const slides = _show(showId).get("slides")
@@ -23,7 +23,7 @@ export function getPlainEditorText(showId = "") {
         const slideData: any = { id, items: slide.items, text: "", ref: refSlide }
         let data = getItems(slide.items)
 
-        if (slide.group !== null && (data.hasTextboxItem || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
+        if (slide.group !== null && (data.hasTextboxItem || allowEmpty || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
             const groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
             text += groupId + "\n"
             slideData.text += groupId + "\n"
@@ -38,7 +38,7 @@ export function getPlainEditorText(showId = "") {
         slideData.text += data.plainText
 
         // don't add slides without textboxes
-        if (data.hasTextboxItem) slidesData.push(slideData)
+        if (data.hasTextboxItem || allowEmpty) slidesData.push(slideData)
     })
 
     return text.trim()
