@@ -19,6 +19,7 @@ import {
     calendarAddShow,
     categories,
     companion,
+    chumsSyncCategories,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -334,5 +335,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         }
 
         special.set(v)
-    }
+    },
+    chumsSyncCategories: (v: any) => chumsSyncCategories.set(v)
 }

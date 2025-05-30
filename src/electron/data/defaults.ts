@@ -73,7 +73,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     calendarAddShow: "",
     metronome: {},
     effectsLibrary: [],
-    special: {}
+    special: {},
+    chumsSyncCategories: ["song"]
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
