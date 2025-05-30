@@ -6,6 +6,7 @@ import type { History } from "../../../types/History"
 import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Show, Slide, SlideAction } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
+import { createCategory } from "../../converters/importHelpers"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import {
     activeDrawerTab,
@@ -17,7 +18,6 @@ import {
     audioFolders,
     audioPlaylists,
     audioStreams,
-    categories,
     drawerTabsData,
     media,
     mediaFolders,
@@ -898,18 +898,14 @@ function createScriptureShow(drag, drop) {
         layouts.push({ id })
     })
 
+    // add scripture category
+    const categoryId = createCategory("scripture", "scripture", { isDefault: true, isArchive: true })
+
     const layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
     const template = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-    const show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), template)
-    // add scripture category
-    if (!get(categories).scripture) {
-        categories.update((a) => {
-            a.scripture = { name: "category.scripture", icon: "scripture", default: true, isArchive: true }
-            return a
-        })
-    }
+    const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), template)
 
     const bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${joinRange(drag.data[0]?.sorted || [])}`
     show.name = checkName(bibleShowName)

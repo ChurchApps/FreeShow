@@ -3,7 +3,8 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
+    import { createCategory } from "../../../converters/importHelpers"
+    import { activePopup, activeProject, activeTriggerFunction, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
     import { trackScriptureUsage } from "../../../utils/analytics"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
@@ -117,18 +118,14 @@
             layouts.push(l)
         })
 
+        // add scripture category
+        const categoryId = createCategory("scripture", "scripture", { isDefault: true, isArchive: true })
+
         let layoutID = uid()
         // only set template if not combined (because it might be a custom reference style on first line)
         let template = $scriptureSettings.combineWithText ? false : $scriptureSettings.template || false
         // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-        let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), $scriptureSettings.verseNumbers ? false : template)
-        // add scripture category
-        if (!$categories.scripture) {
-            categories.update((a) => {
-                a.scripture = { name: "category.scripture", icon: "scripture", default: true, isArchive: true }
-                return a
-            })
-        }
+        let show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), $scriptureSettings.verseNumbers ? false : template)
 
         Object.keys(bibles[0].metadata || {}).forEach((key) => {
             if (key.startsWith("@")) return

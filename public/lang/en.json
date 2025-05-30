@@ -530,7 +530,8 @@
         "scripture": "New scripture",
         "collection": "New collection",
         "action": "New action",
-        "event": "New event"
+        "event": "New event",
+        "event_action": "New scheduled action"
     },
     "show": {
         "name": "Name",

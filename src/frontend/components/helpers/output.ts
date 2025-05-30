@@ -443,11 +443,11 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
 // this will get the first available stage output
 export function getStageOutputId(_updater = get(outputs)) {
-    return keysToID(_updater).find((a) => a.stageOutput)?.id || ""
+    return keysToID(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
 }
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
     if (!outputId) outputId = getStageOutputId()
-    return clone(_updater[outputId]?.bounds || DEFAULT_BOUNDS)
+    return getOutputResolution(outputId)
 }
 
 // calculate actual output resolution based on style aspect ratio
