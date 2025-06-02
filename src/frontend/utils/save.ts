@@ -7,6 +7,7 @@ import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
+    actions,
     activePopup,
     activeProject,
     alertUpdates,
@@ -16,6 +17,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    chumsSyncCategories,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -46,7 +48,6 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
-    actions,
     openedFolders,
     outLocked,
     outputs,
@@ -146,7 +147,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
         effectsLibrary: get(effectsLibrary),
-        special: get(special)
+        special: get(special),
+        chumsSyncCategories: get(chumsSyncCategories)
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
@@ -377,5 +379,6 @@ const saveList: { [key in SaveList]: any } = {
     special,
     companion: null,
     globalTags,
-    customMetadata: null
+    customMetadata: null,
+    chumsSyncCategories: null
 }

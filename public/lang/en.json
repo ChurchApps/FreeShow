@@ -473,7 +473,8 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit"
+        "save_quit": "Save & Quit",
+        "chums_sync_categories": "Select categories to sync"
     },
     "toast": {
         "saving": "Saving...",
@@ -1506,5 +1507,9 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "chums": {
+        "sync_categories": "Sync categories",
+        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }

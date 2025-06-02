@@ -8,7 +8,8 @@ import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from "
 import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { chumsDisconnect, chumsStartupLoad, chumsLoadServices } from "../chums"
+import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { chumsDisconnect, chumsLoadServices, chumsStartupLoad } from "../chums"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
@@ -52,7 +53,6 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
-import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -192,7 +192,7 @@ export const mainResponses: MainResponses = {
     [Main.PCO_DISCONNECT]: () => pcoDisconnect(),
     // Chums CONNECTION
     [Main.CHUMS_LOAD_SERVICES]: () => chumsLoadServices(),
-    [Main.CHUMS_STARTUP_LOAD]: () => chumsStartupLoad(),
+    [Main.CHUMS_STARTUP_LOAD]: (data) => chumsStartupLoad("plans", data),
     [Main.CHUMS_DISCONNECT]: () => chumsDisconnect()
 }
 
