@@ -2,7 +2,25 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, chumsConnected, popupData, ports, remotePassword, serverData, activeTriggerFunction } from "../../../stores"
+    import {
+        activePage,
+        activePopup,
+        activeShow,
+        companion,
+        connections,
+        dataPath,
+        disabledServers,
+        maxConnections,
+        outputs,
+        pcoConnected,
+        chumsConnected,
+        popupData,
+        ports,
+        remotePassword,
+        serverData,
+        activeTriggerFunction,
+        dictionary
+    } from "../../../stores"
     import { pcoSync, chumsSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -229,7 +247,7 @@
             <Icon id="cloud_sync" right />
             <p><T id="cloud.sync" /></p>
         </Button>
-        <Button on:click={() => activePopup.set("chums_sync_categories")}>
+        <Button title={$dictionary.chums?.sync_categories_description} on:click={() => activePopup.set("chums_sync_categories")}>
             <Icon id="settings" right />
             <p><T id="chums.sync_categories" /></p>
         </Button>

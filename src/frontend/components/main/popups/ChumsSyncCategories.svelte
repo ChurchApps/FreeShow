@@ -1,105 +1,72 @@
 <script lang="ts">
-    import { activePopup, categories, chumsSyncCategories, shows } from "../../../stores"
-    import { sortByName } from "../../../components/helpers/array"
+    import { keysToID, sortByName } from "../../../components/helpers/array"
     import T from "../../../components/helpers/T.svelte"
-    import Button from "../../../components/inputs/Button.svelte"
     import Checkbox from "../../../components/inputs/Checkbox.svelte"
+    import { categories, chumsSyncCategories, shows } from "../../../stores"
     import { translate } from "../../../utils/language"
-    
-    const mappedCategories = Object.entries($categories).map(([id, category]) => {
-        const mapped = {
-            id,
-            name: category.name,
-            displayName: category.default ? translate(category.name) || category.name : category.name,
-            count: Object.values($shows).filter((show) => show.category === id).length,
-        }
-        return mapped
-    })
-    
-    let categoryOptions: any[] = []
-    $: categoryOptions = sortByName(mappedCategories, "displayName")
-    
+    import Icon from "../../helpers/Icon.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
-    function handleChange(id: string) {
-        toggleCategory(id)
-    }
+    const mappedCategories = keysToID($categories)
+        .filter((a) => !a.isArchive && a.name)
+        .map((category) => {
+            const name = category.default ? translate(category.name) || category.name : category.name
+            const count = Object.values($shows).filter((show) => show.category === category.id).length
+            return { id: category.id, name, icon: category.icon, count }
+        })
+
+    const categoryOptions = sortByName(mappedCategories)
 
     function toggleCategory(id: string) {
         if ($chumsSyncCategories.indexOf(id) === -1) chumsSyncCategories.update(() => [...$chumsSyncCategories, id])
         else chumsSyncCategories.update(() => $chumsSyncCategories.filter((c) => c !== id))
     }
-
 </script>
 
-<div class="popup">
-    <div class="header">
-        <h2><T id="chums.sync_categories" /></h2>
-    </div>
+<p class="tip"><T id="chums.sync_categories_description" /></p>
 
-    <div class="content">
-        <p><T id="chums.sync_categories_description" /></p>
-
-        <div class="categories">
-            {#each categoryOptions as { id, displayName, count }}
-                <div class="category">
-                    <Checkbox
-                        checked={$chumsSyncCategories.includes(id)}
-                        on:change={() => handleChange(id)}
-                    />
-                    <span class="count">{displayName} ({count})</span>
-                </div>
-            {/each}
-        </div>
-
-        <div class="buttons">
-            <Button on:click={() => (activePopup.set(null))}>
-                <T id="actions.done" />
-            </Button>
-        </div>
-    </div>
+<div class="categories">
+    {#each categoryOptions as { id, name, icon, count }}
+        <CombinedInput>
+            <p style="flex: 1;">
+                <Icon style="border-right: none;" id={icon || "noIcon"} custom right />
+                {name} <span class="count">({count})</span>
+            </p>
+            <div style="flex: 0;padding: 0 10px;" class="alignRight">
+                <Checkbox checked={$chumsSyncCategories.includes(id)} on:change={() => toggleCategory(id)} />
+            </div>
+        </CombinedInput>
+    {/each}
 </div>
 
+<!-- <CombinedInput style="margin-top: 10px;">
+    <Button style="width: 100%;" on:click={() => activePopup.set(null)} center>
+        <Icon id="check" size={1.2} right />
+        <T id="actions.done" />
+    </Button>
+</CombinedInput> -->
+
 <style>
-    .popup {
-        width: 400px;
-        max-width: 90vw;
-    }
+    .tip {
+        margin-bottom: 10px;
 
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-
-    .content {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        opacity: 0.7;
+        font-size: 0.8em;
     }
 
     .categories {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
         max-height: 300px;
         overflow-y: auto;
     }
 
-    .category {
+    .count {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-    }
+        margin-left: 8px;
 
-    .count {
-        color: var(--color-text-secondary);
-        font-size: 0.9em;
+        opacity: 0.7;
+        font-size: 0.7em;
     }
-
-    .buttons {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 1rem;
-    }
-</style> 
+</style>

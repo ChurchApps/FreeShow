@@ -7,6 +7,7 @@ import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
+    actions,
     activePopup,
     activeProject,
     alertUpdates,
@@ -16,8 +17,8 @@ import {
     autosave,
     calendarAddShow,
     categories,
-    customMetadata,
     chumsSyncCategories,
+    customMetadata,
     customizedIcons,
     dataPath,
     deletedShows,
@@ -47,7 +48,6 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
-    actions,
     openedFolders,
     outLocked,
     outputs,
@@ -380,5 +380,5 @@ const saveList: { [key in SaveList]: any } = {
     companion: null,
     globalTags,
     customMetadata: null,
-    chumsSyncCategories
+    chumsSyncCategories: null
 }
