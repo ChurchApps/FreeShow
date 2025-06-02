@@ -30,7 +30,7 @@
         <CombinedInput>
             <p style="flex: 1;">
                 <Icon style="border-right: none;" id={icon || "noIcon"} custom right />
-                {name} <span class="count">({count})</span>
+                {name} <span style="border: none;" class="count">({count})</span>
             </p>
             <div style="flex: 0;padding: 0 10px;" class="alignRight">
                 <Checkbox checked={$chumsSyncCategories.includes(id)} on:change={() => toggleCategory(id)} />

@@ -18,7 +18,7 @@
             size: 300,
             radius: 50,
             glow: true,
-            hold: false,
+            hold: false
         },
         pointer: {
             color: "#FF0000",
@@ -27,10 +27,10 @@
             radius: 50,
             glow: false,
             hollow: true,
-            hold: false,
+            hold: false
         },
         zoom: {
-            size: 200,
+            size: 200
         },
         particles: {
             color: "#1e1eb4",
@@ -39,12 +39,12 @@
             radius: 25,
             glow: false,
             hollow: false,
-            hold: false,
+            hold: false
         },
         fill: {
             color: "#000000",
             opacity: 0.8,
-            rainbow: false,
+            rainbow: false
         },
         paint: {
             color: "#ffffff",
@@ -53,8 +53,9 @@
             // not saved:
             threed: false,
             dots: false,
-            hold: true, // always true
-        },
+            link_to_slide: false,
+            hold: true // always true
+        }
     }
 
     const change = (e: any, key: string) => update(key, e.detail)
@@ -96,7 +97,7 @@
                                         {/if}
                                         {#if key === "color"}
                                             <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                                        {:else if ["glow", "hold", "rainbow", "hollow", "straight", "dots", "threed"].includes(key)}
+                                        {:else if ["glow", "hold", "rainbow", "hollow", "straight", "dots", "threed", "link_to_slide"].includes(key)}
                                             <div class="alignRight">
                                                 <Checkbox checked={value} on:change={(e) => check(e, key)} />
                                             </div>

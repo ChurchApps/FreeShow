@@ -77,7 +77,7 @@ import {
     undoHistory,
     usageLog,
     variables,
-    windowState,
+    windowState
 } from "../stores"
 import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
@@ -183,13 +183,17 @@ export const mainResponses: MainResponses = {
         newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
     },
     [ToMain.RESTORE2]: ({ finished, starting }) => {
-        if (!finished) return activePopup.set(null)
+        if (!finished) {
+            if (get(activePopup) !== "initialize") activePopup.set(null)
+            return
+        }
         if (starting) return newToast("$settings.restore_started")
 
         // close opened
         activeEdit.set({ items: [] })
         activeShow.set(null)
         activePage.set("show")
+        if (get(activePopup) === "initialize") activePopup.set(null)
 
         newToast("$settings.restore_finished")
     },
@@ -297,7 +301,7 @@ export const mainResponses: MainResponses = {
                 created: pcoProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: pcoProject.items || [],
+                shows: pcoProject.items || []
             }
 
             const projectId = pcoProject.id
@@ -361,7 +365,7 @@ export const mainResponses: MainResponses = {
                 created: chumsProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: chumsProject.items || [],
+                shows: chumsProject.items || []
             }
 
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
@@ -383,7 +387,7 @@ export const mainResponses: MainResponses = {
             DATA_SHOWS: () => {
                 dataPath.set(a.path)
                 if (a.showsPath) showsPath.set(a.showsPath)
-            },
+            }
         }
 
         if (!receiveFOLDER[a.channel]) return
@@ -395,7 +399,7 @@ export const mainResponses: MainResponses = {
                 const path = a.files[0]
                 const file = a.content[path]
                 if (file) validateKeys(file)
-            },
+            }
         }
 
         if (!receiveFILE[a.channel]) return
@@ -407,7 +411,7 @@ export const mainResponses: MainResponses = {
         const receiveFilePathIMPORT = {
             // Media
             pdf: () => addToProject("pdf", mainData as string[]),
-            powerkey: () => addToProject("ppt", mainData as string[]),
+            powerkey: () => addToProject("ppt", mainData as string[])
         }
         if (mainData.find((dataValue) => typeof dataValue === "string")) {
             if (!receiveFilePathIMPORT[a.channel]) return
@@ -446,10 +450,10 @@ export const mainResponses: MainResponses = {
             // Other
             calendar: () => convertCalendar(data),
             // Bibles
-            BIBLE: () => importBibles(data),
+            BIBLE: () => importBibles(data)
         }
 
         if (!receiveIMPORT[a.channel]) return
         receiveIMPORT[a.channel]()
-    },
+    }
 }

@@ -98,6 +98,7 @@ export const isFadingOut: Writable<any> = writable(false)
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
+export const paintCacheSlide: Writable<{ [key: string]: DrawLine[] }> = writable({})
 export const paintCache: Writable<DrawLine[]> = writable([])
 
 // OUTPUTS

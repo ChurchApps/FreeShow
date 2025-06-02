@@ -44,6 +44,9 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     }
     if (id) newData.id = id
 
+    // selected item is always on top, deselect to make new item on top
+    activeEdit.set({ ...get(activeEdit), items: [] })
+
     if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }

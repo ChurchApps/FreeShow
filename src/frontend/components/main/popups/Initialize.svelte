@@ -11,6 +11,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
+    import HRule from "../../input/HRule.svelte"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
@@ -39,15 +40,19 @@
     const inputs = {
         timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12")
     }
+
+    function restore() {
+        sendMain(Main.RESTORE, { showsPath: $showsPath! })
+    }
 </script>
 
 <div class="main">
     <p><T id="setup.good_luck" /></p>
     <p><T id="setup.tips" /></p>
 
-    <br />
+    <!-- <HRule /> -->
 
-    <p style="margin-bottom: 10px;font-style: italic;opacity: 0.7;"><T id="setup.change_later" />:</p>
+    <p style="margin-top: 25px;margin-bottom: 10px;font-style: italic;opacity: 0.7;"><T id="setup.change_later" />:</p>
 
     <CombinedInput textWidth={30}>
         <p><T id="settings.language" /></p>
@@ -79,11 +84,18 @@
     <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
   </div> -->
 
-    <br />
-
-    <Button class="start" on:click={create} style="font-size: 2em;" dark center>
+    <Button class="start" on:click={create} style="font-size: 2em;margin-top: 20px;" dark center>
         <Icon id="check" size={2.5} right />
         <T id="setup.get_started" />
+    </Button>
+
+    <HRule title="setup.or" />
+
+    <Button style="padding: 8px !important;" disabled={!$showsPath} on:click={restore} center dark>
+        <span style="display: flex;align-items: center;">
+            <Icon id="import" style="margin-inline-start: 0.5em;" size={1.3} right />
+            <p><T id="setup.restore_data" /></p>
+        </span>
     </Button>
 </div>
 

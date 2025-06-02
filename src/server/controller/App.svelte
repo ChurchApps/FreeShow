@@ -65,7 +65,7 @@
 
         socket.emit("CONTROLLER", {
             channel: "FOCUS",
-            data,
+            data
         })
     }
 
@@ -80,12 +80,12 @@
         let offset = { x: x / elemRect.width, y: y / elemRect.height }
         offset = {
             x: Math.max(0, Math.min(offset.x, 1)),
-            y: Math.max(0, Math.min(offset.y, 1)),
+            y: Math.max(0, Math.min(offset.y, 1))
         }
 
         socket.emit("CONTROLLER", {
             channel: "FOCUS",
-            data: { offset, tool: tool.toLowerCase() },
+            data: { offset, tool: tool.toLowerCase() }
         })
     }
 
@@ -109,9 +109,9 @@
 
 {#if draw}
     <div class="draw">
-        <select name="tools" on:change={changeTool}>
-            {#each tools as tool}
-                <option value={tool}>{tool}</option>
+        <select name="tools" value={tool} on:change={changeTool}>
+            {#each tools as toolKey}
+                <option value={toolKey}>{toolKey}</option>
             {/each}
         </select>
 

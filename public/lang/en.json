@@ -79,10 +79,12 @@
         "global_options": "These options are applied globally."
     },
     "setup": {
-        "good_luck": "I hope you find this software useful. Good luck showing! :)",
+        "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
         "tips": "Find handy tips and tutorials on the website.",
         "change_later": "You can change these settings later",
-        "get_started": "Get started!"
+        "get_started": "Get started!",
+        "or": "or",
+        "restore_data": "Restore previous data"
     },
     "example": {
         "welcome": "Welcome",
@@ -1128,7 +1130,8 @@
         "straight": "Straight",
         "rainbow": "Rainbow",
         "threed": "3D",
-        "dots": "Dots"
+        "dots": "Dots",
+        "link_to_slide": "Link to slide"
     },
     "stage": {
         "stage_layout": "Stage layout",
