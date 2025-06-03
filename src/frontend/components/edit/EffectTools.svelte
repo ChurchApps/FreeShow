@@ -1,29 +1,32 @@
 <script lang="ts">
+    import type { EffectItem } from "../../../types/Effects"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit } from "../../stores"
-    import { effects } from "../drawer/effects/effects"
+    import { activeEdit, activePopup, effects } from "../../stores"
+    import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { clone } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
+    import CombinedInput from "../inputs/CombinedInput.svelte"
     import Tabs from "../main/Tabs.svelte"
     import EditValues from "./tools/EditValues.svelte"
+    import { effectEdits } from "./values/effects"
 
     let tabs: TabsObj = {
-        effect: { name: "items.effect", icon: "image" },
+        effect: { name: "items.effect", icon: "image" }
         // filters: { name: "edit.filters", icon: "filter" },
-        // options: { name: "", icon: "options" },
+        // options: { name: "", icon: "options" }, // canvas settings (background color)
     }
     let active: string = Object.keys(tabs)[0]
 
     // update values
     $: effectId = $activeEdit.id || ""
-    $: currentEffect = effects[effectId]
+    $: currentEffect = $effects[effectId]
+    // $: currentEdits = effectEdits[currentEffect.type]
 
-    let edits: any = {}
-    // let filterEdits = clone(currentEffect.edit)
-    $: if (currentEffect) edits = clone(currentEffect?.edit)
-    $: console.log(edits)
+    // let edits: any = {}
+    // // let filterEdits = clone(currentEffect.edit)
+    // $: if (currentEffect) edits = {} // clone(currentEffect?.items)
+    // $: console.log(edits)
 
     // $: if (geteffectType(getExtension(effectId)) === "video") addVideoOptions()
     // else edits = clone(effectEdits.effect?.edit)
@@ -49,37 +52,24 @@
     //     })
     // }
 
-    // function reset() {
-    //     let deleteKeys: string[] = ["flipped", "fit", "speed"]
-
-    //     // reset
-    //     if (active === "filters") deleteKeys = ["filter"]
-    //     else if (active !== "effect") return
-    //     deleteKeys.forEach((key) => removeStore("effect", { keys: [effectId, key] }))
-
-    //     // update output
-    //     let currentOutput = $outputs[getActiveOutputs()[0]]
-    //     let bg = currentOutput?.out?.background
-    //     if (!bg) return
-    //     deleteKeys.forEach((key) => delete bg[key])
-    //     setOutput("background", bg)
-    // }
-
-    export function valueChanged(input: any) {
+    export function valueChanged(input: any, itemIndex: number) {
         if (!effectId) return
 
-        let value = input.value
-        console.log(value)
-        // if (input.id === "filter") value = addFilterString(currenteffect?.filter || "", [input.key, value])
+        effects.update((a) => {
+            a[effectId].items[itemIndex][input.id] = input.value
+            return a
+        })
+    }
 
-        // updateStore("effect", { keys: [effectId, input.id], value })
+    function getEdits(item: EffectItem) {
+        const edits = clone(effectEdits[item.type] || [])
 
-        // // update output filters
-        // let currentOutput = $outputs[getActiveOutputs()[0]]
-        // if (!currentOutput.out?.background || currentOutput.out?.background?.path !== effectId) return
-        // let bg = currentOutput.out.background
-        // bg[input.id] = value
-        // setOutput("background", bg)
+        edits.forEach((edit) => {
+            const value = item[edit.id]
+            if (value !== undefined) edit.value = value
+        })
+
+        return { default: edits }
     }
 </script>
 
@@ -87,18 +77,31 @@
     <Tabs {tabs} bind:active />
     <div class="content">
         {#if active === "effect"}
-            <EditValues {edits} on:change={(e) => valueChanged(e.detail)} />
+            {#if currentEffect}
+                {#each currentEffect.items || [] as item, i}
+                    <p>{item.type}</p>
+                    <EditValues edits={getEdits(item)} on:change={(e) => valueChanged(e.detail, i)} />
+                {/each}
+            {/if}
+
+            <CombinedInput>
+                <Button style="width: 100%;" on:click={() => activePopup.set("effect_items")} center dark>
+                    <Icon id="add" right />
+                    <T id="settings.add" />
+                </Button>
+            </CombinedInput>
+
             <!-- {:else if active === "filters"}
             <EditValues edits={filterEdits} on:change={(e) => valueChanged(e.detail)} /> -->
         {/if}
     </div>
 
-    <span style="display: flex;">
+    <!-- <span style="display: flex;">
         <Button style="flex: 1;" on:click={() => console.log("reset")} dark center>
             <Icon id="reset" right />
             <T id={"actions.reset"} />
         </Button>
-    </span>
+    </span> -->
 </div>
 
 <style>

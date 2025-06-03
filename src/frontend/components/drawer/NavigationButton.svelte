@@ -55,7 +55,7 @@
 
     $: red = id === "scripture" && $notFound.bible.find((a) => a.id === category.id)
 
-    const defaultFolders = ["all", "unlabeled", "favourites", "effects_library", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const defaultFolders = ["all", "unlabeled", "favourites", "effects_library", "effects", "online", "screens", "cameras", "microphones", "audio_streams"]
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 </script>
 

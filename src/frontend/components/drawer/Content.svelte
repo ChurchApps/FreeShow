@@ -4,7 +4,6 @@
     import Audio from "./audio/Audio.svelte"
     import Scripture from "./bible/Scripture.svelte"
     import Calendar from "./calendar/Calendar.svelte"
-    import Effects from "./effects/Effects.svelte"
     import Media from "./media/Media.svelte"
     import Actions from "./pages/Actions.svelte"
     import Overlays from "./pages/Overlays.svelte"
@@ -57,8 +56,6 @@
             <Variables {searchValue} />
         {:else if active === "triggers"}
             <Triggers {searchValue} />
-        {:else if active === "effects"}
-            <Effects {active} {searchValue} />
         {/if}
     {/if}
 </div>

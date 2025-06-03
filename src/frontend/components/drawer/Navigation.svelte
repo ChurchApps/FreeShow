@@ -85,6 +85,7 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(anyFavourites ? [{ id: "favourites", name: "category.favourites", default: true, icon: "star" }] : []),
                 { id: "SEPERATOR", name: "" },
+                { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
                 { id: "online", name: "media.online", default: true, icon: "web" },
                 { id: "screens", name: "live.screens", default: true, icon: "screen" },
                 { id: "cameras", name: "live.cameras", default: true, icon: "camera" },

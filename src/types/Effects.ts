@@ -1,0 +1,192 @@
+export interface Effects {
+    [key: string]: Effect
+}
+
+export interface Effect {
+    name: string
+    color: string | null
+    style: string
+    items: EffectItem[]
+}
+
+// | "rain_screen"
+export type EffectType = "shape" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "neon" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks"
+export interface EffectItem<T extends EffectType = EffectType> {
+    type: T
+    cropped?: { top: number; right: number; bottom: number; left: number }
+}
+
+///
+
+export type EffectFunction = (item: EffectItem, deltaTime: number) => void
+export type EffectInit = (item: EffectItem) => void
+
+export interface EffectDefinition {
+    init?: EffectInit
+    render: EffectFunction
+}
+
+///
+
+export interface DayNightCycle {
+    speed: number // multiplier (1 = normal speed)
+}
+
+export type Side = "bottom" | "top" | "left" | "right"
+
+/// ITEMS ///
+
+export interface ShapeItem extends EffectItem<"shape"> {
+    shape: "circle" | "rectangle" | "triangle"
+    x: number
+    y: number
+    size: number
+    rotationSpeed: number // degrees per frame or per second scaled by deltaTime
+    color?: string
+}
+
+export interface WaveItem extends EffectItem<"wave"> {
+    amplitude: number
+    wavelength: number
+    speed: number
+    color: string
+    offset: number
+    side?: Side
+    phase?: number
+}
+
+export interface BubbleItem extends EffectItem<"bubbles"> {
+    count: number
+    size: number
+    maxSizeVariation: number
+    pulseSpeed?: number
+    speed: number
+    // color range
+}
+
+export interface StarItem extends EffectItem<"stars"> {
+    count: number
+    size: number
+    speed?: number
+}
+
+export interface GalaxyItem extends EffectItem<"galaxy"> {
+    count: number // Total number of stars
+    size: number // Base size of stars
+    swirlStrength: number // Spiral curve factor
+    rotationSpeed: number // Rotation speed
+    armCount?: number // Number of spiral arms
+    nebula?: boolean // Draw gas clouds
+    colors?: string[] // Star color palette
+}
+
+export interface RainItem extends EffectItem<"rain"> {
+    count: number
+    speed: number
+    length: number
+    width: number
+    color?: string
+}
+
+// interface RainScreenItem extends EffectItem<"rain_screen"> {
+//     count: number
+//     minRadius: number
+//     maxRadius: number
+//     color?: string
+//     gravity?: number
+//     smear?: boolean
+// }
+
+export interface SnowItem extends EffectItem<"snow"> {
+    count: number
+    size: number
+    speed: number
+    drift?: number // horizontal sway
+    color?: string
+}
+
+// WIP
+export interface NeonItem extends EffectItem<"neon"> {
+    radius: number
+    thickness: number
+    speed: number
+    angle: number
+    color: string
+}
+
+export interface SunItem extends EffectItem<"sun"> {
+    x: number // sun center X (px)
+    y: number // sun center Y (px)
+    radius: number // sun core radius
+    rayCount: number // number of rays
+    rayLength: number // length of rays
+    rayWidth: number // width of rays
+    color?: string
+}
+
+export interface LensFlareItem extends EffectItem<"lens_flare"> {
+    radius: number
+    x: number
+    y: number
+}
+
+export interface SpotlightItem extends EffectItem<"spotlight"> {
+    x: number // base center x-position (origin of the cone)
+    y: number // base y-position (origin of the cone)
+    length: number // length of the light cone (height of the triangle)
+    baseWidth: number // width of the base of the triangle
+    color: string // base color of the spotlight (glow)
+    swayAmplitude: number // max horizontal sway (in pixels)
+    swaySpeed: number // sway speed in radians per second
+    angle?: number // optional rotation angle (default 0 means pointing down)
+}
+
+export interface AuroraItem extends EffectItem<"aurora"> {
+    bandCount: number
+    colorStops: string[]
+    amplitude: number
+    wavelength: number
+    speed: number
+    opacity?: number
+    offset?: number
+}
+
+export interface BloomItem extends EffectItem<"bloom"> {
+    blobCount?: number
+    blurAmount?: number
+    speed?: number
+}
+
+export interface FogItem extends EffectItem<"fog"> {
+    count: number // number of fog clouds
+    size: number // base size of each fog cloud
+    speed: number // horizontal movement speed
+    opacity?: number // default: 0.1
+    blur?: number // default: 50
+    spread?: number
+    offset?: number
+}
+
+export interface CityItem extends EffectItem<"city"> {
+    buildingCount: number
+    minWidth: number
+    maxWidth: number
+    minHeight: number
+    maxHeight: number
+    color?: string
+    windowColor?: string
+    night?: boolean
+    flickerSpeed?: number // 0 to 1 (chance per window per frame to toggle)
+}
+
+export interface RayItem extends EffectItem<"rays"> {
+    speed: number
+    color_1: string
+    color_2: string
+    numRays?: number
+}
+
+export interface FireworkItem extends EffectItem<"fireworks"> {
+    count: number
+    speed: number
+}

@@ -534,7 +534,8 @@
         "collection": "New collection",
         "action": "New action",
         "event": "New event",
-        "event_action": "New scheduled action"
+        "event_action": "New scheduled action",
+        "effect": "New effect"
     },
     "show": {
         "name": "Name",
@@ -1447,6 +1448,28 @@
         "daily": "Daily",
         "weekly": "Weekly",
         "mothly": "Monthly"
+    },
+    "effect": {
+        "circle": "circle",
+        "rectangle": "rectangle",
+        "triangle": "triangle",
+        "wave": "wave",
+        "bubbles": "bubbles",
+        "stars": "stars",
+        "galaxy": "galaxy",
+        "rain": "rain",
+        "rain_screen": "rain screen",
+        "snow": "snow",
+        "neon": "neon",
+        "sun": "sun",
+        "lens_flare": "lens flare",
+        "spotlight": "spotlight",
+        "aurora": "aurora",
+        "bloom": "bloom",
+        "fog": "fog",
+        "city": "city",
+        "rays": "rays",
+        "fireworks": "fireworks"
     },
     "info": {
         "created": "Created",

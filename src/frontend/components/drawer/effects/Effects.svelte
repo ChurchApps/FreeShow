@@ -1,22 +1,20 @@
 <script lang="ts">
-    import { mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { effects, outLocked, outputs, styles } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getActiveOutputs, getResolution, setOutput } from "../../helpers/output"
+    import { clearBackground } from "../../output/clear"
     import Effect from "../../output/effects/Effect.svelte"
+    import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
-    import { effects } from "./effects"
 
-    export let active: string | null
     export let searchValue = ""
-    console.log(active)
 
     $: resolution = getResolution(null, { $outputs, $styles })
-
     let filteredEffects: any[] = []
-    $: filteredEffects = sortByName(keysToID(effects))
+    $: filteredEffects = sortByName(keysToID($effects))
 
     // search
     $: if (filteredEffects || searchValue !== undefined) filterSearch()
@@ -27,40 +25,32 @@
         if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
-    let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-
-        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
-    }
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
+<div style="position: relative;height: 100%;width: 100%;overflow-y: auto;">
     {#if fullFilteredEffects.length}
         <div class="grid">
             {#each fullFilteredEffects as effect}
                 <Card
-                    class="context #effect_card"
+                    resolution={{ width: 16, height: 9 }}
                     outlineColor={findMatchingOut(effect.id, $outputs)}
                     active={findMatchingOut(effect.id, $outputs) !== null}
-                    label={effect.name || "—"}
+                    label={effect.name}
+                    renameId="effect_{effect.id}"
                     color={effect.color}
-                    {resolution}
+                    showPlayOnHover
                     on:click={(e) => {
-                        if (!$outLocked && !e.ctrlKey && !e.metaKey) setOutput("effects", effect.id, true)
+                        if ($outLocked || e.ctrlKey || e.metaKey) return
+                        if (currentOutput.out?.background?.id === effect.id) clearBackground()
+                        else setOutput("background", { id: effect.id, type: "effect" })
                     }}
                 >
-                    <SelectElem id="effect" data={effect.id} fill draggable>
-                        <div class="slide">
-                            <Effect {effect} />
-                        </div>
+                    <!-- dblclick open preview -->
+                    <SelectElem id="effect" class="context #effect_card" data={effect.id} fill draggable>
+                        <Zoomed {resolution} background={effect.items?.length ? "var(--primary);" : effect.color || "var(--primary);"} checkered={!!effect.items?.length}>
+                            <Effect {effect} preview />
+                        </Zoomed>
                     </SelectElem>
                 </Card>
             {/each}
@@ -76,20 +66,6 @@
     {/if}
 </div>
 
-<!-- <div class="tabs">
-    <Button
-        style="flex: 1;"
-        on:click={() => {
-            history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
-        }}
-        center
-        title={$dictionary.new?.effect}
-    >
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.effect" />{/if}
-    </Button>
-</div> -->
-
 <style>
     .grid {
         display: flex;
@@ -102,17 +78,4 @@
     .grid :global(.isSelected) {
         outline: 5px solid var(--secondary-text) !important;
     }
-
-    .slide {
-        background-color: black;
-        width: 100%;
-        height: 100%;
-        aspect-ratio: 19/9;
-        overflow: hidden;
-    }
-
-    /* .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
-    } */
 </style>
