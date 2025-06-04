@@ -23,7 +23,7 @@ export const EMPTY_STAGE = {
 
 export const EMPTY_CATEGORY: Category = { name: "", icon: null }
 export const EMPTY_PLAYER_VIDEO = { name: "", type: "" } // "youtube" | "vimeo"
-export const EMPTY_EFFECT: Effect = { name: "", color: null, style: "", items: [] }
+export const EMPTY_EFFECT: Effect = { name: "", color: null, style: "", background: "", items: [] }
 
 // if (get(drawerTabsData)[s.store]?.activeSubTab !== "all" && get(drawerTabsData).templates?.activeSubTab !== "unlabeled") category = get(drawerTabsData)[s.store].activeSubTab
 export const EMPTY_SLIDE: Overlay | Template = { name: "", color: null, category: null, items: [] }

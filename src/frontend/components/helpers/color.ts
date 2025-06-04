@@ -16,7 +16,7 @@ export const defaultColors = [
     { name: "Purple", value: "#B10DC9" },
     { name: "Fuchsia", value: "#F012BE" },
     { name: "Maroon", value: "#85144b" },
-    { name: "Black", value: "#000000" },
+    { name: "Black", value: "#000000" }
 ]
 
 export const defaultGradients = [
@@ -49,7 +49,7 @@ export const defaultGradients = [
     { name: "Red, White, Blue", value: "linear-gradient(90deg, #FF4136 10%, #ff94cd 30%, #FFFFFF 50%, #7FDBFF 70%, #0074D9 90%)" },
     // Radial
     { name: "Purple Circle", value: "radial-gradient(circle, #4998d4 10%, #7a2ad5 50%, #a808aa 90%)" },
-    { name: "Blue Circle", value: "radial-gradient(circle, #39CCCC 0%, #0074D9 50%, #001f3f 100%)" },
+    { name: "Blue Circle", value: "radial-gradient(circle, #39CCCC 0%, #0074D9 50%, #001f3f 100%)" }
 ]
 
 export function hexToRgb(hex: string) {
@@ -58,7 +58,7 @@ export function hexToRgb(hex: string) {
     return {
         r: result ? parseInt(result[1], 16) : 0,
         g: result ? parseInt(result[2], 16) : 0,
-        b: result ? parseInt(result[3], 16) : 0,
+        b: result ? parseInt(result[3], 16) : 0
     }
 }
 
@@ -70,7 +70,7 @@ export function splitRgb(rgb: string) {
         r: Number(splitted[0] ?? 0),
         g: Number(splitted[1] ?? 0),
         b: Number(splitted[2] ?? 0),
-        a: Number(splitted[3] ?? 1),
+        a: Number(splitted[3] ?? 1)
     }
 }
 
@@ -88,7 +88,7 @@ export function splitGradientValue(gradientStr: string) {
         type: "",
         deg: 0,
         shape: "circle",
-        colors: [] as { color: string; pos: number }[],
+        colors: [] as { color: string; pos: number | null }[]
     }
 
     // remove trailing ;
@@ -103,8 +103,8 @@ export function splitGradientValue(gradientStr: string) {
 
     // Split components safely accounting for nested parentheses
     const parts: string[] = []
-    let buffer = "",
-        depth = 0
+    let buffer = ""
+    let depth = 0
     for (const char of inner) {
         if (char === "(") depth++
         if (char === ")") depth--
@@ -119,7 +119,7 @@ export function splitGradientValue(gradientStr: string) {
 
     // linear-gradient: optional angle
     if (result.type === "linear-gradient") {
-        const angle = parts[0].match(/^(\d+(?:\.\d+)?)deg$/i)
+        const angle = parts[0]?.match(/^(\d+(?:\.\d+)?)deg$/i)
         if (angle) {
             result.deg = parseFloat(angle[1])
             parts.shift()
@@ -130,7 +130,7 @@ export function splitGradientValue(gradientStr: string) {
 
     // radial-gradient: optional shape
     if (result.type === "radial-gradient") {
-        const shape = parts[0].toLowerCase()
+        const shape = parts[0]?.toLowerCase()
         if (shape === "circle" || shape === "ellipse") {
             result.shape = shape
             parts.shift()
@@ -152,8 +152,25 @@ export function splitGradientValue(gradientStr: string) {
         const match = stop.match(/^(.*?)(?:\s+([\d.]+)%)?$/)
         if (match) {
             const color = normalizeColor(match[1])
-            const pos = match[2] ? parseFloat(match[2]) : 0
+            const pos = match[2] ? parseFloat(match[2]) : null
             result.colors.push({ color, pos })
+        }
+    }
+
+    // Auto-assign positions if missing
+    const total = result.colors.length
+    const hasAllPositions = result.colors.every((c) => c.pos !== null)
+    if (!hasAllPositions) {
+        for (let i = 0; i < total; i++) {
+            if (result.colors[i].pos === null) {
+                if (i === 0) {
+                    result.colors[i].pos = 0
+                } else if (i === total - 1) {
+                    result.colors[i].pos = 100
+                } else {
+                    result.colors[i].pos = parseFloat(((100 / (total - 1)) * i).toFixed(2))
+                }
+            }
         }
     }
 

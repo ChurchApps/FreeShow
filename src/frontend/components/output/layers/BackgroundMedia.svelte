@@ -6,7 +6,7 @@
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { allOutputs, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { allOutputs, currentWindow, effects, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -16,6 +16,7 @@
     import OutputTransition from "../transitions/OutputTransition.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
+    import Effect from "../effects/Effect.svelte"
 
     export let outputId = ""
 
@@ -217,11 +218,22 @@
         AudioAnalyser.recorderActivate()
         previousPath = id
     }
+
+    // don't update real time
+    let currentEffect: any = null
+    $: if (id) updateEffect()
+    function updateEffect() {
+        currentEffect = $effects[id] ? { id, ...$effects[id] } : null
+    }
 </script>
 
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
         <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
+    {:else if type === "effect"}
+        {#if currentEffect}
+            <Effect effect={currentEffect} />
+        {/if}
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}

@@ -169,7 +169,7 @@ const clickActions = {
         const data = obj.sel?.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
-        const renameByIdDirect = ["overlay", "template", "player", "layout"]
+        const renameByIdDirect = ["overlay", "template", "player", "layout", "effect"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
@@ -215,7 +215,7 @@ const clickActions = {
         console.error("COULD NOT REMOVE", obj)
     },
     recolor: () => {
-        // "slide" || "group" || "overlay" || "template" || "output"
+        // "slide" || "group" || "overlay" || "template" || "output" || "effect"
         activePopup.set("color")
     },
     // not currently in use:

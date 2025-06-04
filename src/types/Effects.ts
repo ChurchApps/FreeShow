@@ -6,6 +6,7 @@ export interface Effect {
     name: string
     color: string | null
     style: string
+    background: string
     items: EffectItem[]
 }
 
@@ -14,6 +15,8 @@ export type EffectType = "shape" | "wave" | "bubbles" | "stars" | "galaxy" | "ra
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     cropped?: { top: number; right: number; bottom: number; left: number }
+    x?: number
+    y?: number
 }
 
 ///
@@ -38,8 +41,6 @@ export type Side = "bottom" | "top" | "left" | "right"
 
 export interface ShapeItem extends EffectItem<"shape"> {
     shape: "circle" | "rectangle" | "triangle"
-    x: number
-    y: number
     size: number
     rotationSpeed: number // degrees per frame or per second scaled by deltaTime
     color?: string
@@ -115,8 +116,6 @@ export interface NeonItem extends EffectItem<"neon"> {
 }
 
 export interface SunItem extends EffectItem<"sun"> {
-    x: number // sun center X (px)
-    y: number // sun center Y (px)
     radius: number // sun core radius
     rayCount: number // number of rays
     rayLength: number // length of rays
@@ -125,14 +124,12 @@ export interface SunItem extends EffectItem<"sun"> {
 }
 
 export interface LensFlareItem extends EffectItem<"lens_flare"> {
+    size: number
     radius: number
-    x: number
-    y: number
+    flareDiscNum?: number
 }
 
 export interface SpotlightItem extends EffectItem<"spotlight"> {
-    x: number // base center x-position (origin of the cone)
-    y: number // base y-position (origin of the cone)
     length: number // length of the light cone (height of the triangle)
     baseWidth: number // width of the base of the triangle
     color: string // base color of the spotlight (glow)

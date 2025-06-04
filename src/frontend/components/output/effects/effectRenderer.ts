@@ -217,11 +217,13 @@ export class EffectRender {
     }
 
     // calculate offset from percentage (0-1)
-    getOffsetX(offset: number, side: Side | null = null) {
+    getOffsetX(offset: number | undefined, side: Side | null = null) {
+        if (offset === undefined) offset = 0.5
         if (side === "right") return this.width * (1 - offset)
         return this.width * offset
     }
-    getOffsetY(offset: number, side: Side | null = null) {
+    getOffsetY(offset: number | undefined, side: Side | null = null) {
+        if (offset === undefined) offset = 0.5
         if (side === "bottom") return this.height * (1 - offset)
         return this.height * offset
     }
@@ -307,6 +309,7 @@ export class EffectRender {
     drawShape(item: ShapeItem, deltaTime: number) {
         const ctx = this.ctx
         const data = this.effectData.get(item)
+        if (!data) return
 
         data.angle += item.rotationSpeed * deltaTime * 0.01 // scale rotation over time
         const angleRad = (data.angle * Math.PI) / 180
@@ -387,7 +390,7 @@ export class EffectRender {
             return {
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                baseRadius: Math.random() * item.size + item.maxSizeVariation,
+                baseRadius: Math.random() * item.size + (item.maxSizeVariation ?? 10),
                 pulseSpeed: Math.random() * ((item.pulseSpeed || 1) * 0.0002) + 0.0001,
                 pulsePhase: Math.random() * Math.PI * 2,
                 speed: item.speed * (Math.random() * 0.5 + 0.2),
@@ -401,7 +404,7 @@ export class EffectRender {
 
     drawBubbles(item: BubbleItem, deltaTime: number) {
         const ctx = this.ctx
-        const bubbles = this.effectData.get(item)
+        const bubbles = this.effectData.get(item) || []
         const time = performance.now()
 
         for (let bubble of bubbles) {
@@ -449,7 +452,7 @@ export class EffectRender {
 
     drawStars(item: StarItem) {
         const ctx = this.ctx
-        const stars = this.effectData.get(item)
+        const stars = this.effectData.get(item) || []
 
         for (let star of stars) {
             ctx.save()
@@ -473,14 +476,16 @@ export class EffectRender {
     /// GALAXY ///
 
     initGalaxy(item: GalaxyItem) {
-        const centerX = this.canvas.width / 2
-        const centerY = this.canvas.height / 2
+        const centerX = this.getOffsetX(item.x)
+        const centerY = this.getOffsetY(item.y)
         // const maxRadius = Math.min(this.canvas.width, this.canvas.height) * 0.45
+
+        item.nebula = item.nebula ?? true
 
         // const stars = []
         const arms = item.armCount ?? 4
-        const swirl = item.swirlStrength
-        const colors = item.colors ?? ["white", "lightblue", "violet"]
+        const swirl = 1 - (item.swirlStrength ?? 0.5)
+        const colors = item.colors ?? ["white", "#a0c8ff", "#e0b3ff", "#ffccff"] // ["white", "lightblue", "violet"]
 
         const ARM_COUNT = arms
         const ARM_SPREAD = swirl
@@ -514,8 +519,8 @@ export class EffectRender {
         for (let i = 0; i < CORE_STARS; i++) {
             const r = Math.pow(Math.random(), 1) * CORE_RADIUS // 0.7 gives more mid-radius stars
             const angle = Math.random() * 2 * Math.PI
-            const x = this.width / 2 + r * Math.cos(angle)
-            const y = this.height / 2 + r * Math.sin(angle)
+            const x = centerX + r * Math.cos(angle)
+            const y = centerY + r * Math.sin(angle)
 
             spiralStars.push({
                 inCore: true,
@@ -542,9 +547,9 @@ export class EffectRender {
 
     drawGalaxy(item: GalaxyItem, deltaTime: number) {
         const maxRadius = Math.min(this.canvas.width, this.canvas.height) * 0.45
-        const { stars, nebula } = this.effectData.get(item)
-        const centerX = this.canvas.width / 2
-        const centerY = this.canvas.height / 2
+        const { stars, nebula } = this.effectData.get(item) || {}
+        const centerX = this.getOffsetX(item.x)
+        const centerY = this.getOffsetY(item.y)
 
         for (const star of stars) {
             let x, y
@@ -603,7 +608,7 @@ export class EffectRender {
 
     drawRain(item: RainItem, deltaTime: number) {
         const ctx = this.ctx
-        const drops = this.effectData.get(item)
+        const drops = this.effectData.get(item) || []
 
         ctx.save()
         ctx.lineCap = "round"
@@ -618,8 +623,8 @@ export class EffectRender {
 
             // Move the drop
             drop.y += drop.speed * deltaTime
-            if (drop.y > this.canvas.height) {
-                drop.y = -drop.length
+            if (drop.speed < 0 ? drop.y < 0 : drop.y > this.canvas.height) {
+                drop.y = drop.speed < 0 ? this.canvas.height + drop.length : -drop.length
                 drop.x = Math.random() * this.canvas.width
             }
         }
@@ -716,7 +721,7 @@ export class EffectRender {
 
     drawSnow(item: SnowItem, deltaTime: number) {
         const ctx = this.ctx
-        const snowflakes = this.effectData.get(item)
+        const snowflakes = this.effectData.get(item) || []
         const time = performance.now()
 
         ctx.save()
@@ -731,8 +736,8 @@ export class EffectRender {
             flake.y += flake.speed * deltaTime
             flake.x += flake.drift * 0.5
 
-            if (flake.y > this.canvas.height) {
-                flake.y = -flake.size
+            if (flake.speed < 0 ? flake.y < 0 : flake.y > this.canvas.height) {
+                flake.y = flake.speed < 0 ? this.canvas.height + flake.size : -flake.size
                 flake.x = Math.random() * this.canvas.width
             }
         }
@@ -744,8 +749,8 @@ export class EffectRender {
 
     drawNeon(item: NeonItem, deltaTime: number) {
         const ctx = this.ctx
-        const centerX = this.canvas.width / 2
-        const centerY = this.canvas.height / 2
+        const centerX = this.getOffsetX(item.x)
+        const centerY = this.getOffsetY(item.y)
 
         item.angle += item.speed * deltaTime
 
@@ -766,21 +771,17 @@ export class EffectRender {
 
     /// SUN ///
 
-    initSun(_item: SunItem) {
-        // Nothing complex needed here, just a placeholder if needed
+    initSun(item: SunItem) {
+        if (!item.rayCount) item.rayCount = 20
+        if (!item.rayLength) item.rayLength = 220
+        if (!item.rayWidth) item.rayWidth = 5
     }
 
     drawSun(item: SunItem) {
         const ctx = this.ctx
-        const {
-            x,
-            y,
-            radius,
-            rayCount,
-            rayLength,
-            rayWidth,
-            color = "rgba(255, 223, 0, 0.9)" // yellow base
-        } = item
+
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
 
         ctx.save()
 
@@ -788,8 +789,8 @@ export class EffectRender {
 
         // Outer glow (largest, faint)
         {
-            const glowRadius = radius * 4
-            const grad = ctx.createRadialGradient(x, y, radius * 1.5, x, y, glowRadius)
+            const glowRadius = item.radius * 4
+            const grad = ctx.createRadialGradient(x, y, item.radius * 1.5, x, y, glowRadius)
             grad.addColorStop(0, "rgba(255, 255, 255, 0.15)")
             grad.addColorStop(1, "transparent")
             ctx.fillStyle = grad
@@ -800,10 +801,10 @@ export class EffectRender {
 
         // Mid glow (yellowish)
         {
-            const glowRadius = radius * 2.5
-            const grad = ctx.createRadialGradient(x, y, radius, x, y, glowRadius)
+            const glowRadius = item.radius * 2.5
+            const grad = ctx.createRadialGradient(x, y, item.radius, x, y, glowRadius)
             grad.addColorStop(0, "rgba(255, 255, 255, 0.5)") // strong white center
-            grad.addColorStop(0.3, color) // yellow fade out
+            grad.addColorStop(0.3, item.color || "rgba(255, 255, 120, 0.5)") // yellow fade out
             grad.addColorStop(1, "transparent")
             ctx.fillStyle = grad
             ctx.beginPath()
@@ -814,31 +815,31 @@ export class EffectRender {
         // Inner core (small bright white circle with heavy blur)
         {
             ctx.shadowColor = "rgba(255, 255, 255, 0.9)"
-            ctx.shadowBlur = radius * 1.5
+            ctx.shadowBlur = item.radius * 1.5
             ctx.fillStyle = "rgba(255, 255, 255, 1)"
             ctx.beginPath()
-            ctx.arc(x, y, radius * 0.8, 0, Math.PI * 2)
+            ctx.arc(x, y, item.radius * 0.8, 0, Math.PI * 2)
             ctx.fill()
             ctx.shadowBlur = 0
         }
 
         // --- RAYS: soft bloom glows instead of hard triangles ---
-        for (let i = 0; i < rayCount; i++) {
-            const angle = (i / rayCount) * 2 * Math.PI
+        for (let i = 0; i < item.rayCount; i++) {
+            const angle = (i / item.rayCount) * 2 * Math.PI
 
-            const waveAmp = rayWidth * 0.3 // subtle wave height
+            const waveAmp = item.rayWidth * 0.3 // subtle wave height
             const waveFreq = 5 // number of waves around the circle
 
-            const rayX = x + Math.cos(angle) * radius * 0.8
-            const rayY = y + Math.sin(angle) * radius * 0.8
+            const rayX = x + Math.cos(angle) * item.radius * 0.8
+            const rayY = y + Math.sin(angle) * item.radius * 0.8
 
-            this.drawWavyRay(rayX, rayY, rayLength, waveAmp, waveFreq, "rgba(255, 255, 255, 0.35)", "rgba(255, 223, 0, 0.15)")
+            this.drawWavyRay(rayX, rayY, item.rayLength, waveAmp, waveFreq, "rgba(255, 255, 255, 0.35)", item.color || "rgba(255, 223, 0, 0.15)")
 
             // Create a radial gradient for each ray (soft bloom)
-            const rayRadius = rayLength
+            const rayRadius = item.rayLength
             const grad = ctx.createRadialGradient(rayX, rayY, 0, rayX, rayY, rayRadius)
             grad.addColorStop(0, "rgba(255, 255, 255, 0.35)") // bright white core of ray
-            grad.addColorStop(0.2, "rgba(255, 223, 220, 0.15)") // yellow soft edge
+            grad.addColorStop(0.2, "rgba(255, 251, 237, 0.25)") // yellow soft edge
             grad.addColorStop(1, "transparent")
 
             ctx.fillStyle = grad
@@ -850,7 +851,7 @@ export class EffectRender {
         ctx.restore()
 
         // Draw enhanced lens flare with white highlights
-        this.drawEnhancedLensFlare(x, y, radius * 3, "rgba(255, 255, 255, 0.6)")
+        this.drawEnhancedLensFlare(x, y, item.radius * 3, "rgba(255, 255, 255, 0.6)")
     }
 
     // Helper to draw a softly wavy radial gradient "ray"
@@ -936,31 +937,25 @@ export class EffectRender {
         hue: number
     }[] = []
 
-    private flareDiscNum = 9
-    private flareT = 0
-
     initLensFlare(item: LensFlareItem) {
-        const pos = this.pos(item)
-        const flareX = (pos.x + pos.xEnd) / 2
-        const flareY = (pos.y + pos.yEnd) / 2
+        const flareX = this.getOffsetX(item.x)
+        const flareY = this.getOffsetY(item.y)
         this.effectData.set(item, { x: flareX, y: flareY })
 
-        // Initialize discs on first call
-        if (this.flareT === 0) {
-            this.flareDiscs = []
+        const flareDiscNum = item.flareDiscNum ?? 8
+        const size = item.size ?? 100
 
-            for (let i = 0; i <= this.flareDiscNum; i++) {
-                const j = i - this.flareDiscNum / 2
-                const x = (this.width / 2 - flareX) * ((j / this.flareDiscNum) * 2) + this.width / 2
-                const y = (this.height / 2 - flareY) * ((j / this.flareDiscNum) * 2) + this.height / 2
-                const dia = Math.pow(Math.abs(10 * (j / this.flareDiscNum)), 2) * 3 + 110 + (Math.random() * 100 - 100)
-                const hue = Math.round(Math.random() * 360)
+        this.flareDiscs = []
 
-                this.flareDiscs.push({ x, y, dia, hue })
-            }
+        for (let i = 0; i <= flareDiscNum; i++) {
+            const j = i - flareDiscNum / 2
+            const x = (this.width / 2 - flareX) * ((j / flareDiscNum) * 2) + this.width / 2
+            const y = (this.height / 2 - flareY) * ((j / flareDiscNum) * 2) + this.height / 2
+            const dia = Math.pow(Math.abs(10 * (j / flareDiscNum)), 2) * 3 + (size + 10) + (Math.random() * size - size)
+            const hue = Math.round(Math.random() * 360)
+
+            this.flareDiscs.push({ x, y, dia, hue })
         }
-
-        this.flareT += 1
     }
 
     drawLensFlare(item: LensFlareItem) {
@@ -976,12 +971,14 @@ export class EffectRender {
 
         const dist = 1 - Math.sqrt(Math.pow(x - this.width / 2, 2) + Math.pow(y - this.height / 2, 2)) / Math.sqrt(Math.pow(this.width / 2, 2) + Math.pow(this.height / 2, 2))
 
+        const flareDiscNum = item.flareDiscNum ?? 8
+
         for (let i = 0; i < this.flareDiscs.length; i++) {
             const disc = this.flareDiscs[i]
 
-            const j = i - this.flareDiscNum / 2
-            disc.x = (this.width / 2 - x) * ((j / this.flareDiscNum) * 2) + this.width / 2
-            disc.y = (this.height / 2 - y) * ((j / this.flareDiscNum) * 2) + this.height / 2
+            const j = i - flareDiscNum / 2
+            disc.x = (this.width / 2 - x) * ((j / flareDiscNum) * 2) + this.width / 2
+            disc.y = (this.height / 2 - y) * ((j / flareDiscNum) * 2) + this.height / 2
 
             const grad = ctx.createRadialGradient(disc.x, disc.y, 0, disc.x, disc.y, disc.dia)
             grad.addColorStop(0, `hsla(${disc.hue},100%,90%,${0 * dist})`)
@@ -1062,8 +1059,8 @@ export class EffectRender {
         const triangular = t < 1 ? t : 2 - t // rises from 0→1 then falls from 1→0
         const swayAngle = (triangular - 0.5) * 2 * item.swayAmplitude
 
-        const baseX = item.x
-        const baseY = item.y
+        const baseX = this.getOffsetX(item.x)
+        const baseY = this.getOffsetY(item.y)
         const length = item.length
         const baseHalf = item.baseWidth / 2
 
@@ -1138,7 +1135,7 @@ export class EffectRender {
 
     drawAurora(item: AuroraItem, deltaTime: number) {
         const ctx = this.ctx
-        const bands = this.effectData.get(item)
+        const bands = this.effectData.get(item) || []
 
         ctx.save()
         ctx.globalCompositeOperation = "lighter"
@@ -1408,7 +1405,7 @@ export class EffectRender {
 
     drawFog(item: FogItem, deltaTime: number) {
         const ctx = this.ctx
-        const clouds = this.effectData.get(item)
+        const clouds = this.effectData.get(item) || []
         const blur = item.blur ?? 40
 
         ctx.save()
@@ -1484,7 +1481,7 @@ export class EffectRender {
 
     drawCity(item: CityItem) {
         const ctx = this.ctx
-        const buildings = this.effectData.get(item)
+        const buildings = this.effectData.get(item) || []
 
         for (const b of buildings) {
             // Building shape

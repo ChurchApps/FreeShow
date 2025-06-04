@@ -284,6 +284,7 @@ export const _updaters = {
             return data
         }
     },
+    effect_key: { store: effects, empty: null },
 
     overlay: {
         store: overlays,

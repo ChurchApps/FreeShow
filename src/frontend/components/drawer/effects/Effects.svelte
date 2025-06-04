@@ -42,6 +42,8 @@
                     showPlayOnHover
                     on:click={(e) => {
                         if ($outLocked || e.ctrlKey || e.metaKey) return
+                        if (e.target?.closest(".edit")) return
+
                         if (currentOutput.out?.background?.id === effect.id) clearBackground()
                         else setOutput("background", { id: effect.id, type: "effect" })
                     }}

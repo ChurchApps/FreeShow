@@ -467,6 +467,8 @@
         "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
+        "chums_sync_categories": "Select categories to sync",
+        "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -475,8 +477,7 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit",
-        "chums_sync_categories": "Select categories to sync"
+        "save_quit": "Save & Quit"
     },
     "toast": {
         "saving": "Saving...",
@@ -994,7 +995,10 @@
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
         "progress_bar": "Progress bar",
-        "each_number_once": "Each number only once"
+        "each_number_once": "Each number only once",
+        "side": "Side",
+        "count": "Count",
+        "speed": "Speed"
     },
     "items": {
         "text": "Textbox",
@@ -1015,6 +1019,7 @@
         "visualizer": "Visualizer",
         "captions": "Captions",
         "icon": "Icon",
+        "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
         "current_output": "Current output"
@@ -1450,26 +1455,28 @@
         "mothly": "Monthly"
     },
     "effect": {
-        "circle": "circle",
-        "rectangle": "rectangle",
-        "triangle": "triangle",
-        "wave": "wave",
-        "bubbles": "bubbles",
-        "stars": "stars",
-        "galaxy": "galaxy",
-        "rain": "rain",
-        "rain_screen": "rain screen",
-        "snow": "snow",
-        "neon": "neon",
-        "sun": "sun",
-        "lens_flare": "lens flare",
-        "spotlight": "spotlight",
-        "aurora": "aurora",
-        "bloom": "bloom",
-        "fog": "fog",
-        "city": "city",
-        "rays": "rays",
-        "fireworks": "fireworks"
+        "stars": "Stars",
+        "galaxy": "Galaxy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "bubbles": "Bubbles",
+        "wave": "Wave",
+        "sun": "Sun",
+        "lens_flare": "Lens flare",
+        "spotlight": "Spotlight",
+        "aurora": "Aurora",
+        "bloom": "Bloom",
+        "fog": "Fog",
+        "city": "City",
+        "fireworks": "Fireworks",
+        "neon": "Neon",
+        "rays": "Rays",
+        "circle": "Circle",
+        "rectangle": "Rectangle",
+        "triangle": "Triangle",
+        "swirl_strength": "Swirl strength",
+        "arm_count": "Arm count",
+        "pulse_speed": "Pulse speed"
     },
     "info": {
         "created": "Created",

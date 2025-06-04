@@ -19,8 +19,6 @@
     onMount(() => {
         if (!canvasElem) return
 
-        canvasElem.style = effect.style
-
         renderer = new EffectRender(canvasElem, items, preview)
         // renderer.dayNightCycle = { speed: 15 }
 
@@ -28,17 +26,23 @@
         // return () => renderer.stop()
     })
 
+    $: style = `${effect.style};background: ${effect.background};`
+    $: if (style && canvasElem) canvasElem.style = style
+
     onDestroy(() => {
         renderer?.stop()
     })
 
     $: if (items) update()
     function update() {
-        if (!renderer || !canvasElem || !mounted || preview) return
+        if (!renderer || !canvasElem || !mounted) return
 
-        // renderer?.stop()
-        // renderer = new EffectRender(canvasElem, items, preview)
-        renderer.updateItems(items)
+        if (preview) {
+            renderer?.stop()
+            renderer = new EffectRender(canvasElem, items, preview)
+        } else {
+            renderer.updateItems(items)
+        }
     }
 
     let pressed = false
@@ -53,6 +57,8 @@
         movedIndex = -1
     }
 
+    const basicMove = ["galaxy", "sun", "lens_flare", "spotlight", "neon"]
+
     function mousemove(e: any) {
         if (!pressed || movedIndex < 0) return
 
@@ -63,17 +69,20 @@
         const mouseX = e.clientX - parentSlide.offsetLeft - center.offsetLeft
         const mouseY = e.clientY - parentSlide.offsetTop - center.offsetTop
 
-        const x = mouseX / parentSlide.clientWidth
-        const y = mouseY / parentSlide.clientHeight
+        const x = Math.max(0, mouseX / parentSlide.clientWidth)
+        const y = Math.max(0, mouseY / parentSlide.clientHeight)
 
         effects.update((a) => {
-            const item = a[effect.id!].items[movedIndex]
+            const item: any = a[effect.id!].items[movedIndex]
 
-            if (item.type === "shape") {
-                ;(item as any).x = x
-                ;(item as any).y = y
+            if (item.type === "shape" || basicMove.includes(item.type)) {
+                item.x = x
+                item.y = y
             } else if (item.type === "wave") {
-                ;(item as any).offset = 1 - y
+                if (item.side === "left") item.offset = x
+                else if (item.side === "right") item.offset = 1 - x
+                else if (item.side === "top") item.offset = y
+                else item.offset = 1 - y
             }
 
             return a
@@ -90,14 +99,23 @@
     {#each items as item, i}
         {#if item.type === "shape"}
             <div class="mover" style="left: {item.x * 100}%;top: {item.y * 100}%;width: {item.size * 0.5}px;height: {item.size * 0.5}px;" on:mousedown={() => mousedown(i)}></div>
+        {:else if basicMove.includes(item.type)}
+            <div class="mover" style="left: {item.x * 100}%;top: {item.y * 100}%;" on:mousedown={() => mousedown(i)}></div>
         {:else if item.type === "wave"}
-            <div class="mover" style="top: {(1 - item.offset) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
+            {#if item.side === "left" || item.side === "right"}
+                <div class="mover" style="left: {(item.side === 'left' ? item.offset : 1 - item.offset) * 100}%;width: 12px;height: 50px;" on:mousedown={() => mousedown(i)}></div>
+            {:else}
+                <div class="mover" style="top: {(item.side === 'top' ? item.offset : 1 - item.offset) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
+            {/if}
         {/if}
     {/each}
 {/if}
 
 <style>
     canvas {
+        width: 100%;
+        height: 100%;
+
         background: transparent;
 
         border: none;
@@ -112,6 +130,8 @@
 
         min-width: 10px;
         min-height: 10px;
+        width: 30px;
+        height: 30px;
 
         cursor: move;
         /* background-color: rgba(37, 186, 197, 0.3); */

@@ -222,7 +222,8 @@ export const effects: Writable<Effects> = writable({
     test: {
         name: "Test",
         color: null,
-        style: "background: linear-gradient(#003366, #001d3d);filter:;",
+        style: "filter:;",
+        background: "linear-gradient(#003366, #001d3d)",
         items: [
             { type: "stars", count: 800, size: 0.7, speed: 1 },
             { type: "stars", count: 300, size: 1.2, speed: 1 },
