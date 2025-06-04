@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { outputs } from "../../../stores"
+    import { outputs, outputState } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -42,6 +42,13 @@
 
         currentOutputId = getActiveOutputs()[0]
     }
+
+    let allSameState = true
+    // wait for all windows to update first
+    $: if ($outputState) setTimeout(updateState, 100)
+    function updateState() {
+        allSameState = new Set($outputState.map((a) => a.active)).size < 2
+    }
 </script>
 
 {#if outs.length > 1}
@@ -58,6 +65,7 @@
                 dark
             >
                 {#if output.stageOutput}<Icon id="stage" right />{/if}
+                {#if !allSameState && $outputState.find((a) => a.id === output.id)?.active}<Icon id="check" right />{/if}
                 {output.name}
             </Button>
         {/each}

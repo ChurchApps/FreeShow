@@ -129,7 +129,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // run category action if show slide is not currently outputted, and it does not have a custom override action
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
-                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!])
+                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!], {}, true)
             }
 
             if (overrideCategoryAction) resetActionTrigger = true

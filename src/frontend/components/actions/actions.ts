@@ -23,7 +23,7 @@ export function runActionByName(name: string) {
     runAction(sortedActions[0])
 }
 
-export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
+export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}, isCategoryAction = false) {
     // console.log(action)
     if (!action) return
     action = convertOldMidiToNewAction(action)
@@ -78,7 +78,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
             }
         } else if (actionId === "send_midi" && triggerData.midi) triggerData = triggerData.midi
 
-        if (actionId === "clear_slide") {
+        if (actionId === "clear_slide" && !isCategoryAction) {
             // without this slide content might get "stuck", if cleared when transitioning
             await wait(10)
         }
