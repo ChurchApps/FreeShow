@@ -246,7 +246,7 @@ export interface Layout {
     name: string
     notes: string
     recording?: Recording[]
-    autoLyrics?: AutoLyrics[]
+    autoLyrics?: LearnedSection[]
     slides: SlideData[]
 }
 
@@ -262,10 +262,16 @@ export interface Recording {
 }
 
 export interface AutoLyrics {
-    part: string
-    avgRms: number
-    avgFreq: number
-    timestamp: number
+    rms: number // Root Mean Square (loudness)
+    avgFreq: number // Average frequency content
+    bandEnergies?: number[] // e.g., [low_avg_db, mid_avg_db, high_avg_db]
+}
+export interface RecordedSample extends AutoLyrics {
+    timestamp: number // When this sample was recorded/averaged
+}
+export interface LearnedSection {
+    part: string // Name of the section (e.g., "Verse 1", "Chorus")
+    samples: RecordedSample[] // Collection of feature samples recorded for this part
 }
 
 export interface SlideData {

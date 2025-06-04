@@ -10,7 +10,7 @@ import type { History } from "../types/History"
 import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { AutoLyrics, Emitter, ID, MidiIn, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
@@ -185,7 +185,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
 export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
-export const autoLyricsRecording: Writable<AutoLyrics[] | null> = writable(null)
+// export const autoLyricsRecording: Writable<AutoLyrics[] | null> = writable(null)
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
