@@ -998,7 +998,8 @@
         "each_number_once": "Each number only once",
         "side": "Side",
         "count": "Count",
-        "speed": "Speed"
+        "speed": "Speed",
+        "angle": "Angle"
     },
     "items": {
         "text": "Textbox",
@@ -1469,14 +1470,16 @@
         "fog": "Fog",
         "city": "City",
         "fireworks": "Fireworks",
-        "neon": "Neon",
         "rays": "Rays",
+        "cycle": "Cycle",
         "circle": "Circle",
         "rectangle": "Rectangle",
         "triangle": "Triangle",
         "swirl_strength": "Swirl strength",
         "arm_count": "Arm count",
-        "pulse_speed": "Pulse speed"
+        "drift": "Drift",
+        "pulse_speed": "Pulse speed",
+        "hollow": "Hollow"
     },
     "info": {
         "created": "Created",

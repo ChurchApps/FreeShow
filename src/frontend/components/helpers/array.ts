@@ -213,3 +213,21 @@ export function convertToOptions(object) {
     const options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
     return sortByName(options)
 }
+
+// find the keys either added or changed in any object in an array
+export function getChangedKeys(current: any[], previous: any[]) {
+    const changedKeys: { key: string; index: number }[] = []
+
+    current.forEach((item, index) => {
+        const prevItem = previous[index] || {}
+        const keys = new Set([...Object.keys(item), ...Object.keys(prevItem)])
+
+        keys.forEach((key) => {
+            if (item[key] !== prevItem[key]) {
+                changedKeys.push({ key, index })
+            }
+        })
+    })
+
+    return changedKeys
+}

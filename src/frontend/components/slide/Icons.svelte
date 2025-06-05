@@ -76,7 +76,7 @@
             id: "slideStyle",
             oldData: { style: slide.settings },
             newData,
-            location: { page: "show", show: $activeShow!, slide: layoutSlide.id },
+            location: { page: "show", show: $activeShow!, slide: layoutSlide.id }
         })
     }
 
@@ -170,7 +170,7 @@
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} {zoom} on:click={() => removeLayout("background")}>
-                    <Icon id={["camera", "screen", "ndi"].includes(background.type || "") ? background.type || "" : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
+                    <Icon id={background.type === "effect" ? "effects" : ["camera", "screen", "ndi"].includes(background.type || "") ? background.type || "" : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}

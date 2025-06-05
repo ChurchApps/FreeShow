@@ -4,6 +4,7 @@ export interface Effects {
 
 export interface Effect {
     name: string
+    isDefault?: boolean
     color: string | null
     style: string
     background: string
@@ -11,7 +12,7 @@ export interface Effect {
 }
 
 // | "rain_screen"
-export type EffectType = "shape" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "neon" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks"
+export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     cropped?: { top: number; right: number; bottom: number; left: number }
@@ -31,20 +32,16 @@ export interface EffectDefinition {
 
 ///
 
-export interface DayNightCycle {
-    speed: number // multiplier (1 = normal speed)
-}
-
 export type Side = "bottom" | "top" | "left" | "right"
 
 /// ITEMS ///
 
-export interface ShapeItem extends EffectItem<"shape"> {
-    shape: "circle" | "rectangle" | "triangle"
-    size: number
-    rotationSpeed: number // degrees per frame or per second scaled by deltaTime
-    color?: string
-}
+// export interface ShapeItem extends EffectItem<"shape"> {
+//     shape: "circle" | "rectangle" | "triangle"
+//     size: number
+//     rotationSpeed: number // degrees per frame or per second scaled by deltaTime
+//     color?: string
+// }
 
 export interface WaveItem extends EffectItem<"wave"> {
     amplitude: number
@@ -106,13 +103,24 @@ export interface SnowItem extends EffectItem<"snow"> {
     color?: string
 }
 
-// WIP
-export interface NeonItem extends EffectItem<"neon"> {
-    radius: number
+export interface ShapeItem extends EffectItem {
     thickness: number
     speed: number
+    hollow?: boolean
+    shadow?: number
     angle: number
     color: string
+}
+export interface CircleItem extends ShapeItem {
+    radius: number
+    gap?: number
+}
+export interface RectangleItem extends ShapeItem {
+    width: number
+    height: number
+}
+export interface TriangleItem extends ShapeItem {
+    size: number
 }
 
 export interface SunItem extends EffectItem<"sun"> {
@@ -165,11 +173,10 @@ export interface FogItem extends EffectItem<"fog"> {
 }
 
 export interface CityItem extends EffectItem<"city"> {
-    buildingCount: number
-    minWidth: number
-    maxWidth: number
-    minHeight: number
-    maxHeight: number
+    offset?: number
+    count: number
+    width: number
+    height: number
     color?: string
     windowColor?: string
     night?: boolean
@@ -184,6 +191,13 @@ export interface RayItem extends EffectItem<"rays"> {
 }
 
 export interface FireworkItem extends EffectItem<"fireworks"> {
+    offset?: number
+    size: number
     count: number
     speed: number
+}
+
+export interface CycleItem extends EffectItem<"cycle"> {
+    speed: number
+    phases: { stop: number; color: string }[]
 }

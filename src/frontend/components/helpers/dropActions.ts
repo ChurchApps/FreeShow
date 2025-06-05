@@ -49,7 +49,7 @@ function getId(drag: Selected): string {
     const extension: string = getExtension(drag.data[0].name)
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0].type === "audio") return "audio"
-    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi") return "media"
+    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "effect" || drag.id === "screen" || drag.id === "ndi") return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
     return drag.id || id
@@ -453,6 +453,7 @@ const slideDrop = {
                 }
             })
         } else if (drag.id === "camera") data[0].type = "camera"
+        else if (drag.id === "effect") data[0] = { id: data[0], type: "effect" }
         else if (drag.id === "screen") data[0].type = "screen"
         else if (drag.id === "ndi") data[0].type = "ndi"
         else if (!data[0].name) data[0].name = data[0].path

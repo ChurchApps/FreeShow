@@ -319,6 +319,7 @@ const initalOutputData = {
 
     VIZUALISER_DATA: "visualizerData",
     MEDIA: "media",
+    EFFECTS: "effects",
     TIMERS: "timers",
     VARIABLES: "variables",
     TIME_FORMAT: "timeFormat",

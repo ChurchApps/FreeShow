@@ -26,18 +26,31 @@
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
+
+    // HOVER
+
+    let hover: null | number = null
+    function mouseenter(e: any, index: number) {
+        const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
+        if (!mediaGrid) return
+
+        if (e.buttons > 0) return
+        hover = index
+    }
 </script>
 
 <div style="position: relative;height: 100%;width: 100%;overflow-y: auto;">
     {#if fullFilteredEffects.length}
         <div class="grid">
-            {#each fullFilteredEffects as effect}
+            {#each fullFilteredEffects as effect, i}
                 <Card
+                    class="context #effect_card{effect.isDefault ? '_default' : ''}"
                     resolution={{ width: 16, height: 9 }}
                     outlineColor={findMatchingOut(effect.id, $outputs)}
                     active={findMatchingOut(effect.id, $outputs) !== null}
                     label={effect.name}
                     renameId="effect_{effect.id}"
+                    icon={effect.isDefault ? "protected" : null}
                     color={effect.color}
                     showPlayOnHover
                     on:click={(e) => {
@@ -47,11 +60,15 @@
                         if (currentOutput.out?.background?.id === effect.id) clearBackground()
                         else setOutput("background", { id: effect.id, type: "effect" })
                     }}
+                    on:mouseenter={(e) => mouseenter(e, i)}
+                    on:mouseleave={() => (hover = null)}
                 >
                     <!-- dblclick open preview -->
-                    <SelectElem id="effect" class="context #effect_card" data={effect.id} fill draggable>
+                    <SelectElem id="effect" data={effect.id} fill draggable>
                         <Zoomed {resolution} background={effect.items?.length ? "var(--primary);" : effect.color || "var(--primary);"} checkered={!!effect.items?.length}>
-                            <Effect {effect} preview />
+                            {#key hover === i}
+                                <Effect {effect} preview={hover !== i} />
+                            {/key}
                         </Zoomed>
                     </SelectElem>
                 </Card>

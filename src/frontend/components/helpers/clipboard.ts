@@ -621,6 +621,7 @@ const pasteActions = {
     effect: (data: any) => {
         data?.forEach((effect) => {
             const newEffect = clone(effect)
+            delete newEffect.isDefault
             newEffect.name += " (2)"
             history({ id: "UPDATE", newData: { data: newEffect }, location: { page: "drawer", id: "effect" } })
         })

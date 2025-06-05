@@ -91,12 +91,16 @@
         })
     }
 
+    let moved = false
     function move(index: number, newIndex: number) {
         effects.update((a) => {
             const item = a[effectId].items.splice(index, 1)
             a[effectId].items = addToPos(a[effectId].items, item, newIndex)
             return a
         })
+
+        moved = true
+        setTimeout(() => (moved = false))
     }
 
     // $: if ((currentEffect.items || []).length < currentItems.length) {
@@ -113,38 +117,40 @@
         {#if active === "effect"}
             {#if currentEffect}
                 <div class="items">
-                    {#each currentItems as item, i}
-                        <CombinedInput textWidth={10} style={i === 0 ? "" : "border-top: 2px solid var(--primary-lighter);"}>
-                            <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
+                    {#key moved}
+                        {#each currentItems as item, i}
+                            <CombinedInput textWidth={10} style={i === 0 ? "" : "border-top: 2px solid var(--primary-lighter);"}>
+                                <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
 
-                            {#if i < currentItems.length - 1}
-                                <Button class="down" on:click={() => move(i, i + 1)}>
-                                    <Icon id="down" />
-                                </Button>
-                            {/if}
-                            {#if i > 0}
-                                <Button class="up" on:click={() => move(i, i - 1)}>
-                                    <Icon id="up" />
-                                </Button>
-                            {/if}
-
-                            <Button title={$dictionary.actions?.remove} on:click={() => deleteItem(i)} redHover>
-                                <Icon id="delete" white />
-                            </Button>
-
-                            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
-                                {#if openedMenus.includes(i)}
-                                    <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                                {:else}
-                                    <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                                {#if i < currentItems.length - 1}
+                                    <Button class="down" on:click={() => move(i, i + 1)}>
+                                        <Icon id="down" />
+                                    </Button>
                                 {/if}
-                            </Button>
-                        </CombinedInput>
+                                {#if i > 0}
+                                    <Button class="up" on:click={() => move(i, i - 1)}>
+                                        <Icon id="up" />
+                                    </Button>
+                                {/if}
 
-                        {#if openedMenus.includes(i)}
-                            <EditValues edits={getEdits(item)} on:change={(e) => valueChanged(e.detail, i)} />
-                        {/if}
-                    {/each}
+                                <Button title={$dictionary.actions?.remove} on:click={() => deleteItem(i)} redHover>
+                                    <Icon id="delete" white />
+                                </Button>
+
+                                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
+                                    {#if openedMenus.includes(i)}
+                                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                                    {:else}
+                                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                                    {/if}
+                                </Button>
+                            </CombinedInput>
+
+                            {#if openedMenus.includes(i)}
+                                <EditValues edits={getEdits(item)} on:change={(e) => valueChanged(e.detail, i)} />
+                            {/if}
+                        {/each}
+                    {/key}
                 </div>
             {/if}
 
