@@ -10,22 +10,22 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
+    slides: ["media", "audio", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
-    project: ["show_drawer", "media", "audio", "overlay", "player", "scripture", "screen", "ndi", "camera"],
+    project: ["show_drawer", "media", "audio", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
     overlays: ["slide"],
     templates: ["slide"],
-    edit: ["media", "global_timer", "variable"],
+    edit: ["media", "global_timer", "variable"]
     // media_drawer: ["file"],
 }
 const areaChildren = {
     projects: ["folder", "project"],
     project: ["show", "media", "audio", "show_drawer", "player", "action"],
-    slides: ["slide", "group", "global_group", "screen", "ndi", "camera", "microphone", "media", "audio", "show"],
+    slides: ["slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
-    audio_playlist: ["audio"],
+    audio_playlist: ["audio"]
 }
 
 export function validateDrop(id: string, selectedId: SelectIds | null, children = false): boolean {

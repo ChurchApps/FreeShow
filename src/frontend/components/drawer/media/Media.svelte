@@ -22,7 +22,7 @@
         popupData,
         selectAllMedia,
         selected,
-        sorted,
+        sorted
     } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -258,7 +258,7 @@
         Backspace: () => {
             if (rootPath === path) return
             goBack()
-        },
+        }
     }
 
     $: if (activeFile !== null) selectMedia()

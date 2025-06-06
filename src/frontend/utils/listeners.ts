@@ -41,7 +41,8 @@ import {
     timers,
     transitionData,
     variables,
-    volume
+    volume,
+    effects
 } from "../stores"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
@@ -209,6 +210,10 @@ export function storeSubscriber() {
         send(OUTPUT, ["CUSTOM_CREDITS"], data)
     })
 
+    effects.subscribe((data) => {
+        send(OUTPUT, ["EFFECTS"], data)
+    })
+
     timers.subscribe((data) => {
         send(OUTPUT, ["TIMERS"], data)
 
@@ -314,6 +319,7 @@ const initalOutputData = {
 
     VIZUALISER_DATA: "visualizerData",
     MEDIA: "media",
+    EFFECTS: "effects",
     TIMERS: "timers",
     VARIABLES: "variables",
     TIME_FORMAT: "timeFormat",

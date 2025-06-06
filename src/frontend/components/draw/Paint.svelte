@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Draw, DrawLine } from "../../../types/Draw"
-    import { draw, drawSettings, outputs, paintCache } from "../../stores"
+    import { draw, drawSettings, outputs, paintCache, paintCacheSlide } from "../../stores"
     import { getActiveOutputs, getOutputResolution } from "../helpers/output"
+    import { clone } from "../helpers/array"
 
     export let settings: { [key: string]: any } = {}
 
@@ -15,12 +16,35 @@
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
     $: resolution = getOutputResolution(outputId, $outputs)
 
+    $: outSlide = $outputs[outputId]?.out?.slide
+    $: outSlideId = (outSlide?.id || "") + (outSlide?.index || 0) + (outSlide?.layout || "")
+    let previousOutSlideId = ""
+    $: linkToSlide = settings.link_to_slide
+    $: if (linkToSlide && outSlideId !== undefined) updateDrawing()
+    function updateDrawing() {
+        if (!mounted) return
+
+        paintCacheSlide.update((a) => {
+            a[previousOutSlideId] = clone(lines)
+            return a
+        })
+
+        paintCache.set(clone($paintCacheSlide[outSlideId] || []))
+        lines = $paintCache
+        ctx?.clearRect(0, 0, resolution.width, resolution.height)
+        redraw()
+
+        previousOutSlideId = outSlideId
+    }
+
+    let mounted = false
     onMount(() => {
         if (canvas) ctx = canvas.getContext("2d")
         if ($paintCache) {
-            lines = $paintCache
+            lines = clone(linkToSlide ? $paintCacheSlide[outSlideId] || [] : $paintCache)
             redraw()
         }
+        mounted = true
     })
 
     function redraw() {

@@ -3,11 +3,13 @@ import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "..
 import type { ClientMessage } from "../../types/Socket"
 import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
+import { runAction } from "../components/actions/actions"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { receiveMainGlobal } from "../IPC/main"
 import {
+    actions,
     activePopup,
     activeProject,
     activeShow,
@@ -23,14 +25,15 @@ import {
     drawTool,
     driveData,
     dynamicValueData,
+    effects,
     events,
     gain,
     media,
-    actions,
     ndiData,
     outputDisplay,
     outputs,
     outputSlideCache,
+    outputState,
     overlays,
     playerVideos,
     playingAudioPaths,
@@ -62,7 +65,6 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
-import { runAction } from "../components/actions/actions"
 
 export function setupMainReceivers() {
     receiveMainGlobal()
@@ -97,6 +99,7 @@ const receiveOUTPUTasMAIN: any = {
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+    OUTPUT_STATE: (a: any) => outputState.set(a),
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
     AUDIO_MAIN: (data: any) => {
         if (!data.id) return
@@ -249,6 +252,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     MEDIA: (a: any) => media.set(a),
     OUT_SLIDE_CACHE: (a: any) => outputSlideCache.set(a),
     CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
+    EFFECTS: (a: any) => clone(effects.set(a)),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),

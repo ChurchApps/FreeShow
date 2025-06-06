@@ -1,7 +1,7 @@
 <script lang="ts">
     import { customActionActivation } from "./components/actions/actions"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
-    import DrawTools from "./components/draw/DrawTools.svelte"
+    import DrawTabs from "./components/draw/DrawTabs.svelte"
     import Slide from "./components/draw/Slide.svelte"
     import Drawer from "./components/drawer/Drawer.svelte"
     import AudioTools from "./components/edit/AudioTools.svelte"
@@ -55,7 +55,7 @@
                 {:else if page === "stage"}
                     <StageLayouts />
                 {:else if page === "draw"}
-                    <DrawTools />
+                    <DrawTabs />
                 {:else if page === "settings"}
                     <SettingsTabs />
                 {/if}

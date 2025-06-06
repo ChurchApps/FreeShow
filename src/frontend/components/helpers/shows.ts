@@ -353,9 +353,9 @@ export function _show(id = "active") {
                             return a
                         })
                         return prev
-                    },
-                }),
-            }),
+                    }
+                })
+            })
         }),
         /** Layouts function */
         /** string[] | "active" */
@@ -386,6 +386,11 @@ export function _show(id = "active") {
                         shows[id].layouts[layoutId]?.slides?.forEach((layoutSlide: any, index: number) => {
                             if (!shows[id].slides[layoutSlide.id]) {
                                 console.error("MISSING SLIDE")
+                                // missing slides can cause index problems, this will delete the layout id
+                                showsCache.update((a) => {
+                                    a[id].layouts[layoutId].slides.splice(index, 1)
+                                    return a
+                                })
                                 return
                             }
 
@@ -431,7 +436,7 @@ export function _show(id = "active") {
                                         layoutIndex,
                                         id: childId,
                                         parent: { id: layoutSlide.id, index, layoutIndex: layoutIndex - jndex - 1 },
-                                        data: layoutSlide.children?.[childId] || {},
+                                        data: layoutSlide.children?.[childId] || {}
                                     })
                                 })
                             }
@@ -630,9 +635,9 @@ export function _show(id = "active") {
                             return a
                         })
                         return prev
-                    },
-                }),
-            }),
+                    }
+                })
+            })
         }),
         /** Media function */
         media: (mediaIds: string[] = []) => ({
@@ -701,7 +706,7 @@ export function _show(id = "active") {
                     return a
                 })
                 return media
-            },
-        }),
+            }
+        })
     }
 }

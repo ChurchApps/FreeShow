@@ -67,6 +67,7 @@
 
     $: slideCleared = isOutCleared("slide", $outputs)
 
+    $: effectsCleared = isOutCleared("effects", $outputs, true)
     $: overlayCleared = isOutCleared("overlays", $outputs, true)
     $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
 
@@ -142,7 +143,15 @@
         </div>
 
         <div class="combinedButton">
-            <Button style={lockedOverlay ? "opacity: 0.5;cursor: default;" : ""} disabled={$outLocked || overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
+            <Button
+                style={lockedOverlay ? "opacity: 0.5;cursor: default;" : ""}
+                disabled={$outLocked || (overlayCleared && effectsCleared)}
+                on:click={() => clear("overlays")}
+                title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"}
+                dark
+                red
+                center
+            >
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}

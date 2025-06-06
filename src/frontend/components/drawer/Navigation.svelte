@@ -99,6 +99,8 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledOverlays ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
+                { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
+                { id: "SEPERATOR", name: "" },
                 ...(sortObject(categoriesList, "name") as Button[])
             ]
             if (archivedCategories.length) {
@@ -161,9 +163,6 @@
                     submenu: { options: sortedVariables }
                 },
                 { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" }
-                // WIP effects
-                // { id: "SEPERATOR", name: "" },
-                // { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
             ]
         } else {
             buttons = [

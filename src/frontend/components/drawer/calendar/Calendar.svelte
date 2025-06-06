@@ -267,7 +267,7 @@
             center
         >
             <Icon id="add" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.event" />{/if}
+            {#if !$labelsDisabled}<T id="new.{active === 'action' ? 'event_action' : 'event'}" />{/if}
         </Button>
 
         <div class="seperator" />

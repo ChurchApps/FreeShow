@@ -644,12 +644,12 @@
         border: none;
     } */
 
-    .line {
+    /* .line {
         display: flex;
         align-items: center;
         background-color: var(--primary-darker);
         flex-flow: wrap;
-    }
+    } */
 
     div :global(input[type="color"]),
     div :global(.dropdownElem),

@@ -19,6 +19,7 @@ import {
     calendarAddShow,
     categories,
     companion,
+    chumsSyncCategories,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -72,7 +73,8 @@ import {
     version,
     videoMarkers,
     videosData,
-    videosTime
+    videosTime,
+    effects
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -334,5 +336,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         }
 
         special.set(v)
-    }
+    },
+    chumsSyncCategories: (v: any) => chumsSyncCategories.set(v),
+    effects: (a: any) => effects.set(a)
 }

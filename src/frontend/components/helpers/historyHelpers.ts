@@ -13,6 +13,7 @@ import {
     currentOutputSettings,
     dictionary,
     drawerTabsData,
+    effects,
     events,
     focusMode,
     folders,
@@ -34,7 +35,7 @@ import {
     themes
 } from "../../stores"
 import { updateThemeValues } from "../../utils/updateSettings"
-import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
+import { EMPTY_CATEGORY, EMPTY_EFFECT, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
@@ -274,6 +275,16 @@ export const _updaters = {
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
     audio_playlists: { store: audioPlaylists, ...getDefaultCategoryUpdater("audio"), empty: { name: "", songs: [] } },
     audio_playlist_key: { store: audioPlaylists },
+
+    effect: {
+        store: effects,
+        empty: EMPTY_EFFECT,
+        initialize: (data, id: string) => {
+            activeRename.set("effect_" + id)
+            return data
+        }
+    },
+    effect_key: { store: effects, empty: null },
 
     overlay: {
         store: overlays,

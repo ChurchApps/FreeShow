@@ -63,6 +63,8 @@ import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 import ColorGradient from "../components/main/popups/ColorGradient.svelte"
 import ManageGroups from "../components/main/popups/ManageGroups.svelte"
 import CustomAction from "../components/main/popups/CustomAction.svelte"
+import ChumsSyncCategories from "../components/main/popups/ChumsSyncCategories.svelte"
+import EffectItems from "../components/main/popups/EffectItems.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -125,7 +127,9 @@ export const popups: { [key in Popups]: ComponentType } = {
     user_data_overwrite: UserDataOverwrite,
     connect: Connect,
     cloud_update: CloudUpdate,
-    cloud_method: CloudMethod
+    cloud_method: CloudMethod,
+    chums_sync_categories: ChumsSyncCategories,
+    effect_items: EffectItems
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

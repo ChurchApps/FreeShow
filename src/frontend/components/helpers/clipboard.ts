@@ -46,7 +46,8 @@ import {
     timers,
     triggers,
     variables,
-    videoMarkers
+    videoMarkers,
+    effects
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
@@ -457,6 +458,9 @@ const copyActions = {
     template: (data: any) => {
         return data.map((id: string) => clone(get(templates)[id]))
     },
+    effect: (data: any) => {
+        return data.map((id: string) => clone(get(effects)[id]))
+    },
     media: (data: any) => {
         // copy style/filters of first selected media
         const path = data[0]?.path
@@ -614,6 +618,14 @@ const pasteActions = {
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
         })
     },
+    effect: (data: any) => {
+        data?.forEach((effect) => {
+            const newEffect = clone(effect)
+            delete newEffect.isDefault
+            newEffect.name += " (2)"
+            history({ id: "UPDATE", newData: { data: newEffect }, location: { page: "drawer", id: "effect" } })
+        })
+    },
     // project items
     show: (data: any) => {
         projects.update((a) => {
@@ -753,6 +765,7 @@ const deleteActions = {
     category_templates: (data: any) => historyDelete("UPDATE", data, { updater: "category_templates" }),
     player: (data: any) => historyDelete("UPDATE", data, { updater: "player_video" }),
     overlay: (data: any) => historyDelete("UPDATE", data, { updater: "overlay" }),
+    effect: (data: any) => historyDelete("UPDATE", data, { updater: "effect" }),
     template: (data: any) => historyDelete("UPDATE", data, { updater: "template" }),
     category_scripture: (data: any) => {
         scriptures.update((a) => {

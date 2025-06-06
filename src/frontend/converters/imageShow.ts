@@ -7,7 +7,7 @@ import { getFileName, removeExtension } from "../components/helpers/media"
 export function createImageShow({ images, name }: { images: string[]; name: string }) {
     // newToast("Creating show...")
 
-    const categoryId = createCategory("Presentation", "presentation", { isDefault: true })
+    const categoryId = createCategory("Converted", "presentation", { isArchive: true })
 
     const layoutId = uid()
     const showId = uid()
@@ -25,14 +25,14 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
             color: "",
             settings: {},
             notes: "",
-            items: [],
+            items: []
         }
 
         const backgroundId = uid()
         backgrounds.push([backgroundId, path])
         layoutShows.push({
             id: slideId,
-            background: backgroundId,
+            background: backgroundId
         })
     })
 

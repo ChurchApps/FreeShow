@@ -107,10 +107,8 @@ export function selectProjectShow(select: number | "next" | "previous") {
     }
 
     // set active show in project list
-    if (newIndex !== index) {
-        if (get(focusMode)) activeFocus.set({ id: items[newIndex].id, index: newIndex, type: items[newIndex].type })
-        else activeShow.set({ ...items[newIndex], index: newIndex })
-    }
+    if (get(focusMode)) activeFocus.set({ id: items[newIndex].id, index: newIndex, type: items[newIndex].type })
+    else activeShow.set({ ...items[newIndex], index: newIndex })
 }
 
 export function swichProjectItem(pos: number, id: string) {
@@ -707,6 +705,11 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     if (a) AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
                 })
             }, 200)
+        }
+
+        // effects
+        if (data.effects?.length) {
+            setOutput("effects", data.effects, false, outputId, true)
         }
 
         // overlays

@@ -4,7 +4,7 @@ import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
-import { activePopup, alertMessage, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, special, tempPath, version, windowState } from "../stores"
+import { activePopup, alertMessage, chumsSyncCategories, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, showsPath, special, tempPath, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -96,7 +96,7 @@ export function pcoSync() {
 }
 
 export function chumsSync() {
-    sendMain(Main.CHUMS_STARTUP_LOAD)
+    sendMain(Main.CHUMS_STARTUP_LOAD, { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" })
 }
 
 function getMainData() {
@@ -106,7 +106,7 @@ function getMainData() {
         [Main.GET_OS]: (a) => os.set(a),
         [Main.GET_TEMP_PATHS]: (a) => tempPath.set(a.temp),
         [Main.DEVICE_ID]: (a) => deviceId.set(a),
-        [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a }),
+        [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a })
     })
 }
 

@@ -7,11 +7,12 @@ import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
+import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, Action, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
@@ -71,6 +72,7 @@ export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const pcoConnected: Writable<boolean> = writable(false)
 export const chumsConnected: Writable<boolean> = writable(false)
+export const chumsSyncCategories: Writable<string[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -97,10 +99,12 @@ export const isFadingOut: Writable<any> = writable(false)
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
+export const paintCacheSlide: Writable<{ [key: string]: DrawLine[] }> = writable({})
 export const paintCache: Writable<DrawLine[]> = writable([])
 
 // OUTPUTS
 export const outputDisplay: Writable<boolean> = writable(false)
+export const outputState: Writable<{ id: string; active: boolean }[]> = writable([])
 export const currentOutputSettings: Writable<string | null> = writable(null)
 export const slideTimers: Writable<{ [key: string]: SlideTimer }> = writable({})
 export const outputCache: Writable<any> = writable(null)
@@ -214,6 +218,7 @@ export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
+export const effects: Writable<Effects> = writable({}) // {default}
 
 // OVERLAYS
 export const overlayCategories: Writable<Categories> = writable({}) // {default}
@@ -369,6 +374,7 @@ export const $ = {
     triggers,
     media,
     mediaFolders,
+    effects,
     overlayCategories,
     overlays,
     audioFolders,
