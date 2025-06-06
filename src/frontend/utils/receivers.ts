@@ -52,7 +52,8 @@ import {
     videosTime,
     visualizerData,
     volume,
-    effects
+    effects,
+    outputState
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -98,6 +99,7 @@ const receiveOUTPUTasMAIN: any = {
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+    OUTPUT_STATE: (a: any) => outputState.set(a),
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
     AUDIO_MAIN: (data: any) => {
         if (!data.id) return
