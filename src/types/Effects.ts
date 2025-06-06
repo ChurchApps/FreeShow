@@ -5,6 +5,7 @@ export interface Effects {
 export interface Effect {
     name: string
     isDefault?: boolean
+    placeUnderSlide?: boolean
     color: string | null
     style: string
     background: string
@@ -15,6 +16,7 @@ export interface Effect {
 export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
+    hidden?: boolean
     cropped?: { top: number; right: number; bottom: number; left: number }
     x?: number
     y?: number
@@ -128,6 +130,9 @@ export interface SunItem extends EffectItem<"sun"> {
     rayCount: number // number of rays
     rayLength: number // length of rays
     rayWidth: number // width of rays
+    speed?: number
+    orbitRadius?: number
+    orbitAngle?: number
     color?: string
 }
 

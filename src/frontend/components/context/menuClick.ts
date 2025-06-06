@@ -33,6 +33,7 @@ import {
     dictionary,
     drawer,
     drawerTabsData,
+    effects,
     effectsLibrary,
     eventEdit,
     events,
@@ -1216,6 +1217,17 @@ const clickActions = {
         })
     },
     place_under_slide: (obj: ObjData) => {
+        if (obj.sel?.id === "effect") {
+            const setUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
+            effects.update((a) => {
+                obj.sel!.data.forEach((id: string) => {
+                    a[id].placeUnderSlide = setUnder
+                })
+                return a
+            })
+            return
+        }
+
         if (obj.sel?.id !== "overlay") return
         const setUnder = !get(overlays)[obj.sel.data[0]]?.placeUnderSlide
 

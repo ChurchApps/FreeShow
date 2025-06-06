@@ -91,6 +91,13 @@
         })
     }
 
+    function toggleHidden(index: number) {
+        effects.update((a) => {
+            a[effectId].items[index].hidden = !a[effectId].items[index].hidden
+            return a
+        })
+    }
+
     let moved = false
     function move(index: number, newIndex: number) {
         effects.update((a) => {
@@ -133,7 +140,11 @@
                                     </Button>
                                 {/if}
 
-                                <Button title={$dictionary.actions?.remove} on:click={() => deleteItem(i)} redHover>
+                                <Button on:click={() => toggleHidden(i)}>
+                                    <Icon id={item.hidden ? "hide" : "eye"} white={!item.hidden} />
+                                </Button>
+
+                                <Button title={$dictionary.actions?.delete} on:click={() => deleteItem(i)} redHover>
                                     <Icon id="delete" white />
                                 </Button>
 

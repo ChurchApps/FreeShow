@@ -7,12 +7,10 @@
 
     export let effect: Effect & { id?: string }
     export let preview: boolean = false
-    export let ratio: number = 1
     export let edit: boolean = false
-    console.log(ratio)
 
     let items: any[]
-    $: items = effect?.items || []
+    $: items = effect?.items || [] // .filter((a) => !a.hidden)
 
     let canvasElem: HTMLCanvasElement | undefined
     let renderer: any
@@ -47,7 +45,10 @@
         if (!renderer || !canvasElem || !mounted) return
 
         // find out which key has changed
-        let _changedKeys = getChangedKeys(items, previousItems)
+        let _changedKeys = getChangedKeys(
+            items.filter((a) => !a.hidden),
+            previousItems.filter((a) => !a.hidden)
+        )
 
         if (!edit && $activePage === "edit" && $activeEdit.type === "effect") {
             // item added or removed
@@ -61,7 +62,6 @@
 
         const changedKeys = _changedKeys.filter((a) => a.key !== "x" && a.key !== "y" && a.key !== "offset")
 
-        console.log(_changedKeys, changedKeys)
         if (_changedKeys.length && !changedKeys.length) return
 
         previousItems = clone(items)
@@ -140,16 +140,18 @@
 <!-- move boxes -->
 {#if edit}
     {#each items as item, i}
-        {#if basicMove.includes(item.type)}
-            <div class="mover" style="left: {item.x * 100}%;top: {item.y * 100}%;" on:mousedown={() => mousedown(i)}></div>
-        {:else if item.type === "wave"}
-            {#if item.side === "left" || item.side === "right"}
-                <div class="mover" style="left: {(item.side === 'left' ? item.offset : 1 - item.offset) * 100}%;width: 12px;height: 50px;" on:mousedown={() => mousedown(i)}></div>
-            {:else}
-                <div class="mover" style="top: {(item.side === 'top' ? item.offset : 1 - item.offset) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
+        {#if !item.hidden}
+            {#if basicMove.includes(item.type)}
+                <div class="mover" style="left: {item.x * 100}%;top: {item.y * 100}%;" on:mousedown={() => mousedown(i)}></div>
+            {:else if item.type === "wave"}
+                {#if item.side === "left" || item.side === "right"}
+                    <div class="mover" style="left: {(item.side === 'left' ? item.offset : 1 - item.offset) * 100}%;width: 12px;height: 50px;" on:mousedown={() => mousedown(i)}></div>
+                {:else}
+                    <div class="mover" style="top: {(item.side === 'top' ? item.offset : 1 - item.offset) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
+                {/if}
+            {:else if verticalMove.includes(item.type)}
+                <div class="mover" style="top: {getTopOffset(item) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
             {/if}
-        {:else if verticalMove.includes(item.type)}
-            <div class="mover" style="top: {getTopOffset(item) * 100}%;width: 50px;height: 12px;" on:mousedown={() => mousedown(i)}></div>
         {/if}
     {/each}
 {/if}

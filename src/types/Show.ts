@@ -280,6 +280,7 @@ export interface SlideData {
     timer?: number
     background?: string // set backgorund action?
     overlays?: string[]
+    effects?: string[]
     audio?: string[]
 
     mics?: { id: string; name: string }[]

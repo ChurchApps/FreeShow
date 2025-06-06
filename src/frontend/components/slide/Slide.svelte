@@ -13,6 +13,7 @@
         checkedFiles,
         dictionary,
         driveData,
+        effects,
         focusMode,
         fullColors,
         groups,
@@ -40,6 +41,7 @@
     import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
+    import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
@@ -389,6 +391,15 @@
                         {/key}
                     {/if}
 
+                    <!-- effects -->
+                    {#if !altKeyPressed && layoutSlide.effects?.length && (viewMode !== "lyrics" || noQuickEdit)}
+                        {#each layoutSlide.effects as id}
+                            {#if $effects[id]?.placeUnderSlide === true}
+                                <Effect effect={{ id, ...$effects[id] }} preview />
+                            {/if}
+                        {/each}
+                    {/if}
+
                     <!-- "underlays" -->
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
@@ -421,6 +432,15 @@
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                 />
+                            {/if}
+                        {/each}
+                    {/if}
+
+                    <!-- effects -->
+                    {#if !altKeyPressed && layoutSlide.effects?.length && (viewMode !== "lyrics" || noQuickEdit)}
+                        {#each layoutSlide.effects as id}
+                            {#if $effects[id] && !$effects[id]?.placeUnderSlide}
+                                <Effect effect={{ id, ...$effects[id] }} preview />
                             {/if}
                         {/each}
                     {/if}

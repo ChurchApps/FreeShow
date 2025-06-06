@@ -170,7 +170,7 @@
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} {zoom} on:click={() => removeLayout("background")}>
-                    <Icon id={background.type === "effect" ? "effects" : ["camera", "screen", "ndi"].includes(background.type || "") ? background.type || "" : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
+                    <Icon id={["camera", "screen", "ndi"].includes(background.type || "") ? background.type || "" : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}
@@ -228,6 +228,18 @@
                     <p>{layoutSlide.audio.length}</p>
                 {/if}
             </span>
+        </div>
+    {/if}
+    {#if layoutSlide.effects?.length}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.effects} {zoom} on:click={() => removeLayout("effects")}>
+                    <Icon id="effects" size={0.9} white />
+                </Button>
+            </div>
+            {#if layoutSlide.effects.length > 1}
+                <span><p>{layoutSlide.effects.length}</p></span>
+            {/if}
         </div>
     {/if}
     {#if layoutSlide.overlays?.length}

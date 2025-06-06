@@ -8,7 +8,7 @@
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
-    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
@@ -19,6 +19,7 @@
     import Image from "../media/Image.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import { updateAnimation } from "./animation"
+    import EffectOutput from "./effects/EffectOutput.svelte"
     import Background from "./layers/Background.svelte"
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
@@ -48,6 +49,11 @@
     let slide: OutSlide | null = null
     let background: OutBackground | null = null
     let clonedOverlays: TOverlays | null = null
+
+    $: effectsIds = clone(out.effects || [])
+    $: allEffects = $effects
+    $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
+    $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -296,6 +302,11 @@
         <Image path="./assets/{$colorbars}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
     {/if}
 
+    <!-- effects -->
+    {#if effectsUnderSlide}
+        <EffectOutput ids={effectsUnderSlide} transition={transitions.overlay} />
+    {/if}
+
     <!-- "underlays" -->
     {#if overlaysActive}
         <!-- && outUnderlays?.length -->
@@ -332,6 +343,11 @@
         {#if metadataValue || $customMessageCredits}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
+        {/if}
+
+        <!-- effects -->
+        {#if effectsOverSlide}
+            <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} />
         {/if}
 
         <!-- overlays -->

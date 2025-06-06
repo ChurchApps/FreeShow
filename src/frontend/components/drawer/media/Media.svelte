@@ -44,8 +44,6 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
-    import Effects from "../effects/Effects.svelte"
-    import { history } from "../../helpers/history"
 
     export let active: string | null
     export let searchValue = ""
@@ -54,7 +52,7 @@
     type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     let files: File[] = []
 
-    let specialTabs = ["effects", "online", "screens", "cameras"]
+    let specialTabs = ["online", "screens", "cameras"]
     let notFolders = ["all", ...specialTabs]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
@@ -385,9 +383,7 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-        {#if active === "effects"}
-            <Effects {searchValue} />
-        {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+        {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
@@ -468,21 +464,7 @@
     </div>
 </div>
 
-{#if active === "effects"}
-    <div class="tabs">
-        <Button
-            style="flex: 1;"
-            on:click={() => {
-                history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
-            }}
-            center
-            title={$dictionary.new?.effect}
-        >
-            <Icon id="add" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.effect" />{/if}
-        </Button>
-    </div>
-{:else if active !== "cameras"}
+{#if active !== "cameras"}
     <div class="tabs">
         {#if active === "screens" || active === "online"}
             <span style="flex: 1;"></span>

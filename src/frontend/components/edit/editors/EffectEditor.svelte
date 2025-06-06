@@ -15,15 +15,14 @@
     let height = 0
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let ratio = 1
     let zoom = 1
 </script>
 
 <div class="editArea">
     <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if effect?.items}
-            <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center>
-                <Effect {effect} {ratio} edit />
+            <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} hideOverflow={false} center>
+                <Effect {effect} edit />
             </Zoomed>
         {:else}
             <Center size={2} faded>

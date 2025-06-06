@@ -74,8 +74,8 @@
     <span style="display: flex;align-items: center;width: calc(100% - 20px);">
         <Icon
             id={category.icon || "noIcon"}
-            custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable", "trigger"].includes(category.icon)}
-            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "effects_library", "variables", "triggers"].includes(category.id)}
+            custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable", "trigger", "effects"].includes(category.icon)}
+            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "effects_library", "variables", "triggers", "effects"].includes(category.id)}
             selectData={{ id: "category_" + id, data: [category.id] }}
             size={isSubmenu ? 0.8 : 1}
             right

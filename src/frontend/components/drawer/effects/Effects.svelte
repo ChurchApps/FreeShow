@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { effects, outLocked, outputs, styles } from "../../../stores"
+    import { onMount } from "svelte"
+    import { effects, mediaOptions, outLocked, outputs, styles } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import { findMatchingOut, getActiveOutputs, getResolution, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../output/clear"
+    import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
     import Effect from "../../output/effects/Effect.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
+    import EffectIcons from "./EffectIcons.svelte"
 
     export let searchValue = ""
 
@@ -25,8 +26,6 @@
         if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
-
     // HOVER
 
     let hover: null | number = null
@@ -37,6 +36,14 @@
         if (e.buttons > 0) return
         hover = index
     }
+
+    let slowLoader = 0
+    onMount(() => {
+        const loader = setInterval(() => {
+            slowLoader++
+            if (slowLoader > Object.keys(fullFilteredEffects).length + 1) clearInterval(loader)
+        })
+    })
 </script>
 
 <div style="position: relative;height: 100%;width: 100%;overflow-y: auto;">
@@ -55,20 +62,24 @@
                     showPlayOnHover
                     on:click={(e) => {
                         if ($outLocked || e.ctrlKey || e.metaKey) return
-                        if (e.target?.closest(".edit")) return
+                        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                        if (currentOutput.out?.background?.id === effect.id) clearBackground()
-                        else setOutput("background", { id: effect.id, type: "effect" })
+                        setOutput("effects", effect.id, true)
                     }}
                     on:mouseenter={(e) => mouseenter(e, i)}
                     on:mouseleave={() => (hover = null)}
                 >
-                    <!-- dblclick open preview -->
+                    <!-- icons -->
+                    <EffectIcons columns={$mediaOptions.columns} effectId={effect.id} />
+
+                    <!-- WIP dblclick open preview -->
                     <SelectElem id="effect" data={effect.id} fill draggable>
                         <Zoomed {resolution} background={effect.items?.length ? "var(--primary);" : effect.color || "var(--primary);"} checkered={!!effect.items?.length}>
-                            {#key hover === i}
-                                <Effect {effect} preview={hover !== i} />
-                            {/key}
+                            {#if slowLoader > i}
+                                {#key hover === i}
+                                    <Effect {effect} preview={hover !== i} />
+                                {/key}
+                            {/if}
                         </Zoomed>
                     </SelectElem>
                 </Card>

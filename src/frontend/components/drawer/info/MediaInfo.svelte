@@ -8,7 +8,6 @@
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
-    import EffectsInfo from "./EffectsInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
 
     $: name = $activeShow?.name || ""
@@ -38,9 +37,7 @@
     $: subTab = $drawerTabsData.media?.activeSubTab
 </script>
 
-{#if subTab === "effects"}
-    <EffectsInfo />
-{:else if subTab === "screens" || $activeRecording}
+{#if subTab === "screens" || $activeRecording}
     <LiveInfo />
 {:else if subTab === "online"}
     <PlayerInfo />

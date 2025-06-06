@@ -161,6 +161,7 @@
     "remove": {
         "background": "Remove background",
         "overlays": "Remove overlays",
+        "effects": "Remove effects",
         "audio": "Remove audio",
         "nextTimer": "Remove next slide timer",
         "to_start": "Remove go to start",

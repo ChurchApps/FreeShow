@@ -87,62 +87,53 @@ const randomNumber = (from: number, to: number): number => Math.floor(Math.rando
 
 export function setExampleEffects() {
     effects.update((a) => {
-        // DEBUG
-        const items: any = [
-            { type: "stars", count: 800, size: 0.7, speed: 1 },
-            { type: "stars", count: 300, size: 1.2, speed: 1 },
+        a.ocean = {
+            name: "Ocean",
+            isDefault: true,
+            placeUnderSlide: true,
+            color: null,
+            style: "", // filter:;
+            background: "linear-gradient(#003366, #001d3d)",
+            items: [
+                { type: "stars", count: 800, size: 0.7, speed: 1 },
+                { type: "stars", count: 300, size: 1.2, speed: 1 },
+                { type: "wave", amplitude: 20, wavelength: 900, speed: 1, color: "rgba(10, 40, 90, 0.6)", offset: 0.19 },
+                { type: "wave", amplitude: 15, wavelength: 600, speed: 1.5, color: "rgba(40, 90, 140, 0.5)", offset: 0.17 },
+                { type: "wave", amplitude: 10, wavelength: 450, speed: 3, color: "rgba(80, 140, 200, 0.4)", offset: 0.15 },
+                { type: "wave", amplitude: 5, wavelength: 300, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.13 }
+            ] as any
+        }
 
-            // { type: "galaxy", count: 500, size: 12, swirlStrength: 0.2, rotationSpeed: 0.5, color: "rgba(255,255,255,0.8)" },
-            // { type: "galaxy", count: 2000, size: 1.5, swirlStrength: 0.6, rotationSpeed: 12, armCount: 5, nebula: true, colors: ["white", "#a0c8ff", "#e0b3ff", "#ffccff"] },
-
-            // { type: "sun", x: 1600, y: 200, radius: 60, rayCount: 12, rayLength: 40, rayWidth: 3, color: "rgba(255, 223, 220, 0.8)" },
-
-            // { type: "aurora", bandCount: 4, amplitude: 50, wavelength: 250, speed: 0.6, colorStops: ["#00ffcc", "#6600ff", "#ff00cc"], opacity: 0.25 },
-            // { type: "aurora", bandCount: 10, amplitude: 60, wavelength: 800, speed: 0.6, colorStops: ["#00ffcc", "#00ffb7", "#00ff88"], opacity: 0.25 },
-            // { type: "aurora", bandCount: 10, amplitude: 60, wavelength: 800, speed: 0.6, colorStops: ["#ff00cc", "#00ff88", "#6600ff"], opacity: 0.25 },
-            { type: "wave", amplitude: 20, wavelength: 180 * 4, speed: 1, color: "rgba(10, 40, 90, 0.6)", offset: 0.4 },
-            // { type: "bubbles", count: 50, size: 20, maxSizeVariation: 10, pulseSpeed: 1, speed: 1 }, // , borderRadius: 50
-            // { type: "rain", count: 300, speed: 10, length: 10, width: 1, color: "rgba(135,206,250,0.6)" },
-            // { type: "snow", count: 300, size: 2, speed: 1, drift: 0.3, color: "white" },
-            { type: "wave", amplitude: 15, wavelength: 120 * 4, speed: 1.5, color: "rgba(40, 90, 140, 0.5)", offset: 0.37 },
-            { type: "wave", amplitude: 10, wavelength: 90 * 4, speed: 3, color: "rgba(80, 140, 200, 0.4)", offset: 0.35 },
-            { type: "wave", amplitude: 5, wavelength: 60 * 4, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.33 }
-            // { type: "wave", amplitude: 0, wavelength: 1, speed: 0, color: "rgba(150, 200, 255, 0.2)", offset: 0.31 },
-
-            // { type: "wave", side: "top", amplitude: 15, wavelength: 120 * 4, speed: 1.5, color: "rgba(40, 90, 140, 0.5)", offset: 0.17 },
-            // { type: "wave", side: "top", amplitude: 10, wavelength: 90 * 4, speed: 3, color: "rgba(80, 140, 200, 0.4)", offset: 0.15 },
-            // { type: "wave", side: "top", amplitude: 5, wavelength: 60 * 4, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.13 },
-            // { type: "wave", side: "left", amplitude: 5, wavelength: 60 * 4, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.13 },
-            // { type: "wave", side: "right", amplitude: 5, wavelength: 60 * 4, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.13 }
-
-            // { type: "neon", radius: 80, thickness: 6, speed: 0.002, angle: 0, color: "cyan" },
-            // { type: "neon", radius: 120, thickness: 8, speed: -0.0015, angle: 0, color: "magenta" },
-            // { type: "neon", radius: 180, thickness: 10, speed: 0.001, angle: 0, color: "lime" },
-
-            // { type: "lens_flare", radius: 150 }
-
-            // { type: "rain_screen", count: 120, minRadius: 10, maxRadius: 30, gravity: 0.2, smear: true, color: "rgba(180,200,255,0.2)" }
-
-            // { type: "bloom", blobCount: 25, blurAmount: 60, speed: 2 },
-            // { type: "fog", count: 120, size: 120, speed: -1, opacity: 0.05, blur: 45, offset: 0.6, spread: 200 }
-
-            // { type: "spotlight", x: 300, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 255, 200, 0.6)", swayAmplitude: 1, swaySpeed: 1 },
-            // { type: "spotlight", x: 600, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 200, 207, 0.6)", swayAmplitude: 1, swaySpeed: 1 },
-            // { type: "spotlight", x: 900, y: 0, length: 2000, baseWidth: 1000, color: "rgba(200, 208, 255, 0.6)", swayAmplitude: 1, swaySpeed: 1 },
-            // { type: "spotlight", x: 1200, y: 0, length: 2000, baseWidth: 1000, color: "rgba(234, 140, 255, 0.6)", swayAmplitude: 1, swaySpeed: 1 }
-
-            // { type: "city", buildingCount: 40, minWidth: 30, maxWidth: 70, minHeight: 100, maxHeight: 400, color: "#222", windowColor: "#ffff99", night: true, flickerSpeed: 1 },
-
-            // { type: "shape", shape: "triangle", x: 300, y: 300, size: 50, rotationSpeed: 20, color: "#ff0055" },
-            // { type: "shape", shape: "circle", x: 600, y: 400, size: 40, rotationSpeed: 0, color: "#00ddff" }
-        ]
-        a.test = {
-            name: "Test",
+        a.spotlights = {
+            name: "Spotlights",
             isDefault: true,
             color: null,
-            style: "filter:;",
-            background: "linear-gradient(#003366, #001d3d)",
-            items
+            style: "",
+            background: "",
+            items: [
+                { type: "spotlight", x: 0.2, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 255, 200, 0.6)", swayAmplitude: 1, swaySpeed: 1.8 },
+                { type: "spotlight", x: 0.4, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 200, 207, 0.6)", swayAmplitude: 1.2, swaySpeed: 2 },
+                { type: "spotlight", x: 0.6, y: 0, length: 2000, baseWidth: 1000, color: "rgba(200, 208, 255, 0.6)", swayAmplitude: 1.2, swaySpeed: 2.1 },
+                { type: "spotlight", x: 0.8, y: 0, length: 2000, baseWidth: 1000, color: "rgba(234, 140, 255, 0.6)", swayAmplitude: 1, swaySpeed: 1.9 }
+            ] as any[]
+        }
+
+        a.rain = {
+            name: "Rain",
+            isDefault: true,
+            color: null,
+            style: "",
+            background: "",
+            items: [{ type: "rain", count: 300, speed: 10, length: 10, width: 1, color: "rgba(135,206,250,0.6)" }] as any[]
+        }
+
+        a.fireworks = {
+            name: "Fireworks",
+            isDefault: true,
+            color: null,
+            style: "",
+            background: "",
+            items: [{ type: "fireworks", speed: 0.5, count: 50, size: 1.5 }] as any[]
         }
 
         return a

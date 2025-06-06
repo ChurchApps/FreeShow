@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { effects, outputs, styles } from "../../../stores"
+    import { outputs, styles } from "../../../stores"
     import { videoExtensions } from "../../../values/extensions"
     import { cropImageToBase64, encodeFilePath, getExtension } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
@@ -11,7 +11,6 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
     import NdiStream from "../live/NDIStream.svelte"
-    import Effect from "../../output/effects/Effect.svelte"
 
     export let name = ""
     export let path: string
@@ -117,10 +116,6 @@
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
                 <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
             </div>
-        {:else if type === "effect"}
-            {#if $effects[path]}
-                <Effect effect={{ id: path, ...$effects[path] }} preview />
-            {/if}
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "ndi"}

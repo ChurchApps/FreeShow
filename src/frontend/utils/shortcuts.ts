@@ -236,7 +236,9 @@ export const previewShortcuts = {
         return true
     },
     F3: () => {
-        if (!get(outLocked)) setOutput("overlays", [])
+        if (get(outLocked)) return
+        setOutput("overlays", [])
+        setOutput("effects", [])
     },
     F4: () => {
         if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })

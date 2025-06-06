@@ -65,6 +65,7 @@ export const effectEdits = {
         // { name: "rayCount", id: "rayCount", input: "number", slider: true, value: 12, values: { min: 1, max: 100 } },
         // { name: "rayLength", id: "rayLength", input: "number", slider: true, value: 150, values: { min: 1, max: 1000 } },
         // { name: "rayWidth", id: "rayWidth", input: "number", slider: true, value: 5, values: { min: 1, max: 100 } },
+        { name: "speed", id: "speed", input: "number", slider: true, value: 0, values: { min: -10, max: 10, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0, max: 5, step: 0.1 } },
         { name: "color", id: "color", input: "color", value: "rgba(255, 223, 120, 0.8)" }
     ],
 
@@ -137,7 +138,7 @@ export const effectEdits = {
         { name: "speed", id: "speed", input: "number", slider: true, value: 0, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0 } },
         { name: "angle", id: "gap", input: "number", slider: true, value: 2, values: { min: 0, max: 2, step: 0.1, decimals: 2, inputMultiplier: 180 }, sliderValues: { step: 0.01 } },
         { name: "shadow", id: "shadow", input: "number", slider: true, value: 0, values: { min: 0, max: 500 }, sliderValues: { max: 100 } },
-        { name: "color", id: "color", input: "color", value: "#c922ef" }
+        { name: "color", id: "color", input: "color", value: "#00ddff", values: { allowGradients: true } }
     ],
     rectangle: [
         { name: "width", id: "width", input: "number", slider: true, value: 200, values: { min: 1, max: 2000 }, sliderValues: { max: 1000 } },
@@ -146,7 +147,7 @@ export const effectEdits = {
         { name: "width", id: "thickness", input: "number", slider: true, value: 10, values: { min: 1, max: 1000 }, sliderValues: { max: 100 } },
         { name: "speed", id: "speed", input: "number", slider: true, value: 0, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0 } },
         { name: "shadow", id: "shadow", input: "number", slider: true, value: 0, values: { min: 0, max: 500 }, sliderValues: { max: 100 } },
-        { name: "color", id: "color", input: "color", value: "#c922ef" }
+        { name: "color", id: "color", input: "color", value: "#00ddff", values: { allowGradients: true } }
     ],
     triangle: [
         { name: "size", id: "size", input: "number", slider: true, value: 200, values: { min: 1, max: 2000 }, sliderValues: { max: 1000 } },
@@ -154,7 +155,7 @@ export const effectEdits = {
         { name: "width", id: "thickness", input: "number", slider: true, value: 10, values: { min: 1, max: 1000 }, sliderValues: { max: 100 } },
         { name: "speed", id: "speed", input: "number", slider: true, value: 0, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0 } },
         { name: "shadow", id: "shadow", input: "number", slider: true, value: 0, values: { min: 0, max: 500 }, sliderValues: { max: 100 } },
-        { name: "color", id: "color", input: "color", value: "#c922ef" }
+        { name: "color", id: "color", input: "color", value: "#00ddff", values: { allowGradients: true } }
     ],
 
     rays: [

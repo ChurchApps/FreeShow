@@ -28,12 +28,12 @@
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
     <div class="grid">
-        {#each Object.entries(effectItems) as [type, effect], i}
+        {#each Object.keys(effectItems) as type, i}
             {@const data = { type, ...effectItems[type].default }}
 
-            <Card label={translate(effect.name ? effect.name : `effect.${type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
+            <Card label={translate(`effect.${type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
                 {#if slowLoader > i}
-                    <Effect effect={{ name: "", style: "", color: null, items: [data] }} preview />
+                    <Effect effect={{ name: "", style: "", background: "", color: null, items: [data] }} preview />
                 {/if}
             </Card>
         {/each}

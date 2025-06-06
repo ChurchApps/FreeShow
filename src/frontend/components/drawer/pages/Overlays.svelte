@@ -16,6 +16,7 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import OverlayActions from "./OverlayActions.svelte"
+    import Effects from "../effects/Effects.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -56,76 +57,95 @@
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
-    <DropArea id="overlays">
-        {#if preloader && fullFilteredOverlays.length > 10}
-            <Center>
-                <Loader />
-            </Center>
-        {:else if fullFilteredOverlays.length}
-            <div class="grid">
-                {#each fullFilteredOverlays as overlay}
-                    <Card
-                        class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
-                        preview={$activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
-                        outlineColor={findMatchingOut(overlay.id, $outputs)}
-                        active={findMatchingOut(overlay.id, $outputs) !== null}
-                        label={overlay.name}
-                        renameId="overlay_{overlay.id}"
-                        icon={overlay.isDefault ? "protected" : null}
-                        color={overlay.color}
-                        {resolution}
-                        showPlayOnHover
-                        on:click={(e) => {
-                            if ($outLocked || e.ctrlKey || e.metaKey) return
-                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+    {#if active === "effects"}
+        <Effects {searchValue} />
+    {:else}
+        <DropArea id="overlays">
+            {#if preloader && fullFilteredOverlays.length > 10}
+                <Center>
+                    <Loader />
+                </Center>
+            {:else if fullFilteredOverlays.length}
+                <div class="grid">
+                    {#each fullFilteredOverlays as overlay}
+                        <Card
+                            class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
+                            preview={$activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
+                            outlineColor={findMatchingOut(overlay.id, $outputs)}
+                            active={findMatchingOut(overlay.id, $outputs) !== null}
+                            label={overlay.name}
+                            renameId="overlay_{overlay.id}"
+                            icon={overlay.isDefault ? "protected" : null}
+                            color={overlay.color}
+                            {resolution}
+                            showPlayOnHover
+                            on:click={(e) => {
+                                if ($outLocked || e.ctrlKey || e.metaKey) return
+                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                            setOutput("overlays", overlay.id, true)
-                        }}
-                        on:dblclick={(e) => {
-                            if (e.ctrlKey || e.metaKey) return
-                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                                setOutput("overlays", overlay.id, true)
+                            }}
+                            on:dblclick={(e) => {
+                                if (e.ctrlKey || e.metaKey) return
+                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                            activeShow.set({ id: overlay.id, type: "overlay" })
-                            activePage.set("show")
-                            if ($focusMode) focusMode.set(false)
-                        }}
-                    >
-                        <!-- icons -->
-                        <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
+                                activeShow.set({ id: overlay.id, type: "overlay" })
+                                activePage.set("show")
+                                if ($focusMode) focusMode.set(false)
+                            }}
+                        >
+                            <!-- icons -->
+                            <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
 
-                        <SelectElem id="overlay" data={overlay.id} fill draggable>
-                            <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
-                                {#each overlay.items as item}
-                                    <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
-                                {/each}
-                            </Zoomed>
-                        </SelectElem>
-                    </Card>
-                {/each}
-            </div>
-        {:else}
-            <Center size={1.2} faded>
-                {#if filteredOverlays.length}
-                    <T id="empty.search" />
-                {:else}
-                    <T id="empty.general" />
-                {/if}
-            </Center>
-        {/if}
-    </DropArea>
+                            <SelectElem id="overlay" data={overlay.id} fill draggable>
+                                <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
+                                    {#each overlay.items as item}
+                                        <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
+                                    {/each}
+                                </Zoomed>
+                            </SelectElem>
+                        </Card>
+                    {/each}
+                </div>
+            {:else}
+                <Center size={1.2} faded>
+                    {#if filteredOverlays.length}
+                        <T id="empty.search" />
+                    {:else}
+                        <T id="empty.general" />
+                    {/if}
+                </Center>
+            {/if}
+        </DropArea>
+    {/if}
 </div>
+
 <div class="tabs">
-    <Button
-        style="flex: 1;"
-        on:click={() => {
-            history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
-        }}
-        center
-        title={$dictionary.new?.overlay}
-    >
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.overlay" />{/if}
-    </Button>
+    {#if active === "effects"}
+        <Button
+            style="flex: 1;"
+            on:click={() => {
+                history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
+            }}
+            center
+            title={$dictionary.new?.effect}
+        >
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="new.effect" />{/if}
+        </Button>
+    {:else}
+        <Button
+            style="flex: 1;"
+            on:click={() => {
+                history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
+            }}
+            center
+            title={$dictionary.new?.overlay}
+        >
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="new.overlay" />{/if}
+        </Button>
+    {/if}
 </div>
 
 <style>

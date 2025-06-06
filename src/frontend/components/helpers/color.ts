@@ -45,7 +45,7 @@ export const defaultGradients = [
     { name: "Green to Purple", value: "linear-gradient(145deg, #3D9970 0%, #B10DC9 100%)" },
     { name: "Orange to Red", value: "linear-gradient(120deg, #FF851B 0%, #b91533 70%)" },
     { name: "Green To Blue", value: "linear-gradient(145deg, #01FF70 0%, #24ffd3 40%, #39CCCC 80%)" },
-    { name: "Red to Cyan", value: " linear-gradient(145deg, #FF4136 0%, #f69351 20%, #2aeaba 70%, #7FDBFF 100%)" },
+    { name: "Red to Cyan", value: "linear-gradient(145deg, #FF4136 0%, #f69351 20%, #2aeaba 70%, #7FDBFF 100%)" },
     { name: "Red, White, Blue", value: "linear-gradient(90deg, #FF4136 10%, #ff94cd 30%, #FFFFFF 50%, #7FDBFF 70%, #0074D9 90%)" },
     // Radial
     { name: "Purple Circle", value: "radial-gradient(circle, #4998d4 10%, #7a2ad5 50%, #a808aa 90%)" },

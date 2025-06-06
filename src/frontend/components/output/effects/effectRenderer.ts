@@ -54,7 +54,7 @@ export class EffectRender {
 
         this.canvas = canvas
         this.ctx = canvas.getContext("2d")!
-        this.items = items
+        this.setItems(items)
 
         this.autoRegisterEffects(effectTypes)
 
@@ -85,8 +85,12 @@ export class EffectRender {
         this.running = false
     }
 
+    private setItems(items: EffectItem[]) {
+        this.items = items.filter((a) => !a.hidden)
+    }
+
     updateItems(items: EffectItem[]) {
-        this.items = items
+        this.setItems(items)
 
         // TODO: only update if count is changed (init data)
         this.frame(0, true)
@@ -176,8 +180,8 @@ export class EffectRender {
 
     checkOffscreen(item: { x: number; y: number; length?: number; size?: number; radius?: number; speed?: number }, inverted: boolean = false) {
         const size = item.size ?? item.radius ?? item.length ?? 0
-        const speed = inverted ? 1 - (item.speed || 0) : item.speed || 0
-        const offscreen = speed < 0 ? item.y + size < 0 : item.y - size > this.height
+        const speed = item.speed || 0
+        const offscreen = (inverted ? speed > 0 : speed < 0) ? item.y + size < 0 : item.y - size > this.height
         if (!offscreen) return
 
         item.y = item.y < 0 ? this.height + size : -size
@@ -567,6 +571,97 @@ export class EffectRender {
 
     /// SHAPES ///
 
+    createCanvasGradient(ctx: CanvasRenderingContext2D, gradientStr: string, width: number, height: number) {
+        const splitStops = (str: string): string[] => {
+            const parts: string[] = []
+            let buffer = ""
+            let depth = 0
+
+            for (let char of str) {
+                if (char === "(") depth++
+                if (char === ")") depth--
+                if (char === "," && depth === 0) {
+                    parts.push(buffer.trim())
+                    buffer = ""
+                } else {
+                    buffer += char
+                }
+            }
+            if (buffer) parts.push(buffer.trim())
+            return parts
+        }
+
+        if (gradientStr.startsWith("linear-gradient")) {
+            const match = gradientStr.match(/linear-gradient\(([^,]+),\s*(.+)\)/)
+            if (!match) return { gradient: gradientStr, plainColor: gradientStr }
+
+            const angleStr = match[1].trim()
+            const stopsStr = match[2]
+
+            const angleDeg = parseFloat(angleStr)
+            const angleRad = ((angleDeg - 90) * Math.PI) / 180
+
+            const halfW = width / 2
+            const halfH = height / 2
+            const x0 = halfW - Math.cos(angleRad) * halfW
+            const y0 = halfH - Math.sin(angleRad) * halfH
+            const x1 = halfW + Math.cos(angleRad) * halfW
+            const y1 = halfH + Math.sin(angleRad) * halfH
+
+            const gradient = ctx.createLinearGradient(x0, y0, x1, y1)
+            // console.log(x0, y0, x1, y1, halfW, halfH, angleRad)
+
+            const stops = splitStops(stopsStr)
+
+            let plainColor = stops[0]
+            const firstStopMatch = plainColor.match(/^(.+?)\s+([\d.]+)%$/)
+            if (firstStopMatch) plainColor = firstStopMatch[1].trim()
+
+            for (let i = 0; i < stops.length; i++) {
+                const stop = stops[i]
+                const parts = stop.match(/^(.+?)\s+([\d.]+)%$/)
+                if (parts) {
+                    gradient.addColorStop(parseFloat(parts[2]) / 100, parts[1].trim())
+                } else {
+                    gradient.addColorStop(i / (stops.length - 1), stop)
+                }
+            }
+
+            return { gradient, plainColor }
+        }
+
+        if (gradientStr.startsWith("radial-gradient")) {
+            const match = gradientStr.match(/radial-gradient\(([^,]+),\s*(.+)\)/)
+            if (!match) return { gradient: gradientStr, plainColor: gradientStr }
+
+            // const shape = match[1].trim();
+            const stopsStr = match[2]
+            const r = Math.min(width, height) / 2
+
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+
+            const stops = splitStops(stopsStr)
+
+            let plainColor = stops[stops.length - 1]
+            const firstStopMatch = plainColor.match(/^(.+?)\s+([\d.]+)%$/)
+            if (firstStopMatch) plainColor = firstStopMatch[1].trim()
+
+            for (let i = 0; i < stops.length; i++) {
+                const stop = stops[i]
+                const parts = stop.match(/^(.+?)\s+([\d.]+)%$/)
+                if (parts) {
+                    gradient.addColorStop(parseFloat(parts[2]) / 100, parts[1].trim())
+                } else {
+                    gradient.addColorStop(i / (stops.length - 1), stop)
+                }
+            }
+
+            return { gradient, plainColor }
+        }
+
+        return { gradient: gradientStr, plainColor: gradientStr }
+    }
+
     drawRotatingShape(item: ShapeItem, deltaTime: number, drawShapeFn: (ctx: CanvasRenderingContext2D, item: any) => void) {
         const ctx = this.ctx
         const centerX = this.getOffsetX(item.x)
@@ -578,12 +673,23 @@ export class EffectRender {
         ctx.translate(centerX, centerY)
         ctx.rotate(item.angle)
 
-        // Set common styles
-        ctx.strokeStyle = item.color
-        ctx.fillStyle = item.color
+        const color = item.color
+        if (typeof color === "string" && (color.startsWith("linear-gradient") || color.startsWith("radial-gradient"))) {
+            const width = (item as any).size ?? (item as any).width ?? (item as any).radius
+            const height = (item as any).size ?? (item as any).height ?? (item as any).radius
+            const { gradient, plainColor } = this.createCanvasGradient(ctx, color, width, height)
+
+            ctx.strokeStyle = gradient
+            ctx.fillStyle = gradient
+            ctx.shadowColor = plainColor
+        } else {
+            ctx.strokeStyle = color
+            ctx.fillStyle = color
+            ctx.shadowColor = color
+        }
+
         ctx.lineWidth = item.thickness
         ctx.shadowBlur = item.shadow ?? 0
-        ctx.shadowColor = item.color
 
         drawShapeFn(ctx, item)
 
@@ -638,18 +744,49 @@ export class EffectRender {
 
     /// SUN ///
 
+    sunOrbitPointX = 0.5
+    sunOrbitPointY = 0.8
     initSun(item: SunItem) {
         const scale = item.radius / 80
         item.rayCount ??= Math.round(20 * scale)
         item.rayLength ??= 200 * scale
         item.rayWidth ??= 5 * scale
         item.color ??= "rgba(255, 223, 0, 0.15)"
+        item.speed ??= 0
+
+        // orbiting
+        if (item.speed) {
+            const dx = (item.x || 0) - this.sunOrbitPointX
+            const dy = (item.y || 0) - this.sunOrbitPointY
+
+            item.orbitRadius = Math.sqrt(dx * dx + dy * dy)
+            item.orbitAngle = Math.atan2(dy, dx) + Math.PI // start at "night"
+        }
+
+        this.effectData.set(item, { cycleTime: 0 })
     }
 
-    drawSun(item: Required<SunItem>) {
+    drawSun(item: Required<SunItem>, deltaTime: number) {
         const ctx = this.ctx
-        const x = this.getOffsetX(item.x)
-        const y = this.getOffsetY(item.y)
+
+        let x: number, y: number
+        if (item.speed) {
+            const data = this.effectData.get(item)
+            if (!data) return
+
+            data.cycleTime = this.getCycleTime(item.speed, data.cycleTime, deltaTime)
+            const time = data.cycleTime / this.cycleLength // 0 → 1
+            const angle = item.orbitAngle + time * 2 * Math.PI
+            // item.orbitAngle += item.speed / 100
+
+            const orbitRadius = item.orbitRadius // * this.width // use width to keep it circular
+
+            x = this.getOffsetX(this.sunOrbitPointX + orbitRadius * Math.cos(angle))
+            y = this.getOffsetY(this.sunOrbitPointY + orbitRadius * Math.sin(angle))
+        } else {
+            x = this.getOffsetX(item.x)
+            y = this.getOffsetY(item.y)
+        }
 
         ctx.save()
 
@@ -912,10 +1049,12 @@ export class EffectRender {
         if (!data) return
 
         data.swayPhase += item.swaySpeed * deltaTime * 0.016
-
-        const t = (data.swayPhase / Math.PI) % 2
-        const triangular = t < 1 ? t : 2 - t
-        const swayAngle = (triangular - 0.5) * 2 * item.swayAmplitude
+        // pendulum sway
+        const swayAngle = Math.sin(data.swayPhase) * item.swayAmplitude
+        // motor turn
+        // const t = (data.swayPhase / Math.PI) % 2
+        // const triangular = t < 1 ? t : 2 - t
+        // const swayAngle = (triangular - 0.5) * 2 * item.swayAmplitude
 
         const baseX = this.getOffsetX(item.x)
         const baseY = this.getOffsetY(item.y)
@@ -970,7 +1109,7 @@ export class EffectRender {
                 amplitude: item.amplitude * (0.8 + Math.random() * 0.4),
                 wavelength: item.wavelength * (0.8 + Math.random() * 0.4),
                 speed: item.speed * (0.5 + Math.random()),
-                colorStops: item.colorStops,
+                colorStops: item.colorStops ?? ["#00ffcc", "#00ffb7", "#00ff88"], // ["#ff00cc", "#00ff88", "#6600ff"]
                 opacity: item.opacity ?? 0.25,
                 noise2D: createNoise2D()
             })
@@ -1434,20 +1573,25 @@ export class EffectRender {
         })
     }
 
+    cycleLength = 24 // seconds
+    getCycleTime(speed: number, cycleTime: number, deltaTime: number) {
+        // Update time (normalized to seconds with a ~60 FPS scale factor)
+        speed ??= 1
+        return (cycleTime + deltaTime * speed * 0.016) % this.cycleLength
+
+        // const time = data.cycleTime / cycleLength // 0 → 1
+        // const isNight = time > 0.9 || time < 0.1
+        // this.nightTime = time > 0.5 ? (time - 0.5) * 2 : 1 - time * 2
+    }
+
     drawCycle(item: CycleItem, deltaTime: number) {
         const data = this.effectData.get(item)
         if (!data) return
 
         const ctx = this.ctx
-        const cycleLength = 24 // seconds
 
-        // Update time (normalized to seconds with a ~60 FPS scale factor)
-        const speed = item.speed ?? 1
-        data.cycleTime = (data.cycleTime + deltaTime * speed * 0.016) % cycleLength
-
-        const time = data.cycleTime / cycleLength // 0 → 1
-        // const isNight = time > 0.9 || time < 0.1
-        // this.nightTime = time > 0.5 ? (time - 0.5) * 2 : 1 - time * 2
+        data.cycleTime = this.getCycleTime(item.speed, data.cycleTime, deltaTime)
+        const time = data.cycleTime / this.cycleLength // 0 → 1
 
         const phases = data.phases
 
