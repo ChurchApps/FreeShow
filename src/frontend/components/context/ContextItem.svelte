@@ -7,6 +7,7 @@
         activeShow,
         categories,
         disabledServers,
+        effects,
         effectsLibrary,
         events,
         forceClock,
@@ -225,7 +226,7 @@
         },
         place_under_slide: () => {
             let id = $selected.data[0]
-            if ($overlays[id]?.placeUnderSlide) enabled = true
+            if ($overlays[id]?.placeUnderSlide || $effects[id]?.placeUnderSlide) enabled = true
         },
         toggle_clock: () => {
             if ($forceClock) enabled = true

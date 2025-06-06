@@ -33,6 +33,7 @@ export type SaveListSyncedSettings =
     | "companion"
     | "globalTags"
     | "customMetadata"
+    | "effects"
 
 export type SaveListSettings =
     | "initialized"
@@ -76,6 +77,7 @@ export type SaveListSettings =
     | "metronome"
     | "effectsLibrary"
     | "special"
+    | "chumsSyncCategories"
 
 export interface SaveData {
     path: string

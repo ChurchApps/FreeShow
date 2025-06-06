@@ -179,7 +179,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     rename: ["rename"],
     close: ["close"],
     output_window: ["close"],
-    input: ["paste"],
+    input: ["copy", "paste"],
 
     // TOP
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
@@ -230,7 +230,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     template_card_default: ["duplicate", "delete"],
-    effect_card: ["edit"],
+    effect_card: ["edit", "SEPERATOR", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    effect_card_default: ["duplicate", "delete"],
     player_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "effects_library_add", "favourite", "SEPERATOR", "system_open"],
     audio_effect_button: ["rename", "remove", "SEPERATOR", "system_open"],

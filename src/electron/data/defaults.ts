@@ -73,7 +73,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     calendarAddShow: "",
     metronome: {},
     effectsLibrary: [],
-    special: {}
+    special: {},
+    chumsSyncCategories: ["song"]
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
@@ -144,5 +145,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     customizedIcons: { disabled: [], svg: [] },
     companion: {},
     globalTags: {},
-    customMetadata: { disabled: [], custom: [] }
+    customMetadata: { disabled: [], custom: [] },
+    effects: {}
 }

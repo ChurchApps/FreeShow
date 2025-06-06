@@ -14,7 +14,7 @@ export class CaptureHelper {
         stage: 20, // StageShow
         server: 10, // 30 // OutputShow
         unconnected: 1,
-        connected: 30, // NDI
+        connected: 30 // NDI
     }
     static customFramerates: { [key: string]: { [key: string]: number } } = {}
 
@@ -24,7 +24,7 @@ export class CaptureHelper {
         const defaultFramerates = {
             ndi: this.framerates.connected,
             server: this.framerates.server,
-            stage: this.framerates.stage,
+            stage: this.framerates.stage
         }
 
         return {
@@ -33,7 +33,7 @@ export class CaptureHelper {
             displayFrequency: screen.displayFrequency || 60,
             options: { ndi: false, server: false, stage: false },
             framerates: defaultFramerates,
-            id,
+            id
         }
     }
 
@@ -42,7 +42,8 @@ export class CaptureHelper {
     static storedFrames: { [key: string]: NativeImage } = {}
 
     static updateFramerate(id: string) {
-        const captureOptions = OutputHelper.getOutput(id)?.captureOptions
+        const output = OutputHelper.getOutput(id)
+        const captureOptions = output?.captureOptions
         if (!captureOptions) return
 
         if (NdiSender.NDI[id]) {
@@ -50,7 +51,8 @@ export class CaptureHelper {
             if (NdiSender.NDI[id].status === "connected") ndiFramerate = this.customFramerates[id]?.ndi || this.framerates.connected
 
             if (captureOptions.framerates.ndi !== parseInt(ndiFramerate.toString(), 10)) {
-                captureOptions.framerates.ndi = parseInt(ndiFramerate.toString(), 10)
+                output.captureOptions!.framerates.ndi = parseInt(ndiFramerate.toString(), 10)
+                OutputHelper.setOutput(id, output)
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }
@@ -61,7 +63,7 @@ export class CaptureHelper {
             x: window.getBounds().x,
             y: window.getBounds().y,
             width: window.getBounds().width,
-            height: window.getBounds().height,
+            height: window.getBounds().height
         })
     }
 

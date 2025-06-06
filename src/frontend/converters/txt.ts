@@ -82,10 +82,11 @@ export function convertText({ name = "", origin = "", category = null, text, noF
         sections[i] = newLines.join("\n")
     })
     if (sections[0] === "") sections.splice(0, 1)
+    console.log(metadataKeys, plainTextMetadata)
 
     // get ccli
     let ccli = ""
-    if (sections[sections.length - 1].includes("www.ccli.com")) {
+    if (!Object.keys(plainTextMetadata).length && sections[sections.length - 1].includes("www.ccli.com")) {
         ccli = sections.pop()!
     }
 
@@ -97,7 +98,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
     labeled = checkRepeats(labeled)
 
-    if (!name) name = trimNameFromString(labeled[0].text)
+    if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0].text)
 
     const layoutID: string = uid()
     const show: Show = new ShowObj(false, category, layoutID)
@@ -139,6 +140,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     } else if (Object.keys(plainTextMetadata).length) {
         show.meta = plainTextMetadata
     }
+    if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
     if (plainNotes) show.layouts[layoutID].notes = plainNotes
 

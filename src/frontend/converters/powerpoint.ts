@@ -10,7 +10,7 @@ export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    const categoryId = createCategory("Presentation", "presentation", { isDefault: true })
+    const categoryId = createCategory("presentation", "presentation", { isDefault: true })
 
     const tempShows: any[] = []
 
@@ -35,12 +35,12 @@ export function convertPowerpoint(files: any[]) {
             if (meta) {
                 show.meta = {
                     title: meta["dc:title"]?.[0] || show.name,
-                    artist: meta["dc:creator"]?.[0] || "",
+                    artist: meta["dc:creator"]?.[0] || ""
                 }
                 show.timestamps = {
                     created: new Date(meta["dcterms:created"]?.[0]?._ || 0).getTime(),
                     modified: new Date(meta["dcterms:modified"]?.[0]?._ || 0).getTime(),
-                    used: null,
+                    used: null
                 }
             }
 
@@ -119,7 +119,7 @@ function createSlides(slides: string[][][]) {
             color: null,
             settings: {},
             notes: "",
-            items,
+            items
         }
     })
 

@@ -9,6 +9,7 @@ import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { sendMain } from "../../IPC/main"
 import {
+    actions,
     activeRename,
     allOutputs,
     categories,
@@ -17,7 +18,6 @@ import {
     dictionary,
     disabledServers,
     lockedOverlays,
-    actions,
     outputDisplay,
     outputs,
     outputSlideCache,
@@ -129,7 +129,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // run category action if show slide is not currently outputted, and it does not have a custom override action
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
-                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!])
+                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!], {}, true)
             }
 
             if (overrideCategoryAction) resetActionTrigger = true
@@ -140,7 +140,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         outs.forEach((id: string, i: number) => {
             const output = a[id]
             if (!output.out) a[id].out = {}
-            if (!output.out?.[type]) a[id].out![type] = type === "overlays" ? [] : null
+            if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
 
             if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
@@ -157,18 +157,20 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             }
 
             let outData = a[id].out?.[type] || null
-            if (type === "overlays" && data.length) {
+            if ((type === "overlays" || type === "effects") && data.length) {
                 if (!Array.isArray(data)) data = [data]
                 if (toggle && i === 0) toggleState = outData?.includes(data[0])
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
-                data.forEach((overlayId) => {
-                    // timeout so output can update first
-                    if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
-                    else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
-                })
+                if (type === "overlays") {
+                    data.forEach((overlayId) => {
+                        // timeout so output can update first
+                        if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
+                        else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
+                    })
+                }
             } else {
                 outData = data
 
@@ -350,6 +352,7 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
             if (output.out?.slide?.id === id) match = output.color
             else if ((output.out?.background?.path || output.out?.background?.id) === id) match = output.color
             else if (output.out?.overlays?.includes(id)) match = output.color
+            else if (output.out?.effects?.includes(id)) match = output.color
         }
     })
 
@@ -389,7 +392,8 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
                 if (type === "overlays") {
                     if (checkLocked && output.out.overlays?.length) cleared = false
                     else if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
-                } else if (output.out[type] !== null) cleared = false
+                } else if (type === "effects") cleared = !output.out.effects?.length
+                else if (output.out[type] !== null) cleared = false
             }
         })
     })
@@ -443,11 +447,11 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
 // this will get the first available stage output
 export function getStageOutputId(_updater = get(outputs)) {
-    return keysToID(_updater).find((a) => a.stageOutput)?.id || ""
+    return keysToID(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
 }
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
     if (!outputId) outputId = getStageOutputId()
-    return clone(_updater[outputId]?.bounds || DEFAULT_BOUNDS)
+    return getOutputResolution(outputId)
 }
 
 // calculate actual output resolution based on style aspect ratio

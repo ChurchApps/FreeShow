@@ -280,6 +280,7 @@ export interface SlideData {
     timer?: number
     background?: string // set backgorund action?
     overlays?: string[]
+    effects?: string[]
     audio?: string[]
 
     mics?: { id: string; name: string }[]
@@ -519,4 +520,4 @@ export type ID = string
 export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
-export type MediaType = "media" | "video" | "image" | "screen" | "ndi" | "camera" | "player" | "audio"
+export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "camera" | "player" | "audio"

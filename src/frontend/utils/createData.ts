@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { MainFilePaths } from "../../types/Main"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
+import { audioFolders, dictionary, effects, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { save } from "./save"
 
@@ -33,6 +33,8 @@ export function createData(paths: MainFilePaths) {
             }
         }
     })
+
+    setExampleEffects()
 
     setExampleOverlays()
 
@@ -82,6 +84,61 @@ export function createData(paths: MainFilePaths) {
 }
 
 const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
+
+export function setExampleEffects() {
+    effects.update((a) => {
+        a.ocean = {
+            name: "Ocean",
+            isDefault: true,
+            placeUnderSlide: true,
+            color: null,
+            style: "", // filter:;
+            background: "linear-gradient(#003366, #001d3d)",
+            items: [
+                { type: "stars", count: 800, size: 0.7, speed: 1 },
+                { type: "stars", count: 300, size: 1.2, speed: 1 },
+                { type: "wave", amplitude: 20, wavelength: 900, speed: 1, color: "rgba(10, 40, 90, 0.6)", offset: 0.19 },
+                { type: "wave", amplitude: 15, wavelength: 600, speed: 1.5, color: "rgba(40, 90, 140, 0.5)", offset: 0.17 },
+                { type: "wave", amplitude: 10, wavelength: 450, speed: 3, color: "rgba(80, 140, 200, 0.4)", offset: 0.15 },
+                { type: "wave", amplitude: 5, wavelength: 300, speed: 8, color: "rgba(150, 200, 255, 0.3)", offset: 0.13 }
+            ] as any
+        }
+
+        a.spotlights = {
+            name: "Spotlights",
+            isDefault: true,
+            color: null,
+            style: "",
+            background: "",
+            items: [
+                { type: "spotlight", x: 0.2, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 255, 200, 0.6)", swayAmplitude: 1, swaySpeed: 1.8 },
+                { type: "spotlight", x: 0.4, y: 0, length: 2000, baseWidth: 1000, color: "rgba(255, 200, 207, 0.6)", swayAmplitude: 1.2, swaySpeed: 2 },
+                { type: "spotlight", x: 0.6, y: 0, length: 2000, baseWidth: 1000, color: "rgba(200, 208, 255, 0.6)", swayAmplitude: 1.2, swaySpeed: 2.1 },
+                { type: "spotlight", x: 0.8, y: 0, length: 2000, baseWidth: 1000, color: "rgba(234, 140, 255, 0.6)", swayAmplitude: 1, swaySpeed: 1.9 }
+            ] as any[]
+        }
+
+        a.rain = {
+            name: "Rain",
+            isDefault: true,
+            color: null,
+            style: "",
+            background: "",
+            items: [{ type: "rain", count: 300, speed: 10, length: 10, width: 1, color: "rgba(135,206,250,0.6)" }] as any[]
+        }
+
+        a.fireworks = {
+            name: "Fireworks",
+            isDefault: true,
+            color: null,
+            style: "",
+            background: "",
+            items: [{ type: "fireworks", speed: 0.5, count: 50, size: 1.5 }] as any[]
+        }
+
+        return a
+    })
+}
 
 export function setExampleOverlays() {
     overlays.update((a) => {

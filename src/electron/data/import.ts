@@ -215,7 +215,9 @@ async function importProject(files: string[], dataPath: string) {
 
         // write files
         const replacedMedia: { [key: string]: string } = {}
-        dataContent.files?.forEach((filePath: string) => {
+        dataContent.files?.forEach((rawPath: string) => {
+            const filePath = path.normalize(rawPath)
+
             // check if path already exists on the system
             if (doesPathExist(filePath)) return
 
@@ -229,7 +231,7 @@ async function importProject(files: string[], dataPath: string) {
             const newMediaPath = path.join(importFolder, pathHash)
 
             if (!file) return
-            replacedMedia[filePath] = newMediaPath
+            replacedMedia[rawPath] = newMediaPath
 
             if (doesPathExist(newMediaPath)) return
             // @ts-ignore
@@ -237,10 +239,19 @@ async function importProject(files: string[], dataPath: string) {
         })
 
         // replace files
+        const escapeJSON = (value: string) => value.replace(/\\/g, "\\\\")
         Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
-            oldPath = oldPath.replace(/\\/g, "\\\\")
-            newPath = newPath.replace(/\\/g, "\\\\")
-            content = content.replaceAll(oldPath, newPath)
+            const escapedNewPath = escapeJSON(path.normalize(newPath))
+
+            // the previous path might come from a different OS
+            const candidates = [JSON.stringify(oldPath).slice(1, -1), escapeJSON(oldPath), oldPath]
+            // oldPath.replace(/\\/g, "/"), oldPath.replace(/\//g, "\\")
+            for (const variant of candidates) {
+                if (content.includes(variant)) {
+                    content = content.split(variant).join(escapedNewPath)
+                    break
+                }
+            }
         })
 
         dataFile.content = content

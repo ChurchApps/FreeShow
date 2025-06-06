@@ -128,7 +128,7 @@ export enum Main {
     PCO_DISCONNECT = "PCO_DISCONNECT",
     CHUMS_LOAD_SERVICES = "CHUMS_LOAD_SERVICES",
     CHUMS_STARTUP_LOAD = "CHUMS_STARTUP_LOAD",
-    CHUMS_DISCONNECT = "CHUMS_DISCONNECT",
+    CHUMS_DISCONNECT = "CHUMS_DISCONNECT"
 }
 
 export interface MainSendPayloads {
@@ -194,6 +194,7 @@ export interface MainSendPayloads {
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
     [Main.PCO_LOAD_SERVICES]: { dataPath: string }
     [Main.PCO_STARTUP_LOAD]: { dataPath: string }
+    [Main.CHUMS_STARTUP_LOAD]: { shows: TrimmedShows; categories: string[]; showsPath: string }
 }
 
 export interface MainReturnPayloads {

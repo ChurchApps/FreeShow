@@ -79,10 +79,12 @@
         "global_options": "These options are applied globally."
     },
     "setup": {
-        "good_luck": "I hope you find this software useful. Good luck showing! :)",
+        "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
         "tips": "Find handy tips and tutorials on the website.",
         "change_later": "You can change these settings later",
-        "get_started": "Get started!"
+        "get_started": "Get started!",
+        "or": "or",
+        "restore_data": "Restore previous data"
     },
     "example": {
         "welcome": "Welcome",
@@ -159,6 +161,7 @@
     "remove": {
         "background": "Remove background",
         "overlays": "Remove overlays",
+        "effects": "Remove effects",
         "audio": "Remove audio",
         "nextTimer": "Remove next slide timer",
         "to_start": "Remove go to start",
@@ -465,6 +468,8 @@
         "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
+        "chums_sync_categories": "Select categories to sync",
+        "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -530,7 +535,9 @@
         "scripture": "New scripture",
         "collection": "New collection",
         "action": "New action",
-        "event": "New event"
+        "event": "New event",
+        "event_action": "New scheduled action",
+        "effect": "New effect"
     },
     "show": {
         "name": "Name",
@@ -989,7 +996,11 @@
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
         "progress_bar": "Progress bar",
-        "each_number_once": "Each number only once"
+        "each_number_once": "Each number only once",
+        "side": "Side",
+        "count": "Count",
+        "speed": "Speed",
+        "angle": "Angle"
     },
     "items": {
         "text": "Textbox",
@@ -1010,6 +1021,7 @@
         "visualizer": "Visualizer",
         "captions": "Captions",
         "icon": "Icon",
+        "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
         "current_output": "Current output"
@@ -1126,7 +1138,8 @@
         "straight": "Straight",
         "rainbow": "Rainbow",
         "threed": "3D",
-        "dots": "Dots"
+        "dots": "Dots",
+        "link_to_slide": "Link to slide"
     },
     "stage": {
         "stage_layout": "Stage layout",
@@ -1443,6 +1456,32 @@
         "weekly": "Weekly",
         "mothly": "Monthly"
     },
+    "effect": {
+        "stars": "Stars",
+        "galaxy": "Galaxy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "bubbles": "Bubbles",
+        "wave": "Wave",
+        "sun": "Sun",
+        "lens_flare": "Lens flare",
+        "spotlight": "Spotlight",
+        "aurora": "Aurora",
+        "bloom": "Bloom",
+        "fog": "Fog",
+        "city": "City",
+        "fireworks": "Fireworks",
+        "rays": "Rays",
+        "cycle": "Cycle",
+        "circle": "Circle",
+        "rectangle": "Rectangle",
+        "triangle": "Triangle",
+        "swirl_strength": "Swirl strength",
+        "arm_count": "Arm count",
+        "drift": "Drift",
+        "pulse_speed": "Pulse speed",
+        "hollow": "Hollow"
+    },
     "info": {
         "created": "Created",
         "modified": "Modified",
@@ -1505,5 +1544,9 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "chums": {
+        "sync_categories": "Sync categories",
+        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }
