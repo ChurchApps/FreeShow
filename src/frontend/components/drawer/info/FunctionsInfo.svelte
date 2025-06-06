@@ -52,8 +52,6 @@
     <div class="scroll" style="padding: 10px;">
         <T id="tips.trigger" />
     </div>
-{:else if type === "effects"}
-    <!-- EFFECTS -->
 {/if}
 
 <style>

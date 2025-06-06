@@ -71,7 +71,7 @@
             <Color style="width: 50%;" value={colorPart.color} on:input={(e) => (colorPart.color = e.detail)} />
             <!-- WIP also change background opacity -->
             <span style="display: flex;width: 50%">
-                <NumberInput value={colorPart.pos} min={parsedValue.colors[i - 1]?.pos || 0} max={parsedValue.colors[i + 1]?.pos || 100} on:change={(e) => (colorPart.pos = e.detail)} />
+                <NumberInput value={colorPart.pos || 0} min={parsedValue.colors[i - 1]?.pos || 0} max={parsedValue.colors[i + 1]?.pos || 100} on:change={(e) => (colorPart.pos = e.detail)} />
                 {#if i > 0}
                     <Button
                         title={$dictionary.actions?.delete}

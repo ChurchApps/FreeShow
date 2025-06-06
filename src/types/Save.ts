@@ -33,6 +33,7 @@ export type SaveListSyncedSettings =
     | "companion"
     | "globalTags"
     | "customMetadata"
+    | "effects"
 
 export type SaveListSettings =
     | "initialized"

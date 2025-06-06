@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, activeShow, globalTags, outputs, overlays, projects, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, effects, globalTags, outputs, overlays, projects, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -22,6 +22,7 @@
             value = _show().slides([$selected.data[0].id]).get("color")[0] || ""
         } else if ($selected.id === "overlay") value = $overlays[$selected.data[0]].color || ""
         else if ($selected.id === "template") value = $templates[$selected.data[0]].color || ""
+        else if ($selected.id === "effect") value = $effects[$selected.data[0]].color || ""
         else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color
         else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color
         else if ($selected.id === "show") value = $projects[$activeProject || ""]?.shows[$selected.data[0].index].color || ""
@@ -50,6 +51,11 @@
         template: () => {
             $selected.data.forEach((id) => {
                 history({ id: "UPDATE", newData: { key: "color", data: value }, oldData: { id }, location: { page: "drawer", id: "template_color" } })
+            })
+        },
+        effect: () => {
+            $selected.data.forEach((id) => {
+                history({ id: "UPDATE", newData: { key: "color", data: value }, oldData: { id }, location: { page: "drawer", id: "effect_key" } })
             })
         },
         output: () => {

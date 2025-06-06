@@ -76,7 +76,7 @@
             id: "slideStyle",
             oldData: { style: slide.settings },
             newData,
-            location: { page: "show", show: $activeShow!, slide: layoutSlide.id },
+            location: { page: "show", show: $activeShow!, slide: layoutSlide.id }
         })
     }
 
@@ -228,6 +228,18 @@
                     <p>{layoutSlide.audio.length}</p>
                 {/if}
             </span>
+        </div>
+    {/if}
+    {#if layoutSlide.effects?.length}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.effects} {zoom} on:click={() => removeLayout("effects")}>
+                    <Icon id="effects" size={0.9} white />
+                </Button>
+            </div>
+            {#if layoutSlide.effects.length > 1}
+                <span><p>{layoutSlide.effects.length}</p></span>
+            {/if}
         </div>
     {/if}
     {#if layoutSlide.overlays?.length}

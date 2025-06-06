@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fullColors, overlays, playerVideos, templates } from "../../stores"
+    import { effects, fullColors, overlays, playerVideos, templates } from "../../stores"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -19,7 +19,8 @@
     const nameCategories = {
         overlay: (c: { name: string; id: string }) => overlays.update((a) => setName(a, c)),
         template: (c: { name: string; id: string }) => templates.update((a) => setName(a, c)),
-        player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c)),
+        effect: (c: { name: string; id: string }) => effects.update((a) => setName(a, c)),
+        player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c))
     }
     const setName = (a: any, { name, id }: any, nameKey = "name") => {
         if (!a[id]) return a

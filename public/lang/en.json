@@ -161,6 +161,7 @@
     "remove": {
         "background": "Remove background",
         "overlays": "Remove overlays",
+        "effects": "Remove effects",
         "audio": "Remove audio",
         "nextTimer": "Remove next slide timer",
         "to_start": "Remove go to start",
@@ -467,6 +468,8 @@
         "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
+        "chums_sync_categories": "Select categories to sync",
+        "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -475,8 +478,7 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit",
-        "chums_sync_categories": "Select categories to sync"
+        "save_quit": "Save & Quit"
     },
     "toast": {
         "saving": "Saving...",
@@ -534,7 +536,8 @@
         "collection": "New collection",
         "action": "New action",
         "event": "New event",
-        "event_action": "New scheduled action"
+        "event_action": "New scheduled action",
+        "effect": "New effect"
     },
     "show": {
         "name": "Name",
@@ -993,7 +996,11 @@
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
         "progress_bar": "Progress bar",
-        "each_number_once": "Each number only once"
+        "each_number_once": "Each number only once",
+        "side": "Side",
+        "count": "Count",
+        "speed": "Speed",
+        "angle": "Angle"
     },
     "items": {
         "text": "Textbox",
@@ -1014,6 +1021,7 @@
         "visualizer": "Visualizer",
         "captions": "Captions",
         "icon": "Icon",
+        "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
         "current_output": "Current output"
@@ -1447,6 +1455,32 @@
         "daily": "Daily",
         "weekly": "Weekly",
         "mothly": "Monthly"
+    },
+    "effect": {
+        "stars": "Stars",
+        "galaxy": "Galaxy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "bubbles": "Bubbles",
+        "wave": "Wave",
+        "sun": "Sun",
+        "lens_flare": "Lens flare",
+        "spotlight": "Spotlight",
+        "aurora": "Aurora",
+        "bloom": "Bloom",
+        "fog": "Fog",
+        "city": "City",
+        "fireworks": "Fireworks",
+        "rays": "Rays",
+        "cycle": "Cycle",
+        "circle": "Circle",
+        "rectangle": "Rectangle",
+        "triangle": "Triangle",
+        "swirl_strength": "Swirl strength",
+        "arm_count": "Arm count",
+        "drift": "Drift",
+        "pulse_speed": "Pulse speed",
+        "hollow": "Hollow"
     },
     "info": {
         "created": "Created",

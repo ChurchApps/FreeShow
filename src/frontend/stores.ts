@@ -7,11 +7,12 @@ import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
+import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, Action, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
@@ -217,6 +218,7 @@ export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
+export const effects: Writable<Effects> = writable({}) // {default}
 
 // OVERLAYS
 export const overlayCategories: Writable<Categories> = writable({}) // {default}
@@ -372,6 +374,7 @@ export const $ = {
     triggers,
     media,
     mediaFolders,
+    effects,
     overlayCategories,
     overlays,
     audioFolders,

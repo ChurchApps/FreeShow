@@ -162,7 +162,13 @@
     let autoChange = true
     $: if (outputId) autoChange = true
     $: if (autoChange && ($outputs || $overlayTimers)) {
-        let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
+        let active = getActiveClear(
+            !isOutCleared("transition"),
+            $playingAudio,
+            !isOutCleared("overlays") || !isOutCleared("effects"),
+            !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")),
+            !isOutCleared("background")
+        )
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value
@@ -170,7 +176,7 @@
     function checkStillActive() {
         if (activeClear === "nextTimer" && isOutCleared("transition")) autoChange = true
         else if (activeClear === "audio" && !$playingAudio) autoChange = true
-        else if (activeClear === "overlays" && isOutCleared("overlays")) autoChange = true
+        else if (activeClear === "overlays" && isOutCleared("overlays") && isOutCleared("effects")) autoChange = true
         else if (activeClear === "slide" && !(!isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")))) autoChange = true
         else if (activeClear === "background" && isOutCleared("background")) autoChange = true
     }

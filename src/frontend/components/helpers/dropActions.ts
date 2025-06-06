@@ -49,6 +49,7 @@ function getId(drag: Selected): string {
     const extension: string = getExtension(drag.data[0].name)
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0].type === "audio") return "audio"
+    if (drag.id === "effect") return "overlay"
     if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi") return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
@@ -660,6 +661,14 @@ const slideDrop = {
         history.id = "SHOW_LAYOUT"
 
         const ref = getLayoutRef()[drop.index!]
+
+        if (drag.id === "effect") {
+            if (!ref) return
+            const data: any[] = removeDuplicates([...(ref.data?.effects || []), ...drag.data])
+            history.newData = { key: "effects", data, dataIsArray: true, indexes: [drop.index! - (drop.trigger?.includes("end") ? 1 : 0)] }
+            return history
+        }
+
         if (!ref) {
             // create slide from overlay if dropping not on a slide
             const slides: Slide[] = []

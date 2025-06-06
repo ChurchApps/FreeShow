@@ -40,6 +40,7 @@ export interface OutData {
     refresh?: boolean
     background?: null | OutBackground
     slide?: null | OutSlide
+    effects?: string[]
     overlays?: string[]
     transition?: null | OutTransition
 }

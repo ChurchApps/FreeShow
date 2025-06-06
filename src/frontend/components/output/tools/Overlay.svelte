@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
-    import { outLocked, overlays } from "../../../stores"
+    import { effects, outLocked, overlays } from "../../../stores"
     import { setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
 
@@ -12,7 +12,17 @@
     //   currentOutput = outs.find((output) => output.out?.overlays)
     // }
 
+    $: activeEffects = currentOutput?.out?.effects?.map((id) => ({ id, ...$effects[id] })) || []
     $: activeOverlays = currentOutput?.out?.overlays?.map((id) => ({ id, ...$overlays[id] })) || []
+
+    function removeEffect(id: string) {
+        if ($outLocked || !currentOutput.out?.effects) return
+
+        setOutput(
+            "effects",
+            currentOutput.out.effects.filter((a) => a !== id)
+        )
+    }
 
     function removeOverlay(id: string) {
         if ($outLocked || !currentOutput.out?.overlays) return
@@ -31,8 +41,15 @@
     // }
 </script>
 
-{#if currentOutput?.out?.overlays?.length}
+{#if currentOutput?.out?.overlays?.length || currentOutput?.out?.effects?.length}
     <span class="name" style="justify-content: space-between;">
+        {#each activeEffects as effect}
+            <div class="overlay">
+                <Button style="flex: 1;" disabled={$outLocked} on:click={() => removeEffect(effect.id)} center red>
+                    <p>{effect.name || "—"}</p>
+                </Button>
+            </div>
+        {/each}
         {#each activeOverlays as overlay}
             <!-- {@const locked = $overlays[overlay.id]?.locked} -->
             <div class="overlay">

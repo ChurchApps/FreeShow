@@ -154,6 +154,10 @@ export function clearOverlays(specificOutputId = "") {
         outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
         setOutput("overlays", outOverlays, false, outputId)
         lockedOverlays.set(outOverlays)
+
+        // effects
+        // let outEffects: string[] = get(outputs)[outputId]?.out?.effects || []
+        setOutput("effects", [], false, outputId)
     })
 }
 

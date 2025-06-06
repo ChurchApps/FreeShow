@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -32,7 +32,8 @@
         media: (id: string) => getFileName(id),
         audio: (id: string) => getFileName(id),
         overlay: (id: string) => $overlays[id]?.name || "",
-        template: (id: string) => $templates[id]?.name || ""
+        template: (id: string) => $templates[id]?.name || "",
+        effect: (id: string) => $effects[id]?.name || ""
     }
 
     $: if ($activeEdit) updateEditHistory()
@@ -50,6 +51,7 @@
             else if (edit.icon === "audio") edit.icon = "music"
             else if (edit.icon === "template") edit.icon = "templates"
             else if (edit.icon === "overlay") edit.icon = "overlays"
+            else if (edit.icon === "effect") edit.icon = "effects"
 
             if (!names[type]) return a
             edit.name = names[type](edit.id)

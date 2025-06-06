@@ -52,6 +52,7 @@ import {
     videosTime,
     visualizerData,
     volume,
+    effects,
     outputState
 } from "../stores"
 import { newToast } from "./common"
@@ -251,6 +252,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     MEDIA: (a: any) => media.set(a),
     OUT_SLIDE_CACHE: (a: any) => outputSlideCache.set(a),
     CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
+    EFFECTS: (a: any) => clone(effects.set(a)),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),

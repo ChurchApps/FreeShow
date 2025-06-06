@@ -145,5 +145,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     customizedIcons: { disabled: [], svg: [] },
     companion: {},
     globalTags: {},
-    customMetadata: { disabled: [], custom: [] }
+    customMetadata: { disabled: [], custom: [] },
+    effects: {}
 }

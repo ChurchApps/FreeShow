@@ -707,6 +707,11 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             }, 200)
         }
 
+        // effects
+        if (data.effects?.length) {
+            setOutput("effects", data.effects, false, outputId, true)
+        }
+
         // overlays
         if (data.overlays?.length) {
             // send overlays again, because it sometimes don't have it for some reason

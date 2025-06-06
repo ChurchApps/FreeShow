@@ -28,6 +28,7 @@ import {
     drawerTabsData,
     driveData,
     driveKeys,
+    effects,
     effectsLibrary,
     emitters,
     errorHasOccured,
@@ -175,7 +176,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
-        customMetadata: get(customMetadata)
+        customMetadata: get(customMetadata),
+        effects: get(effects)
     }
 
     const allSavedData: SaveData = {
@@ -380,5 +382,6 @@ const saveList: { [key in SaveList]: any } = {
     companion: null,
     globalTags,
     customMetadata: null,
-    chumsSyncCategories: null
+    chumsSyncCategories: null,
+    effects
 }
