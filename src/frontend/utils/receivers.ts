@@ -3,11 +3,13 @@ import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "..
 import type { ClientMessage } from "../../types/Socket"
 import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
+import { runAction } from "../components/actions/actions"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { receiveMainGlobal } from "../IPC/main"
 import {
+    actions,
     activePopup,
     activeProject,
     activeShow,
@@ -23,14 +25,15 @@ import {
     drawTool,
     driveData,
     dynamicValueData,
+    effects,
     events,
     gain,
     media,
-    actions,
     ndiData,
     outputDisplay,
     outputs,
     outputSlideCache,
+    outputState,
     overlays,
     playerVideos,
     playingAudioPaths,
@@ -51,9 +54,7 @@ import {
     videosData,
     videosTime,
     visualizerData,
-    volume,
-    effects,
-    outputState
+    volume
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -64,7 +65,6 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
-import { runAction } from "../components/actions/actions"
 
 export function setupMainReceivers() {
     receiveMainGlobal()

@@ -30,8 +30,8 @@
 
     let hover: null | number = null
     function mouseenter(e: any, index: number) {
-        const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
-        if (!mediaGrid) return
+        const grid = document.querySelector(".grid")
+        if (!grid) return
 
         if (e.buttons > 0) return
         hover = index
@@ -41,7 +41,10 @@
     onMount(() => {
         const loader = setInterval(() => {
             slowLoader++
-            if (slowLoader > Object.keys(fullFilteredEffects).length + 1) clearInterval(loader)
+            if (slowLoader > fullFilteredEffects.length + 1) {
+                clearInterval(loader)
+                slowLoader = -1
+            }
         })
     })
 </script>
@@ -75,7 +78,7 @@
                     <!-- WIP dblclick open preview -->
                     <SelectElem id="effect" data={effect.id} fill draggable>
                         <Zoomed {resolution} background={effect.items?.length ? "var(--primary);" : effect.color || "var(--primary);"} checkered={!!effect.items?.length}>
-                            {#if slowLoader > i}
+                            {#if slowLoader < 0 || slowLoader > i}
                                 {#key hover === i}
                                     <Effect {effect} preview={hover !== i} />
                                 {/key}
