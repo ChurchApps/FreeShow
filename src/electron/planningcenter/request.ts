@@ -55,8 +55,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
             // convert to array
             if (!Array.isArray(resultData)) resultData = [resultData]
 
-            // console.log("RESULT", path, resultData) // DEBUG
-            console.debug("PCO Request Result:", apiPath, resultData)
+            // console.debug("PCO Request Result:", apiPath, resultData)
 
             resolve(resultData)
         })
