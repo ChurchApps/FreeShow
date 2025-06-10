@@ -164,6 +164,7 @@ const clickActions = {
     quick_start_guide: () => guideActive.set(true),
 
     // main
+    custom_text: () => activePopup.set("custom_text"),
     rename: (obj: ObjData) => {
         const id = obj.sel?.id || obj.contextElem?.id
         if (!id) return

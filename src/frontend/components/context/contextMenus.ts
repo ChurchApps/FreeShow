@@ -42,6 +42,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_all: { label: "actions.delete_all", icon: "delete" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
+    custom_text: { label: "popup.custom_text", icon: "rename" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
     manage_show_tags: { label: "popup.manage_tags", icon: "edit" },
@@ -176,6 +177,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     help: ["quick_search", "shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
     default: ["save", "settings", "history", "SEPERATOR", "about", "quit"],
+    splash: ["custom_text"],
     rename: ["rename"],
     close: ["close"],
     output_window: ["close"],

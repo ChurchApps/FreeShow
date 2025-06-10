@@ -62,6 +62,20 @@
         hover = false
         // fileOver = false
     }
+
+    // TOUCH SCREEN
+
+    function onTouchStart() {
+        hover = true
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+        if (hover && active) {
+            // simulate a drop event
+            ondrop(e, id)
+        }
+        hover = false
+    }
 </script>
 
 <svelte:window on:click={() => (hover = false)} on:dragend={endDrag} on:dragstart={() => (hover = active)} />
@@ -83,6 +97,8 @@
     }}
     on:dragenter={enter}
     on:dragleave={leave}
+    on:touchstart={onTouchStart}
+    on:touchend={onTouchEnd}
 >
     <span class="ParentBlock">
         <slot {fileOver} />

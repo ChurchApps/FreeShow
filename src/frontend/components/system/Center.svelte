@@ -6,7 +6,7 @@
     export let style = ""
 </script>
 
-<div style="font-size: {size}em;padding: {padding}px;{style}" class="loader" class:faded class:absolute>
+<div style="font-size: {size}em;padding: {padding}px;{style}" class="loader {$$props.class}" class:faded class:absolute>
     <slot />
 </div>
 

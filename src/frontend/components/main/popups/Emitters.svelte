@@ -34,7 +34,7 @@
     $: emitterTypes = [
         { name: "OSC", id: "osc" },
         { name: "HTTP", id: "http" },
-        { name: "MIDI", id: "midi" },
+        { name: "MIDI", id: "midi" }
     ]
 
     const DEFAULT_EMITTER: Emitter = { name: "", type: "osc" }
@@ -167,6 +167,10 @@
         <p><T id="midi.name" /></p>
         <TextInput value={template.name} on:change={(e) => updateTemplate("name", e)} autofocus={!template.name} />
     </CombinedInput>
+    <CombinedInput textWidth={30}>
+        <p><T id="midi.description" /></p>
+        <TextInput value={template.description || ""} on:change={(e) => updateTemplate("description", e)} />
+    </CombinedInput>
 
     <HRule title="emitters.inputs" />
 
@@ -195,6 +199,10 @@
         <p><T id="midi.name" /></p>
         <TextInput value={emitter.name} on:change={(e) => updateValue("name", e)} autofocus={!emitter.name} />
     </CombinedInput>
+    <CombinedInput textWidth={30}>
+        <p><T id="midi.description" /></p>
+        <TextInput value={emitter.description || ""} on:change={(e) => updateValue("description", e)} />
+    </CombinedInput>
 
     <CombinedInput textWidth={30}>
         <p><T id="midi.type" /></p>
@@ -208,7 +216,9 @@
     <HRule title="emitters.message_templates" />
 
     <DynamicList items={keysToID(emitter.templates || {})} let:item={template} on:open={(e) => (editTemplate = e.detail)} on:delete={(e) => deleteTemplate(e.detail)} on:add={createTemplate}>
-        <p class="template" style="gap: 5px;width: 100%;min-width: auto;">{template.name || "—"}</p>
+        <p class="template" style="gap: 5px;width: 100%;min-width: auto;">
+            {template.name || "—"} <span style="display: flex;align-items: center;margin-left: 10px;font-size: 0.8em;opacity: 0.5;font-style: italic;">{template.description || ""}</span>
+        </p>
     </DynamicList>
 {:else}
     {#if !emittersList.length}
@@ -216,7 +226,10 @@
     {/if}
 
     <DynamicList items={emittersList} let:item={emitter} on:open={(e) => (editEmitter = e.detail)} on:delete={(e) => deleteEmitter(e.detail)} on:add={createEmitter}>
-        <p class="emitter" style="gap: 5px;width: 100%;min-width: auto;"><span style="display: flex;align-items: center;text-transform: uppercase;opacity: 0.7;">[{emitter.type}]</span>{emitter.name || "—"}</p>
+        <p class="emitter" style="gap: 5px;width: 100%;min-width: auto;">
+            <span style="display: flex;align-items: center;text-transform: uppercase;opacity: 0.7;">[{emitter.type}]</span>{emitter.name || "—"}
+            <span style="display: flex;align-items: center;margin-left: 10px;font-size: 0.8em;opacity: 0.5;font-style: italic;">{emitter.description || ""}</span>
+        </p>
     </DynamicList>
 {/if}
 

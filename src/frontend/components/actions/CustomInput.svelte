@@ -76,7 +76,7 @@
         clear_overlay: () => convertToOptions($overlays),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
-        stage_outputs: () => [{ id: null, name: "—" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
+        stage_outputs: () => [{ id: "", name: "$:actions.all_outputs:$" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
@@ -103,7 +103,7 @@
     <CombinedInput>
         <!-- keep empty to change all stage outputs -->
         <p><T id="stage.output" /></p>
-        <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === value?.outputId)?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
+        <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === (value?.outputId || ""))?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
     </CombinedInput>
 {:else if inputId === "camera"}
     <CombinedInput>
