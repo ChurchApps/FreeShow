@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
-    import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, outLocked, playingAudio } from "../../../stores"
+    import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, metronome, outLocked, playingAudio, playingMetronome } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
@@ -74,6 +74,8 @@
     }
 
     let fullLength = false
+
+    $: console.log($playingMetronome, $metronome, path, $playingAudio)
 </script>
 
 {#if Object.keys($playingAudio).length > 1}
@@ -86,7 +88,7 @@
             </Button>
         {/each}
     </span>
-{:else}
+{:else if path}
     {@const name = playing.name || getName(path)}
 
     <Button title={name} on:click={() => openAudio(path, playing)} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
@@ -137,6 +139,8 @@
             {/if}
         </div>
     {/if}
+{:else if $playingMetronome}
+    <p style="text-align: center;opacity: 0.9;padding: 4px;">{$metronome.tempo || 120} | {$metronome.beats || 4}</p>
 {/if}
 
 <style>

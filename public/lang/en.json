@@ -215,6 +215,7 @@
         "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
+        "use_metadata_bpm": "Use BPM from metadata",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Beats",

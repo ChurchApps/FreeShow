@@ -18,6 +18,7 @@ import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import {
+    actions,
     activeEdit,
     activeFocus,
     activePage,
@@ -26,11 +27,11 @@ import {
     allOutputs,
     audioData,
     currentWindow,
+    customMetadata,
     driveData,
     dynamicValueData,
     focusMode,
     media,
-    actions,
     outLocked,
     outputs,
     outputSlideCache,
@@ -56,7 +57,7 @@ import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
-import { getGroupName, getLayoutRef, initializeMetadata } from "./show"
+import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
@@ -1014,7 +1015,7 @@ const customTriggers = {
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false) {
     const mainValues = Object.keys(dynamicValues)
-    const metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+    const metaValues = Object.keys(getCustomMetadata()).map((id) => `meta_` + id.replaceAll(" ", "_").toLowerCase())
 
     if (noVariables) return [...mainValues, ...metaValues]
 
@@ -1101,9 +1102,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         // META
         if (dynamicId.includes("meta_")) {
-            const key = dynamicId.slice(5)
+            const key = dynamicId.slice(5).replaceAll("_", " ")
             if (!Object.keys(show)) return ""
-            return (show as Show).meta?.[key] || ""
+            const customKey = get(customMetadata).custom.find((a) => a.toLowerCase() === key) || key
+            return (show as Show).meta?.[customKey] || ""
         }
 
         const activeLayout = layoutId ? [layoutId] : "active"

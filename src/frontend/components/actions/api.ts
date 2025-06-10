@@ -150,6 +150,7 @@ export interface API_midi extends MidiValues {
     defaultValues?: boolean // only used by actions
 }
 export type API_metronome = {
+    metadataBPM?: boolean // only used by actions
     tempo?: number
     beats?: number
     volume?: number

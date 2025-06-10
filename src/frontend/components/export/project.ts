@@ -50,15 +50,17 @@ export async function exportProject(project: Project, projectId: string) {
             // get media file paths
             const mediaData = _show(showRef.id).get("media")
             mediaIds.forEach((id) => {
-                getFile(mediaData[id].path || mediaData[id].id)
+                const path = mediaData[id]?.path || mediaData[id]?.id
+                if (!path || path.includes("http")) return
+                getFile(path)
             })
 
             // get media from "Media" items
-            const slides = shows[showRef.id].slides
+            const slides = shows[showRef.id]?.slides || {}
             Object.values(slides).forEach(({ items }) => {
                 items.forEach((item) => {
                     if (item.type === "media") {
-                        getFile(item.src || "")
+                        getFile(item.src)
                     }
                 })
             })
@@ -76,7 +78,7 @@ export async function exportProject(project: Project, projectId: string) {
         },
         section: () => {
             // do nothing
-        },
+        }
     }
 
     const projectItems = project.shows
@@ -121,7 +123,8 @@ export async function exportProject(project: Project, projectId: string) {
         getProjectItems[type](showRef)
     }
 
-    function getFile(path: string) {
+    function getFile(path: string | undefined) {
+        if (!path) return
         files.push(path)
     }
 

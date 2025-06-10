@@ -119,7 +119,7 @@
     <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
     <div class="column">
-        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
+        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} action />
     </div>
 {:else if inputId === "variable"}
     <VariableInputs {value} on:update={(e) => updateValue(e.detail?.key, e.detail?.value)} />

@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import {
     activeEdit,
     activePage,
@@ -25,6 +26,7 @@ import {
     videosTime
 } from "../../stores"
 import { customActionActivation } from "../actions/actions"
+import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
 import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
@@ -61,6 +63,14 @@ function storeCache() {
             const out = get(outputs)[id]?.out
             if (out) a[id] = clone(out)
         })
+
+        // audio
+        a.playingAudioData = AudioPlayer.getAllPlaying().map((path) => {
+            const playing = get(playingAudio)[path]
+            return { path, metadata: { name: playing.name }, options: { startAt: playing.audio?.currentTime || 0 } }
+        })
+        a.playingMetronome = get(playingMetronome)
+
         return a
     })
 }
@@ -72,6 +82,7 @@ export function restoreOutput() {
 
     outputs.update((a) => {
         Object.keys(get(outputCache)).forEach((id) => {
+            if (id.includes("playing")) return
             // restore only selected outputs
             if (!activeOutputs.includes(id) || !a[id]) return
             a[id].out = get(outputCache)[id]
@@ -79,6 +90,14 @@ export function restoreOutput() {
 
         return a
     })
+
+    // audio
+    if (get(outputCache).playingAudioData) {
+        get(outputCache).playingAudioData.forEach((data) => {
+            AudioPlayer.start(data.path, data.metadata, data.options)
+        })
+    }
+    if (get(outputCache).playingMetronome) startMetronome()
 
     outputCache.set(null)
 }

@@ -386,15 +386,19 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     outputIds.forEach((outputId: string) => {
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        keys.forEach((type: string) => {
-            // TODO:
-            if (output.out?.[type]) {
-                if (type === "overlays") {
-                    if (checkLocked && output.out.overlays?.length) cleared = false
-                    else if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
-                } else if (type === "effects") cleared = !output.out.effects?.length
-                else if (output.out[type] !== null) cleared = false
+        cleared = !keys.find((type: string) => {
+            if (!output.out?.[type]) return
+
+            if (type === "overlays") {
+                if (checkLocked && output.out.overlays?.length) return true
+                if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) return true
+                return false
             }
+            if (type === "effects") {
+                return output.out.effects?.length
+            }
+
+            return output.out[type] !== null
         })
     })
 

@@ -58,20 +58,35 @@
         }
     }
 
+    $: tool = $drawTool
+
     const change = (e: any, key: string) => update(key, e.detail)
     const check = (e: any, key: string) => update(key, e.target.checked)
 
     const update = (key: string, value: any) => {
         drawSettings.update((a) => {
-            a[$drawTool][key] = value
+            a[tool][key] = value
             return a
         })
     }
 
-    $: if (!Object.keys($drawSettings[$drawTool] || {}).length) reset()
     function reset() {
         drawSettings.update((a) => {
-            a[$drawTool] = clone(defaults[$drawTool] || {})
+            a[tool] = clone(defaults[tool] || {})
+            return a
+        })
+    }
+
+    // $: if (!Object.keys($drawSettings[tool] || {}).length) reset()
+    $: if (tool) adddMissingSettings()
+    function adddMissingSettings() {
+        drawSettings.update((a) => {
+            if (!a[tool]) a[tool] = clone(defaults[tool])
+            else {
+                Object.entries(defaults[tool]).forEach(([key, value]) => {
+                    if (a[tool][key] === undefined) a[tool][key] = value
+                })
+            }
             return a
         })
     }
@@ -80,19 +95,19 @@
 <div class="main border">
     <div class="padding">
         <Panel>
-            {#key $drawTool}
+            {#key tool}
                 <h6>
-                    <Icon id={$drawTool} white right />
-                    <T id="draw.{$drawTool}" />
+                    <Icon id={tool} white right />
+                    <T id="draw.{tool}" />
                 </h6>
 
                 <div class="options">
                     {#key $drawSettings}
-                        {#if $drawSettings[$drawTool]}
-                            {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
-                                {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                        {#if $drawSettings[tool]}
+                            {#each Object.entries($drawSettings[tool]) as [key, value]}
+                                {#if key !== "clear" && (key !== "hold" || tool !== "paint")}
                                     <CombinedInput>
-                                        {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                                        {#if key !== "clear" && (key !== "hold" || tool !== "paint")}
                                             <p><T id="draw.{key}" /></p>
                                         {/if}
                                         {#if key === "color"}
@@ -121,7 +136,7 @@
     </div>
 
     <div class="bottom">
-        {#if $drawTool === "paint"}
+        {#if tool === "paint"}
             <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
                 <Icon id="clear" size={2} right />
                 <T id="clear.drawing" />

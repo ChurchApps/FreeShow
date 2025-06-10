@@ -13,6 +13,7 @@
         socket.emit("CONTROLLER", { channel: "GET_OUTPUT_ID" })
     })
 
+    let aspectRatio = 16 / 9
     let thumbnailBackground: string = ""
 
     socket.on("CONTROLLER", (msg) => {
@@ -20,6 +21,7 @@
         switch (msg.channel) {
             case "OUTPUT_FRAME":
                 thumbnailBackground = msg.data.frame || ""
+                if (msg.data.width && msg.data.height) aspectRatio = msg.data.width / msg.data.height
                 frameReceived = true
                 break
             case "GET_OUTPUT_ID":
@@ -115,7 +117,7 @@
             {/each}
         </select>
 
-        <div bind:this={padElem} class="pad" on:mousedown={mousedown} on:touchstart={mousedown}>
+        <div bind:this={padElem} class="pad" style="aspect-ratio: {thumbnailBackground ? aspectRatio : 1};" on:mousedown={mousedown} on:touchstart={mousedown}>
             {#if thumbnailBackground}
                 <div class="thumbnail">
                     <!-- object-fit: {thumbnailBackground.mediaStyle?.fit || 'contain'}; -->
@@ -254,12 +256,13 @@
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 10px;
     }
 
     .pad {
         height: 55vw;
-        width: 80vw;
+        /* width: 80vw; */
         border-radius: 5px;
         background-color: var(--primary-darkest);
         touch-action: none;
@@ -300,7 +303,7 @@
     @media only screen and (min-width: 620px) {
         .pad {
             height: 55vh;
-            width: 55vh;
+            /* width: 55vh; */
         }
     }
     /* (orientation: landscape) */
@@ -315,7 +318,7 @@
         }
         .pad {
             height: 45vh;
-            width: 65vh;
+            /* width: 65vh; */
         }
         .toggles {
             bottom: 20px;

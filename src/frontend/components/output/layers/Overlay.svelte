@@ -33,14 +33,20 @@
         })
     }
 
+    let filteredItems: Item[] = []
     $: videoTime = $videosTime[outputId] || 0
+    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })
+    function filterItems(currentItems: Item[], _updater: any) {
+        const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, type: "default" }))
+        if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
+    }
 </script>
 
 {#key show}
-    {#each currentItems as item}
+    {#each filteredItems as item}
         {#if show}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
-                {#if (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, { outputId, type: "default" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })}
+                {#if !item.bindings?.length || item.bindings.includes(outputId)}
                     <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {outputId} />
                 {/if}
             </SlideItemTransition>
