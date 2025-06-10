@@ -38,6 +38,7 @@ export const actionData = {
 
     // OVERLAYS
     // SECTION: "tabs.overlays",
+    id_start_effect: { canAddMultiple: true, name: "actions.id_start_effect", icon: "effects", input: "id" },
     id_select_overlay: { canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
     // OUTPUT

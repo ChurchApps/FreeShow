@@ -1127,6 +1127,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const audioPath = playingAudioIds[playingAudioIds.length - 1] // get newest
 
         // custom - only from external source (Companion)
+        // or used to set variable value: https://github.com/ChurchApps/FreeShow/issues/1720
         if (dynamicId === "slide_text_current") {
             return getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : (show as any).slides?.[ref[slideIndex]?.id]).join("<br>")
         } else if (dynamicId === "active_layers") {

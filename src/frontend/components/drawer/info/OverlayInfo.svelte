@@ -6,7 +6,7 @@
     import Button from "../../inputs/Button.svelte"
     import EffectsInfo from "./EffectsInfo.svelte"
 
-    $: subTab = $drawerTabsData.media?.activeSubTab
+    $: subTab = $drawerTabsData.overlays?.activeSubTab
 </script>
 
 {#if subTab === "effects"}

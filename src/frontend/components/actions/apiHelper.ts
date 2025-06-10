@@ -32,10 +32,11 @@ import {
     styles,
     timers,
     variables,
-    volume,
+    volume
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
@@ -173,6 +174,12 @@ function outputSlide(showRef, data: API_slide_index) {
     setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
 }
 
+export function selectEffectById(id: string) {
+    if (get(outLocked)) return
+
+    setOutput("effects", id, false, "", true)
+}
+
 function getSortedOverlays() {
     return sortByName(keysToID(get(overlays)))
 }
@@ -269,6 +276,7 @@ export function changeVariable(data: API_variable) {
     } else if (data.value !== undefined) {
         value = data.value
         if (key === "value" && typeof value !== "boolean") key = variable.type
+        if (key === "text" && value.includes("{")) value = getDynamicValue(value)
     } else if (key === "enabled") {
         value = !variable.enabled
     }
