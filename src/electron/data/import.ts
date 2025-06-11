@@ -264,18 +264,18 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
     // write files
     const replacedMedia: { [key: string]: string } = {}
     dataContent.files?.forEach((rawPath: string) => {
-        const filePath = path.normalize(rawPath)
+        const currentPath = path.normalize(rawPath)
 
         // check if path already exists on the system
-        if (doesPathExist(filePath)) return
+        if (doesPathExist(currentPath)) return
 
-        const fileName = path.basename(filePath)
+        const fileName = path.basename(currentPath)
         const file = zipData.find((a) => a.name === fileName)?.content
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten
         const ext = path.extname(fileName)
-        const pathHash = `${path.basename(filePath, ext)}_${filePathHashCode(filePath)}${ext}`
+        const pathHash = `${path.basename(currentPath, ext)}_${filePathHashCode(currentPath)}${ext}`
         const newMediaPath = path.join(importFolder, pathHash)
 
         if (!file) return

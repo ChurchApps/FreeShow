@@ -146,7 +146,7 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
 
 // ----- JSON -----
 
-export function exportJSON(content: any, extension: string, path: string, name: string = "") {
+export function exportJSON(content: any, extension: string, path: string, name = "") {
     writeFile(join(path, name || content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
