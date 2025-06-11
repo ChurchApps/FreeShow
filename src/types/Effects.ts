@@ -5,6 +5,7 @@ export interface Effects {
 export interface Effect {
     name: string
     isDefault?: boolean
+    displayDuration?: number
     placeUnderSlide?: boolean
     color: string | null
     style: string

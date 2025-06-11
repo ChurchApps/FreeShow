@@ -72,7 +72,7 @@ export class EffectRender {
         this.frame(0, true)
 
         const loop = (time: number) => {
-            const deltaTime = time - this.lastTime
+            const deltaTime = this.lastTime ? time - this.lastTime : 1
             this.lastTime = time
 
             if (this.running) this.frame(deltaTime / 16) // 1
@@ -182,10 +182,11 @@ export class EffectRender {
         const size = item.size ?? item.radius ?? item.length ?? 0
         const speed = item.speed || 0
         const offscreen = (inverted ? speed > 0 : speed < 0) ? item.y + size < 0 : item.y - size > this.height
-        if (!offscreen) return
+        if (!offscreen) return false
 
         item.y = item.y < 0 ? this.height + size : -size
         item.x = this.getRandomPosX()
+        return true
     }
 
     pathOpen = false
@@ -445,7 +446,7 @@ export class EffectRender {
             // move
             drop.y += drop.speed * deltaTime
 
-            drop = this.checkOffscreen(drop)
+            this.checkOffscreen(drop)
         }
     }
 
@@ -484,7 +485,7 @@ export class EffectRender {
             flake.y += flake.speed * deltaTime
             flake.x += flake.drift * 0.5
 
-            flake = this.checkOffscreen(flake)
+            this.checkOffscreen(flake)
         }
     }
 
@@ -528,7 +529,7 @@ export class EffectRender {
             bubble.y -= bubble.speed * deltaTime
             bubble.x += bubble.drift
 
-            bubble = this.checkOffscreen(bubble, true)
+            this.checkOffscreen(bubble, true)
         }
     }
 

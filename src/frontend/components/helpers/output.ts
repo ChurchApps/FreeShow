@@ -17,6 +17,7 @@ import {
     currentWindow,
     dictionary,
     disabledServers,
+    effects,
     lockedOverlays,
     outputDisplay,
     outputs,
@@ -164,13 +165,11 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
-                if (type === "overlays") {
-                    data.forEach((overlayId) => {
-                        // timeout so output can update first
-                        if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
-                        else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
-                    })
-                }
+                data.forEach((overlayId) => {
+                    // timeout so output can update first
+                    if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData, type)
+                    else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
+                })
             } else {
                 outData = data
 
@@ -274,11 +273,11 @@ export function startScreen(screen: API_screen) {
 
 /// OVERLAY TIMERS
 
-function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = []) {
-    if (!outData.length) outData = get(outputs)[outputId]?.out?.overlays || []
+function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = [], type: "overlays" | "effects" = "overlays") {
+    if (!outData.length) outData = get(outputs)[outputId]?.out?.[type] || []
     if (!outData.includes(overlayId)) return
 
-    const overlay = get(overlays)[overlayId]
+    const overlay = type === "overlays" ? get(overlays)[overlayId] : get(effects)[overlayId]
     if (!overlay?.displayDuration) return
 
     overlayTimers.update((a) => {
@@ -290,9 +289,9 @@ function startOverlayTimer(outputId: string, overlayId: string, outData: string[
             overlayId,
             timer: setTimeout(() => {
                 clearOverlayTimer(outputId, overlayId)
-                if (!get(outputs)[outputId]?.out?.overlays?.includes(overlayId)) return
+                if (!get(outputs)[outputId]?.out?.[type]?.includes(overlayId)) return
 
-                setOutput("overlays", overlayId, true, outputId)
+                setOutput(type, overlayId, true, outputId)
             }, overlay.displayDuration! * 1000)
         }
 

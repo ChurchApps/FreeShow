@@ -7,6 +7,7 @@
         activeShow,
         categories,
         disabledServers,
+        drawerTabsData,
         effects,
         effectsLibrary,
         events,
@@ -199,9 +200,14 @@
             else if ($overlays[id]?.locked) enabled = true
         },
         display_duration: () => {
+            const subTab = $drawerTabsData.overlays?.activeSubTab
             let id = $selected.data[0]
-            if ($overlays[id]?.locked) disabled = true
-            else if ($overlays[id]?.displayDuration) enabled = true
+            if (subTab === "effects") {
+                if ($effects[id]?.displayDuration) enabled = true
+            } else {
+                if ($overlays[id]?.locked) disabled = true
+                else if ($overlays[id]?.displayDuration) enabled = true
+            }
         },
         move_to_front: () => {
             let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)

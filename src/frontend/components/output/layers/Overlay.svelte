@@ -7,10 +7,12 @@
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
 
     export let outputId: string
+    export let isClearing = false
 
     export let id: string
     export let overlays: { [key: string]: Overlay }
     export let mirror = false
+    export let preview = false
     export let transition: Transition
 
     $: transitionEnabled = !!((transition.type !== "none" && transition.duration) || transition.in || transition.out)
@@ -33,22 +35,21 @@
         })
     }
 
-    let filteredItems: Item[] = []
+    const showItemRef = { outputId, type: "default" }
     $: videoTime = $videosTime[outputId] || 0
-    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })
-    function filterItems(currentItems: Item[], _updater: any) {
-        const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, type: "default" }))
-        if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
+    $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
+    let update = 0
+    function updateValues() {
+        if (isClearing) return
+        update++
     }
 </script>
 
 {#key show}
-    {#each filteredItems as item}
-        {#if show}
+    {#each currentItems as item}
+        {#if show && (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, showItemRef, update)}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
-                {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                    <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {outputId} />
-                {/if}
+                <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} />
             </SlideItemTransition>
         {/if}
     {/each}

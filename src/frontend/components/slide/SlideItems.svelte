@@ -95,7 +95,7 @@
         <Mirror {item} {ref} {ratio} index={slideIndex} {edit} />
     {/if}
 {:else if item.type === "visualizer"}
-    <Visualizer {item} {preview} />
+    <Visualizer {item} {preview} {edit} />
 {:else if item.type === "captions"}
     <Captions {item} />
 {:else if item.type === "icon"}

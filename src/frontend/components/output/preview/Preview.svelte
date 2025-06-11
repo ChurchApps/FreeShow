@@ -57,9 +57,9 @@
         }
 
         // group shortcuts
-        if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
+        if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
-            let layoutRef = getLayoutRef()
+            let layoutRef = getLayoutRef(outSlide?.id || "active")
             let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)

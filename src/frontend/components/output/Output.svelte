@@ -265,6 +265,22 @@
     // draw zoom
     $: drawZoom = $drawTool === "zoom" ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
+    // CLEARING
+    $: if (slide !== undefined) updateSlide()
+    let actualSlide: OutSlide | null = null
+    let actualSlideData: SlideData | null = null
+    let actualCurrentSlide: Slide | null = null
+    let isSlideClearing = false
+    function updateSlide() {
+        // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
+        isSlideClearing = !slide
+        setTimeout(() => {
+            actualSlide = clone(slide)
+            actualSlideData = clone(slideData)
+            actualCurrentSlide = clone(currentSlide)
+        })
+    }
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     const dynamicInterval = setInterval(() => {
@@ -288,7 +304,7 @@
     bind:ratio
 >
     <!-- always show style background (behind other backgrounds) -->
-    {#if styleBackground && slide?.type !== "pdf"}
+    {#if styleBackground && actualSlide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />
     {/if}
 
@@ -310,29 +326,45 @@
     <!-- "underlays" -->
     {#if overlaysActive}
         <!-- && outUnderlays?.length -->
-        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} {preview} />
     {/if}
 
     <!-- slide -->
-    {#if slide?.type === "pdf" && layers.includes("background")}
+    {#if actualSlide?.type === "pdf" && layers.includes("background")}
         <span style="zoom: {1 / ratio};">
-            <PdfOutput {slide} {currentStyle} transition={transitions.media} />
+            <PdfOutput slide={actualSlide} {currentStyle} transition={transitions.media} />
         </span>
-    {:else if slide?.type === "ppt" && layers.includes("slide")}
+    {:else if actualSlide?.type === "ppt" && layers.includes("slide")}
         <span style="zoom: {1 / ratio};">
-            {#if slide?.screen?.id}
-                <Window id={slide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
+            {#if actualSlide?.screen?.id}
+                <Window id={actualSlide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
             {/if}
         </span>
-    {:else if slide && slide?.type !== "pdf" && layers.includes("slide")}
-        <SlideContent {outputId} outSlide={slide} {slideData} {currentSlide} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {isKeyOutput} />
+    {:else if actualSlide && actualSlide?.type !== "pdf" && layers.includes("slide")}
+        <SlideContent
+            {outputId}
+            outSlide={actualSlide}
+            isClearing={isSlideClearing}
+            slideData={actualSlideData}
+            currentSlide={actualCurrentSlide}
+            {currentStyle}
+            {animationData}
+            {currentLineId}
+            {lines}
+            {ratio}
+            {mirror}
+            {preview}
+            transition={transitions.text}
+            transitionEnabled={!mirror || preview}
+            {isKeyOutput}
+        />
     {/if}
 
     {#if layers.includes("overlays")}
         <!-- message -->
         {#if messageText}
             <Metadata
-                value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : messageText}
+                value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText}
                 style={metadata.messageStyle || ""}
                 transition={metadata.messageTransition || transitions.overlay}
                 {isKeyOutput}
@@ -341,7 +373,7 @@
 
         <!-- metadata -->
         {#if metadataValue || $customMessageCredits}
-            <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
+            <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
         {/if}
 
@@ -353,15 +385,15 @@
         <!-- overlays -->
         <!-- outOverlays?.length -->
         {#if overlaysActive}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
+            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} {preview} />
         {/if}
     {/if}
 
-    {#if slide?.attributionString}
+    {#if actualSlide?.attributionString}
         {#if mirror}
-            <p class="attributionString">{slide.attributionString}</p>
+            <p class="attributionString">{actualSlide.attributionString}</p>
         {:else}
-            <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString}</p>
         {/if}
     {/if}
 

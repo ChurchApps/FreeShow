@@ -8,6 +8,7 @@
 
     export let item: Item
     export let preview = false
+    export let edit = false
 
     // visualizer
     // TODO: videos & mics
@@ -23,7 +24,7 @@
         }, 800)
     }
 
-    $: if (($visualizerData || analysers?.length) && canvas && item) visualizer()
+    $: if (($visualizerData || analysers?.length || edit) && canvas && item) visualizer()
 
     let canvas: HTMLCanvasElement | undefined
     let ctx: CanvasRenderingContext2D | null = null
@@ -56,12 +57,29 @@
         let WIDTH = canvas.width
         let HEIGHT = canvas.height
 
-        const bufferLength = $visualizerData?.buffers ?? analysers[0]?.frequencyBinCount // 128
+        let bufferLength = $visualizerData?.buffers ?? analysers[0]?.frequencyBinCount // 128
+        if (!bufferLength && edit) bufferLength = 128
         if (!bufferLength) return
 
-        const barWidth = (WIDTH / bufferLength - padding) * 1.42 // 1.3
+        let barWidth = WIDTH / bufferLength - padding
 
         let x = 0
+
+        if (edit) {
+            // wait for color/padding to update
+            setTimeout(() => {
+                ctx!.clearRect(0, 0, WIDTH, HEIGHT)
+                for (let i = 0; i < bufferLength; i++) {
+                    const sineFactor = Math.abs(Math.sin((1 - i / bufferLength) * Math.PI * 8))
+                    const barHeight = HEIGHT * (0.5 * sineFactor + 0.5) * ((bufferLength - i) / bufferLength)
+                    generateBar({ height: barHeight, percentage: sineFactor })
+                }
+            })
+            return
+        }
+
+        // don't show highest frequenzies as they are often flat
+        barWidth *= 1.42 // 1.3
 
         if ($currentWindow) {
             if ($visualizerData) renderFrame()

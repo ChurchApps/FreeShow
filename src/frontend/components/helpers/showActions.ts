@@ -865,7 +865,7 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
     let index
     showRef.forEach((ref) => {
         // if (ref.id !== slideId) return
-        if (!globalGroupIds.includes(ref.id)) return
+        if (!globalGroupIds.includes(ref.id) || ref.data?.disabled) return
 
         // get next slide if global group is outputted
         if (index === undefined) index = ref.layoutIndex

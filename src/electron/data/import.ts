@@ -111,6 +111,10 @@ export async function importShow(id: string, files: string[] | null, importSetti
         await importProject(files, importSettings.path)
         return
     }
+    if (id === "freeshow_template") {
+        await importTemplate(files, importSettings.path)
+        return
+    }
 
     if (id === "songbeamer") {
         const encoding = importSettings.encoding.id
@@ -206,62 +210,100 @@ async function importProject(files: string[], dataPath: string) {
     if (!doesPathExist(importFolder)) makeDir(importFolder)
 
     zipFiles.forEach((zipFile) => {
-        const zipData: FileData[] = decompress([zipFile], true)
-        const dataFile = zipData.find((a) => a.name === "data.json")
-        if (!dataFile) return
-
-        let content = dataFile.content as string
-        const dataContent = JSON.parse(content)
-
-        // write files
-        const replacedMedia: { [key: string]: string } = {}
-        dataContent.files?.forEach((rawPath: string) => {
-            const filePath = path.normalize(rawPath)
-
-            // check if path already exists on the system
-            if (doesPathExist(filePath)) return
-
-            const fileName = path.basename(filePath)
-            const file = zipData.find((a) => a.name === fileName)?.content
-
-            // get file path hash to prevent the same file importing multiple times
-            // this also ensures files with the same name don't get overwritten
-            const ext = path.extname(fileName)
-            const pathHash = `${path.basename(filePath, ext)}_${filePathHashCode(filePath)}${ext}`
-            const newMediaPath = path.join(importFolder, pathHash)
-
-            if (!file) return
-            replacedMedia[rawPath] = newMediaPath
-
-            if (doesPathExist(newMediaPath)) return
-            // @ts-ignore
-            writeFile(newMediaPath, file)
-        })
-
-        // replace files
-        const escapeJSON = (value: string) => value.replace(/\\/g, "\\\\")
-        Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
-            const escapedNewPath = escapeJSON(path.normalize(newPath))
-
-            // the previous path might come from a different OS
-            const candidates = [JSON.stringify(oldPath).slice(1, -1), escapeJSON(oldPath), oldPath]
-            // oldPath.replace(/\\/g, "/"), oldPath.replace(/\//g, "\\")
-            for (const variant of candidates) {
-                if (content.includes(variant)) {
-                    content = content.split(variant).join(escapedNewPath)
-                    break
-                }
-            }
-        })
-
-        dataFile.content = content
-        data.push(dataFile)
+        const dataFile = extractZipDataAndMedia(zipFile, importFolder)
+        if (dataFile) data.push(dataFile)
     })
 
     // remove folder if no files stored
     // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
     sendToMain(ToMain.IMPORT2, { channel: "freeshow_project", data })
+}
+
+// TEMPLATE
+
+async function importTemplate(files: string[], dataPath: string) {
+    sendToMain(ToMain.ALERT, "popup.importing")
+
+    // some .fstemplate files are plain JSON and others are zip
+    const zipFiles: string[] = []
+    const jsonFiles: string[] = []
+    await Promise.all(
+        files.map(async (file) => {
+            const zip = await isZip(file)
+            if (zip) zipFiles.push(file)
+            else jsonFiles.push(file)
+        })
+    )
+
+    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+
+    const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
+    const importFolder = path.join(importDataPath, "Templates")
+
+    if (!doesPathExist(importFolder)) makeDir(importFolder)
+
+    zipFiles.forEach((zipFile) => {
+        const dataFile = extractZipDataAndMedia(zipFile, importFolder)
+        if (dataFile) data.push(dataFile)
+    })
+
+    sendToMain(ToMain.IMPORT2, { channel: "freeshow_template", data })
+}
+
+/// ZIP ///
+
+function extractZipDataAndMedia(filePath: string, importFolder: string) {
+    const zipData: FileData[] = decompress([filePath], true)
+    const dataFile = zipData.find((a) => a.name === "data.json")
+    if (!dataFile) return
+
+    let content = dataFile.content as string
+    const dataContent = JSON.parse(content)
+
+    // write files
+    const replacedMedia: { [key: string]: string } = {}
+    dataContent.files?.forEach((rawPath: string) => {
+        const filePath = path.normalize(rawPath)
+
+        // check if path already exists on the system
+        if (doesPathExist(filePath)) return
+
+        const fileName = path.basename(filePath)
+        const file = zipData.find((a) => a.name === fileName)?.content
+
+        // get file path hash to prevent the same file importing multiple times
+        // this also ensures files with the same name don't get overwritten
+        const ext = path.extname(fileName)
+        const pathHash = `${path.basename(filePath, ext)}_${filePathHashCode(filePath)}${ext}`
+        const newMediaPath = path.join(importFolder, pathHash)
+
+        if (!file) return
+        replacedMedia[rawPath] = newMediaPath
+
+        if (doesPathExist(newMediaPath)) return
+        // @ts-ignore
+        writeFile(newMediaPath, file)
+    })
+
+    // replace files
+    const escapeJSON = (value: string) => value.replace(/\\/g, "\\\\")
+    Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
+        const escapedNewPath = escapeJSON(path.normalize(newPath))
+
+        // the previous path might come from a different OS
+        const candidates = [JSON.stringify(oldPath).slice(1, -1), escapeJSON(oldPath), oldPath]
+        // oldPath.replace(/\\/g, "/"), oldPath.replace(/\//g, "\\")
+        for (const variant of candidates) {
+            if (content.includes(variant)) {
+                content = content.split(variant).join(escapedNewPath)
+                break
+            }
+        }
+    })
+
+    dataFile.content = content
+    return dataFile
 }
 
 // PROTO

@@ -62,7 +62,7 @@ export const actionData = {
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
 
     // TIMERS
-    id_start_timer: { SECTION: "tabs.timers", name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },
+    id_start_timer: { SECTION: "tabs.timers", canAddMultiple: true, name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer", incompatible: ["pause_timers", "stop_timers"] },
     pause_timers: { name: "actions.pause_timers", icon: "pause", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },

@@ -69,7 +69,7 @@
 <!-- <span class="name">
     <p><T id="transition.{currentOutput?.out?.transition?.type || 'fade'}" /></p>
   </span> -->
-{#if timer.timer}
+{#if timer.timer && timer.max}
     <span class="group">
         <!-- padding: 0.3em; -->
         <Button style="flex: 0;" center title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playPause(timer.paused)}>
