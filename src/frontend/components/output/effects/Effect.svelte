@@ -37,7 +37,8 @@
     const fullReloadKeys = ["count", "color", "flareDiscNum"]
     const fullReloadKeysSpecific = {
         rain: ["length", "width"],
-        city: ["height", "width"]
+        city: ["height", "width"],
+        grass: ["height", "speed"]
     }
     let previousItems: any[] = []
     $: if (items) update()
@@ -89,7 +90,7 @@
     }
 
     const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon"]
-    const verticalMove = ["aurora", "fog", "fireworks", "city"]
+    const verticalMove = ["aurora", "fog", "fireworks", "city", "grass", "rainbow"]
 
     function mousemove(e: any) {
         if (!pressed || movedIndex < 0) return
@@ -129,6 +130,8 @@
         if (item.type === "fog") return item.offset ?? 0.3
         if (item.type === "fireworks") return 1 - (item.offset ?? 0.7)
         if (item.type === "city") return 1 - (item.offset ?? 0)
+        if (item.type === "grass") return item.offset ?? 1
+        if (item.type === "rainbow") return item.offset ?? 0.2
         return item.offset ?? 0.5
     }
 </script>
