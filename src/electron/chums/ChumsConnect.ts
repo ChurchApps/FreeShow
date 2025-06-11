@@ -76,7 +76,7 @@ export class ChumsConnect {
         return new Promise((resolve) => {
             const apiUrl = data.api === "doing" ? DOING_API_URL : CONTENT_API_URL
             const headers = data.authenticated ? { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` } : {}
-            //console.log("SENDING REQUEST TO CHUMS", apiUrl, data.endpoint, data.method || "GET", headers, data.data || {})
+            // console.log("SENDING REQUEST TO CHUMS", apiUrl, data.endpoint, data.method || "GET", headers, data.data || {})
             httpsRequest(apiUrl, data.endpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
                     console.error("Could not get data", apiUrl, data.endpoint)
