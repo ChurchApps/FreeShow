@@ -164,6 +164,7 @@ export class ChumsConnect {
             console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
             httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                 if (err || data === null) {
+                    this.disconnect();
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
                     resolve(null)
                     return
