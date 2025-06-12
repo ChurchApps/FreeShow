@@ -89,7 +89,7 @@ import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
 import { select } from "../helpers/select"
-import { checkName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
+import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
@@ -164,6 +164,7 @@ const clickActions = {
     quick_start_guide: () => guideActive.set(true),
 
     // main
+    custom_text: () => activePopup.set("custom_text"),
     rename: (obj: ObjData) => {
         const id = obj.sel?.id || obj.contextElem?.id
         if (!id) return
@@ -720,9 +721,22 @@ const clickActions = {
     // project
     export: (obj: ObjData) => {
         if (obj.sel?.id === "template") {
-            const template = get(templates)[obj.sel.data[0]]
+            const id = obj.sel.data[0]
+            const template = get(templates)[id]
             if (!template) return
-            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), content: template })
+
+            let files: string[] = []
+            template.items.forEach((item) => {
+                if (item.type === "media") getFile(item.src)
+            })
+            getFile(template.settings?.backgroundPath)
+
+            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
+
+            function getFile(path: string | undefined) {
+                if (!path) return
+                files.push(path)
+            }
 
             return
         }

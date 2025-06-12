@@ -82,13 +82,27 @@
 </CombinedInput>
 
 {#if value.emitter}
+    {#if emitter?.description}
+        <CombinedInput textWidth={38}>
+            <p><T id="midi.description" /></p>
+            <p style="opacity: 0.5;overflow: hidden;" title={emitter.description}>{emitter.description}</p>
+        </CombinedInput>
+    {/if}
+
     <CombinedInput textWidth={38}>
         <p><T id="emitters.message_template" /></p>
         <Dropdown options={templatesList} value={getDropdownValue(templatesList, activeTemplate)} on:click={(e) => updateValue("template", e.detail.id)} />
     </CombinedInput>
 
     {#if templateInputs.length}
-        {#if emitter.type !== "midi"}
+        {#if emitter?.templates?.[activeTemplate]?.description}
+            <CombinedInput textWidth={38}>
+                <p><T id="midi.description" /></p>
+                <p style="opacity: 0.5;overflow: hidden;" title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
+            </CombinedInput>
+        {/if}
+
+        {#if emitter?.type !== "midi"}
             {#each templateInputs as input, i}
                 <CombinedInput textWidth={38}>
                     <TextInput disabled value={input.name} style="width: var(--text-width);" />
@@ -101,7 +115,7 @@
                 </CombinedInput>
             {/each}
         {/if}
-    {:else if emitter.type === "midi"}
+    {:else if emitter?.type === "midi"}
         <MidiValues value={{ ...emitter.signal, values: typeof customTemplateInputs[0]?.value === "object" ? customTemplateInputs[0].value : {} }} on:change={(e) => setMidiTemplateValue(e)} type="emitter" />
     {:else}
         <DynamicList
@@ -122,7 +136,7 @@
     {/if}
 
     <!-- extra DATA -->
-    {#if emitter.type === "osc"}
+    {#if emitter?.type === "osc"}
         <CombinedInput textWidth={38}>
             <p><T id="emitters.data" /></p>
             <TextInput value={value.data || ""} on:change={(e) => updateValue("data", e)} />

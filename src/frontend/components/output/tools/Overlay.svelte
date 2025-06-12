@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
     import { effects, outLocked, overlays } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import { setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
 
@@ -46,6 +47,7 @@
         {#each activeEffects as effect}
             <div class="overlay">
                 <Button style="flex: 1;" disabled={$outLocked} on:click={() => removeEffect(effect.id)} center red>
+                    <Icon id="effects" right />
                     <p>{effect.name || "—"}</p>
                 </Button>
             </div>

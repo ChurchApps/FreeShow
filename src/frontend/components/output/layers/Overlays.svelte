@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Overlays, Transition } from "../../../../types/Show"
+    import { clone } from "../../helpers/array"
     import Overlay from "./Overlay.svelte"
 
     export let outputId: string
@@ -10,6 +11,7 @@
 
     export let isKeyOutput = false
     export let mirror = false
+    export let preview = false
 
     // SPAM PREVENTION
 
@@ -47,12 +49,24 @@
         })
         clearingOverlays = []
     }
+
+    // CLEARING
+    let isClearing: string[] = []
+    let actualOutputtedOverlays: string[] = []
+    $: if (outputtedOverlays !== undefined) updateClearingOverlays()
+    function updateClearingOverlays() {
+        // update clearing variable before setting slide value
+        isClearing = actualOutputtedOverlays.filter((id) => !outputtedOverlays.includes(id))
+        setTimeout(() => {
+            actualOutputtedOverlays = clone(outputtedOverlays)
+        })
+    }
 </script>
 
-{#each outputtedOverlays as id (id)}
+{#each actualOutputtedOverlays as id (id)}
     {#if overlays?.[id]}
         <div class:key={isKeyOutput}>
-            <Overlay {id} {outputId} {overlays} {mirror} {transition} />
+            <Overlay {id} {outputId} isClearing={isClearing.includes(id)} {overlays} {mirror} {transition} {preview} />
         </div>
     {/if}
 {/each}

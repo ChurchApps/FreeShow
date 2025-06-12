@@ -32,10 +32,11 @@ import {
     styles,
     timers,
     variables,
-    volume,
+    volume
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
@@ -57,6 +58,7 @@ import type { API_add_to_project, API_create_project, API_edit_timer, API_group,
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
     const shows = get(sortedShowsList)
+    if (name.includes("{")) name = getDynamicValue(name)
     const sortedShows = sortByClosestMatch(shows, name)
     const showId = sortedShows[0]?.id
     if (!showId) return
@@ -113,9 +115,10 @@ export function selectProjectByIndex(index: number) {
     if (get(activeShow)) activeShow.set({ ...get(activeShow)!, index: -1 })
 }
 
-export function selectProjectByName(value: string) {
+export function selectProjectByName(name: string) {
     const projectsList = sortByName(removeDeleted(keysToID(get(projects))))
-    const sortedProjects = sortByClosestMatch(projectsList, value)
+    if (name.includes("{")) name = getDynamicValue(name)
+    const sortedProjects = sortByClosestMatch(projectsList, name)
     const projectId = sortedProjects[0]?.id
     if (!projectId) return
 
@@ -151,6 +154,7 @@ export function selectSlideByName(name: string) {
             return { ...a, group }
         })
 
+    if (name.includes("{")) name = getDynamicValue(name)
     const sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
@@ -173,6 +177,12 @@ function outputSlide(showRef, data: API_slide_index) {
     setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
 }
 
+export function selectEffectById(id: string) {
+    if (get(outLocked)) return
+
+    setOutput("effects", id, false, "", true)
+}
+
 function getSortedOverlays() {
     return sortByName(keysToID(get(overlays)))
 }
@@ -188,6 +198,7 @@ export function selectOverlayByIndex(index: number) {
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
 
+    if (name.includes("{")) name = getDynamicValue(name)
     const sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
     const overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
@@ -214,6 +225,7 @@ export function moveStageConnection(id: string) {
 export function startPlaylistByName(name: string) {
     if (get(outLocked)) return
 
+    if (name.includes("{")) name = getDynamicValue(name)
     const sortedPlaylists = sortByClosestMatch(keysToID(get(audioPlaylists)), name)
     const playlistId = sortedPlaylists[0]?.id
     if (!playlistId) return
@@ -269,6 +281,7 @@ export function changeVariable(data: API_variable) {
     } else if (data.value !== undefined) {
         value = data.value
         if (key === "value" && typeof value !== "boolean") key = variable.type
+        if (key === "text" && value.includes("{")) value = getDynamicValue(value)
     } else if (key === "enabled") {
         value = !variable.enabled
     }

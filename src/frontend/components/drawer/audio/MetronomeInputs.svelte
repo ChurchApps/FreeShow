@@ -7,10 +7,11 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
 
     export let values: API_metronome = {}
     export let audioOutputs: { id: string; name: string }[] = []
-    export let volume = true
+    export let action = false
 
     let dispatch = createEventDispatcher()
     function updateValue(key, e) {
@@ -20,18 +21,30 @@
 
         dispatch("change", { ...values, [key]: value })
     }
+
+    const isChecked = (e: any) => e.target.checked
 </script>
 
-<CombinedInput>
-    <p><T id="audio.tempo" /> {getLeftParenthesis()}<T id="audio.bpm" />{getRightParenthesis()}</p>
-    <NumberInput value={values.tempo || 120} min={1} decimals={1} fixed={Math.floor(values.tempo || 0) === (values.tempo || 0) ? 0 : 1} max={320} on:change={(e) => updateValue("tempo", e)} />
-</CombinedInput>
+{#if action}
+    <CombinedInput>
+        <p><T id="audio.use_metadata_bpm" /></p>
+        <span class="alignRight">
+            <Checkbox checked={values.metadataBPM} on:change={(e) => updateValue("metadataBPM", isChecked(e))} />
+        </span>
+    </CombinedInput>
+{/if}
+{#if !values.metadataBPM}
+    <CombinedInput>
+        <p><T id="audio.tempo" /> {getLeftParenthesis()}<T id="audio.bpm" />{getRightParenthesis()}</p>
+        <NumberInput value={values.tempo || 120} min={1} decimals={1} fixed={Math.floor(values.tempo || 0) === (values.tempo || 0) ? 0 : 1} max={320} on:change={(e) => updateValue("tempo", e)} />
+    </CombinedInput>
+{/if}
 <CombinedInput>
     <p><T id="audio.beats" /></p>
     <NumberInput value={values.beats || 4} min={1} max={16} on:change={(e) => updateValue("beats", e)} />
 </CombinedInput>
 <!-- <NumberInput value={values.notesPerBeat} min={1} max={4} on:change={(e) => (values.notesPerBeat = e.detail)} /> -->
-{#if volume}
+{#if !action}
     <CombinedInput>
         <p><T id="media.volume" /></p>
         <NumberInput value={values.volume || 1} min={0.1} max={3} decimals={1} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />

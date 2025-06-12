@@ -4,7 +4,7 @@ import type { Show } from "../../types/Show"
 import type { Category } from "../../types/Tabs"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
+import { activeDrawerTab, activePopup, activeProject, activeRename, alertMessage, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
 import { convertText } from "./txt"
 
@@ -73,6 +73,26 @@ export function importShow(files: { content: string; name?: string; extension?: 
     })
 
     setTempShows(tempShows)
+}
+
+/// TEMPLATE ///
+
+export function importTemplate(files: { content: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content }) => {
+        const parsed = JSON.parse(content)
+
+        // old template export does not have the "template" key (pre 1.4.5)
+        const template = parsed.template ? parsed.template : parsed
+        if (!template.items) return
+
+        const templateId = template.id
+        delete template.id
+
+        history({ id: "UPDATE", newData: { data: template }, oldData: { id: templateId }, location: { page: "drawer", id: "template" } })
+    })
+
+    alertMessage.set("actions.imported")
+    activePopup.set("alert")
 }
 
 /// //

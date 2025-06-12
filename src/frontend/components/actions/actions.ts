@@ -12,12 +12,15 @@ import type { API_toggle } from "./api"
 import { API_ACTIONS } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { sortByClosestMatch } from "./apiHelper"
+import { getShowBPM } from "../drawer/audio/metronome"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
 export function runActionId(id: string) {
     runAction(get(actions)[id])
 }
 
 export function runActionByName(name: string) {
+    if (name.includes("{")) name = getDynamicValue(name)
     const sortedActions = sortByClosestMatch(keysToID(get(actions)), name)
     if (!sortedActions.length) return
     runAction(sortedActions[0])
@@ -214,6 +217,7 @@ export function getActionName(actionId: string, actionValue: any) {
 
     if (actionId === "start_metronome") {
         const beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
+        if (actionValue.metadataBPM) actionValue.tempo = getShowBPM()
         return (actionValue.tempo || 120) + beats
     }
 

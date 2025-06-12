@@ -60,6 +60,7 @@ import {
     rearrangeGroups,
     removeProjectItem,
     renameProject,
+    selectEffectById,
     selectOverlayById,
     selectOverlayByIndex,
     selectOverlayByName,
@@ -150,6 +151,7 @@ export interface API_midi extends MidiValues {
     defaultValues?: boolean // only used by actions
 }
 export type API_metronome = {
+    metadataBPM?: boolean // only used by actions
     tempo?: number
     beats?: number
     volume?: number
@@ -235,6 +237,7 @@ export const API_ACTIONS = {
     // play / pause playing
 
     // OVERLAYS
+    id_start_effect: (data: API_id) => selectEffectById(data.id),
     index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
     name_select_overlay: (data: API_strval) => selectOverlayByName(data.value), // BC
     id_select_overlay: (data: API_id) => selectOverlayById(data.id),

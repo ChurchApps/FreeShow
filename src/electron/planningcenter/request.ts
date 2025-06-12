@@ -19,6 +19,7 @@ type PCORequestData = {
 export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any> {
     const MAX_RETRIES = 3
     const PCO_ACCESS = await pcoConnect(data.scope)
+
     if (!PCO_ACCESS) {
         sendToMain(ToMain.ALERT, "Not authorized at Planning Center (try logging out and in again)!")
         return null
@@ -55,7 +56,8 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
             // convert to array
             if (!Array.isArray(resultData)) resultData = [resultData]
 
-            // console.log("RESULT", path, resultData) // DEBUG
+            // console.debug("PCO Request Result:", apiPath, resultData)
+
             resolve(resultData)
         })
 
@@ -87,7 +89,11 @@ export async function pcoLoadServices(dataPath: string) {
         endpoint: typesEndpoint
     })
 
-    if (!SERVICE_TYPES[0]?.id) return
+    if (!SERVICE_TYPES || !SERVICE_TYPES[0]?.id) {
+        sendToMain(ToMain.ALERT, "No service types found in Planning Center! Please create some services first.")
+        return
+    }
+
     sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
     const projects: any[] = []
@@ -106,7 +112,10 @@ export async function pcoLoadServices(dataPath: string) {
                 }
             })
 
-            if (!SERVICE_PLANS[0]?.id) return
+            if (!SERVICE_PLANS || !SERVICE_PLANS[0]?.id) {
+                console.warn(`No plans found for service type ${serviceType.attributes.name} (${serviceType.id})`)
+                return
+            }
 
             // Now we only need to filter for the one week window since we're already getting future plans
             const filteredPlans = SERVICE_PLANS.filter(({ attributes: a }: any) => {

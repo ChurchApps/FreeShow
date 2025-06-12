@@ -2,7 +2,7 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
-    import { actions, activePopup, audioPlaylists, audioStreams, dictionary, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import { actions, activePopup, audioPlaylists, audioStreams, dictionary, effects, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
     import { convertToOptions, keysToID, sortByName } from "../helpers/array"
@@ -74,9 +74,10 @@
         id_select_project: () => convertToOptions($projects),
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
         clear_overlay: () => convertToOptions($overlays),
+        id_start_effect: () => convertToOptions($effects),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
-        stage_outputs: () => [{ id: null, name: "—" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
+        stage_outputs: () => [{ id: "", name: "$:actions.all_outputs:$" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
@@ -103,7 +104,7 @@
     <CombinedInput>
         <!-- keep empty to change all stage outputs -->
         <p><T id="stage.output" /></p>
-        <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === value?.outputId)?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
+        <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === (value?.outputId || ""))?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
     </CombinedInput>
 {:else if inputId === "camera"}
     <CombinedInput>
@@ -119,7 +120,7 @@
     <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
     <div class="column">
-        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
+        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} action />
     </div>
 {:else if inputId === "variable"}
     <VariableInputs {value} on:update={(e) => updateValue(e.detail?.key, e.detail?.value)} />

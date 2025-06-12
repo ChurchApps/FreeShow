@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Overlay } from "../../../../types/Show"
-    import { activePage, activeShow, dictionary, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -70,7 +70,7 @@
                     {#each fullFilteredOverlays as overlay}
                         <Card
                             class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
-                            preview={$activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
+                            preview={$activePage === "edit" ? $activeEdit.type === "overlay" && $activeEdit.id === overlay.id : $activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
                             outlineColor={findMatchingOut(overlay.id, $outputs)}
                             active={findMatchingOut(overlay.id, $outputs) !== null}
                             label={overlay.name}
