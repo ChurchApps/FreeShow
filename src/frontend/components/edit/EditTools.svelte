@@ -412,7 +412,7 @@
                     <T id="actions.reset" />
                 </Button>
 
-                {#if false && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
+                {#if true && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
                     <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
                         <Icon id="copy" right />
                         DEV: Copy to "createData"

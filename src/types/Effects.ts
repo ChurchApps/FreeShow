@@ -38,6 +38,7 @@ export type EffectType =
     | "mountains"
     | "lightning"
     | "rainbow"
+    | "asset"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     hidden?: boolean
@@ -251,4 +252,9 @@ export interface LightningItem extends EffectItem<"lightning"> {
 export interface RainbowItem extends EffectItem<"rainbow"> {
     offset?: number
     bandWidth?: number
+}
+
+export interface AssetItem extends EffectItem<"asset"> {
+    path: string
+    size: number
 }

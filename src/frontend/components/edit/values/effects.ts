@@ -171,6 +171,8 @@ export const effectEdits = {
         { name: "color", id: "color", input: "color", value: "#00ddff", values: { allowGradients: true } }
     ],
 
+    asset: [{ name: "size", id: "size", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0, max: 2 } }],
+
     rays: [
         { name: "count", id: "numRays", input: "number", slider: true, value: 8, values: { min: 1, max: 100 }, sliderValues: { max: 20 } },
         { name: "speed", id: "speed", input: "number", slider: true, value: 1, values: { min: -50, max: 50, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0, max: 20 } },

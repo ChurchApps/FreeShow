@@ -30,5 +30,13 @@ export const effectItems = {
 
     circle: { default: { radius: 200, thickness: 10, color: "#00ddff" } },
     rectangle: { default: { width: 200, height: 200, thickness: 10, color: "#00ddff" } },
-    triangle: { default: { size: 200, thickness: 10, color: "#00ddff" } }
+    triangle: { default: { size: 200, thickness: 10, color: "#00ddff" } },
+
+    jesus: { default: { type: "asset", path: "Jesus", size: 1 } },
+    sheperd: { default: { type: "asset", path: "Sheperd", size: 1 } },
+    moses: { default: { type: "asset", path: "Moses", size: 1 } },
+    joseph: { default: { type: "asset", path: "Joseph", size: 1 } },
+    esther: { default: { type: "asset", path: "Esther", size: 1 } },
+    goliath: { default: { type: "asset", path: "Goliath", size: 1 } },
+    sheep: { default: { type: "asset", path: "Sheep", size: 1 } }
 }

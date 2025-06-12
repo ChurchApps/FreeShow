@@ -107,7 +107,7 @@
             <Icon id="refresh" size={1.1} />
         </Button>
     {:else}
-        <Button on:click={playCurrent} title={$dictionary.preview?._start + " [Space]"} disabled={$outLocked || !shouldPlay} center>
+        <Button on:click={playCurrent} title={$dictionary.preview?._start + " [Space]"} disabled={$outLocked || !shouldPlay || ($activePage === "edit" && $activeEdit.type === "effect")} center>
             <Icon id="play" size={1.2} white />
         </Button>
     {/if}

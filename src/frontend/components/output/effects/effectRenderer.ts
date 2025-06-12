@@ -1,4 +1,5 @@
 import type {
+    AssetItem,
     AuroraItem,
     BloomItem,
     BubbleItem,
@@ -53,7 +54,8 @@ const effectTypes: readonly EffectType[] = [
     "cycle",
     "grass",
     "lightning",
-    "rainbow"
+    "rainbow",
+    "asset"
 ] as const
 // type EffectType = (typeof effectTypes)[number]
 
@@ -115,10 +117,10 @@ export class EffectRender {
         this.items = items.filter((a) => !a.hidden)
     }
 
-    updateItems(items: EffectItem[]) {
+    updateItems(items: EffectItem[], _noFrameChange: boolean = false) {
         this.setItems(items)
 
-        // TODO: only update if count is changed (init data)
+        // if (noFrameChange) return
         this.frame(0, true)
     }
 
@@ -1894,5 +1896,39 @@ export class EffectRender {
         const a = parse(color1),
             b = parse(color2)
         return `rgba(${Math.round(a.r + (b.r - a.r) * t)}, ${Math.round(a.g + (b.g - a.g) * t)}, ${Math.round(a.b + (b.b - a.b) * t)}, ${(a.a + (b.a - a.a) * t).toFixed(3)})`
+    }
+
+    /// ASSET ///
+
+    loadedImages = {}
+    initAsset(item: AssetItem) {
+        const imagePath = item.path.includes("/") ? item.path : `../assets/effects/${item.path}.webp`
+
+        const image = new Image()
+        image.onload = imageLoaded
+
+        image.src = imagePath
+        this.loadedImages[item.path] = image
+
+        const ctx = this.ctx
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
+        function imageLoaded() {
+            const width = image.width * 0.3 * item.size
+            const height = image.height * 0.3 * item.size
+            ctx.drawImage(image, x - width * 0.5, y - height * 0.5, width, height)
+        }
+    }
+
+    drawAsset(item: AssetItem) {
+        const image = this.loadedImages[item.path]
+        if (!image) return
+
+        const ctx = this.ctx
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
+        const width = image.width * 0.3 * item.size
+        const height = image.height * 0.3 * item.size
+        ctx.drawImage(image, x - width * 0.5, y - height * 0.5, width, height)
     }
 }

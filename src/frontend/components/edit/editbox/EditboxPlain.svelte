@@ -197,6 +197,15 @@
             </div>
         {/each}
     {/if}
+
+    <!-- gradient -->
+    {#if item?.lines?.find((a) => a.text?.find((a) => a.style.includes("-gradient")))}
+        <div title={$dictionary.popup?.color_gradient} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+            <span style="padding: 5px;z-index: 3;font-size: 0;">
+                <Icon id="color" white />
+            </span>
+        </div>
+    {/if}
 </div>
 
 <style>

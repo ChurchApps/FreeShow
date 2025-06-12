@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Effect } from "../../../../types/Effects"
-    import { EffectRender } from "./effectRenderer"
-    import { activeEdit, activePage, effects } from "../../../stores"
+    import { activeEdit, activePage, currentWindow, effects } from "../../../stores"
     import { clone, getChangedKeys } from "../../helpers/array"
+    import { EffectRender } from "./effectRenderer"
 
     export let effect: Effect & { id?: string }
     export let preview: boolean = false
@@ -63,7 +63,7 @@
 
         const changedKeys = _changedKeys.filter((a) => a.key !== "x" && a.key !== "y" && a.key !== "offset")
 
-        if (_changedKeys.length && !changedKeys.length) return
+        if (_changedKeys.length && !changedKeys.length && !$currentWindow) return
 
         previousItems = clone(items)
         const itemType = effect.items[changedKeys[0]?.index]?.type
@@ -73,7 +73,7 @@
             renderer?.stop()
             renderer = new EffectRender(canvasElem, items, preview)
         } else {
-            renderer.updateItems(items)
+            renderer.updateItems(items, !changedKeys.length)
         }
     }
 
@@ -89,7 +89,7 @@
         movedIndex = -1
     }
 
-    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon"]
+    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon", "asset"]
     const verticalMove = ["aurora", "fog", "fireworks", "city", "grass", "rainbow"]
 
     function mousemove(e: any) {

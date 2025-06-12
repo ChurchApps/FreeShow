@@ -1483,6 +1483,7 @@
         "circle": "Circle",
         "rectangle": "Rectangle",
         "triangle": "Triangle",
+        "asset": "Asset",
         "swirl_strength": "Swirl strength",
         "arm_count": "Arm count",
         "drift": "Drift",

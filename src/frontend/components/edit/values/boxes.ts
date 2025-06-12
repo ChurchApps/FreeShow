@@ -94,7 +94,7 @@ export const boxes: Box = {
         edit: {
             default: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF", values: { allowGradients: true } },
                 { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
                 {
