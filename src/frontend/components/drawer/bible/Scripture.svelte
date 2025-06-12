@@ -978,7 +978,7 @@
                             {#each books[firstBibleId] as book, i}
                                 {@const id = bibles[0].api ? book.keyName : i}
                                 {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
-                                {@const name = getShortName(book.name, i)}
+                                {@const name = book.abbreviation || getShortName(book.name, i)}
 
                                 <span
                                     id={id.toString()}

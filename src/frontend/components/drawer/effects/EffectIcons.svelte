@@ -18,7 +18,10 @@
         })
     }
 
-    const actionsList = [{ id: "placeUnderSlide", title: $dictionary.context?.place_under_slide, icon: "under" }]
+    const actionsList = [
+        { id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" },
+        { id: "placeUnderSlide", title: $dictionary.context?.place_under_slide, icon: "under" }
+    ]
 
     $: zoom = 5 / columns
 </script>

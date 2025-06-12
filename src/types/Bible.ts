@@ -6,6 +6,7 @@ export interface Bible {
     books: {
         number: number
         name: string
+        abbreviation?: string
         chapters: {
             number: number
             verses: {

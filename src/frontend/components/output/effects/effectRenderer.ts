@@ -1,4 +1,5 @@
 import type {
+    AssetItem,
     AuroraItem,
     BloomItem,
     BubbleItem,
@@ -13,7 +14,10 @@ import type {
     FireworkItem,
     FogItem,
     GalaxyItem,
+    GrassItem,
     LensFlareItem,
+    LightningItem,
+    RainbowItem,
     RainItem,
     RayItem,
     RectangleItem,
@@ -28,7 +32,31 @@ import type {
 } from "../../../../types/Effects"
 import { createNoise2D } from "./simplex-noise"
 
-const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "cycle"] as const
+const effectTypes: readonly EffectType[] = [
+    "circle",
+    "rectangle",
+    "triangle",
+    "wave",
+    "bubbles",
+    "stars",
+    "galaxy",
+    "rain",
+    "snow",
+    "sun",
+    "lens_flare",
+    "spotlight",
+    "aurora",
+    "bloom",
+    "fog",
+    "city",
+    "rays",
+    "fireworks",
+    "cycle",
+    "grass",
+    "lightning",
+    "rainbow",
+    "asset"
+] as const
 // type EffectType = (typeof effectTypes)[number]
 
 export class EffectRender {
@@ -72,7 +100,7 @@ export class EffectRender {
         this.frame(0, true)
 
         const loop = (time: number) => {
-            const deltaTime = time - this.lastTime
+            const deltaTime = this.lastTime ? time - this.lastTime : 1
             this.lastTime = time
 
             if (this.running) this.frame(deltaTime / 16) // 1
@@ -89,10 +117,10 @@ export class EffectRender {
         this.items = items.filter((a) => !a.hidden)
     }
 
-    updateItems(items: EffectItem[]) {
+    updateItems(items: EffectItem[], _noFrameChange: boolean = false) {
         this.setItems(items)
 
-        // TODO: only update if count is changed (init data)
+        // if (noFrameChange) return
         this.frame(0, true)
     }
 
@@ -182,10 +210,11 @@ export class EffectRender {
         const size = item.size ?? item.radius ?? item.length ?? 0
         const speed = item.speed || 0
         const offscreen = (inverted ? speed > 0 : speed < 0) ? item.y + size < 0 : item.y - size > this.height
-        if (!offscreen) return
+        if (!offscreen) return false
 
         item.y = item.y < 0 ? this.height + size : -size
         item.x = this.getRandomPosX()
+        return true
     }
 
     pathOpen = false
@@ -241,6 +270,31 @@ export class EffectRender {
         gradient.addColorStop(1, "transparent")
 
         this.ctx.fillStyle = gradient
+    }
+
+    /// COLOR ///
+
+    hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+        // Handle both #RRGGBB and #RGB formats
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex) || /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex)
+
+        if (!result) return null
+
+        if (result[1].length === 1) {
+            // Short format #RGB
+            return {
+                r: parseInt(result[1] + result[1], 16),
+                g: parseInt(result[2] + result[2], 16),
+                b: parseInt(result[3] + result[3], 16)
+            }
+        } else {
+            // Long format #RRGGBB
+            return {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            }
+        }
     }
 
     //////
@@ -445,7 +499,7 @@ export class EffectRender {
             // move
             drop.y += drop.speed * deltaTime
 
-            drop = this.checkOffscreen(drop)
+            this.checkOffscreen(drop)
         }
     }
 
@@ -484,7 +538,7 @@ export class EffectRender {
             flake.y += flake.speed * deltaTime
             flake.x += flake.drift * 0.5
 
-            flake = this.checkOffscreen(flake)
+            this.checkOffscreen(flake)
         }
     }
 
@@ -528,7 +582,124 @@ export class EffectRender {
             bubble.y -= bubble.speed * deltaTime
             bubble.x += bubble.drift
 
-            bubble = this.checkOffscreen(bubble, true)
+            this.checkOffscreen(bubble, true)
+        }
+    }
+
+    /// GRASS ///
+
+    initGrass(item: GrassItem) {
+        const baseHeight = item.height ?? 60
+        const heightVar = 1
+        const windStrength = item.windStrength ?? 0.5
+        const windSpeed = item.speed ?? 1
+
+        const blades = Array.from({ length: item.count }, (_, i) => {
+            const x = (this.width / item.count) * i + Math.random() * (this.width / item.count)
+            const height = baseHeight * (1 + (Math.random() - 0.5) * heightVar)
+            const segments = Math.max(3, Math.floor(height / 15)) // More segments for taller grass
+
+            return {
+                x,
+                height,
+                segments,
+                windOffset: Math.random() * Math.PI * 2, // Random phase for natural movement
+                maxSway: windStrength * (height / baseHeight) * 15, // Taller grass sways more
+                windSpeed: windSpeed * (0.8 + Math.random() * 0.4) // Slight speed variation
+            }
+        })
+
+        this.effectData.set(item, { blades, time: 0 })
+    }
+
+    drawGrass(item: GrassItem, deltaTime: number) {
+        const ctx = this.ctx
+        const data = this.effectData.get(item)
+        if (!data) return
+
+        const { blades } = data
+        data.time += deltaTime * 0.01
+
+        const baseColor = item.color ?? "#4a7c59"
+        ctx.strokeStyle = baseColor
+        ctx.lineJoin = "round"
+
+        const baseY = this.getOffsetY(item.offset ?? 1)
+
+        for (const blade of blades) {
+            const windSway = Math.sin(data.time * blade.windSpeed + blade.windOffset) * blade.maxSway
+            const windSway2 = Math.sin(data.time * blade.windSpeed * 1.3 + blade.windOffset) * blade.maxSway * 0.3
+
+            const baseWidth = (item.width ?? 2) * 2 // Base width at bottom
+            const points: any[] = []
+
+            // Generate points for the triangular grass blade
+            for (let i = 0; i <= blade.segments; i++) {
+                const progress = i / blade.segments
+                const y = baseY - blade.height * progress
+
+                // Apply wind effect - more sway at the top
+                const swayAmount = windSway * progress * progress + windSway2 * progress
+                const x = blade.x + swayAmount
+
+                // Add slight curve for more natural look
+                const curve = Math.sin(progress * Math.PI) * 1.5
+
+                // Calculate width at this point (triangular taper)
+                const widthAtPoint = baseWidth * (1 - progress * 0.95) // Tapers to 5% at top
+
+                points.push({
+                    x: x + curve,
+                    y: y,
+                    width: widthAtPoint
+                })
+            }
+
+            // Create gradient from dark bottom to lighter top
+            const gradient = ctx.createLinearGradient(blade.x, baseY, blade.x, baseY - blade.height)
+
+            // Parse the base color and create darker version for bottom
+            const rgb = this.hexToRgb(baseColor) || { r: 74, g: 124, b: 89 }
+            const darkerColor = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 20)})`
+
+            gradient.addColorStop(0, darkerColor) // Darker at bottom
+            gradient.addColorStop(1, baseColor) // Original color at top
+
+            ctx.fillStyle = gradient
+
+            // Draw the triangular grass blade using a path
+            ctx.beginPath()
+
+            // Start at bottom left
+            ctx.moveTo(blade.x - baseWidth / 2, baseY)
+
+            // Draw left side going up
+            for (let i = 1; i < points.length; i++) {
+                const point = points[i]
+                ctx.lineTo(point.x - point.width / 2, point.y)
+            }
+
+            // Draw tip
+            const tip = points[points.length - 1]
+            ctx.lineTo(tip.x, tip.y - 1)
+
+            // Draw right side going down
+            for (let i = points.length - 2; i >= 1; i--) {
+                const point = points[i]
+                ctx.lineTo(point.x + point.width / 2, point.y)
+            }
+
+            // Close at bottom right
+            ctx.lineTo(blade.x + baseWidth / 2, baseY)
+            ctx.closePath()
+
+            ctx.fill()
+
+            // Optional: Add a subtle stroke for definition
+            ctx.lineWidth = 0.5
+            ctx.globalAlpha = 0.7
+            ctx.stroke()
+            ctx.globalAlpha = 1
         }
     }
 
@@ -1017,6 +1188,85 @@ export class EffectRender {
         ])
         ctx.fillStyle = grad4
         ctx.fillRect(disc.x - 2, disc.y - disc.dia * 1.5, 4, disc.dia * 3)
+    }
+
+    /// LIGHTNING ///
+
+    initLightning(item: LightningItem) {
+        this.effectData.set(item, {
+            nextStrike: performance.now() + this.randomNumber(1000 / item.frequency, 2000 / item.frequency),
+            flashAlpha: 0,
+            strikePath: []
+        })
+    }
+
+    drawLightning(item: LightningItem, deltaTime: number) {
+        const ctx = this.ctx
+        const data = this.effectData.get(item)
+        if (!data) return
+
+        const currentTime = performance.now()
+
+        // Trigger lightning strike
+        if (currentTime >= data.nextStrike) {
+            const startX = this.getRandomPosX()
+            const segments = 10
+            const segmentHeight = this.height / segments
+            const maxOffset = 50
+
+            let path = [{ x: startX, y: 0 }]
+            for (let i = 1; i <= segments; i++) {
+                path.push({
+                    x: path[i - 1].x + this.randomNumber(-maxOffset, maxOffset),
+                    y: segmentHeight * i
+                })
+            }
+
+            data.strikePath = path
+            data.flashAlpha = 1
+            data.flashDecay = 0.1
+            data.nextStrike = currentTime + this.randomNumber(1000 / item.frequency, 2000 / item.frequency)
+        }
+
+        // Draw lightning strike
+        if (data.flashAlpha > 0) {
+            ctx.strokeStyle = item.color || "#ffffff"
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.moveTo(data.strikePath[0].x, data.strikePath[0].y)
+            for (let point of data.strikePath) {
+                ctx.lineTo(point.x, point.y)
+            }
+            ctx.stroke()
+
+            // Draw flash
+            ctx.fillStyle = `rgba(255, 255, 255, ${data.flashAlpha})`
+            ctx.fillRect(0, 0, this.width, this.height)
+
+            // Fade the flash
+            data.flashAlpha -= data.flashDecay * deltaTime
+            if (data.flashAlpha < 0) data.flashAlpha = 0
+        }
+    }
+
+    /// RAINBOW ///
+
+    drawRainbow(item: RainbowItem) {
+        const ctx = this.ctx
+        const centerX = this.getOffsetX(0.5)
+        const centerY = this.getOffsetY(Math.min(item.offset ?? 0.2, 0.86) + 1.42)
+        const outerRadius = this.height * 1.5
+        const bandWidth = item.bandWidth ?? 30
+
+        const rainbowColors = ["rgba(255, 0, 0, 0.4)", "rgba(255, 165, 0, 0.4)", "rgba(255, 255, 0, 0.4)", "rgba(0, 128, 0, 0.4)", "rgba(0, 0, 255, 0.4)", "rgba(75, 0, 130, 0.4)", "rgba(238, 130, 238, 0.4)"]
+
+        for (let i = 0; i < rainbowColors.length; i++) {
+            ctx.beginPath()
+            ctx.strokeStyle = rainbowColors[i]
+            ctx.lineWidth = bandWidth
+            ctx.arc(centerX, centerY, outerRadius - i * bandWidth, Math.PI, 2 * Math.PI, false)
+            ctx.stroke()
+        }
     }
 
     /// SPOT LIGHT ///
@@ -1646,5 +1896,39 @@ export class EffectRender {
         const a = parse(color1),
             b = parse(color2)
         return `rgba(${Math.round(a.r + (b.r - a.r) * t)}, ${Math.round(a.g + (b.g - a.g) * t)}, ${Math.round(a.b + (b.b - a.b) * t)}, ${(a.a + (b.a - a.a) * t).toFixed(3)})`
+    }
+
+    /// ASSET ///
+
+    loadedImages = {}
+    initAsset(item: AssetItem) {
+        const imagePath = item.path.includes("/") ? item.path : `../assets/effects/${item.path}.webp`
+
+        const image = new Image()
+        image.onload = imageLoaded
+
+        image.src = imagePath
+        this.loadedImages[item.path] = image
+
+        const ctx = this.ctx
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
+        function imageLoaded() {
+            const width = image.width * 0.3 * item.size
+            const height = image.height * 0.3 * item.size
+            ctx.drawImage(image, x - width * 0.5, y - height * 0.5, width, height)
+        }
+    }
+
+    drawAsset(item: AssetItem) {
+        const image = this.loadedImages[item.path]
+        if (!image) return
+
+        const ctx = this.ctx
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
+        const width = image.width * 0.3 * item.size
+        const height = image.height * 0.3 * item.size
+        ctx.drawImage(image, x - width * 0.5, y - height * 0.5, width, height)
     }
 }

@@ -8,6 +8,7 @@
 
     export let outputId: string
     export let outSlide: any
+    export let isClearing: boolean = false
 
     export let slideData: any
     export let currentSlide: any
@@ -28,14 +29,13 @@
     let current: any = {}
     let show = false
 
-    let filteredItems: Item[] = []
+    const showItemRef = { outputId, slideIndex: outSlide?.index }
     $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
-    $: filterItems(currentItems, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })
-    function filterItems(currentItems: Item[], _updater: any) {
-        // if (!currentItems.length) return
-        const data = { outputId, slideIndex: outSlide?.index }
-        const newItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, data))
-        if (JSON.stringify(newItems) !== JSON.stringify(filteredItems)) filteredItems = newItems
+    $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
+    let update = 0
+    function updateValues() {
+        if (isClearing) return
+        update++
     }
 
     // do not update if only line has changed
@@ -62,7 +62,6 @@
     function updateItems() {
         if (!currentSlide?.items?.length) {
             currentItems = []
-            filteredItems = [] // this has to be updated here due to Svelte $ not updating properly
             current = {
                 outSlide: clone(outSlide),
                 slideData: clone(slideData),
@@ -125,9 +124,9 @@
 </script>
 
 <!-- Updating this with another "store" causes svelte transition bug! -->
-{#key show || filteredItems}
-    {#each filteredItems as item}
-        {#if show}
+{#key show}
+    {#each currentItems as item}
+        {#if show && shouldItemBeShown(item, currentItems, showItemRef, update)}
             <SlideItemTransition
                 {preview}
                 {transitionEnabled}

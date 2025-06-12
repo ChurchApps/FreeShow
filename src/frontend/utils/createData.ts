@@ -181,7 +181,7 @@ export function setExampleOverlays() {
             category: "visuals",
             items: [
                 {
-                    style: "top:72.50px;inset-inline-start:50px;height:936.40px;width:936.40px;font-family:CMGSans;color:#FFFFFF;left:492.00px;border-radius:500px;background:;border-width:2px;background-color:rgb(0 0 0 / 0.5);",
+                    style: "top:72.50px;inset-inline-start:50px;height:936.40px;width:936.40px;font-family:CMGSans;color:#FFFFFF;left:492.00px;border-radius:500px;border-width:2px;background-color:rgb(0 0 0 / 0.5);",
                     type: "clock",
                     clock: { type: "analog", dateFormat: "none", showTime: true, seconds: false }
                 }
@@ -694,6 +694,52 @@ export function setExampleTemplates() {
                     style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
+                }
+            ]
+        }
+        a.scriptureLT = {
+            isDefault: true,
+            name: (get(dictionary).category?.scripture || "Scripture") + " Lower Third",
+            color: "#876543",
+            category: "scripture",
+            items: [
+                {
+                    style: "left:30px;top:765px;width:1860px;height:238px;border-radius:20px;padding:25px;opacity:1;background-color:#FFFFFF;",
+                    align: "",
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
+                    auto: true
+                },
+                {
+                    style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "Meta", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] }],
+                    auto: true
+                }
+            ]
+        }
+        a.scriptureLT_2 = {
+            isDefault: true,
+            name: (get(dictionary).category?.scripture || "Scripture") + " Lower Third 2",
+            color: "#876543",
+            category: "scripture",
+            items: [
+                {
+                    style: "left:30px;top:765px;width:1860px;height:120px;border-radius:20px;padding:25px;opacity:1;background-color:#FFFFFF;",
+                    align: "",
+                    lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
+                    auto: true
+                },
+                {
+                    style: "left:30px;top:885px;width:1860px;height:120px;border-radius:20px;padding:25px;opacity:1;background-color:#DDDDDD;",
+                    align: "",
+                    lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
+                    auto: true
+                },
+                {
+                    style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "Meta", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] }],
+                    auto: true
                 }
             ]
         }

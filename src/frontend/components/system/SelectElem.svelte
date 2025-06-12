@@ -106,6 +106,21 @@
     //     rightClickMenu = false
     // }
 
+    // TOUCH SCREEN
+
+    function touchstart(e: TouchEvent) {
+        // Convert to a synthetic "mouse" event for reuse
+        const fakeMouseEvent = { ...e, button: 0, buttons: 1 }
+        mousedown(fakeMouseEvent, false)
+    }
+
+    function touchend(e: TouchEvent) {
+        endDrag()
+        deselect(e)
+    }
+
+    // DRAG EVENT
+
     function mousedown(e: any, dragged = false) {
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
@@ -259,6 +274,8 @@
     on:mousedown={deselect}
     on:dragstart={dragstart}
     on:dragend={endDrag}
+    on:touchend={touchend}
+    on:touchcancel={touchend}
     on:click={() => {
         dragActive = false
         fileOver = false
@@ -279,6 +296,7 @@
     on:mouseenter={enter}
     on:mousedown={mousedown}
     on:dragstart={(e) => mousedown(e, true)}
+    on:touchstart={touchstart}
 >
     <!-- on:mouseup={mouseup}
     on:contextmenu={contextmenu} -->

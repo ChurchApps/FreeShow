@@ -12,6 +12,7 @@ import { loadShows } from "./setShow"
 import { checkNextAfterMedia } from "./showActions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -37,6 +38,7 @@ export function startTimer() {
 }
 
 export function startTimerByName(name: string) {
+    if (name.includes("{")) name = getDynamicValue(name)
     const timersList = sortByClosestMatch(keysToID(get(timers)), name)
     const timerId = timersList[0]?.id
     if (!timerId) return

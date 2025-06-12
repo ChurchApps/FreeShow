@@ -149,7 +149,7 @@ export class EditboxHelper {
                 const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
-                const textStyle = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
+                const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""
                 let value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
@@ -168,8 +168,24 @@ export class EditboxHelper {
         return style
     }
 
-    static getCustomFontSize(style: string) {
+    static getCustomTextStyle(style: string) {
         if (!style) return ""
+
+        // text gradient
+
+        if (style.includes("-gradient")) {
+            // can't edit properly when this is applied in the editor
+            // let styles = getStyles(style)
+            // styles.color = extractPlainColorFromGradient(styles.color)
+            // let newStyles = ""
+            // Object.entries(styles).forEach((key, value) => {
+            //     newStyles += `${key}: ${value};`
+            // })
+            // style = newStyles
+        }
+
+        // custom font size ratio
+
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
 
         // get first output style
@@ -187,3 +203,46 @@ export class EditboxHelper {
         return `${style};--custom:true;font-size: ${fontSize * customFontSizeRatio}px;`
     }
 }
+
+// function extractPlainColorFromGradient(gradient: string) {
+//     const fallback = "#FFFFFF"
+
+//     const splitStops = (str: string): string[] => {
+//         const parts: string[] = []
+//         let buffer = ""
+//         let depth = 0
+
+//         for (let char of str) {
+//             if (char === "(") depth++
+//             if (char === ")") depth--
+//             if (char === "," && depth === 0) {
+//                 parts.push(buffer.trim())
+//                 buffer = ""
+//             } else {
+//                 buffer += char
+//             }
+//         }
+//         if (buffer) parts.push(buffer.trim())
+//         return parts
+//     }
+
+//     if (gradient.startsWith("linear-gradient")) {
+//         const match = gradient.match(/linear-gradient\(([^,]+),\s*(.+)\)/)
+//         if (!match) return fallback
+
+//         const stops = splitStops(match[2])
+//         const plainColor = stops[0]
+//         return plainColor
+//     }
+
+//     if (gradient.startsWith("radial-gradient")) {
+//         const match = gradient.match(/radial-gradient\(([^,]+),\s*(.+)\)/)
+//         if (!match) return fallback
+
+//         const stops = splitStops(match[2])
+//         const plainColor = stops[stops.length - 1]
+//         return plainColor
+//     }
+
+//     return fallback
+// }

@@ -17,6 +17,7 @@ import {
     currentWindow,
     dictionary,
     disabledServers,
+    effects,
     lockedOverlays,
     outputDisplay,
     outputs,
@@ -164,13 +165,11 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
-                if (type === "overlays") {
-                    data.forEach((overlayId) => {
-                        // timeout so output can update first
-                        if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
-                        else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
-                    })
-                }
+                data.forEach((overlayId) => {
+                    // timeout so output can update first
+                    if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData, type)
+                    else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
+                })
             } else {
                 outData = data
 
@@ -274,11 +273,11 @@ export function startScreen(screen: API_screen) {
 
 /// OVERLAY TIMERS
 
-function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = []) {
-    if (!outData.length) outData = get(outputs)[outputId]?.out?.overlays || []
+function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = [], type: "overlays" | "effects" = "overlays") {
+    if (!outData.length) outData = get(outputs)[outputId]?.out?.[type] || []
     if (!outData.includes(overlayId)) return
 
-    const overlay = get(overlays)[overlayId]
+    const overlay = type === "overlays" ? get(overlays)[overlayId] : get(effects)[overlayId]
     if (!overlay?.displayDuration) return
 
     overlayTimers.update((a) => {
@@ -290,9 +289,9 @@ function startOverlayTimer(outputId: string, overlayId: string, outData: string[
             overlayId,
             timer: setTimeout(() => {
                 clearOverlayTimer(outputId, overlayId)
-                if (!get(outputs)[outputId]?.out?.overlays?.includes(overlayId)) return
+                if (!get(outputs)[outputId]?.out?.[type]?.includes(overlayId)) return
 
-                setOutput("overlays", overlayId, true, outputId)
+                setOutput(type, overlayId, true, outputId)
             }, overlay.displayDuration! * 1000)
         }
 
@@ -386,15 +385,19 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     outputIds.forEach((outputId: string) => {
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        keys.forEach((type: string) => {
-            // TODO:
-            if (output.out?.[type]) {
-                if (type === "overlays") {
-                    if (checkLocked && output.out.overlays?.length) cleared = false
-                    else if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
-                } else if (type === "effects") cleared = !output.out.effects?.length
-                else if (output.out[type] !== null) cleared = false
+        cleared = !keys.find((type: string) => {
+            if (!output.out?.[type]) return
+
+            if (type === "overlays") {
+                if (checkLocked && output.out.overlays?.length) return true
+                if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) return true
+                return false
             }
+            if (type === "effects") {
+                return output.out.effects?.length
+            }
+
+            return output.out[type] !== null
         })
     })
 

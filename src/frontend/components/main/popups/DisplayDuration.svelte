@@ -1,18 +1,21 @@
 <script lang="ts">
-    import { overlays, selected } from "../../../stores"
+    import { drawerTabsData, effects, overlays, selected } from "../../../stores"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
-    let overlayIds = $selected.data
-    let currentValue = $overlays[overlayIds[0]]?.displayDuration || 0
+    const subTab = $drawerTabsData.overlays?.activeSubTab
+    const isEffect = subTab === "effects"
+
+    let ids = $selected.data
+    let currentValue = (isEffect ? $effects : $overlays)[ids[0]]?.displayDuration || 0
 
     function updateValue(e: any) {
         let value = Number(e.detail)
         currentValue = value
 
         // WIP history
-        overlays.update((a) => {
-            overlayIds.forEach((id) => {
+        ;(isEffect ? effects : overlays).update((a) => {
+            ids.forEach((id) => {
                 if (!value) delete a[id].displayDuration
                 else a[id].displayDuration = value
             })

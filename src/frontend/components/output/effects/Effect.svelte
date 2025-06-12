@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Effect } from "../../../../types/Effects"
-    import { EffectRender } from "./effectRenderer"
-    import { activeEdit, activePage, effects } from "../../../stores"
+    import { activeEdit, activePage, currentWindow, effects } from "../../../stores"
     import { clone, getChangedKeys } from "../../helpers/array"
+    import { EffectRender } from "./effectRenderer"
 
     export let effect: Effect & { id?: string }
     export let preview: boolean = false
@@ -37,7 +37,8 @@
     const fullReloadKeys = ["count", "color", "flareDiscNum"]
     const fullReloadKeysSpecific = {
         rain: ["length", "width"],
-        city: ["height", "width"]
+        city: ["height", "width"],
+        grass: ["height", "speed"]
     }
     let previousItems: any[] = []
     $: if (items) update()
@@ -62,7 +63,7 @@
 
         const changedKeys = _changedKeys.filter((a) => a.key !== "x" && a.key !== "y" && a.key !== "offset")
 
-        if (_changedKeys.length && !changedKeys.length) return
+        if (_changedKeys.length && !changedKeys.length && !$currentWindow) return
 
         previousItems = clone(items)
         const itemType = effect.items[changedKeys[0]?.index]?.type
@@ -72,7 +73,7 @@
             renderer?.stop()
             renderer = new EffectRender(canvasElem, items, preview)
         } else {
-            renderer.updateItems(items)
+            renderer.updateItems(items, !changedKeys.length)
         }
     }
 
@@ -88,8 +89,8 @@
         movedIndex = -1
     }
 
-    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon"]
-    const verticalMove = ["aurora", "fog", "fireworks", "city"]
+    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon", "asset"]
+    const verticalMove = ["aurora", "fog", "fireworks", "city", "grass", "rainbow"]
 
     function mousemove(e: any) {
         if (!pressed || movedIndex < 0) return
@@ -129,6 +130,8 @@
         if (item.type === "fog") return item.offset ?? 0.3
         if (item.type === "fireworks") return 1 - (item.offset ?? 0.7)
         if (item.type === "city") return 1 - (item.offset ?? 0)
+        if (item.type === "grass") return item.offset ?? 1
+        if (item.type === "rainbow") return item.offset ?? 0.2
         return item.offset ?? 0.5
     }
 </script>

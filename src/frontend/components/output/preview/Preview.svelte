@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, slideTimers, special, styles } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -57,9 +57,9 @@
         }
 
         // group shortcuts
-        if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
+        if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
-            let layoutRef = getLayoutRef()
+            let layoutRef = getLayoutRef(outSlide?.id || "active")
             let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
@@ -161,10 +161,10 @@
     let activeClear: string | null = null
     let autoChange = true
     $: if (outputId) autoChange = true
-    $: if (autoChange && ($outputs || $overlayTimers)) {
+    $: if (autoChange && ($outputs || $overlayTimers || $playingMetronome)) {
         let active = getActiveClear(
             !isOutCleared("transition"),
-            $playingAudio,
+            Object.keys($playingAudio).length || $playingMetronome,
             !isOutCleared("overlays") || !isOutCleared("effects"),
             !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")),
             !isOutCleared("background")
@@ -172,10 +172,10 @@
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value
-    $: if (!autoChange && ($outputs || $playingAudio || $overlayTimers)) checkStillActive()
+    $: if (!autoChange && ($outputs || $playingAudio || $playingMetronome || $overlayTimers)) checkStillActive()
     function checkStillActive() {
         if (activeClear === "nextTimer" && isOutCleared("transition")) autoChange = true
-        else if (activeClear === "audio" && !$playingAudio) autoChange = true
+        else if (activeClear === "audio" && !Object.keys($playingAudio).length && !$playingMetronome) autoChange = true
         else if (activeClear === "overlays" && isOutCleared("overlays") && isOutCleared("effects")) autoChange = true
         else if (activeClear === "slide" && !(!isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")))) autoChange = true
         else if (activeClear === "background" && isOutCleared("background")) autoChange = true
@@ -194,7 +194,7 @@
 
     function getActiveClear(slideTimer: any, audio: any, overlays: any, slide: any, background: any) {
         if (slideTimer) return "nextTimer"
-        if (Object.keys(audio).length) return "audio"
+        if (audio) return "audio"
         if (overlays) return "overlays"
         if (slide) return "slide"
         if (background) return "background"
@@ -270,7 +270,7 @@
             <Show {currentOutput} {ref} {linesIndex} {maxLines} />
         {:else if updatedActiveClear === "overlays"}
             <Overlay {currentOutput} />
-        {:else if updatedActiveClear === "audio" && Object.keys($playingAudio).length}
+        {:else if updatedActiveClear === "audio"}
             <Audio />
         {:else if updatedActiveClear === "nextTimer"}
             <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />

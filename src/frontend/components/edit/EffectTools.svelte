@@ -148,13 +148,15 @@
                                     <Icon id="delete" white />
                                 </Button>
 
-                                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
-                                    {#if openedMenus.includes(i)}
-                                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                                    {:else}
-                                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                                    {/if}
-                                </Button>
+                                {#if effectEdits[item.type]}
+                                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
+                                        {#if openedMenus.includes(i)}
+                                            <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                                        {:else}
+                                            <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                                        {/if}
+                                    </Button>
+                                {/if}
                             </CombinedInput>
 
                             {#if openedMenus.includes(i)}

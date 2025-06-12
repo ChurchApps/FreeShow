@@ -1,4 +1,6 @@
 import express from "express"
+import { randomFillSync, createHash } from "crypto"
+
 import { ToMain } from "../../types/IPC/ToMain"
 import { stores } from "../data/store"
 import { sendToMain } from "../IPC/main"
@@ -7,14 +9,8 @@ import { getKey } from "../utils/keys"
 import { httpsRequest } from "../utils/requests"
 import { pcoLoadServices } from "./request"
 
-const app = express()
-const PCO_PORT = 5501
-
-export const PCO_API_URL = "https://api.planningcenteronline.com"
-const clientId = getKey("pco_id")
-const clientSecret = getKey("pco_secret")
-
 export type PCOScopes = "calendar" | "check_ins" | "giving" | "groups" | "people" | "publishing" | "services"
+
 type PCOAuthData = {
     access_token: string
     refresh_token: string
@@ -23,6 +19,8 @@ type PCOAuthData = {
     expires_in: number
     scope: PCOScopes
 } | null
+
+export const PCO_API_URL = "https://api.planningcenteronline.com"
 
 export const DEFAULT_PCO_DATA: PCOAuthData = {
     access_token: "",
@@ -33,6 +31,9 @@ export const DEFAULT_PCO_DATA: PCOAuthData = {
     scope: "services",
 }
 
+const app = express()
+const PCO_PORT = 5501
+const clientId = getKey("pco_id")
 const HTML_success = `
     <head>
         <title>Success!</title>
@@ -53,26 +54,14 @@ const HTML_error = `
 `
 
 let PCO_ACCESS: PCOAuthData = null
-export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
-    const storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
-    if (storedAccess?.created_at) {
-        if (hasExpired(storedAccess)) {
-            PCO_ACCESS = await refreshToken(storedAccess)
-            return PCO_ACCESS
-        }
-
-        sendToMain(ToMain.PCO_CONNECT, { success: true })
-        if (!PCO_ACCESS) PCO_ACCESS = storedAccess
-        return storedAccess
-    }
-
-    PCO_ACCESS = await pcoAuthenticate(scope)
-    return PCO_ACCESS
-}
 
 function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     const path = "/auth/complete"
     const redirect_uri = `http://localhost:${PCO_PORT}${path}`
+
+    // Generate PKCE values
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = generateCodeChallenge(codeVerifier);
 
     const server = app.listen(PCO_PORT, () => {
         console.info(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
@@ -87,11 +76,17 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     return new Promise((resolve) => {
         app.get(path, (req, res) => {
             const code = req.query.code?.toString() || ""
+            console.info(`OAuth code received: ${code}`)
             if (!code) return resolve(null)
 
-            console.info("OAuth code received!")
+            const params = {
+                grant_type: "authorization_code",
+                code,
+                client_id: clientId,
+                redirect_uri,
+                code_verifier: codeVerifier
+            }
 
-            const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
             httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
                 if (err) {
                     res.setHeader("Content-Type", "text/html")
@@ -117,34 +112,87 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             })
         })
 
-        const URL = `${PCO_API_URL}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}`
+        const URL = `${PCO_API_URL}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+
         openURL(URL)
     })
 }
 
-function hasExpired(access: PCOAuthData) {
+function hasExpired(access: PCOAuthData): boolean {
     if (access === null) return true
-    return (access.created_at + access.expires_in) * 1000 < Date.now()
+
+    const expirationTime = (access.created_at + access.expires_in) * 1000
+    const currentTime = Date.now()
+
+    // TODO: consider whether we want to allow a small buffer for expiration (to avoid issues with a token expiring right at the moment of use)
+    // e.g., 5 minutes before actual expiration
+
+    return currentTime >= expirationTime
 }
 
 function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
     return new Promise((resolve) => {
-        if (!access?.refresh_token) return resolve(null)
-        console.info("Refreshing PCO OAuth token")
+        if (!access?.refresh_token) {
+            console.warn("No refresh token available, cannot refresh PCO OAuth token")
+            return resolve(null)
+        }
 
-        const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
-        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
+        console.info("refreshToken: Refreshing PCO OAuth token")
+
+        const params = { grant_type: "refresh_token", client_id: clientId, refresh_token: access.refresh_token }
+
+        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
             if (err || data === null) {
-                sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
-                resolve(null)
-                return
+                // If refresh fails, fallback to full authentication flow
+                return handleRefreshFailure(access.scope)
             }
 
             stores.ACCESS.set(`pco_${data.scope}`, data)
             sendToMain(ToMain.PCO_CONNECT, { success: true })
-            resolve(data)
+
+            return resolve(data)
         })
     })
+}
+
+async function handleRefreshFailure(scope: PCOScopes): Promise<PCOAuthData> {
+    try {
+        const newData = await pcoAuthenticate(scope)
+        return newData
+    } catch (authErr: any) {
+        sendToMain(ToMain.ALERT, "Could not refresh token! " + String(authErr?.message))
+        return null
+    }
+}
+
+function generateCodeVerifier() {
+    const array = new Uint8Array(32);
+    randomFillSync(array);
+    return Buffer.from(array).toString("base64url");
+}
+
+function generateCodeChallenge(verifier: string) {
+    const hash = createHash("sha256").update(verifier).digest();
+    return Buffer.from(hash).toString("base64url");
+}
+
+export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
+    const storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
+
+    if (storedAccess?.created_at) {
+        if (hasExpired(storedAccess)) {
+            PCO_ACCESS = await refreshToken(storedAccess)
+            return PCO_ACCESS
+        }
+
+        sendToMain(ToMain.PCO_CONNECT, { success: true })
+        if (!PCO_ACCESS) PCO_ACCESS = storedAccess
+        return storedAccess
+    }
+
+    PCO_ACCESS = await pcoAuthenticate(scope)
+
+    return PCO_ACCESS
 }
 
 export function pcoDisconnect(scope: PCOScopes = "services") {

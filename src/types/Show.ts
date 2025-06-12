@@ -401,6 +401,7 @@ export interface EmitterTemplateValue {
 }
 export interface EmitterTemplate {
     name: string
+    description?: string
     inputs: EmitterTemplateValue[]
 }
 export interface EmitterInputs {
@@ -408,6 +409,7 @@ export interface EmitterInputs {
 }
 export interface Emitter {
     name: string
+    description?: string
     type: EmitterTypes
     signal?: any
     templates?: { [key: string]: EmitterTemplate }

@@ -65,9 +65,11 @@ import ManageGroups from "../components/main/popups/ManageGroups.svelte"
 import CustomAction from "../components/main/popups/CustomAction.svelte"
 import ChumsSyncCategories from "../components/main/popups/ChumsSyncCategories.svelte"
 import EffectItems from "../components/main/popups/EffectItems.svelte"
+import CustomText from "../components/main/popups/CustomText.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
+    custom_text: CustomText,
     import: Import,
     songbeamer_import: SongbeamerImport,
     export: Export,

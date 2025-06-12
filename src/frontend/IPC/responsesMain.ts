@@ -24,7 +24,7 @@ import { convertCSV } from "../converters/csv"
 import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
-import { createCategory, importShow, importSpecific, setTempShows } from "../converters/importHelpers"
+import { createCategory, importShow, importSpecific, importTemplate, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong } from "../converters/opensong"
@@ -425,7 +425,7 @@ export const mainResponses: MainResponses = {
             // FreeShow
             freeshow: () => importShow(data),
             freeshow_project: () => importProject(data),
-            freeshow_template: () => importSpecific(data, templates),
+            freeshow_template: () => importTemplate(data),
             freeshow_theme: () => importSpecific(data, themes),
             // Text
             txt: () => convertTexts(data),

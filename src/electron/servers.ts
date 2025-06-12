@@ -25,7 +25,7 @@ const serverPorts: { [key in ServerName]: number } = {
     REMOTE: 5510,
     STAGE: 5511,
     CONTROLLER: 5512,
-    OUTPUT_STREAM: 5513,
+    OUTPUT_STREAM: 5513
     // CAM: 5513,
 }
 
@@ -41,7 +41,6 @@ function createServers() {
 
         if (id === "STAGE") {
             // app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
-
             // Serve media files
             // app.get('/media/:token', handleMediaRequest);
         }
@@ -58,7 +57,7 @@ function createServers() {
             io: new Server(server),
             max: 10,
             connections: {},
-            data: {},
+            data: {}
         }
 
         createBridge(id, servers[id]!)
@@ -154,7 +153,8 @@ function initialize(id: ServerName, socket: Socket) {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
             const frame = await CaptureHelper.captureBase64Frame(window)
-            toServer(id, { channel: "OUTPUT_FRAME", data: { frame } })
+            const bounds = window.getBounds()
+            toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
         } else if (msg) {
             toApp(id, msg)
         }
@@ -183,7 +183,7 @@ const device: { [key: string]: RegExp } = {
     iPod: /iPod/i,
     macOS: /Macintosh/i,
     Windows: /IEMobile|Windows/i,
-    Zebra: /TC70|TC55/i,
+    Zebra: /TC70|TC55/i
 }
 export function getOS(ua: string) {
     return Object.keys(device).find((v) => ua.match(device[v])) || "Unknown"

@@ -34,6 +34,7 @@ function XMLtoObject(xml: string): Bible {
     bible.div?.forEach((book, bookIndex) => {
         const bookId = book["@osisID"]
         const name = book["@name"] || defaultNames[bookId]
+        const abbreviation = book["@abbr"]
         const bookNumber = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? bookIndex) + 1
         const chapters: any[] = []
 
@@ -55,7 +56,9 @@ function XMLtoObject(xml: string): Bible {
             chapters.push({ number: chapterNumber, verses })
         })
 
-        books.push({ name, number: bookNumber, chapters })
+        const bookData = { name, abbreviation, number: bookNumber, chapters }
+        if (abbreviation) bookData.abbreviation = abbreviation
+        books.push(bookData)
     })
 
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem
@@ -131,5 +134,5 @@ const defaultNames: any = {
     "2John": "2 John",
     "3John": "3 John",
     Jude: "Jude",
-    Rev: "Revelation",
+    Rev: "Revelation"
 }

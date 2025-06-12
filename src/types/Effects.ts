@@ -5,6 +5,7 @@ export interface Effects {
 export interface Effect {
     name: string
     isDefault?: boolean
+    displayDuration?: number
     placeUnderSlide?: boolean
     color: string | null
     style: string
@@ -13,7 +14,31 @@ export interface Effect {
 }
 
 // | "rain_screen"
-export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle"
+export type EffectType =
+    | "circle"
+    | "rectangle"
+    | "triangle"
+    | "wave"
+    | "bubbles"
+    | "stars"
+    | "galaxy"
+    | "rain"
+    | "snow"
+    | "sun"
+    | "lens_flare"
+    | "spotlight"
+    | "aurora"
+    | "bloom"
+    | "fog"
+    | "city"
+    | "rays"
+    | "fireworks"
+    | "cycle"
+    | "grass"
+    | "mountains"
+    | "lightning"
+    | "rainbow"
+    | "asset"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     hidden?: boolean
@@ -205,4 +230,31 @@ export interface FireworkItem extends EffectItem<"fireworks"> {
 export interface CycleItem extends EffectItem<"cycle"> {
     speed: number
     phases: { stop: number; color: string }[]
+}
+
+export interface GrassItem extends EffectItem<"grass"> {
+    offset?: number
+    count: number
+    height: number
+    speed?: number
+    width: number
+    color?: string
+    windStrength?: number // how much the grass sways (0-1, default: 0.5)
+    heightVariation?: number // height variation (0-1, default: 0.3)
+}
+
+export interface LightningItem extends EffectItem<"lightning"> {
+    frequency: number // average strikes per second
+    duration: number // flash duration in frames
+    color?: string
+}
+
+export interface RainbowItem extends EffectItem<"rainbow"> {
+    offset?: number
+    bandWidth?: number
+}
+
+export interface AssetItem extends EffectItem<"asset"> {
+    path: string
+    size: number
 }

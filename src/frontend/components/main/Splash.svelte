@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, shows, version } from "../../stores"
+    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, shows, special, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -18,13 +18,43 @@
 
         showRecentlyUsedProjects.set(false)
     }
+
+    let links: string[] = []
+    function extractLinksAndCleanText(text: string) {
+        links = []
+
+        // extract and remove links from <a> tags
+        const textWithoutATags = text.replace(/<a\s[^>]*href=["'](https?:\/\/[^"']+)["'][^>]*>.*?<\/a>/gi, (_match, url) => {
+            links.push(url)
+            return ""
+        })
+        // extract and remove raw links from plain text
+        const finalText = textWithoutATags.replace(/https?:\/\/[^\s<>"']+/gi, (url) => {
+            links.push(url)
+            return ""
+        })
+
+        return finalText.replaceAll("\n", "<br>").replace(/\s+/g, " ").trim()
+    }
 </script>
 
-<Center>
+<Center class="context #splash">
     <h1>FreeShow</h1>
     <p style="opacity: 0.7;">v{$version}</p>
-    <!-- shows up for new users (can be found in "About" menu) -->
-    {#if Object.keys($shows).length < 20}
+    {#if $special.splashText}
+        <p style="padding-top: 30px">
+            {@html extractLinksAndCleanText($special.splashText)}
+            <span class="links" style="display: flex;flex-direction: column;align-items: center;">
+                {#each links as link}
+                    <Link url={link}>
+                        {link.replace(/^(https?:\/\/)/, "")}
+                        <Icon id="launch" white />
+                    </Link>
+                {/each}
+            </span>
+        </p>
+    {:else if Object.keys($shows).length < 20}
+        <!-- shows up for new users (can be found in "About" menu) -->
         <p style="padding-top: 30px">
             <Link url="https://freeshow.app/docs">
                 <T id="main.docs" />

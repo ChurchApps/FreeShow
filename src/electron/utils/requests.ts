@@ -12,10 +12,10 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         headers: {
             ...(dataString.length
                 ? {
-                      "Content-Type": "application/json",
-                      "User-Agent": "Node.js",
-                      "Content-Length": Buffer.byteLength(dataString),
-                  }
+                    "Content-Type": "application/json",
+                    "User-Agent": "Node.js",
+                    "Content-Length": Buffer.byteLength(dataString),
+                }
                 : {}),
             ...headers,
         },
@@ -66,7 +66,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
             ...createLog(err),
             type: "Failed HTTPS Request",
             source: hostname + path,
-            message: err.message.toString() + "\n" + JSON.stringify(content || {}),
+            message: String(err.message) + "\n" + JSON.stringify(content || {}),
         }
 
         logError(error, "request")

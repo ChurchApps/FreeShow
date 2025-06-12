@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Template } from "../../../../types/Show"
-    import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -76,6 +76,7 @@
                 {#each fullFilteredTemplates as template}
                     <Card
                         class="context #template_card{template.isDefault ? '_default' : ''}"
+                        preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
                         active={template.id === activeTemplate}
                         label={template.name}
                         renameId="template_{template.id}"
@@ -107,7 +108,7 @@
                                         id: "slideStyle",
                                         oldData,
                                         newData,
-                                        location: { page: "edit", show: $activeShow, slide: slideId },
+                                        location: { page: "edit", show: $activeShow, slide: slideId }
                                     })
                                 })
 

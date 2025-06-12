@@ -31,7 +31,7 @@
         {#each Object.keys(effectItems) as type, i}
             {@const data = { type, ...effectItems[type].default }}
 
-            <Card label={translate(`effect.${type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
+            <Card label={translate(`effect.${effectItems[type].default?.type || type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
                 {#if slowLoader > i}
                     <Effect effect={{ name: "", style: "", background: "", color: null, items: [data] }} preview />
                 {/if}

@@ -30,6 +30,8 @@
     export let actionNameIndex = 0
     export let choosePopup = false
 
+    $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter((a) => a !== actionId)
+
     let dispatch = createEventDispatcher()
     function changeAction(data: any) {
         dispatch("change", data)
@@ -83,7 +85,7 @@
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't show action if incompatible with any existing action (and no wait action is added)
-                if (!existingActions.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActions.includes(id))) return false
+                if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActionsFiltered.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 
@@ -91,7 +93,7 @@
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true
                 // remove already added or custom ones
-                if (removeActions.includes(id) || (!actionData[id].canAddMultiple && existingActions.includes(id))) return false
+                if (removeActions.includes(id) || (!actionData[id].canAddMultiple && existingActionsFiltered.includes(id))) return false
                 // custom slide actions list
                 if (list && !full && !slideActions.includes(id)) return false
                 // if (list && id.includes("index_select")) return false
@@ -137,10 +139,10 @@
     }
 
     $: dataInputs = !!(input && actionId && !pickAction && !full)
-    let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
+    let dataOpened = !Object.keys(actionValue).length || !existingActionsFiltered?.length // || existingActionsFiltered.length < 2
     let dataMenuOpened = false
 
-    $: isLast = actionNameIndex >= existingActions.length
+    $: isLast = actionNameIndex >= existingActionsFiltered.length
 
     // SEARCH
 
@@ -199,7 +201,7 @@
                     <Button
                         on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
                         outline={getActionTriggerId(actionId) === action.id}
-                        active={(existingActions || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
+                        active={(existingActionsFiltered || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
                         style="width: 100%;{searchValue.length && i === 0 ? 'background-color: var(--primary-lighter);' : ''}"
                         bold={action.common}
                     >
@@ -240,7 +242,7 @@
             </Button>
         {/if}
 
-        {#if isLast && actionId && existingActions.length > 1}
+        {#if isLast && actionId && existingActionsFiltered.length > 1}
             <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove" })} redHover>
                 <Icon id="close" size={1.2} white />
             </Button>

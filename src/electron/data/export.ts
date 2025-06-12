@@ -9,7 +9,7 @@ import { join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide } from "../../types/Show"
+import type { Show, Slide, Template } from "../../types/Show"
 import type { Message } from "../../types/Socket"
 import { isProd } from "../index"
 import { sendMain, sendToMain } from "../IPC/main"
@@ -20,7 +20,7 @@ import { exportOptions } from "../utils/windowOptions"
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
-    THEME: ".fstheme",
+    THEME: ".fstheme"
 }
 
 export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
@@ -35,6 +35,11 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
     }
 
     msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
+
+    if (msg.channel === "TEMPLATE") {
+        exportTemplate(msg.data)
+        return
+    }
 
     const customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
@@ -86,7 +91,7 @@ const PDFOptions = {
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
     pageSize: "A4" as const,
     printBackground: true,
-    landscape: false,
+    landscape: false
 }
 
 export function generatePDF(path: string) {
@@ -141,8 +146,8 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
 
 // ----- JSON -----
 
-export function exportJSON(content: any, extension: string, path: string) {
-    writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
+export function exportJSON(content: any, extension: string, path: string, name = "") {
+    writeFile(join(path, name || content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
 export function exportJSONFile(content: any, path: string, name: string) {
@@ -273,6 +278,40 @@ export function exportProject(data: { type: "project"; path: string; name: strin
 
     const outputPath = join(data.path, data.name)
     const filePath = getUniquePath(outputPath, ".project")
+    zip.writeZip(filePath, (err) => doneWritingFile(err, data.path))
+}
+
+// ----- TEMPLATE -----
+
+export function exportTemplate(data: { file: { template: Template; files?: string[] }; name: string; path: string }) {
+    sendToMain(ToMain.ALERT, "export.exporting")
+
+    const files: string[] = data.file.files || []
+    if (!files.length) {
+        // export as plain JSON
+        delete data.file.files
+        exportJSON(data.file, customJSONExtensions.TEMPLATE, data.path, data.name)
+        return
+    }
+
+    // create archive
+    const zip = new AdmZip()
+
+    // copy files
+    files.forEach((path) => {
+        try {
+            // file might not exist
+            zip.addLocalFile(path)
+        } catch (err) {
+            console.error("Could not add a file to project:", err)
+        }
+    })
+
+    // add project file
+    zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
+
+    const outputPath = join(data.path, data.name)
+    const filePath = getUniquePath(outputPath, customJSONExtensions.TEMPLATE)
     zip.writeZip(filePath, (err) => doneWritingFile(err, data.path))
 }
 

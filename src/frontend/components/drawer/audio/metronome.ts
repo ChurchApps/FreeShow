@@ -1,15 +1,16 @@
 import { get } from "svelte/store"
 import { AudioPlayer } from "../../../audio/audioPlayer"
-import { metronome, playingMetronome, volume } from "../../../stores"
+import { customMetadata, metronome, playingMetronome, volume } from "../../../stores"
 import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
+import { _show } from "../../helpers/shows"
 
 const audioContext = new AudioContext()
 
 const defaultMetronomeValues = {
     tempo: 120, // BPM
     beats: 4,
-    volume: 1,
+    volume: 1
     // notesPerBeat: 1
     // audioOutput: ""
 }
@@ -27,6 +28,7 @@ export function toggleMetronome() {
 
 export function startMetronome(values: API_metronome = {}) {
     if (get(metronome)?.tempo) metronomeValues = get(metronome)
+    if (values.metadataBPM) values.tempo = getShowBPM()
     if (Object.keys(values).length) {
         const oldValues = clone(metronomeValues)
         delete oldValues.volume
@@ -43,6 +45,12 @@ export function startMetronome(values: API_metronome = {}) {
     if (get(playingMetronome)) stopMetronome()
 
     initializeMetronome()
+}
+
+export function getShowBPM() {
+    const showMetadata = _show().get("meta")
+    const customKey = get(customMetadata).custom.find((a) => a.toLowerCase().includes("bpm")) || "BPM"
+    return Math.floor(parseFloat(showMetadata[customKey] || 0)) || 120
 }
 
 export function updateMetronome(values: API_metronome, starting = false) {
