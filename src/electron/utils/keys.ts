@@ -5,7 +5,7 @@
 // (they are all free, so you can just get your own keys if you want)
 
 export function getKey(type: string) {
-    if (type === "pco_id") return decrypt("43560b570154400d5752490759510806175a0950140658550001400a09074001575700564a0a5d5844570d570106470c5d0414055f55565d105d5c0012005f53")
+    if (type === "pco_id") return "35d1112d839d678ce3f1de730d2cff0b81038c2944b11c5e2edf03f8b43abc05"
     if (type === "chums_id") return decrypt("1e2608317f261819055200")
     if (type === "chums_secret") return decrypt("02022a207f57193d5f2d13")
     return "5a4104165513101501415e5b030a5d19121f03485f4603035a03"

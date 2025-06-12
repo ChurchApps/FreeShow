@@ -79,12 +79,12 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             console.info(`OAuth code received: ${code}`)
             if (!code) return resolve(null)
 
-            const params = { 
-                grant_type: "authorization_code", 
-                code, 
-                client_id: clientId, 
+            const params = {
+                grant_type: "authorization_code",
+                code,
+                client_id: clientId,
                 redirect_uri,
-                code_verifier: codeVerifier  // Add the code verifier here
+                code_verifier: codeVerifier
             }
 
             httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
@@ -118,9 +118,16 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     })
 }
 
-function hasExpired(access: PCOAuthData) {
+function hasExpired(access: PCOAuthData): boolean {
     if (access === null) return true
-    return (access.created_at + access.expires_in) * 1000 < Date.now()
+
+    const expirationTime = (access.created_at + access.expires_in) * 1000
+    const currentTime = Date.now()
+
+    // TODO: consider whether we want to allow a small buffer for expiration (to avoid issues with a token expiring right at the moment of use)
+    // e.g., 5 minutes before actual expiration
+
+    return currentTime >= expirationTime
 }
 
 function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
@@ -129,21 +136,33 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
             console.warn("No refresh token available, cannot refresh PCO OAuth token")
             return resolve(null)
         }
-        console.info("Refreshing PCO OAuth token")
+
+        console.info("refreshToken: Refreshing PCO OAuth token")
 
         const params = { grant_type: "refresh_token", client_id: clientId, refresh_token: access.refresh_token }
-        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
+
+        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
             if (err || data === null) {
-                sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
-                resolve(null)
-                return
+                // If refresh fails, fallback to full authentication flow
+                return handleRefreshFailure(access.scope)
             }
 
             stores.ACCESS.set(`pco_${data.scope}`, data)
             sendToMain(ToMain.PCO_CONNECT, { success: true })
-            resolve(data)
+
+            return resolve(data)
         })
     })
+}
+
+async function handleRefreshFailure(scope: PCOScopes): Promise<PCOAuthData> {
+    try {
+        const newData = await pcoAuthenticate(scope)
+        return newData
+    } catch (authErr: any) {
+        sendToMain(ToMain.ALERT, "Could not refresh token! " + String(authErr?.message))
+        return null
+    }
 }
 
 function generateCodeVerifier() {
@@ -159,6 +178,7 @@ function generateCodeChallenge(verifier: string) {
 
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
     const storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
+
     if (storedAccess?.created_at) {
         if (hasExpired(storedAccess)) {
             PCO_ACCESS = await refreshToken(storedAccess)
@@ -171,6 +191,7 @@ export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
     }
 
     PCO_ACCESS = await pcoAuthenticate(scope)
+
     return PCO_ACCESS
 }
 
