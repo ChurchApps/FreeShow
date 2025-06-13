@@ -178,7 +178,7 @@
         { id: 30, name: "30 fps" },
         { id: 48, name: "48 fps" },
         { id: 50, name: "50 fps" },
-        { id: 60, name: "60 fps" },
+        { id: 60, name: "60 fps" }
     ]
 
     // blackmagic
@@ -251,7 +251,7 @@
         GET_DEVICES: (data) => {
             blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
             if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
-        },
+        }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
@@ -387,8 +387,10 @@
     </div>
 </CombinedInput>
 
+<!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
 <!-- disable on windows -->
-{#if $os.platform !== "win32"}
+<!-- only <= 1.4.5 -->
+{#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
     <CombinedInput>
         <p><T id="settings.kiosk_mode" /></p>
         <div class="alignRight">

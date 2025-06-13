@@ -96,6 +96,12 @@
         }
 
         values.text = data.lyrics
+
+        const metadata: string[] = []
+        if (data.title) metadata.push(`Title=${data.title}`)
+        if (data.artist) metadata.push(`Artist=${data.artist}`)
+        if (metadata.length) values.text = `${metadata.join("\n")}\n\n${values.text}`
+
         if (data.source) values.origin = data.source.toLowerCase()
         selectedOption = "text"
     }

@@ -259,7 +259,7 @@ async function searchLyrics({ artist, title }: { artist: string; title: string }
 
 async function getLyrics({ song }: { song: LyricSearchResult }) {
     const lyrics = await LyricSearch.get(song)
-    return { lyrics, source: song.source, title: song.title }
+    return { lyrics, source: song.source, title: song.title, artist: song.artist }
 }
 
 // GET DEVICE MEDIA PERMISSION
@@ -292,13 +292,13 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
         OutputHelper.getAllOutputs().forEach((output) => {
             if (output.window) windows.push(output.window)
         })
-            ;[mainWindow!, ...windows].forEach((window) => {
-                const mediaId = window?.getMediaSourceId()
-                const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
-                if (windowsAlreadyExists) return
+        ;[mainWindow!, ...windows].forEach((window) => {
+            const mediaId = window?.getMediaSourceId()
+            const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
+            if (windowsAlreadyExists) return
 
-                screens.push({ name: window?.getTitle(), id: mediaId })
-            })
+            screens.push({ name: window?.getTitle(), id: mediaId })
+        })
 
         return screens
     }

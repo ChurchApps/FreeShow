@@ -320,7 +320,7 @@
 
     <!-- effects -->
     {#if effectsUnderSlide}
-        <EffectOutput ids={effectsUnderSlide} transition={transitions.overlay} />
+        <EffectOutput ids={effectsUnderSlide} transition={transitions.overlay} {mirror} />
     {/if}
 
     <!-- "underlays" -->
@@ -379,7 +379,7 @@
 
         <!-- effects -->
         {#if effectsOverSlide}
-            <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} />
+            <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />
         {/if}
 
         <!-- overlays -->

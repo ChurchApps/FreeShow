@@ -79,10 +79,12 @@
         "global_options": "Bu seçenekler genel olarak uygulanır."
     },
     "setup": {
-        "good_luck": "Umarım bu yazılımı yararlı bulursunuz. İyi şanslar! :)",
+        "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
         "tips": "Web sitesinde kullanışlı ipuçları ve öğreticiler bulun.",
         "change_later": "Bu ayarları daha sonra değiştirebilirsiniz",
-        "get_started": "Başla!"
+        "get_started": "Başla!",
+        "or": "or",
+        "restore_data": "Restore previous data"
     },
     "example": {
         "welcome": "Hoşgeldiniz",
@@ -117,7 +119,8 @@
         "quick_lyrics_example_tip": "Şarkı sözlerini veya herhangi bir metni buraya girin",
         "quick_lyrics_example_text": "Çizgi",
         "empty": "Boş gösteri",
-        "exists": "Aynı adı taşıyan mevcut bir gösteri bulundu"
+        "exists": "Aynı adı taşıyan mevcut bir gösteri bulundu",
+        "slideshow": "Slayt gösterisi"
     },
     "preview": {
         "_previous_show": "Önceki gösteri",
@@ -149,6 +152,7 @@
         "background": "Arka planı temizle",
         "slide": "Slaytı temizle",
         "overlays": "Bindirmeleri temizle",
+        "overlay": "Şeffaf bindirme",
         "audio": "Sesi temizle",
         "nextTimer": "Sonraki slayt zamanlayıcısını temizle",
         "timer": "Zamanlayıcıyı temizle",
@@ -157,6 +161,7 @@
     "remove": {
         "background": "Arkaplanı kaldırın",
         "overlays": "Kaplamaları kaldır",
+        "effects": "Remove effects",
         "audio": "Sesi kaldır",
         "nextTimer": "Sonraki slayt zamanlayıcısını kaldır",
         "to_start": "Başa git'i kaldır",
@@ -210,11 +215,15 @@
         "mixer": "Mikser",
         "metronome": "Metronom",
         "toggle_metronome": "Metronomu değiştir",
+        "use_metadata_bpm": "Use BPM from metadata",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Ritim",
         "type_music": "Müzik",
-        "type_effect": "Efekt"
+        "type_effect": "Efekt",
+        "unknown_artist": "Bilinmeyen Sanatçı",
+        "unknown_title": "Bilinmeyen Başlık",
+        "unknown_album": "Bilinmeyen Albüm"
     },
     "menu": {
         "show": "Gösteri",
@@ -243,8 +252,8 @@
         "items": "Seçili öğe yok",
         "search": "Eşleşme yok",
         "media": "Gösterilen medya yok",
-        "stage_show": "Sahne şovu yok",
-        "stage_shows": "Sahne gösterisi yok",
+        "layout": "Hiçbir düzen seçilmedi",
+        "layouts": "Düzen yok",
         "player": "Video yok",
         "groups": "Grup yok",
         "events": "Olay yok",
@@ -403,8 +412,10 @@
         "show": "Yeni gösteri",
         "select_show": "Gösteri seç",
         "select_template": "Şablonu seçin",
+        "custom_text": "Set custom text",
         "rename": "Yeniden adlandır",
         "color": "Renk",
+        "color_gradient": "Gradyan rengi",
         "find_replace": "Bul ve Değiştir",
         "edit_list": "Listeyi düzenle",
         "timer": "Zamanlayıcı",
@@ -427,6 +438,7 @@
         "set_time": "Zamanı ayarla",
         "assign_shortcut": "Kısayol atama",
         "dynamic_values": "Dinamik değerler",
+        "conditions": "Şartlar",
         "animate": "Hareketlendir",
         "translate": "Lokalizasyon",
         "next_timer": "Sonraki slayt zamanlayıcı",
@@ -441,20 +453,25 @@
         "edit_event": "Etkinliği düzenle",
         "about": "Hakkında",
         "history": "Tarih",
+        "action_history": "Aksiyon geçmişi",
         "manage_emitters": "Yayıcıları yönet",
         "action": "Eylem",
         "category_action": "Kategori eylemi",
+        "custom_action": "Custom action",
         "user_data_overwrite": "Mevcut veriler bulundu",
         "connect": "Bağlan",
         "cloud_update": "Bulut ile senkronizasyon",
         "cloud_method": "Veri konumu",
         "shortcuts": "Kısayollar",
         "icon": "Simgeler",
+        "manage_groups": "Grupları yönet",
         "manage_icons": "Simgeleri yönet",
         "manage_colors": "Renkleri yönet",
         "manage_metadata": "Meta verileri yönet",
         "choose_camera": "Kamera seç",
         "manage_tags": "Etiketleri yönet",
+        "chums_sync_categories": "Select categories to sync",
+        "effect_items": "Effect items",
         "initialize": "FreeShow'a Hoşgeldiniz",
         "unsaved": "Bırakmak istediğine emin misin?",
         "cancel": "İptal",
@@ -492,6 +509,7 @@
         "deleted_cache": "Medya küçük resim önbelleği silindi.",
         "no_songswords_easyworship": "SongsWords.db dosyası eksik.",
         "delete_shows_empty": "Silinecek gösteri yok.",
+        "reached_end": "Sona geldik!",
         "output_capture_enabled": "Çıkış ekran görüntüsü etkinleştirildi, bu performans sorunlarına neden olabilir. Sadece gerektiğinde kullanın!",
         "midi_no_project": "Projeyi değiştirmek için tetikleyici alındı, ancak dizinde proje bulunamadı:",
         "midi_no_show": "Slaytı başlatmak için tetik alındı, ancak gösteri etkin değil.",
@@ -519,7 +537,9 @@
         "scripture": "Yeni kutsal",
         "collection": "Yeni koleksiyon",
         "action": "Yeni aksiyon",
-        "event": "Yeni etkinlik"
+        "event": "Yeni etkinlik",
+        "event_action": "New scheduled action",
+        "effect": "New effect"
     },
     "show": {
         "name": "İsim",
@@ -529,6 +549,7 @@
         "simple": "Basit görünüm",
         "list": "Liste görünümü",
         "lyrics": "Şarkı sözü görünümü",
+        "change_view": "Slayt görünümünü değiştir",
         "text": "Metin düzenleme",
         "update": "Gösteriyi güncelle",
         "locked": "Bu gösteri kilitlendi!",
@@ -540,7 +561,8 @@
         "delete_manual": "Manuel kontrol",
         "delete_match": "Tam eşleşme varsa sil",
         "delete_keep_last_modified": "Son değiştirilen hariç hepsini sil",
-        "delete_keep_first_created": "İlk oluşturulan hariç hepsini sil"
+        "delete_keep_first_created": "İlk oluşturulan hariç hepsini sil",
+        "custom_action_tip": "Assign a custom action for this show to trigger when this button is clicked."
     },
     "actions": {
         "rename": "Yeniden adlandır",
@@ -610,6 +632,8 @@
         "bind_to": "Özel çıktılar",
         "remove_binding": "Belirli çıkışları kaldır",
         "dynamic_values": "Dinamik değerler",
+        "dynamic_value": "Dinamik değer",
+        "conditions": "Şartlar",
         "rearrange": "Yeniden düzenle",
         "to_front": "Öne geç",
         "forward": "İleriye doğru",
@@ -668,6 +692,8 @@
         "open_log_file": "Günlük dosyasını aç",
         "open_error_log": "Hata günlüğünü aç",
         "open_cache_folder": "Önbellek klasörünü açın",
+        "open_app_data_folder": "Uygulama veri klasörünü aç",
+        "open_user_data_folder": "Kullanıcı veri klasörünü aç",
         "refresh_all_shows": "Tüm şovları 'Şovlar' klasörüne alın",
         "start_timer": "Zamanlayıcıyı başlat",
         "pause_timers": "Etkin zamanlayıcıları duraklat",
@@ -694,6 +720,8 @@
         "id_select_group": "Belirli bir grupla oynayın",
         "id_change_stage_layout": "Sahne bağlantı düzenini değiştir",
         "start_camera": "Kamerayı başlat",
+        "start_screen": "Başlangıç ekranı",
+        "id_start_effect": "Start effect",
         "id_select_overlay": "Bindirmeyi başlat",
         "change_volume": "Hacmi değiştirin",
         "start_audio_stream": "Ses akışını başlat",
@@ -715,6 +743,7 @@
         "custom_activation": "Özel etkinleştirme",
         "set_custom_activation": "Özel aktivasyonu ayarla",
         "any": "Herhangi",
+        "override_category_action": "Kategori eylemini geçersiz kıl",
         "activate_on_startup": "Başlangıçta etkinleştir",
         "activate_save": "Kaydettiğinde etkinleştir",
         "activate_slide_clicked": "Slayt tıklandığında etkinleştir",
@@ -729,6 +758,21 @@
         "activate_show_created": "Gösteri oluşturulduğunda etkinleştir",
         "activate_show_opened": "Gösteri açıldığında etkinleştir",
         "activate_audio_playlist_ended": "Ses çalma listesi sona erdiğinde etkinleştir"
+    },
+    "conditions": {
+        "show_item": "Öğeyi göster",
+        "all_conditions": "Aşağıdaki koşulların tümü yerine getirilir",
+        "some_conditions": "Aşağıdaki koşullardan bazıları karşılanır",
+        "none_conditions": "Aşağıdaki koşulların hiçbiri karşılanmıyor",
+        "has": "var",
+        "has_not": "yok",
+        "is": "dır",
+        "is_not": "değil",
+        "is_above": "yukarıda",
+        "is_below": "aşağıda",
+        "value": "değer",
+        "seconds": "saniye",
+        "empty": "boş"
     },
     "recording": {
         "remove": "Kaydı kaldır",
@@ -800,6 +844,8 @@
         "columns": "Sütunlar"
     },
     "context": {
+        "to_dictionary": "Sözlüğe ekle",
+        "correct": "Bu kelime ile değiştir",
         "enabledTabs": "Sekmeleri değiştir",
         "setTag": "Etiket ayarla",
         "filterByTags": "Etiketlere göre filtrele",
@@ -811,6 +857,7 @@
         "changeIcon": "Simgeyi değiştir",
         "changeGroup": "Grubu değiştir",
         "createNew": "Yeni oluştur",
+        "create_slideshow": "Slayt gösterisi oluştur",
         "selectAll": "Hepsini seç",
         "force_outputs": "Force outputs",
         "align_with_screen": "Ekran ile hizalama",
@@ -861,7 +908,10 @@
         "overlay_content": "Bindirme içeriği ekleme",
         "different_first_template": "İlk slaytta özel şablon",
         "max_lines_per_slide": "Slayt başına maksimum satır sayısı",
+        "break_long_lines": "Uzun çizgileri kırın",
+        "break_long_lines_tip": "Belirlenen kelimelerden uzunsa satırı kes",
         "media_fit": "Medya sığdır",
+        "cropping": "Cropping",
         "one_letter": "Tek harf modu",
         "sub_indexes": "Alt dizinler",
         "size": "Boyut",
@@ -873,10 +923,14 @@
         "invert_items": "Öğeleri ters çevir",
         "list": "Liste",
         "chords": "Akorlar",
+        "vertical_offset": "Dikey ofset",
         "transpose": "Transpoze",
+        "transpose_up": "Transpoze yukarı",
+        "transpose_down": "Transpoze aşağı",
         "auto_size": "Otomatik boyut",
         "no_wrap": "Tek satırdaki metin",
         "line_spacing": "Satır aralığı",
+        "line_radius": "Çizgi yarıçapı",
         "line_height": "Satır yüksekliği",
         "letter_spacing": "Harf boşluğu",
         "word_spacing": "Kelime aralığı",
@@ -937,18 +991,26 @@
         "bottom_top": "Aşağıdan yukarıya",
         "left_right": "Soldan sağa",
         "right_left": "Sağdan sola",
+        "press_action": "Basın eylemi",
+        "release_action": "Eylemi serbest bırak",
         "max_events": "Maksimum etkinlik",
         "start_days_from_today": "Bugünden sonraki günlerde başla",
         "just_one_day": "Sadece bir gün",
         "enable_start_date": "Başlangıç tarihini etkinleştir",
         "disable_navigation": "Navigasyon kontrollerini devre dışı bırak",
-        "progress_bar": "İlerleme çubuğu"
+        "progress_bar": "İlerleme çubuğu",
+        "each_number_once": "Her sayı yalnızca bir kez",
+        "side": "Side",
+        "count": "Count",
+        "speed": "Speed",
+        "angle": "Angle"
     },
     "items": {
         "text": "Metin kutusu",
         "media": "Medya",
         "image": "Resim",
         "camera": "Kamera",
+        "screen": "Ekran",
         "video": "Video",
         "mirror": "Ayna",
         "clock": "Saat",
@@ -962,6 +1024,7 @@
         "visualizer": "Görselleştirici",
         "captions": "Başlıklar",
         "icon": "Simge",
+        "effect": "Effect",
         "slide_text": "Slayt metni",
         "slide_notes": "Slayt notları",
         "current_output": "Mevcut çıkış"
@@ -1003,6 +1066,7 @@
         "to": "İle",
         "overflow": "Sona ulaşıldığında taşma",
         "overflow_color": "Taşma rengi",
+        "overflow_blink": "Taşma olduğunda yanıp söner",
         "preview": "Ön izleme",
         "clock": "Saat",
         "event": "Etkinlik",
@@ -1038,6 +1102,7 @@
         "activate": "MIDI sinyali ile etkinleştirin",
         "activate_keypress": "Tuşa basarak etkinleştir",
         "name": "İsim",
+        "description": "Description",
         "input": "Giriş",
         "output": "Çıkış",
         "type": "Tip",
@@ -1057,7 +1122,8 @@
         "signal": "Sinyal",
         "message_template": "Mesaj şablonu",
         "message_templates": "Mesaj şablonları",
-        "inputs": "Girişler"
+        "inputs": "Girişler",
+        "data": "Veri"
     },
     "draw": {
         "focus": "Odak",
@@ -1076,7 +1142,8 @@
         "straight": "Düz",
         "rainbow": "Gökkuşağı",
         "threed": "3D",
-        "dots": "Noktalar"
+        "dots": "Noktalar",
+        "link_to_slide": "Link to slide"
     },
     "stage": {
         "stage_layout": "Sahne düzeni",
@@ -1096,6 +1163,7 @@
     },
     "settings": {
         "general": "Genel",
+        "files": "Dosyalar",
         "theme": "Tema",
         "groups": "Gruplar",
         "styles": "Stiller",
@@ -1151,6 +1219,7 @@
         "full_colors": "Yüksek kontrastlı grup renkleri",
         "slide_number_keys": "Slaytları sayı tuşlarıyla oynatın",
         "auto_shortcut_first_letter": "Metindeki ilk harfe otomatik kısayol",
+        "startup_projects_list": "Başlangıçta proje listesini göster",
         "auto_output": "Başlangıçta çıktı ekranını etkinleştir",
         "hide_cursor_in_output": "İmleci çıktıda gizle",
         "clear_media_when_finished": "Bittiğinde medyayı temizleyin",
@@ -1341,12 +1410,24 @@
         "cubic": "Kübik",
         "sine": "Akış"
     },
+    "color": {
+        "normal": "Normal",
+        "gradient": "Gradyan",
+        "linear": "Doğrusal",
+        "radial": "Radyal",
+        "angle": "Açı",
+        "shape": "Şekil",
+        "circle": "Daire",
+        "ellipse": "Elips"
+    },
     "variables": {
         "number": "Sayı",
+        "random_number": "Rastgele sayı",
         "text": "Metin",
         "step": "Adım",
         "default_value": "Varsayılan değer",
         "value": "Değer",
+        "randomize": "Rastgele",
         "set_state": "Durumu ayarla",
         "minimum": "En az",
         "maximum": "Maksimum"
@@ -1378,6 +1459,36 @@
         "daily": "Günlük",
         "weekly": "Haftalık",
         "mothly": "Aylık"
+    },
+    "effect": {
+        "stars": "Stars",
+        "galaxy": "Galaxy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "bubbles": "Bubbles",
+        "grass": "Grass",
+        "wave": "Wave",
+        "sun": "Sun",
+        "lens_flare": "Lens flare",
+        "lightning": "Lightning",
+        "rainbow": "Rainbow",
+        "spotlight": "Spotlight",
+        "aurora": "Aurora",
+        "bloom": "Bloom",
+        "fog": "Fog",
+        "city": "City",
+        "fireworks": "Fireworks",
+        "rays": "Rays",
+        "cycle": "Cycle",
+        "circle": "Circle",
+        "rectangle": "Rectangle",
+        "triangle": "Triangle",
+        "asset": "Asset",
+        "swirl_strength": "Swirl strength",
+        "arm_count": "Arm count",
+        "drift": "Drift",
+        "pulse_speed": "Pulse speed",
+        "hollow": "Hollow"
     },
     "info": {
         "created": "Oluşturuldu",
@@ -1441,5 +1552,9 @@
         "translation_description_multiline": "Tüm dilleri tek bir metin kutusuna dönüşümlü satırlar halinde ekler. (Songbeamer'daki gibi)",
         "translation_description_textboxes": "Her dili ayrı bir metin kutusu olarak slayta ekler.",
         "translation_description_layouts": "Her dil için benzersiz bir slayt seti ve bir düzen oluşturur."
+    },
+    "chums": {
+        "sync_categories": "Sync categories",
+        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }

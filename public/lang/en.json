@@ -8,6 +8,7 @@
         "drop": "Drop here",
         "search": "Search",
         "quick_search": "Quick search",
+        "search_active": "Search is active",
         "none": "None",
         "finished": "Finished",
         "open": "Open",
@@ -156,7 +157,8 @@
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",
-        "drawing": "Clear drawing"
+        "drawing": "Clear drawing",
+        "search": "Clear search"
     },
     "remove": {
         "background": "Remove background",
@@ -1215,6 +1217,7 @@
         "auto_updates": "Auto updates",
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",
+        "auto_group_numbers": "Auto assign group numbers",
         "transparent_slides": "Transparent slide preview",
         "full_colors": "High contrast group colors",
         "slide_number_keys": "Play slides with number keys",

@@ -70,8 +70,10 @@
 
     .images {
         position: absolute;
-        width: 100%;
-        height: 100%;
+        /* width: 100%;
+        height: 100%; */
+        width: 70%;
+        height: 70%;
 
         display: flex;
         flex-wrap: wrap;
@@ -83,8 +85,10 @@
     }
     .images img {
         width: calc(50% - 3px);
-        max-height: 38px;
-        object-fit: contain;
+        max-height: 35px;
+
+        object-fit: cover;
+        border-radius: 3px;
 
         /* hide alt text */
         color: transparent;
