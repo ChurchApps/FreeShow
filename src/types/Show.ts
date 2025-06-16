@@ -78,6 +78,7 @@ export interface TrimmedShow {
 export interface ShowList extends TrimmedShow {
     id: string
     match?: number
+    originalMatch?: number
 }
 
 export interface Slide {

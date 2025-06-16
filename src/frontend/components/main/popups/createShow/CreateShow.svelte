@@ -22,13 +22,15 @@
         values[key] = e.target.value || ""
 
         // store text if popup is closed
-        if (key === "text") quickTextCache.set(values.text)
+        quickTextCache.set({ name: values.name, text: values.text })
     }
+    let storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
     let values = {
-        text: $quickTextCache.length > 20 ? $quickTextCache : "",
-        name: "",
+        text: storedCache ? $quickTextCache.text : "",
+        name: storedCache ? $quickTextCache.name : "",
         origin: ""
     }
+    if ($quickTextCache.fromSearch) quickTextCache.set({ name: values.name, text: values.text })
 
     // CATEGORY
 
@@ -129,7 +131,7 @@
         }
 
         values = { name: "", text: "", origin: "" }
-        quickTextCache.set("")
+        quickTextCache.set({ name: "", text: "" })
         activePopup.set(null)
     }
 

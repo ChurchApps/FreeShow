@@ -8,6 +8,7 @@
         "drop": "Ejtse ide",
         "search": "Keresés",
         "quick_search": "Gyorskeresés",
+        "search_active": "A keresés aktív",
         "none": "Nincs",
         "finished": "Befejezett",
         "open": "Megnyitás",
@@ -79,10 +80,12 @@
         "global_options": "Ezek a beállítások globálisan érvényesek."
     },
     "setup": {
-        "good_luck": "Remélem, hogy hasznosnak találja ezt a szoftvert. Sikeres bemutatót! :)",
+        "good_luck": "Reméljük, hogy hasznosnak találja ezt a szoftvert. Sikeres prezentációt! :)",
         "tips": "Hasznos tippek és útmutatók a weboldalon.",
         "change_later": "Ezek a beállítások később megváltoztathatóak",
-        "get_started": "Kezdjük!"
+        "get_started": "Kezdjük!",
+        "or": "vagy",
+        "restore_data": "Előző adatok helyreállítása"
     },
     "example": {
         "welcome": "Üdvözöljük",
@@ -154,11 +157,13 @@
         "audio": "Hang törlése",
         "nextTimer": "Következő dia időzítőjének törlése",
         "timer": "Időzítő törlése",
-        "drawing": "Rajz törlése"
+        "drawing": "Rajz törlése",
+        "search": "Keresés törlése"
     },
     "remove": {
         "background": "Háttér eltávolítása",
         "overlays": "Átfedések eltávolítása",
+        "effects": "Effektusok elvátolítása",
         "audio": "Hang eltávolítása",
         "nextTimer": "Következő dia időzítőjének eltávolítása",
         "to_start": "Ugrás az elejére eltávolítása",
@@ -212,6 +217,7 @@
         "mixer": "Keverő",
         "metronome": "Metronóm",
         "toggle_metronome": "Metronóm átváltása",
+        "use_metadata_bpm": "BPM alkalmazása a metaadatokból",
         "tempo": "Tempó",
         "bpm": "BPM",
         "beats": "Ütem",
@@ -408,6 +414,7 @@
         "show": "Új bemutató",
         "select_show": "Bemutató kijelölése",
         "select_template": "Sablon kijelölése",
+        "custom_text": "Egyedi szöveg beállítása",
         "rename": "Átnevezés",
         "color": "Szín",
         "color_gradient": "Színátmenet",
@@ -452,6 +459,7 @@
         "manage_emitters": "Kibocsátók kezelése",
         "action": "Művelet",
         "category_action": "Kategória művelet",
+        "custom_action": "Egyedi művelet",
         "user_data_overwrite": "Meglévő adatok találhatóak",
         "connect": "Csatlakozás",
         "cloud_update": "Szinkronizálás a felhővel",
@@ -464,6 +472,8 @@
         "manage_metadata": "Metaadatok kezelése",
         "choose_camera": "Kamera kiválasztása",
         "manage_tags": "Címkék kezelése",
+        "chums_sync_categories": "Szinkronizálandó kategóriák kijelölése",
+        "effect_items": "Effektus elemek",
         "initialize": "Üdvözöljük a FreeShow-ban",
         "unsaved": "Biztosan ki szeretne léptni?",
         "cancel": "Mége",
@@ -529,7 +539,9 @@
         "scripture": "Új szentírás",
         "collection": "Új gyűjtemény",
         "action": "Új művelet",
-        "event": "Új esemény"
+        "event": "Új esemény",
+        "event_action": "Új időzített művelet",
+        "effect": "Új effektus"
     },
     "show": {
         "name": "Név",
@@ -551,7 +563,8 @@
         "delete_manual": "Kézi ellenőrzés",
         "delete_match": "Törlés pontos egyezés esetén",
         "delete_keep_last_modified": "Összes törlése az utolsó módosítás kivételével",
-        "delete_keep_first_created": "Összes törlése az elsőként létrehozott kivételével"
+        "delete_keep_first_created": "Összes törlése az elsőként létrehozott kivételével",
+        "custom_action_tip": "Rendeljen hozzá egy egyedi műveletet ehhez a bemutatóhoz, amely akkor aktiválódik, amikor erre a gombra kattintanak."
     },
     "actions": {
         "rename": "Átnevezés",
@@ -630,7 +643,7 @@
         "to_back": "Mozgatás leghátulra",
         "show_timer": "Idő a műsorkezdésig",
         "hide_timer": "Idő a rejtésig",
-        "choose_custom": "Egyéni választása",
+        "choose_custom": "Egyedi választása",
         "add_color": "Szín hozzáadása",
         "format": "Formázás",
         "find_replace": "Szöveg keresése és cseréje",
@@ -665,7 +678,7 @@
         "chord_bass": "Basszus",
         "roman_keys": "Római fok",
         "set_key": "Billentyű beállítása",
-        "custom_key": "Egyéni érték beállítása",
+        "custom_key": "Egyedi érték beállítása",
         "select_chord": "Akkord kijelölése",
         "play_with_shortcut": "Aktiválás gyorsbillentyűvel",
         "press_to_assign": "Nyomjon meg bármely betűt a hozzárendeléshez",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "Színpadi kapcsolatok elrendezésének módosítása",
         "start_camera": "Kamera indítása",
         "start_screen": "Kezdő képernyő",
+        "id_start_effect": "Effektus indítása",
         "id_select_overlay": "Átfedés indítása",
         "change_volume": "Hangerő módosítása",
         "start_audio_stream": "Hangfolyam indítása",
@@ -899,6 +913,7 @@
         "break_long_lines": "Hosszú sorok megtörése",
         "break_long_lines_tip": "Sor megtörése, ha hosszabb, mint a beállított szavak",
         "media_fit": "Média méretezése",
+        "cropping": "Vágás",
         "one_letter": "Egyetlen betű mód",
         "sub_indexes": "Alindex",
         "size": "Méret",
@@ -986,7 +1001,11 @@
         "enable_start_date": "Kezdési dátum engedélyezése",
         "disable_navigation": "Navigációs billentyűk letiltása",
         "progress_bar": "Folyamatjelző",
-        "each_number_once": "Minden szám csak egyszer"
+        "each_number_once": "Minden szám csak egyszer",
+        "side": "Oldal",
+        "count": "Szám",
+        "speed": "Sebesség",
+        "angle": "Szög"
     },
     "items": {
         "text": "Szövegdoboz",
@@ -1007,6 +1026,7 @@
         "visualizer": "Vizualizáló",
         "captions": "Feliratok",
         "icon": "Ikon",
+        "effect": "Effektus",
         "slide_text": "Dia szövege",
         "slide_notes": "Dia megjegyzése",
         "current_output": "Aktuális kimenet"
@@ -1063,7 +1083,7 @@
         "digital": "Digitális",
         "analog": "Analóg",
         "seconds": "Másodperc",
-        "custom": "Egyéni",
+        "custom": "Egyedi",
         "show_time": "Megjelenítési idő"
     },
     "captions": {
@@ -1084,6 +1104,7 @@
         "activate": "Aktiválás MIDI jel alapján",
         "activate_keypress": "Aktiválás billentyűleütésre ",
         "name": "Név",
+        "description": "Leírás",
         "input": "Bemenet",
         "output": "Kimenet",
         "type": "Típus",
@@ -1123,7 +1144,8 @@
         "straight": "Egyenes",
         "rainbow": "Szivárvány",
         "threed": "3D",
-        "dots": "Pontok"
+        "dots": "Pontok",
+        "link_to_slide": "Hivatkozás a diára"
     },
     "stage": {
         "stage_layout": "Színpadi elrendezés",
@@ -1229,7 +1251,7 @@
         "show_location": "Bemutatók helye",
         "data_location": "Adatok helye",
         "user_data_location": "Felhasználói beállítások mentése az „Adatok helyére\"",
-        "user_data_exists": "Meglévő adatok találhatóak ezen az egyéni helyen, szeretné felülírni azokat?",
+        "user_data_exists": "Meglévő adatok találhatóak ezen az egyedi helyen, szeretné felülírni azokat?",
         "user_data_yes": "Igen, jelenlegi adatok megőrzése",
         "user_data_no": "Nem, meglévő adatok importálása",
         "popup_before_close": "Bezárást megerősítő felugró ablak engedélyezése",
@@ -1440,6 +1462,36 @@
         "weekly": "Heti",
         "mothly": "Havi"
     },
+    "effect": {
+        "stars": "Csillagok",
+        "galaxy": "Galaxis",
+        "rain": "Eső",
+        "snow": "Hó",
+        "bubbles": "Buborékok",
+        "grass": "Pázsit",
+        "wave": "Hullám",
+        "sun": "Nap",
+        "lens_flare": "Lencsetükröződés",
+        "lightning": "Villám",
+        "rainbow": "Szivárvány",
+        "spotlight": "Reflektorfény",
+        "aurora": "Sarki fény",
+        "bloom": "Virág",
+        "fog": "Köd",
+        "city": "Város",
+        "fireworks": "Tűzijáték",
+        "rays": "Fénysugár",
+        "cycle": "Körforgás",
+        "circle": "Kör",
+        "rectangle": "Téglalap",
+        "triangle": "Háromszög",
+        "asset": "Eszköz",
+        "swirl_strength": "Örvényerősség",
+        "arm_count": "Karok száma",
+        "drift": "Sodródás",
+        "pulse_speed": "Lüktetés sebessége",
+        "hollow": "Mélyedés"
+    },
     "info": {
         "created": "Létrehozás dátuma",
         "modified": "Módosítva",
@@ -1463,7 +1515,7 @@
         "projects": "Projektek",
         "project": "Projekt",
         "drawer": "A szerkesztő",
-        "categories": "Ketgóriák",
+        "categories": "Kategóriák",
         "show_create": "Bemutató készítése",
         "show": "Bemutató",
         "output": "Kimenet",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "Hozzáadja az összes nyelvet egyetlen szövegdobozban, váltakozó sorokban (úgy, mint a Songbeamerben)",
         "translation_description_textboxes": "Minden nyelvet külön szövegdobozként ad hozzá a diához.",
         "translation_description_layouts": "Minden nyelvhez egyedi diakészletet és elrendezést hoz létre."
+    },
+    "chums": {
+        "sync_categories": "Kategóriák szinkronizálása",
+        "sync_categories_description": "Jelölje ki, mely kategóriákat szeretné dalként szinkronizálni a Chums alkalmazással."
     }
 }

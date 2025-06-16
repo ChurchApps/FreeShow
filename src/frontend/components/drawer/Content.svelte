@@ -43,7 +43,7 @@
 </script>
 
 <div class="main">
-    {#if searchValue && searchTab !== id + active && id !== "scripture"}
+    {#if searchValue && active !== "all" && searchTab !== id + active && id !== "scripture"}
         <div class="warning">
             <p style="padding: 6px 8px;"><T id="main.search_active" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue}</span></p>
             <Button on:click={() => (searchValue = "")} dark>

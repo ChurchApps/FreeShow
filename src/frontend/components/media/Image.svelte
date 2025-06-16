@@ -2,7 +2,6 @@
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
     import { cropImageToBase64, encodeFilePath } from "../helpers/media"
-    import { Cropping } from "../../../types/Settings"
 
     export let path: string
     export let mediaStyle: MediaStyle = {}

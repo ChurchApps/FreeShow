@@ -560,6 +560,7 @@
         "source": "Source",
         "artist": "Artist",
         "song": "Song",
+        "enter_create": "Press enter to create",
         "delete_manual": "Manual check",
         "delete_match": "Delete if exact match",
         "delete_keep_last_modified": "Delete all except last modified",
