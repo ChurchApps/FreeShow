@@ -64,7 +64,7 @@
         }
 
         // background opacity
-        if (input.id === "background-opacity" || (input.value?.includes("rgb") && input.key === "background-color")) {
+        if (input.id === "background-opacity" || (input.value?.toString()?.includes("rgb") && input.key === "background-color")) {
             input = setBackgroundColor(input, data)
             setTimeout(() => getBackgroundOpacity(itemEdit, data), 100)
         }

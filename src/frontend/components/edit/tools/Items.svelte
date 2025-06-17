@@ -31,6 +31,7 @@
         { id: "slide_tracker", icon: "percentage" },
         // { id: "button" },
         { id: "events", icon: "calendar" },
+        { id: "weather", icon: "cloud" },
         { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
         { id: "captions", maxAmount: 1 } // max one because there can't be multiple translations at this point

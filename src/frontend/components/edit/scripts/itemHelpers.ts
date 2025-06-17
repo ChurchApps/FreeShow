@@ -55,7 +55,17 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         newData.timer = { id: timerId, ...get(timers)[timerId] }
         if (get(timers)[timerId]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
     } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", showTime: true, seconds: false }
-    else if (type === "mirror") newData.mirror = {}
+    else if (type === "weather") {
+        newData.weather = {}
+
+        let style = getStyles(newData.style)
+        style = { ...style, width: "1530px", height: "680px", left: "195px", top: "200px" }
+        let styleString = ""
+        Object.entries(style).forEach(([key, value]) => {
+            styleString += `${key}: ${value};`
+        })
+        newData.style = styleString
+    } else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }
     else if (type === "slide_tracker") newData.auto = true

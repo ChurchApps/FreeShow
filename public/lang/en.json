@@ -1006,7 +1006,12 @@
         "side": "Side",
         "count": "Count",
         "speed": "Speed",
-        "angle": "Angle"
+        "angle": "Angle",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "altitude": "Altitude",
+        "fahrenheit": "Fahrenheit",
+        "longRange": "Long range"
     },
     "items": {
         "text": "Textbox",
@@ -1018,6 +1023,7 @@
         "mirror": "Mirror",
         "clock": "Clock",
         "events": "Events",
+        "weather": "Weather",
         "live": "Live",
         "audio": "Audio",
         "timer": "Timer",
@@ -1320,6 +1326,7 @@
         "to_time": "To time",
         "location": "Location",
         "notes": "Notes",
+        "now": "Now",
         "today": "Today",
         "tomorrow": "Tomorrow",
         "repeat": "Repeat",

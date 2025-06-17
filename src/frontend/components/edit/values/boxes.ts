@@ -546,6 +546,19 @@ export const boxes: Box = {
             ]
         }
     },
+    weather: {
+        icon: "cloud",
+        edit: {
+            default: [
+                { name: "size", id: "weather.size", input: "number", value: 100, values: { min: 0, max: 200 } },
+                { name: "latitude", id: "weather.latitude", input: "number", value: 0, values: { min: -90, max: 90, decimals: 2, fixed: 2 } },
+                { name: "longitude", id: "weather.longitude", input: "number", value: 0, values: { min: -180, max: 180, decimals: 2, fixed: 2 } },
+                // { name: "altitude", id: "weather.altitude", input: "number", value: 0, values: { max: 5000 } },
+                { name: "fahrenheit", id: "weather.useFahrenheit", input: "checkbox", value: false },
+                { name: "longRange", id: "weather.longRange", input: "checkbox", value: false }
+            ]
+        }
+    },
     visualizer: {
         icon: "visualizer",
         edit: {

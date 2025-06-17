@@ -1902,7 +1902,7 @@ export class EffectRender {
 
     loadedImages = {}
     initAsset(item: AssetItem) {
-        const imagePath = item.path.includes("/") ? item.path : `../assets/effects/${item.path}.webp`
+        const imagePath = item.path.includes("/") ? item.path : `./assets/effects/${item.path}.webp`
 
         const image = new Image()
         image.onload = imageLoaded
