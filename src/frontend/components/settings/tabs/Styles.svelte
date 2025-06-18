@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
-    import { activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
@@ -200,6 +200,15 @@
         </p>
     </MediaPicker>
     {#if currentStyle.backgroundImage}
+        <Button
+            title={$dictionary.titlebar?.edit}
+            on:click={() => {
+                activeEdit.set({ type: "media", id: currentStyle.backgroundImage, items: [] })
+                activePage.set("edit")
+            }}
+        >
+            <Icon id="edit" white />
+        </Button>
         <Button
             title={$dictionary.actions?.remove}
             on:click={() => {
@@ -443,6 +452,18 @@
         </div>
     </Button>
     {#if currentStyle.template}
+        {#if !$templates[currentStyle.template]?.isDefault}
+            <Button
+                title={$dictionary.titlebar?.edit}
+                on:click={() => {
+                    activeDrawerTab.set("templates")
+                    activeEdit.set({ type: "template", id: currentStyle.template, items: [] })
+                    activePage.set("edit")
+                }}
+            >
+                <Icon id="edit" white />
+            </Button>
+        {/if}
         <Button
             title={$dictionary.actions?.remove}
             on:click={() => {
@@ -489,6 +510,18 @@
             </p>
         </div>
     </Button>
+    {#if currentStyle.templateScripture && !$templates[currentStyle.templateScripture]?.isDefault}
+        <Button
+            title={$dictionary.titlebar?.edit}
+            on:click={() => {
+                activeDrawerTab.set("templates")
+                activeEdit.set({ type: "template", id: currentStyle.templateScripture, items: [] })
+                activePage.set("edit")
+            }}
+        >
+            <Icon id="edit" white />
+        </Button>
+    {/if}
     {#if currentStyle.templateScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4}
         <Button
             title={$dictionary.actions?.remove}

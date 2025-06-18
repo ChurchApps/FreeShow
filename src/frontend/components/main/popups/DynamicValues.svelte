@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { activeEdit, activePage, activePopup, activeShow, activeStage, dictionary, overlays, popupData, refreshEditSlide, showsCache, stageShows, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeStage, dictionary, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -17,6 +17,8 @@
     const caret = $popupData.caret || {}
     onMount(() => popupData.set({}))
 
+    const hidden: string[] = $special.disabledDynamicValues || []
+
     const values = getValues()
 
     function getValues() {
@@ -27,7 +29,7 @@
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
         let seperatorId = ""
-        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_"]
+        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "rss_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
@@ -36,6 +38,9 @@
                 seperatorId = seperator
                 newList[seperatorId] = []
             }
+
+            if (hidden.includes(seperatorId.slice(0, -1))) return
+
             newList[seperatorId].push(value)
         })
 
@@ -49,6 +54,7 @@
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
         if (id === "meta_") return "tools.metadata"
+        if (id === "rss_") return "settings.rss"
         if (id === "$") return "items.variable"
         return ""
     }
@@ -212,7 +218,7 @@
     {#if Object.values(searchedValues)[0]?.length}
         <div class="list" style={searchValue.length > 1 ? "margin-top: 10px;" : ""}>
             {#each Object.entries(searchedValues) as [key, values]}
-                {#if key !== "search"}
+                {#if key !== "search" && !hidden.includes(key.slice(0, -1))}
                     <HRule title={getTitle(key)} />
                 {/if}
 
@@ -287,5 +293,6 @@
         font-size: 1.2em;
         text-align: center;
         white-space: initial;
+        max-height: 200px;
     }
 </style>

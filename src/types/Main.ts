@@ -278,6 +278,7 @@ export type Popups =
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"
+    | "manage_dynamic_values"
     | "player"
     | "rename"
     | "color"

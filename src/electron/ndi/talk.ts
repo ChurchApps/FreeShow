@@ -17,19 +17,19 @@ export const ndiResponses = {
     CAPTURE_STREAM: (data: { source: { name: string; urlAddress: string; id: string }; outputId: string }) => NdiReceiver.captureStreamNDI(data),
     CAPTURE_DESTROY: (data: { id: string; outputId?: string }) => NdiReceiver.stopReceiversNDI(data),
 
-    NDI_DATA: (data: { id: string; framerate?: number; audio?: boolean }) => setDataNDI(data),
+    NDI_DATA: (data: { id: string; framerate?: number; audio?: boolean }) => setDataNDI(data)
 
     // SEND_CREATE: (outputId: string) => createSenderNDI(outputId),
     // SEND_DESTORY: (data) => stopSenderNDI(data.outputId),
     // SEND_CAPTURE: (data) => startCapture(data.outputId),
 }
 
-export function setDataNDI(data: { id: string; framerate?: number; audio?: boolean }) {
+export function setDataNDI(data: { id: string; framerate?: number | string; audio?: boolean }) {
     if (!data?.id) return
 
     if (data.framerate) {
         if (!CaptureHelper.customFramerates[data.id]) CaptureHelper.customFramerates[data.id] = {}
-        CaptureHelper.customFramerates[data.id].ndi = data.framerate
+        CaptureHelper.customFramerates[data.id].ndi = Number(data.framerate)
 
         CaptureHelper.updateFramerate(data.id)
     }

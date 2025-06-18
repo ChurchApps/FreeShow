@@ -121,7 +121,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     transition: { label: "popup.transition", icon: "transition" },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star" },
+    dynamic_values: { label: "actions.dynamic_values", icon: "dynamic" },
     conditions: { label: "actions.conditions", icon: "light" },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },

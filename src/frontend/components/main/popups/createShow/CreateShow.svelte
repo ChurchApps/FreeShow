@@ -220,16 +220,22 @@
                     value={$splitLines}
                     max={100}
                     on:change={(e) => {
-                        splitLines.set(e.detail)
+                        splitLines.set(Number(e.detail))
                     }}
                 />
             </CombinedInput>
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
-                    <!-- settings -->
-                    <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
-                    <T id="edit.options" />
+                    <div class="text" style="display: flex;align-items: center;padding: 0;">
+                        <!-- settings -->
+                        <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
+                        <T id="edit.options" />
+
+                        {#if Number($splitLines)}
+                            <span class="name" style="font-size: 0.8em;">({$splitLines})</span>
+                        {/if}
+                    </div>
                 </Button>
             </CombinedInput>
         {/if}

@@ -5,7 +5,7 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
@@ -54,7 +54,15 @@
         }
 
         if (key === "ndi") {
-            if (value) newToast("$toast.output_capture_enabled")
+            if (value) {
+                newToast("$toast.output_capture_enabled")
+
+                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
+                if (enabledOutputs.length > 1) {
+                    updateOutput("transparent", true)
+                    updateOutput("invisible", true)
+                }
+            }
         } else if (key === "blackmagic") {
             if (value === true) {
                 // send(BLACKMAGIC, ["GET_DEVICES"])
@@ -167,14 +175,14 @@
     }
 
     const framerates = [
-        { id: 10, name: "10 fps" },
-        { id: 12, name: "12 fps" },
-        { id: 24, name: "24 fps" },
-        { id: 25, name: "25 fps" },
-        { id: 30, name: "30 fps" },
-        { id: 48, name: "48 fps" },
-        { id: 50, name: "50 fps" },
-        { id: 60, name: "60 fps" }
+        { id: "10", name: "10 fps" },
+        { id: "12", name: "12 fps" },
+        { id: "24", name: "24 fps" },
+        { id: "25", name: "25 fps" },
+        { id: "30", name: "30 fps" },
+        { id: "48", name: "48 fps" },
+        { id: "50", name: "50 fps" },
+        { id: "60", name: "60 fps" }
     ]
 
     // blackmagic
@@ -354,6 +362,17 @@
                 </p>
             </div>
         </Button>
+        {#if currentOutput?.stageOutput}
+            <Button
+                title={$dictionary.titlebar?.edit}
+                on:click={() => {
+                    activeStage.set({ id: currentOutput?.stageOutput || "", items: [] })
+                    activePage.set("stage")
+                }}
+            >
+                <Icon id="edit" white />
+            </Button>
+        {/if}
     </CombinedInput>
 {:else}
     <CombinedInput>
@@ -377,6 +396,15 @@
             </div>
         </Button>
         {#if currentOutput?.style}
+            <Button
+                title={$dictionary.titlebar?.edit}
+                on:click={() => {
+                    activeStyle.set(currentOutput?.style || "")
+                    settingsTab.set("styles")
+                }}
+            >
+                <Icon id="edit" white />
+            </Button>
             <Button
                 title={$dictionary.actions?.remove}
                 on:click={() => {

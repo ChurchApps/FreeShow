@@ -545,10 +545,24 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
+                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;",
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "", text: [{ value: "1", style: "font-size: 70px;font-weight: bold;text-transform:uppercase;" }] }]
+                }
+            ]
+        }
+        a.lowerThirdWhite = {
+            isDefault: true,
+            name: "Lower Third White",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
                     style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background-color: #FFFFFF;border-radius:20px;padding:25px;border-color: #000000;border-style: solid;border-width: 5px;",
                     align: "",
                     auto: true,
-                    lines: [{ align: "", text: [{ value: "1", style: "color: #000000;font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
+                    lines: [{ align: "", text: [{ value: "1", style: "color: #000000;font-size: 70px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
                 }
             ]
         }

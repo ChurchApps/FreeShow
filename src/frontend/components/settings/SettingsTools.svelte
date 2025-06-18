@@ -34,6 +34,10 @@
             <Icon id="info" style="margin-inline-start: 0.5em;" right />
             <p><T id="popup.manage_metadata" /></p>
         </Button>
+        <Button on:click={() => activePopup.set("manage_dynamic_values")}>
+            <Icon id="dynamic" style="margin-inline-start: 0.5em;" right />
+            <p><T id="popup.manage_dynamic_values" /></p>
+        </Button>
         <Button on:click={() => activePopup.set("manage_icons")}>
             <Icon id="star" style="margin-inline-start: 0.5em;" right />
             <p><T id="popup.manage_icons" /></p>

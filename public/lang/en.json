@@ -473,6 +473,7 @@
         "manage_icons": "Manage icons",
         "manage_colors": "Manage colors",
         "manage_metadata": "Manage metadata",
+        "manage_dynamic_values": "Manage dynamic values",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
         "chums_sync_categories": "Select categories to sync",
@@ -1306,7 +1307,8 @@
         "optimized": "Optimized",
         "reduced": "Reduced",
         "full": "Full",
-        "section_trigger_action": "Trigger action when navigating presentation to a section"
+        "section_trigger_action": "Trigger action when navigating presentation to a section",
+        "rss": "RSS"
     },
     "sort": {
         "sort_by": "Sort by",

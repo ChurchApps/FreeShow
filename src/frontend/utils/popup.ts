@@ -69,6 +69,7 @@ import CustomText from "../components/main/popups/CustomText.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelte"
 import SelectStyle from "../components/main/popups/SelectStyle.svelte"
+import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -88,6 +89,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
+    manage_dynamic_values: ManageDynamicValues,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,
