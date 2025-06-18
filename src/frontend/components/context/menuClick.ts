@@ -927,10 +927,16 @@ const clickActions = {
             activeEdit.set({ type: "audio", id: path, items: [] })
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: "audio" })
+        } else if (obj.sel.id === "show_drawer") {
+            const showId = obj.sel.data[0].id
+            activeShow.set({ type: "show", id: showId })
+            activeEdit.set({ type: "show", slide: 0, items: [], showId: showId })
+            if (get(activePage) === "edit") refreshEditSlide.set(true)
+            activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
             activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
+            if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
-            refreshEditSlide.set(true)
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]

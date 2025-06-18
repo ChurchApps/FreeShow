@@ -211,7 +211,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPERATOR", "selectAll"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "edit", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPERATOR", "selectAll"],
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
@@ -254,10 +254,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
     project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
-    project_media: ["play", "play_no_audio", "play_no_filters", "remove"],
+    project_media: ["play", "play_no_audio", "play_no_filters", "SEPERATOR", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project
+    // "delete" removed as too many users thought it just removed the show from the project
+    // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
+    project_show: ["remove", "SEPERATOR", "private", "SEPERATOR", "rename"],
     project_section: ["recolor", "SEPERATOR", "remove"],
     project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",

@@ -5,14 +5,14 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
+    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput, refreshOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -46,6 +46,11 @@
                 updateOutput(key, false, outputId)
                 newToast("$toast.reverted")
             }, revertTime * 1000)
+        }
+
+        // properly update output content
+        if (key === "style") {
+            refreshOut()
         }
 
         if (key === "ndi") {
@@ -139,15 +144,6 @@
     }
 
     const isChecked = (e: any) => e.target.checked
-
-    // styles
-    $: stylesList = getList($styles)
-    function getList(styles) {
-        let sortedList = sortByName(keysToID(styles))
-        return [{ id: null, name: "—" }, ...sortedList]
-    }
-
-    let stageLayouts = sortByName(keysToID($stageShows)).map((a) => ({ ...a, name: a.name || $dictionary.main?.unnamed || "" }))
 
     // ndi
     function updateNdiData(e: any, key: string) {
@@ -260,18 +256,27 @@
     async function createOutput() {
         let stageLayouts = keysToID($stageShows)
         let type = stageLayouts.length ? await waitForPopupData("choose_output") : "normal"
+        if (!type) return
 
         if (type === "stage") {
-            // get first stage layout
-            let stageOutput = sortByName(stageLayouts)[0] || {}
+            let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
+            let stageId = (await waitForPopupData("select_stage_layout")) || firstStageLayoutId
+
+            let stageLayout = $stageShows[stageId]
 
             toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
             setTimeout(() => {
-                let id = enableStageOutput({ stageOutput: stageOutput?.id || "", name: stageOutput?.name || "" })
+                let id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
                 currentOutputSettings.set(id)
             }, 100)
         } else if (type === "normal") {
-            addOutput()
+            let styleId = ""
+            if (Object.keys($styles).length) {
+                popupData.set({ outputId: currentOutput?.id, skip: true })
+                styleId = await waitForPopupData("select_style")
+            }
+
+            addOutput(false, styleId)
         }
     }
 </script>
@@ -331,12 +336,57 @@
 {#if currentOutput?.stageOutput}
     <CombinedInput>
         <p><T id="stage.stage_layout" /></p>
-        <Dropdown options={stageLayouts} value={stageLayouts.find((a) => a.id === currentOutput?.stageOutput)?.name || "—"} on:click={(e) => (e.detail?.id ? updateOutput("stageOutput", e.detail.id) : "")} />
+        <Button
+            on:click={() => {
+                popupData.set({ active: currentOutput?.stageOutput, trigger: (id) => updateOutput("stageOutput", id) })
+                activePopup.set("select_stage_layout")
+            }}
+            bold={false}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="stage" style="margin-inline-start: 0.5em;" right />
+                <p>
+                    {#if currentOutput?.stageOutput}
+                        {$stageShows[currentOutput?.stageOutput]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_stage_layout" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
     </CombinedInput>
 {:else}
     <CombinedInput>
         <p><T id="settings.active_style" /></p>
-        <Dropdown options={stylesList} value={$styles[currentOutput?.style || ""]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
+        <Button
+            on:click={() => {
+                popupData.set({ active: currentOutput?.style, outputId: currentOutput?.id, trigger: (id) => updateOutput("style", id) })
+                activePopup.set("select_style")
+            }}
+            bold={!currentOutput?.style}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="styles" style="margin-inline-start: 0.5em;" right />
+                <p>
+                    {#if currentOutput?.style}
+                        {$styles[currentOutput?.style]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_style" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if currentOutput?.style}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    updateOutput("style", null)
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
 {/if}
 

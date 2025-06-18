@@ -16,23 +16,17 @@
 
     type ItemRef = { id: ItemType; icon?: string; name?: string; maxAmount?: number }
 
-    const items: ItemRef[] = [
-        { id: "text" },
-        { id: "media", icon: "image" },
-        { id: "web" },
-        { id: "timer" },
-        { id: "clock" }
-        // { id: "variable" },
-    ]
+    const items: ItemRef[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "web" }, { id: "timer" }, { id: "clock" }]
 
     const specialItems: ItemRef[] = [
         // { id: "table" },
         { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
-        // { id: "button" },
         { id: "events", icon: "calendar" },
         { id: "weather", icon: "cloud" },
-        { id: "mirror" },
+        // mirror item is probably never used anymore, as we have a dedicated stage output, and dynamic values for next/previous slide
+        // we could have a way to show the capture of an output screen.., but again, might be useless.
+        // { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
         { id: "captions", maxAmount: 1 } // max one because there can't be multiple translations at this point
     ]

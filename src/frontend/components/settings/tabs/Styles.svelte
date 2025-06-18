@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import type { AspectRatio, Resolution } from "../../../../types/Settings"
+    import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
     import { activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
@@ -20,6 +20,7 @@
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { waitForPopupData } from "../../../utils/popup"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -59,7 +60,7 @@
         })
     }
 
-    const defaultStyle = {
+    const defaultStyle: Styles = {
         name: $dictionary.example?.default || "Default"
     }
 
@@ -124,6 +125,36 @@
     $: maxLines = Number(currentStyle.lines || 0)
     $: metadataDisplay = currentStyle.displayMetadata || "never"
     $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
+
+    // CREATE
+
+    async function createStyle() {
+        let type = await waitForPopupData("choose_style")
+        if (!type) return
+
+        // create default if no styles
+        if (!stylesList.length) {
+            history({ id: "UPDATE", newData: { data: clone(currentStyle) }, oldData: { id: "default" }, location: { page: "settings", id: "settings_style" } })
+        }
+        styleId = uid()
+
+        if (type === "live") {
+            const liveStyle: Styles = {
+                ...clone(defaultStyle),
+                background: "#01FF70",
+                transition: { text: { duration: 500, easing: "sine", type: "fade", between: { type: "none", duration: 500, easing: "sine" } } },
+                fit: "blur",
+                layers: ["slide", "overlays"],
+                lines: 2,
+                template: "lowerThird",
+                templateScripture: "scriptureLT",
+                templateScripture_2: "scriptureLT_2"
+            }
+            history({ id: "UPDATE", newData: { data: liveStyle, replace: { name: $dictionary.tabs?.live || currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+        } else if (type === "normal") {
+            history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+        }
+    }
 </script>
 
 <div class="info">
@@ -585,18 +616,7 @@
     {/if}
 
     <div style="display: flex;">
-        <Button
-            style="width: 100%;"
-            on:click={() => {
-                if (!stylesList.length) {
-                    history({ id: "UPDATE", newData: { data: clone(currentStyle) }, oldData: { id: "default" }, location: { page: "settings", id: "settings_style" } })
-                }
-
-                styleId = uid()
-                history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
-            }}
-            center
-        >
+        <Button style="width: 100%;" on:click={createStyle} center>
             <Icon id="add" right />
             <T id="settings.add" />
         </Button>

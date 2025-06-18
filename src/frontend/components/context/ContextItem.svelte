@@ -77,6 +77,10 @@
             const isArchive = !!categoryStores[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
             enabled = isArchive
         },
+        edit: () => {
+            if ($selected.id !== "show_drawer" || !$shows[$selected.data[0]?.id]?.locked) return
+            disabled = !!$shows[$selected.data[0].id].locked
+        },
         lock_show: () => {
             if (!$shows[$selected.data[0]?.id]?.locked) return
             enabled = !!$shows[$selected.data[0].id].locked

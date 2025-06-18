@@ -24,6 +24,7 @@
     export let transition: any = {}
     export let transitionEnabled = false
     export let isKeyOutput = false
+    export let styleIdOverride = ""
 
     let currentItems: Item[] = []
     let current: any = {}
@@ -162,6 +163,7 @@
                     {mirror}
                     {preview}
                     slideIndex={customOut?.index}
+                    {styleIdOverride}
                 />
             </SlideItemTransition>
         {/if}

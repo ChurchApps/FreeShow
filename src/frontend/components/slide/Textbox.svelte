@@ -50,6 +50,7 @@
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let styleIdOverride = ""
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -80,9 +81,9 @@
     let customOutputId = outputId
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
-    function getCustomStyle(style: string, outputId = "", _updater: any = null) {
+    function getCustomStyle(style: string, outputId = "", styleIdOverride = "", _updater: any = null) {
         if (outputId && !isMirrorItem && !isStage) {
-            let outputResolution = getOutputResolution(outputId, $outputs, true)
+            let outputResolution = getOutputResolution(outputId, $outputs, true, styleIdOverride)
             style = percentageStylePos(style, outputResolution)
         }
 
@@ -304,7 +305,7 @@
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

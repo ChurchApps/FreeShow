@@ -32,11 +32,13 @@
     export let ratio = 0
     export let mirror = false
     export let preview = false
+    export let styleIdOverride = ""
+    export let outOverride: OutData | null = null
 
     $: currentOutput = $outputs[outputId] || {}
 
     // output styling
-    $: currentStyling = getCurrentStyle($styles, currentOutput.style)
+    $: currentStyling = getCurrentStyle($styles, styleIdOverride || currentOutput.style)
     let currentStyle: Styles = { name: "" }
     // don't refresh content unless it changes
     $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = clone(currentStyling)
@@ -62,7 +64,7 @@
         layers = clone(Array.isArray(currentStyle.layers) ? currentStyle.layers : defaultLayers)
         if (!Array.isArray(layers)) layers = []
     }
-    $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
+    $: if (JSON.stringify(out) !== JSON.stringify(outOverride || currentOutput?.out || {})) out = clone(outOverride || currentOutput?.out || {})
 
     $: if (JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
     $: if (JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
@@ -129,7 +131,7 @@
 
         function getCurrentSlide() {
             if (!slide && !outputId) return null
-            if (slide.id === "temp") return { items: slide.tempItems }
+            if (slide.id === "temp" || slide.id === "tempText") return { items: slide.tempItems }
             if (!currentLayout) return null
 
             let slideId: string = currentLayout[slide?.index]?.id || ""
@@ -147,13 +149,13 @@
 
     // slide styling
     // currentSlide?.settings?.resolution
-    $: resolution = getResolution(null, { currentOutput, currentStyle }, false, outputId)
+    $: resolution = getResolution(null, { currentOutput, currentStyle }, false, outputId, styleIdOverride)
     $: transitions = getOutputTransitions(slideData, currentStyle.transition, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
     // WIP revert to old style when output style is reverted to no style (REFRESH OUTPUT)
-    $: outputStyle = currentOutput?.style
+    $: outputStyle = styleIdOverride || currentOutput?.style
     // currentSlide is so the background updates when scripture is removed (if template background on both) - not changed in preview
     $: if (outputStyle && currentStyle && currentSlide !== undefined) {
         if (currentSlide) setTemplateItems()
@@ -357,6 +359,7 @@
             transition={transitions.text}
             transitionEnabled={!mirror || preview}
             {isKeyOutput}
+            {styleIdOverride}
         />
     {/if}
 
@@ -372,7 +375,7 @@
         {/if}
 
         <!-- metadata -->
-        {#if metadataValue || $customMessageCredits}
+        {#if metadataValue || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
         {/if}
@@ -389,7 +392,7 @@
         {/if}
     {/if}
 
-    {#if actualSlide?.attributionString}
+    {#if actualSlide?.attributionString && layers.includes("slide")}
         {#if mirror}
             <p class="attributionString">{actualSlide.attributionString}</p>
         {:else}
