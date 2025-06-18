@@ -48,12 +48,17 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
-    // text = text.replaceAll("\r", "").replaceAll("\n\n \n\n", "__BREAK__").replaceAll("\n \n", "\n\n").replaceAll("__BREAK__", "\n\n \n\n")
-    let sections = (text as string).split("\n\n").filter(Boolean)
+
+    // preprocess chord lines before splitting into sections
+    const allLines = text.split("\n")
+    const processedLines = preprocessLines(allLines)
+    const processedText = processedLines.join("\n")
+
+    let sections = processedText.split("\n\n").filter(Boolean)
 
     // example: Artist=Casting Crowns, CCLI=123456
     const metadataKeys = getCustomMetadata()
-    let plainTextMetadata: { [key: string]: string } = {}
+    const plainTextMetadata: { [key: string]: string } = {}
     let plainNotes = ""
     sections.forEach((section, i) => {
         const lines = section.split("\n")
@@ -82,7 +87,6 @@ export function convertText({ name = "", origin = "", category = null, text, noF
         sections[i] = newLines.join("\n")
     })
     if (sections[0] === "") sections.splice(0, 1)
-    console.log(metadataKeys, plainTextMetadata)
 
     // get ccli
     let ccli = ""
@@ -177,43 +181,99 @@ export function trimNameFromString(text: string) {
 }
 
 function isChordLine(line: string): boolean {
-    return /^[A-G][#b]?m?(maj|min|dim|aug|sus)?(\s+[A-G][#b]?m?(maj|min|dim|aug|sus)?)*\s*$/.test(line.trim())
+    if (!line || line.trim() === "") return false
+
+    const chordPattern = /[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?/g
+    const nonWhitespace = line.replace(/\s/g, "")
+    if (!nonWhitespace) return false
+
+    const chords = line.match(chordPattern) || []
+    if (chords.length === 0) return false
+
+    const chordChars = chords.join("").length
+    const nonChordChars = nonWhitespace.length - chordChars
+
+    // If more than 20% of non-whitespace characters are not chords, it's probably not a chord line
+    return nonChordChars / nonWhitespace.length <= 0.2
 }
-// convert chord lines into line text
 function preprocessLines(lines: string[]): string[] {
     const output: string[] = []
-    for (let i = 0; i < lines.length; i++) {
-        const chordLine = lines[i]
-        const lyricLine = lines[i + 1]
+    let i = 0
 
-        if (isChordLine(chordLine) && lyricLine && !isChordLine(lyricLine)) {
-            const combinedLine = insertChordsIntoLyrics(chordLine, lyricLine)
-            output.push(combinedLine)
-            i++ // Skip the lyric line
+    while (i < lines.length) {
+        const currentLine = lines[i]
+
+        // Check if this is a section header (like [Verse], [Chorus], etc.)
+        const isSectionHeader = currentLine.trim().match(/^\[.+\]$/)
+        if (isSectionHeader) {
+            output.push(currentLine)
+            i++
+            // Skip any empty lines after the section header
+            while (i < lines.length && lines[i].trim() === "") {
+                i++
+            }
+            continue
+        }
+
+        // Check if current line is a chord line with a lyric line below
+        if (isChordLine(currentLine)) {
+            let j = i + 1
+            // Skip one empty line if present
+            if (j < lines.length && lines[j].trim() === "") {
+                j++
+            }
+
+            if (j < lines.length && lines[j].trim() !== "" && !isChordLine(lines[j])) {
+                // Found a lyric line - combine chord and lyric lines
+                const combinedLine = insertChordsIntoLyrics(currentLine, lines[j])
+                output.push(combinedLine)
+                i = j + 1
+            } else {
+                // No corresponding lyric line found
+                output.push(currentLine)
+                i++
+            }
         } else {
-            output.push(chordLine)
+            // Not a chord line, add as is
+            output.push(currentLine)
+            i++
         }
     }
+
     return output
 }
 function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
-    const result = lyricLine.split("")
-    const chordRegex = /[A-G][#b]?m?(maj|min|dim|aug|sus)?/g
+    const chordRegex = /[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?/g
+    const chords: { chord: string; position: number }[] = []
     let match: RegExpExecArray | null
 
     while ((match = chordRegex.exec(chordLine)) !== null) {
-        const chord = match[0]
-        const pos = match.index
+        chords.push({
+            chord: match[0],
+            position: match.index,
+        })
+    }
 
-        if (pos < result.length) {
-            result[pos] = `[${chord}]` + result[pos]
-        } else {
-            // Append if the lyric is shorter than the chord line
-            result.push(" ".repeat(pos - result.length) + `[${chord}]`)
+    if (chords.length === 0) return lyricLine
+
+    let result = ""
+    let chordIdx = 0
+    const maxLen = Math.max(chordLine.length, lyricLine.length)
+
+    for (let pos = 0; pos < maxLen; pos++) {
+        // Insert chord if it starts at this position
+        if (chordIdx < chords.length && chords[chordIdx].position === pos) {
+            result += `[${chords[chordIdx].chord}]`
+            chordIdx++
+        }
+
+        // Add lyric character at this position
+        if (pos < lyricLine.length) {
+            result += lyricLine[pos]
         }
     }
 
-    return result.join("")
+    return result
 }
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
@@ -264,14 +324,14 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         const color: string | null = null
 
         // split slide notes from text ("---")
-        let slideTextAndNotes = slideText.split("---")
+        const slideTextAndNotes = slideText.split("---")
 
         while (new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
         let allLines: string[] = [slideTextAndNotes.shift() || ""]
         if (allLines[0].endsWith("\n")) allLines[0] = allLines[0].slice(0, -1)
 
         while (slideTextAndNotes[0] === "") slideTextAndNotes.shift()
-        let slideNotes = slideTextAndNotes.join("\n").slice(1)
+        const slideNotes = slideTextAndNotes.join("\n").slice(1)
 
         const slideLines = allLines[0].split("\n").filter(Boolean)
 
@@ -297,10 +357,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         }
 
         function createSlide(lines: string, slideIndex: number) {
-            // preprocess inline chord lines
-            let preprocessedLines = preprocessLines(lines.split("\n")).join("\n")
-
-            let items: Item[] = linesToItems(preprocessedLines)
+            let items: Item[] = linesToItems(lines)
             if (!items.length) return
 
             // get active show
