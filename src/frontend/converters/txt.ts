@@ -49,10 +49,14 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
 
-    // preprocess chord lines before splitting into sections
-    const allLines = text.split("\n")
-    const processedLines = preprocessLines(allLines)
-    const processedText = processedLines.join("\n")
+    // preprocess chord lines before splitting into sections (only if formatting is enabled)
+    const formatText: boolean = noFormatting ? false : get(formatNewShow)
+    let processedText = text
+    if (formatText) {
+        const allLines = text.split("\n")
+        const processedLines = preprocessLines(allLines)
+        processedText = processedLines.join("\n")
+    }
 
     let sections = processedText.split("\n\n").filter(Boolean)
 
@@ -261,7 +265,7 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
         
         chords.push({
             chord: match[0],
-            position: position,
+            position,
         })
     }
 
@@ -390,39 +394,41 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
             const textLength = items.reduce((value, item) => (value += getItemText(item).length), 0)
             if (!textLength) items = []
 
-            // extract chords (chordpro)
-            items = items.map((item) => {
-                item.lines?.forEach((line) => {
-                    const chords: Chords[] = []
-                    let letterIndex = 0
-                    let isChord = false
+            // extract chords (chordpro) - only if formatting is enabled
+            if (formatText) {
+                items = items.map((item) => {
+                    item.lines?.forEach((line) => {
+                        const chords: Chords[] = []
+                        let letterIndex = 0
+                        let isChord = false
 
-                    line?.text?.forEach((text) => {
-                        let newValue = ""
-                        text.value?.split("").forEach((char) => {
-                            if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
-                                isChord = char === "["
-                                if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
-                                return
-                            }
+                        line?.text?.forEach((text) => {
+                            let newValue = ""
+                            text.value?.split("").forEach((char) => {
+                                if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
+                                    isChord = char === "["
+                                    if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
+                                    return
+                                }
 
-                            if (isChord) {
-                                chords[chords.length - 1].key += char
-                                return
-                            }
+                                if (isChord) {
+                                    chords[chords.length - 1].key += char
+                                    return
+                                }
 
-                            newValue += char
-                            letterIndex++
+                                newValue += char
+                                letterIndex++
+                            })
+
+                            text.value = newValue.replaceAll("\r", "")
                         })
 
-                        text.value = newValue.replaceAll("\r", "")
+                        if (chords.length) line.chords = chords
                     })
 
-                    if (chords.length) line.chords = chords
+                    return item
                 })
-
-                return item
-            })
+            }
 
             if (slideIndex > 0) {
                 // don't add empty slides as children (but allow e.g. "Break")
