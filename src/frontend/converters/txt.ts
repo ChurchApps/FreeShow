@@ -248,9 +248,20 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
     let match: RegExpExecArray | null
 
     while ((match = chordRegex.exec(chordLine)) !== null) {
+        // Adjust chord position to attach to words instead of spaces
+        let position = match.index
+        
+        // If chord position is at a space, move it to the next word
+        if (position < lyricLine.length && lyricLine[position] === " ") {
+            // Find the next non-space character
+            while (position < lyricLine.length && lyricLine[position] === " ") {
+                position++
+            }
+        }
+        
         chords.push({
             chord: match[0],
-            position: match.index,
+            position: position,
         })
     }
 
