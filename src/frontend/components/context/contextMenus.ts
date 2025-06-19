@@ -121,7 +121,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     transition: { label: "popup.transition", icon: "transition" },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star" },
+    dynamic_values: { label: "actions.dynamic_values", icon: "dynamic" },
     conditions: { label: "actions.conditions", icon: "light" },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
@@ -211,7 +211,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPERATOR", "selectAll"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "edit", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPERATOR", "selectAll"],
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
@@ -239,7 +239,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_effect_button: ["rename", "remove", "SEPERATOR", "system_open"],
     audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
-    live_card: ["recording"],
+    screen_card: ["recording"],
+    camera_card: ["edit", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
     action: ["edit", "SEPERATOR", "disable", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
@@ -254,10 +255,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
     project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
-    project_media: ["play", "play_no_audio", "play_no_filters", "remove"],
+    project_media: ["play", "play_no_audio", "play_no_filters", "SEPERATOR", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project
+    // "delete" removed as too many users thought it just removed the show from the project
+    // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
+    project_show: ["remove", "SEPERATOR", "private", "SEPERATOR", "rename"],
     project_section: ["recolor", "SEPERATOR", "remove"],
     project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",
@@ -297,6 +300,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     video_subtitle: ["rename", "delete"],
     video_subtitle_embedded: ["rename"],
     video_marker: ["rename", "delete"],
+
+    // SCRIPTURE
+    bible_book_local: ["rename"],
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],

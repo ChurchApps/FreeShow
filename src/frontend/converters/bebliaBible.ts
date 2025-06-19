@@ -31,7 +31,7 @@ function convertToBible(content: any): Bible {
     const bible: Bible = {
         name: content.bible["@name"] || content.bible["@translation"] || "",
         metadata: { copyright: content.bible["@info"] || "" },
-        books: [],
+        books: []
     }
 
     let testaments = content.bible.testament
@@ -56,8 +56,8 @@ function getBooks(oldBooks: any[]) {
     oldBooks.forEach((book) => {
         const currentBook = {
             number: book["@number"],
-            name: book["@name"] || defaultNames[book["@number"]],
-            chapters: getChapters(book.chapter),
+            name: book["@name"] || defaultBibleBookNames[book["@number"]],
+            chapters: getChapters(book.chapter)
         }
 
         books.push(currentBook)
@@ -74,7 +74,7 @@ function getChapters(oldChapters: any[]) {
     oldChapters.forEach((chapter) => {
         const currentChapter = {
             number: chapter["@number"],
-            verses: getVerses(chapter.verse || []),
+            verses: getVerses(chapter.verse || [])
         }
 
         chapters.push(currentChapter)
@@ -91,7 +91,7 @@ function getVerses(oldVerses: any[]) {
     oldVerses.forEach((verse) => {
         const currentVerse = {
             number: verse["@number"],
-            text: verse["#text"],
+            text: verse["#text"]
         }
 
         verses.push(currentVerse)
@@ -100,7 +100,7 @@ function getVerses(oldVerses: any[]) {
     return verses
 }
 
-const defaultNames: any = {
+export const defaultBibleBookNames: any = {
     1: "Genesis",
     2: "Exodus",
     3: "Leviticus",
@@ -167,5 +167,5 @@ const defaultNames: any = {
     63: "2 John",
     64: "3 John",
     65: "Jude",
-    66: "Revelation",
+    66: "Revelation"
 }

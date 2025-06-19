@@ -176,7 +176,10 @@ const clickActions = {
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
-        else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
+        else if (obj.contextElem?.classList.contains("#bible_book_local")) {
+            selected.set({ id: "bible_book", data: [{ index: Number(obj.contextElem?.id) }] })
+            activePopup.set("rename")
+        } else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
@@ -917,6 +920,10 @@ const clickActions = {
             activeEdit.set({ type: "media", id: path, items: [] })
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: getMediaType(getExtension(path)) })
+        } else if (obj.sel.id === "camera") {
+            const data = obj.sel.data[0]
+            activeEdit.set({ type: "camera", id: data.id, data, items: [] })
+            activePage.set("edit")
         } else if (obj.sel.id === "player") {
             const id = obj.sel.data[0]
             const onlineTab = get(drawerTabsData).media?.openedSubSubTab?.online || "youtube"
@@ -927,10 +934,16 @@ const clickActions = {
             activeEdit.set({ type: "audio", id: path, items: [] })
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: "audio" })
+        } else if (obj.sel.id === "show_drawer") {
+            const showId = obj.sel.data[0].id
+            activeShow.set({ type: "show", id: showId })
+            activeEdit.set({ type: "show", slide: 0, items: [], showId: showId })
+            if (get(activePage) === "edit") refreshEditSlide.set(true)
+            activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
             activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
+            if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
-            refreshEditSlide.set(true)
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]

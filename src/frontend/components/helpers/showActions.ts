@@ -11,6 +11,7 @@ import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
+import { convertRSSToString, getRSS } from "../../utils/rss"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
@@ -1024,7 +1025,12 @@ export function getDynamicIds(noVariables = false) {
     const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
-    return [...mainValues, ...metaValues, ...variableValues, ...variableSetNameValues]
+    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name))
+
+    const mergedValues = [...mainValues, ...metaValues]
+    if (rssValues.length) mergedValues.push(...rssValues)
+    mergedValues.push(...variableValues, ...variableSetNameValues)
+    return mergedValues
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
@@ -1078,6 +1084,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             if (variable.enabled === false) return ""
             if (variable.text?.includes(dynamicId)) return variable.text || ""
             return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id: dynamicId })
+        }
+
+        if (dynamicId.includes("rss_")) {
+            const nameId = dynamicId.slice(4)
+            const rss = get(special).dynamicRSS?.find((a) => getVariableNameId(a.name) === nameId)
+            if (!rss) return ""
+
+            return convertRSSToString(getRSS(rss.url), rss.divider, rss.count)
         }
 
         let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]

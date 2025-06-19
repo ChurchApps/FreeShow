@@ -137,6 +137,14 @@ export const audioEdits: Box = {
                             { id: "effect", name: "$:audio.type_effect:$" }
                         ]
                     }
+                },
+                {
+                    name: "media.volume",
+                    id: "volume",
+                    input: "number",
+                    slider: true,
+                    value: 100,
+                    values: { min: 1, max: 100 }
                 }
             ]
         }

@@ -65,7 +65,7 @@
                     <div class="variable numberBox context #variable">
                         <div class="reset">
                             <Button title={$dictionary.actions?.reset} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
-                                <Icon id="reset" />
+                                <Icon id="reset" white />
                             </Button>
                         </div>
 
@@ -146,7 +146,7 @@
                     <div class="variable numberBox context #variable">
                         <div class="reset">
                             <Button disabled={$randomNumberVariable[variable.id]} title={$dictionary.actions?.reset} on:click={() => resetVariable(variable.id)}>
-                                <Icon id="reset" />
+                                <Icon id="reset" white />
                             </Button>
                         </div>
 

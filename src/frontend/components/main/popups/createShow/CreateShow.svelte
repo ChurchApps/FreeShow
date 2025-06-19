@@ -22,13 +22,15 @@
         values[key] = e.target.value || ""
 
         // store text if popup is closed
-        if (key === "text") quickTextCache.set(values.text)
+        quickTextCache.set({ name: values.name, text: values.text })
     }
+    let storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
     let values = {
-        text: $quickTextCache.length > 20 ? $quickTextCache : "",
-        name: "",
+        text: storedCache ? $quickTextCache.text : "",
+        name: storedCache ? $quickTextCache.name : "",
         origin: ""
     }
+    if ($quickTextCache.fromSearch) quickTextCache.set({ name: values.name, text: values.text })
 
     // CATEGORY
 
@@ -96,6 +98,12 @@
         }
 
         values.text = data.lyrics
+
+        const metadata: string[] = []
+        if (data.title) metadata.push(`Title=${data.title}`)
+        if (data.artist) metadata.push(`Artist=${data.artist}`)
+        if (metadata.length) values.text = `${metadata.join("\n")}\n\n${values.text}`
+
         if (data.source) values.origin = data.source.toLowerCase()
         selectedOption = "text"
     }
@@ -123,7 +131,7 @@
         }
 
         values = { name: "", text: "", origin: "" }
-        quickTextCache.set("")
+        quickTextCache.set({ name: "", text: "" })
         activePopup.set(null)
     }
 
@@ -212,16 +220,22 @@
                     value={$splitLines}
                     max={100}
                     on:change={(e) => {
-                        splitLines.set(e.detail)
+                        splitLines.set(Number(e.detail))
                     }}
                 />
             </CombinedInput>
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
-                    <!-- settings -->
-                    <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
-                    <T id="edit.options" />
+                    <div class="text" style="display: flex;align-items: center;padding: 0;">
+                        <!-- settings -->
+                        <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
+                        <T id="edit.options" />
+
+                        {#if Number($splitLines)}
+                            <span class="name" style="font-size: 0.8em;">({$splitLines})</span>
+                        {/if}
+                    </div>
                 </Button>
             </CombinedInput>
         {/if}

@@ -128,12 +128,13 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 // CACHE
 export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
-export const quickTextCache: Writable<string> = writable("")
+export const quickTextCache: Writable<{ name: string; text: string; fromSearch?: boolean }> = writable({ name: "", text: "" })
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
 export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
 export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
+export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)

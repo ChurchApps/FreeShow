@@ -432,7 +432,7 @@ export function outputSlideHasContent(output) {
 // WIP style should override any slide resolution & color ? (it does not)
 
 // this actually gets aspect ratio
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes = false, outputId = ""): Resolution {
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes = false, outputId = "", styleIdOverride = ""): Resolution {
     if (initial) return initial
 
     if (!outputId) outputId = getActiveOutputs()[0]
@@ -440,7 +440,7 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
     if (currentOutput?.stageOutput) return currentOutput.bounds
 
-    const style = currentOutput?.style ? get(styles)[currentOutput?.style] || null : null
+    const style = styleIdOverride || currentOutput?.style ? get(styles)[(styleIdOverride || currentOutput?.style)!] || null : null
     const styleRatio: any = style?.aspectRatio || style?.resolution
 
     const ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
@@ -459,11 +459,11 @@ export function getStageResolution(outputId = "", _updater = get(outputs)): Reso
 
 // calculate actual output resolution based on style aspect ratio
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
-export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false) {
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
     const currentOutput = _updater[outputId]
     const outputRes = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
 
-    const styleRatio = getResolution(null, null, false, outputId)
+    const styleRatio = getResolution(null, null, false, outputId, styleIdOverride)
     const styleAspectRatio = styleRatio.width / styleRatio.height
 
     const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
@@ -619,13 +619,14 @@ export function keyOutput(keyId: string, delOutput = false) {
 }
 
 // WIP history
-export function addOutput(onlyFirst = false) {
+export function addOutput(onlyFirst = false, styleId = "") {
     if (onlyFirst && get(outputs).length) return
 
     outputs.update((output) => {
         const id = uid()
         if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)].colors.secondary!
         output[id] = clone(defaultOutput)
+        if (styleId) output[id].style = styleId
 
         // set name
         let n = 0

@@ -78,6 +78,7 @@ export interface TrimmedShow {
 export interface ShowList extends TrimmedShow {
     id: string
     match?: number
+    originalMatch?: number
 }
 
 export interface Slide {
@@ -129,6 +130,7 @@ export interface Item {
     chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }
     scrolling?: Scrolling
     button?: { press?: string; release?: string } // click actions
+    weather?: Weather
     visualizer?: any
     captions?: any
     language?: string // used to store auto localized text
@@ -209,6 +211,15 @@ export interface Scrolling {
 export interface Condition {
     scenario: string
     values: { [key: string]: string }[]
+}
+
+export interface Weather {
+    size?: number
+    latitude?: number
+    longitude?: number
+    altitude?: number
+    useFahrenheit?: boolean
+    longRange?: boolean
 }
 
 export interface Mirror {
@@ -519,7 +530,7 @@ export interface Tag {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "camera" | "player" | "audio"

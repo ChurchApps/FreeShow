@@ -48,7 +48,7 @@
 
 <CombinedInput style="margin-top: 10px;">
     <Button on:click={save} style="width: 100%;" center dark>
-        <Icon id="edit" right />
+        <Icon id="save" right />
         <T id="actions.save" />
     </Button>
 </CombinedInput>

@@ -289,17 +289,19 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
     // replace files
     const escapeJSON = (value: string) => value.replace(/\\/g, "\\\\")
     Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
-        const escapedNewPath = escapeJSON(path.normalize(newPath))
+        const windowsPath = oldPath.replace(/\//g, "\\")
+        const unixPath = oldPath.replace(/\\/g, "/")
+        const escapedWindowsPath = escapeJSON(windowsPath)
 
-        // the previous path might come from a different OS
-        const candidates = [JSON.stringify(oldPath).slice(1, -1), escapeJSON(oldPath), oldPath]
-        // oldPath.replace(/\\/g, "/"), oldPath.replace(/\//g, "\\")
-        for (const variant of candidates) {
-            if (content.includes(variant)) {
-                content = content.split(variant).join(escapedNewPath)
-                break
-            }
-        }
+        const pathVariants = [oldPath, windowsPath, unixPath, escapedWindowsPath]
+
+        pathVariants.forEach((variant) => {
+            // convert \ to \\
+            const escapedPattern = variant.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
+            const replacementPath = escapeJSON(newPath)
+            const regex = new RegExp(escapedPattern, "g")
+            content = content.replace(regex, replacementPath)
+        })
     })
 
     dataFile.content = content

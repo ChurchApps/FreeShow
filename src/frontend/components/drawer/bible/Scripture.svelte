@@ -3,7 +3,25 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { destroyMain, receiveMain } from "../../../IPC/main"
-    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
+    import {
+        activeEdit,
+        activeScripture,
+        activeTriggerFunction,
+        customScriptureBooks,
+        dictionary,
+        notFound,
+        openScripture,
+        os,
+        outLocked,
+        outputs,
+        playScripture,
+        resized,
+        scriptureHistory,
+        scriptures,
+        scripturesCache,
+        scriptureSettings,
+        selected
+    } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -15,6 +33,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
     import { formatSearch } from "../../../utils/search"
+    import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 
     export let active: string | null
     export let bibles: Bible[]
@@ -247,7 +266,7 @@
                 })
                 loadAPIBible(id, "chapters", i)
             } else if (books[id][bookId]) {
-                bibles[i].book = books[id][bookId].name || ""
+                bibles[i].book = books[id][bookId].customName || books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
 
                 chapterId = cachedRef?.chapterId || 0
@@ -532,12 +551,12 @@
                         chapter.verses.forEach((verse) => {
                             let verseValue = formatSearch(verse.text || verse.value || "")
                             if (verseValue.includes(searchValue)) {
-                                matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
+                                matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.customName || book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
                             } else {
                                 let wordInSearch = searchValue.split(" ")
                                 let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
                                 if (matchingWords === wordInSearch.length)
-                                    extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value || "" })
+                                    extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.customName || book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value || "" })
                             }
                         })
                     })
@@ -559,7 +578,7 @@
         if (searchValue.endsWith(" ") && splittedSearch.length === 2) {
             const book = booksList.find((a) => a.abbr && formatBookSearch(a.abbr) === splittedSearch[0])
             if (book) {
-                updateSearchValue(book.name + " ")
+                updateSearchValue((book.customName || book.name) + " ")
                 return book.keyName || book.id
             }
         }
@@ -588,7 +607,7 @@
             let matchingArray: any[] = []
 
             booksList.forEach((book: any) => {
-                let bookName = formatBookSearch(book.name)
+                let bookName = formatBookSearch(book.customName || book.name)
                 if (bookName.includes(value) || bookName.replaceAll(" ", "").includes(value)) matchingArray.push(book)
             })
 
@@ -597,13 +616,13 @@
 
         // remove books with number if no number in start of search
         if (findMatches.length && !hasNumber(lowerSearch.slice(0, 3))) {
-            findMatches = findMatches.filter((a) => !hasNumber(a.name))
+            findMatches = findMatches.filter((a) => !hasNumber(a.customName || a.name))
         }
 
-        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName || formatBookSearch(a.name) === formatBookSearch(searchValue))
+        let exactMatch = findMatches.find((a: any) => (a.customName || a.name) === searchValues.bookName || formatBookSearch(a.customName || a.name) === formatBookSearch(searchValue))
         if (!exactMatch && findMatches.length !== 1) {
             // autocomplete e.g. "First ..."
-            const firstWordMatch = [...new Set(findMatches.map((a) => a.name.split(" ")[0]))]
+            const firstWordMatch = [...new Set(findMatches.map((a) => (a.customName || a.name).split(" ")[0]))]
             if (firstWordMatch.length === 1 && !hasNumber(lowerSearch.slice(0, 3))) {
                 updateSearchValue(firstWordMatch[0] + " ")
                 storedSearch = firstWordMatch[0] + " "
@@ -614,17 +633,17 @@
         }
 
         let matchingBook = exactMatch || findMatches[0]
-        searchValues.bookName = matchingBook.name
+        searchValues.bookName = matchingBook.customName || matchingBook.name
         if (searchValues.book !== undefined && searchValues.book === (matchingBook.keyName || matchingBook.id)) return matchingBook.keyName || matchingBook.id
 
-        let fullMatch = formatBookSearch(searchValue).includes(formatBookSearch(matchingBook.name) + " ")
+        let fullMatch = formatBookSearch(searchValue).includes(formatBookSearch(matchingBook.customName || matchingBook.name) + " ")
         if (fullMatch || !autoComplete) return matchingBook.keyName || matchingBook.id
 
         // auto complete
         // let rest = searchValue.slice(match.length)
-        updateSearchValue(matchingBook.name + " ") // + rest.trim()
+        updateSearchValue((matchingBook.customName || matchingBook.name) + " ") // + rest.trim()
 
-        storedSearch = matchingBook.name + " "
+        storedSearch = (matchingBook.customName || matchingBook.name) + " "
         tempDisableInputs = true
         setTimeout(() => {
             tempDisableInputs = false
@@ -978,7 +997,7 @@
                             {#each books[firstBibleId] as book, i}
                                 {@const id = bibles[0].api ? book.keyName : i}
                                 {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
-                                {@const name = book.abbreviation || getShortName(book.name, i)}
+                                {@const name = book.abbreviation || getShortName(book.customName || book.name, i)}
 
                                 <span
                                     id={id.toString()}
@@ -988,7 +1007,7 @@
                                     }}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                     style="color: {color};"
-                                    title={book.name}
+                                    title={book.customName || book.name}
                                 >
                                     {name}
                                 </span>
@@ -1071,10 +1090,11 @@
                                     if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
+                                class={bibles[0].api || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"}
                                 class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                 style={color ? `border-inline-start: 2px solid ${color};` : ""}
                             >
-                                {book.name}
+                                {$customScriptureBooks[active || ""]?.[id] || book.customName || book.name}
                             </span>
                         {/each}
                     {/key}

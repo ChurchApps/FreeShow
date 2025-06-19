@@ -4,6 +4,7 @@
     import { send } from "../../util/socket"
     import { scriptureViewList } from "../../util/stores"
 
+    export let id: string
     export let scripture: Bible
     export let tablet: boolean = false
 
@@ -48,7 +49,7 @@
     function playScripture(verseNumber: number) {
         activeVerse = verseNumber
         // chapters[activeChapter]?.number ??
-        send("API:start_scripture", { id: scripture.id, reference: `${books[activeBook]?.number ?? activeBook + 1}.${activeChapter + 1}.${activeVerse}` })
+        send("API:start_scripture", { id, reference: `${books[activeBook]?.number ?? activeBook + 1}.${activeChapter + 1}.${activeVerse}` })
     }
 
     // OPEN ONE AT A TIME

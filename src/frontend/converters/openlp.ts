@@ -90,12 +90,25 @@ function createSlides({ verseOrder, lyrics }: Song) {
     const sequence: string[] = verseOrder.split(" ").filter((a) => a)
     const sequences: any = {}
 
-    lyrics.forEach((verse) => {
+    // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
+    let slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
+    lyrics.forEach((lyricSlide) => {
+        const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
+        currentSlides.forEach((slideData, i) => {
+            const mergedLines = slideData.trim().split("__BREAK__").filter(Boolean)
+            // Chords will "break" if splitted into multiple
+            slidesList.push({ name: lyricSlide.name, isChild: i > 0, lines: mergedLines, chords: lyricSlide.chords })
+        })
+    })
+
+    slidesList.forEach((verse) => {
         if (!verse.lines) return
 
         const id: string = uid()
-        if (verse.name) sequences[verse.name] = id
-        layout.push({ id })
+        if (!verse.isChild) {
+            if (verse.name) sequences[verse.name] = id
+            layout.push({ id })
+        }
 
         const items = [
             {
@@ -109,11 +122,18 @@ function createSlides({ verseOrder, lyrics }: Song) {
         ]
 
         slides[id] = {
-            group: "",
+            group: verse.isChild ? null : "",
             color: null,
             settings: {},
             notes: "",
             items
+        }
+
+        if (verse.isChild) {
+            const parentId = sequences[verse.name]
+            if (!slides[parentId].children) slides[parentId].children = []
+            slides[parentId].children.push(id)
+            return
         }
 
         const globalGroup = OLPgroups[verse.name.replace(/[0-9]/g, "").toUpperCase()]

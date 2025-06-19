@@ -12,17 +12,20 @@
 
     export let tablet: boolean = false
 
+    let collectionId = localStorage.collectionId || ""
     let openedScripture = localStorage.scripture || ""
     $: if (openedScripture && !$scriptureCache[openedScripture]) send("GET_SCRIPTURE", { id: openedScripture })
 
-    function openScripture(id: string) {
+    function openScripture(id: string, collection: string = "") {
         openedScripture = id
+        collectionId = collection
         localStorage.setItem("scripture", id)
+        localStorage.setItem("collectionId", collection)
     }
 
     // WIP collections: remove with API Bibles, get correct ID etc.
     $: sortedBibles = keysToID($scriptures)
-        .filter((a) => !a.api && !a.collection)
+        .filter((a) => !a.api && (!a.collection || !$scriptures[a.collection.versions[0]]?.api))
         .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
         .sort((a: any, b: any) => (b.customName || b.name).localeCompare(a.customName || a.name))
         .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
@@ -69,7 +72,7 @@
     }
     function playSearchVerse() {
         if (!searchResult.reference) return
-        send("API:start_scripture", { id: openedScripture, reference: searchResult.reference })
+        send("API:start_scripture", { id: collectionId || openedScripture, reference: searchResult.reference })
     }
 </script>
 
@@ -90,7 +93,7 @@
 {:else}
     <h2 class="header" style="display: inline;">
         {#if openedScripture}
-            {$scriptures[openedScripture]?.customName || $scriptures[openedScripture]?.name || ""}
+            {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
         {:else}
             {translate("tabs.scripture", $dictionary)}
         {/if}
@@ -100,7 +103,7 @@
         <div class="bible">
             {#if $scriptureCache[openedScripture]}
                 <!-- {tablet} -->
-                <ScriptureContent scripture={$scriptureCache[openedScripture]} bind:depth />
+                <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} bind:depth />
             {:else}
                 <Loading />
             {/if}
@@ -134,7 +137,15 @@
         {/if}
     {:else if sortedBibles.length}
         {#each sortedBibles as scripture}
-            <Button on:click={() => openScripture(scripture.id)} title={scripture.customName || scripture.name} style="padding: 0.5em 0.8em;" bold={false}>
+            <Button
+                on:click={() => {
+                    const collection = $scriptures[scripture.id].collection
+                    openScripture(collection ? collection.versions[0] : scripture.id, collection ? scripture.id : "")
+                }}
+                title={scripture.customName || scripture.name}
+                style="padding: 0.5em 0.8em;"
+                bold={false}
+            >
                 <Icon id={scripture.icon} right />
                 <p>{scripture.customName || scripture.name}</p>
             </Button>

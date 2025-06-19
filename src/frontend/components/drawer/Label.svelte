@@ -62,7 +62,7 @@
             {:else}
                 <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
             {/if}
-            {#if count}<span style="opacity: 0.6;font-size: 0.8em;position: absolute;inset-inline-end: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
+            {#if count}<span style="opacity: 0.6;font-size: 0.75em;position: absolute;inset-inline-end: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
         </span>
     {/if}
 </div>

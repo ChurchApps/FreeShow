@@ -73,14 +73,14 @@
             // set "background" value instead of "background-color"
             if (input.value.includes("gradient")) input.key = "background"
             // reset "background" value
-            else {
+            else if (data.background) {
                 updateStyle({ detail: { ...input, key: "background", value: "" } })
                 await wait(10)
             }
         }
 
         // background opacity
-        if (input.id === "background-opacity" || (input.value && input.key === "background-color")) {
+        if (input.id === "background-opacity" || (input.value?.toString()?.includes("rgb") && input.key === "background-color")) {
             input = setBackgroundColor(input, data)
             setTimeout(() => getBackgroundOpacity(itemEditValues, data), 100)
         }

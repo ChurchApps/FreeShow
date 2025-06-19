@@ -5,14 +5,14 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
+    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput, refreshOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -48,8 +48,21 @@
             }, revertTime * 1000)
         }
 
+        // properly update output content
+        if (key === "style") {
+            refreshOut()
+        }
+
         if (key === "ndi") {
-            if (value) newToast("$toast.output_capture_enabled")
+            if (value) {
+                newToast("$toast.output_capture_enabled")
+
+                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
+                if (enabledOutputs.length > 1) {
+                    updateOutput("transparent", true)
+                    updateOutput("invisible", true)
+                }
+            }
         } else if (key === "blackmagic") {
             if (value === true) {
                 // send(BLACKMAGIC, ["GET_DEVICES"])
@@ -140,15 +153,6 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    // styles
-    $: stylesList = getList($styles)
-    function getList(styles) {
-        let sortedList = sortByName(keysToID(styles))
-        return [{ id: null, name: "—" }, ...sortedList]
-    }
-
-    let stageLayouts = sortByName(keysToID($stageShows)).map((a) => ({ ...a, name: a.name || $dictionary.main?.unnamed || "" }))
-
     // ndi
     function updateNdiData(e: any, key: string) {
         let id = currentOutput?.id
@@ -171,14 +175,14 @@
     }
 
     const framerates = [
-        { id: 10, name: "10 fps" },
-        { id: 12, name: "12 fps" },
-        { id: 24, name: "24 fps" },
-        { id: 25, name: "25 fps" },
-        { id: 30, name: "30 fps" },
-        { id: 48, name: "48 fps" },
-        { id: 50, name: "50 fps" },
-        { id: 60, name: "60 fps" },
+        { id: "10", name: "10 fps" },
+        { id: "12", name: "12 fps" },
+        { id: "24", name: "24 fps" },
+        { id: "25", name: "25 fps" },
+        { id: "30", name: "30 fps" },
+        { id: "48", name: "48 fps" },
+        { id: "50", name: "50 fps" },
+        { id: "60", name: "60 fps" }
     ]
 
     // blackmagic
@@ -251,27 +255,37 @@
         GET_DEVICES: (data) => {
             blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
             if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
-        },
+        }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
     // CREATE
 
-    async function createOutput() {
+    async function createOutput(e: any) {
+        const skipPopup = e.ctrlKey || e.metaKey
         let stageLayouts = keysToID($stageShows)
-        let type = stageLayouts.length ? await waitForPopupData("choose_output") : "normal"
+        let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
+        if (!type) return
 
         if (type === "stage") {
-            // get first stage layout
-            let stageOutput = sortByName(stageLayouts)[0] || {}
+            let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
+            let stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
+
+            let stageLayout = $stageShows[stageId]
 
             toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
             setTimeout(() => {
-                let id = enableStageOutput({ stageOutput: stageOutput?.id || "", name: stageOutput?.name || "" })
+                let id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
                 currentOutputSettings.set(id)
             }, 100)
         } else if (type === "normal") {
-            addOutput()
+            let styleId = ""
+            if (Object.keys($styles).length && !skipPopup) {
+                popupData.set({ outputId: currentOutput?.id, skip: true })
+                styleId = await waitForPopupData("select_style")
+            }
+
+            addOutput(false, styleId)
         }
     }
 </script>
@@ -331,12 +345,79 @@
 {#if currentOutput?.stageOutput}
     <CombinedInput>
         <p><T id="stage.stage_layout" /></p>
-        <Dropdown options={stageLayouts} value={stageLayouts.find((a) => a.id === currentOutput?.stageOutput)?.name || "—"} on:click={(e) => (e.detail?.id ? updateOutput("stageOutput", e.detail.id) : "")} />
+        <Button
+            on:click={() => {
+                popupData.set({ active: currentOutput?.stageOutput, trigger: (id) => updateOutput("stageOutput", id) })
+                activePopup.set("select_stage_layout")
+            }}
+            bold={false}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="stage" style="margin-inline-start: 0.5em;" right />
+                <p>
+                    {#if currentOutput?.stageOutput}
+                        {$stageShows[currentOutput?.stageOutput]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_stage_layout" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if currentOutput?.stageOutput && $stageShows[currentOutput?.stageOutput]}
+            <Button
+                title={$dictionary.titlebar?.edit}
+                on:click={() => {
+                    activeStage.set({ id: currentOutput?.stageOutput || "", items: [] })
+                    activePage.set("stage")
+                }}
+            >
+                <Icon id="edit" white />
+            </Button>
+        {/if}
     </CombinedInput>
 {:else}
     <CombinedInput>
         <p><T id="settings.active_style" /></p>
-        <Dropdown options={stylesList} value={$styles[currentOutput?.style || ""]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
+        <Button
+            on:click={() => {
+                popupData.set({ active: currentOutput?.style, outputId: currentOutput?.id, trigger: (id) => updateOutput("style", id) })
+                activePopup.set("select_style")
+            }}
+            bold={!currentOutput?.style}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="styles" style="margin-inline-start: 0.5em;" right />
+                <p>
+                    {#if currentOutput?.style}
+                        {$styles[currentOutput?.style]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_style" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if currentOutput?.style}
+            {#if $styles[currentOutput?.style]}
+                <Button
+                    title={$dictionary.titlebar?.edit}
+                    on:click={() => {
+                        activeStyle.set(currentOutput?.style || "")
+                        settingsTab.set("styles")
+                    }}
+                >
+                    <Icon id="edit" white />
+                </Button>
+            {/if}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    updateOutput("style", null)
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
 {/if}
 
@@ -387,8 +468,10 @@
     </div>
 </CombinedInput>
 
+<!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
 <!-- disable on windows -->
-{#if $os.platform !== "win32"}
+<!-- only <= 1.4.5 -->
+{#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
     <CombinedInput>
         <p><T id="settings.kiosk_mode" /></p>
         <div class="alignRight">

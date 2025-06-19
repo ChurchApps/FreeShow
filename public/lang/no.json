@@ -8,6 +8,7 @@
         "drop": "Slipp her",
         "search": "Søk",
         "quick_search": "Hurtigsøk",
+        "search_active": "Søk er aktivt",
         "none": "Ingen",
         "finished": "Fullført",
         "open": "Åpne",
@@ -79,10 +80,12 @@
         "global_options": "Disse alternativene brukes globalt."
     },
     "setup": {
-        "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
+        "good_luck": "Vi håper du får god nytte av dette programmet. Lykke til med presentasjonen! :)",
         "tips": "Finn nyttige tips og guider på nettsiden.",
         "change_later": "Du kan endre dette senere",
-        "get_started": "Kom i gang!"
+        "get_started": "Kom i gang!",
+        "or": "eller",
+        "restore_data": "Gjenopprett tidligere data"
     },
     "example": {
         "welcome": "Velkommen",
@@ -154,11 +157,13 @@
         "audio": "Fjern lyd",
         "nextTimer": "Fjern tid til neste lysbilde",
         "timer": "Fjern tidtaker",
-        "drawing": "Fjern tegning"
+        "drawing": "Fjern tegning",
+        "search": "Fjern søk"
     },
     "remove": {
         "background": "Fjern bakgrunn",
         "overlays": "Fjern overlegg",
+        "effects": "Fjern effekter",
         "audio": "Fjern lyd",
         "nextTimer": "Fjern tid til neste lysbilde",
         "to_start": "Fjern gå til start",
@@ -212,6 +217,7 @@
         "mixer": "Mikser",
         "metronome": "Metronom",
         "toggle_metronome": "Veksle metronom",
+        "use_metadata_bpm": "Bruk BPM fra metadata",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Slag",
@@ -408,6 +414,7 @@
         "show": "Nytt show",
         "select_show": "Velg show",
         "select_template": "Velg mal",
+        "custom_text": "Angi egendefinert tekst",
         "rename": "Gi nytt navn",
         "color": "Farge",
         "color_gradient": "Gradientfarge",
@@ -452,6 +459,7 @@
         "manage_emitters": "Behandle utsendere",
         "action": "Handling",
         "category_action": "Handling for kategori",
+        "custom_action": "Egendefinert handling",
         "user_data_overwrite": "Fant eksisterende data",
         "connect": "Koble til",
         "cloud_update": "Synkroniserer med sky",
@@ -464,6 +472,8 @@
         "manage_metadata": "Behandle metadata",
         "choose_camera": "Velg kamera",
         "manage_tags": "Behandle etiketter",
+        "chums_sync_categories": "Velg kategorier for synkronisering",
+        "effect_items": "Effekt elementer",
         "initialize": "Velkommen til FreeShow",
         "unsaved": "Er du sikkert på at du vil avslutte?",
         "cancel": "Avbryt",
@@ -529,7 +539,9 @@
         "scripture": "Ny bibel",
         "collection": "Ny samling",
         "action": "Ny handling",
-        "event": "Ny hendelse"
+        "event": "Ny hendelse",
+        "event_action": "Ny planlagt handling",
+        "effect": "Ny effekt"
     },
     "show": {
         "name": "Navn",
@@ -551,7 +563,8 @@
         "delete_manual": "Sjekk manuelt",
         "delete_match": "Slett hvis helt lik",
         "delete_keep_last_modified": "Slett alle unntatt sist modifisert",
-        "delete_keep_first_created": "Slett alle unntatt først opprettet"
+        "delete_keep_first_created": "Slett alle unntatt først opprettet",
+        "custom_action_tip": "Angi en egendefinert handling for dette showet som skal utløses når denne knappen trykkes."
     },
     "actions": {
         "rename": "Endre navn",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "Endre scene-oppsett for tilkoblet",
         "start_camera": "Start kamera",
         "start_screen": "Start skjerm",
+        "id_start_effect": "Start effekt",
         "id_select_overlay": "Start overlegg",
         "change_volume": "Endre volum",
         "start_audio_stream": "Start lydstrøm",
@@ -899,6 +913,7 @@
         "break_long_lines": "Del opp lange linjer",
         "break_long_lines_tip": "Del opp linje hvis den er lengre enn angitt ord",
         "media_fit": "Tilpass medier",
+        "cropping": "Beskjæring",
         "one_letter": "Én bokstav-modus",
         "sub_indexes": "Underindekser",
         "size": "Størrelse",
@@ -986,7 +1001,11 @@
         "enable_start_date": "Aktiver startdato",
         "disable_navigation": "Deaktiver navigeringsknapper",
         "progress_bar": "Fremdriftslinje",
-        "each_number_once": "Hvert nummer bare en gang"
+        "each_number_once": "Hvert nummer bare en gang",
+        "side": "Side",
+        "count": "Antall",
+        "speed": "Hastighet",
+        "angle": "Vinkel"
     },
     "items": {
         "text": "Tekstboks",
@@ -1007,6 +1026,7 @@
         "visualizer": "Visualisering",
         "captions": "Teksting",
         "icon": "Ikon",
+        "effect": "Effekt",
         "slide_text": "Lysbilde tekst",
         "slide_notes": "Lysbilde notater",
         "current_output": "Gjeldende utgang"
@@ -1084,6 +1104,7 @@
         "activate": "Aktiver ved MIDI signal",
         "activate_keypress": "Aktiver med tastetrykk",
         "name": "Navn",
+        "description": "Beskrivelse",
         "input": "Inngang",
         "output": "Utgang",
         "type": "Type",
@@ -1123,7 +1144,8 @@
         "straight": "Rett",
         "rainbow": "Regnbue",
         "threed": "3D",
-        "dots": "Prikker"
+        "dots": "Prikker",
+        "link_to_slide": "Koble til lysbilde"
     },
     "stage": {
         "stage_layout": "Scene-oppsett",
@@ -1440,6 +1462,36 @@
         "weekly": "Ukentlig",
         "mothly": "Månedlig"
     },
+    "effect": {
+        "stars": "Stjerner",
+        "galaxy": "Galakse",
+        "rain": "Regn",
+        "snow": "Snø",
+        "bubbles": "Bobler",
+        "grass": "Gress",
+        "wave": "Bølge",
+        "sun": "Sol",
+        "lens_flare": "Linserefleks",
+        "lightning": "Lyn",
+        "rainbow": "Regnbue",
+        "spotlight": "Lyskaster",
+        "aurora": "Nordlys",
+        "bloom": "Bloom",
+        "fog": "Tåke",
+        "city": "By",
+        "fireworks": "Fyrverkeri",
+        "rays": "Stråler",
+        "cycle": "Syklus",
+        "circle": "Sirkel",
+        "rectangle": "Rektangel",
+        "triangle": "Trekant",
+        "asset": "Ressurs",
+        "swirl_strength": "Virvelstyrke",
+        "arm_count": "Antall armer",
+        "drift": "Driv",
+        "pulse_speed": "Pulshastighet",
+        "hollow": "Hul"
+    },
     "info": {
         "created": "Opprettet",
         "modified": "Endret",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "Legger til alle språk i en tekstboks med vekslende linjer. (Som i Songbeamer)",
         "translation_description_textboxes": "Legger hvert språk til lysbildet i en egen tekstboks.",
         "translation_description_layouts": "Oppretter et unikt sett med lysbilder og et oppsett for hvert språk."
+    },
+    "chums": {
+        "sync_categories": "Synkroniserte kategorier",
+        "sync_categories_description": "Velg hvilke kategorier som skal synkroniseres som sanger til Chums"
     }
 }

@@ -15,6 +15,7 @@
     export let columns = 1
     export let active = false
     export let list = false
+    export let selectable = true
 
     let ratio = 1
     $: stageOutputId = getStageOutputId($outputs)
@@ -37,7 +38,7 @@
 <div class="main" class:active style="width: {100 / columns}%" class:list>
     <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
-            <SelectElem id="stage" data={{ id }}>
+            <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each stageItems as item}
                         {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })}

@@ -6,6 +6,7 @@
 
     export let ids: string[]
     export let transition: Transition
+    export let mirror: boolean = false
 
     // $: transitionEnabled = !!((transition.type !== "none" && transition.duration) || transition.in || transition.out)
 
@@ -20,7 +21,7 @@
 {#each ids as id}
     {@const effect = $effects[id]}
     {#if effect}
-        <OutputTransition {transition} inTransition={transition.in || transition} outTransition={transition.out || transition}>
+        <OutputTransition transition={mirror ? undefined : transition} inTransition={mirror ? null : transition.in || transition} outTransition={mirror ? null : transition.out || transition}>
             <Effect effect={{ id, ...effect }} />
         </OutputTransition>
     {/if}

@@ -66,6 +66,10 @@ import CustomAction from "../components/main/popups/CustomAction.svelte"
 import ChumsSyncCategories from "../components/main/popups/ChumsSyncCategories.svelte"
 import EffectItems from "../components/main/popups/EffectItems.svelte"
 import CustomText from "../components/main/popups/CustomText.svelte"
+import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
+import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelte"
+import SelectStyle from "../components/main/popups/SelectStyle.svelte"
+import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -77,12 +81,15 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_show: DeleteShow,
     select_show: SelectShow,
     select_template: SelectTemplate,
+    select_style: SelectStyle,
+    select_stage_layout: SelectStageLayout,
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_groups: ManageGroups,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
+    manage_dynamic_values: ManageDynamicValues,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,
@@ -104,6 +111,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
     choose_output: ChooseOutput,
+    choose_style: ChooseStyle,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
     assign_shortcut: SlideShortcut,

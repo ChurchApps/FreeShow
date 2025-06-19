@@ -58,7 +58,7 @@
     const MAX_RETRIES = 3
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {
-        if (ghost) return
+        if (ghost || croppingActive) return
 
         if (retryCount > MAX_RETRIES) {
             loaded = true
@@ -103,7 +103,8 @@
     })
 
     let croppedImage = ""
-    $: if (mediaStyle.cropping) cropImage()
+    $: croppingActive = mediaStyle.cropping?.bottom || mediaStyle.cropping?.left || mediaStyle.cropping?.top || mediaStyle.cropping?.right
+    $: if (croppingActive) cropImage()
     async function cropImage() {
         croppedImage = await cropImageToBase64(path, mediaStyle.cropping)
         if (croppedImage) useOriginal = true
@@ -126,10 +127,10 @@
             {:else if type !== "video" || (thumbnailPath && retryCount <= MAX_RETRIES)}
                 {#key retryCount}
                     {#if mediaStyle.fit === "blur"}
-                        <img src={type !== "video" && useOriginal ? croppedImage || encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleBlurString} loading="lazy" class:loading={!loaded} class="hideError" />
+                        <img src={type !== "video" && useOriginal ? (croppingActive ? croppedImage : encodeFilePath(path)) : thumbnailPath} alt={name} style={mediaStyleBlurString} loading="lazy" class:loading={!loaded} class="hideError" />
                     {/if}
                     <img
-                        src={type !== "video" && useOriginal ? croppedImage || encodeFilePath(path) : thumbnailPath}
+                        src={type !== "video" && useOriginal ? (croppingActive ? croppedImage : encodeFilePath(path)) : thumbnailPath}
                         alt={name}
                         style={mediaStyleString}
                         loading="lazy"

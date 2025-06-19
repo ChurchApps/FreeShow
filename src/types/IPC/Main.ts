@@ -251,7 +251,7 @@ export interface MainReturnPayloads {
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
-    [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string }>
+    [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.DOES_PATH_EXIST]: { path: string; dataPath: string; exists: boolean }
     [Main.GET_SIMULAR]: { path: string; name: string }[]

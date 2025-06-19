@@ -469,9 +469,11 @@
         {#if active === "screens" || active === "online"}
             <span style="flex: 1;"></span>
         {:else}
-            <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
-                <Icon size={1.3} id="back" />
-            </Button>
+            {#if active !== "all" && active !== "favourites"}
+                <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
+                    <Icon size={1.3} id="back" />
+                </Button>
+            {/if}
             <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
             <Icon size={1.3} id="home" />
         </Button> -->
