@@ -21,13 +21,12 @@ interface RSSItem {
 }
 
 const cachedData: { [key: string]: { time: number; data: RSSjson } } = {}
-export function getRSS(url: string): RSSjson | null {
+export function getRSS(url: string, updateTime: number | string | undefined): RSSjson | null {
     const queryKey = url
 
-    // don't use cache if it's older than one hour
-    // WIP change update interval
-    const ONE_HOUR = 3600000
-    if (cachedData[queryKey] && Date.now() - cachedData[queryKey].time < ONE_HOUR) {
+    // don't use cache if it's older than the set interval
+    const UPDATE_MS = Number(updateTime || "60") * 60 * 1000
+    if (cachedData[queryKey] && Date.now() - cachedData[queryKey].time < UPDATE_MS) {
         return cachedData[queryKey].data
     }
 
@@ -59,7 +58,6 @@ export function getRSS(url: string): RSSjson | null {
 }
 
 export function convertRSSToString(data: RSSjson | null, divider?: string, count: number = 5) {
-    console.log(data)
     let items = data?.item
     if (!Array.isArray(items)) return ""
 

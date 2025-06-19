@@ -6,6 +6,7 @@
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
@@ -81,7 +82,7 @@
     }
 
     function setValue(e: any, index: number, key: string) {
-        const value = e.target?.value || e.detail
+        const value = e.target?.value || e.detail?.id || e.detail
 
         special.update((a) => {
             if (!a.dynamicRSS?.[index]) return a
@@ -98,21 +99,30 @@
         else openedMenus.push(index)
         openedMenus = openedMenus
     }
+
+    const updateIntervalList = [
+        { id: "5", name: "5 $:settings.minutes:$" },
+        { id: "10", name: "10 $:settings.minutes:$" },
+        { id: "15", name: "15 $:settings.minutes:$" },
+        { id: "30", name: "30 $:settings.minutes:$" },
+        { id: "60", name: "60 $:settings.minutes:$" },
+        { id: "120", name: "120 $:settings.minutes:$" },
+        { id: "240", name: "240 $:settings.minutes:$" }
+    ]
 </script>
 
 <div>
     {#each toggleSections as section}
         {@const alwaysEnabled = alwaysEnabledIds.includes(section)}
-        {#if section !== "rss" || $special.dynamicRSS?.length}
-            <CombinedInput>
-                <p class:alwaysEnabled style="width: 100%;{hidden.includes(section) ? 'opacity: 0.5;' : ''}"><T id={getTitle(section)} /></p>
-                {#if !alwaysEnabled}
-                    <Button style="min-width: 40px;" disabled={alwaysEnabled} on:click={() => toggleHidden(section)} center>
-                        <Icon id={hidden.includes(section) ? "private" : "eye"} white={alwaysEnabled || hidden.includes(section)} />
-                    </Button>
-                {/if}
-            </CombinedInput>
-        {/if}
+        <CombinedInput>
+            <!-- class:faded={alwaysEnabled} -->
+            <p class:faded={section === "rss" && !$special.dynamicRSS?.length} style="width: 100%;{hidden.includes(section) ? 'opacity: 0.5;' : ''}"><T id={getTitle(section)} /></p>
+            {#if !alwaysEnabled && (section !== "rss" || $special.dynamicRSS?.length)}
+                <Button style="min-width: 40px;" disabled={alwaysEnabled} on:click={() => toggleHidden(section)} center>
+                    <Icon id={hidden.includes(section) ? "private" : "eye"} white={alwaysEnabled || hidden.includes(section)} />
+                </Button>
+            {/if}
+        </CombinedInput>
     {/each}
 </div>
 
@@ -153,7 +163,10 @@
                 <NumberInput value={rss.count || 5} min={1} on:change={(e) => setValue(e, i, "count")} />
             </CombinedInput>
 
-            <!-- WIP update interval -->
+            <CombinedInput textWidth={40}>
+                <p><T id="edit.interval" /></p>
+                <Dropdown options={updateIntervalList} value={updateIntervalList.find((a) => a.id === (rss.updateInterval || "60"))?.name || ""} on:click={(e) => setValue(e, i, "updateInterval")} />
+            </CombinedInput>
         {/if}
     {/each}
     <CombinedInput>
@@ -165,7 +178,7 @@
 </div>
 
 <style>
-    p.alwaysEnabled {
+    p.faded {
         font-style: italic;
         opacity: 0.7;
     }
