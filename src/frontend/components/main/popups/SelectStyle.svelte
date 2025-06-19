@@ -70,7 +70,7 @@
 </div>
 
 {#if skip}
-    <CombinedInput style="margin: 6px;margin-top: 10px;">
+    <CombinedInput style="margin: 6px;margin-top: 10px;width: initial;">
         <Button style="width: 100%;" on:click={() => activePopup.set(null)} center dark>
             <Icon id="arrow_forward" right />
             <T id="guide.skip" />

@@ -272,6 +272,7 @@
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
+    let actualCurrentLineId: string | undefined = undefined
     let isSlideClearing = false
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
@@ -280,6 +281,7 @@
             actualSlide = clone(slide)
             actualSlideData = clone(slideData)
             actualCurrentSlide = clone(currentSlide)
+            actualCurrentLineId = clone(currentLineId)
         })
     }
 
@@ -351,7 +353,7 @@
             currentSlide={actualCurrentSlide}
             {currentStyle}
             {animationData}
-            {currentLineId}
+            currentLineId={actualCurrentLineId}
             {lines}
             {ratio}
             {mirror}

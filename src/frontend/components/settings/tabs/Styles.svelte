@@ -128,8 +128,9 @@
 
     // CREATE
 
-    async function createStyle() {
-        let type = await waitForPopupData("choose_style")
+    async function createStyle(e: any) {
+        const skipPopup = e.ctrlKey || e.metaKey
+        let type = skipPopup ? "normal" : await waitForPopupData("choose_style")
         if (!type) return
 
         // create default if no styles
@@ -452,7 +453,7 @@
         </div>
     </Button>
     {#if currentStyle.template}
-        {#if !$templates[currentStyle.template]?.isDefault}
+        {#if $templates[currentStyle.template] && !$templates[currentStyle.template]?.isDefault}
             <Button
                 title={$dictionary.titlebar?.edit}
                 on:click={() => {
@@ -510,7 +511,7 @@
             </p>
         </div>
     </Button>
-    {#if currentStyle.templateScripture && !$templates[currentStyle.templateScripture]?.isDefault}
+    {#if currentStyle.templateScripture && $templates[currentStyle.templateScripture] && !$templates[currentStyle.templateScripture]?.isDefault}
         <Button
             title={$dictionary.titlebar?.edit}
             on:click={() => {

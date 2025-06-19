@@ -6,7 +6,7 @@
 
     const styleTypes = [
         { id: "normal", name: "settings.normal", icon: "styles" },
-        { id: "live", name: "settings.stream_ready", icon: "camera" }
+        { id: "live", name: "tabs.live", icon: "camera" }
     ]
 
     function selectStyle(id) {

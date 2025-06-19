@@ -239,7 +239,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_effect_button: ["rename", "remove", "SEPERATOR", "system_open"],
     audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
-    live_card: ["recording"],
+    screen_card: ["recording"],
+    camera_card: ["edit", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
     action: ["edit", "SEPERATOR", "disable", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
@@ -299,6 +300,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     video_subtitle: ["rename", "delete"],
     video_subtitle_embedded: ["rename"],
     video_marker: ["rename", "delete"],
+
+    // SCRIPTURE
+    bible_book_local: ["rename"],
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],

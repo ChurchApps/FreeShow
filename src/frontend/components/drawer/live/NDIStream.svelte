@@ -48,7 +48,7 @@
             if (timeSinceSent > 100) return // skip frames if overloaded
 
             frame = data.frame
-        },
+        }
     }
 
     receive(NDI, receiveNDI, screen.id)
@@ -63,7 +63,7 @@
 {#if background}
     <canvas bind:this={canvas} />
 {:else}
-    <!-- class="context #live_card" -->
+    <!-- class="context #screen_card" -->
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover>
         <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable>
             <canvas bind:this={canvas} />

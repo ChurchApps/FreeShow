@@ -28,12 +28,16 @@
     let edits = clone(mediaEdits.media?.edit)!
     let filterEdits = clone(mediaFilters.media?.edit)!
 
-    $: mediaType = getMediaType(getExtension(mediaId))
+    $: mediaType = $activeEdit.type === "camera" ? "camera" : getMediaType(getExtension(mediaId))
+
+    // WIP camera / video cropping ??
 
     $: isVideo = mediaType === "video"
     $: isImage = mediaType === "image"
+    $: isCamera = mediaType === "camera"
     $: if (isVideo) addVideoOptions()
     else if (isImage) addImageOptions()
+    else if (isCamera) setCameraOptions()
     else edits = clone(mediaEdits.media?.edit)!
     function addVideoOptions() {
         if (!edits) return
@@ -42,6 +46,11 @@
     function addImageOptions() {
         if (!edits) return
         edits.cropping = clone(croppingEdit)
+    }
+    function setCameraOptions() {
+        edits.default[0].hidden = true
+        const blurIndex = edits.default[1].values.options.findIndex((a) => a.id === "blur")
+        if (blurIndex > -1) edits.default[1].values.options.splice(blurIndex, 1)
     }
 
     $: if (mediaId && isVideo) getVideoDuration()

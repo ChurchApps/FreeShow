@@ -261,14 +261,15 @@
 
     // CREATE
 
-    async function createOutput() {
+    async function createOutput(e: any) {
+        const skipPopup = e.ctrlKey || e.metaKey
         let stageLayouts = keysToID($stageShows)
-        let type = stageLayouts.length ? await waitForPopupData("choose_output") : "normal"
+        let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
         if (!type) return
 
         if (type === "stage") {
             let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
-            let stageId = (await waitForPopupData("select_stage_layout")) || firstStageLayoutId
+            let stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
 
             let stageLayout = $stageShows[stageId]
 
@@ -279,7 +280,7 @@
             }, 100)
         } else if (type === "normal") {
             let styleId = ""
-            if (Object.keys($styles).length) {
+            if (Object.keys($styles).length && !skipPopup) {
                 popupData.set({ outputId: currentOutput?.id, skip: true })
                 styleId = await waitForPopupData("select_style")
             }
@@ -362,7 +363,7 @@
                 </p>
             </div>
         </Button>
-        {#if currentOutput?.stageOutput}
+        {#if currentOutput?.stageOutput && $stageShows[currentOutput?.stageOutput]}
             <Button
                 title={$dictionary.titlebar?.edit}
                 on:click={() => {
@@ -396,15 +397,17 @@
             </div>
         </Button>
         {#if currentOutput?.style}
-            <Button
-                title={$dictionary.titlebar?.edit}
-                on:click={() => {
-                    activeStyle.set(currentOutput?.style || "")
-                    settingsTab.set("styles")
-                }}
-            >
-                <Icon id="edit" white />
-            </Button>
+            {#if $styles[currentOutput?.style]}
+                <Button
+                    title={$dictionary.titlebar?.edit}
+                    on:click={() => {
+                        activeStyle.set(currentOutput?.style || "")
+                        settingsTab.set("styles")
+                    }}
+                >
+                    <Icon id="edit" white />
+                </Button>
+            {/if}
             <Button
                 title={$dictionary.actions?.remove}
                 on:click={() => {

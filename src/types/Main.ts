@@ -79,6 +79,7 @@ export type SelectIds =
     | "style"
     | "output"
     | "tag"
+    | "bible_book"
 
 export interface Selected {
     id: null | SelectIds
@@ -122,11 +123,12 @@ export interface MediaOptions {
 
 export interface ActiveEdit {
     // id?: string
-    type?: "show" | "media" | "overlay" | "template" | "effect" | "audio"
+    type?: "show" | "media" | "camera" | "overlay" | "template" | "effect" | "audio"
     id?: string
     slide?: null | number
     items: number[]
     showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
+    data?: any // camera data
 }
 
 export type MediaFit = "contain" | "cover" | "fill" | "blur"

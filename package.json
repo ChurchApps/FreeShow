@@ -121,7 +121,7 @@
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
         "pcm-convert": "^1.6.5",
-        "pdfjs-dist": "^5.2.133",
+        "pdfjs-dist": "^5.3.31",
         "pptx2json": "^0.0.10",
         "protobufjs": "^7.5.0",
         "qrcode-generator": "^1.4.4",

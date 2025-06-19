@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, effectsLibrary, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -27,6 +27,12 @@
             list = removeDuplicates(list)
         } else if ($selected.id === "chord") {
             groupName = $selected.data?.[0]?.chord?.key || ""
+        } else if ($selected.id === "bible_book") {
+            const scriptureId = $drawerTabsData.scripture?.activeSubTab || ""
+            const activeBible = $scripturesCache[scriptureId]
+            const bookIndex = $selected.data[0]?.index
+            const book = activeBible.books?.[bookIndex] || {}
+            groupName = book.customName || book.name || ""
         } else if ($selected.data?.[0]?.name) {
             groupName = $selected.data[0].name
         }
@@ -135,6 +141,23 @@
             effectsLibrary.update((a) => {
                 let index = a.findIndex((a) => a.path === selectedPath)
                 if (index > -1) a[index].name = groupName
+                return a
+            })
+        },
+        bible_book: () => {
+            const scriptureId = $drawerTabsData.scripture?.activeSubTab || ""
+            const bookIndex = $selected.data[0]?.index
+            scripturesCache.update((a) => {
+                if (!a[scriptureId]?.books?.[bookIndex]) return a
+
+                a[scriptureId].books[bookIndex].customName = groupName
+                return a
+            })
+
+            // update in drawer real time
+            customScriptureBooks.update((a) => {
+                if (!a[scriptureId]) a[scriptureId] = []
+                a[scriptureId][bookIndex] = groupName
                 return a
             })
         }

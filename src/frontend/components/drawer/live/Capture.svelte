@@ -34,9 +34,9 @@
                 maxWidth: 1920,
                 maxHeight: 1080,
                 // maxAspectRatio: 16/9,
-                maxFrameRate: 60,
-            },
-        },
+                maxFrameRate: 60
+            }
+        }
     }
 
     onMount(capture)
@@ -74,7 +74,7 @@
 {:else}
     <Card
         mediaData={JSON.stringify(constraints)}
-        class="context #live_card"
+        class="context #screen_card"
         {loaded}
         outlineColor={findMatchingOut(screen.id, $outputs)}
         active={findMatchingOut(screen.id, $outputs) !== null}

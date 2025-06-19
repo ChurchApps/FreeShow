@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Item } from "../../../../types/Show"
+    import type { Item, OutSlide, SlideData } from "../../../../types/Show"
     import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
@@ -7,15 +7,15 @@
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
 
     export let outputId: string
-    export let outSlide: any
+    export let outSlide: OutSlide
     export let isClearing: boolean = false
 
-    export let slideData: any
-    export let currentSlide: any
+    export let slideData: SlideData | null
+    export let currentSlide: any // Slide | null
     export let currentStyle: any
 
     export let animationData: any
-    export let currentLineId: any
+    export let currentLineId: string | undefined
     export let lines: any
 
     export let ratio: number
@@ -25,6 +25,13 @@
     export let transitionEnabled = false
     export let isKeyOutput = false
     export let styleIdOverride = ""
+
+    // TEST:
+    // conditions
+    // transitions
+    // overlays
+    // style lines
+    // starting slide while clearing
 
     let currentItems: Item[] = []
     let current: any = {}
@@ -53,15 +60,20 @@
         let outLinesString = JSON.stringify(lines)
         if (outLinesString !== currentLines) currentLines = outLinesString
     }
+    // only update if changed (no update when another output changes)
+    let currentSlideItems: Item[] | null = null
+    $: if (currentSlide?.items !== 0) {
+        if (JSON.stringify(currentSlide?.items) !== JSON.stringify(currentSlideItems)) currentSlideItems = clone(currentSlide?.items || null)
+    }
 
-    $: if (currentSlide?.items !== undefined || currentOutSlide || currentLines) updateItems()
+    $: if (currentSlideItems !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: NodeJS.Timeout | null = null
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween = false
 
     function updateItems() {
-        if (!currentSlide?.items?.length) {
+        if (!currentSlideItems?.length) {
             currentItems = []
             current = {
                 outSlide: clone(outSlide),
@@ -157,8 +169,8 @@
                     {ratio}
                     {outputId}
                     ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
-                    linesStart={customLines?.[currentLineId]?.start}
-                    linesEnd={customLines?.[currentLineId]?.end}
+                    linesStart={customLines?.[currentLineId || ""]?.start}
+                    linesEnd={customLines?.[currentLineId || ""]?.end}
                     outputStyle={current.currentStyle}
                     {mirror}
                     {preview}

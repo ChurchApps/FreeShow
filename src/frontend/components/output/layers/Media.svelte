@@ -26,6 +26,8 @@
     let timeout: NodeJS.Timeout | null = null
     let useAlternative = false
     function reload() {
+        const croppingActive = mediaStyle.cropping?.bottom || mediaStyle.cropping?.left || mediaStyle.cropping?.top || mediaStyle.cropping?.right
+        if (croppingActive) return
         if (retryCount > 4) useAlternative = true
         if (retryCount > 4 || timeout) return
 

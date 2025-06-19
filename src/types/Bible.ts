@@ -5,6 +5,7 @@ export interface Bible {
     copyright?: string // displayed in the drawer
     books: {
         number: number
+        customName?: string // many XML book names are not correct
         name: string
         abbreviation?: string
         chapters: {
