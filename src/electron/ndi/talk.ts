@@ -1,6 +1,7 @@
 import { NDI } from "../../types/Channels"
 import type { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
+import { RTMP } from "../stream/rtmp"
 import { NdiReceiver } from "./NdiReceiver"
 import { NdiSender } from "./NdiSender"
 
@@ -17,7 +18,8 @@ export const ndiResponses = {
     CAPTURE_STREAM: (data: { source: { name: string; urlAddress: string; id: string }; outputId: string }) => NdiReceiver.captureStreamNDI(data),
     CAPTURE_DESTROY: (data: { id: string; outputId?: string }) => NdiReceiver.stopReceiversNDI(data),
 
-    NDI_DATA: (data: { id: string; framerate?: number; audio?: boolean }) => setDataNDI(data)
+    NDI_DATA: (data: { id: string; framerate?: number; audio?: boolean }) => setDataNDI(data),
+    RTMP_DATA: (data: { id: string; streamServer?: string; streamServerBackup?: string; streamKey?: string; framerate?: number }) => setDataRTMP(data)
 
     // SEND_CREATE: (outputId: string) => createSenderNDI(outputId),
     // SEND_DESTORY: (data) => stopSenderNDI(data.outputId),
@@ -36,4 +38,17 @@ export function setDataNDI(data: { id: string; framerate?: number | string; audi
 
     if (data.audio) NdiSender.enableAudio(data.id)
     else NdiSender.disableAudio(data.id)
+}
+
+export function setDataRTMP(data: { id: string; streamServer?: string; streamServerBackup?: string; streamKey?: string; framerate?: number }) {
+    if (!data?.id) return
+
+    if (data.framerate) {
+        if (!CaptureHelper.customFramerates[data.id]) CaptureHelper.customFramerates[data.id] = {}
+        CaptureHelper.customFramerates[data.id].rtmp = Number(data.framerate)
+
+        CaptureHelper.updateFramerate(data.id)
+    }
+
+    RTMP.set(data.id, { server: data.streamServer, serverBackup: data.streamServerBackup, key: data.streamKey })
 }

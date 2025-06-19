@@ -28,6 +28,8 @@ export interface Output {
     ndiData?: any
     blackmagic?: boolean
     blackmagicData?: any
+    rtmp?: boolean
+    rtmpData?: any
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

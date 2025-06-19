@@ -7,6 +7,7 @@ import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
 import { toApp } from "../.."
+import { RTMP } from "../../stream/rtmp"
 
 export type Channel = {
     key: string
@@ -28,8 +29,9 @@ export class CaptureTransmitter {
         if (!captureOptions) return
         // this.startChannel(captureId, "preview")
 
-        const { ndi, server, stage } = captureOptions.options
+        const { ndi, rtmp, server, stage } = captureOptions.options
         if (ndi) this.startChannel(captureId, "ndi")
+        if (rtmp) this.startChannel(captureId, "rtmp")
         if (server) this.startChannel(captureId, "server")
         if (stage) this.startChannel(captureId, "stage")
 
@@ -61,7 +63,7 @@ export class CaptureTransmitter {
                 timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
                 lastImage: Buffer.from([]),
                 imageIsSame: false,
-                lastCheck: 0,
+                lastCheck: 0
             }
         }
     }
@@ -113,6 +115,9 @@ export class CaptureTransmitter {
             // break
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
+                break
+            case "rtmp":
+                RTMP.sendFrame(captureId, image)
                 break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions

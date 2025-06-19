@@ -23,6 +23,7 @@ export class CaptureHelper {
 
         const defaultFramerates = {
             ndi: this.framerates.connected,
+            rtmp: this.framerates.connected,
             server: this.framerates.server,
             stage: this.framerates.stage
         }
@@ -31,7 +32,7 @@ export class CaptureHelper {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, server: false, stage: false },
+            options: { ndi: false, rtmp: false, server: false, stage: false },
             framerates: defaultFramerates,
             id
         }
@@ -56,6 +57,10 @@ export class CaptureHelper {
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }
+    }
+
+    static getFramerate(id: string, key: string) {
+        return this.customFramerates[id]?.[key] || this.framerates.connected
     }
 
     static getWindowScreen(window: BrowserWindow) {

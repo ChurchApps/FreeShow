@@ -11,6 +11,9 @@ const setValues = {
 
         setValues.capture({ key: "ndi", value }, window, id)
     },
+    rtpm: async (value: boolean, window: BrowserWindow, id: string) => {
+        setValues.capture({ key: "rtmp", value }, window, id)
+    },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
@@ -25,7 +28,7 @@ const setValues = {
     },
     kioskMode: (value: boolean, window: BrowserWindow) => {
         window.setKiosk(value)
-    },
+    }
 }
 
 export class OutputValues {

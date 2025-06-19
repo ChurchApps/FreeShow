@@ -18,6 +18,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
     let outputsList: Output[] = []
@@ -53,7 +54,14 @@
             refreshOut()
         }
 
-        if (key === "ndi") {
+        if (key === "rtmp") {
+            if (value) {
+                newToast("$toast.output_capture_enabled")
+
+                updateOutput("transparent", true)
+                updateOutput("invisible", true)
+            }
+        } else if (key === "ndi") {
             if (value) {
                 newToast("$toast.output_capture_enabled")
 
@@ -87,6 +95,16 @@
                     a[a[outputId].keyOutput][key] = value
                 }
             }
+
+            // if (key === "rtmp") {
+            //     if (!value) {
+            //         if (!a[outputId].blackmagic) {
+            //             if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
+            //             delete a[outputId].transparent
+            //             delete a[outputId].invisible
+            //         }
+            //     }
+            // }
 
             if (key === "ndi") {
                 if (value) {
@@ -138,7 +156,7 @@
 
             // UPDATE OUTPUT WINDOW
 
-            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
+            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi", "rtmp"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
 
                 // update key output
@@ -172,6 +190,22 @@
             if (value) AudioAnalyser.recorderActivate()
             else AudioAnalyser.recorderDeactivate()
         }
+    }
+
+    // rtmp
+    function updateRtmpData(e: any, key: string) {
+        let id = currentOutput?.id
+        if (!id) return
+
+        let newData = $outputs[id]?.rtmpData
+        if (!newData) newData = {}
+
+        let value = e?.detail?.id ?? e?.target?.value ?? e
+        newData[key] = value
+
+        updateOutput("rtmpData", newData)
+
+        send(NDI, ["RTMP_DATA"], { id, ...newData })
     }
 
     const framerates = [
@@ -480,6 +514,36 @@
     </CombinedInput>
 {/if}
 
+<!-- RTMP Streaming -->
+<h3>RTMP</h3>
+
+<CombinedInput>
+    <p><T id="actions.enable" /> RTMP</p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput?.rtmp} on:change={(e) => updateOutput("rtmp", isChecked(e))} />
+    </div>
+</CombinedInput>
+
+{#if currentOutput?.rtmp}
+    <CombinedInput>
+        <p>Stream server</p>
+        <TextInput value={currentOutput?.rtmpData?.streamServer || ""} on:change={(e) => updateRtmpData(e, "streamServer")} />
+    </CombinedInput>
+    <!-- <CombinedInput>
+        <p>Stream server backup</p>
+        <TextInput value={currentOutput?.rtmpData?.streamServerBackup || ""} on:change={(e) => updateRtmpData(e, "streamServerBackup")} />
+    </CombinedInput> -->
+    <CombinedInput>
+        <p>Stream key</p>
+        <TextInput type="password" value={currentOutput?.rtmpData?.streamKey || ""} on:change={(e) => updateRtmpData(e, "streamKey")} />
+    </CombinedInput>
+
+    <CombinedInput>
+        <p><T id="settings.frame_rate" /></p>
+        <Dropdown value={framerates.find((a) => a.id === currentOutput?.rtmpData?.framerate)?.name || "30 fps"} options={framerates.map((a) => ({ ...a, id: a.id.toString() }))} on:click={(e) => updateRtmpData(e, "framerate")} />
+    </CombinedInput>
+{/if}
+
 <!-- NDI -->
 <h3>NDI®</h3>
 
@@ -555,7 +619,7 @@
 
 <br />
 
-{#if currentOutput?.ndi || currentOutput?.blackmagic}
+{#if currentOutput?.rtmp || currentOutput?.ndi || currentOutput?.blackmagic}
     <CombinedInput>
         <p><T id="settings.transparent" /></p>
         <div class="alignRight">
