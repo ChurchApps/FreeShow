@@ -1,6 +1,6 @@
 # NPM issue with build on GitHub Actions
 # Error: Cannot find module @rollup/rollup-x-gnu. npm has a bug related to optional dependencies.
-package-lock.json
+# package-lock.json
 
 /node_modules/
 /public/build/
