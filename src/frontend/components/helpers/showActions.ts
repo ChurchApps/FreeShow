@@ -1091,7 +1091,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const rss = get(special).dynamicRSS?.find((a) => getVariableNameId(a.name) === nameId)
             if (!rss) return ""
 
-            return convertRSSToString(getRSS(rss.url), rss.divider, rss.count)
+            return convertRSSToString(getRSS(rss.url, rss.updateInterval), rss.divider, rss.count)
         }
 
         let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
