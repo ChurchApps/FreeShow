@@ -10,22 +10,22 @@
     import EffectTools from "./components/edit/EffectTools.svelte"
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
+    import TextEditTools from "./components/edit/TextEditTools.svelte"
     import Top from "./components/main/Top.svelte"
     import Preview from "./components/output/preview/Preview.svelte"
     import Settings from "./components/settings/Settings.svelte"
     import SettingsTabs from "./components/settings/SettingsTabs.svelte"
+    import SettingsTools from "./components/settings/SettingsTools.svelte"
     import Projects from "./components/show/Projects.svelte"
     import Show from "./components/show/Show.svelte"
     import ShowTools from "./components/show/ShowTools.svelte"
     import FocusMode from "./components/show/focus/FocusMode.svelte"
-    import StageLayouts from "./components/stage/StageLayouts.svelte"
     import StageShow from "./components/stage/StageLayout.svelte"
+    import StageLayouts from "./components/stage/StageLayouts.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
-    import SettingsTools from "./components/settings/SettingsTools.svelte"
-    import TextEditTools from "./components/edit/TextEditTools.svelte"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -88,7 +88,7 @@
                         <ShowTools />
                     {/if}
                 {:else if page === "edit"}
-                    {#if $activeEdit.type === "media"}
+                    {#if $activeEdit.type === "media" || $activeEdit.type === "camera"}
                         <MediaTools />
                     {:else if $activeEdit.type === "audio"}
                         <AudioTools />

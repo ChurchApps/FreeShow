@@ -30,6 +30,7 @@
     const names = {
         show: (id: string) => _show(id).get("name"),
         media: (id: string) => getFileName(id),
+        camera: () => $activeEdit.data?.name,
         audio: (id: string) => getFileName(id),
         overlay: (id: string) => $overlays[id]?.name || "",
         template: (id: string) => $templates[id]?.name || "",

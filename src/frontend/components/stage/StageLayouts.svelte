@@ -5,6 +5,7 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import StageSlide from "./StageSlide.svelte"
 
@@ -39,28 +40,44 @@
         if (nextTab < 0 || !sortedStageSlides[nextTab]) return
         activeStage.set({ id: sortedStageSlides[nextTab].id, items: [] })
     }
+
+    // Auto scroll
+    let scrollElem: HTMLElement | undefined
+    let offset = -1
+    $: if ($activeStage.id) {
+        setTimeout(() => {
+            if (!scrollElem) return
+            const index = Math.max(
+                0,
+                [...(scrollElem.querySelector(".grid")?.children || [])].findIndex((a) => a?.classList.contains("active"))
+            )
+            offset = ((scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5) - 80
+        }, 10)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main">
     {#if sortedStageSlides.length}
-        <div class="grid">
-            {#each sortedStageSlides as show}
-                <StageSlide
-                    id={show.id}
-                    layout={show}
-                    active={$activeStage.id === show.id}
-                    on:click={(e) => {
-                        if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
-                            activeStage.update((as) => {
-                                as.id = show.id
-                                return as
-                            })
-                    }}
-                />
-            {/each}
-        </div>
+        <Autoscroll {offset} bind:scrollElem timeout={150} smoothTimeout={0}>
+            <div class="grid">
+                {#each sortedStageSlides as show}
+                    <StageSlide
+                        id={show.id}
+                        layout={show}
+                        active={$activeStage.id === show.id}
+                        on:click={(e) => {
+                            if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
+                                activeStage.update((as) => {
+                                    as.id = show.id
+                                    return as
+                                })
+                        }}
+                    />
+                {/each}
+            </div>
+        </Autoscroll>
     {:else}
         <Center faded>
             <T id="empty.layouts" />
@@ -91,10 +108,8 @@
     .grid {
         display: flex;
         flex-wrap: wrap;
-        /* gap: 10px; */
         padding: 5px;
-        overflow-y: auto;
-        overflow-x: hidden;
+        width: 100%;
         height: 100%;
         align-content: flex-start;
     }

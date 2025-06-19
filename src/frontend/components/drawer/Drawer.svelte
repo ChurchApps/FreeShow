@@ -1,7 +1,25 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import {
+        activeDrawerTab,
+        activeEdit,
+        activePage,
+        activePopup,
+        activeProject,
+        activeShow,
+        dictionary,
+        drawer,
+        drawerOpenedInEdit,
+        drawerTabsData,
+        focusMode,
+        labelsDisabled,
+        os,
+        previousShow,
+        projects,
+        quickTextCache,
+        selected
+    } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
@@ -29,7 +47,7 @@
         mouse = {
             x: e.clientX,
             y: e.clientY,
-            offsetY: window.innerHeight - height - e.clientY,
+            offsetY: window.innerHeight - height - e.clientY
         }
     }
 
@@ -142,6 +160,14 @@
             if ($activeDrawerTab !== "shows") return
 
             let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
+
+            // create from search
+            if (match === "SEARCH_CREATE") {
+                quickTextCache.set({ name: searchValue[0].toUpperCase() + searchValue.slice(1), text: "", fromSearch: true })
+                activePopup.set("show")
+                return
+            }
+
             searchElem.select()
             let newIndex = ($activeShow?.index ?? $projects[$activeProject].shows.length - 1) + 1
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })

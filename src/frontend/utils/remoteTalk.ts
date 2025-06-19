@@ -27,7 +27,7 @@ export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         msg.data = {
             dictionary: get(dictionary),
-            password: !!get(remotePassword).length,
+            password: !!get(remotePassword).length
         }
         if (msg.data.password) return msg
 
@@ -156,8 +156,10 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        const id = msg.data?.id
+        let id = msg.data?.id
         if (!id) return
+
+        // if (get(scriptures)[id]?.collection) id = get(scriptures)[id].collection!.versions[0]
 
         const listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
@@ -166,7 +168,7 @@ export const receiveREMOTE: any = {
 
         msg.data.bible = bible
         return msg
-    },
+    }
 }
 
 let oldOutSlide = ""

@@ -4,7 +4,7 @@ import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/
 import { activeShow } from "../../stores"
 import { createChord } from "../edit/scripts/chords"
 import { DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
-import { getItemChords, getItemText, getSlideText } from "../edit/scripts/textStyle"
+import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmpty } from "../helpers/output"
@@ -62,21 +62,19 @@ export function formatText(text: string, showId = "") {
             const id = old.slides[0].id || ""
             newLayoutSlides.push({ id })
 
-            // set changed children
-            if (old.slides.length !== slidesNew.length) {
-                newSlides[id] = slidesNew.shift()!
+            // update slide content
+            newSlides[id] = slidesNew.shift()!
 
-                if (slidesNew.length) {
-                    // children
-                    const newChildren: string[] = []
-                    slidesNew.forEach((slide) => {
-                        const childId = uid()
-                        newChildren.push(childId)
-                        newSlides[childId] = slide
-                    })
+            // set children
+            if (slidesNew.length) {
+                const newChildren: string[] = []
+                slidesNew.forEach((slide) => {
+                    const childId = uid()
+                    newChildren.push(childId)
+                    newSlides[childId] = slide
+                })
 
-                    newSlides[id].children = newChildren
-                }
+                newSlides[id].children = newChildren
             }
         })
 
@@ -376,7 +374,18 @@ function groupSlides(slides: Slide[]) {
         const textItems = getTextboxes(slide.items)
         if (!textItems.length) return
 
-        const fullOldSlideText = textItems.reduce((value, item) => (value += getItemText(item) + getItemChords(item)), "")
+        // Create chord-position-agnostic fingerprint for slide matching when chords are moved
+        const textContent = textItems.reduce((value, item) => (value += getItemText(item)), "")
+        const chords = new Set<string>()
+        textItems.forEach((item) => {
+            item.lines?.forEach((line) => {
+                line.chords?.forEach((chord) => {
+                    chords.add(chord.key)
+                })
+            })
+        })
+        const fullOldSlideText = textContent + Array.from(chords).sort().join("")
+        
         if (!fullOldSlideText) return
 
         // adding length so line breaks with no text changes works

@@ -44,7 +44,7 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
 
     // change all values relative to the highest value
     const highestValue = newShows[0]?.match || 0
-    newShows = newShows.map((a) => ({ ...a, match: ((a.match || 0) / highestValue) * 100 }))
+    newShows = newShows.map((a) => ({ ...a, originalMatch: a.match, match: ((a.match || 0) / highestValue) * 100 }))
 
     return newShows
 }

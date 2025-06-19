@@ -50,6 +50,7 @@ export interface Book {
     bibleId: string // "de4e12af7f28f599-01"
     id?: string // "GEN"
     keyName: string // "GEN"
+    customName?: string // many XML book names are not correct
     name: string // "Genesis"
     nameLong: string // "The First Book of Moses, called Genesis"
 }

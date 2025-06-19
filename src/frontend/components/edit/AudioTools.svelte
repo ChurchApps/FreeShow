@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeShow, media } from "../../stores"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -12,15 +13,18 @@
     $: audioId = $activeEdit.id || $activeShow!.id
     $: currentMedia = $media[audioId] || {}
 
-    let edits = clone(audioEdits.media?.edit)
+    let edits = clone(audioEdits.media?.edit)!
 
     // set values
     $: if (currentMedia && edits) {
         edits.default[0].value = currentMedia?.audioType || ""
+        edits.default[1].value = (currentMedia?.volume || 1) * 100
     }
 
     function reset() {
-        let deleteKeys: string[] = ["audioType"]
+        let deleteKeys: string[] = ["audioType", "volume"]
+
+        if (currentMedia.volume) setTimeout(() => AudioPlayer.updateVolume(audioId))
 
         // reset
         deleteKeys.forEach((key) => removeStore("media", { keys: [audioId, key] }))
@@ -31,6 +35,10 @@
 
         let value = input.value
         if (value?.id !== undefined) value = value.id
+        if (input.id === "volume") {
+            value = Math.min(1, Math.max(0, value / 100))
+            setTimeout(() => AudioPlayer.updateVolume(audioId))
+        }
 
         updateStore("media", { keys: [audioId, input.id], value })
     }

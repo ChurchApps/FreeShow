@@ -2,7 +2,6 @@
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
     import { cropImageToBase64, encodeFilePath } from "../helpers/media"
-    import { Cropping } from "../../../types/Settings"
 
     export let path: string
     export let mediaStyle: MediaStyle = {}
@@ -19,16 +18,17 @@
     $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});image-rendering: ${mediaStyle.rendering || "initial"};`
 
     let croppedImage = ""
-    $: if (mediaStyle.cropping) cropImage()
+    $: croppingActive = mediaStyle.cropping?.bottom || mediaStyle.cropping?.left || mediaStyle.cropping?.top || mediaStyle.cropping?.right
+    $: if (croppingActive) cropImage()
     async function cropImage() {
         croppedImage = await cropImageToBase64(path, mediaStyle.cropping)
     }
 </script>
 
 {#if mediaStyle.fit === "blur"}
-    <img class="media" style={mediaStyleBlurString} src={croppedImage || encodeFilePath(path)} alt="" draggable="false" />
+    <img class="media" style={mediaStyleBlurString} src={croppingActive ? croppedImage : encodeFilePath(path)} alt="" draggable="false" />
 {/if}
-<img class="media" style={mediaStyleString} src={croppedImage || encodeFilePath(path)} alt="" draggable="false" on:error on:load={loaded} />
+<img class="media" style={mediaStyleString} src={croppingActive ? croppedImage : encodeFilePath(path)} alt="" draggable="false" on:error on:load={loaded} />
 
 <style>
     /* hide alt text */

@@ -17,6 +17,7 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
+    import Weather from "./views/Weather.svelte"
 
     export let item: Item
 
@@ -89,6 +90,8 @@
     <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} />
 {:else if item.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+{:else if item.type === "weather"}
+    <Weather data={item.weather || {}} />
 {:else if item.type === "mirror"}
     <!-- no mirrors in mirrors! -->
     {#if !isMirrorItem}

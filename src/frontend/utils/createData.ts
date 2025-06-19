@@ -538,6 +538,34 @@ export function setExampleTemplates() {
         }
 
         // lower thirds
+        a.lowerThird = {
+            isDefault: true,
+            name: "Lower Third",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
+                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;",
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "", text: [{ value: "1", style: "font-size: 70px;font-weight: bold;text-transform:uppercase;" }] }]
+                }
+            ]
+        }
+        a.lowerThirdWhite = {
+            isDefault: true,
+            name: "Lower Third White",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
+                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background-color: #FFFFFF;border-radius:20px;padding:25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "", text: [{ value: "1", style: "color: #000000;font-size: 70px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
+                }
+            ]
+        }
         a.lowerThirdBlue = {
             isDefault: true,
             name: "Lower Third Blue",
@@ -704,7 +732,7 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    style: "left:30px;top:765px;width:1860px;height:238px;border-radius:20px;padding:25px;opacity:1;background-color:#FFFFFF;",
+                    style: "left:30px;top:765px;width:1860px;height:238px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
                     align: "",
                     lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
                     auto: true
@@ -724,13 +752,13 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    style: "left:30px;top:765px;width:1860px;height:120px;border-radius:20px;padding:25px;opacity:1;background-color:#FFFFFF;",
+                    style: "left:30px;top:765px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
                     align: "",
                     lines: [{ align: "text-align: start;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
                     auto: true
                 },
                 {
-                    style: "left:30px;top:885px;width:1860px;height:120px;border-radius:20px;padding:25px;opacity:1;background-color:#DDDDDD;",
+                    style: "left:30px;top:885px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#DDDDDD;",
                     align: "",
                     lines: [{ align: "text-align: start;", text: [{ value: "2", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
                     auto: true

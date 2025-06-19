@@ -9,6 +9,7 @@
     import TemplateEditor from "./editors/TemplateEditor.svelte"
     import TextEditor from "../show/TextEditor.svelte"
     import AudioEditor from "./editors/AudioEditor.svelte"
+    import CameraEditor from "./editors/CameraEditor.svelte"
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -39,6 +40,10 @@
         <EffectEditor />
     {:else if $activeEdit.type === "media"}
         <MediaEditor />
+    {:else if $activeEdit.type === "camera"}
+        {#key $activeEdit.id}
+            <CameraEditor />
+        {/key}
     {:else if $activeEdit.type === "audio"}
         <AudioEditor />
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}

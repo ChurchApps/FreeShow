@@ -79,6 +79,7 @@ export type SelectIds =
     | "style"
     | "output"
     | "tag"
+    | "bible_book"
 
 export interface Selected {
     id: null | SelectIds
@@ -122,11 +123,12 @@ export interface MediaOptions {
 
 export interface ActiveEdit {
     // id?: string
-    type?: "show" | "media" | "overlay" | "template" | "effect" | "audio"
+    type?: "show" | "media" | "camera" | "overlay" | "template" | "effect" | "audio"
     id?: string
     slide?: null | number
     items: number[]
     showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
+    data?: any // camera data
 }
 
 export type MediaFit = "contain" | "cover" | "fill" | "blur"
@@ -270,12 +272,15 @@ export type Popups =
     | "delete_show"
     | "select_show"
     | "select_template"
+    | "select_style"
+    | "select_stage_layout"
     | "delete_duplicated_shows"
     | "icon"
     | "manage_groups"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"
+    | "manage_dynamic_values"
     | "player"
     | "rename"
     | "color"
@@ -297,6 +302,7 @@ export type Popups =
     | "choose_screen"
     | "choose_camera"
     | "choose_output"
+    | "choose_style"
     | "change_output_values"
     | "set_time"
     | "assign_shortcut"

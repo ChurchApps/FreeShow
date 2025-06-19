@@ -21,6 +21,13 @@
     $: formattedSearch = formatSearch(searchValue)
     $: showsSorted = $sortedShowsList
 
+    // // don't update unless it's changed
+    // let updatedSorted: typeof showsSorted = []
+    // $: if (showsSorted) updateSorted()
+    // function updateSorted() {
+    //     if (JSON.stringify(updateSorted) !== JSON.stringify(updatedSorted)) updatedSorted = clone(showsSorted)
+    // }
+
     let filteredShows: ShowList[] = []
     let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
@@ -30,7 +37,9 @@
     let previousSearchTokens: string[] = []
     let previousFilteredShows: any[] = clone(filteredStored)
 
-    $: {
+    let createFromSearch = false
+    $: if (formattedSearch !== undefined || filteredStored || $activeTagFilter) search()
+    function search() {
         if (searchValue.length > 1) {
             const currentTokens = tokenize(formattedSearch)
             const isNarrowing = isRefinement(currentTokens, previousSearchTokens)
@@ -38,14 +47,23 @@
             const baseList = isNarrowing ? previousFilteredShows : clone(filteredStored)
             const tagFiltered = filterByTags(baseList, $activeTagFilter)
 
-            filteredShows = showSearch(formattedSearch, tagFiltered)
+            let filteredShowsTemp = showSearch(formattedSearch, tagFiltered)
 
-            if (searchValue.length > 15 && filteredShows.length > 50) filteredShows = filteredShows.slice(0, 50)
-            if (searchValue.length > 30 && filteredShows.length > 30) filteredShows = filteredShows.slice(0, 30)
+            if (searchValue.length > 15 && filteredShowsTemp.length > 50) filteredShowsTemp = filteredShowsTemp.slice(0, 50)
+            if (searchValue.length > 30 && filteredShowsTemp.length > 30) filteredShowsTemp = filteredShowsTemp.slice(0, 30)
 
+            filteredShows = filteredShowsTemp
             firstMatch = filteredShows[0] || null
-            previousFilteredShows = filteredShows
+            previousFilteredShows = clone(filteredShows)
             previousSearchTokens = currentTokens
+
+            // if no title matches
+            if (active === "all" && !showLoading && searchValue.length > 5 && (firstMatch?.originalMatch || 0) < 70) {
+                firstMatch = "SEARCH_CREATE"
+                createFromSearch = true
+            } else {
+                createFromSearch = false
+            }
 
             // scroll to top
             document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
@@ -54,6 +72,13 @@
             firstMatch = null
             previousSearchTokens = []
             previousFilteredShows = clone(filteredStored)
+            createFromSearch = false
+            if ($activeShow?.data?.searchInput) {
+                activeShow.update((a) => {
+                    delete a!.data
+                    return a
+                })
+            }
         }
     }
 
@@ -77,11 +102,13 @@
     //     }
     // }
 
+    let showLoading = false
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".search")) {
             // get preview of shows
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
+                createFromSearch = false
                 let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
                 let newIndex = 0
                 if (currentIndex < 0) newIndex = e.key === "ArrowDown" ? 0 : filteredShows.length - 1
@@ -89,6 +116,9 @@
                 if (newIndex < 0 || newIndex >= filteredShows.length) return
 
                 activeShow.set({ id: filteredShows[newIndex].id, type: "show", data: { searchInput: true } })
+
+                showLoading = true
+                setTimeout(() => (showLoading = false), 500)
             }
             return
         }
@@ -125,6 +155,11 @@
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <div class="column context #drawer_show">
         {#if filteredShows.length}
+            {#if createFromSearch}
+                <div class="warning">
+                    <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0].toUpperCase() + searchValue.slice(1)}</span></p>
+                </div>
+            {/if}
             <!-- reload list when changing category -->
             {#key active}
                 <VirtualList items={filteredShows} let:item={show}>
@@ -169,6 +204,12 @@
         flex-direction: column;
         background-color: var(--primary-darker);
         height: 100%;
+    }
+
+    .warning {
+        display: flex;
+        justify-content: space-between;
+        background-color: var(--primary-darkest);
     }
 
     /* THIS don't work with virtual list */

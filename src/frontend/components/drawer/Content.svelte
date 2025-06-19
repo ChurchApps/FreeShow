@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
     import { drawerTabsData } from "../../stores"
+    import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import Button from "../inputs/Button.svelte"
     import Audio from "./audio/Audio.svelte"
     import Scripture from "./bible/Scripture.svelte"
     import Calendar from "./calendar/Calendar.svelte"
@@ -19,6 +22,13 @@
     export let firstMatch: null | string
     $: active = $drawerTabsData[id]?.activeSubTab || null
 
+    // search active warning
+    let searchTab: string | null = null
+    $: if (searchValue) updateTab()
+    function updateTab() {
+        searchTab = id + active
+    }
+
     let streams: MediaStream[] = []
     $: if (id !== "media" || active) stopStreams()
 
@@ -33,6 +43,16 @@
 </script>
 
 <div class="main">
+    {#if searchValue && active !== "all" && searchTab !== id + active && id !== "scripture"}
+        <div class="warning">
+            <p style="padding: 6px 8px;"><T id="main.search_active" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue}</span></p>
+            <Button on:click={() => (searchValue = "")} dark>
+                <Icon id="close" right />
+                <p><T id="clear.search" /></p>
+            </Button>
+        </div>
+    {/if}
+
     {#if id === "shows"}
         <Shows {id} {active} {searchValue} bind:firstMatch />
     {:else if id === "media"}
@@ -67,5 +87,11 @@
         flex-direction: column;
         background-color: var(--primary-darker);
         flex: 1;
+    }
+
+    .warning {
+        display: flex;
+        justify-content: space-between;
+        background-color: var(--primary-darkest);
     }
 </style>

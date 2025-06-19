@@ -220,8 +220,8 @@
                     <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
                 </Button>
             {/if}
-            <!-- VOLUME -->
-            <Button
+            <!-- VOLUME (moved to editor) -->
+            <!-- <Button
                 center
                 title={$dictionary.actions?.decrease_volume}
                 disabled={($media[path]?.volume || 1) < 0.06}
@@ -256,8 +256,10 @@
                 }}
             >
                 <Icon id="volume" white size={1.2} />
-            </Button>
-            <p style="align-self: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
+            </Button> -->
+            {#if $media[path]?.volume !== undefined && $media[path]?.volume < 1}
+                <p style="align-self: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
+            {/if}
         </div>
     </div>
 </div>
