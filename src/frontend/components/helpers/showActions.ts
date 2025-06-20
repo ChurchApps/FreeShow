@@ -1025,7 +1025,7 @@ export function getDynamicIds(noVariables = false) {
     const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name))
+    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name)) || []
 
     const mergedValues = [...mainValues, ...metaValues]
     if (rssValues.length) mergedValues.push(...rssValues)
