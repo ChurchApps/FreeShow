@@ -8,6 +8,7 @@
         "drop": "Soltar aqui",
         "search": "Pesquisar",
         "quick_search": "Pesquisa rápida",
+        "search_active": "A pesquisa está ativa",
         "none": "Nenhum",
         "finished": "Concluído",
         "open": "Abrir",
@@ -79,10 +80,12 @@
         "global_options": "Essas opções são aplicadas globalmente."
     },
     "setup": {
-        "good_luck": "Espero que você ache este software útil. Boa sorte projetando! :)",
+        "good_luck": "Esperamos que este software seja útil. Boa sorte apresentando! :)",
         "tips": "Encontre dicas e tutoriais úteis no site.",
         "change_later": "Você pode alterar essas configurações mais tarde",
-        "get_started": "Vamos lá!"
+        "get_started": "Vamos lá!",
+        "or": "ou",
+        "restore_data": "Restaurar dados anteriores"
     },
     "example": {
         "welcome": "Seja bem-vindo",
@@ -154,11 +157,13 @@
         "audio": "Limpar áudio",
         "nextTimer": "Limpar temporizador do próximo slide",
         "timer": "Limpar temporizador",
-        "drawing": "Limpar anotações"
+        "drawing": "Limpar anotações",
+        "search": "Limpar pesquisa"
     },
     "remove": {
         "background": "Remover plano de fundo",
         "overlays": "Remover sobreposições",
+        "effects": "Remover efeitos",
         "audio": "Remover áudio",
         "nextTimer": "Remover temporizador do próximo slide",
         "to_start": "Remover Ir para o ínicio",
@@ -212,6 +217,7 @@
         "mixer": "Mixer",
         "metronome": "Metrônomo",
         "toggle_metronome": "Metrônomo",
+        "use_metadata_bpm": "Usar BPM dos metadados",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Batidas",
@@ -408,6 +414,7 @@
         "show": "Novo Show",
         "select_show": "Selecione um show",
         "select_template": "Selecionar modelo",
+        "custom_text": "Definir texto personalizado",
         "rename": "Renomear",
         "color": "Cor",
         "color_gradient": "Cor do gradiente",
@@ -452,6 +459,7 @@
         "manage_emitters": "Gerenciar emitters",
         "action": "Ação",
         "category_action": "Ação de categoria",
+        "custom_action": "Ação personalizada",
         "user_data_overwrite": "Dados existentes encontrados",
         "connect": "Conectar",
         "cloud_update": "Sincronizando com a nuvem",
@@ -464,6 +472,8 @@
         "manage_metadata": "Gerenciar metadados",
         "choose_camera": "Escolha a câmera",
         "manage_tags": "Gerenciar tags",
+        "chums_sync_categories": "Selecione categorias para sincronizar",
+        "effect_items": "Efeitos",
         "initialize": "Seja bem-vindo ao FreeShow",
         "unsaved": "Tem certeza que deseja sair?",
         "cancel": "Cancelar",
@@ -529,7 +539,9 @@
         "scripture": "Nova bíblia",
         "collection": "Nova coleção",
         "action": "Nova ação",
-        "event": "Novo evento"
+        "event": "Novo evento",
+        "event_action": "Nova ação agendada",
+        "effect": "Novo efeito"
     },
     "show": {
         "name": "Nome",
@@ -551,7 +563,8 @@
         "delete_manual": "Checagem manual",
         "delete_match": "Excluir se encontrar idêntico",
         "delete_keep_last_modified": "Excluir todos exceto o último modificado",
-        "delete_keep_first_created": "Excluir todos exceto o primeiro criado"
+        "delete_keep_first_created": "Excluir todos exceto o primeiro criado",
+        "custom_action_tip": "Escolha uma ação para ativar neste Show quando este botão for clicado."
     },
     "actions": {
         "rename": "Renomear",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "Mudar layout do palco",
         "start_camera": "Iniciar câmera",
         "start_screen": "Iniciar tela",
+        "id_start_effect": "Iniciar efeito",
         "id_select_overlay": "Iniciar sobreposição",
         "change_volume": "Mudar volume",
         "start_audio_stream": "Iniciar transmissão de áudio",
@@ -899,6 +913,7 @@
         "break_long_lines": "Quebrar linhas longas",
         "break_long_lines_tip": "Quebra linhas se o número de palavras é maior que o especificado",
         "media_fit": "Encaixe de mídia",
+        "cropping": "Recortar",
         "one_letter": "Modo de letra única",
         "sub_indexes": "Sub índices ",
         "size": "Tamanho",
@@ -986,7 +1001,11 @@
         "enable_start_date": "Habilitar data de início",
         "disable_navigation": "Desativar controles de navegação",
         "progress_bar": "Barra de progresso",
-        "each_number_once": "Cada número é único"
+        "each_number_once": "Cada número é único",
+        "side": "Lado",
+        "count": "Número",
+        "speed": "Velocidade",
+        "angle": "Ângulo"
     },
     "items": {
         "text": "Caixa de texto",
@@ -1007,6 +1026,7 @@
         "visualizer": "Visualizador",
         "captions": "Legendas",
         "icon": "Ícone",
+        "effect": "Efeito",
         "slide_text": "Texto do slide",
         "slide_notes": "Notas do slide",
         "current_output": "Saída atual"
@@ -1084,6 +1104,7 @@
         "activate": "Ativar pelo sinal MIDI",
         "activate_keypress": "Ativar por uma tecla",
         "name": "Nome",
+        "description": "Descrição",
         "input": "Entrada",
         "output": "Saída",
         "type": "Tipo",
@@ -1123,7 +1144,8 @@
         "straight": "Linha reta",
         "rainbow": "Arco-íris",
         "threed": "3D",
-        "dots": "Pontos"
+        "dots": "Pontos",
+        "link_to_slide": "Linkar ao slide"
     },
     "stage": {
         "stage_layout": "Layout do palco",
@@ -1440,6 +1462,36 @@
         "weekly": "Semanalmente",
         "mothly": "Mensalmente"
     },
+    "effect": {
+        "stars": "Estrelas",
+        "galaxy": "Galáxia",
+        "rain": "Chuva",
+        "snow": "Neve",
+        "bubbles": "Bolhas",
+        "grass": "Grama",
+        "wave": "Onda",
+        "sun": "Sol",
+        "lens_flare": "Reflexo de lente",
+        "lightning": "Relâmpago",
+        "rainbow": "Arco-íris",
+        "spotlight": "Holofote",
+        "aurora": "Aurora",
+        "bloom": "Resplandecer",
+        "fog": "Neblina",
+        "city": "Cidade",
+        "fireworks": "Fogos de artifício",
+        "rays": "Raios",
+        "cycle": "Ciclo",
+        "circle": "Círculo",
+        "rectangle": "Retângulo",
+        "triangle": "Triângulo",
+        "asset": "Asset",
+        "swirl_strength": "Força de giro",
+        "arm_count": "Número de braços",
+        "drift": "Desvio",
+        "pulse_speed": "Velocidade de pulso",
+        "hollow": "Vazio"
+    },
     "info": {
         "created": "Criado",
         "modified": "Modificado",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "Adiciona todos os idiomas em uma única caixa de texto em linhas alternadas. (Como no Songbeamer)",
         "translation_description_textboxes": "Adiciona cada idioma como uma caixa de texto separada ao slide.",
         "translation_description_layouts": "Cria um conjunto único de slides e um layout para cada idioma."
+    },
+    "chums": {
+        "sync_categories": "Sincronizar categorias",
+        "sync_categories_description": "Selecione quais categorias devem ser sincronizadas como músicas para o Chums"
     }
 }
