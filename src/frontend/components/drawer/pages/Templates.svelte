@@ -63,6 +63,8 @@
     // open drawer tab instantly before content has loaded
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
+
+    const ignoreDefault = ["metadata", "message"]
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
@@ -75,7 +77,7 @@
             <div class="grid">
                 {#each fullFilteredTemplates as template}
                     <Card
-                        class="context #template_card{template.isDefault ? '_default' : ''}"
+                        class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) ? '_default' : ''}"
                         preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
                         active={template.id === activeTemplate}
                         label={template.name}

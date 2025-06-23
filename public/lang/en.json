@@ -646,6 +646,8 @@
         "forward": "Move forward",
         "backward": "Move backward",
         "to_back": "Move to back",
+        "click_reveal": "Reveal on click",
+        "line_reveal": "Reveal line by line",
         "show_timer": "Time until show",
         "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",

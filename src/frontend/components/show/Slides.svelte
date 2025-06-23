@@ -7,7 +7,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -96,6 +96,8 @@
                 // loop back to line start
                 if (line >= slideLines) line = 0
             }
+
+            // WIP get lines reveal
 
             setOutput("slide", { id: showId, layout: activeLayout, index, line })
             updateOut(showId, index, slideRef, !e.altKey)
@@ -216,14 +218,15 @@
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
+            let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+            let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
+
             // get progress of current line division
             // let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
             let amountOfLinesToShow: number = getFewestOutputLines($outputs)
             let lineIndex = 0
             let maxLines = 0
             if (amountOfLinesToShow > 0) {
-                let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
-                let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
                 let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
 
                 maxLines = slideLines && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : 0
@@ -235,11 +238,18 @@
                 if (!maxLines) maxLines = 1
             }
 
+            // lines reveal
+            const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+            if (linesRevealItems.length) {
+                lineIndex = getFewestOutputLinesReveal($outputs) - 1
+                maxLines = getItemWithMostLines({ items: linesRevealItems })
+            }
+
             activeSlides[outSlide.index] = {
                 color: $outputs[a].color,
                 line: lineIndex,
                 maxLines,
-                cached: !currentOutput.out?.slide,
+                cached: !currentOutput.out?.slide
             }
         })
     }

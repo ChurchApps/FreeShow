@@ -11,6 +11,7 @@
     import ScriptureContent from "./ScriptureContent.svelte"
 
     export let tablet: boolean = false
+    export let triggerScriptureSearch: boolean = false
 
     let collectionId = localStorage.collectionId || ""
     let openedScripture = localStorage.scripture || ""
@@ -42,6 +43,12 @@
     }
 
     // SEARCH
+
+    $: if (triggerScriptureSearch) triggerSearch()
+    function triggerSearch() {
+        openScriptureSearch = true
+        triggerScriptureSearch = false
+    }
 
     let openScriptureSearch = false
     let searchValue = ""

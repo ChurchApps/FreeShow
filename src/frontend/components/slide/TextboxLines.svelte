@@ -10,6 +10,8 @@
 
     export let item: Item
     export let slideIndex = 0
+    export let mirror = false
+    export let preview = false
     export let isMirrorItem = false
     export let key = false
     export let smallFontSize = false
@@ -35,6 +37,7 @@
     export let customTypeRatio = 1
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let revealed = -1
 
     $: lines = clone(item?.lines || [])
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -55,6 +58,8 @@
     })
 
     function getCustomStyle(style: string, outputId = "", _updater: any = null) {
+        if (!style) return ""
+
         if (outputId && !isMirrorItem) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
@@ -229,7 +234,12 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}">
+                <div
+                    class="break"
+                    class:reveal={mirror && !preview && item.lineReveal && revealed < i}
+                    class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
+                    style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}"
+                >
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
@@ -284,6 +294,12 @@
         overflow-wrap: break-word;
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+    }
+
+    .lines .break.reveal {
+        outline: 1px solid red;
+        outline-offset: -8px;
+        opacity: 0.7;
     }
 
     *:global(.wj) {

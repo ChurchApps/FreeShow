@@ -50,6 +50,7 @@
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let revealed = -1
     export let styleIdOverride = ""
 
     $: lines = clone(item?.lines)
@@ -176,11 +177,13 @@
                 return
             }
 
-            const itemText = item?.lines?.[0]?.text?.filter((a) => !a.customType?.includes("disableTemplate")) || []
+            let text = item?.lines?.[0]?.text || []
+            if (!Array.isArray(text)) text = []
+            const itemText = text.filter((a) => !a.customType?.includes("disableTemplate")) || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
@@ -313,6 +316,7 @@
     class:noTransition
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
+    class:reveal={mirror && !preview && item.clickReveal}
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
@@ -321,6 +325,8 @@
         <TextboxLines
             {item}
             {slideIndex}
+            {mirror}
+            {preview}
             {isMirrorItem}
             {key}
             {smallFontSize}
@@ -340,6 +346,7 @@
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}
+            {revealed}
             on:updateAutoSize={calculateAutosize}
         />
     {:else}
@@ -365,6 +372,11 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+    }
+
+    .item.reveal {
+        outline: 1px solid red;
+        opacity: 0.7;
     }
 
     .clickable {

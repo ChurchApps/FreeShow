@@ -292,9 +292,11 @@
         }
     }
 
+    const ignoreDefault = ["metadata", "message"]
+
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked === true
-    $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault : false
+    $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault && !ignoreDefault.includes($activeEdit.id || "") : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]

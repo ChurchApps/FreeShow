@@ -91,13 +91,15 @@
 
         zoomOpened = false
     }
+
+    const ignoreDefault = ["metadata", "message"]
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if Slide && !Slide.isDefault}
+        {#if Slide && (!Slide.isDefault || ignoreDefault.includes(currentId))}
             <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
         {:else}
             <Center size={2} faded>

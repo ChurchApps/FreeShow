@@ -363,7 +363,7 @@
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" title={removeTagsAndContent(name || "")} style="color: {color};margin-bottom: 5px;">
-                        <span style="color: var(--text);opacity: 0.85;">{index + 1}</span>
+                        <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
                     </div>
                 {/if}
@@ -421,6 +421,7 @@
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
                                     disableListTransition
                                     {item}
+                                    revealed={output?.line ?? -1}
                                     itemIndex={i}
                                     {ratio}
                                     slideIndex={index}
@@ -488,7 +489,7 @@
 
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
-                        <span style="color: var(--text);opacity: 0.85;">{index + 1}</span>
+                        <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>

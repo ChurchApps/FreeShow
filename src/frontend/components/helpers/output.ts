@@ -44,7 +44,7 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
-import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
@@ -803,7 +803,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (templateItem.textFit) item.textFit = templateItem.textFit
 
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem[style]) item[style] = templateItem[style]
@@ -1097,6 +1097,7 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
 }
 
 export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
+    console.log(outSlide)
     if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
@@ -1116,18 +1117,29 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
     const linesIndex = Math.ceil(maxLines * progress) - 1
-    let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+    let start = maxStyleLines ? maxStyleLines * Math.floor(linesIndex / maxStyleLines) : 0
 
     // current style lines does not match another output lines index
     // e.g. styles set to 5 lines & 2 lines, with slide text of 6 lines
     const highestLinePos = getHighestOutputLinePos()
     const isEnding = maxLines && highestLinePos + amountOfLinesToShow >= maxLines
-    const overflow = maxLines % maxStyleLines
+    const overflow = maxStyleLines ? maxLines % maxStyleLines : 0
     if (isEnding && overflow > 0) start = maxLines - overflow
+
+    let end = start + maxStyleLines
 
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
-    return { start, end: start + maxStyleLines } // , index: linesIndex, max: maxStyleLines
+    // lines reveal
+    const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+    const currentReveal = outSlide?.revealCount ?? 0
+    if (linesRevealItems.length) {
+        start = maxStyleLines ? Math.max(0, currentReveal - maxStyleLines) : 0
+        end = currentReveal
+    }
+
+    const active = !!(maxStyleLines || linesRevealItems.length)
+    return { start: active ? start : null, end: active ? end : null } // , index: linesIndex, max: maxStyleLines
 }
 
 function getHighestOutputLinePos() {
@@ -1175,9 +1187,10 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
+    metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
 
-    const metadataTemplateValue = templatesUpdater[templateId]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
+    const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId].items?.[0])
     // if (metadataTemplateValue || metadata.message || currentStyle)
     getMetaValue()
     function getMetaValue() {
@@ -1186,10 +1199,10 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
             return
         }
 
-        if (metadataTemplateValue.includes("{")) {
+        if (metadataTemplateValue.find((a) => a.includes("{"))) {
             if (!outSlide) return
             const ref = { showId: outSlide.id, layoutId: outSlide.layout, slideIndex: outSlide.index }
-            metadata.value = replaceDynamicValues(metadataTemplateValue, ref)
+            metadata.value = replaceDynamicValues(metadataTemplateValue.join("<br>"), ref)
             return
         }
 
@@ -1201,6 +1214,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
     const messageTemplate = overrideOutput ? show.message?.template || "" : currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate, templatesUpdater) || defaultMessageStyle
+    metadata.messageStyle += getTemplateAlignment(messageTemplate, templatesUpdater)
     metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
     return clone(metadata)
@@ -1220,6 +1234,17 @@ function getTemplateStyle(templateId: string, templatesUpdater: Templates) {
     const textStyle = template.items?.[0]?.lines?.[0]?.text?.[0]?.style || ""
 
     return style + textStyle
+}
+
+function getTemplateAlignment(templateId: string, templatesUpdater: Templates) {
+    if (!templateId) return
+    const template = templatesUpdater[templateId]
+    if (!template) return
+
+    const itemAlign = template.items?.[0]?.align || ""
+    const lineAlign = template.items?.[0]?.lines?.[0]?.align || ""
+
+    return itemAlign + lineAlign.replace("text-align", "justify-content")
 }
 
 export function decodeExif(data: any) {

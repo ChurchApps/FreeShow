@@ -176,6 +176,7 @@
             lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
         }, updateLinesTime)
     }
+    $: console.log(lines)
 
     // metadata
     let metadata: OutputMetadata = {}
