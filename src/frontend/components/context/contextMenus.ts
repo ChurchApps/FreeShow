@@ -269,6 +269,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_screen: ["remove"],
     project_ndi: ["remove"],
     project_camera: ["remove"],
+    project_folder: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"

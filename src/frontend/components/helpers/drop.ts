@@ -1,10 +1,15 @@
 import { get } from "svelte/store"
 import type { History } from "../../../types/History"
+import { Main } from "../../../types/IPC/Main"
 import type { DropData, SelectIds } from "../../../types/Main"
-import { activePage, selected } from "../../stores"
+import type { ProjectShowRef } from "../../../types/Projects"
+import { requestMain } from "../../IPC/main"
+import { activePage, activeProject, projects, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
+import { addToPos } from "./mover"
 import { deselect } from "./select"
+import { getFileName } from "./media"
 
 export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist"
 
@@ -68,4 +73,19 @@ export function ondrop(e: any, id: string) {
     }
 
     console.info("NOT ASSIGNED!", sel.id + " => " + id)
+}
+
+export async function projectDropFolders(filePaths: string[], index: number = -1) {
+    const stats = await Promise.all(filePaths.map(async (path) => await requestMain(Main.FILE_INFO, path)))
+    const folders = stats.filter((a) => a?.folder)
+    if (!folders.length) return
+
+    const projectId = get(activeProject)
+    if (!projectId) return
+
+    const currentProjectItems = get(projects)[projectId]?.shows || []
+    const newProjectItems: ProjectShowRef[] = folders.map((a) => ({ type: "folder", id: a!.path, name: getFileName(a!.path) }))
+
+    const data = addToPos(currentProjectItems, newProjectItems, index < 0 ? currentProjectItems.length : index)
+    history({ id: "UPDATE", newData: { key: "shows", data }, oldData: { id: projectId }, location: { page: "show", id: "project_ref" } })
 }

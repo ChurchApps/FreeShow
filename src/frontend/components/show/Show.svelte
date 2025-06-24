@@ -9,6 +9,7 @@
     import Camera from "../output/Camera.svelte"
     import Layouts from "../slide/Layouts.svelte"
     import AudioPreview from "./AudioPreview.svelte"
+    import FolderShow from "./folder/FolderShow.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
     import OverlayPreview from "./overlay/OverlayPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
@@ -76,6 +77,10 @@
             >
                 <NdiStream screen={{ id: show.id, name: show.name || "" }} background />
             </HoverButton>
+        {:else if show.type === "folder"}
+            {#key show.id}
+                <FolderShow path={show.id} index={show.index} />
+            {/key}
         {:else if (show.type || "show") === "show"}
             <Slides showId={$activeShow?.id || ""} />
             <Layouts />
