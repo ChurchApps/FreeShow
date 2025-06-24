@@ -8,7 +8,7 @@
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
-    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, language, localeDirection, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
@@ -285,6 +285,10 @@
         })
     }
 
+    // set language direction
+    $: document.documentElement.setAttribute("dir", $localeDirection)
+    $: document.documentElement.setAttribute("lang", $language)
+    
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     const dynamicInterval = setInterval(() => {
