@@ -1,4 +1,4 @@
-import { scriptures, scripturesCache } from "./../stores"
+import { language, scriptures, scripturesCache } from "./../stores"
 import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
 import { xml2json } from "./xml"
@@ -50,13 +50,16 @@ function convertToBible(content: any): Bible {
 
 function getBooks(oldBooks: any[]) {
     const books: any[] = []
-
+    let bibleBookNames = defaultBibleBookNames;
+    language.subscribe((lang) => {
+        bibleBookNames = lang === "ar" ? arabicDefaultBibleBookNames : defaultBibleBookNames;
+    })
     if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
     // console.log("Books:", oldBooks)
     oldBooks.forEach((book) => {
         const currentBook = {
             number: book["@number"],
-            name: book["@name"] || defaultBibleBookNames[book["@number"]],
+            name: book["@name"] ?? bibleBookNames[book["@number"]],
             chapters: getChapters(book.chapter)
         }
 
@@ -168,4 +171,75 @@ export const defaultBibleBookNames: any = {
     64: "3 John",
     65: "Jude",
     66: "Revelation"
+}
+
+export const arabicDefaultBibleBookNames: any = {
+    1: "التكوين",
+    2: "الخروج",
+    3: "اللاويين",
+    4: "العدد",
+    5: "التثنية",
+    6: "يشوع",
+    7: "القضاة",
+    8: "راعوث",
+    9: "صموئيل الأول",
+    10: "صموئيل الثاني",
+    11: "الملوك الأول",
+    12: "الملوك الثاني",
+    13: "اخبار الأيام الأول",
+    14: "اخبار الأيام الثاني",
+    15: "عزرا",
+    16: "نحميا",
+    17: "أستير",
+    18: "أيوب",
+    19: "المزامير",
+    20: "الأمثال",
+    21: "جامعة",
+    22: "نشيد الأنشاد",
+    23: "إشعياء",
+    24: "إرميا",
+    25: "مراثي إرميا",
+    26: "حزقيال",
+    27: "دانيال",
+    28: "هوشع",
+    29: "يوئيل",
+    30: "عاموس",
+    31: "عوبديا",
+    32: "يونان",
+    33: "ميخا",
+    34: "ناحوم",
+    35: "حبقوق",
+    36: "صفنيا",
+    37: "حجي",
+    38: "زكريا",
+    39: "ملاخي",
+
+    // New Testament
+    40: "متى",
+    41: "مرقس",
+    42: "لوقا",
+    43: "يوحنا",
+    44: "أعمال الرسل",
+    45: "رومية",
+    46: "كورنثوس الأولى",
+    47: "كورنثوس الثانية",
+    48: "غلاطية",
+    49: "أفسس",
+    50: "فيليبي",
+    51: "كولوسي",
+    52: "تسالونيكي الأولى",
+    53: "تسالونيكي الثانية",
+    54: "تيموثاوس الأولى",
+    55: "تيموثاوس الثانية",
+    56: "تيطس",
+    57: "فليمون",
+    58: "عبرانيين",
+    59: "يعقوب",
+    60: "بطرس الأولى",
+    61: "بطرس الثانية",
+    62: "يوحنا الأولى",
+    63: "يوحنا الثانية",
+    64: "يوحنا الثالثة",
+    65: "يهوذا",
+    66: "رؤيا يوحنا"
 }
