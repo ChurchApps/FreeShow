@@ -51,6 +51,8 @@
     $: if (outSlide) {
         let newOutSlide = clone(outSlide)
         delete newOutSlide.line
+        delete newOutSlide.revealCount
+        delete newOutSlide.itemClickReveal
         let outSlideString = JSON.stringify(newOutSlide)
         if (outSlideString !== currentOutSlide) currentOutSlide = outSlideString
     }

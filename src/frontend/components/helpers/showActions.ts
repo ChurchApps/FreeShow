@@ -497,7 +497,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     const currentShowSlide: Slide | null =
         _show(slide ? slide.id : "active")
-            .slides([layout[slide!.index!]?.id])
+            .slides([layout[slide?.index ?? -1]?.id])
             .get()[0] || null
 
     // item/click reveal

@@ -10,7 +10,8 @@ import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
 
-const slidesViews = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
+// only available with right click: "simple", "groups"
+const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid" }
 export function changeSlidesView() {
     slidesOptions.set({ ...get(slidesOptions), mode: slidesViews[get(slidesOptions).mode] })
 }

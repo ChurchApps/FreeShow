@@ -802,6 +802,12 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
 
+        // use original line reveal if style template does not have the value set
+        const hasLineReveal = item.lineReveal
+        if (hasLineReveal) templateItem.lineReveal = true
+        // const hasClickReveal = item.clickReveal
+        // if (hasClickReveal) templateItem.clickReveal = true
+
         // remove exiting styling & add new if set in template
         const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
         extraStyles.forEach((style) => {
@@ -1139,7 +1145,15 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
         linesEnd = currentReveal
     }
 
-    return { start: !!maxStyleLines ? start : null, end: !!maxStyleLines ? end : null, linesStart: !!linesRevealItems.length ? linesStart : null, linesEnd: !!linesRevealItems.length ? linesEnd : null, clickRevealed: !!outSlide.itemClickReveal } // , index: linesIndex, max: maxStyleLines
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+
+    return {
+        start: !!maxStyleLines ? start : null,
+        end: !!maxStyleLines ? end : null,
+        linesStart: !!linesRevealItems.length ? linesStart : null,
+        linesEnd: !!linesRevealItems.length ? linesEnd : null,
+        clickRevealed: clickRevealItems.length ? !!outSlide.itemClickReveal : true
+    } // , index: linesIndex, max: maxStyleLines
 }
 
 function getHighestOutputLinePos() {

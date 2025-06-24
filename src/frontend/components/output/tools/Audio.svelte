@@ -17,14 +17,18 @@
 
     $: path = Object.keys($playingAudio)[0] || ""
     $: playing = Object.values($playingAudio)[0] || {}
-    $: currentTime = playing.audio?.currentTime || 0
+    let currentTime = 0
     $: paused = playing.paused !== false
 
     let duration = 0
     $: justOneAudio = Object.keys($playingAudio).length === 1
     $: if (justOneAudio && path) getDuration()
-    else duration = 0
+    else {
+        currentTime = 0
+        duration = 0
+    }
     async function getDuration() {
+        currentTime = 0
         duration = 0
         duration = playing.isMic ? 0 : await AudioPlayer.getDuration(Object.keys($playingAudio)[0])
         currentTime = playing.audio?.currentTime || 0
@@ -74,8 +78,6 @@
     }
 
     let fullLength = false
-
-    $: console.log($playingMetronome, $metronome, path, $playingAudio)
 </script>
 
 {#if Object.keys($playingAudio).length > 1}

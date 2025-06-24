@@ -9,6 +9,7 @@
     import Button from "../inputs/Button.svelte"
     import Color from "../inputs/Color.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
+    import NumberInput from "../inputs/NumberInput.svelte"
     import Tabs from "../main/Tabs.svelte"
     import EditValues from "./tools/EditValues.svelte"
     import { effectEdits } from "./values/effects"
@@ -200,6 +201,22 @@
                         }}
                         enableNoColor
                         allowGradients
+                    />
+                </CombinedInput>
+                <CombinedInput>
+                    <p><T id="edit.opacity" /></p>
+                    <NumberInput
+                        value={currentEffect.opacity ?? 1}
+                        max={1}
+                        step={0.01}
+                        decimals={2}
+                        inputMultiplier={100}
+                        on:change={(e) => {
+                            effects.update((a) => {
+                                a[effectId].opacity = Number(e.detail)
+                                return a
+                            })
+                        }}
                     />
                 </CombinedInput>
             </div>

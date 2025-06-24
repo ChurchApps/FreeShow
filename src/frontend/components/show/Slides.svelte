@@ -153,7 +153,7 @@
     }
 
     // update show by its template
-    $: gridMode = $slidesOptions.mode === "grid" || $slidesOptions.mode === "simple"
+    $: gridMode = $slidesOptions.mode === "grid" || $slidesOptions.mode === "simple" || $slidesOptions.mode === "groups"
     $: if (showId && gridMode && !isLessons && loaded) setTimeout(updateTemplate, 100)
     function updateTemplate() {
         if (!loaded) return
@@ -426,7 +426,7 @@
                 <div class="grid">
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled) && ($slidesOptions.mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}
@@ -438,7 +438,7 @@
                                     output={activeSlides[i]}
                                     active={activeSlides[i] !== undefined}
                                     {endIndex}
-                                    list={$slidesOptions.mode !== "grid" && $slidesOptions.mode !== "simple"}
+                                    list={!gridMode}
                                     columns={$slidesOptions.columns}
                                     icons
                                     {altKeyPressed}

@@ -128,6 +128,7 @@
                                 {clickRevealed}
                                 {revealed}
                                 isStage
+                                originalStyle
                             />
                         {/if}
                         <!-- (style ? item.auto && item.textFit === "growToFit" : item.auto) -->
@@ -149,6 +150,7 @@
                                 {clickRevealed}
                                 {revealed}
                                 isStage
+                                originalStyle
                             />
                         {/if}
                     {/each}

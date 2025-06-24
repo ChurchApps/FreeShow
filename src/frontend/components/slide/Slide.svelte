@@ -288,7 +288,7 @@
         if (viewMode !== "lyrics" || noQuickEdit) colorStyle += `background-color: ${color};`
         if (!$fullColors && (viewMode !== "lyrics" || noQuickEdit)) colorStyle += `color: ${color};`
         if (viewMode === "lyrics" && !noQuickEdit) colorStyle += "background-color: transparent;"
-        if (viewMode !== "grid" && viewMode !== "simple" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
+        if (viewMode !== "grid" && viewMode !== "simple" && viewMode !== "groups" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
 
     $: slideFilter = getSlideFilter(layoutSlide)
@@ -335,7 +335,12 @@
     }
 </script>
 
-<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
+<div
+    class="main"
+    class:active
+    class:focused
+    style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;"
+>
     <!-- group box -->
     {#if $fullColors}
         <div class="group_box" style="background-color: {color};" />

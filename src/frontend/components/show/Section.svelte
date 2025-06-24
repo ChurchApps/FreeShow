@@ -1,5 +1,6 @@
 <script lang="ts">
     import { actions, activeProject, activeShow, dictionary, labelsDisabled, projects, special } from "../../stores"
+    import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -67,7 +68,10 @@
     let settingsOpened = false
 
     $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
-    $: localAction = settingsOpened ? $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || "" : ""
+    $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
+
+    $: currentActionId = localAction || $special.sectionTriggerAction
+    $: currentAction = currentActionId ? { ...$actions[currentActionId], id: currentActionId } : null
 </script>
 
 {#if settingsOpened}
@@ -98,6 +102,15 @@
 
         <Notes value={note} on:edit={edit} />
     {/key}
+{/if}
+
+{#if currentAction && !settingsOpened}
+    <div class="actionButton">
+        <Button on:click={() => runAction(currentAction)} style="padding: 8px 10px;" dark>
+            <Icon id={getActionIcon(currentActionId)} right />
+            {currentAction.name}
+        </Button>
+    </div>
 {/if}
 
 <div class="settingsButton">
@@ -132,6 +145,14 @@
     .settings {
         flex: 1;
         /* background-color: var(--primary); */
+    }
+
+    .actionButton {
+        position: absolute;
+        bottom: 0;
+        inset-inline-start: 0;
+
+        background-color: var(--primary);
     }
 
     .settingsButton {

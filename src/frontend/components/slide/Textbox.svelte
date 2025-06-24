@@ -31,6 +31,7 @@
     export let animationStyle: any = {}
     export let dynamicValues = true
     export let isStage = false
+    export let originalStyle = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
     export let ref: {
@@ -84,19 +85,19 @@
     let customOutputId = outputId
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
-    function getCustomStyle(style: string, outputId = "", styleIdOverride = "", _updater: any = null) {
+    function getCustomStyle(currentStyle: string, outputId = "", styleIdOverride = "", _updater: any = null) {
         if (outputId && !isMirrorItem && !isStage) {
             let outputResolution = getOutputResolution(outputId, $outputs, true, styleIdOverride)
-            style = percentageStylePos(style, outputResolution)
+            currentStyle = percentageStylePos(currentStyle, outputResolution)
         }
 
         // reset item styles (as it's set in parent item)
-        if (isStage && !style) {
-            style += "display: contents;"
+        if (isStage && !originalStyle) {
+            currentStyle += "display: contents;"
         }
 
-        if (!key) return style
-        let styles = getStyles(style)
+        if (!key) return currentStyle
+        let styles = getStyles(currentStyle)
 
         // alpha style
         let alphaStyles = ";"
@@ -105,7 +106,7 @@
         if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
         alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
-        return style + alphaStyles
+        return currentStyle + alphaStyles
     }
 
     function getAlphaValues(colorValue: string) {

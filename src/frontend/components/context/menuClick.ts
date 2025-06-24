@@ -840,6 +840,9 @@ const clickActions = {
     view_simple: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "simple" })
     },
+    view_groups: () => {
+        slidesOptions.set({ ...get(slidesOptions), mode: "groups" })
+    },
     view_list: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "list" })
     },
