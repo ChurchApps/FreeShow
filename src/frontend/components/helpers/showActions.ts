@@ -243,6 +243,11 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : linesIndex + amountOfLinesToShow >= slideLines
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
+    // item/click reveal
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const itemsRevealed = clickRevealItems.length ? !!slide?.itemClickReveal : true
+    if (isLastSlide && !itemsRevealed) isLastSlide = false
+
     // lines reveal
     const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
@@ -288,13 +293,15 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     if (!slide || slide.id === "temp") return
 
-    const newSlideOut = { ...slide, line: 0, revealCount: 0 }
-    if (!hasLinesEnded || !allLinesRevealed) {
+    const newSlideOut = { ...slide, line: 0, revealCount: 0, itemClickReveal: itemsRevealed }
+    if (!hasLinesEnded || !allLinesRevealed || !itemsRevealed) {
         index = slideIndex
         if (amountOfLinesToShow && linesIndex !== null) newSlideOut.line = linesIndex + amountOfLinesToShow
-        if (shouldLinesReveal) newSlideOut.revealCount = currentReveal + 1
+        if (clickRevealItems.length && !itemsRevealed) newSlideOut.itemClickReveal = true
+        else if (shouldLinesReveal) newSlideOut.revealCount = currentReveal + 1
     } else {
         // TODO: Check for loop to beginning slide...
+        newSlideOut.itemClickReveal = false
         index = getNextEnabled(slideIndex, end, customOutputId)
     }
     if (index !== null) newSlideOut.index = index
@@ -488,11 +495,18 @@ export function previousSlide(e: any, customOutputId?: string) {
     // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
     const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
 
-    // lines reveal
     const currentShowSlide: Slide | null =
         _show(slide ? slide.id : "active")
             .slides([layout[slide!.index!]?.id])
             .get()[0] || null
+
+    // item/click reveal
+    const clickRevealItems = (currentShowSlide?.items || []).filter((a) => a.clickReveal)
+    const itemsRevealed = !!slide?.itemClickReveal
+    const clickRevealEnded = !clickRevealItems.length || !itemsRevealed
+    if (isFirstSlide && !clickRevealEnded) isLastSlide = false
+
+    // lines reveal
     const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter((a) => a.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
     let currentReveal = slide?.revealCount || 0
@@ -515,7 +529,8 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     let line: number = linesIndex || 0
-    if (hasLinesEnded && revealEnded) {
+    let itemClickReveal = true
+    if (hasLinesEnded && revealEnded && clickRevealEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
@@ -536,18 +551,21 @@ export function previousSlide(e: any, customOutputId?: string) {
             const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
             currentReveal = maxRevealLines
         } else currentReveal = 0
+        itemClickReveal = true
     } else {
         index = slide!.index!
         if (amountOfLinesToShow) line -= amountOfLinesToShow
         if (shouldLinesReveal) currentReveal--
+        if (!shouldLinesReveal || currentReveal < 0) itemClickReveal = false
     }
+    currentReveal = Math.max(0, currentReveal)
 
     const data = layout[index]?.data
     checkActionTrigger(data, index)
     // allow custom actions to trigger first
     setTimeout(() => {
-        if (slide) setOutput("slide", { ...slide, index, line, revealCount: currentReveal }, false, customOutputId)
-        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line, revealCount: currentReveal }, false, customOutputId)
+        if (slide) setOutput("slide", { ...slide, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
+        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
 
         updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
     })

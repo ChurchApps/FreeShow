@@ -139,7 +139,7 @@
 <!-- Updating this with another "store" causes svelte transition bug! -->
 {#key show}
     {#each currentItems as item}
-        {#if show && shouldItemBeShown(item, currentItems, showItemRef, update)}
+        {#if show && shouldItemBeShown(item, currentItems, showItemRef, update) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
             <SlideItemTransition
                 {preview}
                 {transitionEnabled}
@@ -169,8 +169,9 @@
                     {ratio}
                     {outputId}
                     ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
-                    linesStart={customLines?.[currentLineId || ""]?.start}
-                    linesEnd={customLines?.[currentLineId || ""]?.end}
+                    linesStart={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
+                    linesEnd={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
+                    clickRevealed={!!customLines?.[currentLineId || ""]?.clickRevealed}
                     outputStyle={current.currentStyle}
                     {mirror}
                     {preview}

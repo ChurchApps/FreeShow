@@ -1097,7 +1097,6 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
 }
 
 export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
-    console.log(outSlide)
     if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
@@ -1132,14 +1131,15 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
 
     // lines reveal
     const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
-    const currentReveal = outSlide?.revealCount ?? 0
+    const currentReveal = outSlide.revealCount ?? 0
+    let linesStart: number | null = null
+    let linesEnd: number | null = null
     if (linesRevealItems.length) {
-        start = maxStyleLines ? Math.max(0, currentReveal - maxStyleLines) : 0
-        end = currentReveal
+        linesStart = maxStyleLines ? Math.max(0, currentReveal - maxStyleLines) : 0
+        linesEnd = currentReveal
     }
 
-    const active = !!(maxStyleLines || linesRevealItems.length)
-    return { start: active ? start : null, end: active ? end : null } // , index: linesIndex, max: maxStyleLines
+    return { start: !!maxStyleLines ? start : null, end: !!maxStyleLines ? end : null, linesStart: !!linesRevealItems.length ? linesStart : null, linesEnd: !!linesRevealItems.length ? linesEnd : null, clickRevealed: !!outSlide.itemClickReveal } // , index: linesIndex, max: maxStyleLines
 }
 
 function getHighestOutputLinePos() {

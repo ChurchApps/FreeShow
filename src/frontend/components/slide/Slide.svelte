@@ -56,7 +56,7 @@
     export let color: string | null = slide.color
     export let index: number
     export let columns = 1
-    export let output: { color: string; line: number; maxLines: number; cached: boolean } | null = null
+    export let output: { color: string; line: number; maxLines: number; cached: boolean; clickRevealed?: boolean } | null = null
     export let active = false
     export let focused = false
     export let list = false
@@ -65,6 +65,7 @@
     export let noQuickEdit = false
     export let altKeyPressed = false
     export let disableThumbnails = false
+    export let centerPreview = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
@@ -432,6 +433,8 @@
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
+                                    clickRevealed={!!output?.clickRevealed}
+                                    {centerPreview}
                                 />
                             {/if}
                         {/each}

@@ -87,19 +87,37 @@
             let currentOutput = $outputs[outputId] || {}
             let outSlide = currentOutput.out?.slide || null
             let amountOfLinesToShow = getFewestOutputLines()
+            let showSlide = _show(showId).slides([slideRef[index]?.id]).get()[0]
             let line = 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && amountOfLinesToShow > 0) {
                 line = (outSlide.line || 0) + amountOfLinesToShow
 
-                let showSlide = _show(showId).slides([slideRef[index]?.id]).get()[0]
                 let slideLines = showSlide ? getItemWithMostLines(showSlide) : 0
                 // loop back to line start
                 if (line >= slideLines) line = 0
             }
 
-            // WIP get lines reveal
+            // get item click reveal
+            const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+            const isRevealed = clickRevealItems.length ? !!outSlide?.itemClickReveal : true
+            let itemClickReveal = false
+            if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && clickRevealItems.length) {
+                // WIP this does not toggle on click
+                itemClickReveal = true
+            }
 
-            setOutput("slide", { id: showId, layout: activeLayout, index, line })
+            // get lines reveal
+            const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+            let revealCount = outSlide?.revealCount ?? 0
+            if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
+                revealCount++
+
+                // loop back to start
+                let maxLines = getItemWithMostLines({ items: linesRevealItems })
+                if (revealCount > maxLines) revealCount = 0
+            } else revealCount = 0
+
+            setOutput("slide", { id: showId, layout: activeLayout, index, line, revealCount, itemClickReveal })
             updateOut(showId, index, slideRef, !e.altKey)
 
             getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
@@ -249,7 +267,8 @@
                 color: $outputs[a].color,
                 line: lineIndex,
                 maxLines,
-                cached: !currentOutput.out?.slide
+                cached: !currentOutput.out?.slide,
+                clickRevealed: !!currentOutput.out?.slide?.itemClickReveal
             }
         })
     }
@@ -424,6 +443,7 @@
                                     icons
                                     {altKeyPressed}
                                     disableThumbnails={isLessons && !loaded}
+                                    centerPreview
                                     on:click={(e) => slideClick(e, i)}
                                 />
                             {/if}

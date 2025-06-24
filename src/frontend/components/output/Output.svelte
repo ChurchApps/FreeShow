@@ -167,7 +167,7 @@
     $: templateBackground = styleTemplate?.settings?.backgroundPath || ""
 
     // lines
-    let lines: { [key: string]: { start: number | null; end: number | null } } = {}
+    let lines: { [key: string]: { start: number | null; end: number | null; linesStart?: number | null; linesEnd?: number | null; clickRevealed?: boolean } } = {}
     $: currentLineId = slide?.id
     const updateLinesTime = $currentWindow === "output" ? 50 : 10
     $: if (currentLineId) {
@@ -176,7 +176,6 @@
             lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
         }, updateLinesTime)
     }
-    $: console.log(lines)
 
     // metadata
     let metadata: OutputMetadata = {}

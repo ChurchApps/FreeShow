@@ -46,10 +46,12 @@
     export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
+    export let clickRevealed: boolean = false
     export let stageAutoSize = false
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let centerPreview = false
     export let revealed = -1
     export let styleIdOverride = ""
 
@@ -89,7 +91,7 @@
         }
 
         // reset item styles (as it's set in parent item)
-        if (isStage) {
+        if (isStage && !style) {
             style += "display: contents;"
         }
 
@@ -316,7 +318,7 @@
     class:noTransition
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
-    class:reveal={mirror && !preview && item.clickReveal}
+    class:reveal={(centerPreview || isStage) && item.clickReveal && !clickRevealed}
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
@@ -325,8 +327,6 @@
         <TextboxLines
             {item}
             {slideIndex}
-            {mirror}
-            {preview}
             {isMirrorItem}
             {key}
             {smallFontSize}
@@ -346,6 +346,7 @@
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}
+            {centerPreview}
             {revealed}
             on:updateAutoSize={calculateAutosize}
         />
@@ -376,7 +377,7 @@
 
     .item.reveal {
         outline: 1px solid red;
-        opacity: 0.7;
+        opacity: 0.6;
     }
 
     .clickable {

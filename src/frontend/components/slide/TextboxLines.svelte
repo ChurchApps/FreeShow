@@ -10,8 +10,6 @@
 
     export let item: Item
     export let slideIndex = 0
-    export let mirror = false
-    export let preview = false
     export let isMirrorItem = false
     export let key = false
     export let smallFontSize = false
@@ -37,6 +35,7 @@
     export let customTypeRatio = 1
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let centerPreview = false
     export let revealed = -1
 
     $: lines = clone(item?.lines || [])
@@ -141,7 +140,7 @@
     // CHORDS
 
     let chordLines: string[] = []
-    $: if (chords && (item.lines || fontSize)) createChordLines()
+    $: if (chords && (item?.lines || fontSize)) createChordLines()
     function createChordLines() {
         chordLines = []
         if (!Array.isArray(item?.lines)) return
@@ -236,7 +235,7 @@
                 <!-- class:height={!line.text[0]?.value.length} -->
                 <div
                     class="break"
-                    class:reveal={mirror && !preview && item.lineReveal && revealed < i}
+                    class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
                     style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}"
                 >
@@ -298,7 +297,7 @@
 
     .lines .break.reveal {
         outline: 1px solid red;
-        outline-offset: -8px;
+        outline-offset: -10px;
         opacity: 0.7;
     }
 
