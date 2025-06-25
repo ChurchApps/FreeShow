@@ -11,7 +11,7 @@ import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
 
 // only available with right click: "simple", "groups"
-const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid" }
+const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
 export function changeSlidesView() {
     slidesOptions.set({ ...get(slidesOptions), mode: slidesViews[get(slidesOptions).mode] })
 }

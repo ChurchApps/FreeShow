@@ -57,6 +57,8 @@
         data: [{ id: "value", name: "$:conditions.value:$" }] // { id: "state" }
     }
 
+    // WIP time_hours/video_time etc. should be treated as number like timer, instead of string
+
     const customOperators = {
         timer: [
             { id: "isAbove", name: "$:conditions.is_above:$" },

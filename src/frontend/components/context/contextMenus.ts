@@ -292,7 +292,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     metadata_tools: ["manage_metadata"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
-    slideViews: ["view_grid", "view_simple", "view_groups", "view_list", "view_lyrics"],
+    slideViews: ["view_grid", "view_list", "view_lyrics", "SEPERATOR", "view_simple", "view_groups"],
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
     meta_message: ["dynamic_values"],

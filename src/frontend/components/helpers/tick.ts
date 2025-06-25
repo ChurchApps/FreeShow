@@ -2,8 +2,9 @@ import { get } from "svelte/store"
 import { outputs, slideTimers } from "../../stores"
 import { clone } from "./array"
 import { nextSlide } from "./showActions"
+import { playFolder } from "../../utils/shortcuts"
 
-export function newSlideTimer(timerId: string, duration: number) {
+export function newSlideTimer(timerId: string, duration: number, folderPath: string = "") {
     if (duration <= 0) return
 
     if (get(slideTimers)[timerId]) {
@@ -11,7 +12,7 @@ export function newSlideTimer(timerId: string, duration: number) {
     }
 
     slideTimers.update((a) => {
-        a[timerId] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, timerId) }
+        a[timerId] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, timerId), data: folderPath }
         return a
     })
 
@@ -30,6 +31,8 @@ export function newSlideTimer(timerId: string, duration: number) {
 
         if (!get(slideTimers)[id]) return
 
+        const data = get(slideTimers)[id].data || ""
+
         outputs.update((a) => {
             if (a[id].out) a[id].out!.transition = null
             return a
@@ -39,6 +42,11 @@ export function newSlideTimer(timerId: string, duration: number) {
             delete a[id]
             return a
         })
+
+        if (data) {
+            playFolder(data)
+            return
+        }
 
         nextSlide(null, false, false, true, true, id)
     }

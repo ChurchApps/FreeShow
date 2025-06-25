@@ -329,7 +329,7 @@
     </Button> -->
     <CombinedInput style="background-color: initial;border-bottom: 0;">
         <Button style="width: 50%;padding: 8px !important;" on:click={backup} center>
-            <span style="display: flex;align-items: center;">
+            <span style="display: flex;align-items: center;" title={$dictionary.settings?.backup_info}>
                 <Icon id="export" style="margin-inline-start: 0.5em;" size={1.3} right />
                 <p><T id="settings.backup_all" /></p>
             </span>

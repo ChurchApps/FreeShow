@@ -62,6 +62,7 @@ import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { playFolder } from "../../utils/shortcuts"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -211,6 +212,13 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         if (start && slide?.id !== get(activeShow)?.id) slide = null
         const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
         playPdf(slide, nextPage)
+        return
+    }
+
+    // Folder
+    if (((!slide || start) && get(activeShow)?.type === "folder") || (!start && slide?.type === "folder")) {
+        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+        playFolder(path)
         return
     }
 
@@ -460,6 +468,13 @@ export function previousSlide(e: any, customOutputId?: string) {
     if ((!slide && get(activeShow)?.type === "pdf") || slide?.type === "pdf") {
         const nextPage = slide?.page ? slide.page - 1 : 0
         playPdf(slide, nextPage)
+        return
+    }
+
+    // Folder
+    if ((!slide && get(activeShow)?.type === "folder") || slide?.type === "folder") {
+        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+        playFolder(path, true)
         return
     }
 

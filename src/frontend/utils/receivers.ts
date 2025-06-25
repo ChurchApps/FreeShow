@@ -63,7 +63,7 @@ import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, save } from "./save"
 import { client } from "./sendData"
-import { previewShortcuts } from "./shortcuts"
+import { playFolder, previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
 
 export function setupMainReceivers() {
@@ -154,8 +154,15 @@ const receiveOUTPUTasMAIN: any = {
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
 
-        const videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
+        const background = get(outputs)[msg.id]?.out?.background
+        const videoPath: string = background?.path || background?.id || ""
         if (!videoPath) return
+
+        // project media folder
+        if (background?.folderPath) {
+            playFolder(background.folderPath)
+            return
+        }
 
         // check and execute next after media regardless of loop
         if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return

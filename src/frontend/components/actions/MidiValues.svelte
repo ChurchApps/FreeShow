@@ -39,7 +39,7 @@
         dispatch("change", midi)
     }
 
-    let types = [{ name: "noteon" }, { name: "noteoff" }]
+    let types = [{ name: "noteon" }, { name: "noteoff" }, { name: "control" }]
 
     let inputs: any[] = [{ name: "—" }]
     let outputs: any[] = [{ name: "—" }]
@@ -120,7 +120,7 @@
     {/if}
 {/if}
 
-{#if hasActions}
+{#if hasActions && midi.type !== "control"}
     <CombinedInput>
         <p><T id="midi.use_default_values" /></p>
         <div class="alignRight">
@@ -145,25 +145,36 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
-    <p>
-        <T id="midi.note" />
-        <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values?.note ?? 0)}</span>
-    </p>
-    <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-</CombinedInput>
-{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
-    {#if type === "input"}
+{#if midi.type === "control"}
+    <CombinedInput>
+        <p><T id="midi.controller" /></p>
+        <NumberInput value={midi.values?.controller || 0} max={127} on:change={(e) => setValues("controller", Number(e.detail))} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="variables.value" /></p>
+        <NumberInput value={midi.values?.value || 0} max={127} on:change={(e) => setValues("value", Number(e.detail))} />
+    </CombinedInput>
+{:else}
+    <CombinedInput>
+        <p>
+            <T id="midi.note" />
+            <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values?.note ?? 0)}</span>
+        </p>
+        <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
+    </CombinedInput>
+    {#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
+        {#if type === "input"}
+            <CombinedInput>
+                <p style="font-size: 0.7em;opacity: 0.8;">
+                    <T id="midi.tip_velocity" />
+                </p>
+            </CombinedInput>
+        {/if}
         <CombinedInput>
-            <p style="font-size: 0.7em;opacity: 0.8;">
-                <T id="midi.tip_velocity" />
-            </p>
+            <p><T id="midi.velocity" /></p>
+            <NumberInput value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", Number(e.detail))} />
         </CombinedInput>
     {/if}
-    <CombinedInput>
-        <p><T id="midi.velocity" /></p>
-        <NumberInput value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", Number(e.detail))} />
-    </CombinedInput>
 {/if}
 <CombinedInput>
     <p><T id="midi.channel" /></p>

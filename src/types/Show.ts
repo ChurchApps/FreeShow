@@ -399,11 +399,15 @@ export interface Action {
 export interface MidiValues {
     input?: string
     output?: string
-    type: "noteon" | "noteoff" | "cc"
+    type: "noteon" | "noteoff" | "control"
     values: {
-        note: number
-        velocity: number
         channel: number
+        // Note
+        note?: number
+        velocity?: number
+        // CC
+        controller?: number
+        value?: number
     }
 }
 
@@ -484,6 +488,7 @@ export interface OutBackground {
     flippedY?: boolean
     title?: string // player
     cameraGroup?: string // camera
+    folderPath?: string // project media folder
 
     ignoreLayer?: boolean // foreground background type
 }
@@ -513,6 +518,7 @@ export interface OutTransition {
     // action: string
     // slide?: number
     duration: number
+    folderPath?: string
 }
 
 export interface SlideTimer {
@@ -524,6 +530,7 @@ export interface SlideTimer {
     timer: any
     remaining?: number
     start?: number
+    data?: string // used for project media folder loop
 }
 
 export interface Tag {

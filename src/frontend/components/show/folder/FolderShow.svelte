@@ -5,13 +5,14 @@
     import { clearAudio } from "../../../audio/audioFading"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, activeProject, dictionary, media, outLocked, outputs, playingAudio, popupData, projects, styles } from "../../../stores"
+    import { activePopup, activeProject, dictionary, focusMode, media, outLocked, outputs, playingAudio, popupData, projects, styles } from "../../../stores"
     import { audioExtensions, imageExtensions, videoExtensions } from "../../../values/extensions"
     import Card from "../../drawer/Card.svelte"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
+    import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle, getMediaType, getVideoDuration } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -29,7 +30,7 @@
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     onMount(async () => {
         const files = await requestMain(Main.READ_FOLDER, { path })
-        folderFiles = files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath }))
+        folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
 
         // get total time
         let total = 0
@@ -67,10 +68,7 @@
         if (videoType === "foreground") clearSlide()
         setOutput("background", { path: file.path, type: file.type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
 
-        // WIP auto advance: slide timer / video advance & audio
-        // if (file.type === "image" && timer) {
-        //     newSlideTimer("media_folder_timer", timer)
-        // }
+        startFolderTimer(path, file)
     }
 
     $: timer = data?.timer ?? 10
@@ -133,28 +131,30 @@
     {/if}
 </div>
 
-<div class="actions">
-    <div class="left">
-        <Button on:click={() => sendMain(Main.SYSTEM_OPEN, path)}>
-            <Icon id="folder" right />
-            <T id="main.open" />
-        </Button>
-    </div>
+{#if !$focusMode}
+    <div class="actions">
+        <div class="left">
+            <Button on:click={() => sendMain(Main.SYSTEM_OPEN, path)}>
+                <Icon id="folder" right />
+                <T id="main.open" />
+            </Button>
+        </div>
 
-    <div class="right">
-        <Button
-            disabled={!folderFiles.length}
-            on:click={() => {
-                popupData.set({ type: "folder", value: timer, totalTime })
-                activePopup.set("next_timer")
-            }}
-            title="{$dictionary.popup?.next_timer}{totalTime !== 0 ? `: ${totalTime}s` : ''}"
-        >
-            <Icon size={1.1} id="clock" white={totalTime === 0} right />
-            {joinTime(secondsToTime(totalTime))}
-        </Button>
+        <div class="right">
+            <Button
+                disabled={!folderFiles.length}
+                on:click={() => {
+                    popupData.set({ type: "folder", value: timer, totalTime })
+                    activePopup.set("next_timer")
+                }}
+                title="{$dictionary.popup?.next_timer}{totalTime !== 0 ? `: ${totalTime}s` : ''}"
+            >
+                <Icon size={1.1} id="clock" white={totalTime === 0} right />
+                {joinTime(secondsToTime(totalTime))}
+            </Button>
+        </div>
     </div>
-</div>
+{/if}
 
 <style>
     .grid {

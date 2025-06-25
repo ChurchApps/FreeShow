@@ -79,7 +79,7 @@
             </HoverButton>
         {:else if show.type === "folder"}
             {#key show.id}
-                <FolderShow path={show.id} index={show.index} />
+                <FolderShow path={show.id} index={show.index || 0} />
             {/key}
         {:else if (show.type || "show") === "show"}
             <Slides showId={$activeShow?.id || ""} />

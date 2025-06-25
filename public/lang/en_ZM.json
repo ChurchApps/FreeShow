@@ -8,6 +8,7 @@
         "drop": "Drop here",
         "search": "Search",
         "quick_search": "Quick search",
+        "search_active": "Search is active",
         "none": "None",
         "finished": "Finished",
         "open": "Open",
@@ -79,10 +80,12 @@
         "global_options": "These options are applied globally."
     },
     "setup": {
-        "good_luck": "I hope you find this software useful. Good luck showing! :)",
+        "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
         "tips": "Find handy tips and tutorials on the website.",
         "change_later": "You can change these settings later",
-        "get_started": "Get started!"
+        "get_started": "Get started!",
+        "or": "or",
+        "restore_data": "Restore previous data"
     },
     "example": {
         "welcome": "Welcome",
@@ -154,11 +157,13 @@
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",
-        "drawing": "Clear drawing"
+        "drawing": "Clear drawing",
+        "search": "Clear search"
     },
     "remove": {
         "background": "Remove background",
         "overlays": "Remove overlays",
+        "effects": "Remove effects",
         "audio": "Remove audio",
         "nextTimer": "Remove next slide timer",
         "to_start": "Remove go to start",
@@ -212,6 +217,7 @@
         "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
+        "use_metadata_bpm": "Use BPM from metadata",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Beats",
@@ -408,6 +414,7 @@
         "show": "New show",
         "select_show": "Select show",
         "select_template": "Select template",
+        "custom_text": "Set custom text",
         "rename": "Rename",
         "color": "Colour",
         "color_gradient": "Gradient colour",
@@ -452,6 +459,7 @@
         "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
+        "custom_action": "Custom action",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
@@ -464,6 +472,8 @@
         "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
+        "chums_sync_categories": "Select categories to sync",
+        "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -529,7 +539,9 @@
         "scripture": "New scripture",
         "collection": "New collection",
         "action": "New action",
-        "event": "New event"
+        "event": "New event",
+        "event_action": "New scheduled action",
+        "effect": "New effect"
     },
     "show": {
         "name": "Name",
@@ -551,7 +563,8 @@
         "delete_manual": "Manual check",
         "delete_match": "Delete if exact match",
         "delete_keep_last_modified": "Delete all except last modified",
-        "delete_keep_first_created": "Delete all except first created"
+        "delete_keep_first_created": "Delete all except first created",
+        "custom_action_tip": "Assign a custom action for this show to trigger when this button is clicked."
     },
     "actions": {
         "rename": "Rename",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "Change stage connections layout",
         "start_camera": "Start camera",
         "start_screen": "Start screen",
+        "id_start_effect": "Start effect",
         "id_select_overlay": "Start overlay",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
@@ -899,6 +913,7 @@
         "break_long_lines": "Break long lines",
         "break_long_lines_tip": "Break line if longer than the set words",
         "media_fit": "Media fit",
+        "cropping": "Cropping",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",
         "size": "Size",
@@ -986,7 +1001,11 @@
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
         "progress_bar": "Progress bar",
-        "each_number_once": "Each number only once"
+        "each_number_once": "Each number only once",
+        "side": "Side",
+        "count": "Count",
+        "speed": "Speed",
+        "angle": "Angle"
     },
     "items": {
         "text": "Textbox",
@@ -1007,6 +1026,7 @@
         "visualizer": "Visualiser",
         "captions": "Captions",
         "icon": "Icon",
+        "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
         "current_output": "Current output"
@@ -1084,6 +1104,7 @@
         "activate": "Activate by MIDI signal",
         "activate_keypress": "Activate by keypress",
         "name": "Name",
+        "description": "Description",
         "input": "Input",
         "output": "Output",
         "type": "Type",
@@ -1123,7 +1144,8 @@
         "straight": "Straight",
         "rainbow": "Rainbow",
         "threed": "3D",
-        "dots": "Dots"
+        "dots": "Dots",
+        "link_to_slide": "Link to slide"
     },
     "stage": {
         "stage_layout": "Stage layout",
@@ -1440,6 +1462,36 @@
         "weekly": "Weekly",
         "mothly": "Monthly"
     },
+    "effect": {
+        "stars": "Stars",
+        "galaxy": "Galaxy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "bubbles": "Bubbles",
+        "grass": "Grass",
+        "wave": "Wave",
+        "sun": "Sun",
+        "lens_flare": "Lens flare",
+        "lightning": "Lightning",
+        "rainbow": "Rainbow",
+        "spotlight": "Spotlight",
+        "aurora": "Aurora",
+        "bloom": "Bloom",
+        "fog": "Fog",
+        "city": "City",
+        "fireworks": "Fireworks",
+        "rays": "Rays",
+        "cycle": "Cycle",
+        "circle": "Circle",
+        "rectangle": "Rectangle",
+        "triangle": "Triangle",
+        "asset": "Asset",
+        "swirl_strength": "Swirl strength",
+        "arm_count": "Arm count",
+        "drift": "Drift",
+        "pulse_speed": "Pulse speed",
+        "hollow": "Hollow"
+    },
     "info": {
         "created": "Created",
         "modified": "Modified",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "chums": {
+        "sync_categories": "Sync categories",
+        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }

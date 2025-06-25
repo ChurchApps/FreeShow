@@ -10,6 +10,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audio
 import { sendMain } from "../../IPC/main"
 import {
     actions,
+    activeProject,
     activeRename,
     allOutputs,
     categories,
@@ -25,6 +26,7 @@ import {
     overlays,
     overlayTimers,
     playingVideos,
+    projects,
     scriptures,
     serverData,
     showsCache,
@@ -186,6 +188,18 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         return a
     })
+}
+
+export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {
+    // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
+    const projectItems = get(projects)[get(activeProject) || ""]?.shows
+    // this does not work with multiple of the same folder
+    let projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
+    if (!timer || file.type !== "image") return
+
+    // newSlideTimer played from Preview.svelte
+    setOutput("transition", { duration: timer, folderPath })
 }
 
 function appendShowUsage(showId: string) {
@@ -383,6 +397,8 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     const outputIds = getActiveOutputs(updater, true, true, true)
 
     outputIds.forEach((outputId: string) => {
+        if (!cleared) return
+
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
         cleared = !keys.find((type: string) => {

@@ -10,7 +10,7 @@ import { sendMidi } from "../helpers/showActions"
 
 const OSC_SIGNAL_INPUTS: Input[] = [
     { name: "inputs.url", id: "host", type: "string", value: "0.0.0.0" }, // ws://127.0.0.1
-    { name: "settings.port", id: "port", type: "number", value: 8080, settings: { max: 65535, buttons: false } },
+    { name: "settings.port", id: "port", type: "number", value: 8080, settings: { max: 65535, buttons: false } }
 ]
 
 const INPUT_REST: Input = { name: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
@@ -25,20 +25,21 @@ const MIDI_SIGNAL_INPUTS: Input[] = [
         options: [
             { id: "noteon", name: "noteon" },
             { id: "noteoff", name: "noteoff" },
-        ],
-    },
+            { id: "control", name: "control" }
+        ]
+    }
 ]
 
 export const emitterData: { [key in EmitterTypes]: EmitterInputs } = {
     osc: {
-        signal: OSC_SIGNAL_INPUTS,
+        signal: OSC_SIGNAL_INPUTS
     },
     http: {
-        signal: [{ ...INPUT_REST, settings: { emitter: true } }],
+        signal: [{ ...INPUT_REST, settings: { emitter: true } }]
     },
     midi: {
-        signal: MIDI_SIGNAL_INPUTS,
-    },
+        signal: MIDI_SIGNAL_INPUTS
+    }
 }
 
 function valueArrayToObject(values: EmitterTemplateValue[], removeEmptyValues = false) {
@@ -58,7 +59,7 @@ function getMidiInfo(values: { note?: number; velocity?: number; channel?: numbe
 export const formatData = {
     osc: (values: EmitterTemplateValue[], data = "") => `/${Object.values(valueArrayToObject(values, true)).join("/")}${data ? ` ${data}` : ""}`,
     http: (values: EmitterTemplateValue[]) => JSON.stringify(valueArrayToObject(values)),
-    midi: (values: EmitterTemplateValue[]) => getMidiInfo(typeof values[0]?.value === "object" ? values[0].value : {}),
+    midi: (values: EmitterTemplateValue[]) => getMidiInfo(typeof values[0]?.value === "object" ? values[0].value : {})
 }
 
 const EMIT_DATA = {
@@ -77,7 +78,7 @@ const EMIT_DATA = {
         const midiValues = { channel: 1, note: 0, velocity: 0, ...values[0].value }
         const data: API_midi = { output: signal.output, type: signal.type || "noteon", values: midiValues }
         sendMidi(data)
-    },
+    }
 }
 
 export function emitData(data: API_emitter) {
