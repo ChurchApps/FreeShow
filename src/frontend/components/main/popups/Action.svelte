@@ -148,7 +148,7 @@
         // remove action id
         if (actionId === "remove") {
             if (index === undefined) index = action.triggers.length - 1
-            action.triggers.splice(index)
+            action.triggers.splice(index, 1)
             action = action
             return
         }

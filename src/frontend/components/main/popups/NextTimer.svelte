@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { LayoutRef } from "../../../../types/Show"
-    import { activePopup, activeShow, popupData, showsCache } from "../../../stores"
+    import { activePopup, activeProject, activeShow, popupData, projects, showsCache } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
@@ -12,6 +12,8 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import { getLayoutRef } from "../../helpers/show"
 
+    let type = $popupData.type || "show"
+
     let value = $popupData.value || 0
     let layoutRef = getLayoutRef()
     let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
@@ -21,12 +23,29 @@
     onMount(() => {
         popupData.set({})
 
-        if (allSlides) getTotalTime()
+        if (type === "folder") totalTime = $popupData.totalTime
+        else if (allSlides) getTotalTime()
     })
 
     function updateValue(e: any) {
         value = e?.detail ?? e
         if (value) value = Number(value)
+
+        if (type === "folder") {
+            projects.update((a) => {
+                const index = $activeShow?.index ?? -1
+                const projectId = $activeProject
+                if (!projectId || !a[projectId] || index < 0) return a
+
+                if (!a[projectId].shows[index].data) a[projectId].shows[index].data = {}
+                a[projectId].shows[index].data.timer = value || 0
+
+                return a
+            })
+
+            activePopup.set(null)
+            return
+        }
 
         history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
 
@@ -59,7 +78,7 @@
         appliedToSlides = [...new Set(allValues)].length === 1 && allValues[0] === allTime ? allTime : 0
     }
 
-    let allTime: number = allActiveSlides[0]?.data?.nextTimer || 10
+    let allTime: number = type === "folder" ? value || 10 : allActiveSlides[0]?.data?.nextTimer || 10
 
     $: newTime = allTime * allActiveSlides.length
 
@@ -79,7 +98,7 @@
 
     <CombinedInput>
         <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
-        {#if totalTime && (appliedToSlides === allTime || allTime === 0)}
+        {#if type === "folder" ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
             <Button style="flex: 1;" on:click={() => updateValue(undefined)} center dark>
                 <Icon id="reset" right />
                 <T id="actions.reset" />

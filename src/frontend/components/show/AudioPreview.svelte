@@ -48,10 +48,10 @@
         if (rendering) cancelAnimationFrame(rendering)
     })
 
-    function setTime(e: any) {
+    function setTime(e: any, newTime: number | null = null) {
         sliderValue = null
 
-        const time = e.target.value
+        const time = newTime ?? e?.target?.value
         if (!AudioPlayer.setTime(path, time)) {
             currentTime = time
         }
@@ -190,6 +190,26 @@
         </span>
 
         <div style="display: flex;">
+            <!-- +/- 10 seconds -->
+            <Button
+                center
+                title={$dictionary.media?.back10}
+                on:click={() => {
+                    setTime(null, Math.max(currentTime - 10, 0.01))
+                }}
+            >
+                <Icon id="back_10" white size={1.4} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.media?.forward10}
+                on:click={() => {
+                    setTime(null, Math.min(currentTime + 10, duration - 0.1))
+                }}
+            >
+                <Icon id="forward_10" white size={1.4} />
+            </Button>
+
             <Button
                 disabled={!playing.audio}
                 style="flex: 0"
@@ -220,6 +240,7 @@
                     <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
                 </Button>
             {/if}
+
             <!-- VOLUME (moved to editor) -->
             <!-- <Button
                 center

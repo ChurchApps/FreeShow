@@ -840,6 +840,9 @@ const clickActions = {
     view_simple: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "simple" })
     },
+    view_groups: () => {
+        slidesOptions.set({ ...get(slidesOptions), mode: "groups" })
+    },
     view_list: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "list" })
     },
@@ -1032,12 +1035,50 @@ const clickActions = {
     },
     item_actions: (obj: ObjData) => {
         const action = obj.menu.id || ""
-        popupData.set({ action })
 
         // if (action === "transition") {
+        //     popupData.set({ action })
         //     activePopup.set("transition")
         if (action.includes("Timer")) {
+            popupData.set({ action })
             activePopup.set("set_time")
+        } else {
+            const id = obj.menu?.id || ""
+            const items = get(activeEdit).items
+
+            if (get(activeEdit).id) {
+                const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+                const newState = !currentItems[items[0]][id]
+
+                history({
+                    id: "UPDATE",
+                    oldData: { id: get(activeEdit).id },
+                    newData: { key: "items", subkey: id, data: newState, indexes: items },
+                    location: { page: "edit", id: get(activeEdit).type + "_items", override: true }
+                })
+
+                return
+            }
+
+            const slideIndex = get(activeEdit).slide || 0
+            const ref = getLayoutRef()
+            const slideRef = ref[slideIndex]
+
+            const currentItems = _show().slides([slideRef.id]).items(items).get()[0]
+            const newState = !currentItems[items[0]][id]
+
+            // not made for booleans:
+            // history({
+            //     id: "setItems",
+            //     newData: { style: { key: id, values: [newState] } },
+            //     location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itemaction_" + slideRef.id + "_items_" + items.join(",") }
+            // })
+            showsCache.update((a) => {
+                items.forEach((itemIndex) => {
+                    a[get(activeShow)!.id].slides[slideRef.id].items[itemIndex][id] = newState
+                })
+                return a
+            })
         }
     },
     template_actions: (obj: ObjData) => {

@@ -10,6 +10,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audio
 import { sendMain } from "../../IPC/main"
 import {
     actions,
+    activeProject,
     activeRename,
     allOutputs,
     categories,
@@ -25,6 +26,7 @@ import {
     overlays,
     overlayTimers,
     playingVideos,
+    projects,
     scriptures,
     serverData,
     showsCache,
@@ -44,7 +46,7 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
-import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
@@ -186,6 +188,18 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         return a
     })
+}
+
+export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {
+    // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
+    const projectItems = get(projects)[get(activeProject) || ""]?.shows
+    // this does not work with multiple of the same folder
+    let projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
+    if (!timer || file.type !== "image") return
+
+    // newSlideTimer played from Preview.svelte
+    setOutput("transition", { duration: timer, folderPath })
 }
 
 function appendShowUsage(showId: string) {
@@ -383,6 +397,8 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     const outputIds = getActiveOutputs(updater, true, true, true)
 
     outputIds.forEach((outputId: string) => {
+        if (!cleared) return
+
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
         cleared = !keys.find((type: string) => {
@@ -802,8 +818,14 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
 
+        // use original line reveal if style template does not have the value set
+        const hasLineReveal = item.lineReveal
+        if (hasLineReveal) templateItem.lineReveal = true
+        // const hasClickReveal = item.clickReveal
+        // if (hasClickReveal) templateItem.clickReveal = true
+
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem[style]) item[style] = templateItem[style]
@@ -1116,18 +1138,38 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
     const linesIndex = Math.ceil(maxLines * progress) - 1
-    let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+    let start = maxStyleLines ? maxStyleLines * Math.floor(linesIndex / maxStyleLines) : 0
 
     // current style lines does not match another output lines index
     // e.g. styles set to 5 lines & 2 lines, with slide text of 6 lines
     const highestLinePos = getHighestOutputLinePos()
     const isEnding = maxLines && highestLinePos + amountOfLinesToShow >= maxLines
-    const overflow = maxLines % maxStyleLines
+    const overflow = maxStyleLines ? maxLines % maxStyleLines : 0
     if (isEnding && overflow > 0) start = maxLines - overflow
+
+    let end = start + maxStyleLines
 
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
-    return { start, end: start + maxStyleLines } // , index: linesIndex, max: maxStyleLines
+    // lines reveal
+    const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+    const currentReveal = outSlide.revealCount ?? 0
+    let linesStart: number | null = null
+    let linesEnd: number | null = null
+    if (linesRevealItems.length) {
+        linesStart = maxStyleLines ? Math.max(0, currentReveal - maxStyleLines) : 0
+        linesEnd = currentReveal
+    }
+
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+
+    return {
+        start: !!maxStyleLines ? start : null,
+        end: !!maxStyleLines ? end : null,
+        linesStart: !!linesRevealItems.length ? linesStart : null,
+        linesEnd: !!linesRevealItems.length ? linesEnd : null,
+        clickRevealed: clickRevealItems.length ? !!outSlide.itemClickReveal : true
+    } // , index: linesIndex, max: maxStyleLines
 }
 
 function getHighestOutputLinePos() {
@@ -1175,9 +1217,10 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
+    metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
 
-    const metadataTemplateValue = templatesUpdater[templateId]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
+    const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId].items?.[0])
     // if (metadataTemplateValue || metadata.message || currentStyle)
     getMetaValue()
     function getMetaValue() {
@@ -1186,10 +1229,10 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
             return
         }
 
-        if (metadataTemplateValue.includes("{")) {
+        if (metadataTemplateValue.find((a) => a.includes("{"))) {
             if (!outSlide) return
             const ref = { showId: outSlide.id, layoutId: outSlide.layout, slideIndex: outSlide.index }
-            metadata.value = replaceDynamicValues(metadataTemplateValue, ref)
+            metadata.value = replaceDynamicValues(metadataTemplateValue.join("<br>"), ref)
             return
         }
 
@@ -1201,6 +1244,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
     const messageTemplate = overrideOutput ? show.message?.template || "" : currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate, templatesUpdater) || defaultMessageStyle
+    metadata.messageStyle += getTemplateAlignment(messageTemplate, templatesUpdater)
     metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
     return clone(metadata)
@@ -1220,6 +1264,17 @@ function getTemplateStyle(templateId: string, templatesUpdater: Templates) {
     const textStyle = template.items?.[0]?.lines?.[0]?.text?.[0]?.style || ""
 
     return style + textStyle
+}
+
+function getTemplateAlignment(templateId: string, templatesUpdater: Templates) {
+    if (!templateId) return
+    const template = templatesUpdater[templateId]
+    if (!template) return
+
+    const itemAlign = template.items?.[0]?.align || ""
+    const lineAlign = template.items?.[0]?.lines?.[0]?.align || ""
+
+    return itemAlign + lineAlign.replace("text-align", "justify-content")
 }
 
 export function decodeExif(data: any) {

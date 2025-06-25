@@ -56,7 +56,7 @@
     export let color: string | null = slide.color
     export let index: number
     export let columns = 1
-    export let output: { color: string; line: number; maxLines: number; cached: boolean } | null = null
+    export let output: { color: string; line: number; maxLines: number; cached: boolean; clickRevealed?: boolean } | null = null
     export let active = false
     export let focused = false
     export let list = false
@@ -65,6 +65,7 @@
     export let noQuickEdit = false
     export let altKeyPressed = false
     export let disableThumbnails = false
+    export let centerPreview = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
@@ -287,7 +288,7 @@
         if (viewMode !== "lyrics" || noQuickEdit) colorStyle += `background-color: ${color};`
         if (!$fullColors && (viewMode !== "lyrics" || noQuickEdit)) colorStyle += `color: ${color};`
         if (viewMode === "lyrics" && !noQuickEdit) colorStyle += "background-color: transparent;"
-        if (viewMode !== "grid" && viewMode !== "simple" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
+        if (viewMode !== "grid" && viewMode !== "simple" && viewMode !== "groups" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
 
     $: slideFilter = getSlideFilter(layoutSlide)
@@ -334,7 +335,12 @@
     }
 </script>
 
-<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
+<div
+    class="main"
+    class:active
+    class:focused
+    style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;"
+>
     <!-- group box -->
     {#if $fullColors}
         <div class="group_box" style="background-color: {color};" />
@@ -363,7 +369,7 @@
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" title={removeTagsAndContent(name || "")} style="color: {color};margin-bottom: 5px;">
-                        <span style="color: var(--text);opacity: 0.85;">{index + 1}</span>
+                        <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
                     </div>
                 {/if}
@@ -421,6 +427,7 @@
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
                                     disableListTransition
                                     {item}
+                                    revealed={output?.line ?? -1}
                                     itemIndex={i}
                                     {ratio}
                                     slideIndex={index}
@@ -431,6 +438,8 @@
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
+                                    clickRevealed={!!output?.clickRevealed}
+                                    {centerPreview}
                                 />
                             {/if}
                         {/each}
@@ -488,7 +497,7 @@
 
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
-                        <span style="color: var(--text);opacity: 0.85;">{index + 1}</span>
+                        <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>

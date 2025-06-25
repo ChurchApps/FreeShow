@@ -7,6 +7,7 @@
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import AudioPreview from "../AudioPreview.svelte"
+    import FolderShow from "../folder/FolderShow.svelte"
     import OverlayPreview from "../overlay/OverlayPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
     import Slides from "../Slides.svelte"
@@ -58,9 +59,10 @@
         <OverlayPreview {show} />
     </div>
 {:else if type === "pdf"}
-    {#key show}
-        <PdfPreview {show} />
-    {/key}
+    <PdfPreview {show} />
+    <!-- ppt, screen, ndi -->
+{:else if type === "folder"}
+    <FolderShow path={show.id} index={show.index || 0} />
 {:else}
     <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
 

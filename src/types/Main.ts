@@ -114,7 +114,7 @@ export interface Clipboard {
 
 export interface SlidesOptions {
     columns: number
-    mode: "grid" | "simple" | "list" | "lyrics" | "text"
+    mode: "grid" | "simple" | "groups" | "list" | "lyrics" | "text"
 }
 export interface MediaOptions {
     columns: number

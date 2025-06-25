@@ -35,6 +35,8 @@
     export let customTypeRatio = 1
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let centerPreview = false
+    export let revealed = -1
 
     $: lines = clone(item?.lines || [])
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -55,6 +57,8 @@
     })
 
     function getCustomStyle(style: string, outputId = "", _updater: any = null) {
+        if (!style) return ""
+
         if (outputId && !isMirrorItem) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
@@ -136,7 +140,7 @@
     // CHORDS
 
     let chordLines: string[] = []
-    $: if (chords && (item.lines || fontSize)) createChordLines()
+    $: if (chords && (item?.lines || fontSize)) createChordLines()
     function createChordLines() {
         chordLines = []
         if (!Array.isArray(item?.lines)) return
@@ -229,7 +233,12 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}">
+                <div
+                    class="break"
+                    class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
+                    class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
+                    style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}"
+                >
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
@@ -284,6 +293,12 @@
         overflow-wrap: break-word;
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+    }
+
+    .lines .break.reveal {
+        outline: 1px solid red;
+        outline-offset: -10px;
+        opacity: 0.7;
     }
 
     *:global(.wj) {

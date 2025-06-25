@@ -32,7 +32,7 @@
     $: [updateEvents(), $events, maxEvents, startDaysFromToday, justOneDay, enableStartDate, startDate, startTime]
 
     function updateEvents() {
-        let startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(startDaysFromToday)
+        let startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(Number(startDaysFromToday || 0))
         let eventsList = keysToID($events).filter((a) => a.type === "event" && new Date(a.to) >= startFromDate)
 
         if (justOneDay) {

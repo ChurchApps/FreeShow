@@ -3,11 +3,11 @@ import type { Show, ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { activeProject, activeShow, folders, projects, overlays as overlayStores, media as mediaStores, alertMessage, activePopup } from "../stores"
+import { actions as actionsStores, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, folders, media as mediaStores, overlays as overlayStores, projects } from "../stores"
 
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
-        const { project, parentFolder, shows, overlays, media } = JSON.parse(content)
+        const { project, parentFolder, shows, overlays, effects, actions, media } = JSON.parse(content)
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
@@ -20,6 +20,28 @@ export function importProject(files: { content: string; name?: string; extension
                 Object.entries(overlays).forEach(([id, overlay]: any) => {
                     // create new or replace existing
                     a[id] = overlay
+                })
+                return a
+            })
+        }
+
+        // add effects
+        if (effects) {
+            effectsStores.update((a) => {
+                Object.entries(effects).forEach(([id, effect]: any) => {
+                    // create new or replace existing
+                    a[id] = effect
+                })
+                return a
+            })
+        }
+
+        // add actions
+        if (actions) {
+            actionsStores.update((a) => {
+                Object.entries(actions).forEach(([id, action]: any) => {
+                    // create new or replace existing
+                    a[id] = action
                 })
                 return a
             })
