@@ -52,6 +52,7 @@
         // slide views
         view_grid: () => ($slidesOptions.mode === "grid" ? (enabled = true) : ""),
         view_simple: () => ($slidesOptions.mode === "simple" ? (enabled = true) : ""),
+        view_groups: () => ($slidesOptions.mode === "groups" ? (enabled = true) : ""),
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         rename: () => {

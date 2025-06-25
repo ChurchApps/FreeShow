@@ -29,7 +29,7 @@ export enum ToMain {
     API_TRIGGER2 = "API_TRIGGER2",
     OPEN_FOLDER2 = "OPEN_FOLDER2",
     OPEN_FILE2 = "OPEN_FILE2",
-    RECEIVE_MIDI2 = "RECEIVE_MIDI2",
+    RECEIVE_MIDI2 = "RECEIVE_MIDI2"
 }
 export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
@@ -59,7 +59,7 @@ export interface ToMainSendPayloads {
     [ToMain.API_TRIGGER2]: { action: string; returnId: string; data: any }
     [ToMain.OPEN_FOLDER2]: { channel: string; path: string; showsPath?: string }
     [ToMain.OPEN_FILE2]: { channel: string; id: string; files: string[]; content: { [key: string]: string } }
-    [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" }
+    [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" | "control" }
 }
 
 export interface ToMainReturnPayloads {

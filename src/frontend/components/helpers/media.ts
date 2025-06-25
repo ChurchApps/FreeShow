@@ -366,6 +366,39 @@ export async function checkThatMediaExists(path: string, iteration = 1): Promise
     return exists
 }
 
+let cachedDurations: { [key: string]: number } = {}
+export function getVideoDuration(path: string): Promise<number> {
+    return new Promise((resolve) => {
+        if (cachedDurations[path]) {
+            resolve(cachedDurations[path])
+            return
+        }
+
+        const video = document.createElement("video")
+        video.src = path
+        video.preload = "metadata"
+
+        let loaded = false
+        video.onloadedmetadata = () => {
+            const duration = video.duration
+            loaded = true
+
+            // clean up references
+            video.src = ""
+
+            cachedDurations[path] = duration
+            resolve(duration)
+        }
+
+        video.onerror = () => {
+            if (loaded) return
+
+            console.error(new Error("Failed to load video. Check the path or file format."))
+            resolve(0)
+        }
+    })
+}
+
 // CACHE
 
 // const jpegQuality = 90 // 0-100

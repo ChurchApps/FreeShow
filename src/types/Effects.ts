@@ -8,8 +8,11 @@ export interface Effect {
     displayDuration?: number
     placeUnderSlide?: boolean
     color: string | null
+    // options
     style: string
     background: string
+    opacity?: number
+
     items: EffectItem[]
 }
 

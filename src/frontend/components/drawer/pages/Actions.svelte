@@ -75,8 +75,12 @@
                                         <span>
                                             <!-- ({action.midi.input || "—"}) -->
                                             <!-- <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)}, -->
-                                            <T id="midi.note" />: {midiToNote(action.midi.values?.note)},
-                                            {#if action.midi.values?.velocity > -1}<T id="midi.velocity" />: {action.midi.values?.velocity},{/if}
+                                            <T id="midi.note" />: {action.midi.type === "control" ? action.midi.values?.controller || 0 : midiToNote(action.midi.values?.note)},
+                                            {#if action.midi.type === "control"}
+                                                <T id="variables.value" />: {action.midi.values?.value},
+                                            {:else if action.midi.values?.velocity > -1}
+                                                <T id="midi.velocity" />: {action.midi.values?.velocity},
+                                            {/if}
                                             <T id="midi.channel" />: {action.midi.values?.channel}
                                             {#if action.midi.type !== "noteon"}
                                                 — {action.midi.type}{/if}

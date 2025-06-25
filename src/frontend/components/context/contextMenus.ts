@@ -105,6 +105,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
     view_simple: { label: "show.simple", icon: "simple" },
+    view_groups: { label: "show.groups", icon: "groups" },
     view_list: { label: "show.list", icon: "list" },
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
     // SLIDE
@@ -268,6 +269,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_screen: ["remove"],
     project_ndi: ["remove"],
     project_camera: ["remove"],
+    project_folder: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"
@@ -290,7 +292,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     metadata_tools: ["manage_metadata"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
-    slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics"],
+    slideViews: ["view_grid", "view_list", "view_lyrics", "SEPERATOR", "view_simple", "view_groups"],
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
     meta_message: ["dynamic_values"],

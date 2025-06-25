@@ -44,6 +44,7 @@ export function convertOpenSong(data: any) {
             let song: any = {}
             if (content.includes("<html>")) song = HTMLtoObject(content)
             else song = XMLtoObject(content)
+            console.log(content, song)
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
@@ -55,7 +56,7 @@ export function convertOpenSong(data: any) {
                 author: song.author || "",
                 copyright: song.copyright || "",
                 key: song.key || "",
-                CCLI: song.ccli || "",
+                CCLI: song.ccli || ""
             }
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
             if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
@@ -125,8 +126,8 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             const items = [
                 {
                     style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords })),
-                },
+                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords }))
+                }
             ]
 
             slides[id] = {
@@ -134,7 +135,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
                 color: null,
                 settings: {},
                 notes: "",
-                items,
+                items
             }
 
             if (i > 0) return
@@ -196,7 +197,7 @@ function XMLtoObject(xml: string) {
         // key_line: song.getElementsByTagName("key_line")[0]?.textContent || "",
         // linked_songs: song.getElementsByTagName("linked_songs")[0]?.textContent || "",
         time_sig: song.getElementsByTagName("time_sig")[0]?.textContent || "",
-        backgrounds: song.getElementsByTagName("backgrounds")[0]?.textContent || "",
+        backgrounds: song.getElementsByTagName("backgrounds")[0]?.textContent || ""
     }
 
     return object
@@ -265,6 +266,8 @@ function HTMLtoObject(content: string) {
 
     // WIP chords
 
+    const divs = content.includes('<div class="heading">')
+    content = content.replaceAll('<div class="heading">', '<span class="heading">')
     const slideGroups = content.split('<span class="heading">').slice(1)
     let lyrics = ""
     slideGroups.forEach((group) => {
@@ -272,7 +275,7 @@ function HTMLtoObject(content: string) {
         const g = group.slice(0, linesEnd)
         const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)
 
-        const groupName = group.slice(0, group.indexOf("</span>")).trim()
+        const groupName = group.slice(0, group.indexOf(divs ? "</div>" : "</span>")).trim()
         lyrics += `[${groupName}]\n`
 
         lines.forEach((line) => {
@@ -300,7 +303,7 @@ function HTMLtoObject(content: string) {
         lyrics,
         hymn_number: html?.querySelector("#hymn_number")?.textContent || "",
         key: html?.querySelector("#key")?.textContent || "",
-        backgrounds: html?.querySelector("#backgrounds")?.textContent || "",
+        backgrounds: html?.querySelector("#backgrounds")?.textContent || ""
     }
 
     return object

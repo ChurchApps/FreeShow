@@ -5,7 +5,7 @@ import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Variable } from "../../../types/Main"
 import type { ProjectShowRef } from "../../../types/Projects"
-import type { LayoutRef, OutSlide, Show, Slide, SlideAction, SlideData } from "../../../types/Show"
+import type { Item, LayoutRef, OutSlide, Show, Slide, SlideAction, SlideData } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
@@ -62,6 +62,7 @@ import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { playFolder } from "../../utils/shortcuts"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -134,7 +135,7 @@ export function swichProjectItem(pos: number, id: string) {
     })
 }
 
-export function getItemWithMostLines(slide: Slide) {
+export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
     slide.items?.forEach((item) => {
         const lines: number = item.lines?.filter((line) => line.text.filter((text) => text.value.length)?.length)?.length || 0
@@ -156,6 +157,22 @@ export function getFewestOutputLines(updater = get(outputs)) {
         const style = get(styles)[output.style]
         if (!style) return
         const lines = Number(style.lines || 0)
+        if (!lines) return
+
+        if (!currentLines || lines < currentLines) currentLines = lines
+    })
+
+    return Number(currentLines)
+}
+
+// get output with fewest revealed lines
+export function getFewestOutputLinesReveal(updater = get(outputs)) {
+    const outs = getActiveOutputs(updater, true, true, true)
+
+    let currentLines = 0
+    outs.forEach((id: string) => {
+        const output = updater[id]
+        const lines = Number(output.out?.slide?.revealCount || 0)
         if (!lines) return
 
         if (!currentLines || lines < currentLines) currentLines = lines
@@ -198,6 +215,13 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         return
     }
 
+    // Folder
+    if (((!slide || start) && get(activeShow)?.type === "folder") || (!start && slide?.type === "folder")) {
+        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+        playFolder(path)
+        return
+    }
+
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -217,13 +241,28 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     let index: null | number = null
 
+    const showSlides = _show(slide?.id).slides([layout?.[slideIndex]?.id]).get()[0]
+    const showSlide: Slide | null = slide?.index !== undefined ? showSlides : null
+
     // lines
     const amountOfLinesToShow: number = getFewestOutputLines()
     const linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    const showSlide: Slide | null = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
     const hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : linesIndex + amountOfLinesToShow >= slideLines
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
+
+    // item/click reveal
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const itemsRevealed = clickRevealItems.length ? !!slide?.itemClickReveal : true
+    if (isLastSlide && !itemsRevealed) isLastSlide = false
+
+    // lines reveal
+    const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+    const shouldLinesReveal = !!linesRevealItems.length
+    const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
+    const currentReveal = slide?.revealCount ?? 0
+    const allLinesRevealed = shouldLinesReveal ? currentReveal >= maxRevealLines : true
+    if (isLastSlide && !allLinesRevealed) isLastSlide = false
 
     // TODO: active show slide index on delete......
 
@@ -262,12 +301,15 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     if (!slide || slide.id === "temp") return
 
-    const newSlideOut = { ...slide, line: 0 }
-    if (!hasLinesEnded) {
+    const newSlideOut = { ...slide, line: 0, revealCount: 0, itemClickReveal: itemsRevealed }
+    if (!hasLinesEnded || !allLinesRevealed || !itemsRevealed) {
         index = slideIndex
         if (amountOfLinesToShow && linesIndex !== null) newSlideOut.line = linesIndex + amountOfLinesToShow
+        if (clickRevealItems.length && !itemsRevealed) newSlideOut.itemClickReveal = true
+        else if (shouldLinesReveal) newSlideOut.revealCount = currentReveal + 1
     } else {
         // TODO: Check for loop to beginning slide...
+        newSlideOut.itemClickReveal = false
         index = getNextEnabled(slideIndex, end, customOutputId)
     }
     if (index !== null) newSlideOut.index = index
@@ -429,6 +471,13 @@ export function previousSlide(e: any, customOutputId?: string) {
         return
     }
 
+    // Folder
+    if ((!slide && get(activeShow)?.type === "folder") || slide?.type === "folder") {
+        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+        playFolder(path, true)
+        return
+    }
+
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -451,12 +500,34 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     const slideIndex: number = slide?.index || 0
-    const isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
     const showSlide: Slide | null =
         _show(slide ? slide.id : "active")
             .slides([layout[index]?.id])
             .get()[0] || null
     const isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
+
+    // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
+    const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
+
+    const currentShowSlide: Slide | null =
+        _show(slide ? slide.id : "active")
+            .slides([layout[slide?.index ?? -1]?.id])
+            .get()[0] || null
+
+    // item/click reveal
+    const clickRevealItems = (currentShowSlide?.items || []).filter((a) => a.clickReveal)
+    const itemsRevealed = !!slide?.itemClickReveal
+    const clickRevealEnded = !clickRevealItems.length || !itemsRevealed
+    if (isFirstSlide && !clickRevealEnded) isLastSlide = false
+
+    // lines reveal
+    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter((a) => a.lineReveal)
+    const shouldLinesReveal = !!linesRevealItems.length
+    let currentReveal = slide?.revealCount || 0
+    const revealEnded = !shouldLinesReveal || currentReveal === 0
+    if (isFirstSlide && !revealEnded) isLastSlide = false
+
     const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) - 1]?.id
     const isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
     if (isNextProjectItem) {
@@ -464,10 +535,8 @@ export function previousSlide(e: any, customOutputId?: string) {
         return
     }
 
-    // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
-    const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
     // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
-    if (activeShowLayout !== slide?.layout && hasLinesEnded && (index < 0 || isFirstSlide)) {
+    if (activeShowLayout !== slide?.layout && hasLinesEnded && revealEnded && (index < 0 || isFirstSlide)) {
         slide = null
         layout = getLayoutRef()
         activeLayout = activeShowLayout
@@ -475,7 +544,8 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     let line: number = linesIndex || 0
-    if (hasLinesEnded) {
+    let itemClickReveal = true
+    if (hasLinesEnded && revealEnded && clickRevealEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
@@ -492,17 +562,25 @@ export function previousSlide(e: any, customOutputId?: string) {
             const maxIndex = slideLines ? amountOfLinesToShow * Math.ceil(slideLines / amountOfLinesToShow) : 0
             line = maxIndex ? maxIndex - amountOfLinesToShow : 0
         }
+        if (shouldLinesReveal) {
+            const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
+            currentReveal = maxRevealLines
+        } else currentReveal = 0
+        itemClickReveal = true
     } else {
         index = slide!.index!
         if (amountOfLinesToShow) line -= amountOfLinesToShow
+        if (shouldLinesReveal) currentReveal--
+        if (!shouldLinesReveal || currentReveal < 0) itemClickReveal = false
     }
+    currentReveal = Math.max(0, currentReveal)
 
     const data = layout[index]?.data
     checkActionTrigger(data, index)
     // allow custom actions to trigger first
     setTimeout(() => {
-        if (slide) setOutput("slide", { ...slide, index, line }, false, customOutputId)
-        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line }, false, customOutputId)
+        if (slide) setOutput("slide", { ...slide, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
+        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
 
         updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
     })
@@ -1025,7 +1103,7 @@ export function getDynamicIds(noVariables = false) {
     const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name))
+    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name)) || []
 
     const mergedValues = [...mainValues, ...metaValues]
     if (rssValues.length) mergedValues.push(...rssValues)
@@ -1118,7 +1196,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (dynamicId.includes("meta_")) {
             const key = dynamicId.slice(5).replaceAll("_", " ")
             if (!Object.keys(show)) return ""
-            const customKey = get(customMetadata).custom.find((a) => a.toLowerCase() === key) || key
+            let customKey = get(customMetadata).custom.find((a) => a.toLowerCase() === key) || key
+            if (customKey === "ccli") customKey = "CCLI"
             return (show as Show).meta?.[customKey] || ""
         }
 

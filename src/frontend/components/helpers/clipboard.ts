@@ -129,8 +129,17 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
+    //Handle text directly
+    if (window.getSelection()?.toString()) {
+        const selection = window.getSelection()!
+        navigator.clipboard.writeText(selection.toString())
+        selection.deleteFromDocument();
+        console.info("CUTTED TEXT", selection.toString())
+        return
+    }
+    //Handle other types
     const copyData = copy(clip)
-    if (!copyData) return
+    if (!copyData) return 
     deleteAction(copyData)
 
     console.info("CUTTED:", copyData)

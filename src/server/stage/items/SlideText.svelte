@@ -88,6 +88,9 @@
 
         return oneItem ? [oneItem as Item] : []
     }
+
+    $: clickRevealed = slideOffset === 0 && !!currentSlide?.itemClickReveal
+    $: revealed = slideOffset === 0 ? (currentSlide?.revealCount || 0) - 1 : -1
 </script>
 
 {#if slide}
@@ -96,14 +99,14 @@
             <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
                 {#each items as item, i}
                     {#if !itemNumber || itemNumber - 1 === i}
-                        <Textbox showId={currentSlide.id} {item} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                        <Textbox showId={currentSlide.id} {item} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} {clickRevealed} {revealed} />
                     {/if}
                 {/each}
             </Zoomed>
         </Main>
     {:else}
         {#each items as item}
-            <Textbox showId={currentSlide.id} {item} style={false} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} />
+            <Textbox showId={currentSlide.id} {item} style={false} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} {clickRevealed} {revealed} />
         {/each}
     {/if}
 {/if}

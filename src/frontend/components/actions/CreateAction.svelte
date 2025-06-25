@@ -139,10 +139,10 @@
     }
 
     $: dataInputs = !!(input && actionId && !pickAction && !full)
-    let dataOpened = !Object.keys(actionValue).length || !existingActionsFiltered?.length // || existingActionsFiltered.length < 2
+    let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
     let dataMenuOpened = false
 
-    $: isLast = actionNameIndex >= existingActionsFiltered.length
+    // $: isLast = actionNameIndex >= existingActionsFiltered.length
 
     // SEARCH
 
@@ -242,8 +242,9 @@
             </Button>
         {/if}
 
-        {#if isLast && actionId && existingActionsFiltered.length > 1}
-            <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove" })} redHover>
+        <!-- isLast -->
+        {#if actionId && existingActions.length > 1}
+            <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })} redHover>
                 <Icon id="close" size={1.2} white />
             </Button>
         {/if}

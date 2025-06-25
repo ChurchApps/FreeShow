@@ -208,7 +208,8 @@
         if ((Object.keys($outputs)?.length > 1 && !output.enabled) || output.keyOutput || output.stageOutput) return
         if (!output.out?.transition || $slideTimers[id]?.timer) return
 
-        newSlideTimer(id, output.out.transition.duration)
+        const data = output.out.transition
+        newSlideTimer(id, data.duration, data.folderPath || "")
     })
 
     // $: currentStyle = $styles[currentOutput?.style] || {}

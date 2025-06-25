@@ -39,12 +39,12 @@
     $: tabs = {
         shows: { name: translate("remote.shows", $dictionary), icon: "search" },
         scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
-        project: { name: translate("remote.project", $dictionary), icon: "project" },
+        project: { name: translate("remote.project", $dictionary), icon: "project" }
     }
     $: tabsDisabled = {
         shows: $shows.length,
         scripture: Object.keys($scriptures).length,
-        project: $projects.length || $activeProject,
+        project: $projects.length || $activeProject
     }
 
     // SHOW
@@ -60,6 +60,23 @@
 
     const slidesViews: any = { grid: "lyrics", lyrics: "grid" }
     let slideView: string = "grid"
+
+    // keyboard shortcuts
+    let triggerScriptureSearch = false
+    function keydown(e: KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === "f") {
+                e.preventDefault()
+                if (activeTab !== "scripture") {
+                    activeTab = "shows"
+                    double({ detail: "shows" })
+                } else {
+                    triggerScriptureSearch = true
+                }
+                return
+            }
+        }
+    }
 
     // click when focused
     function double(e: any) {
@@ -133,13 +150,15 @@
     }
 </script>
 
+<svelte:window on:keydown={keydown} />
+
 {#if !isFullscreen}
     <div class="left">
         <div class="flex">
             {#if activeTab === "shows"}
                 <Shows tablet />
             {:else if activeTab === "scripture"}
-                <Scripture tablet />
+                <Scripture tablet bind:triggerScriptureSearch />
             {:else if activeTab === "project"}
                 <Project />
             {/if}

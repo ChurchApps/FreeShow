@@ -85,6 +85,7 @@ export const defaultMidiActionChannels = {
     index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } }
 }
 
+// CC: https://nickfever.com/music/midi-cc-list
 export function receivedMidi(msg) {
     const msgAction = get(actions)[msg.id]
     if (!msgAction) return
@@ -97,10 +98,14 @@ export function receivedMidi(msg) {
     let index = msg.values.velocity ?? -1
     if (action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
 
+    if (msg.type === "control") {
+        index = msg.values.value || 0
+    }
+
     // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
     // velocity of 0 currently bypasses the note on/off
     const diff_type = action.midi?.type !== msg.type
-    const diff_note = msg.values.note !== action.midi?.values.note
+    const diff_note = msg.type === "control" ? msg.values.controller !== action.midi?.values.controller : msg.values.note !== action.midi?.values.note
     const diff_channel = msg.values.channel !== action.midi?.values.channel
     if (!msg.bypass && (diff_type || diff_note || diff_channel) && index !== 0) return
 

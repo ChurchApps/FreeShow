@@ -31,6 +31,7 @@
     export let animationStyle: any = {}
     export let dynamicValues = true
     export let isStage = false
+    export let originalStyle = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
     export let ref: {
@@ -46,10 +47,13 @@
     export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
+    export let clickRevealed: boolean = false
     export let stageAutoSize = false
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
     export let maxLinesInvert = false // stage next item preview (last lines)
+    export let centerPreview = false
+    export let revealed = -1
     export let styleIdOverride = ""
 
     $: lines = clone(item?.lines)
@@ -81,19 +85,19 @@
     let customOutputId = outputId
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
-    function getCustomStyle(style: string, outputId = "", styleIdOverride = "", _updater: any = null) {
+    function getCustomStyle(currentStyle: string, outputId = "", styleIdOverride = "", _updater: any = null) {
         if (outputId && !isMirrorItem && !isStage) {
             let outputResolution = getOutputResolution(outputId, $outputs, true, styleIdOverride)
-            style = percentageStylePos(style, outputResolution)
+            currentStyle = percentageStylePos(currentStyle, outputResolution)
         }
 
         // reset item styles (as it's set in parent item)
-        if (isStage) {
-            style += "display: contents;"
+        if (isStage && !originalStyle) {
+            currentStyle += "display: contents;"
         }
 
-        if (!key) return style
-        let styles = getStyles(style)
+        if (!key) return currentStyle
+        let styles = getStyles(currentStyle)
 
         // alpha style
         let alphaStyles = ";"
@@ -102,7 +106,7 @@
         if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
         alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
-        return style + alphaStyles
+        return currentStyle + alphaStyles
     }
 
     function getAlphaValues(colorValue: string) {
@@ -176,11 +180,13 @@
                 return
             }
 
-            const itemText = item?.lines?.[0]?.text?.filter((a) => !a.customType?.includes("disableTemplate")) || []
+            let text = item?.lines?.[0]?.text || []
+            if (!Array.isArray(text)) text = []
+            const itemText = text.filter((a) => !a.customType?.includes("disableTemplate")) || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
@@ -313,6 +319,7 @@
     class:noTransition
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
+    class:reveal={(centerPreview || isStage) && item.clickReveal && !clickRevealed}
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
@@ -340,6 +347,8 @@
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}
+            {centerPreview}
+            {revealed}
             on:updateAutoSize={calculateAutosize}
         />
     {:else}
@@ -365,6 +374,11 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+    }
+
+    .item.reveal {
+        outline: 1px solid red;
+        opacity: 0.6;
     }
 
     .clickable {

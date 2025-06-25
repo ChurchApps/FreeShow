@@ -33,7 +33,7 @@ export async function sendMidi(data: any) {
     let port: any = null
 
     if (!data.type) data.type = "noteon"
-    if (!data.values) data.values = { note: 0, velocity: 0, channel: 1 }
+    if (!data.values) data.values = data.type === "control" ? { controller: 0, value: 0, channel: 1 } : { note: 0, velocity: 0, channel: 1 }
 
     // send channel 1 as channel 1, and not 0
     if (data.values.channel) data.values.channel--
@@ -44,7 +44,9 @@ export async function sendMidi(data: any) {
         if (!port) return
 
         console.info("SENDING MIDI SIGNAL:", data)
-        if (data.type === "noteon") {
+        if (data.type === "control") {
+            await port.control(data.values.channel, data.values.controller, data.values.value)
+        } else if (data.type === "noteon") {
             // this might be rendered as note off by some programs if velocity is 0, but that should be fine
             await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
         } else {
@@ -75,12 +77,24 @@ export async function receiveMidi(data: any) {
         if (port.name()) openedPorts[data.id] = port
 
         await port.connect((msg: any) => {
-            if (!msg.toString().includes("Note")) return
+            const bytes = msg.toBytes() // .slice()
+            const status = bytes[0]
+            const channel = (status & 0x0f) + 1
+            const typeCode = status & 0xf0
 
-            // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
-            const type: "noteon" | "noteoff" = msg.toString().includes("Off") ? "noteoff" : "noteon"
-            const values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
-            sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type })
+            if (typeCode === 0x90 || typeCode === 0x80) {
+                // Note On (0x90) or Note Off (0x80)
+                // noteon with velocity 0 is actually noteoff
+                const type: "noteon" | "noteoff" = typeCode === 0x90 && bytes[2] > 0 ? "noteon" : "noteoff"
+                const values = { note: bytes[1], velocity: bytes[2], channel }
+                sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type })
+            } else if (typeCode === 0xb0) {
+                // Control Change (0xB0)
+                const controller = bytes[1]
+                const value = bytes[2]
+                const values = { controller, value, channel }
+                sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type: "control" })
+            }
         })
     } catch (err) {
         console.error(err)

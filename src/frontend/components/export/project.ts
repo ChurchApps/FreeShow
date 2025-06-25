@@ -3,9 +3,10 @@
 
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
+import type { Effects } from "../../../types/Effects"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
-import type { Overlays, Shows, SlideData } from "../../../types/Show"
-import { dataPath, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
+import type { Action, Overlays, Shows, SlideData } from "../../../types/Show"
+import { actions as actionsStores, dataPath, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
@@ -16,6 +17,8 @@ export async function exportProject(project: Project, projectId: string) {
     const shows: Shows = {}
     let files: string[] = []
     const overlays: Overlays = {}
+    const effects: Effects = {}
+    const actions: { [key: string]: Action } = {}
 
     // get project
     project = clone(project)
@@ -44,6 +47,10 @@ export async function exportProject(project: Project, projectId: string) {
                     // overlays
                     const overlayIds = data.overlays || []
                     overlayIds.forEach(getOverlay)
+
+                    // actions
+                    const actionIds = data.actions?.slideActions || []
+                    actionIds.forEach((a) => getAction(a.id))
                 })
             })
 
@@ -73,6 +80,7 @@ export async function exportProject(project: Project, projectId: string) {
         ppt: (showRef: ProjectShowRef) => getFile(showRef.id),
         pdf: (showRef: ProjectShowRef) => getFile(showRef.id),
         overlay: (showRef: ProjectShowRef) => getOverlay(showRef.id),
+        effects: (showRef: ProjectShowRef) => getEffect(showRef.id),
         player: () => {
             // do nothing
         },
@@ -93,7 +101,10 @@ export async function exportProject(project: Project, projectId: string) {
     files = [...new Set(files)]
 
     // set data
-    const projectData: any = { project, parentFolder, shows, overlays }
+    let projectData: any = { project, parentFolder, shows }
+    if (Object.keys(overlays).length) projectData.overlays = overlays
+    if (Object.keys(effects).length) projectData.effects = effects
+    if (Object.keys(actions).length) projectData.actions = actions
     const includeMediaFiles = get(special).projectIncludeMedia ?? true
     if (includeMediaFiles) {
         projectData.files = files
@@ -139,6 +150,18 @@ export async function exportProject(project: Project, projectId: string) {
                 getFile(item.src)
             }
         })
+    }
+
+    function getEffect(id: string) {
+        if (!get(effectsStores)[id] || effects[id]) return
+
+        effects[id] = clone(get(effectsStores)[id])
+    }
+
+    function getAction(id: string) {
+        if (!get(actionsStores)[id] || actions[id]) return
+
+        actions[id] = clone(get(actionsStores)[id])
     }
 
     // store as base64 ?

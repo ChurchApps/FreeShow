@@ -22,6 +22,8 @@
     export let ratio: number = 1
     export let maxLines: number = 0 // stage next item preview
     export let customStyle: string = ""
+    export let clickRevealed: boolean = false
+    export let revealed = -1
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
@@ -255,6 +257,7 @@
     style={style ? getCustomStyle(itemStyle) : null}
     class:chords={chordLines.length}
     class:clickable={item.button?.press || item.button?.release}
+    class:reveal={item.clickReveal && !clickRevealed}
     on:click={toggleActions}
     on:pointerdown={press}
     on:pointerup={release}
@@ -284,7 +287,7 @@
                                 {@html chordLines[i]}
                             </div>
                         {/if}
-                        <div class="break" style="{style ? lineStyle : ''}{style ? line.align : ''}">
+                        <div class="break" class:reveal={item?.lineReveal && revealed < i} style="{style ? lineStyle : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 {#key updateDynamic}
@@ -353,6 +356,16 @@
 
         /* click event */
         pointer-events: initial;
+    }
+
+    .item.reveal {
+        outline: 1px solid red;
+        opacity: 0.6;
+    }
+    .item .break.reveal {
+        outline: 1px solid red;
+        outline-offset: -2px;
+        opacity: 0.7;
     }
 
     .clickable {

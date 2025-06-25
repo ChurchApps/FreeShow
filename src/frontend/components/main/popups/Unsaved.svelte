@@ -8,7 +8,7 @@
     const actions = {
         n: () => activePopup.set(null),
         q: () => closeApp(),
-        y: () => ($saved ? saveComplete({ closeWhenFinished: true }) : save(true)),
+        y: () => ($saved ? saveComplete({ closeWhenFinished: true }) : save(true))
     }
 
     function keydown(e: KeyboardEvent) {
@@ -38,7 +38,7 @@
 </CombinedInput>
 {#if $saved}
     <CombinedInput>
-        <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={closeApp} dark center>
+        <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={() => saveComplete({ closeWhenFinished: true })} dark center>
             <T id="main.quit" />
             <span>Y</span>
         </Button>

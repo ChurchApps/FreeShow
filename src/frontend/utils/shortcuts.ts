@@ -9,14 +9,14 @@ import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getMediaStyle } from "../components/helpers/media"
-import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
+import { getMediaStyle, getMediaType } from "../components/helpers/media"
+import { displayOutputs, getActiveOutputs, refreshOut, setOutput, startFolderTimer } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
-import { sendMain } from "../IPC/main"
+import { requestMain, sendMain } from "../IPC/main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -53,6 +53,8 @@ import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
 import { changeSlidesView } from "../show/slides"
+import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
+import { sortByName } from "../components/helpers/array"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -279,6 +281,8 @@ export const previewShortcuts = {
                     return setOutput("overlays", currentShow.id, false, "", true)
                 } else if ((currentShow?.type === "video" || currentShow?.type === "image" || currentShow?.type === "player") && (out?.background?.path || out?.background?.id) !== currentShow?.id) {
                     return playMedia(e)
+                    // } else if (currentShow?.type === "folder") {
+                    //     return playMedia(e)
                 }
                 // WIP audio
             }
@@ -291,6 +295,16 @@ export const previewShortcuts = {
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("previous")
+
+        // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        // if (!get(showsCache)[currentShow?.id || ""]) {
+        //     const out = get(outputs)[getActiveOutputs()[0]]?.out
+        //     if (!out?.slide) {
+        //         if (currentShow?.type === "folder") {
+        //             return playMedia(e, true)
+        //         }
+        //     }
+        // }
 
         previousSlideIndividual(e)
     },
@@ -377,7 +391,7 @@ function createNew() {
     }
 }
 
-function playMedia(e: Event) {
+function playMedia(e: Event, back: boolean = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
     const item = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -388,7 +402,8 @@ function playMedia(e: Event) {
 
     const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
-    const alreadyPlaying = currentOutput.out?.background?.path === item.id
+    const currentlyPlaying = currentOutput.out?.background?.path
+    const alreadyPlaying = currentlyPlaying === item.id
 
     if (type === "video" || type === "image" || type === "player") {
         if (alreadyPlaying) {
@@ -412,5 +427,35 @@ function playMedia(e: Event) {
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
+    } else if (type === "folder") {
+        playFolder(item.id, back)
     }
+}
+
+export async function playFolder(path: string, back: boolean = false) {
+    const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+    const currentOutput = get(outputs)[outputId] || {}
+    const currentlyPlaying = currentOutput.out?.background?.path
+
+    const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
+    const files = await requestMain(Main.READ_FOLDER, { path })
+    const folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+    if (!folderFiles.length) return
+
+    const mediaFiles = folderFiles.filter((a) => a.type !== "audio")
+    const playingIndex = mediaFiles.findIndex((a) => a.path === currentlyPlaying)
+    const newMedia = back ? (mediaFiles[playingIndex - 1] ?? mediaFiles[mediaFiles.length - 1]) : (mediaFiles[playingIndex + 1] ?? mediaFiles[0])
+    const allFilesIndex = folderFiles.findIndex((a) => a.path === newMedia.path)
+
+    // skip and play audio file
+    if (!back && folderFiles[allFilesIndex - 1]?.type === "audio") {
+        AudioPlayer.start(folderFiles[allFilesIndex - 1].path, { name: folderFiles[allFilesIndex - 1].name })
+    }
+
+    const outputStyle = get(styles)[currentOutput.style || ""]
+    const mediaStyle = getMediaStyle(get(media)[newMedia.path], outputStyle)
+
+    setOutput("background", { type: newMedia.type, path: newMedia.path, muted: false, loop: false, ...mediaStyle, folderPath: path })
+
+    startFolderTimer(path, newMedia)
 }

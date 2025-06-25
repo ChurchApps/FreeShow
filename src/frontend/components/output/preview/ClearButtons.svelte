@@ -60,7 +60,7 @@
     $: outputContent = getOutputContent("", $outputs)
 
     $: backgroundCleared = isOutCleared("background", $outputs)
-    $: output = $outputs[getActiveOutputs()[0]] || {}
+    $: output = $outputs[getActiveOutputs($outputs, true, true, true)[0]] || {}
     $: outputStyle = $styles[output.style || ""] || {}
     $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
     $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG

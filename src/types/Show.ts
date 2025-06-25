@@ -127,6 +127,8 @@ export interface Item {
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
+    clickReveal?: boolean
+    lineReveal?: boolean
     chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }
     scrolling?: Scrolling
     button?: { press?: string; release?: string } // click actions
@@ -397,11 +399,15 @@ export interface Action {
 export interface MidiValues {
     input?: string
     output?: string
-    type: "noteon" | "noteoff" | "cc"
+    type: "noteon" | "noteoff" | "control"
     values: {
-        note: number
-        velocity: number
         channel: number
+        // Note
+        note?: number
+        velocity?: number
+        // CC
+        controller?: number
+        value?: number
     }
 }
 
@@ -482,6 +488,7 @@ export interface OutBackground {
     flippedY?: boolean
     title?: string // player
     cameraGroup?: string // camera
+    folderPath?: string // project media folder
 
     ignoreLayer?: boolean // foreground background type
 }
@@ -493,7 +500,9 @@ export interface OutSlide {
     tempItems?: Item[]
     previousSlides?: Item[][]
     nextSlides?: Item[][]
-    line?: number
+    line?: number // styles limit lines
+    revealCount?: number // reveal one by one line
+    itemClickReveal?: boolean // reveal item on click
     // layout: ID ?
     name?: string // mostly used for PDFs
     type?: ShowType // mostly used for PDFs
@@ -509,6 +518,7 @@ export interface OutTransition {
     // action: string
     // slide?: number
     duration: number
+    folderPath?: string
 }
 
 export interface SlideTimer {
@@ -520,6 +530,7 @@ export interface SlideTimer {
     timer: any
     remaining?: number
     start?: number
+    data?: string // used for project media folder loop
 }
 
 export interface Tag {
@@ -531,6 +542,6 @@ export interface Tag {
 
 export type ID = string
 export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
-export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" // "private"
+export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "camera" | "player" | "audio"

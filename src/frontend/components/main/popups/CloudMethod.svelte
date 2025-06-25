@@ -30,7 +30,7 @@
     let customFolderEnabled = false
 </script>
 
-<p style="max-width: 400px;white-space: normal;"><T id="cloud.choose_method_tip" /></p>
+<p style="max-width: 600px;white-space: normal;margin-bottom: 10px;"><T id="cloud.choose_method_tip" /></p>
 
 <div>
     <Button on:click={() => setMethod("upload")}>

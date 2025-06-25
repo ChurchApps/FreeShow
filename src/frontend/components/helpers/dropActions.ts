@@ -36,6 +36,7 @@ import { getActionTriggerId } from "../actions/actions"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
+import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
@@ -140,11 +141,15 @@ export const dropActions = {
 
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
+            let extraFiles: string[] = []
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)
                     const extension: string = getExtension(path || a.name)
-                    if (drag.id === "files" && !files[drop.id].includes(extension)) return null
+                    if (drag.id === "files" && !files[drop.id].includes(extension)) {
+                        extraFiles.push(path)
+                        return null
+                    }
 
                     const type: string = getMediaType(extension)
 
@@ -152,6 +157,9 @@ export const dropActions = {
                     return { name: removeExtension(name), id: path, type }
                 })
                 .filter((a) => a)
+
+            // add folders
+            if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
         } else if (drag.id === "audio") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {

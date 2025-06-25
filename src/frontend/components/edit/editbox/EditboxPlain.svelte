@@ -17,19 +17,15 @@
     export let index: number
     export let ratio: number
 
-    const actions = {
-        transition: { label: "popup.transition", icon: "transition" },
-        showTimer: { label: "actions.show_timer", icon: "time_in" },
-        hideTimer: { label: "actions.hide_timer", icon: "time_out" }
-    }
+    const actions = [
+        { id: "transition", label: "popup.transition", icon: "transition" },
+        { id: "clickReveal", label: "actions.click_reveal", icon: "click_action", direct: true },
+        { id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", direct: true },
+        { id: "showTimer", label: "actions.show_timer", icon: "time_in" },
+        { id: "hideTimer", label: "actions.hide_timer", icon: "time_out" }
+    ]
 
-    // bindings
-    function removeBindings() {
-        menuClick("bind_item")
-    }
-
-    // conditions
-    function removeConditions() {
+    function removeItemValue(valueId: string) {
         let layoutRef = getLayoutRef()
         let slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
@@ -49,8 +45,8 @@
             history({
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
-                newData: { key: "items", subkey: "conditions", data: [{}], indexes: [index] },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemcondition_" + index }
+                newData: { key: "items", subkey: valueId, data: [undefined], indexes: [index] },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitem" + valueId + "_" + index }
             })
 
             return
@@ -58,9 +54,14 @@
 
         history({
             id: "setItems",
-            newData: { style: { key: "conditions", values: [{}] } },
-            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemcondition_" + slideRef.id + "_items_" + index }
+            newData: { style: { key: valueId, values: [undefined] } },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitem" + valueId + "_" + slideRef.id + "_items_" + index }
         })
+    }
+
+    // bindings
+    function removeBindings() {
+        menuClick("bind_item")
     }
 
     // actions
@@ -178,28 +179,29 @@
     <!-- conditions -->
     {#if Object.values(item?.conditions || {}).length}
         <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
-            <Button on:click={removeConditions} redHover>
+            <Button on:click={() => removeItemValue("conditions")} redHover>
                 <Icon id="light" white />
             </Button>
         </div>
     {/if}
 
     <!-- actions -->
-    {#if item?.actions}
-        {#each Object.keys(item.actions) as action}
-            <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
-                <Button on:click={() => removeAction(action)} redHover>
-                    <Icon id={actions[action]?.icon} white />
+    {#each actions as action}
+        {@const actionValue = action.direct ? item[action.id] : item.actions?.[action.id]}
+        {#if actionValue}
+            <div title={action ? $dictionary[action.label.split(".")[0]]?.[action.label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <Button on:click={() => (action.direct ? removeItemValue(action.id) : removeAction(action.id))} redHover>
+                    <Icon id={action?.icon} white />
                 </Button>
-                {#if typeof item.actions[action] === "number"}
-                    <span class="actionValue">{item.actions[action]}s</span>
+                {#if typeof actionValue === "number"}
+                    <span class="actionValue">{actionValue}s</span>
                 {/if}
             </div>
-        {/each}
-    {/if}
+        {/if}
+    {/each}
 
     <!-- gradient -->
-    {#if item?.lines?.find((a) => a.text?.find((a) => a.style.includes("-gradient")))}
+    {#if item?.lines?.find((a) => a.text?.find((a) => a.style?.includes("-gradient")))}
         <div title={$dictionary.popup?.color_gradient} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="color" white />

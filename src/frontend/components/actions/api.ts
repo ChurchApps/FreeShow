@@ -147,7 +147,7 @@ export type API_variable = {
     variableAction?: "increment" | "decrement"
 }
 export interface API_midi extends MidiValues {
-    type: "noteon" | "noteoff"
+    type: "noteon" | "noteoff" | "control"
     defaultValues?: boolean // only used by actions
 }
 export type API_metronome = {
@@ -167,7 +167,7 @@ export type API_rest_command = {
 export type API_emitter = {
     emitter: string
     template?: string
-    templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } }[]
+    templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } | { controller?: number; value?: number; channel?: number } }[]
     data?: string // custom (OSC) data
 }
 
