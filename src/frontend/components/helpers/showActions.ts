@@ -241,7 +241,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     let index: null | number = null
 
-    const showSlides = _show(slide?.id).slides([layout?.[slideIndex]?.id]).get()[0]
+    const showSlides = _show(slide?.id).slides([layout?.[slideIndex]?.id]).get()?.[0]
     const showSlide: Slide | null = slide?.index !== undefined ? showSlides : null
 
     // lines
@@ -620,8 +620,8 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
 
-    if (layout[index - 1]?.data?.end) index = 0
-    if (!layout[index]) return null
+    if (layout?.[index - 1]?.data?.end) index = 0
+    if (!layout?.[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
     while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++

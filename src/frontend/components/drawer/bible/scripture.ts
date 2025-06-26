@@ -387,9 +387,13 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
             if (remainder) indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
         }
 
-        // auto size
+        // auto size & item options
         slides.forEach((slide, i) => {
             slide.forEach((_item, j) => {
+                // specific outputs
+                if (templateTextItems[j]?.bindings) slides[i][j].bindings = templateTextItems[j].bindings
+
+                // auto size
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
                 // WIP historyActions - TEMPLATE...

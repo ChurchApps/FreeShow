@@ -298,6 +298,7 @@
                 save()
                 setTimeout(() => syncDrive(true), 2000)
             }}
+            title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
             disabled={!validKeys}
             style="width: 100%;"
             center

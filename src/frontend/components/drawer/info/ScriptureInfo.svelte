@@ -4,7 +4,26 @@
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { createCategory } from "../../../converters/importHelpers"
-    import { activePopup, activeProject, activeTriggerFunction, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
+    import {
+        activeDrawerTab,
+        activeEdit,
+        activePage,
+        activePopup,
+        activeProject,
+        activeTriggerFunction,
+        dictionary,
+        drawerTabsData,
+        media,
+        outLocked,
+        outputs,
+        playScripture,
+        popupData,
+        scriptureHistory,
+        scriptures,
+        scriptureSettings,
+        styles,
+        templates
+    } from "../../../stores"
     import { trackScriptureUsage } from "../../../utils/analytics"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
@@ -361,7 +380,7 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        <CombinedInput style="border-bottom: 4px solid var(--primary-lighter);">
+        <CombinedInput textWidth={40} style="border-bottom: 4px solid var(--primary-lighter);">
             <p><T id="info.template" /></p>
             <Button
                 on:click={() => {
@@ -376,6 +395,23 @@
                     <p>{$templates[templateId]?.name || "popup.select_template"}</p>
                 </div>
             </Button>
+            {#if $templates[templateId]}
+                <Button
+                    title={$dictionary.titlebar?.edit}
+                    on:click={() => {
+                        activeDrawerTab.set("templates")
+                        // closeDrawer()
+                        // drawerTabsData.update(a => {
+                        //     a.template.activeSubTab = "all"
+                        //     return a
+                        // })
+                        activeEdit.set({ type: "template", id: templateId, items: [] })
+                        activePage.set("edit")
+                    }}
+                >
+                    <Icon id="edit" white />
+                </Button>
+            {/if}
             {#if !templateId.includes("scripture")}
                 <Button title={$dictionary.actions?.remove} on:click={() => update("template", "")} redHover>
                     <Icon id="close" size={1.2} white />

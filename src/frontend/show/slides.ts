@@ -700,7 +700,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     const sameTextboxCount =
         new Set(
             indexes.map(({ index }) => {
-                const slide: Slide = _show().slides([layoutRef[index]?.id]).get()[0]
+                const slide: Slide = _show().slides([layoutRef[index]?.id]).get()?.[0]
                 return (slide?.items || []).filter((a) => (a.type || "text") === "text").length
             })
         ).size === 1

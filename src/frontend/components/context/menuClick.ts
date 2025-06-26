@@ -1064,7 +1064,9 @@ const clickActions = {
             const ref = getLayoutRef()
             const slideRef = ref[slideIndex]
 
-            const currentItems = _show().slides([slideRef.id]).items(items).get()[0]
+            const currentItems = _show().slides([slideRef.id]).items().get()[0]
+            if (!currentItems?.[items[0]]) return
+
             const newState = !currentItems[items[0]][id]
 
             // not made for booleans:

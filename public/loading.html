@@ -11,10 +11,13 @@
         <style>
             :root {
                 --radius: 5px;
+                --loader-height: 3px;
             }
 
             main {
-                background-color: var(--primary);
+                /* background-color: var(--primary); */
+                background-color: #28276d;
+                background: linear-gradient(140deg, #28276d 20%, #150f30);
                 width: 100%;
                 height: 100%;
                 border-radius: var(--radius);
@@ -25,10 +28,44 @@
                 justify-content: center;
                 align-items: center;
                 -webkit-app-region: drag;
+
+                overflow: hidden;
             }
 
-            p {
-                opacity: 0.5;
+            img {
+                height: calc(100% - var(--loader-height));
+                width: 42%;
+                object-fit: cover;
+                object-position: top left;
+
+                left: 0;
+                /* max-width: 40%; */
+                position: absolute;
+                top: var(--loader-height);
+
+                border-bottom-left-radius: var(--radius);
+                border-top-right-radius: var(--radius);
+            }
+
+            .text {
+                position: absolute;
+                right: 0;
+                width: 58%;
+
+                text-align: center;
+            }
+
+            .v {
+                opacity: 0.3;
+                font-size: 0.9em;
+            }
+
+            h1 {
+                font-size: 3em;
+                background: -webkit-linear-gradient(340deg, var(--secondary), #ef4684);
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
 
             .loader {
@@ -41,7 +78,7 @@
                 position: absolute;
                 top: 0;
                 width: calc(100% - (var(--margin) * 2));
-                height: 3px;
+                height: var(--loader-height);
 
                 overflow: hidden;
             }
@@ -91,8 +128,12 @@
         </div>
 
         <main>
-            <h1 style="font-size: 3em">FreeShow</h1>
-            <p>v<span class="version">0.0.0</span></p>
+            <img src="./assets/startup.webp" alt="Loading..." draggable="false" />
+
+            <div class="text">
+                <h1>FreeShow</h1>
+                <p class="v">v<span class="version">0.0.0</span></p>
+            </div>
         </main>
 
         <script>
