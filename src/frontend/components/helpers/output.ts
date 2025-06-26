@@ -820,7 +820,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         // use original line reveal if style template does not have the value set
         const hasLineReveal = item.lineReveal
-        if (hasLineReveal) templateItem.lineReveal = true
+        if (hasLineReveal && !addOverflowTemplateItems) templateItem.lineReveal = true
         // const hasClickReveal = item.clickReveal
         // if (hasClickReveal) templateItem.clickReveal = true
 
@@ -1118,13 +1118,15 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
     return newItems
 }
 
+// , currentSlide: Slide | null = null
 export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
-    const showSlide = _show(outSlide.id)
-        .slides([ref?.[outSlide.index ?? -1]?.id])
-        .get()[0]
+    const showSlide: Slide | null =
+        _show(outSlide.id)
+            .slides([ref?.[outSlide.index ?? -1]?.id])
+            .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
     if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
 
@@ -1220,7 +1222,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
 
-    const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId].items?.[0])
+    const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId]?.items?.[0])
     // if (metadataTemplateValue || metadata.message || currentStyle)
     getMetaValue()
     function getMetaValue() {

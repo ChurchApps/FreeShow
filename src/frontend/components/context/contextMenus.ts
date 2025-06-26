@@ -188,7 +188,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
 
     // OUTPUTS
-    output_active_button: ["toggle_output", "move_to_front", "SEPERATOR", "hide_from_preview", "SEPERATOR", "edit"],
+    output_preview: ["edit", "SEPERATOR", "toggle_output"],
+    output_active_button: ["edit", "SEPERATOR", "toggle_output", "move_to_front", "SEPERATOR", "hide_from_preview"],
 
     // DRAWER
     drawer_top: ["enabledTabs"],
@@ -222,7 +223,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     show_media: ["edit", "preview", "SEPERATOR", "play_no_filters", "SEPERATOR", "system_open"], // "play_no_audio"
     show_audio: ["preview", "SEPERATOR", "system_open"],
     slide_recorder_item: ["remove"],
-    midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
