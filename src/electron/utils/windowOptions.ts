@@ -8,7 +8,7 @@ import { isMac, isProd } from ".."
 
 export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,
-    height: 300,
+    height: 280,
     icon: "public/icon.png",
     transparent: true,
     alwaysOnTop: true,
@@ -16,8 +16,8 @@ export const loadingOptions: BrowserWindowConstructorOptions = {
     frame: false,
     webPreferences: {
         nodeIntegration: true,
-        contextIsolation: false,
-    },
+        contextIsolation: false
+    }
 }
 
 export const mainOptions: BrowserWindowConstructorOptions = {
@@ -33,8 +33,8 @@ export const mainOptions: BrowserWindowConstructorOptions = {
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
-        webviewTag: true, // website item
-    },
+        webviewTag: true // website item
+    }
 }
 
 export const outputOptions: BrowserWindowConstructorOptions = {
@@ -64,8 +64,8 @@ export const outputOptions: BrowserWindowConstructorOptions = {
         allowRunningInsecureContent: false,
         webviewTag: true,
         backgroundThrottling: false,
-        autoplayPolicy: "no-user-gesture-required",
-    },
+        autoplayPolicy: "no-user-gesture-required"
+    }
 }
 
 export const screenIdentifyOptions: BrowserWindowConstructorOptions = {
@@ -77,8 +77,8 @@ export const screenIdentifyOptions: BrowserWindowConstructorOptions = {
     hasShadow: false,
     webPreferences: {
         nodeIntegration: !isProd,
-        contextIsolation: false,
-    },
+        contextIsolation: false
+    }
 }
 
 export const exportOptions: BrowserWindowConstructorOptions = {
@@ -93,8 +93,8 @@ export const exportOptions: BrowserWindowConstructorOptions = {
         // contextIsolation: true,
         // enableRemoteModule: false,
         backgroundThrottling: false,
-        autoplayPolicy: "no-user-gesture-required",
-    },
+        autoplayPolicy: "no-user-gesture-required"
+    }
 }
 
 export const captureOptions: BrowserWindowConstructorOptions = {
@@ -111,6 +111,6 @@ export const captureOptions: BrowserWindowConstructorOptions = {
         webviewTag: true,
         backgroundThrottling: false,
         autoplayPolicy: "no-user-gesture-required",
-        offscreen: true,
-    },
+        offscreen: true
+    }
 }

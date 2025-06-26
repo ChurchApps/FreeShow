@@ -21,7 +21,7 @@ export function save(data: SaveData) {
     // save to files
     Object.entries(stores).forEach(storeData as any)
     function storeData([key, store]: [keyof typeof stores, any]) {
-        if (!(data as any)[key] || JSON.stringify(store.store) === JSON.stringify((data as any)[key])) return
+        if (!(data as any)[key] || checkIfMatching(store.store, (data as any)[key])) return
 
         store.clear()
         store.set((data as any)[key])
@@ -76,4 +76,9 @@ export function save(data: SaveData) {
 
         if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, customTriggers: data.customTriggers })
     }, 700)
+}
+
+// a few keys might not be placed in the same order in JS object vs store file
+function checkIfMatching(a: object, b: object): boolean {
+    return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
 }

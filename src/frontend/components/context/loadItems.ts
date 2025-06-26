@@ -173,7 +173,7 @@ const loadActions = {
         // text content
         let textContent = ""
         get(selected).data.forEach(({ index }) => {
-            textContent += getSlideText(_show().slides([layoutSlides[index]?.id]).get()[0])
+            textContent += getSlideText(_show().slides([layoutSlides[index]?.id]).get()?.[0])
         })
         setContextData("textContent", textContent)
 

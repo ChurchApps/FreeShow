@@ -173,7 +173,7 @@
     $: if (currentLineId) {
         // don't update until all outputs has updated their "line" value
         setTimeout(() => {
-            lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
+            lines[currentLineId] = getOutputLines(slide!, currentStyle.lines) // , currentSlide
         }, updateLinesTime)
     }
 

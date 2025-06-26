@@ -63,7 +63,7 @@
     {/if}
 
     {#each outs as output}
-        <div class="outputPreview" style={!fullscreen || fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;"}>
+        <div id={output.id} class="outputPreview output_button context #output_preview" style={!fullscreen || fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};width:50%` : ""} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
         </div>
     {/each}

@@ -51,12 +51,22 @@ export class NdiReceiver {
 
         // https://github.com/Streampunk/grandiose/issues/12
         if (!this.allActiveReceivers[source.id]) {
-            this.allActiveReceivers[source.id] = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA })
         }
         // , allowVideoFields: false
 
         try {
-            const videoFrame = await this.allActiveReceivers[source.id].video(this.receiverTimeout)
+            const rawFrame = await this.allActiveReceivers[source.id].video(this.receiverTimeout)
+            const videoFrame = rawFrame.data
+
+            // Issue with NDI 6.2: COLOR_FORMAT_RGBX_RGBA is incorrect (green tinted), using BGRA and converting back to RGBA (this worked fine without using NDI 6.1.1)
+            for (let i = 0; i < videoFrame.length; i += 4) {
+                const b = videoFrame[i]
+                videoFrame[i] = videoFrame[i + 2] // B -> R
+                videoFrame[i + 2] = b // R -> B
+            }
+
+            rawFrame.data = videoFrame
             this.sendBuffer(source.id, videoFrame)
         } catch (err) {
             console.error(err)
@@ -86,7 +96,7 @@ export class NdiReceiver {
         // this.NDI_RECEIVERS[source.id] = { frameRate: frameRate || 0.1 }
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
-            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA })
         }
 
         const frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)
@@ -100,8 +110,18 @@ export class NdiReceiver {
 
             try {
                 // WIP app crashes if the ndi source stops sending data! (problem in grandiose package)
-                const videoFrame = await receiver.video(this.receiverTimeout)
-                this.sendBuffer(source.id, videoFrame)
+                const rawFrame = await receiver.video(this.receiverTimeout)
+                const videoFrame = rawFrame.data
+
+                // Issue with NDI 6.2: COLOR_FORMAT_RGBX_RGBA is incorrect (green tinted), using BGRA and converting back to RGBA (this worked fine without using NDI 6.1.1)
+                for (let i = 0; i < videoFrame.length; i += 4) {
+                    const b = videoFrame[i]
+                    videoFrame[i] = videoFrame[i + 2] // B -> R
+                    videoFrame[i + 2] = b // R -> B
+                }
+
+                rawFrame.data = videoFrame
+                this.sendBuffer(source.id, rawFrame)
             } catch (err) {
                 console.error(err)
                 this.stopReceiversNDI({ id: source.id })

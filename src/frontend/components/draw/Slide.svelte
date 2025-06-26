@@ -7,7 +7,7 @@
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
     // $: ref = $activeShow?.id ? getLayoutRef() : null
     // $: currentOutput = $outputs[outputId] || {}
-    // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
+    // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()?.[0] : null
 
     let width = 0
     let height = 0
