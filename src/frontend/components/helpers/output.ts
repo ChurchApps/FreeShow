@@ -439,7 +439,7 @@ export function outputSlideHasContent(output) {
     const showRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
     if (!showRef.length) return false
 
-    const currentSlide = _show(outSlide.id).slides([showRef[outSlide.index!]?.id]).get()[0]
+    const currentSlide = _show(outSlide.id).slides([showRef[outSlide.index!]?.id]).get()?.[0]
     if (!currentSlide) return false
 
     return !!getSlideText(currentSlide)?.length

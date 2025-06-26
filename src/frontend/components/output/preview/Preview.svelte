@@ -221,7 +221,7 @@
     let linesIndex: null | number = null
     let maxLines: null | number = null
     $: amountOfLinesToShow = getFewestOutputLines($outputs)
-    $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
+    $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()?.[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     $: maxLines = slideLines && amountOfLinesToShow && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : null
     $: outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null

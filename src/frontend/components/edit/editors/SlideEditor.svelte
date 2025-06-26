@@ -28,7 +28,7 @@
     $: currentShow = $showsCache[currentShowId]
     $: if (currentShowId && currentShow && $activeEdit.slide === null && _show(currentShowId).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShowId })
     $: ref = currentShowId && currentShow ? getLayoutRef(currentShowId) : []
-    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShowId).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
+    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShowId).slides([ref[$activeEdit.slide!]?.id]).get()?.[0] : null
 
     let lines: [string, number][] = []
     let mouse: any = null
