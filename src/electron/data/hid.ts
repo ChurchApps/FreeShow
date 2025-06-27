@@ -19,23 +19,42 @@ export function getHidDevices(): Promise<Device[]> {
         // })
 
         // remove devices not readable (might be in use by Windows)
-        devices = devices.filter(isReadable)
+        let filteredDevices: Device[] = []
+        for (const device of devices) {
+            if (await isReadable(device)) filteredDevices.push(device)
+        }
 
-        resolve(devices)
+        resolve(filteredDevices)
     })
 }
 
-function isReadable(d: Device) {
-    return true
-    console.log(d)
-    // THIS DID NOT WORK
-    // try {
-    //     const device = new HID(d.path!)
-    //     device.close()
-    //     return true
-    // } catch (err) {
-    //     return false
-    // }
+async function isReadable(d: Device): Promise<boolean> {
+    return new Promise((resolve) => {
+        const device = new HID(d.path!)
+
+        device.on("error", error)
+
+        // needed to check for errors
+        device.on("data", () => {})
+
+        // give time to connect and check for connection errors
+        // if no errors after 10 ms, close as valid
+        setTimeout(valid, 10)
+
+        let done = false
+        function error() {
+            if (done) return
+            done = true
+            device.close()
+            resolve(false)
+        }
+        function valid() {
+            if (done) return
+            done = true
+            device.close()
+            resolve(true)
+        }
+    })
 }
 
 const devices: { [key: string]: HID } = {}
@@ -46,14 +65,14 @@ export function hidAwaitInput(data: { path: string }) {
     const device = new HID(data.path)
     console.log("HID LISTENING: ", data.path)
 
-    // try {
+    device.on("error", (err) => {
+        console.log("HID ERROR:", err)
+    })
+
     device.on("data", (data) => {
         console.log("HID RECEIVED DATA")
         sendToMain(ToMain.HID_DATA, data)
     })
-    // } catch (err) {
-    //     console.log("HID ERROR:", err)
-    // }
 
     devices[deviceId] = device
 }
