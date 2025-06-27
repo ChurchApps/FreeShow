@@ -23,6 +23,10 @@
         "dev:vite": "vite",
         "build:vite": "vite build",
         "preview:vite": "vite preview",
+        "---ELECTRON-VITE---": "",
+        "dev:electron-vite": "electron-vite dev",
+        "build:electron-vite": "electron-vite build",
+        "preview:electron-vite": "electron-vite preview",
         "---VITE MULTI-TARGET---": "",
         "build:vite:all": "node scripts/vite-build-all.mjs",
         "build:vite:frontend": "cross-env BUILD_TARGET=frontend vite build",
@@ -83,6 +87,7 @@
         "cross-env": "^7.0.3",
         "electron": "^32.3.3",
         "electron-builder": "^26.0.13",
+        "electron-vite": "^3.1.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^8.10.0",
         "eslint-plugin-jsdoc": "^39.9.1",
@@ -108,6 +113,7 @@
         "tslib": "^2.8.1",
         "typescript": "^4.9.5",
         "vite": "^4.5.14",
+        "vite-plugin-electron": "^0.29.0",
         "vite-plugin-static-copy": "^0.17.1"
     },
     "dependencies": {
