@@ -6,6 +6,7 @@ import { getActiveOutputs } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { variables } from "../../stores"
 import type { API_id_optional, API_slide } from "./api"
 
 export function getShows() {
@@ -99,4 +100,51 @@ export function getSlide(data: API_slide) {
     const slides = _show(data.showId || "active").get("slides") || {}
     const slide = slides[data.slideId || Object.keys(slides)[0]]
     return slide || null
+}
+
+export function getVariables() {
+    const variableStore = get(variables)
+    
+    // Transform the variables object to an array with the requested fields
+    return Object.entries(variableStore || {}).map(([id, variable]) => ({
+        id,
+        name: variable.name || "",
+        type: variable.type || "number",
+        value: variable.number !== undefined ? variable.number : variable.text || "",
+        text: variable.text || "",
+        enabled: variable.enabled !== false // default to true if not specified
+    }))
+}
+
+export function getVariable(data: { id?: string; name?: string }) {
+    const variableStore = get(variables)
+    
+    if (!data.id && !data.name) {
+        return null // No lookup criteria provided
+    }
+    
+    // Look up by ID first (more efficient)
+    if (data.id && variableStore[data.id]) {
+        return {
+            id: data.id,
+            ...variableStore[data.id]
+        }
+    }
+    
+    // Look up by name if ID not found or not provided
+    if (data.name) {
+        const foundEntry = Object.entries(variableStore).find(([_, variable]) => 
+            variable.name === data.name
+        )
+        
+        if (foundEntry) {
+            const [id, variable] = foundEntry
+            return {
+                id,
+                ...variable
+            }
+        }
+    }
+    
+    return null // Variable not found
 }

@@ -37,7 +37,9 @@ import {
     getShow,
     getShowLayout,
     getShows,
-    getSlide
+    getSlide,
+    getVariables,
+    getVariable
 } from "./apiGet"
 import {
     addGroup,
@@ -146,6 +148,8 @@ export type API_variable = {
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
+
+
 export interface API_midi extends MidiValues {
     type: "noteon" | "noteoff" | "control"
     defaultValues?: boolean // only used by actions
@@ -336,6 +340,9 @@ export const API_ACTIONS = {
     get_playing_audio_time: () => getPlayingAudioTime(),
     get_playing_audio_time_left: () => getPlayingAudioDuration() - getPlayingAudioTime(),
     get_playing_audio_data: () => getPlayingAudioData(),
+    
+    get_variables: () => getVariables(),
+    get_variable: (data: { id?: string; name?: string }) => getVariable(data),
 
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
