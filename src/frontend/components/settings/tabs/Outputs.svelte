@@ -50,7 +50,8 @@
 
         // properly update output content
         if (key === "style") {
-            refreshOut()
+            // wait to update output, so slide is refreshed after style is changed in output window
+            setTimeout(refreshOut)
         }
 
         if (key === "ndi") {

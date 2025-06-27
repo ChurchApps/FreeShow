@@ -844,7 +844,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             // outTransition.set({ duration })
             setOutput("transition", { duration }, false, outputId)
         } else {
-            clearTimers(outputId)
+            clearTimers(outputId, false)
         }
     }
 }
