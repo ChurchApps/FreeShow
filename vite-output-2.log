@@ -1,0 +1,17 @@
+
+> freeshow@1.4.7 dev:vite
+> vite
+
+(node:37955) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///mnt/e/LCS/FreeShow/FreeShow/svelte.config.js?t=1751017620996.182 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /mnt/e/LCS/FreeShow/FreeShow/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Forced re-optimization of dependencies
+[vite-plugin-static-copy] Collected 3 items.
+
+  VITE v4.5.14  ready in 2699 ms
+
+  ➜  Local:   http://localhost:3000/
+4:47:47 AM [vite-plugin-svelte] /mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/slide/Slide.svelte:676:4 Unused CSS selector ".open-in-browser-btn"
+4:47:47 AM [vite-plugin-svelte] /mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/slide/Slide.svelte:686:4 Unused CSS selector ".open-in-browser-btn:hover"
+4:47:51 AM [vite] Failed to load source map for /src/frontend/components/output/effects/simplex-noise.js.

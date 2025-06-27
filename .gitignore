@@ -8,6 +8,7 @@
 /public/*.ts
 /build/
 /dist/
+/public/build-vite/
 
 *.env
 

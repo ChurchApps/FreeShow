@@ -1,0 +1,62 @@
+
+> freeshow@1.4.7 dev:vite
+> vite
+
+[vite-plugin-static-copy] Collected 3 items.
+
+  VITE v4.5.14  ready in 1885 ms
+
+  ➜  Local:   http://localhost:3000/
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/MainOutput.svelte:4:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/context/ContextMenu.svelte:12:19 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/guide/Guide.svelte:26:62 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/export/Pdf.svelte:3:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/main/MenuBar.svelte:14:15 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/main/Popup.svelte:3:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/quicksearch/QuickSearch.svelte:14:14 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/main/Toast.svelte:10:20 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/draw/Slide.svelte:18:15 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/draw/DrawSettings.svelte:63:21 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/drawer/Drawer.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/Editor.svelte:29:85 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/draw/DrawTabs.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/AudioTools.svelte:13:46 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/EffectTools.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/MediaTools.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/Navigation.svelte:16:23 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/edit/EditTools.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/main/Top.svelte:18:28 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/SettingsTabs.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/output/preview/Preview.svelte:28:21 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/ShowTools.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/Projects.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/stage/StageLayout.svelte:27:13 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/stage/StageLayouts.svelte:25:22 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/system/Resizeable.svelte:7:17 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/focus/FocusMode.svelte:15:23 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/stage/StageTools.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/helpers/T.svelte:4:17 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/helpers/T.svelte:4:17 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Files.svelte:30:27 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Connection.svelte:38:23 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Other.svelte:46:24 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/General.svelte:14:22 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Theme.svelte:3:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Outputs.svelte:6:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/drawer/live/Capture.svelte:10:21 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/settings/tabs/Styles.svelte:3:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/drawer/live/NDIStream.svelte:10:4 The keyword 'interface' is reserved
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/output/Camera.svelte:6:17 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/main/Splash.svelte:22:13 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/slide/Layouts.svelte:49:24 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/inputs/HoverButton.svelte:5:19 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/AudioPreview.svelte:12:21 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/media/MediaPreview.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/overlay/OverlayPreview.svelte:9:19 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/folder/FolderShow.svelte:4:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/ppt/PowerPointPreview.svelte:17:19 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/Slides.svelte:21:21 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/Section.svelte:12:22 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/show/pdf/PdfPreview.svelte:2:52 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/helpers/Icon.svelte:2:16 Unexpected token
+/mnt/e/LCS/FreeShow/FreeShow/src/frontend/components/inputs/Button.svelte:6:27 Unexpected token

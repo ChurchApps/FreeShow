@@ -1,0 +1,3 @@
+{
+    "extends": "../../src/frontend/tsconfig.json"
+}
