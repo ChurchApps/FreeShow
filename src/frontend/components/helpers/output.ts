@@ -175,7 +175,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             } else {
                 outData = data
 
-                if (type === "overlays") {
+                if (type === "overlays" || type === "effects") {
                     clearOverlayTimers(id)
                 }
             }

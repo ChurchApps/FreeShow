@@ -232,7 +232,15 @@
 
                             <p style="display: inline-flex;">
                                 <span style="color: var(--secondary);">{"{"}</span>
-                                {value.id}
+                                {#if value.id.startsWith("$")}
+                                    <span style="color: var(--secondary);">{"$"}</span>
+                                    {value.id.slice(1)}
+                                {:else}
+                                    <!-- variable_set_ -->
+                                    <!-- <span style="color: var(--secondary);">{value.id.slice(0, value.id.indexOf("_") + 1)}</span> -->
+                                    <!-- {value.id.slice(value.id.indexOf("_") + 1)} -->
+                                    {value.id}
+                                {/if}
                                 <span style="color: var(--secondary);">{"}"}</span>
                             </p>
                         </div>
