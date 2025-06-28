@@ -334,10 +334,6 @@ export type Popups =
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 
-export interface Variables {
-    [key: string]: Variable
-}
-
 // export type DropIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file"
 // export interface Drop {
 //   id: null | SelectIds
