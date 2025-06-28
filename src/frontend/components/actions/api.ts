@@ -50,6 +50,7 @@ import {
     createProject,
     deleteProject,
     editTimer,
+    getTimersDetailed,
     getClearedState,
     getPDFThumbnails,
     getPlainText,
@@ -80,7 +81,11 @@ import {
     timerSeekTo,
     toggleLock,
     updateVolumeValues,
-    videoSeekTo
+    videoSeekTo,
+    pauseTimerById,
+    pauseTimerByName,
+    stopTimerById,
+    stopTimerByName
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -286,6 +291,10 @@ export const API_ACTIONS = {
     stop_timers: () => stopTimers(), // BC
     timer_seekto: (data: API_seek) => timerSeekTo(data), // BC
     edit_timer: (data: API_edit_timer) => editTimer(data),
+    id_pause_timer: (data: API_id) => pauseTimerById(data.id),
+    name_pause_timer: (data: API_strval) => pauseTimerByName(data.value),
+    id_stop_timer: (data: API_id) => stopTimerById(data.id),
+    name_stop_timer: (data: API_strval) => stopTimerByName(data.value),
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
@@ -343,6 +352,8 @@ export const API_ACTIONS = {
     
     get_variables: () => getVariables(),
     get_variable: (data: { id?: string; name?: string }) => getVariable(data),
+    
+    get_timers: () => getTimersDetailed(),
 
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
