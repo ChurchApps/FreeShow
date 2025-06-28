@@ -1,6 +1,6 @@
 // import { Notification, app } from "electron"
 import { autoUpdater } from "electron-updater"
-import { isProd } from ".."
+import { isProd } from "./platform"
 
 // let notification: Notification | null
 

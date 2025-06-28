@@ -9,6 +9,7 @@
 /build/
 /dist/
 /public/build-vite/
+/out/
 
 *.env
 

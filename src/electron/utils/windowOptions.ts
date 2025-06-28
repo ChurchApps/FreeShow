@@ -4,7 +4,7 @@
 
 import type { BrowserWindowConstructorOptions } from "electron"
 import { join } from "path"
-import { isMac, isProd } from ".."
+import { isMac, isProd } from "./platform"
 
 export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,
@@ -27,7 +27,7 @@ export const mainOptions: BrowserWindowConstructorOptions = {
     trafficLightPosition: { x: 10, y: 12 }, // mac buttons
     show: false,
     webPreferences: {
-        preload: join(__dirname, "..", "preload"), // browser - node communication
+        preload: join(__dirname, "..", "preload", "preload.js"), // browser - node communication
         devTools: !isProd, // enable dev tools in dev
         webSecurity: isProd, // access local files in dev
         nodeIntegration: !isProd,
@@ -57,7 +57,7 @@ export const outputOptions: BrowserWindowConstructorOptions = {
     // roundedCorners: false, // disable rounded corners on mac
     // thickFrame: false, // remove window shadow and window animations on Windows
     webPreferences: {
-        preload: join(__dirname, "..", "preload"),
+        preload: join(__dirname, "..", "preload", "preload.js"),
         webSecurity: isProd,
         nodeIntegration: !isProd,
         contextIsolation: true,
@@ -87,7 +87,7 @@ export const exportOptions: BrowserWindowConstructorOptions = {
     modal: true,
     frame: false,
     webPreferences: {
-        preload: join(__dirname, "..", "preload"),
+        preload: join(__dirname, "..", "preload", "preload.js"),
         webSecurity: isProd,
         nodeIntegration: !isProd,
         // contextIsolation: true,
@@ -103,7 +103,7 @@ export const captureOptions: BrowserWindowConstructorOptions = {
     frame: false,
     skipTaskbar: true,
     webPreferences: {
-        preload: join(__dirname, "..", "preload"),
+        preload: join(__dirname, "..", "preload", "preload.js"),
         webSecurity: isProd,
         nodeIntegration: !isProd,
         contextIsolation: true,

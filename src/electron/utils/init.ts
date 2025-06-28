@@ -1,16 +1,16 @@
 import { app, screen, type BrowserWindow } from "electron"
 import path from "path"
-import { isProd, isWindows } from ".."
+import { isProd, isWindows } from "./platform"
 import { catchErrors } from "../IPC/responsesMain"
 import { doesPathExist } from "./files"
+import "../servers" // initialize express servers
 
 // get LOADED message from frontend
 export function mainWindowInitialize() {
     // midi
     // createVirtualMidi()
 
-    // express
-    require("../servers")
+    // express servers are initialized via import above
 
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
@@ -27,9 +27,9 @@ export function openDevTools(window: BrowserWindow) {
     // https://github.com/electron/electron/issues/41614
 }
 
-// wait until the main Rollup bundle exists before loading
+// wait until the main Vite bundle exists before loading
 export function waitForBundle() {
-    const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "..", "public/build/bundle.js")
+    const BUNDLE_PATH = path.resolve(__dirname, "..", "renderer", "main.js")
     const CHECK_INTERVAL = 2 // every 2 seconds
     const MAX_SECONDS = 120
     let tries = 0

@@ -1,4 +1,4 @@
-import Bonjour from "bonjour-service"
+import { Bonjour } from "bonjour-service"
 import os from "os"
 
 const bonjour = new Bonjour()

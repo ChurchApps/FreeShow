@@ -1,5 +1,5 @@
 import { app } from "electron"
-import { isMac, isProd } from ".."
+import { isMac, isProd } from "./platform"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Dictionary } from "../../types/Settings"
 import { sendToMain } from "../IPC/main"

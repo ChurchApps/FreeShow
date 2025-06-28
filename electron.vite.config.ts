@@ -24,12 +24,10 @@ export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
     build: {
-      outDir: 'build/electron',
       rollupOptions: {
         input: 'src/electron/index.ts',
         output: {
-          format: 'cjs',
-          entryFileNames: 'index.js'
+          format: 'cjs'
         }
       }
     },
@@ -42,12 +40,10 @@ export default defineConfig({
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: {
-      outDir: 'build/electron',
       rollupOptions: {
         input: 'src/electron/preload.ts',
         output: {
-          format: 'cjs',
-          entryFileNames: 'preload.js'
+          format: 'cjs'
         }
       }
     },
@@ -104,7 +100,6 @@ export default defineConfig({
       }
     },
     build: {
-      outDir: 'public/build-vite',
       emptyOutDir: true,
       rollupOptions: {
         input: {

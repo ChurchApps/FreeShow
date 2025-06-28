@@ -3,6 +3,7 @@
 
 import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, screen } from "electron"
+import path from "path"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
@@ -22,8 +23,9 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
-// check if app's in production or not
-export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+// platform detection
+import { isProd } from "./utils/platform"
+export { isProd, isWindows, isMac, isLinux } from "./utils/platform"
 
 // remove "Disabled webSecurity" console warning as it is only disabled in development
 if (!isProd) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
@@ -31,11 +33,6 @@ if (!isProd) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 // development settings
 export const OUTPUT_CONSOLE = false
 const RECORD_STARTUP_TIME = false
-
-// get os platform
-export const isWindows: boolean = process.platform === "win32"
-export const isMac: boolean = process.platform === "darwin"
-export const isLinux: boolean = process.platform === "linux"
 
 // check if store works
 config.set("loaded", true)
@@ -143,14 +140,17 @@ function mainWindowLoaded() {
 export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
     const mainOutput = type === null
 
-    if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
-    else {
+    if (isProd) {
+        window.loadFile("public/index.html").catch(loadingFailed)
+    } else {
         // load development environment
         if (mainOutput) {
             await waitForBundle()
             openDevTools(window)
         }
-        window.loadURL("http://localhost:3000").catch(loadingFailed)
+        // For electron-vite dev, load the built renderer files
+        const htmlPath = path.join(__dirname, "..", "renderer", "index-vite.html")
+        window.loadFile(htmlPath).catch(loadingFailed)
     }
 
     window.webContents.on("did-finish-load", () => {
