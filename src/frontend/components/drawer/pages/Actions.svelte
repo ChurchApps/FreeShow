@@ -43,7 +43,7 @@
                                 <p style="font-size: 1.03em;display: flex;align-items: center;" class:customActivation={action.customActivation || action.startupEnabled}>
                                     {#if action.shows?.length}
                                         <Icon id="slide" white right />
-                                    {:else if action.triggers.length !== 1}
+                                    {:else if action.triggers?.length !== 1}
                                         <Icon id="actions" right />
                                     {:else}
                                         <Icon id={getActionIcon(action.id)} right />
