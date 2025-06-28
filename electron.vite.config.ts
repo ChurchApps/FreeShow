@@ -2,6 +2,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { resolve } from 'path'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { freeShowInspectorPlugin } from './config/vite/inspector-plugin.mjs'
 
 const production = process.env.NODE_ENV === 'production'
 
@@ -87,8 +88,15 @@ export default defineConfig({
             dest: '.'
           }
         ]
+      }),
+      // Add custom inspector plugin in development mode
+      !production && freeShowInspectorPlugin({
+        activateKeyCode: 73, // I(nspect)
+        openFileKeyCode: 79, // O(pen)
+        editor: 'code',
+        color: '#ff3c00'
       })
-    ],
+    ].filter(Boolean),
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),
