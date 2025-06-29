@@ -9,6 +9,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import { getSlideTextItems, stageItemToItem } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let layout: StageLayout
     export let id: string
@@ -36,7 +37,7 @@
 
 <!-- WIP duplicate of StageLayout.svelte (pretty much) -->
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-    <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} role="button" on:click on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}>
+    <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} role="button" on:click on:keydown={triggerClickOnEnterSpace}>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>

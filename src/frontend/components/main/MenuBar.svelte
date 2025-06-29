@@ -10,6 +10,7 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     const menus: string[] = ["file", "edit", "view", "help"]
 
@@ -64,7 +65,7 @@
         </div>
     {/if}
 
-    <div class="nocontext menus" role="menubar" tabindex="0" on:mousemove={move} on:click={menu} on:contextmenu={menu} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); menu(e); } }}>
+    <div class="nocontext menus" role="menubar" tabindex="0" on:mousemove={move} on:click={menu} on:contextmenu={menu} on:keydown={triggerClickOnEnterSpace}>
         {#each menus as menu}
             <Button id={menu} active={activeID === menu} red={menu === "file" && !$saved}>
                 <T id="titlebar.{menu}" />

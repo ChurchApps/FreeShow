@@ -7,6 +7,7 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let type = "event"
 
@@ -59,13 +60,7 @@
                             eventEdit.set(event.id)
                             activePopup.set("edit_event")
                         }}
-                        on:keydown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                eventEdit.set(event.id)
-                                activePopup.set("edit_event")
-                            }
-                        }}
+                        on:keydown={triggerClickOnEnterSpace}
                     >
                         {#if event.time}
                             <span class="time">

@@ -3,6 +3,7 @@
     import { activePopup, localeDirection, selected } from "../../stores"
     import { customIcons } from "../../values/customIcons"
     import icons from "../../values/icons"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let id: string
     export let size = 1
@@ -29,21 +30,14 @@
         activePopup.set("icon")
     }
 
-    const handleKeydown = (e: KeyboardEvent) => {
-        if (!select) return
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault()
-            click()
-        }
-    }
 </script>
 
 {#if select}
-<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={handleKeydown} tabindex={0} role="button" style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
     {@html icon ? icon : icons.noIcon}
 </svg>
 {:else}
-<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={handleKeydown} style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={triggerClickOnEnterSpace} style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
     {@html icon ? icon : icons.noIcon}
 </svg>
 {/if}

@@ -7,6 +7,7 @@
     import T from "../../helpers/T.svelte"
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let path = ""
 
@@ -100,7 +101,7 @@
         <p style="padding: 0 10px;"><T id="presentation_control.choose_window" />:</p>
         <div class="choose">
             {#each chooseWindow as screen}
-                <div class="screen" role="button" tabindex="0" on:click={() => selectWindow(screen, true)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectWindow(screen, true); } }}>
+                <div class="screen" role="button" tabindex="0" on:click={() => selectWindow(screen, true)} on:keydown={triggerClickOnEnterSpace}>
                     <Window id={screen.id} class="media" style="width: 100%;height: 100%;pointer-events: none;position: absolute;" />
                     <p title={screen.name}>{screen.name}</p>
                 </div>

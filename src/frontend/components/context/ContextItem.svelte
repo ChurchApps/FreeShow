@@ -281,7 +281,10 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") contextItemClick()
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            contextItemClick()
+        }
     }
 
     let shortcut = ""

@@ -3,6 +3,7 @@
     import type { LayoutRef } from "../../../../types/Show"
     import { activeFocus, activeShow, focusMode, presentationData, showsCache } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let currentOutput: Output
     export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[]
@@ -33,7 +34,7 @@
 </script>
 
 {#if slide}
-    <span class="name" style="justify-content: space-between;" role="button" tabindex="0" on:click={openShow} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openShow(); } }}>
+    <span class="name" style="justify-content: space-between;" role="button" tabindex="0" on:click={openShow} on:keydown={triggerClickOnEnterSpace}>
         <p>
             {#if name.length}
                 {name}
