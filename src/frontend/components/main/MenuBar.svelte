@@ -64,7 +64,7 @@
         </div>
     {/if}
 
-    <div class="nocontext menus" on:mousemove={move} on:click={menu} on:contextmenu={menu}>
+    <div class="nocontext menus" role="menubar" tabindex="0" on:mousemove={move} on:click={menu} on:contextmenu={menu} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); menu(e); } }}>
         {#each menus as menu}
             <Button id={menu} active={activeID === menu} red={menu === "file" && !$saved}>
                 <T id="titlebar.{menu}" />

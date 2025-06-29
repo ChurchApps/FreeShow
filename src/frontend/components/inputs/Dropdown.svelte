@@ -80,6 +80,9 @@
                 <span
                     id={formatId(option.name)}
                     style={option.style || ""}
+                    role="option"
+                    aria-selected={activeId ? option.id === activeId : option.name === value}
+                    tabindex="0"
                     on:click={() => {
                         if (disabled) return
                         active = false
@@ -87,6 +90,16 @@
                         setTimeout(() => {
                             dispatch("click", option)
                         }, 50)
+                    }}
+                    on:keydown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            if (disabled) return
+                            active = false
+                            setTimeout(() => {
+                                dispatch("click", option)
+                            }, 50)
+                        }
                     }}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >

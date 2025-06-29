@@ -83,7 +83,7 @@
 
 {#if background}
     {#if !big}
-        <span class="name" on:click={openPreview}>
+        <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(); } }}>
             {#if background?.type === "player"}
                 <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
             {:else}
@@ -172,5 +172,9 @@
 
     .name:hover {
         background-color: var(--primary-darker);
+    }
+    .name:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

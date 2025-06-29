@@ -50,6 +50,8 @@
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
                         class="slide {isLocked ? '' : 'context #group'}"
+                        role="button"
+                        tabindex="0"
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
                             if (isLocked) {
@@ -62,6 +64,22 @@
                                 selected.set({ id: "group", data: [{ id: slide.id }] })
                                 ondrop(null, "slide")
                                 selected.set({ id: null, data: [] })
+                            }
+                        }}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                if (isLocked) {
+                                    alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
+                                }
+
+                                if (!e.ctrlKey && !e.metaKey) {
+                                    selected.set({ id: "group", data: [{ id: slide.id }] })
+                                    ondrop(null, "slide")
+                                    selected.set({ id: null, data: [] })
+                                }
                             }
                         }}
                     >
@@ -90,6 +108,8 @@
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide context #global_group"
+                            role="button"
+                            tabindex="0"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
                                 if (isLocked) {
@@ -101,6 +121,21 @@
                                 if (!e.ctrlKey && !e.metaKey && $activeShow) {
                                     // , unique: true
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
+                                }
+                            }}
+                            on:keydown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault()
+                                    if (isLocked) {
+                                        alertMessage.set("show.locked_info")
+                                        activePopup.set("alert")
+                                        return
+                                    }
+
+                                    if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                        // , unique: true
+                                        history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
+                                    }
                                 }
                             }}
                         >

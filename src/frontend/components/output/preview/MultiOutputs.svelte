@@ -42,10 +42,20 @@
     function currentResolution() {
         resolution = getOutputResolution(fullscreenId, $outputs, true)
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            toggleFullscreen(e)
+        } else if (e.key === 'Escape' && fullscreen) {
+            e.preventDefault()
+            fullscreen = false
+        }
+    }
 </script>
 
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
-<div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"}>
+<div on:click={toggleFullscreen} on:keydown={handleKeydown} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"} role="button" tabindex="0" aria-label="{fullscreen ? 'Exit fullscreen preview' : 'Toggle fullscreen preview'}">
     {#if fullscreen}
         <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title={$dictionary.actions?.close} center>
             <Icon id="close" size={1.5} white />

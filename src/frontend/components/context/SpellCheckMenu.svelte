@@ -18,11 +18,18 @@
         sendMain(Main.SPELLCHECK, { fixSpelling: word })
         closeContextMenu()
     }
+
+    function handleKeydown(e: KeyboardEvent, action: () => void) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            action()
+        }
+    }
 </script>
 
 {#if misspelled && suggestions.length}
     {#each suggestions as suggestion}
-        <div on:click={() => fixSpelling(suggestion)} tabindex={0} title={$dictionary.context?.correct}>
+        <div on:click={() => fixSpelling(suggestion)} on:keydown={(e) => handleKeydown(e, () => fixSpelling(suggestion))} tabindex={0} role="button" title={$dictionary.context?.correct}>
             <span style="display: flex;align-items: center;gap: 10px;">
                 <Icon id="fix_misspelling" />
                 <p style="display: flex;align-items: center;gap: 5px;font-weight: bold;">
@@ -34,7 +41,7 @@
 
     <hr />
 
-    <div on:click={addToDictionary} tabindex={0}>
+    <div on:click={addToDictionary} on:keydown={(e) => handleKeydown(e, addToDictionary)} tabindex={0} role="button">
         <span style="display: flex;align-items: center;gap: 10px;">
             <Icon id="dictionary" />
             <p style="display: flex;align-items: center;gap: 5px;">

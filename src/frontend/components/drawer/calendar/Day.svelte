@@ -53,9 +53,18 @@
                         style="color: {event.color || 'unset'}"
                         id={event.id}
                         title={customName}
+                        role="button"
+                        tabindex="0"
                         on:click={() => {
                             eventEdit.set(event.id)
                             activePopup.set("edit_event")
+                        }}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                eventEdit.set(event.id)
+                                activePopup.set("edit_event")
+                            }
                         }}
                     >
                         {#if event.time}
@@ -136,6 +145,10 @@
     }
     .event:hover {
         background-color: var(--hover);
+    }
+    .event:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 
     .time {

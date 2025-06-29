@@ -120,19 +120,19 @@
 {#if $slidesOptions.mode === "grid"}
     <!-- one at a time, in prioritized order -->
     {#if layouts?.[activeLayout]?.notes}
-        <div class="notes" title={$dictionary.tools?.notes} on:click={() => openTab("notes")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab("notes"); } }}>
             <Icon id="notes" right white />
             {#if typeof layouts[activeLayout].notes === "string"}
                 <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
             {/if}
         </div>
     {:else if currentShow.message?.text}
-        <div class="notes" title={$dictionary.meta?.message} on:click={() => openTab("metadata")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab("metadata"); } }}>
             <Icon id="message" right white />
             <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-        <div class="notes" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab("metadata"); } }}>
             <Icon id="info" right white />
             <p>
                 <!-- currentStyle.metadataDivider -->

@@ -181,7 +181,7 @@
 
         <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
 
-        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullLength = !fullLength; } }}>
             {#if !isMic && fullLength}
                 {joinTime(secondsToTime(duration))}
             {:else}
@@ -319,5 +319,13 @@
         bottom: 0;
         inset-inline-start: 0;
         width: 100%;
+    }
+    
+    span[role="button"] {
+        cursor: pointer;
+    }
+    span[role="button"]:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

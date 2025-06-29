@@ -28,11 +28,25 @@
         if (selectData && !$selected.data.includes(selectData.data[0])) selected.set(selectData)
         activePopup.set("icon")
     }
+
+    const handleKeydown = (e: KeyboardEvent) => {
+        if (!select) return
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            click()
+        }
+    }
 </script>
 
-<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+{#if select}
+<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={handleKeydown} tabindex={0} role="button" style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
     {@html icon ? icon : icons.noIcon}
 </svg>
+{:else}
+<svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={handleKeydown} style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+    {@html icon ? icon : icons.noIcon}
+</svg>
+{/if}
 
 <style>
     svg {

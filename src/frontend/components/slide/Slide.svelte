@@ -351,7 +351,7 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
+    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} role="button" on:click on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
@@ -489,10 +489,10 @@
                             </div>
                         {/if}
                         {#if slide.notes && icons}
-                            <p class="notes" title={slide.notes} on:click={openNotes}>
+                            <button class="notes" title={slide.notes} on:click={openNotes}>
                                 <Icon id="notes" white right />
                                 <span>{slide.notes}</span>
-                            </p>
+                            </button>
                         {/if}
 
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
@@ -717,19 +717,19 @@
         white-space: nowrap;
     }
 
-    .open-in-browser-btn {
+    /* .open-in-browser-btn {
         background: none;
         border: none;
-        color: inherit; /* Or a specific color if needed */
+        color: inherit;
         cursor: pointer;
-        padding: 0 4px; /* Adjust as needed */
-        margin-inline-start: auto; /* Pushes it to the right if label is flex */
-        display: flex; /* To align icon nicely if needed */
+        padding: 0 4px;
+        margin-inline-start: auto;
+        display: flex;
         align-items: center;
     }
     .open-in-browser-btn:hover {
         opacity: 0.7;
-    }
+    } */
 
     hr {
         height: 100%;

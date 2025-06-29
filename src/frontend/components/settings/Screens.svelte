@@ -346,11 +346,20 @@
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution || currentScreen.boundsLocked}
                         style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;inset-inline-start: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
+                        role="button"
+                        tabindex="0"
                         on:click={() => {
                             if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
 
                             // WIP this will not always change correct output if multiple & "activateOutput"
                             changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                        }}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
+                                changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                            }
                         }}
                     >
                         {i + 1}
@@ -454,6 +463,10 @@
 
     .screen.disabled {
         opacity: 0.5;
+    }
+    .screen:focus:not(.disabled) {
+        outline: 42px solid var(--secondary);
+        outline-offset: 0;
     }
 
     .preview {

@@ -54,6 +54,13 @@
         const minHeight = 40
         if ($drawer.height <= minHeight) drawer.set({ height: $drawer.stored || DEFAULT_DRAWER_HEIGHT, stored: null })
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            openAudioMix()
+        }
+    }
 </script>
 
 {#if advanced}
@@ -85,7 +92,7 @@
         </div>
     </div>
 {:else}
-    <div class="main" on:click={openAudioMix}>
+    <div class="main" on:click={openAudioMix} on:keydown={handleKeydown} role="button" tabindex="0" aria-label="Open audio mixer">
         <!-- <span class="left">
             <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
         </span>

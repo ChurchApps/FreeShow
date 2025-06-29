@@ -117,7 +117,7 @@
 <div class="grid" on:wheel={wheel}>
     {#each { length: pageCount } as _page, i}
         <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
-            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} on:click={(e) => outputPdf(e, i)}>
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); outputPdf(e, i); } }}>
                 <canvas bind:this={canvases[i]} />
             </div>
         </div>

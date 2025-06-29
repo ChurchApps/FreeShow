@@ -173,12 +173,24 @@
             {#each fonts as font}
                 <span
                     id={formatId(font.family)}
+                    role="option"
+                    aria-selected={font.family === value}
+                    tabindex="0"
                     on:click={() => {
                         active = false
                         // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
                         setTimeout(() => {
                             setFont(font.family)
                         }, 50)
+                    }}
+                    on:keydown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            active = false
+                            setTimeout(() => {
+                                setFont(font.family)
+                            }, 50)
+                        }
                     }}
                     class:active={font.family === value}
                     style={font.fonts[font.default]?.css || `font-family: ${font.family};`}

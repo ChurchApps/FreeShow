@@ -112,7 +112,7 @@
 
 {#if !active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height)}
     <div class="preview">
-        <div class="box" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)}>
+        <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activePopup.set(null); } }}>
             <p>{active.width}:{active.height}</p>
         </div>
     </div>

@@ -29,7 +29,7 @@
     {#if stageLayouts.length}
         <div class="grid">
             {#each stageLayouts as layout}
-                <div class="stageLayout" on:click={() => select(layout.id)}>
+                <div class="stageLayout" role="button" tabindex="0" on:click={() => select(layout.id)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(layout.id); } }}>
                     <StageSlide id={layout.id} {layout} active={active === layout.id} selectable={false} />
                 </div>
             {/each}
@@ -52,5 +52,10 @@
 
     .stageLayout {
         width: 25%;
+        cursor: pointer;
+    }
+    .stageLayout:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

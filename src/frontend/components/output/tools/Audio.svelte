@@ -126,7 +126,7 @@
 
             <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, path)} />
 
-            <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+            <span style={fullLength ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullLength = !fullLength; } }}>
                 {#if fullLength}
                     {joinTime(secondsToTime(duration))}
                 {:else}
@@ -166,5 +166,12 @@
     }
     .controls span {
         padding: 0 0.3em;
+    }
+    .controls span[role="button"] {
+        cursor: pointer;
+    }
+    .controls span[role="button"]:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

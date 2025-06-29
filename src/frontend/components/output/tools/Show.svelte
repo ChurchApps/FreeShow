@@ -33,7 +33,7 @@
 </script>
 
 {#if slide}
-    <span class="name" style="justify-content: space-between;" on:click={openShow}>
+    <span class="name" style="justify-content: space-between;" role="button" tabindex="0" on:click={openShow} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openShow(); } }}>
         <p>
             {#if name.length}
                 {name}
@@ -64,5 +64,9 @@
 
     .name:hover {
         background-color: var(--primary-darker);
+    }
+    .name:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>
