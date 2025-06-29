@@ -432,7 +432,8 @@ export class EffectRender {
         const rotationSpeed = item.rotationSpeed * 0.0002 * deltaTime
 
         for (const star of stars) {
-            let x; let y
+            let x
+            let y
 
             if (!star.inCore) {
                 star.rotation += rotationSpeed
@@ -940,7 +941,8 @@ export class EffectRender {
     drawSun(item: Required<SunItem>, deltaTime: number) {
         const ctx = this.ctx
 
-        let x: number; let y: number
+        let x: number
+        let y: number
         if (item.speed) {
             const data = this.effectData.get(item)
             if (!data) return
@@ -1028,7 +1030,8 @@ export class EffectRender {
             const r = baseRadius + waveOffset
             const px = x + Math.cos(angle) * r
             const py = y + Math.sin(angle) * r
-            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py)
+            if (i === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
         }
         ctx.closePath()
 
@@ -1893,8 +1896,8 @@ export class EffectRender {
             }
         }
 
-        const a = parse(color1);
-            const b = parse(color2)
+        const a = parse(color1)
+        const b = parse(color2)
         return `rgba(${Math.round(a.r + (b.r - a.r) * t)}, ${Math.round(a.g + (b.g - a.g) * t)}, ${Math.round(a.b + (b.b - a.b) * t)}, ${(a.a + (b.a - a.a) * t).toFixed(3)})`
     }
 

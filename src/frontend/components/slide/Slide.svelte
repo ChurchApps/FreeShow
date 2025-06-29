@@ -708,8 +708,8 @@
 
     .label .text {
         flex-grow: 1; /* Allow text to take available space */
-        margin-inline: 15px 5px; /* Space between text and button */
-        /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */ /* Keep existing left margin if needed */
+        margin-inline: 15px 5px; /* Keep existing left margin if needed | Space between text and button */
+        /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */
         margin-inline-end: 15px; /* Keep existing right margin if needed, or adjust for button */
         text-align: center;
         overflow-x: hidden;
