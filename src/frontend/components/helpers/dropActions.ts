@@ -141,7 +141,7 @@ export const dropActions = {
 
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
-            let extraFiles: string[] = []
+            const extraFiles: string[] = []
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)

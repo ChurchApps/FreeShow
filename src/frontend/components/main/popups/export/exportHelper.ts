@@ -62,12 +62,12 @@ export async function convertShowSlidesToImages(showId: string) {
             batch.map(async (ref, j) => {
                 if (ref.data.disabled) return
 
-                let background = ref.data.background || ""
+                const background = ref.data.background || ""
                 let backgroundImage = show.media[background]?.path || currentBackground
                 if (ref.data.actions?.clearBackground) backgroundImage = ""
                 if (!background || show.media[background]?.loop !== false) currentBackground = backgroundImage
 
-                let overlays = ref.data.overlays
+                const overlays = ref.data.overlays
                 const thumbnail = await getSlideThumbnail({ showId, layoutId, index: ref.layoutIndex }, { backgroundImage, overlays }, true)
                 thumbnails[i + j] = thumbnail
             })

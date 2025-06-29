@@ -220,8 +220,8 @@ function mdbConvert(content: MDBContents, categoryId: string) {
 }
 
 function getSong(song: MDBSong, content: MDBContents, categoryId: string) {
-    let layoutId = uid()
-    let showId = song.SongID
+    const layoutId = uid()
+    const showId = song.SongID
     const show = new ShowObj(false, categoryId, layoutId)
     show.origin = "mediashout"
     show.name = checkName(song.Title, showId)

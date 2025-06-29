@@ -45,7 +45,7 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    async function toggle(e: any, key: string) {
+    function toggle(e: any, key: string) {
         let checked = e.target.checked
         updateSpecial(checked, key)
     }

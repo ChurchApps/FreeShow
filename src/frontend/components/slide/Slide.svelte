@@ -708,10 +708,9 @@
 
     .label .text {
         flex-grow: 1; /* Allow text to take available space */
-        margin-right: 5px; /* Space between text and button */
-        /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */
-        margin-left: 15px; /* Keep existing left margin if needed */
-        margin-right: 15px; /* Keep existing right margin if needed, or adjust for button */
+        margin-inline: 15px 5px; /* Space between text and button */
+        /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */ /* Keep existing left margin if needed */
+        margin-inline-end: 15px; /* Keep existing right margin if needed, or adjust for button */
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;
@@ -724,7 +723,7 @@
         color: inherit; /* Or a specific color if needed */
         cursor: pointer;
         padding: 0 4px; /* Adjust as needed */
-        margin-left: auto; /* Pushes it to the right if label is flex */
+        margin-inline-start: auto; /* Pushes it to the right if label is flex */
         display: flex; /* To align icon nicely if needed */
         align-items: center;
     }

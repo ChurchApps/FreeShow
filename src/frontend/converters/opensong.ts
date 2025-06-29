@@ -44,7 +44,7 @@ export function convertOpenSong(data: any) {
             let song: any = {}
             if (content.includes("<html>")) song = HTMLtoObject(content)
             else song = XMLtoObject(content)
-            console.log(content, song)
+            // console.log(content, song)
 
             const layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)

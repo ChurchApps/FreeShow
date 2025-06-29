@@ -8,7 +8,7 @@
 
     export let outputId: string
     export let outSlide: OutSlide
-    export let isClearing: boolean = false
+    export let isClearing = false
 
     export let slideData: SlideData | null
     export let currentSlide: any // Slide | null

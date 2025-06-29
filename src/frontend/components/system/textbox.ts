@@ -115,7 +115,7 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
 }
 
 // const maxSize = 16
-export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio: number, mirror: boolean, forceSquare: boolean = false) {
+export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio: number, mirror: boolean, forceSquare = false) {
     const itemElem = mouse.e.target.closest(".item")
     const styles: any = {}
     const squareElem = mouse.e.target.closest(".square")
@@ -153,8 +153,8 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
         styles.width = newWidth
 
         if (mirror) {
-            const difference = mouse.width - styles.width
-            styles.width -= difference
+            const widthDifference = mouse.width - styles.width
+            styles.width -= widthDifference
 
             if (corner) return
         }
@@ -165,8 +165,8 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
 
         if (corner) return
 
-        const difference = (height - styles.height) / 2
-        styles.top = mouse.top + difference
+        const heightAdjustment = (height - styles.height) / 2
+        styles.top = mouse.top + heightAdjustment
     }
 
     function resizeTop() {
@@ -180,8 +180,8 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
         styles.height = newHeight
 
         if (mirror) {
-            const difference = mouse.height - styles.height
-            styles.height -= difference
+            const heightDifference = mouse.height - styles.height
+            styles.height -= heightDifference
 
             if (corner) return
         }
@@ -192,17 +192,17 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
 
         if (corner) return
 
-        const difference = (width - styles.width) / 2
-        styles.left = mouse.left + difference
+        const widthAdjustment = (width - styles.width) / 2
+        styles.left = mouse.left + widthAdjustment
     }
 
     function resizeRight() {
         styles.width = e.clientX / ratio - mouse.offset.width
 
         if (mirror) {
-            const difference = mouse.width - styles.width
-            styles.left = mouse.left + difference
-            styles.width -= difference
+            const widthDifference = mouse.width - styles.width
+            styles.left = mouse.left + widthDifference
+            styles.width -= widthDifference
 
             if (corner) return
         }
@@ -218,17 +218,17 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
 
         if (corner) return
 
-        const difference = (height - newHeight) / 2
-        styles.top = mouse.top + difference
+        const heightAdjustment = (height - newHeight) / 2
+        styles.top = mouse.top + heightAdjustment
     }
 
     function resizeBottom() {
         styles.height = e.clientY / ratio - mouse.offset.height
 
         if (mirror) {
-            const difference = mouse.height - styles.height
-            styles.top = mouse.top + difference
-            styles.height -= difference
+            const heightDifference = mouse.height - styles.height
+            styles.top = mouse.top + heightDifference
+            styles.height -= heightDifference
 
             if (corner) return
         }
@@ -244,8 +244,8 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
 
         if (corner) return
 
-        const difference = (width - newWidth) / 2
-        styles.left = mouse.left + difference
+        const widthAdjustment = (width - newWidth) / 2
+        styles.left = mouse.left + widthAdjustment
     }
 
     return styles

@@ -4,7 +4,7 @@ import { clone } from "./array"
 import { nextSlide } from "./showActions"
 import { playFolder } from "../../utils/shortcuts"
 
-export function newSlideTimer(timerId: string, duration: number, folderPath: string = "") {
+export function newSlideTimer(timerId: string, duration: number, folderPath = "") {
     if (duration <= 0) return
 
     if (get(slideTimers)[timerId]) {

@@ -96,7 +96,7 @@ export async function getThumbnail(data: API_media) {
     return await toDataURL(path)
 }
 
-export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide: boolean = false) {
+export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
     const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
     const outSlide = get(outputs)[outputId]?.out?.slide
 
@@ -366,7 +366,7 @@ export async function checkThatMediaExists(path: string, iteration = 1): Promise
     return exists
 }
 
-let cachedDurations: { [key: string]: number } = {}
+const cachedDurations: { [key: string]: number } = {}
 export function getVideoDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
         if (cachedDurations[path]) {

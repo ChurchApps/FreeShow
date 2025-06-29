@@ -261,7 +261,7 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
         
         chords.push({
             chord: match[0],
-            position: position,
+            position,
         })
     }
 

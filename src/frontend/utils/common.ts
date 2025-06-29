@@ -107,7 +107,7 @@ export function focusArea(e: any) {
 
 // auto save
 let autosaveTimeout: NodeJS.Timeout | null = null
-export let previousAutosave: number = 0
+export let previousAutosave = 0
 export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)

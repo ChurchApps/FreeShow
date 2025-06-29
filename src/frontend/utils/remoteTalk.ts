@@ -156,7 +156,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        let id = msg.data?.id
+        const id = msg.data?.id
         if (!id) return
 
         // if (get(scriptures)[id]?.collection) id = get(scriptures)[id].collection!.versions[0]

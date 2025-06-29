@@ -325,22 +325,22 @@ export const mainResponses: MainResponses = {
         createCategory("Chums")
 
         // CREATE SHOWS
-        let replaceIds: { [key: string]: string } = {}
+        const replaceIds: { [key: string]: string } = {}
         const tempShows: { id: string; show: Show }[] = []
-        for (let show of data.shows) {
+        for (const show of data.shows) {
             const id = show.id
 
             // don't add/update if already existing (to not mess up any set styles)
             if (get(shows)[id]) continue
 
             // replace with existing Chums show, that has the same name (but different ID), if it's without content
-            for (let [id, currentShow] of Object.entries(get(shows))) {
+            for (const [showId, currentShow] of Object.entries(get(shows))) {
                 if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
-                await loadShows([id])
+                await loadShows([showId])
 
-                const loadedShow = get(showsCache)[id]
+                const loadedShow = get(showsCache)[showId]
                 if (!getSlidesText(loadedShow.slides)) {
-                    replaceIds[show.id] = id
+                    replaceIds[show.id] = showId
                     break
                 }
             }

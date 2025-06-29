@@ -966,7 +966,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : data.dataIsArray === false ? values[valueIndex] || values[i] : values[i]?.[valueIndex] || values[valueIndex] || values[i]
 
                     if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
-                    console.log(valueIndex, value, values, data, key, l)
+                    // console.log(valueIndex, value, values, data, key, l)
 
                     if (value === undefined) delete l[key]
                     else if (data.key && data.keys) {
