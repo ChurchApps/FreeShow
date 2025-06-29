@@ -34,7 +34,7 @@
 
     $: overflow = getTimerOverflow(currentTime)
     $: negative = (timer?.start || 0) > (timer?.end || 0) || currentTime < 0
-    function getTimerOverflow(time: number, offset: number = 0) {
+    function getTimerOverflow(time: number, offset = 0) {
         if (!timer.overflow) return false
 
         if (currentTime < 0) return true

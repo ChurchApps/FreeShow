@@ -850,24 +850,24 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
-function playSlideActions(actions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
-    actions = clone(actions)
+function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
+    slideActions = clone(slideActions)
 
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
-            const existingIndex = actions.findIndex((a) => a.triggers?.[0] === id)
+            const existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
             outputIds.forEach((outputId) => {
                 if (id.includes("background")) setOutput("background", null, false, outputId)
                 else if (id.includes("overlays")) clearOverlays(outputId)
             })
-            actions.splice(existingIndex, 1)
+            slideActions.splice(existingIndex, 1)
         })
     }
 
-    actions.forEach((a) => {
+    slideActions.forEach((a) => {
         // no need to "re-run" actions triggered right before output
         if (shouldTriggerBefore(a)) return
 

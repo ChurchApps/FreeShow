@@ -72,7 +72,7 @@ export class EffectRender {
 
     TYPES: Record<string, EffectDefinition> = {}
 
-    constructor(canvas: HTMLCanvasElement, items: EffectItem[], isPreview: boolean = false) {
+    constructor(canvas: HTMLCanvasElement, items: EffectItem[], isPreview = false) {
         if (!canvas) throw new Error("Canvas element not found")
 
         // this.width = canvas.width || this.width
@@ -117,14 +117,14 @@ export class EffectRender {
         this.items = items.filter((a) => !a.hidden)
     }
 
-    updateItems(items: EffectItem[], _noFrameChange: boolean = false) {
+    updateItems(items: EffectItem[], _noFrameChange = false) {
         this.setItems(items)
 
         // if (noFrameChange) return
         this.frame(0, true)
     }
 
-    frame(deltaTime: number, init: boolean = false) {
+    frame(deltaTime: number, init = false) {
         const ctx = this.ctx
         ctx.clearRect(0, 0, this.width, this.height)
 
@@ -133,7 +133,7 @@ export class EffectRender {
             if (!effect) {
                 if (init) {
                     console.warn("Unknown effect type:", item.type)
-                    console.log(this.TYPES)
+                    // console.log(this.TYPES)
                 }
                 continue
             }
@@ -206,7 +206,7 @@ export class EffectRender {
         return Math.random() < 0.5 ? -1 : 1
     }
 
-    checkOffscreen(item: { x: number; y: number; length?: number; size?: number; radius?: number; speed?: number }, inverted: boolean = false) {
+    checkOffscreen(item: { x: number; y: number; length?: number; size?: number; radius?: number; speed?: number }, inverted = false) {
         const size = item.size ?? item.radius ?? item.length ?? 0
         const speed = item.speed || 0
         const offscreen = (inverted ? speed > 0 : speed < 0) ? item.y + size < 0 : item.y - size > this.height
@@ -264,7 +264,7 @@ export class EffectRender {
         this.ctx.fill()
     }
 
-    setGlow(x: number, y: number, radius: number, color: string = "white") {
+    setGlow(x: number, y: number, radius: number, color = "white") {
         const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius)
         gradient.addColorStop(0, color)
         gradient.addColorStop(1, "transparent")
@@ -297,7 +297,7 @@ export class EffectRender {
         }
     }
 
-    //////
+    /// ///
 
     line(x: number, y: number) {
         this.ctx.lineTo(x, y)
@@ -335,7 +335,7 @@ export class EffectRender {
         const stars = this.effectData.get(item)
         if (!stars) return
 
-        for (let star of stars) {
+        for (const star of stars) {
             const x = star.x
             const y = star.y
             const glowRadius = star.radius * 2
@@ -432,7 +432,7 @@ export class EffectRender {
         const rotationSpeed = item.rotationSpeed * 0.0002 * deltaTime
 
         for (const star of stars) {
-            let x, y
+            let x; let y
 
             if (!star.inCore) {
                 star.rotation += rotationSpeed
@@ -490,7 +490,7 @@ export class EffectRender {
         ctx.strokeStyle = item.color
         ctx.lineWidth = item.width
 
-        for (let drop of drops) {
+        for (const drop of drops) {
             ctx.beginPath()
             ctx.moveTo(drop.x, drop.y)
             ctx.lineTo(drop.x, drop.y + drop.length)
@@ -528,7 +528,7 @@ export class EffectRender {
 
         ctx.fillStyle = item.color
 
-        for (let flake of snowflakes) {
+        for (const flake of snowflakes) {
             // sway motion
             const sway = Math.sin(time + flake.phase) * flake.drift * 2
 
@@ -567,7 +567,7 @@ export class EffectRender {
         const bubbles = this.effectData.get(item) || []
         const time = performance.now()
 
-        for (let bubble of bubbles) {
+        for (const bubble of bubbles) {
             const pulse = Math.sin(time * bubble.pulseSpeed + bubble.pulsePhase) * 0.3 + 1
             const radius = bubble.radius * pulse
 
@@ -650,7 +650,7 @@ export class EffectRender {
 
                 points.push({
                     x: x + curve,
-                    y: y,
+                    y,
                     width: widthAtPoint
                 })
             }
@@ -748,7 +748,7 @@ export class EffectRender {
             let buffer = ""
             let depth = 0
 
-            for (let char of str) {
+            for (const char of str) {
                 if (char === "(") depth++
                 if (char === ")") depth--
                 if (char === "," && depth === 0) {
@@ -833,7 +833,7 @@ export class EffectRender {
         return { gradient: gradientStr, plainColor: gradientStr }
     }
 
-    drawRotatingShape(item: ShapeItem, deltaTime: number, drawShapeFn: (ctx: CanvasRenderingContext2D, item: any) => void) {
+    drawRotatingShape(item: ShapeItem, deltaTime: number, drawShapeFn: (canvasCtx: CanvasRenderingContext2D, shapeItem: any) => void) {
         const ctx = this.ctx
         const centerX = this.getOffsetX(item.x)
         const centerY = this.getOffsetY(item.y)
@@ -940,7 +940,7 @@ export class EffectRender {
     drawSun(item: Required<SunItem>, deltaTime: number) {
         const ctx = this.ctx
 
-        let x: number, y: number
+        let x: number; let y: number
         if (item.speed) {
             const data = this.effectData.get(item)
             if (!data) return
@@ -1028,7 +1028,7 @@ export class EffectRender {
             const r = baseRadius + waveOffset
             const px = x + Math.cos(angle) * r
             const py = y + Math.sin(angle) * r
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py)
         }
         ctx.closePath()
 
@@ -1076,7 +1076,7 @@ export class EffectRender {
 
     /// LENS FLARE ///
 
-    private setColorStops(gradient: CanvasGradient, stops: Array<[number, string]>) {
+    private setColorStops(gradient: CanvasGradient, stops: [number, string][]) {
         for (const [offset, color] of stops) {
             gradient.addColorStop(offset, color)
         }
@@ -1214,7 +1214,7 @@ export class EffectRender {
             const segmentHeight = this.height / segments
             const maxOffset = 50
 
-            let path = [{ x: startX, y: 0 }]
+            const path = [{ x: startX, y: 0 }]
             for (let i = 1; i <= segments; i++) {
                 path.push({
                     x: path[i - 1].x + this.randomNumber(-maxOffset, maxOffset),
@@ -1234,7 +1234,7 @@ export class EffectRender {
             ctx.lineWidth = 2
             ctx.beginPath()
             ctx.moveTo(data.strikePath[0].x, data.strikePath[0].y)
-            for (let point of data.strikePath) {
+            for (const point of data.strikePath) {
                 ctx.lineTo(point.x, point.y)
             }
             ctx.stroke()
@@ -1893,8 +1893,8 @@ export class EffectRender {
             }
         }
 
-        const a = parse(color1),
-            b = parse(color2)
+        const a = parse(color1);
+            const b = parse(color2)
         return `rgba(${Math.round(a.r + (b.r - a.r) * t)}, ${Math.round(a.g + (b.g - a.g) * t)}, ${Math.round(a.b + (b.b - a.b) * t)}, ${(a.a + (b.a - a.a) * t).toFixed(3)})`
     }
 

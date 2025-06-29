@@ -129,7 +129,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
-    //Handle text directly
+    // Handle text directly
     if (window.getSelection()?.toString()) {
         const selection = window.getSelection()!
         navigator.clipboard.writeText(selection.toString())
@@ -137,7 +137,7 @@ export function cut(clip: Clipboard | null = null) {
         console.info("CUTTED TEXT", selection.toString())
         return
     }
-    //Handle other types
+    // Handle other types
     const copyData = copy(clip)
     if (!copyData) return 
     deleteAction(copyData)
@@ -801,11 +801,11 @@ const deleteActions = {
         // remove from all layouts
         const ref = getLayoutRef()
         ref.forEach((slideRef, i) => {
-            const actions = clone(slideRef.data.actions) || {}
-            if (actions[key] !== id) return
-            delete actions[key]
+            const slideActions = clone(slideRef.data.actions) || {}
+            if (slideActions[key] !== id) return
+            delete slideActions[key]
 
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [i] } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideActions, indexes: [i] } })
         })
 
         if (data.type === "in") {

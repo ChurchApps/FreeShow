@@ -194,7 +194,7 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
     // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
     const projectItems = get(projects)[get(activeProject) || ""]?.shows
     // this does not work with multiple of the same folder
-    let projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
     const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
     if (!timer || file.type !== "image") return
 
@@ -1149,7 +1149,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     const overflow = maxStyleLines ? maxLines % maxStyleLines : 0
     if (isEnding && overflow > 0) start = maxLines - overflow
 
-    let end = start + maxStyleLines
+    const end = start + maxStyleLines
 
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 

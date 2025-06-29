@@ -728,7 +728,7 @@ const clickActions = {
             const template = get(templates)[id]
             if (!template) return
 
-            let files: string[] = []
+            const files: string[] = []
             template.items.forEach((item) => {
                 if (item.type === "media") getFile(item.src)
             })
@@ -940,7 +940,7 @@ const clickActions = {
         } else if (obj.sel.id === "show_drawer") {
             const showId = obj.sel.data[0].id
             activeShow.set({ type: "show", id: showId })
-            activeEdit.set({ type: "show", slide: 0, items: [], showId: showId })
+            activeEdit.set({ type: "show", slide: 0, items: [], showId })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
@@ -1047,13 +1047,13 @@ const clickActions = {
             const items = get(activeEdit).items
 
             if (get(activeEdit).id) {
-                const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-                const newState = !currentItems[items[0]][id]
+                const slideItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+                const toggleState = !slideItems[items[0]][id]
 
                 history({
                     id: "UPDATE",
                     oldData: { id: get(activeEdit).id },
-                    newData: { key: "items", subkey: id, data: newState, indexes: items },
+                    newData: { key: "items", subkey: id, data: toggleState, indexes: items },
                     location: { page: "edit", id: get(activeEdit).type + "_items", override: true }
                 })
 
@@ -1288,10 +1288,10 @@ const clickActions = {
     },
     place_under_slide: (obj: ObjData) => {
         if (obj.sel?.id === "effect") {
-            const setUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
+            const placeUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
             effects.update((a) => {
                 obj.sel!.data.forEach((id: string) => {
-                    a[id].placeUnderSlide = setUnder
+                    a[id].placeUnderSlide = placeUnder
                 })
                 return a
             })

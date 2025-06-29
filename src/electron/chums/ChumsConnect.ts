@@ -161,7 +161,7 @@ export class ChumsConnect {
                 refresh_token: access.refresh_token,
             }
 
-            console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
+            // console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
             httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                 if (err || data === null) {
                     this.disconnect();
@@ -169,7 +169,7 @@ export class ChumsConnect {
                     resolve(null)
                     return
                 }
-                console.log("DATA", data)
+                // console.log("DATA", data)
 
                 this.CHUMS_ACCESS = data
                 stores.ACCESS.set(`chums_${data.scope}`, data)

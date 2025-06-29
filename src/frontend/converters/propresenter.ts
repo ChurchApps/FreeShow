@@ -225,7 +225,7 @@ function convertToSlides(song: any, extension: string) {
         let slideIndex = -1
         groupSlides.forEach((slide) => {
             const items = getSlideItems(slide)
-            console.log(slide, items)
+            // console.log(slide, items)
             if (!items?.length) return
             slideIndex++
 

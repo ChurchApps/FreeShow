@@ -180,7 +180,7 @@ export function clearOverlays(specificOutputId = "") {
     })
 }
 
-export function clearTimers(specificOutputId = "", clearOverlayTimers: boolean = true) {
+export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
     // clear slide timers
     setOutput("transition", null, false, specificOutputId)
 

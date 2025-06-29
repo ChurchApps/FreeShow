@@ -105,7 +105,7 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
 
         if (parentIndex === previousParentIndex) groups[groups.length - 1].slides.push(slideRef)
         else {
-            let groupData: GroupData = { globalGroup }
+            const groupData: GroupData = { globalGroup }
             groups.push({ slides: [slideRef], groupData })
         }
 
@@ -847,10 +847,10 @@ export function breakLongLines(showId: string, breakPoint: number) {
         slide.items.forEach((item) => {
             let freezeStop = 0
             do {
-                let newLines: Line[] = []
+                const newLines: Line[] = []
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
-                    let lineText = line.text[0]
+                    const lineText = line.text[0]
                     if (!lineText) return
 
                     lineText.value = getLineText(line)

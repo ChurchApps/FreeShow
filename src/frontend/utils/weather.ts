@@ -95,7 +95,7 @@ export async function getWeather(data: Weather): Promise<TmetAPI | null> {
 
     if (latitude === 0 && longitude === 0) return null
 
-    let queryValues: { [key: string]: number | string } = {
+    const queryValues: { [key: string]: number | string } = {
         lat: latitude,
         lon: longitude
     }
@@ -124,9 +124,9 @@ export async function getWeather(data: Weather): Promise<TmetAPI | null> {
 
                 return response.json()
             })
-            .then((data: TmetAPI) => {
-                resolve(data)
-                cachedWeatherData[queryKey] = { time: Date.now(), data }
+            .then((weatherData: TmetAPI) => {
+                resolve(weatherData)
+                cachedWeatherData[queryKey] = { time: Date.now(), data: weatherData }
             })
             .catch((error) => {
                 console.error("Fetch error:", error)

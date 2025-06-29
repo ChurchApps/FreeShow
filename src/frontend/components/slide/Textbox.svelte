@@ -47,7 +47,7 @@
     export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
-    export let clickRevealed: boolean = false
+    export let clickRevealed = false
     export let stageAutoSize = false
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
