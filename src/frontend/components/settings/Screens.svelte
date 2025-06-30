@@ -5,6 +5,7 @@
     import { requestMain } from "../../IPC/main"
     import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs, styles } from "../../stores"
     import { send } from "../../utils/request"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -354,13 +355,7 @@
                             // WIP this will not always change correct output if multiple & "activateOutput"
                             changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
-                        on:keydown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
-                                changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
-                            }
-                        }}
+                        on:keydown={triggerClickOnEnterSpace}
                     >
                         {i + 1}
                     </div>

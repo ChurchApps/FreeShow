@@ -2,6 +2,7 @@
     import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
     import { activeDrawerTab, activePage, audioChannels, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let advanced = false
     // const numbers: number[] = [0, -3, -6, -9, -12, -15, -21, -36, -51, -63, -80]
@@ -55,12 +56,6 @@
         if ($drawer.height <= minHeight) drawer.set({ height: $drawer.stored || DEFAULT_DRAWER_HEIGHT, stored: null })
     }
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            openAudioMix()
-        }
-    }
 </script>
 
 {#if advanced}
@@ -92,7 +87,7 @@
         </div>
     </div>
 {:else}
-    <div class="main" on:click={openAudioMix} on:keydown={handleKeydown} role="button" tabindex="0" aria-label="Open audio mixer">
+    <div class="main" on:click={openAudioMix} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Open audio mixer">
         <!-- <span class="left">
             <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
         </span>

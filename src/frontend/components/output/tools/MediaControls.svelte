@@ -5,6 +5,7 @@
     import type { MediaType, ShowType } from "../../../../types/Show"
     import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
@@ -83,7 +84,7 @@
 
 {#if background}
     {#if !big}
-        <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(); } }}>
+        <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={triggerClickOnEnterSpace}>
             {#if background?.type === "player"}
                 <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
             {:else}

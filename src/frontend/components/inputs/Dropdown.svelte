@@ -5,6 +5,7 @@
     import { language } from "../../stores"
     import type { Option } from "../../../types/Main"
     import Icon from "../helpers/Icon.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     const dispatch = createEventDispatcher()
     export let options: Option[]
@@ -91,16 +92,7 @@
                             dispatch("click", option)
                         }, 50)
                     }}
-                    on:keydown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault()
-                            if (disabled) return
-                            active = false
-                            setTimeout(() => {
-                                dispatch("click", option)
-                            }, 50)
-                        }
-                    }}
+                    on:keydown={triggerClickOnEnterSpace}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
                     {translate(option.name, { parts: true }) || option.name}

@@ -4,6 +4,7 @@
     import T from "../../helpers/T.svelte"
     import StageSlide from "../../stage/StageSlide.svelte"
     import Center from "../../system/Center.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     let stageLayouts = sortByName(keysToID($stageShows))
 
@@ -29,7 +30,7 @@
     {#if stageLayouts.length}
         <div class="grid">
             {#each stageLayouts as layout}
-                <div class="stageLayout" role="button" tabindex="0" on:click={() => select(layout.id)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(layout.id); } }}>
+                <div class="stageLayout" role="button" tabindex="0" on:click={() => select(layout.id)} on:keydown={triggerClickOnEnterSpace}>
                     <StageSlide id={layout.id} {layout} active={active === layout.id} selectable={false} />
                 </div>
             {/each}

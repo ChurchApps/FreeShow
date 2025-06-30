@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import Icon from "../helpers/Icon.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let icon: string
     export let size = 5
@@ -14,17 +15,9 @@
         }, 800)
     }
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault()
-            // Trigger click event on the element
-            const element = e.currentTarget as HTMLElement
-            element.click()
-        }
-    }
 </script>
 
-<div style={$$props.style} on:click on:keydown={handleKeydown} tabindex="0" role="button" title={$$props.title}>
+<div style={$$props.style} on:click on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" title={$$props.title}>
     <slot />
     <div class="overlay" class:reveal>
         <Icon id={icon} {size} white />

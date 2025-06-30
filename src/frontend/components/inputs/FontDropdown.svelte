@@ -7,6 +7,7 @@
     import { dictionary, systemFonts } from "../../stores"
     import { formatSearch } from "../../utils/search"
     import Dropdown from "./Dropdown.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let value: string
     export let fontStyleValue = ""
@@ -183,15 +184,7 @@
                             setFont(font.family)
                         }, 50)
                     }}
-                    on:keydown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault()
-                            active = false
-                            setTimeout(() => {
-                                setFont(font.family)
-                            }, 50)
-                        }
-                    }}
+                    on:keydown={triggerClickOnEnterSpace}
                     class:active={font.family === value}
                     style={font.fonts[font.default]?.css || `font-family: ${font.family};`}
                 >
