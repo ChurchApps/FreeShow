@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { debounce } from "@tanstack/pacer"
+    
     export let items: any[] = []
     export let columns = 1
 
@@ -16,8 +18,9 @@
     let scrollYPos = 0
     let lastUpdate = 0
     let scrollUpdateFrame: number | null = null
-    function scroll(e) {
-        scrollYPos = e.target.scrollTop
+    
+    const debouncedScroll = debounce((scrollTop: number) => {
+        scrollYPos = scrollTop
 
         // update if scrolling more than 0.4 card up/down
         let extraMargin = cardHeight * 0.4
@@ -30,6 +33,10 @@
                 scrollUpdateFrame = null
             })
         }
+    }, { wait: 32 }) // ~30fps debouncing for smooth scrolling
+    
+    function scroll(e) {
+        debouncedScroll(e.target.scrollTop)
     }
 
     const margin = 250
