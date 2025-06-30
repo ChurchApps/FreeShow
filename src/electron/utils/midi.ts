@@ -108,8 +108,12 @@ export function stopMidi() {
 }
 
 function closeMidiOutPorts() {
-    Object.values(openedOutputPorts).forEach((port: any) => {
-        port.close()
+    Object.entries(openedOutputPorts).forEach(([key, port]: [string, any]) => {
+        try {
+            port.close()
+        } catch (err) {
+            console.error(`Error closing MIDI output port ${key}:`, err)
+        }
     })
 
     openedOutputPorts = {}
@@ -117,13 +121,21 @@ function closeMidiOutPorts() {
 
 export function closeMidiInPorts(id = "") {
     if (id && openedPorts[id]) {
-        openedPorts[id].close()
-        delete openedPorts[id]
+        try {
+            openedPorts[id].close()
+            delete openedPorts[id]
+        } catch (err) {
+            console.error(`Error closing MIDI input port ${id}:`, err)
+        }
         return
     }
-
-    Object.values(openedPorts).forEach((port: any) => {
-        port.close()
+    
+    Object.entries(openedPorts).forEach(([key, port]: [string, any]) => {
+        try {
+            port.close()
+        } catch (err) {
+            console.error(`Error closing MIDI input port ${key}:`, err)
+        }
     })
 
     openedPorts = {}
