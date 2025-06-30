@@ -2,6 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { activeEdit, activePage, activePopup, activeShow, activeStage, dictionary, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
@@ -225,7 +226,7 @@
                 <div class="grid">
                     {#each values as value, i}
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
-                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} on:click={(e) => applyValue(e, value.id)}>
+                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>
@@ -292,6 +293,10 @@
         outline-offset: 0;
     }
     .value:active {
+        outline: 2px solid var(--secondary);
+        outline-offset: 0;
+    }
+    .value:focus {
         outline: 2px solid var(--secondary);
         outline-offset: 0;
     }

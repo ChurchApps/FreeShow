@@ -5,6 +5,7 @@
     import { getResolution } from "../helpers/output"
     import Loader from "../main/Loader.svelte"
     import Label from "./Label.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let loaded = true
     export let preview = false
@@ -25,11 +26,12 @@
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
     $: mainWidth = width || (mode === "grid" ? 100 / $mediaOptions.columns : 100)
+
 </script>
 
 <!-- display: table; -->
 <div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active>
-    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick>
+    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button">
         {#if preview}
             <div class="overlay" />
         {:else}

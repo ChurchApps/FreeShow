@@ -6,6 +6,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     let msg = ""
     $: msg = $alertMessage.toString()
@@ -37,7 +38,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p on:click={click}>
+<button on:click={click} on:keydown={triggerClickOnEnterSpace}>
     {#key msg}
         {#if msg.includes("captions#")}
             <T id="captions.info" />
@@ -50,7 +51,7 @@
             {@html msg}
         {/if}
     {/key}
-</p>
+</button>
 
 <br />
 
@@ -59,7 +60,7 @@
 </Button>
 
 <style>
-    p {
+    /* p {
         white-space: initial;
     }
 
@@ -81,5 +82,5 @@
     }
     p :global(a):active {
         opacity: 0.9;
-    }
+    } */
 </style>

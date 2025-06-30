@@ -5,6 +5,7 @@
     import { requestMain } from "../../IPC/main"
     import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs, styles } from "../../stores"
     import { send } from "../../utils/request"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -346,12 +347,15 @@
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution || currentScreen.boundsLocked}
                         style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;inset-inline-start: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
+                        role="button"
+                        tabindex="0"
                         on:click={() => {
                             if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
 
                             // WIP this will not always change correct output if multiple & "activateOutput"
                             changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
+                        on:keydown={triggerClickOnEnterSpace}
                     >
                         {i + 1}
                     </div>
@@ -454,6 +458,10 @@
 
     .screen.disabled {
         opacity: 0.5;
+    }
+    .screen:focus:not(.disabled) {
+        outline: 42px solid var(--secondary);
+        outline-offset: 0;
     }
 
     .preview {

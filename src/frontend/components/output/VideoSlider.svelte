@@ -2,6 +2,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Slider from "../inputs/Slider.svelte"
 
     export let videoData: any
@@ -97,6 +98,7 @@
     }
 
     let fullLength = false
+
 </script>
 
 <svelte:window
@@ -131,7 +133,7 @@
             on:input={sliderInput}
         />
     </div>
-    <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+    <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Toggle time display format">
         {#if fullLength}
             {joinTime(secondsToTime(videoData.duration || 0))}
         {:else}

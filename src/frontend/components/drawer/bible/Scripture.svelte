@@ -33,6 +33,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
     import { formatSearch } from "../../../utils/search"
+    import { createKeydownHandler } from "../../../utils/clickable"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 
     export let active: string | null
@@ -1001,10 +1002,16 @@
 
                                 <span
                                     id={id.toString()}
+                                    role="button"
+                                    tabindex="0"
                                     on:click={() => {
                                         bookId = id
                                         autoComplete = false
                                     }}
+                                    on:keydown={createKeydownHandler((e) => {
+                                        bookId = id
+                                        autoComplete = false
+                                    })}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                     style="color: {color};"
                                     title={book.customName || book.name}
@@ -1048,6 +1055,8 @@
                                 <span
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
                                     id={content.id}
+                                    role="button"
+                                    tabindex="0"
                                     draggable="true"
                                     on:mouseup={(e) => selectVerse(e, content.id)}
                                     on:mousedown={(e) => {
@@ -1057,6 +1066,13 @@
                                     }}
                                     on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                                     on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
+                                    on:keydown={createKeydownHandler((e) => {
+                                        if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
+                                            playOrClearScripture(true)
+                                        } else {
+                                            selectVerse(e, content.id)
+                                        }
+                                    })}
                                     class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                                     title={$dictionary.tooltip?.scripture}
                                 >
@@ -1085,11 +1101,18 @@
 
                             <span
                                 id={id.toString()}
+                                role="button"
+                                tabindex="0"
                                 on:click={() => {
                                     bookId = id
                                     if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
+                                on:keydown={createKeydownHandler((e) => {
+                                    bookId = id
+                                    if (bibles[0].api) chapterId = `${bookId}.1`
+                                    autoComplete = false
+                                })}
                                 class={bibles[0].api || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"}
                                 class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                 style={color ? `border-inline-start: 2px solid ${color};` : ""}
@@ -1129,7 +1152,7 @@
                         {@const subverse = Number(splitted[1] || 0)}
 
                         <!-- custom drag -->
-                        <p
+                        <button
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             id={content.id}
                             draggable="true"
@@ -1141,6 +1164,13 @@
                             }}
                             on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                             on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
+                            on:keydown={createKeydownHandler((e) => {
+                                if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
+                                    playOrClearScripture(true)
+                                } else {
+                                    selectVerse(e, content.id)
+                                }
+                            })}
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
@@ -1149,7 +1179,7 @@
                                 {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                             </span>
                             {@html formatBibleText(content.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
-                        </p>
+                        </button>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}
                         <copy>{bibles[0].copyright || bibles[0].metadata?.copyright}</copy>

@@ -2,6 +2,7 @@
     import { uid } from "uid"
     import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
     import { sortByName } from "../../helpers/array"
+    import { createKeydownHandler } from "../../../utils/clickable"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -50,6 +51,8 @@
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
                         class="slide {isLocked ? '' : 'context #group'}"
+                        role="button"
+                        tabindex="0"
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
                             if (isLocked) {
@@ -64,6 +67,19 @@
                                 selected.set({ id: null, data: [] })
                             }
                         }}
+                        on:keydown={createKeydownHandler((e) => {
+                            if (isLocked) {
+                                alertMessage.set("show.locked_info")
+                                activePopup.set("alert")
+                                return
+                            }
+
+                            if (!e.ctrlKey && !e.metaKey) {
+                                selected.set({ id: "group", data: [{ id: slide.id }] })
+                                ondrop(null, "slide")
+                                selected.set({ id: null, data: [] })
+                            }
+                        })}
                     >
                         <p title={slide.group}>
                             {slide.group || "—"}
@@ -90,6 +106,8 @@
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide context #global_group"
+                            role="button"
+                            tabindex="0"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
                                 if (isLocked) {
@@ -103,6 +121,18 @@
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                 }
                             }}
+                            on:keydown={createKeydownHandler((e) => {
+                                if (isLocked) {
+                                    alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
+                                }
+
+                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                    // , unique: true
+                                    history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
+                                }
+                            })}
                         >
                             <p title={slide.group}>
                                 {slide.group || "—"}

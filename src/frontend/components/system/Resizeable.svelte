@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { editColumns, resized, localeDirection } from "../../stores"
+    import { createKeydownHandler } from "../../utils/clickable"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
 
@@ -93,6 +94,13 @@
         storeWidth = null
     }
 
+    const handleKeydown = createKeydownHandler((e: KeyboardEvent) => {
+        if (width <= minWidth) {
+            width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
+            storeWidth = null
+        }
+    })
+
     $: if (width !== null) storeValue()
     function storeValue() {
         if (!loaded) return
@@ -124,7 +132,7 @@
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
-<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click}>
+<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click} on:keydown={handleKeydown} role="button" tabindex="0" aria-label="Resize panel {id}" aria-expanded={width > minWidth}>
     {#if width <= handleWidth}
         <Icon id="arrow_right" size={1.3} white />
     {/if}

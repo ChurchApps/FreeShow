@@ -6,6 +6,7 @@
     import T from "../helpers/T.svelte"
     import { defaultColors, defaultGradients, getContrast } from "../helpers/color"
     import Button from "./Button.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let value = "#FFF"
     export let visible = false
@@ -25,6 +26,7 @@
         // if (!update && mousePressed) update = true
         if (update) dispatch("input", value)
     }
+
 
     let pickerId: string = "picker_" + uid()
     let pickerOpen = false
@@ -83,7 +85,7 @@
         <div class="picker" style="padding: 10px;" class:visible class:clipRight>
             <div class="colors">
                 {#each colorsList as color}
-                    <div class="pickColor" class:disabled={disabledColors.includes(color.value)} class:active={value === color.value} title={color.name} style="background: {color.value};" on:click={() => change(color.value, true)}>
+                    <div class="pickColor" class:disabled={disabledColors.includes(color.value)} class:active={value === color.value} title={color.name} style="background: {color.value};" tabindex="0" role="button" aria-label="Select color {color.name || color.value}" on:click={() => change(color.value, true)} on:keydown={triggerClickOnEnterSpace}>
                         {#if showDisabled || custom}
                             <div class="hover" class:visible={!custom && disabledColors.includes(color.value)}>
                                 <Icon id={custom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
@@ -120,7 +122,11 @@
         id={pickerId}
         class="color"
         style="--outline-color: {getContrast(value)};{(height ? 'height: ' + height + 'px;' : '') + (width ? 'width: ' + width + 'px;' : '') + 'background: ' + value + ';' + ($$props.style || '')}"
+        tabindex="0"
+        role="button"
+        aria-label="Open color picker"
         on:click={togglePicker}
+        on:keydown={triggerClickOnEnterSpace}
     >
         {#if pickerOpen}
             <div class="picker" class:clipRight bind:this={colorElem}>
@@ -149,12 +155,16 @@
                                     class:active={value === color.value}
                                     title={color.name}
                                     style="background: {color.value};"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="Select gradient {color.name || color.value}"
                                     on:click={() => {
                                         change(color.value, true)
                                         setTimeout(() => {
                                             pickerOpen = false
                                         }, 10)
                                     }}
+                                    on:keydown={triggerClickOnEnterSpace}
                                 />
                             {/each}
                         </div>
@@ -177,12 +187,16 @@
                                         class="pickColor noColor"
                                         class:active={!value}
                                         title={$dictionary.settings?.remove}
+                                        tabindex="0"
+                                        role="button"
+                                        aria-label="Remove color"
                                         on:click={() => {
                                             change("", true)
                                             setTimeout(() => {
                                                 pickerOpen = false
                                             }, 10)
                                         }}
+                                        on:keydown={triggerClickOnEnterSpace}
                                     >
                                         <Icon id="close" white />
                                     </div>
@@ -193,12 +207,16 @@
                                         class:active={value === color.value}
                                         title={color.name}
                                         style="background-color: {color.value};"
+                                        tabindex="0"
+                                        role="button"
+                                        aria-label="Select color {color.name || color.value}"
                                         on:click={() => {
                                             change(color.value, true)
                                             setTimeout(() => {
                                                 pickerOpen = false
                                             }, 10)
                                         }}
+                                        on:keydown={triggerClickOnEnterSpace}
                                     />
                                 {/each}
                             </div>

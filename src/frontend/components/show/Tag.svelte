@@ -3,6 +3,7 @@
     import { history } from "../helpers/history"
     import { _show } from "../helpers/shows"
     import HiddenInput from "../inputs/HiddenInput.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let tag
     export let active = false
@@ -48,9 +49,10 @@
         let showId: string = $activeShow!.id
         history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
     }
+
 </script>
 
-<div on:mouseup={(e) => select(e, tag.id)} class="tag context #tag" class:active={active || editActive} style="--color: {tag.color || 'white'};" on:click={() => toggleTag(tag.id)}>
+<div on:mouseup={(e) => select(e, tag.id)} class="tag context #tag" class:active={active || editActive} style="--color: {tag.color || 'white'};" on:click={() => toggleTag(tag.id)} on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button">
     <HiddenInput id="tag_{tag.id}" value={tag.name || ""} on:edit={(e) => rename(e, tag.id)} bind:edit={editActive} />
 </div>
 

@@ -326,7 +326,8 @@
                     bind:duration={videoData.duration}
                     bind:muted={videoData.muted}
                     bind:volume={$volume}
-                    loop={videoData.loop}
+                    loop={videoData.loop}>
+                    <track kind="captions" src="" label="No captions available" />
                 >
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />

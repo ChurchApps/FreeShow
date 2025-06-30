@@ -281,7 +281,10 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") contextItemClick()
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            contextItemClick()
+        }
     }
 
     let shortcut = ""
@@ -296,7 +299,7 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
+<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown} role="menuitem">
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}

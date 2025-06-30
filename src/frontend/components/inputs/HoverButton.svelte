@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import Icon from "../helpers/Icon.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let icon: string
     export let size = 5
@@ -13,9 +14,10 @@
             reveal = false
         }, 800)
     }
+
 </script>
 
-<div style={$$props.style} on:click title={$$props.title}>
+<div style={$$props.style} on:click on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" title={$$props.title}>
     <slot />
     <div class="overlay" class:reveal>
         <Icon id={icon} {size} white />
