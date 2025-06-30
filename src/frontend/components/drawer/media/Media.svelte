@@ -4,6 +4,7 @@
     import { slide } from "svelte/transition"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
+    import { debounce } from "@tanstack/pacer"
     import {
         activeEdit,
         activeFocus,
@@ -232,18 +233,15 @@
         sortedFiles = files.sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
     }
 
-    let nextScrollTimeout: NodeJS.Timeout | null = null
+    const debouncedColumnUpdate = debounce((deltaY: number) => {
+        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (deltaY < 0 ? -100 : 100) / 100)) })
+    }, { wait: 50 }) // 50ms debounce for responsive column adjustments
+
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-
-        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
+        
+        e.preventDefault()
+        debouncedColumnUpdate(e.deltaY)
     }
 
     const shortcuts = {

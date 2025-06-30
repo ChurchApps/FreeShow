@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { debounce } from "@tanstack/pacer"
+    
     export let items: any[] = []
     export let columns = 1
 
@@ -10,20 +12,31 @@
     function initialize() {
         if (!customCard) return
         cardHeight = customCard.offsetHeight
-        setTimeout(() => (ready = true))
+        ready = true
     }
 
     let scrollYPos = 0
     let lastUpdate = 0
-    function scroll(e) {
-        scrollYPos = e.target.scrollTop
+    let scrollUpdateFrame: number | null = null
+    
+    const debouncedScroll = debounce((scrollTop: number) => {
+        scrollYPos = scrollTop
 
         // update if scrolling more than 0.4 card up/down
         let extraMargin = cardHeight * 0.4
         if (scrollYPos > lastUpdate + extraMargin || scrollYPos < lastUpdate - extraMargin) {
             lastUpdate = scrollYPos
-            setTimeout(updateVisibleItems)
+            
+            if (scrollUpdateFrame) cancelAnimationFrame(scrollUpdateFrame)
+            scrollUpdateFrame = requestAnimationFrame(() => {
+                updateVisibleItems()
+                scrollUpdateFrame = null
+            })
         }
+    }, { wait: 32 }) // ~30fps debouncing for smooth scrolling
+    
+    function scroll(e) {
+        debouncedScroll(e.target.scrollTop)
     }
 
     const margin = 250
@@ -78,28 +91,40 @@
         }
     }
 
-    const createTimeout = 500 / columns
-    let timeout: NodeJS.Timeout | null = null
+    let animationFrame: number | null = null
     function slowlyChange(type: "last" | "first", steps: number = columns - 1) {
         if (steps < 1) return
-        else if (timeout) clearTimeout(timeout)
+        
+        if (animationFrame) cancelAnimationFrame(animationFrame)
 
-        timeout = setTimeout(() => {
+        animationFrame = requestAnimationFrame(() => {
             if (type === "last") lastItemIndex++
             else if (type === "first") firstItemIndex--
 
-            slowlyChange(type, steps - 1)
-        }, createTimeout)
+            if (steps > 1) {
+                slowlyChange(type, steps - 1)
+            } else {
+                animationFrame = null
+            }
+        })
     }
 
     let lazyLoader = 0
+    let lazyLoadFrame: number | null = null
     $: if (ready && items?.length) lazyLoad(true)
     function lazyLoad(start = false) {
-        if (start) lazyLoader = 0
+        if (start) {
+            lazyLoader = 0
+            if (lazyLoadFrame) cancelAnimationFrame(lazyLoadFrame)
+        }
+        
         lazyLoader++
 
-        if (lazyLoader > lastItemIndex) lazyLoader = items.length
-        else if (lazyLoader < items.length) setTimeout(lazyLoad, 20)
+        if (lazyLoader > lastItemIndex) {
+            lazyLoader = items.length
+        } else if (lazyLoader < items.length) {
+            lazyLoadFrame = requestAnimationFrame(() => lazyLoad())
+        }
     }
 
     // TODO: lagging a bit on scroll when rendering new components
