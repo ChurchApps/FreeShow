@@ -11,7 +11,7 @@
     import { history } from "../helpers/history"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { triggerClickOnEnterSpace } from "../utils/clickable"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Center from "../system/Center.svelte"

@@ -6,7 +6,7 @@
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { triggerClickOnEnterSpace } from "../utils/clickable"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Button from "../inputs/Button.svelte"
     import Slider from "../inputs/Slider.svelte"
 

@@ -2,7 +2,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { triggerClickOnEnterSpace } from "../utils/clickable"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Slider from "../inputs/Slider.svelte"
 
     export let videoData: any

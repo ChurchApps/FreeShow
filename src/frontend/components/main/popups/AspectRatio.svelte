@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePopup, dictionary, popupData } from "../../../stores"
     import T from "../../helpers/T.svelte"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"

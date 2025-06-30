@@ -33,7 +33,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
     import { formatSearch } from "../../../utils/search"
-    import { createKeydownHandler } from "../../utils/clickable"
+    import { createKeydownHandler } from "../../../utils/clickable"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 
     export let active: string | null
