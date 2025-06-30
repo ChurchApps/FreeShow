@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { editColumns, resized, localeDirection } from "../../stores"
+    import { createKeydownHandler } from "../../utils/clickable"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
 
@@ -93,15 +94,12 @@
         storeWidth = null
     }
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            if (width <= minWidth) {
-                width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
-                storeWidth = null
-            }
+    const handleKeydown = createKeydownHandler((e: KeyboardEvent) => {
+        if (width <= minWidth) {
+            width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
+            storeWidth = null
         }
-    }
+    })
 
     $: if (width !== null) storeValue()
     function storeValue() {

@@ -6,6 +6,7 @@
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { triggerClickOnEnterSpace } from "../utils/clickable"
     import Button from "../inputs/Button.svelte"
     import Slider from "../inputs/Slider.svelte"
 
@@ -181,7 +182,7 @@
 
         <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
 
-        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullLength = !fullLength; } }}>
+        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
             {#if !isMic && fullLength}
                 {joinTime(secondsToTime(duration))}
             {:else}

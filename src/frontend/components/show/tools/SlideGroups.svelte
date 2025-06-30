@@ -2,6 +2,7 @@
     import { uid } from "uid"
     import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
     import { sortByName } from "../../helpers/array"
+    import { createKeydownHandler } from "../../utils/clickable"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -66,22 +67,19 @@
                                 selected.set({ id: null, data: [] })
                             }
                         }}
-                        on:keydown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                if (isLocked) {
-                                    alertMessage.set("show.locked_info")
-                                    activePopup.set("alert")
-                                    return
-                                }
-
-                                if (!e.ctrlKey && !e.metaKey) {
-                                    selected.set({ id: "group", data: [{ id: slide.id }] })
-                                    ondrop(null, "slide")
-                                    selected.set({ id: null, data: [] })
-                                }
+                        on:keydown={createKeydownHandler((e) => {
+                            if (isLocked) {
+                                alertMessage.set("show.locked_info")
+                                activePopup.set("alert")
+                                return
                             }
-                        }}
+
+                            if (!e.ctrlKey && !e.metaKey) {
+                                selected.set({ id: "group", data: [{ id: slide.id }] })
+                                ondrop(null, "slide")
+                                selected.set({ id: null, data: [] })
+                            }
+                        })}
                     >
                         <p title={slide.group}>
                             {slide.group || "—"}
@@ -123,21 +121,18 @@
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                 }
                             }}
-                            on:keydown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault()
-                                    if (isLocked) {
-                                        alertMessage.set("show.locked_info")
-                                        activePopup.set("alert")
-                                        return
-                                    }
-
-                                    if (!e.ctrlKey && !e.metaKey && $activeShow) {
-                                        // , unique: true
-                                        history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
-                                    }
+                            on:keydown={createKeydownHandler((e) => {
+                                if (isLocked) {
+                                    alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
                                 }
-                            }}
+
+                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                    // , unique: true
+                                    history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
+                                }
+                            })}
                         >
                             <p title={slide.group}>
                                 {slide.group || "—"}

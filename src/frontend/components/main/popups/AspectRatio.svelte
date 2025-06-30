@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePopup, dictionary, popupData } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -112,7 +113,7 @@
 
 {#if !active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height)}
     <div class="preview">
-        <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activePopup.set(null); } }}>
+        <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={triggerClickOnEnterSpace}>
             <p>{active.width}:{active.height}</p>
         </div>
     </div>

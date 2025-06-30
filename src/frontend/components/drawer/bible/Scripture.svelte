@@ -33,6 +33,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
     import { formatSearch } from "../../../utils/search"
+    import { createKeydownHandler } from "../../utils/clickable"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 
     export let active: string | null
@@ -1007,13 +1008,10 @@
                                         bookId = id
                                         autoComplete = false
                                     }}
-                                    on:keydown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault()
-                                            bookId = id
-                                            autoComplete = false
-                                        }
-                                    }}
+                                    on:keydown={createKeydownHandler((e) => {
+                                        bookId = id
+                                        autoComplete = false
+                                    })}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                     style="color: {color};"
                                     title={book.customName || book.name}
@@ -1068,16 +1066,13 @@
                                     }}
                                     on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                                     on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
-                                    on:keydown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault()
-                                            if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
-                                                playOrClearScripture(true)
-                                            } else {
-                                                selectVerse(e, content.id)
-                                            }
+                                    on:keydown={createKeydownHandler((e) => {
+                                        if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
+                                            playOrClearScripture(true)
+                                        } else {
+                                            selectVerse(e, content.id)
                                         }
-                                    }}
+                                    })}
                                     class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                                     title={$dictionary.tooltip?.scripture}
                                 >
@@ -1113,14 +1108,11 @@
                                     if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
-                                on:keydown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault()
-                                        bookId = id
-                                        if (bibles[0].api) chapterId = `${bookId}.1`
-                                        autoComplete = false
-                                    }
-                                }}
+                                on:keydown={createKeydownHandler((e) => {
+                                    bookId = id
+                                    if (bibles[0].api) chapterId = `${bookId}.1`
+                                    autoComplete = false
+                                })}
                                 class={bibles[0].api || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"}
                                 class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                 style={color ? `border-inline-start: 2px solid ${color};` : ""}
@@ -1172,16 +1164,13 @@
                             }}
                             on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                             on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
-                            on:keydown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault()
-                                    if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
-                                        playOrClearScripture(true)
-                                    } else {
-                                        selectVerse(e, content.id)
-                                    }
+                            on:keydown={createKeydownHandler((e) => {
+                                if (outputIsScripture && !e.ctrlKey && !e.metaKey) {
+                                    playOrClearScripture(true)
+                                } else {
+                                    selectVerse(e, content.id)
                                 }
-                            }}
+                            })}
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
