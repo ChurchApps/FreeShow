@@ -214,11 +214,22 @@ export function apiReturnData(data: any) {
 // CLOSE
 
 export function stopApiListener(specificId = "") {
-    if (specificId) stop(specificId)
-    else Object.keys(servers).forEach(stop)
+    if (specificId) {
+        stop(specificId)
+    } else {
+        Object.keys(servers).forEach(stop)
+    }
 
     function stop(id: string) {
         console.info(`${id}: Stopping server.`)
-        servers[id].close()
+        
+        try {
+            if (servers[id]) {
+                servers[id].close()
+                delete servers[id]
+            }
+        } catch (err) {
+            console.error(`${id}: Error closing server:`, err)
+        }
     }
 }
