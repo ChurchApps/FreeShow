@@ -135,6 +135,7 @@ export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
     duration?: number // default: 500
+    autoSizeDelay? : number
     easing?: string // default: "sine"
 }
 export type API_variable = {

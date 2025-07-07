@@ -192,7 +192,7 @@ export const textCache: Writable<any> = writable({}) // {}
 export const groups: Writable<ShowGroups> = writable({}) // {default}
 export const categories: Writable<Categories> = writable({}) // {default}
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
-    text: { type: "fade", duration: 500, easing: "sine" },
+    text: { type: "fade", duration: 500, easing: "sine", autoSizeDelay: 500 },
     media: { type: "fade", duration: 800, easing: "sine" }
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}

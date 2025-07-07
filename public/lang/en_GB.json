@@ -1389,6 +1389,7 @@
         "in": "In",
         "out": "Out",
         "duration": "Duration",
+        "autoSizeDelay": "Auto Font Sizing Delay",
         "easing": "Easing",
         "direction": "Direction",
         "type": "Type",

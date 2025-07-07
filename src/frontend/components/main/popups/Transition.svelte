@@ -31,8 +31,8 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
-        if (key === "duration") value = Number(value)
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "autoSizeDelay" | "custom", value: any, reset = false) {
+        if (key === "duration" || key === "autoSizeDelay") value = Number(value)
 
         if (isItem) {
             // WIP duplicate of SetTime.svelte ++
@@ -100,7 +100,7 @@
 
     let updated: string[] = []
     let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "autoSizeDelay" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -197,6 +197,7 @@
 
     $: isDisabled = currentTransition.type === "none"
     $: durationValue = currentTransition.duration
+    $: autoSizeDelayValue = currentTransition.autoSizeDelay
     $: easingValue = easings.find((a) => a.id === currentTransition.easing)?.name || "$:easings.sine:$"
 
     // SPECIFIC
@@ -293,6 +294,11 @@
 <CombinedInput style="margin-top: 10px;">
     <p><T id="transition.duration" /></p>
     <NumberInput disabled={isDisabled} value={durationValue} max={20000} fixed={1} decimals={3} step={100} inputMultiplier={0.001} on:change={(e) => changeTransition(selectedType, "duration", e.detail)} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="transition.autoSizeDelay" /></p>
+    <NumberInput disabled={isDisabled} value={autoSizeDelayValue} max={20000} fixed={2} decimals={3} step={100} inputMultiplier={0.001} on:change={(e) => changeTransition(selectedType, "autoSizeDelay", e.detail)} />
 </CombinedInput>
 
 <CombinedInput>

@@ -333,6 +333,7 @@ export interface SlideAction {
 export interface Transition {
     type: TransitionType
     duration: number
+    autoSizeDelay?: number
     easing: string
     delay?: number // item in/out wait
     custom?: any // e.g. transition direction
