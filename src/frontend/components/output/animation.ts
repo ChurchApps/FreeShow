@@ -48,13 +48,11 @@ const animations = {
             } else {
                 // zoom
                 key = "transform"
-                initialValue = "transform: scale(1.3) translate(-50%, -50%);"
-                // WIP not properly centered due to -50%
-                const randomScale = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
-                const randomTranslateX = randomNumBetween(-8, 8) / 2
-                const randomTranslateY = randomNumBetween(-8, 8) / 2
-                // value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslateX}% + ${randomNumber * 4}%), calc(-50% + ${randomTranslateY}% + ${randomNumber * 4}%));`
-                value = `translate(-50%, -50%) scale(${randomScale}) translate(${randomTranslateX}%, ${randomTranslateY}%)`
+                initialValue = "transform-origin: center;transform: scale(1);"
+                const randomScale = 1 + (Math.random() * 0.5) // This gives 1.0 to 1.5
+                //const randomTranslateX = randomNumBetween(-8, 8) / 2
+                //const randomTranslateY = randomNumBetween(-8, 8) / 2
+                value = `scale(${randomScale})`
             }
         }
 
@@ -101,6 +99,7 @@ function removePreviousKeys(array: string[] | undefined, key: string | undefined
     return array.filter((a) => !a.includes(key))
 }
 
+/*
 function randomNumBetween(min = 0, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
-}
+}*/
