@@ -253,6 +253,12 @@ export const mainResponses: MainResponses = {
             const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`
             variableData[`timer_${labelId}`] = timeValue
             variableData[`timer_${labelId}_seconds`] = currentTime.toString()
+            const activeTimer = get(activeTimers).find((activeTimer) => activeTimer.id === id)
+            let status = "Stopped"
+            if (activeTimer) {
+                status = activeTimer.paused ? "Paused" : "Playing"
+            }
+            variableData[`timer_${labelId}_status`] = status
         })
 
         // timer status
