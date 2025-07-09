@@ -11,15 +11,14 @@ export function convertPowerpoint(files: any[]) {
     alertMessage.set("popup.importing")
 
     const categoryId = createCategory("presentation", "presentation", { isDefault: true })
-
     const tempShows: any[] = []
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
-            const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
+            const slideKeys = sortByNameNumber(Object.keys(content).filter(a => a.includes("ppt/slides/slide")))
 
-            const slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
+            const slides: string[][][] = slideKeys.map(key => convertPPTX(content[key]))
             if (!slides.length) {
                 alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
                 return
@@ -80,15 +79,25 @@ function convertPPTX(content: any) {
         if (!list?.["p:txBody"]?.length) return
 
         const lines: string[] = []
-        list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
-            if (!line?.["a:r"]) return
+        list["p:txBody"][0]?.["a:p"]?.forEach((paragraph: any) => {
+            // Check if paragraph has content
+            if (!paragraph["a:r"] && !paragraph["a:br"]) return
 
-            let value = ""
-            line["a:r"].forEach((a: any) => {
-                value += a["a:t"]?.[0] || ""
-            })
+            const textRuns = paragraph["a:r"] || []
+            const lineBreaks = paragraph["a:br"] || []
 
-            lines.push(value)
+            // If there are line breaks, split the text runs accordingly
+            if (lineBreaks.length > 0) {
+                textRuns.forEach((textRun: any) => {
+                    const text = textRun["a:t"]?.[0] || ""
+                    if (text.trim()) lines.push(text.trim())
+                })
+            } else {
+                // No line breaks, concatenate all text runs into one line
+                let paragraphText = ""
+                textRuns.forEach((textRun: any) => { paragraphText += textRun["a:t"]?.[0] || "" })
+                if (paragraphText.trim()) lines.push(paragraphText.trim())
+            }
         })
         slide.push(lines)
     })
@@ -105,9 +114,9 @@ function createSlides(slides: string[][][]) {
         layouts.push({ id })
 
         const items: Item[] = []
-        slide.forEach((textbox) => {
+        slide.forEach(textbox => {
             const lines: any[] = []
-            textbox.forEach((line) => {
+            textbox.forEach(line => {
                 lines.push({ align: "text-align: start;", text: [{ style: "", value: line }] })
             })
 
