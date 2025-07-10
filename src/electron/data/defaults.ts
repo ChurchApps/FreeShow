@@ -64,7 +64,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     splitLines: 0,
     theme: "default",
     transitionData: {
-        text: { type: "fade", duration: 500, easing: "sine" },
+        text: { type: "fade", duration: 500, easing: "sine", autoSizeDelay: 500 },
         media: { type: "fade", duration: 800, easing: "sine" }
     },
     volume: 1,

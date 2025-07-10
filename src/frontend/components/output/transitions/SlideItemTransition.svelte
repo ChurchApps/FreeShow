@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { get } from "svelte/store"
     import { uid } from "uid"
     import type { Item, Transition } from "../../../../types/Show"
-    import { currentWindow, scriptureSettings, templates } from "../../../stores"
+    import { currentWindow, scriptureSettings, templates, transitionData } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
     import OutputTransition from "./OutputTransition.svelte"
+
     // import { onMount } from "svelte"
 
     export let globalTransition: Transition
@@ -57,7 +59,7 @@
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
             // wait output style/scripture template auto size
-            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 500
+            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = get(transitionData)?.text.autoSizeDelay || 500
 
             if (!inDelay) inDelay = outDelay * 0.98
         }

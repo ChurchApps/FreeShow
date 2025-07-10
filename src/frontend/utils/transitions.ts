@@ -83,6 +83,7 @@ export function updateTransition(data: API_transition) {
         a[data.id || "text"] = {
             type: data.type || "fade",
             duration: data.duration ?? 500,
+            autoSizeDelay: data.autoSizeDelay ?? 500,
             easing: data.easing || "sine",
         }
 
