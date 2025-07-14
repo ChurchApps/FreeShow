@@ -8,7 +8,7 @@ import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
 import { stores } from "../data/store"
 import { sendMain, sendToMain } from "../IPC/main"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, writeFile } from "../utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, parseShow, readFile, writeFile } from "../utils/files"
 import { renameShows } from "../utils/shows"
 
 export function save(data: SaveData) {
@@ -58,9 +58,16 @@ export function save(data: SaveData) {
         // delete shows
         if (data.deletedShows) data.deletedShows.forEach(deleteShow)
         function deleteShow({ name, id }: { name: string; id: string }) {
-            if (!name || data.showsCache?.[id]) return
+            if (!id || data.showsCache?.[id]) return
 
             const filePath: string = path.join(data.path, (name || id) + ".show")
+            if (!doesPathExist(filePath)) return
+
+            // load file to double check the ID (as a new show with the same name might have been created)
+            const jsonData = readFile(filePath) || "{}"
+            const show = parseShow(jsonData)
+            if (show?.[0] !== id) return
+
             deleteFile(filePath)
 
             // update cloud

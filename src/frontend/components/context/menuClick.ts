@@ -4,7 +4,7 @@ import { EXPORT, OUTPUT } from "../../../types/Channels"
 import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
-import type { Item, Slide, SlideData } from "../../../types/Show"
+import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
@@ -1699,6 +1699,11 @@ export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     const parents: any[] = []
     const childs: any[] = []
 
+    if (type === "delete") {
+        const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
+        if (selectedInDifferentLayout && !confirm("Slide exists in a different layout! Would you like to delete?")) return
+    }
+
     // remove parents and delete childs
     data.forEach(({ index }: any) => {
         if (!ref[index]) return
@@ -1790,6 +1795,21 @@ export function format(id: string, obj: ObjData, data: any = null) {
     })
 
     refreshEditSlide.set(true)
+}
+
+function checkIfAddedToDifferentLayout(ref: LayoutRef[], data: any[]) {
+    let showLayouts = _show().layouts().get(null, true)
+    if (showLayouts.length < 2) return false
+
+    // don't check current
+    const currentLayoutId = _show().get("settings.activeLayout")
+    showLayouts = showLayouts.filter((a) => a.layoutId !== currentLayoutId)
+
+    // check if slide is added to any other layout
+    return data.find(({ index }) => {
+        const parentSlideId = ref[index]?.parent?.id ?? ref[index]?.id
+        return showLayouts.find((a) => a.slides.find((a) => a.id === parentSlideId))
+    })
 }
 
 const formatting = {

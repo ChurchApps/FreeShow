@@ -1,4 +1,6 @@
 export function triggerClickOnEnterSpace(event: KeyboardEvent) {
+    if (event.target?.classList.contains("edit") || (event.target as any)?.nodeName === "INPUT" || (event.target as any)?.nodeName === "TEXTAREA") return
+
     if (event.key === "Enter" || event.key === " ") {
         event.preventDefault()
         event.stopPropagation()
@@ -8,6 +10,8 @@ export function triggerClickOnEnterSpace(event: KeyboardEvent) {
 
 export function createKeydownHandler(callback: (event: KeyboardEvent) => void) {
     return (event: KeyboardEvent) => {
+        if (event.target?.classList.contains("edit") || (event.target as any)?.nodeName === "INPUT" || (event.target as any)?.nodeName === "TEXTAREA") return
+
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault()
             event.stopPropagation()
