@@ -8,6 +8,7 @@
         "drop": "拖到此处",
         "search": "搜索",
         "quick_search": "快速搜索",
+        "search_active": "搜索已启动",
         "none": "无",
         "finished": "已完成",
         "open": "打开",
@@ -79,10 +80,12 @@
         "global_options": "这些选项将全局生效。"
     },
     "setup": {
-        "good_luck": "希望您觉得这个软件有用。祝演出顺利！:)",
+        "good_luck": "我们希望这个软件能满足你的需求。祝您敬拜顺利！:)",
         "tips": "在网站上查找方便的提示和教程。",
         "change_later": "您可以稍后修改这些设置",
-        "get_started": "开始"
+        "get_started": "开始",
+        "or": "或者",
+        "restore_data": "还原之前的数据"
     },
     "example": {
         "welcome": "欢迎",
@@ -154,11 +157,13 @@
         "audio": "清除音频",
         "nextTimer": "清除下一张幻灯片计时器",
         "timer": "清除计时器",
-        "drawing": "清除绘图"
+        "drawing": "清除绘图",
+        "search": "清空搜索"
     },
     "remove": {
         "background": "移除背景",
         "overlays": "移除叠加",
+        "effects": "移除效果",
         "audio": "移除音频",
         "nextTimer": "移除下一张幻灯片计时器",
         "to_start": "移除返回到开始",
@@ -212,6 +217,7 @@
         "mixer": "调音台",
         "metronome": "节拍器",
         "toggle_metronome": "显示/隐藏节拍器",
+        "use_metadata_bpm": "使用元数据中的 BPM",
         "tempo": "节奏",
         "bpm": "拍数",
         "beats": "拍子",
@@ -408,6 +414,7 @@
         "show": "新建节目",
         "select_show": "选择节目",
         "select_template": "选择模板",
+        "custom_text": "设置自定义文本",
         "rename": "重命名",
         "color": "颜色",
         "color_gradient": "渐变色",
@@ -452,6 +459,7 @@
         "manage_emitters": "管理发射器",
         "action": "动作",
         "category_action": "分类动作",
+        "custom_action": "自定义动作",
         "user_data_overwrite": "发现已有数据",
         "connect": "连接",
         "cloud_update": "与云端同步",
@@ -464,6 +472,8 @@
         "manage_metadata": "管理元数据",
         "choose_camera": "选择相机",
         "manage_tags": "管理标签",
+        "chums_sync_categories": "选择要同步的分类",
+        "effect_items": "效果元素",
         "initialize": "欢迎使用 FreeShow",
         "unsaved": "您确定要退出吗？",
         "cancel": "取消",
@@ -529,7 +539,9 @@
         "scripture": "新建圣经",
         "collection": "新建收藏夹",
         "action": "新建动作",
-        "event": "新建事件"
+        "event": "新建事件",
+        "event_action": "新建计划动作",
+        "effect": "新建效果"
     },
     "show": {
         "name": "名称",
@@ -551,13 +563,14 @@
         "delete_manual": "手动检查",
         "delete_match": "完全匹配时删除",
         "delete_keep_last_modified": "删除除最后修改的文件外的所有文件",
-        "delete_keep_first_created": "删除除第一个创建的文件外的所有文件"
+        "delete_keep_first_created": "删除除第一个创建的文件外的所有文件",
+        "custom_action_tip": "为这个节目分配一个自定义动作，当点击此按钮时触发。"
     },
     "actions": {
         "rename": "重命名",
         "recolor": "修改颜色",
         "remove": "移除",
-        "remove_group": "从布局中移除分组",
+        "remove_group": "移除分组",
         "choose_group": "选择分组",
         "goto_group": "转到分组",
         "active_outputs": "活动输出",
@@ -570,7 +583,7 @@
         "imported": "已导入！",
         "duplicate": "创建副本",
         "delete": "删除",
-        "delete_slide": "从演出中删除幻灯片",
+        "delete_slide": "删除幻灯片",
         "delete_group": "删除分组",
         "delete_all": "全部删除",
         "close": "关闭",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "修改舞台连接布局",
         "start_camera": "启动相机",
         "start_screen": "开始屏幕",
+        "id_start_effect": "启动效果",
         "id_select_overlay": "启动叠加",
         "change_volume": "修改音量",
         "start_audio_stream": "开始音频流",
@@ -899,6 +913,7 @@
         "break_long_lines": "长句换行",
         "break_long_lines_tip": "超过设定字数时换行",
         "media_fit": "媒体适应",
+        "cropping": "裁剪",
         "one_letter": "单字母模式",
         "sub_indexes": "子索引",
         "size": "大小",
@@ -986,7 +1001,11 @@
         "enable_start_date": "启用开始日期",
         "disable_navigation": "禁用导航控制",
         "progress_bar": "进度条",
-        "each_number_once": "数字不重复"
+        "each_number_once": "数字不重复",
+        "side": "侧面",
+        "count": "计数",
+        "speed": "速度",
+        "angle": "角度"
     },
     "items": {
         "text": "文本框",
@@ -1007,6 +1026,7 @@
         "visualizer": "可视化",
         "captions": "字幕",
         "icon": "图标",
+        "effect": "效果",
         "slide_text": "幻灯片文本",
         "slide_notes": "幻灯片备注",
         "current_output": "当前输出"
@@ -1084,6 +1104,7 @@
         "activate": "通过 MIDI 信号激活",
         "activate_keypress": "通过按键激活",
         "name": "名称",
+        "description": "描述",
         "input": "输入",
         "output": "输出",
         "type": "类型",
@@ -1123,7 +1144,8 @@
         "straight": "直接",
         "rainbow": "彩虹",
         "threed": "3D",
-        "dots": "点"
+        "dots": "点",
+        "link_to_slide": "链接到幻灯片"
     },
     "stage": {
         "stage_layout": "舞台布局",
@@ -1440,6 +1462,36 @@
         "weekly": "每周",
         "mothly": "每月"
     },
+    "effect": {
+        "stars": "星标",
+        "galaxy": "星系",
+        "rain": "雨",
+        "snow": "雪",
+        "bubbles": "泡泡",
+        "grass": "青草",
+        "wave": "波浪",
+        "sun": "太阳",
+        "lens_flare": "镜头光晕",
+        "lightning": "闪电",
+        "rainbow": "彩虹",
+        "spotlight": "聚光灯",
+        "aurora": "极光",
+        "bloom": "泛光",
+        "fog": "烟雾",
+        "city": "城市",
+        "fireworks": "烟花",
+        "rays": "光线",
+        "cycle": "循环",
+        "circle": "圆形",
+        "rectangle": "长方形",
+        "triangle": "三角形",
+        "asset": "素材",
+        "swirl_strength": "漩涡强度",
+        "arm_count": "分支数量",
+        "drift": "漂移",
+        "pulse_speed": "闪烁速度",
+        "hollow": "镂空"
+    },
     "info": {
         "created": "已创建",
         "modified": "已修改",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "在同一个文本框内交替显示所有语言（类似 Songbeamer）。",
         "translation_description_textboxes": "将每种语言作为单独的文本框添加到幻灯片中。",
         "translation_description_layouts": "为每种语言创建一组独特的幻灯片和布局。"
+    },
+    "chums": {
+        "sync_categories": "同步分类",
+        "sync_categories_description": "选择要与 Chums 同步为歌曲的类别"
     }
 }
