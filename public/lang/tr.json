@@ -8,6 +8,7 @@
         "drop": "Buraya bırak",
         "search": "Arama",
         "quick_search": "Hızlı arama",
+        "search_active": "Arama etkin",
         "none": "Hiçbiri",
         "finished": "Bitti",
         "open": "Açık",
@@ -79,12 +80,12 @@
         "global_options": "Bu seçenekler genel olarak uygulanır."
     },
     "setup": {
-        "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
+        "good_luck": "Bu yazılımı faydalı bulacağınızı umuyoruz. Sunum için iyi şanslar! :)",
         "tips": "Web sitesinde kullanışlı ipuçları ve öğreticiler bulun.",
         "change_later": "Bu ayarları daha sonra değiştirebilirsiniz",
         "get_started": "Başla!",
-        "or": "or",
-        "restore_data": "Restore previous data"
+        "or": "veya",
+        "restore_data": "Önceki verileri geri yükle"
     },
     "example": {
         "welcome": "Hoşgeldiniz",
@@ -156,12 +157,13 @@
         "audio": "Sesi temizle",
         "nextTimer": "Sonraki slayt zamanlayıcısını temizle",
         "timer": "Zamanlayıcıyı temizle",
-        "drawing": "Temiz çizim"
+        "drawing": "Temiz çizim",
+        "search": "Aramayı temizle"
     },
     "remove": {
         "background": "Arkaplanı kaldırın",
         "overlays": "Kaplamaları kaldır",
-        "effects": "Remove effects",
+        "effects": "Efektleri kaldır",
         "audio": "Sesi kaldır",
         "nextTimer": "Sonraki slayt zamanlayıcısını kaldır",
         "to_start": "Başa git'i kaldır",
@@ -215,7 +217,7 @@
         "mixer": "Mikser",
         "metronome": "Metronom",
         "toggle_metronome": "Metronomu değiştir",
-        "use_metadata_bpm": "Use BPM from metadata",
+        "use_metadata_bpm": "Meta verilerden BPM kullanın",
         "tempo": "Tempo",
         "bpm": "BPM",
         "beats": "Ritim",
@@ -412,7 +414,7 @@
         "show": "Yeni gösteri",
         "select_show": "Gösteri seç",
         "select_template": "Şablonu seçin",
-        "custom_text": "Set custom text",
+        "custom_text": "Özel metin ayarla",
         "rename": "Yeniden adlandır",
         "color": "Renk",
         "color_gradient": "Gradyan rengi",
@@ -457,7 +459,7 @@
         "manage_emitters": "Yayıcıları yönet",
         "action": "Eylem",
         "category_action": "Kategori eylemi",
-        "custom_action": "Custom action",
+        "custom_action": "Özel eylem",
         "user_data_overwrite": "Mevcut veriler bulundu",
         "connect": "Bağlan",
         "cloud_update": "Bulut ile senkronizasyon",
@@ -470,8 +472,8 @@
         "manage_metadata": "Meta verileri yönet",
         "choose_camera": "Kamera seç",
         "manage_tags": "Etiketleri yönet",
-        "chums_sync_categories": "Select categories to sync",
-        "effect_items": "Effect items",
+        "chums_sync_categories": "Senkronize edilecek kategorileri seçin",
+        "effect_items": "Efekt öğeleri",
         "initialize": "FreeShow'a Hoşgeldiniz",
         "unsaved": "Bırakmak istediğine emin misin?",
         "cancel": "İptal",
@@ -538,8 +540,8 @@
         "collection": "Yeni koleksiyon",
         "action": "Yeni aksiyon",
         "event": "Yeni etkinlik",
-        "event_action": "New scheduled action",
-        "effect": "New effect"
+        "event_action": "Yeni planlanmış eylem",
+        "effect": "Yeni efekt"
     },
     "show": {
         "name": "İsim",
@@ -562,13 +564,13 @@
         "delete_match": "Tam eşleşme varsa sil",
         "delete_keep_last_modified": "Son değiştirilen hariç hepsini sil",
         "delete_keep_first_created": "İlk oluşturulan hariç hepsini sil",
-        "custom_action_tip": "Assign a custom action for this show to trigger when this button is clicked."
+        "custom_action_tip": "Bu düğmeye tıklandığında tetiklenmesi için bu gösteriye özel bir eylem atayın."
     },
     "actions": {
         "rename": "Yeniden adlandır",
         "recolor": "Rengi değiştir",
         "remove": "Sil",
-        "remove_group": "Grubu düzenden kaldır",
+        "remove_group": "Grubu kaldır",
         "choose_group": "Grubu seç",
         "goto_group": "Gruba git",
         "active_outputs": "Aktif çıkışlar",
@@ -581,7 +583,7 @@
         "imported": "İçe aktarıldı!",
         "duplicate": "Çoğalt",
         "delete": "Sil",
-        "delete_slide": "Slaydı şovdan sil",
+        "delete_slide": "Slaydı sil",
         "delete_group": "Grubu sil",
         "delete_all": "Hepsini sil",
         "close": "Kapat",
@@ -721,7 +723,7 @@
         "id_change_stage_layout": "Sahne bağlantı düzenini değiştir",
         "start_camera": "Kamerayı başlat",
         "start_screen": "Başlangıç ekranı",
-        "id_start_effect": "Start effect",
+        "id_start_effect": "Efekti başlat",
         "id_select_overlay": "Bindirmeyi başlat",
         "change_volume": "Hacmi değiştirin",
         "start_audio_stream": "Ses akışını başlat",
@@ -911,7 +913,7 @@
         "break_long_lines": "Uzun çizgileri kırın",
         "break_long_lines_tip": "Belirlenen kelimelerden uzunsa satırı kes",
         "media_fit": "Medya sığdır",
-        "cropping": "Cropping",
+        "cropping": "Kırpma",
         "one_letter": "Tek harf modu",
         "sub_indexes": "Alt dizinler",
         "size": "Boyut",
@@ -1000,10 +1002,10 @@
         "disable_navigation": "Navigasyon kontrollerini devre dışı bırak",
         "progress_bar": "İlerleme çubuğu",
         "each_number_once": "Her sayı yalnızca bir kez",
-        "side": "Side",
-        "count": "Count",
-        "speed": "Speed",
-        "angle": "Angle"
+        "side": "Yan taraf",
+        "count": "Sayım",
+        "speed": "Hız",
+        "angle": "Açı"
     },
     "items": {
         "text": "Metin kutusu",
@@ -1024,7 +1026,7 @@
         "visualizer": "Görselleştirici",
         "captions": "Başlıklar",
         "icon": "Simge",
-        "effect": "Effect",
+        "effect": "Efekt",
         "slide_text": "Slayt metni",
         "slide_notes": "Slayt notları",
         "current_output": "Mevcut çıkış"
@@ -1102,7 +1104,7 @@
         "activate": "MIDI sinyali ile etkinleştirin",
         "activate_keypress": "Tuşa basarak etkinleştir",
         "name": "İsim",
-        "description": "Description",
+        "description": "Açıklama",
         "input": "Giriş",
         "output": "Çıkış",
         "type": "Tip",
@@ -1143,7 +1145,7 @@
         "rainbow": "Gökkuşağı",
         "threed": "3D",
         "dots": "Noktalar",
-        "link_to_slide": "Link to slide"
+        "link_to_slide": "Slayt bağlantısı"
     },
     "stage": {
         "stage_layout": "Sahne düzeni",
@@ -1461,34 +1463,34 @@
         "mothly": "Aylık"
     },
     "effect": {
-        "stars": "Stars",
-        "galaxy": "Galaxy",
-        "rain": "Rain",
-        "snow": "Snow",
-        "bubbles": "Bubbles",
-        "grass": "Grass",
-        "wave": "Wave",
-        "sun": "Sun",
-        "lens_flare": "Lens flare",
-        "lightning": "Lightning",
-        "rainbow": "Rainbow",
-        "spotlight": "Spotlight",
+        "stars": "Yıldızlar",
+        "galaxy": "Galaksi",
+        "rain": "Yağmur",
+        "snow": "Kar",
+        "bubbles": "Kabarcıklar",
+        "grass": "Çimen",
+        "wave": "Dalga",
+        "sun": "Güneş",
+        "lens_flare": "Lens parlaması",
+        "lightning": "Yıldırım",
+        "rainbow": "Gökkuşağı",
+        "spotlight": "Spot Işığı",
         "aurora": "Aurora",
-        "bloom": "Bloom",
-        "fog": "Fog",
-        "city": "City",
-        "fireworks": "Fireworks",
-        "rays": "Rays",
-        "cycle": "Cycle",
-        "circle": "Circle",
-        "rectangle": "Rectangle",
-        "triangle": "Triangle",
-        "asset": "Asset",
-        "swirl_strength": "Swirl strength",
-        "arm_count": "Arm count",
-        "drift": "Drift",
-        "pulse_speed": "Pulse speed",
-        "hollow": "Hollow"
+        "bloom": "Çiçek açmak",
+        "fog": "Sis",
+        "city": "Şehir",
+        "fireworks": "Havai fişekler",
+        "rays": "Işınlar",
+        "cycle": "Döngü",
+        "circle": "Daire",
+        "rectangle": "Dikdörtgen",
+        "triangle": "Üçgen",
+        "asset": "Varlık",
+        "swirl_strength": "Girdap gücü",
+        "arm_count": "Kol sayısı",
+        "drift": "Sürüklenme",
+        "pulse_speed": "Darbe hızı",
+        "hollow": "İçi boş"
     },
     "info": {
         "created": "Oluşturuldu",
@@ -1554,7 +1556,7 @@
         "translation_description_layouts": "Her dil için benzersiz bir slayt seti ve bir düzen oluşturur."
     },
     "chums": {
-        "sync_categories": "Sync categories",
-        "sync_categories_description": "Select which categories to sync as songs with Chums"
+        "sync_categories": "Kategorileri senkronize et",
+        "sync_categories_description": "Chums ile şarkı olarak hangi kategorilerin senkronize edileceğini seçin"
     }
 }

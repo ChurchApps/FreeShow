@@ -8,6 +8,7 @@
         "drop": "Soltar aquí",
         "search": "Buscar",
         "quick_search": "Búsqueda rápida",
+        "search_active": "La búsqueda está activa",
         "none": "Ninguno",
         "finished": "Finalizado",
         "open": "Abrir",
@@ -79,10 +80,12 @@
         "global_options": "Estas opciones son aplicadas globalmente."
     },
     "setup": {
-        "good_luck": "Espero que encuentres útil este software. ¡Buena suerte con tu presentación! :)",
+        "good_luck": "Esperamos que encuentres útil este software. ¡Buena suerte con la presentación! :)",
         "tips": "Encontrar en la web consejos prácticos y tutoriales.",
         "change_later": "Puedes realizar estos ajustes después",
-        "get_started": "¡Empezar!"
+        "get_started": "¡Empezar!",
+        "or": "o",
+        "restore_data": "Restaurar datos anteriores"
     },
     "example": {
         "welcome": "Bienvenido",
@@ -154,11 +157,13 @@
         "audio": "Borrar audio",
         "nextTimer": "Borrar temporizador de la siguiente diapositiva",
         "timer": "Borrar temporizador",
-        "drawing": "Borrar dibujo"
+        "drawing": "Borrar dibujo",
+        "search": "Borrar búsqueda"
     },
     "remove": {
         "background": "Eliminar fondo",
         "overlays": "Eliminar capas",
+        "effects": "Quitar efectos",
         "audio": "Eliminar audio",
         "nextTimer": "Eliminar temporizador de siguiente diapositiva",
         "to_start": "Eliminar inicio",
@@ -212,6 +217,7 @@
         "mixer": "Mezclador",
         "metronome": "Metrónomo",
         "toggle_metronome": "Activar metrónomo",
+        "use_metadata_bpm": "Usar PPM a partir de los metadatos",
         "tempo": "Tempo",
         "bpm": "PPM",
         "beats": "Pulsaciones",
@@ -408,6 +414,7 @@
         "show": "Nuevo programa",
         "select_show": "Seleccionar programa",
         "select_template": "Seleccionar plantilla",
+        "custom_text": "Establecer texto personalizado",
         "rename": "Renombrar",
         "color": "Color",
         "color_gradient": "Color degradado",
@@ -452,6 +459,7 @@
         "manage_emitters": "Gestionar emisores",
         "action": "Acción",
         "category_action": "Acción de Categoría",
+        "custom_action": "Acción personalizada",
         "user_data_overwrite": "Se encontraron datos existentes",
         "connect": "Conectar",
         "cloud_update": "Sincronizando con la nube",
@@ -464,6 +472,8 @@
         "manage_metadata": "Gestión de metadatos",
         "choose_camera": "Elegir cámara",
         "manage_tags": "Gestionar etiquetas",
+        "chums_sync_categories": "Elige las categorías a sincronizar",
+        "effect_items": "Elementos de efecto",
         "initialize": "Bienvenido a FreeShow",
         "unsaved": "¿Estás seguro de que quieres salir?",
         "cancel": "Cancelar",
@@ -529,7 +539,9 @@
         "scripture": "Nueva escritura",
         "collection": "Nueva colección",
         "action": "Nueva acción",
-        "event": "Nuevo evento"
+        "event": "Nuevo evento",
+        "event_action": "Nueva acción programada",
+        "effect": "Nuevo efecto"
     },
     "show": {
         "name": "Nombre",
@@ -551,13 +563,14 @@
         "delete_manual": "Comprobación manual",
         "delete_match": "Eliminar si coincide exactamente",
         "delete_keep_last_modified": "Eliminar todo excepto el último modificado",
-        "delete_keep_first_created": "Eliminar todo excepto el primero creado"
+        "delete_keep_first_created": "Eliminar todo excepto el primero creado",
+        "custom_action_tip": "Asigna una acción personalizada a este show para que se active cuando se haga clic en este botón"
     },
     "actions": {
         "rename": "Renombrar",
         "recolor": "Cambiar color",
         "remove": "Suprimir",
-        "remove_group": "Quitar grupo del diseño",
+        "remove_group": "Quitar grupo",
         "choose_group": "Elegir grupo",
         "goto_group": "Ir al grupo",
         "active_outputs": "Salidas activas",
@@ -570,7 +583,7 @@
         "imported": "¡Importado!",
         "duplicate": "Duplicar",
         "delete": "Eliminar",
-        "delete_slide": "Eliminar diapositiva del espectáculo",
+        "delete_slide": "Eliminar diapositiva",
         "delete_group": "Eliminar grupo",
         "delete_all": "Eliminar todos",
         "close": "Cerrar",
@@ -710,6 +723,7 @@
         "id_change_stage_layout": "Cambiar diseño de las conexiones del escenario",
         "start_camera": "Iniciar camara",
         "start_screen": "Iniciar pantalla",
+        "id_start_effect": "Iniciar efecto",
         "id_select_overlay": "Iniciar superposición",
         "change_volume": "Cambiar el volumen",
         "start_audio_stream": "Iniciar transmisión de audio",
@@ -899,6 +913,7 @@
         "break_long_lines": "Saltar lineas largas",
         "break_long_lines_tip": "Saltar línea si es mas larga que la palabras colocadas",
         "media_fit": "Ajuste de medios",
+        "cropping": "Recortar",
         "one_letter": "Modo de una letra",
         "sub_indexes": "Subíndices",
         "size": "Tamaño",
@@ -986,7 +1001,11 @@
         "enable_start_date": "Habilitar fecha de inicio",
         "disable_navigation": "Deshabilitar los controles de navegación",
         "progress_bar": "Barra de Progreso",
-        "each_number_once": "Cada número solo una vez"
+        "each_number_once": "Cada número solo una vez",
+        "side": "Lado",
+        "count": "Conteo",
+        "speed": "Velocidad",
+        "angle": "Angulo"
     },
     "items": {
         "text": "Cuadro de texto",
@@ -1007,6 +1026,7 @@
         "visualizer": "Visualizador",
         "captions": "Subtítulos",
         "icon": "Icono",
+        "effect": "Efecto",
         "slide_text": "Texto de diapositiva",
         "slide_notes": "Notas de Diapositivas",
         "current_output": "Salida actual"
@@ -1084,6 +1104,7 @@
         "activate": "Activar por señal MIDI",
         "activate_keypress": "Activar presionando una tecla",
         "name": "Nombre",
+        "description": "Descripción",
         "input": "Entrada",
         "output": "Salida",
         "type": "Tipo",
@@ -1123,7 +1144,8 @@
         "straight": "Derecho",
         "rainbow": "Arco iris",
         "threed": "3D",
-        "dots": "Entrecortado"
+        "dots": "Entrecortado",
+        "link_to_slide": "Enlazar a lado"
     },
     "stage": {
         "stage_layout": "Diseño del escenario",
@@ -1440,6 +1462,36 @@
         "weekly": "Semanalmente",
         "mothly": "Mensualmente"
     },
+    "effect": {
+        "stars": "Estrellas",
+        "galaxy": "Galaxia",
+        "rain": "Lluvia",
+        "snow": "Nieve",
+        "bubbles": "Burbujas",
+        "grass": "Cristal",
+        "wave": "Ola",
+        "sun": "Sol",
+        "lens_flare": "Destello de lente",
+        "lightning": "Rayos",
+        "rainbow": "Arcoiris",
+        "spotlight": "Foco",
+        "aurora": "Aurora",
+        "bloom": "Florecer",
+        "fog": "Niebla",
+        "city": "Ciudad",
+        "fireworks": "Fuegos Artificiales",
+        "rays": "Rayos",
+        "cycle": "Ciclo",
+        "circle": "Circulo",
+        "rectangle": "Rectangulo",
+        "triangle": "Triangulo",
+        "asset": "Recurso",
+        "swirl_strength": "Fuerza del remolino",
+        "arm_count": "Conteo de brazos",
+        "drift": "Deriva",
+        "pulse_speed": "Velocidad de pulso",
+        "hollow": "Hueco"
+    },
     "info": {
         "created": "Creado",
         "modified": "Modificado",
@@ -1502,5 +1554,9 @@
         "translation_description_multiline": "Agrega todos los lenguajes en un único cuadro de texto en líneas alternas. (Como en Songbeamer)",
         "translation_description_textboxes": "Agrega cada lenguaje como un cuadro de texto separado a la diapositiva.",
         "translation_description_layouts": "Crea un conjunto único de diapositivas y un diseño para cada lenguaje."
+    },
+    "chums": {
+        "sync_categories": "Sincronizar categorías",
+        "sync_categories_description": "Selecciona qué categorías sincronizar como canciones con Chums"
     }
 }
