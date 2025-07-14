@@ -25,6 +25,7 @@ import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, start
 import { renameShows } from "./utils/shows"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
+
 // ----- STARTUP -----
 process.on('uncaughtException', (error) => {
   console.error('CRITICAL: Uncaught exception in main process:', error);
@@ -43,6 +44,38 @@ process.on('uncaughtException', (error) => {
     console.error('Error during exception cleanup:', cleanupErr);
   }
 });
+
+// Specifically listen for segmentation faults
+process.on('SIGSEGV', () => {
+  console.error('CRITICAL: Segmentation fault detected!');
+  
+  try {
+    console.log('Attempting graceful cleanup after segmentation fault');
+    
+    // Stop all Blackmagic senders
+    if (BlackmagicSender.stopAll) {
+      BlackmagicSender.stopAll();
+    }
+  } catch (err) {
+    console.error('Error during SIGSEGV cleanup:', err);
+  }
+  
+  // Exit with a non-zero code to indicate error
+  process.exit(1);
+});
+
+// Make sure we clean up hardware connections on app quit
+app.on('will-quit', () => {
+  console.log('App quitting, cleaning up hardware connections...');
+  try {
+    if (BlackmagicSender.stopAll) {
+      BlackmagicSender.stopAll();
+    }
+  } catch (err) {
+    console.error('Error cleaning up hardware on quit:', err);
+  }
+});
+
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
