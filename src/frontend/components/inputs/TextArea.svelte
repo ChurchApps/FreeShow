@@ -5,10 +5,10 @@
 
     export let center = false
     export let disabled = false
-    export const autofocus = false
+    export let autofocus = false
 </script>
 
-<textarea class="edit" {placeholder} {value} {style} class:center {disabled} on:input />
+<textarea class="edit" {placeholder} {value} {style} class:center {disabled} {autofocus} on:input />
 
 <style>
     textarea {

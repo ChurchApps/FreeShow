@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { Resolution } from "../../../types/Settings"
     import { mediaOptions, outputs, styles } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
     import Loader from "../main/Loader.svelte"
     import Label from "./Label.svelte"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let loaded = true
     export let preview = false
@@ -26,7 +26,6 @@
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
     $: mainWidth = width || (mode === "grid" ? 100 / $mediaOptions.columns : 100)
-
 </script>
 
 <!-- display: table; -->

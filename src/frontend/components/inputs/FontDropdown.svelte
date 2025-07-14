@@ -5,9 +5,9 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { dictionary, systemFonts } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { formatSearch } from "../../utils/search"
     import Dropdown from "./Dropdown.svelte"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let value: string
     export let fontStyleValue = ""
@@ -137,7 +137,7 @@
         data: a.css
             ?.replace(/^font:\s*(.*);$/, "$1")
             .replace("1em", "100px")
-            .trim(),
+            .trim()
     }))
 </script>
 

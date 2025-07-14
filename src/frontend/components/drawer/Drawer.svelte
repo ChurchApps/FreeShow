@@ -196,7 +196,19 @@
 
 <!-- <Resizeable id="drawer" side="bottom" minWidth={50}> -->
 <section class="drawer" style="height: {height}px">
-    <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(e); } }} role="button" tabindex="0">
+    <div
+        class="top context #drawer_top"
+        on:mousedown={mousedown}
+        on:click={click}
+        on:keydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                click(e)
+            }
+        }}
+        role="button"
+        tabindex="0"
+    >
         <span class="tabs">
             {#each tabs as tab, i}
                 {#if $drawerTabsData[tab.id]?.enabled !== false && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}

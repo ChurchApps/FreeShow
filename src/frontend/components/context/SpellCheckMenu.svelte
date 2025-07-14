@@ -2,8 +2,8 @@
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
     import { dictionary, spellcheck } from "../../stores"
-    import { closeContextMenu } from "../../utils/shortcuts"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { closeContextMenu } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
 
@@ -19,7 +19,6 @@
         sendMain(Main.SPELLCHECK, { fixSpelling: word })
         closeContextMenu()
     }
-
 </script>
 
 {#if misspelled && suggestions.length}

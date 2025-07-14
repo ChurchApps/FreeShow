@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeDays, activePopup, dictionary, eventEdit, events } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { actionData } from "../../actions/actionData"
     import { getActionName } from "../../actions/actions"
     import { sortByTime } from "../../helpers/array"
@@ -7,7 +8,6 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
-    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let type = "event"
 

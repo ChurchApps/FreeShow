@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { StageLayout } from "../../../types/Stage"
     import { activeTimers, allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables, videosTime } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -9,7 +10,6 @@
     import SelectElem from "../system/SelectElem.svelte"
     import { getSlideTextItems, stageItemToItem } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     export let layout: StageLayout
     export let id: string

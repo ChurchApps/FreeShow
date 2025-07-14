@@ -2,12 +2,12 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
     import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
-    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
 
     export let path = ""
 

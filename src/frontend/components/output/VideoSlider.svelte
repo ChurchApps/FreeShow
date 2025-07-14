@@ -1,8 +1,8 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Slider from "../inputs/Slider.svelte"
 
     export let videoData: any
@@ -98,7 +98,6 @@
     }
 
     let fullLength = false
-
 </script>
 
 <svelte:window

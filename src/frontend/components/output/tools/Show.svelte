@@ -2,8 +2,8 @@
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
     import { activeFocus, activeShow, focusMode, presentationData, showsCache } from "../../../stores"
-    import T from "../../helpers/T.svelte"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import T from "../../helpers/T.svelte"
 
     export let currentOutput: Output
     export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[]

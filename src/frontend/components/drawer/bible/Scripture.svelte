@@ -1008,7 +1008,7 @@
                                         bookId = id
                                         autoComplete = false
                                     }}
-                                    on:keydown={createKeydownHandler((e) => {
+                                    on:keydown={createKeydownHandler(() => {
                                         bookId = id
                                         autoComplete = false
                                     })}
@@ -1108,7 +1108,7 @@
                                     if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
-                                on:keydown={createKeydownHandler((e) => {
+                                on:keydown={createKeydownHandler(() => {
                                     bookId = id
                                     if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
@@ -1152,7 +1152,7 @@
                         {@const subverse = Number(splitted[1] || 0)}
 
                         <!-- custom drag -->
-                        <button
+                        <p
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             id={content.id}
                             draggable="true"
@@ -1179,7 +1179,7 @@
                                 {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                             </span>
                             {@html formatBibleText(content.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
-                        </button>
+                        </p>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}
                         <copy>{bibles[0].copyright || bibles[0].metadata?.copyright}</copy>

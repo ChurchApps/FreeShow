@@ -66,11 +66,11 @@ export const actionData = {
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer", incompatible: ["pause_timers", "stop_timers"] },
     pause_timers: { name: "actions.pause_timers", icon: "pause", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
-    id_pause_timer: { canAddMultiple: true, name: "actions.id_pause_timer", icon: "pause", input: "id", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
-    name_pause_timer: { canAddMultiple: true, name: "actions.name_pause_timer", icon: "pause", input: "text", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
-    id_stop_timer: { canAddMultiple: true, name: "actions.id_stop_timer", icon: "stop", input: "id", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
-    name_stop_timer: { canAddMultiple: true, name: "actions.name_stop_timer", icon: "stop", input: "text", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
-
+    // only API action:
+    // id_pause_timer: { canAddMultiple: true, name: "actions.id_pause_timer", icon: "pause", input: "id", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
+    // name_pause_timer: { canAddMultiple: true, name: "actions.name_pause_timer", icon: "pause", input: "text", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
+    // id_stop_timer: { canAddMultiple: true, name: "actions.id_stop_timer", icon: "stop", input: "id", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
+    // name_stop_timer: { canAddMultiple: true, name: "actions.name_stop_timer", icon: "stop", input: "text", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
 
     // FUNCTIONS
     change_variable: { SECTION: "tabs.functions", canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },

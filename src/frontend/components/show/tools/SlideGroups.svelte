@@ -1,8 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
-    import { sortByName } from "../../helpers/array"
     import { createKeydownHandler } from "../../../utils/clickable"
+    import { sortByName } from "../../helpers/array"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"

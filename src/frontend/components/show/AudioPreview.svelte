@@ -4,9 +4,9 @@
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Button from "../inputs/Button.svelte"
     import Slider from "../inputs/Slider.svelte"
 
@@ -321,7 +321,7 @@
         inset-inline-start: 0;
         width: 100%;
     }
-    
+
     span[role="button"] {
         cursor: pointer;
     }

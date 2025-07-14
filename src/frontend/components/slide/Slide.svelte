@@ -29,8 +29,8 @@
         styles,
         textEditActive
     } from "../../stores"
-    import { wait } from "../../utils/common"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { wait } from "../../utils/common"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -352,7 +352,16 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} role="button" on:click on:keydown={triggerClickOnEnterSpace}>
+    <div
+        class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}"
+        class:disabled={layoutSlide.disabled}
+        class:afterEnd={endIndex !== null && index > endIndex}
+        {style}
+        tabindex={0}
+        role="button"
+        on:click
+        on:keydown={triggerClickOnEnterSpace}
+    >
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
