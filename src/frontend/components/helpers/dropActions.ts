@@ -869,6 +869,8 @@ const slideDrop = {
                 return
             }
 
+            if (keys?.shiftKey) action.customData = { [action.triggers[0]]: { overrideCategoryAction: true } }
+
             newActions.push({ id: uid(), ...action })
         })
 
