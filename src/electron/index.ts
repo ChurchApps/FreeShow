@@ -6,7 +6,8 @@ import path from "path"
 import { BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { receiveBM } from "./blackmagic/talk"
-import { BlackmagicSender } from "./blackmagic/BlackmagicSender" // Add this import
+import { BlackmagicSender } from "./blackmagic/BlackmagicSender" 
+import { setupCleanupHandlers } from './cleanup-handlers';
 import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
@@ -138,6 +139,9 @@ function initialize() {
     if (!isProd) return
 
     catchErrors()
+    
+    BlackmagicSender.initialize();
+    setupCleanupHandlers();
 }
 
 // get LOADED message from frontend
@@ -355,7 +359,17 @@ app.on("window-all-closed", () => {
 
 // close app completely on mac
 app.on("will-quit", () => {
-    if (isMac) app.exit()
+    
+    console.log('App quitting, cleaning up hardware connections...');
+  try {
+    if (BlackmagicSender.stopAll) {
+      BlackmagicSender.stopAll();
+    }
+  } catch (err) {
+    console.error('Error cleaning up hardware on quit:', err);
+  }
+    
+  if (isMac) app.exit()
 })
 
 app.on("web-contents-created", (_e, contents) => {
@@ -447,6 +461,7 @@ function save(data: any) {
         if (data.backup) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath })
     }, 700)
 }
+
 
 // ----- LISTENERS -----
 
