@@ -101,15 +101,17 @@
 
             <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
 
-            <Button
-                center
-                title={$dictionary.media?.back10}
-                on:click={() => {
-                    changeValue = Math.max(videoTime - 10, 0.01)
-                }}
-            >
-                <Icon id="back_10" white size={big ? 1.4 : 1.2} />
-            </Button>
+            {#if big}
+                <Button
+                    center
+                    title={$dictionary.media?.back10}
+                    on:click={() => {
+                        changeValue = Math.max(videoTime - 10, 0.01)
+                    }}
+                >
+                    <Icon id="back_10" white size={big ? 1.4 : 1.2} />
+                </Button>
+            {/if}
             <Button
                 center
                 title={$dictionary.media?.forward10}

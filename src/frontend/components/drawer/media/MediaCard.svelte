@@ -114,7 +114,13 @@
         let loop = videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
-        setOutput("background", { path, type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
+
+        // get style per output
+        getActiveOutputs().forEach((outputId) => {
+            const currentOutputStyle = $styles[$outputs[outputId]?.style || ""]
+            const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
+            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, outputId)
+        })
 
         // unsplash requires the download to be triggered when using their images
         if (credits && credits.type === "unsplash" && credits.trigger_download) {
@@ -133,9 +139,7 @@
 
     // Memoized output and style computation
     const currentOutput = derived(outputs, ($outputs) => $outputs[getActiveOutputs()[0]])
-    const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => 
-        $styles[$currentOutput?.style || ""] || {}
-    )
+    const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => $styles[$currentOutput?.style || ""] || {})
 
     // Memoized media style computation
     let mediaStyle: MediaStyle = {}
@@ -157,7 +161,7 @@
     let isFavourite = false
     let icon = "image"
     let tags: string[] = []
-    
+
     $: {
         const mediaData = $media[path]
         isFavourite = mediaData?.favourite === true

@@ -193,6 +193,9 @@ export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mi
     if (!info) return info
 
     delete info.path
+
+    if (JSON.stringify(get(media)[path]?.info) === JSON.stringify(info)) return info
+
     media.update((a) => {
         if (!a[path]) a[path] = {}
         a[path].info = info

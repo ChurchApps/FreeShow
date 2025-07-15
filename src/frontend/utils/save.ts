@@ -240,6 +240,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
 }
 
 export function initializeClosing(skipPopup = false) {
+    // don't save automatically if an error has happened in case it breaks something
     if (!skipPopup && (get(special).showClosePopup || get(errorHasOccured))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })

@@ -12,7 +12,9 @@
         "none": "None",
         "finished": "Finished",
         "open": "Open",
-        "system_open": "Open in system"
+        "system_open": "Open in system",
+        "yes": "Yes",
+        "no": "No"
     },
     "formats": {
         "show": "Show",
@@ -416,6 +418,7 @@
         "select_template": "Select template",
         "select_style": "Select style",
         "select_stage_layout": "Select stage layout",
+        "confirm": "Confirm",
         "custom_text": "Set custom text",
         "rename": "Rename",
         "color": "Color",
@@ -487,6 +490,10 @@
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
         "save_quit": "Save & Quit"
+    },
+    "confirm": {
+        "statement_slide_exists_layout": "Slide exists in a different layout!",
+        "question_delete": "Would you like to delete?"
     },
     "toast": {
         "saving": "Saving...",
@@ -709,9 +716,7 @@
         "pause_timers": "Pause active timers",
         "stop_timers": "Stop active timers",
         "id_pause_timer": "Pause specific timer",
-        "name_pause_timer": "Pause timer by name",
         "id_stop_timer": "Stop specific timer",
-        "name_stop_timer": "Stop timer by name",
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
         "remove_layers": "Remove layers",

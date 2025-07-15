@@ -217,7 +217,7 @@
         {#if templates.length}
             <div class="projectTemplates">
                 {#each templates as project}
-                    <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
+                    <ProjectButton name={project.name} parent={project.parent} id={project.id} {interactedFolder} template />
                 {/each}
             </div>
         {/if}

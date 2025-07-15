@@ -61,10 +61,10 @@
     // OPTIONS
 
     const createOptions = [
-        { id: "text", name: "create_show.quick_lyrics", title: $dictionary.create_show?.quick_lyrics_tip, icon: "text" },
+        { id: "text", name: "create_show.quick_lyrics", title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
-        { id: "web", name: "create_show.web", title: $dictionary.create_show?.search_web, icon: "search" },
-        { id: "empty", name: "create_show.empty", title: $dictionary.new?.empty_show, icon: "add" }
+        { id: "web", name: "create_show.web", title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
+        { id: "empty", name: "create_show.empty", title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
     ]
     let selectedOption = ""
     function selectOption(id: string) {
@@ -138,22 +138,20 @@
     // SHORTCUTS
 
     function keydown(e: KeyboardEvent) {
-        if (!e.ctrlKey && !e.metaKey) return
-
-        if (e.key === "f") {
+        const ctrl = e.ctrlKey || e.metaKey
+        if (e.key === "f" && ctrl) {
             e.preventDefault()
-
-            if (document.activeElement?.closest("#name")) {
-                selectOption("web")
-            }
+            selectOption("web")
 
             return
         }
 
         if (e.key === "Enter") {
+            if (e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
+
             e.preventDefault()
 
-            if (document.activeElement?.closest("#name")) {
+            if (!ctrl) {
                 selectOption("text")
                 return
             }
@@ -241,7 +239,7 @@
         {/if}
 
         <CombinedInput>
-            <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
+            <Button title="{$dictionary.timer?.create} [Ctrl+Enter]" on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}
                         <!-- showIcon -->
@@ -253,7 +251,7 @@
                     {/if}
 
                     {#if values.name}
-                        <span class="name">{values.name}</span>
+                        <span class="name" style="border: none;">{values.name}</span>
                     {/if}
                     <!-- <span class="name">({#if values.name}{values.name}{:else}<T id="main.unnamed" />{/if})</span> -->
                 </div>

@@ -69,7 +69,7 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
+import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
@@ -96,6 +96,7 @@ import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
 import { translate } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 
 interface ObjData {
     sel: Selected | null
@@ -256,6 +257,12 @@ const clickActions = {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
+        if (obj.contextElem?.classList.value.includes("#event")) {
+            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        // THIS MUST BE LAST (otherwise deleteing e.g. an event while the editbox is selected will delete that instead)
         // delete slide item using context menu, or menubar action
         if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
@@ -263,10 +270,6 @@ const clickActions = {
         }
         if (obj.contextElem?.classList.value.includes("stage_item")) {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
-            return
-        }
-        if (obj.contextElem?.classList.value.includes("#event")) {
-            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
 
@@ -1694,14 +1697,15 @@ export function removeGroup(data: any[]) {
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
-export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
+export async function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     const ref = getLayoutRef()
     const parents: any[] = []
     const childs: any[] = []
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
-        if (selectedInDifferentLayout && !confirm("Slide exists in a different layout! Would you like to delete?")) return
+        const prompt = `${get(dictionary).confirm?.statement_slide_exists_layout} ${get(dictionary).confirm?.question_delete}`
+        if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
 
     // remove parents and delete childs
@@ -1730,7 +1734,7 @@ export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
-export function format(id: string, obj: ObjData, data: any = null) {
+export async function format(id: string, obj: ObjData, data: any = null) {
     let slideIds: string[] = []
 
     const editing = get(activeEdit)
@@ -1776,7 +1780,8 @@ export function format(id: string, obj: ObjData, data: any = null) {
         ]
     }
 
-    slideIds.forEach((slide) => {
+    // async update
+    for (const slide of slideIds) {
         const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
         const newData: any = { style: { values: [] } }
 
@@ -1792,7 +1797,9 @@ export function format(id: string, obj: ObjData, data: any = null) {
         newData.style.values = newItems
 
         history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items, slide } })
-    })
+
+        await wait(10)
+    }
 
     refreshEditSlide.set(true)
 }

@@ -65,7 +65,7 @@
         </div>
     {/if}
 
-    <div class="nocontext menus" role="menubar" tabindex="0" on:mousemove={move} on:click={menu} on:contextmenu={menu} on:keydown={triggerClickOnEnterSpace}>
+    <div class="nocontext menus" on:mousemove={move} on:click={menu} on:contextmenu={menu}>
         {#each menus as menu}
             <Button id={menu} active={activeID === menu} red={menu === "file" && !$saved}>
                 <T id="titlebar.{menu}" />

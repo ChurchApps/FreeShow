@@ -2,17 +2,17 @@
     import { onMount } from "svelte"
     import type { Condition } from "../../../../types/Show"
     import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+    import { clone, convertToOptions, keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
+    import { getDynamicIds } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { clone, convertToOptions } from "../../helpers/array"
-    import { getLayoutRef } from "../../helpers/show"
-    import { getDynamicIds } from "../../helpers/showActions"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -75,7 +75,12 @@
 
     const elementOptions = {
         timer: convertToOptions($timers),
-        variable: convertToOptions($variables),
+        variable: [
+            ...convertToOptions($variables),
+            ...keysToID($variables)
+                .filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1)
+                .map(({ id, name }) => ({ id, name: `Set: ` + name }))
+        ],
         dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a }))
     }
 

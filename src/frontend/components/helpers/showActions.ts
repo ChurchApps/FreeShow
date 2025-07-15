@@ -29,6 +29,7 @@ import {
     audioData,
     currentWindow,
     customMetadata,
+    dictionary,
     driveData,
     dynamicValueData,
     focusMode,
@@ -60,7 +61,7 @@ import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { addZero, joinTime, secondsToTime } from "./time"
+import { addZero, getMonthName, getWeekday, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 import { playFolder } from "../../utils/shortcuts"
 
@@ -1260,6 +1261,10 @@ const dynamicValues = {
     time_hours: () => addZero(new Date().getHours()),
     time_minutes: () => addZero(new Date().getMinutes()),
     time_seconds: () => addZero(new Date().getSeconds()),
+    // time_weeknum: () => "52",
+
+    time_str_day: () => getWeekday(new Date().getDay(), get(dictionary), true),
+    time_str_month: () => getMonthName(new Date().getMonth(), get(dictionary), true),
 
     // show
     show_name: ({ show }) => show.name || "",

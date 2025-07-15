@@ -60,7 +60,15 @@
         let currentLayout = e.detail?.id?.slice("layout_".length)
         if (!currentLayout) return
 
-        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+        const newName = e.detail.value
+        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+
+        if ($projects[$activeProject!]?.shows?.[$activeShow?.index ?? -1]?.layout === currentLayout) {
+            projects.update((a) => {
+                a[$activeProject!].shows[$activeShow!.index!].layoutInfo = { name: newName }
+                return a
+            })
+        }
     }
 
     function setLayout(id: string, layoutInfo) {

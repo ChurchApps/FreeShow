@@ -3,22 +3,25 @@ import { uid } from "uid"
 import type { Item, Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { checkName } from "../components/helpers/show"
-import { activePopup, alertMessage, dictionary } from "../stores"
+import { activePopup, alertMessage, dictionary, drawerTabsData } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 
 export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    const categoryId = createCategory("presentation", "presentation", { isDefault: true })
+    // use selected category (or Presentation if no specific is selected)
+    let categoryId = get(drawerTabsData).shows?.activeSubTab
+    if (categoryId === "all" || categoryId === "unlabeled") categoryId = createCategory("presentation", "presentation", { isDefault: true })
+
     const tempShows: any[] = []
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
-            const slideKeys = sortByNameNumber(Object.keys(content).filter(a => a.includes("ppt/slides/slide")))
+            const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
 
-            const slides: string[][][] = slideKeys.map(key => convertPPTX(content[key]))
+            const slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
             if (!slides.length) {
                 alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
                 return
@@ -95,7 +98,9 @@ function convertPPTX(content: any) {
             } else {
                 // No line breaks, concatenate all text runs into one line
                 let paragraphText = ""
-                textRuns.forEach((textRun: any) => { paragraphText += textRun["a:t"]?.[0] || "" })
+                textRuns.forEach((textRun: any) => {
+                    paragraphText += textRun["a:t"]?.[0] || ""
+                })
                 if (paragraphText.trim()) lines.push(paragraphText.trim())
             }
         })
@@ -114,9 +119,9 @@ function createSlides(slides: string[][][]) {
         layouts.push({ id })
 
         const items: Item[] = []
-        slide.forEach(textbox => {
+        slide.forEach((textbox) => {
             const lines: any[] = []
-            textbox.forEach(line => {
+            textbox.forEach((line) => {
                 lines.push({ align: "text-align: start;", text: [{ style: "", value: line }] })
             })
 
