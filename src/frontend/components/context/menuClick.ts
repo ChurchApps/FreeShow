@@ -83,7 +83,7 @@ import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
 import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
-import { clone, removeDuplicates } from "../helpers/array"
+import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
@@ -1707,6 +1707,9 @@ export async function removeSlide(data: any[], type: "delete" | "remove" = "dele
         const prompt = `${get(dictionary).confirm?.statement_slide_exists_layout} ${get(dictionary).confirm?.question_delete}`
         if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
+
+    // sort so the correct slide indexes are removed
+    data = sortObjectNumbers(data, "index")
 
     // remove parents and delete childs
     data.forEach(({ index }: any) => {

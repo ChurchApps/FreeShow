@@ -57,6 +57,10 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
             return
         }
 
+        // add "child" now converted to parent slide
+        delete layoutRef.remove
+        newLayout.push(layoutRef)
+
         const allNewChildIds = [layoutRef.id, ...Object.keys(layoutRef.children || {})]
 
         const newParentId = Object.keys(newData.slides).find((id) => newData.slides[id]?.children?.includes(layoutRef.id))
@@ -64,7 +68,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 
         allNewChildIds.forEach(getData)
 
-        function getData(slideId, i) {
+        function getData(slideId: string, i: number) {
             const newParentLayoutIndex = newData.layout.findIndex((a) => a.id === newParentId)
             if (!newData.layout[newParentLayoutIndex].children) newData.layout[newParentLayoutIndex].children = {}
 
@@ -214,7 +218,11 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
             function setAsParent() {
                 // const newValues: { group: string; color: string; globalGroup?: string } = { group: groupData.group || "", color: groupData.color || "" }
                 const newValues: GroupData = {}
-                if (groupData.globalGroup) newValues.globalGroup = groupData.globalGroup
+                if (groupData.globalGroup) {
+                    newValues.globalGroup = groupData.globalGroup
+                    newValues.group = ""
+                    newValues.color = ""
+                }
                 changeValues(newData.slides[slideId], newValues)
             }
 
