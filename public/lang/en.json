@@ -1297,6 +1297,7 @@
         "connections": "Connections",
         "max_connections": "Max connections",
         "allowed_connections": "Allowed connections",
+        "use_hostname": "Use hostname instead of IP",
         "connect": "Connect by typing this in a web browser",
         "connect_qr": "Or scan this QR code",
         "restart": "Restart servers",
