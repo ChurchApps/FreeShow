@@ -1,12 +1,10 @@
 <script lang="ts">
-    import type { Family } from "css-fonts"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { Main } from "../../../types/IPC/Main"
-    import { requestMain } from "../../IPC/main"
-    import { dictionary, systemFonts } from "../../stores"
+    import { dictionary } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { formatSearch } from "../../utils/search"
+    import { Family, getFontsList } from "../helpers/fonts"
     import Dropdown from "./Dropdown.svelte"
 
     export let value: string
@@ -40,14 +38,13 @@
             return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
         })
 
-        if ($systemFonts.length) addFonts($systemFonts)
-        else loadSystemFonts()
+        loadSystemFonts()
     })
-    async function loadSystemFonts() {
-        let loadedFonts = (await requestMain(Main.GET_SYSTEM_FONTS))?.fonts
-        if (!loadedFonts) return
 
-        systemFonts.set(loadedFonts)
+    async function loadSystemFonts() {
+        let loadedFonts = await getFontsList()
+        if (!loadedFonts.length) return
+
         addFonts(loadedFonts)
     }
 
@@ -125,11 +122,7 @@
 
     // FONT STYLE
 
-    // remove styles that can already be changed
-    // "Regular"
-    const commonStyles = ["Bold", "Italic", "Bold Italic"]
-
-    $: fontStyles = (activeFont?.fonts || []).filter((a) => !commonStyles.includes(a.style))
+    $: fontStyles = activeFont?.fonts || []
     $: fontDataOptions = fontStyles.map((a) => ({
         name: a.style,
         // id: a.name,
@@ -151,7 +144,7 @@
 />
 
 <div bind:this={self} class="dropdownElem" title={value || ""} style={$$props.style || ""}>
-    <button style={activeFont?.fonts[activeFont.default]?.css || `font-family: ${activeFont};`} on:click={() => (active = !active)} on:wheel={wheel}>
+    <button style={activeFont?.fonts[activeFont.default]?.css || `font-family: ${typeof activeFont === "string" ? activeFont : activeFont?.fonts[0]?.name};`} on:click={() => (active = !active)} on:wheel={wheel}>
         <p>{value || "—"}</p>
     </button>
 

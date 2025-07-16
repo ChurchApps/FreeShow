@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ShowObj } from "../../../../classes/Show"
-    import { convertText, getQuickExample } from "../../../../converters/txt"
+    import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { sortObject } from "../../../helpers/array"
@@ -160,6 +160,12 @@
             textToShow()
         }
     }
+
+    function getName(values) {
+        if (values.name) return values.name
+        if (values.text.trim().length) return trimNameFromString(values.text)
+        return $dictionary.main?.unnamed
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -239,20 +245,21 @@
         {/if}
 
         <CombinedInput>
-            <Button title="{$dictionary.timer?.create} [Ctrl+Enter]" on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
+            <Button title="{$dictionary.timer?.create} [Ctrl+Enter]" disabled={values.text.trim().length === 0} on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}
                         <!-- showIcon -->
                         <Icon id="add" right />
-                        <T id="new.show" />
+                        <T id="timer.create" />
+                        <!-- <T id="new.show" /> -->
                     {:else}
                         <Icon id="add" right white />
-                        <T id="new.empty_show" />
+                        <T id="timer.create" />
+                        <!-- <T id="create_show.empty" /> -->
+                        <!-- <T id="new.empty_show" /> -->
                     {/if}
 
-                    {#if values.name}
-                        <span class="name" style="border: none;">{values.name}</span>
-                    {/if}
+                    <span class="name" style="border: none;">{getName(values)}</span>
                     <!-- <span class="name">({#if values.name}{values.name}{:else}<T id="main.unnamed" />{/if})</span> -->
                 </div>
             </Button>
@@ -299,7 +306,7 @@
 
     .name {
         opacity: 0.5;
-        margin-inline-start: 5px;
+        margin-inline-start: 15px;
         align-content: center;
     }
 </style>

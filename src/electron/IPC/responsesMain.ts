@@ -1,4 +1,3 @@
-import getFonts from "css-fonts"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
 import { machineIdSync } from "node-machine-id"
@@ -99,7 +98,6 @@ export const mainResponses: MainResponses = {
         return loadShows(data)
     },
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
-    [Main.GET_SYSTEM_FONTS]: () => loadFonts(),
     [Main.URL]: (data) => openURL(data),
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
@@ -240,16 +238,6 @@ function getOS() {
 export const openURL = (url: string) => {
     shell.openExternal(url)
     return
-}
-
-async function loadFonts() {
-    try {
-        const fonts = await getFonts()
-        return { fonts }
-    } catch (err) {
-        console.error("Something went wrong when loading fonts.")
-        return { fonts: [] }
-    }
 }
 
 async function searchLyrics({ artist, title }: { artist: string; title: string }) {

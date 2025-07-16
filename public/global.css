@@ -1,7 +1,7 @@
 /* custom CMG Sans */
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-Regular.ttf");
+    src: url("./fonts/CMGSans-Medium.ttf");
 }
 @font-face {
     font-family: "CMGSans";
@@ -10,7 +10,7 @@
 }
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-Italic.ttf");
+    src: url("./fonts/CMGSans-MediumItalic.ttf");
     font-style: italic;
 }
 @font-face {
