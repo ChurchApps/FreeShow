@@ -46,16 +46,17 @@
 
     let splittedVerses: { [key: string]: { id: string; text: string }[] } = {}
     $: if (bibles[0]?.verses || $scriptureSettings.longVersesChars) updateSplitted()
+    $: if (displayedBibleIndex !== undefined) updateSplitted()
     function updateSplitted() {
         if (!$scriptureSettings.splitLongVerses) {
-            splittedVerses[firstBibleId] = Object.entries(verses?.[firstBibleId] || {}).map(([id, text]) => ({ id: id.toString(), text }))
+            splittedVerses[displayedBibleId] = Object.entries(verses?.[displayedBibleId] || {}).map(([id, text]) => ({ id: id.toString(), text }))
             return
         }
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: { id: string; text: string }[] = []
-        Object.keys(verses?.[firstBibleId] || {}).forEach((verseKey) => {
-            let verse = verses[firstBibleId][verseKey]
+        Object.keys(verses?.[displayedBibleId] || {}).forEach((verseKey) => {
+            let verse = verses[displayedBibleId][verseKey]
             let newVerseStrings = splitText(verse, chars)
 
             for (let i = 0; i < newVerseStrings.length; i++) {
@@ -64,7 +65,7 @@
             }
         })
 
-        splittedVerses[firstBibleId] = newVerses
+        splittedVerses[displayedBibleId] = newVerses
     }
 
     let cachedRef: any = {}
@@ -122,6 +123,9 @@
         bibles = versions.map((id) => {
             return { id, version: null, book: null, chapter: null, verses: [], activeVerses: [] }
         })
+        
+        // Reset displayed bible index when switching scripture collections
+        displayedBibleIndex = 0
     }
 
     function getBibleId(index: number, bible: any = null) {
@@ -229,7 +233,7 @@
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()
     $: if (chapters[firstBibleId]?.length && chapterId !== undefined) getChapter()
-    $: if (Object.keys(verses?.[firstBibleId] || {})?.length) getVerses()
+    $: if (Object.keys(verses?.[displayedBibleId] || {})?.length) getVerses()
 
     function getBible() {
         notLoaded = false
@@ -916,10 +920,53 @@
 
     let gridMode = false
     let history = false
+    
+    // Track which bible to display in the reference bar (for bilingual collections)
+    let displayedBibleIndex = 0
+    $: displayedBible = bibles[displayedBibleIndex] || bibles[0]
+    
+    // Update the displayed bible ID when index changes
+    $: displayedBibleId = bibles[displayedBibleIndex]?.id || firstBibleId
+    
+    // Function to swap between available bible translations
+    function swapDisplayedBible() {
+        if (bibles.length <= 1) return
+        displayedBibleIndex = (displayedBibleIndex + 1) % bibles.length
+        
+        // Update the displayed verses and splitted verses to show the new translation
+        updateDisplayedContent()
+    }
+    
+    // Function to update the displayed content when switching translations
+    function updateDisplayedContent() {
+        if (!bibles[displayedBibleIndex]) return
+        
+        // Update the splitted verses for the displayed bible
+        const displayedId = bibles[displayedBibleIndex].id
+        if (verses[displayedId] && !splittedVerses[displayedId]) {
+            const chars = Number($scriptureSettings.longVersesChars || 100)
+            const newVerses: { id: string; text: string }[] = []
+            
+            if (!$scriptureSettings.splitLongVerses) {
+                splittedVerses[displayedId] = Object.entries(verses[displayedId] || {}).map(([id, text]) => ({ id: id.toString(), text }))
+            } else {
+                Object.keys(verses[displayedId] || {}).forEach((verseKey) => {
+                    let verse = verses[displayedId][verseKey]
+                    let newVerseStrings = splitText(verse, chars)
+
+                    for (let i = 0; i < newVerseStrings.length; i++) {
+                        const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
+                        newVerses.push({ id: verseKey + key, text: newVerseStrings[i] })
+                    }
+                })
+                splittedVerses[displayedId] = newVerses
+            }
+        }
+    }
 
     $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0]?.id)).reverse()
 
-    $: currentVerses = splittedVerses[firstBibleId] || []
+    $: currentVerses = splittedVerses[displayedBibleId] || []
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -997,7 +1044,7 @@
                         {#key books[firstBibleId]}
                             {#each books[firstBibleId] as book, i}
                                 {@const id = bibles[0].api ? book.keyName : i}
-                                {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
+                                {@const color = getColorCode(books[displayedBibleId], book.id ?? i)}
                                 {@const name = book.abbreviation || getShortName(book.customName || book.name, i)}
 
                                 <span
@@ -1024,10 +1071,9 @@
                         <Loader />
                     {/if}
                 </div>
-                <div class="content">
-                    <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
-                        {#if chapters[firstBibleId]?.length}
-                            {#each chapters[firstBibleId] as chapter, i}
+                <div class="content">            <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[displayedBibleId]?.length}>
+                {#if chapters[displayedBibleId]?.length}
+                    {#each chapters[displayedBibleId] as chapter, i}
                                 {@const id = bibles[0].api ? chapter.keyName : i}
                                 <span
                                     id={id.toString()}
@@ -1125,8 +1171,8 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
-                {#if chapters[firstBibleId]?.length}
+            <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[displayedBibleId]?.length}>
+                {#if chapters[displayedBibleId]?.length}
                     {#each chapters[firstBibleId] as chapter, i}
                         {@const id = bibles[0].api ? chapter.keyName : i}
                         <span
@@ -1144,8 +1190,8 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
-                {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
+            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[displayedBibleId] || {}).length}>
+                {#if Object.keys(splittedVerses[displayedBibleId] || {}).length}
                     {#each currentVerses as content}
                         {@const splitted = content.id.split("_")}
                         {@const id = splitted[0]}
@@ -1195,12 +1241,24 @@
 <div class="tabs" style="display: flex;align-items: center;">
     <!-- text-align: center; -->
     <span style="flex: 1;padding: 0 10px;">
-        {#if bibles[0]?.version}
-            <span style="opacity: 0.8;">{bibles[0].version}:</span>
-            {bibles[0]?.book || ""}
-            {bibles[0]?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
+        {#if displayedBible?.version}
+            <span style="opacity: 0.8;">{displayedBible.version}:</span>
+            {displayedBible?.book || ""}
+            {displayedBible?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
         {/if}
     </span>
+    
+    <!-- Translation swap button (only show if there are multiple bibles) -->
+    {#if bibles.length > 1}
+        <Button 
+            on:click={swapDisplayedBible} 
+            title={`Switch to ${bibles[(displayedBibleIndex + 1) % bibles.length]?.version || 'next translation'}`}
+            style="padding: 0.3em;"
+        >
+            <Icon size={1.2} id="restart" />
+        </Button>
+    {/if}
+    
     <!-- <div class="seperator" /> -->
     <!-- TODO: change view (grid easy select) ? -->
 
@@ -1216,9 +1274,9 @@
             <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
         </Button>
         <Button
-            disabled={Object.keys(verses[firstBibleId] || {}).length &&
-                activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString()) &&
-                (chapterId >= chapters[firstBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[firstBibleId].length + 1}`)}
+            disabled={Object.keys(verses[displayedBibleId] || {}).length &&
+                activeVerses.includes(Object.keys(verses[displayedBibleId] || {}).length.toString()) &&
+                (chapterId >= chapters[displayedBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[displayedBibleId].length + 1}`)}
             title={$dictionary.preview?._next_slide}
             on:click={() => moveSelection(false)}
         >
