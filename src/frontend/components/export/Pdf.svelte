@@ -434,24 +434,6 @@
         /* transform: translateY(-30px); */
     }
 
-    /* Chord Sheet Styles */
-    .chord-sheet-slide {
-        page-break-inside: avoid;
-    }
-
-    .chord-group {
-        font-weight: bold;
-        font-size: 16px;
-        color: #333;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
-    }
-
-    .chord-text {
-        line-height: 1.4;
-    }
-
     /* Professional chord sheet layout styles */
     .chord-sheet-page {
         width: 100%;
