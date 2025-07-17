@@ -259,7 +259,7 @@
                             <span class="artist">by {shows[index].meta.artist}</span>
                         {/if}
                         {#if options.key}
-                            <span class="key"><T id="export.song_key" />: {getSongKey(shows[index])}</span>
+                            <span class="key">Key: {getSongKey(shows[index])}</span>
                         {/if}
                     </div>
                 </div>
@@ -288,7 +288,7 @@
                 <!-- Chord diagram area (if space permits) -->
                 {#if options.showChords && getShowChords(shows[index]).length > 0}
                     <div class="chord-diagrams">
-                        <h4><T id="export.chords_used" />:</h4>
+                        <h4>Chords Used:</h4>
                         <div class="chord-list">
                             {#each getShowChords(shows[index]) as chord}
                                 <span class="chord-name">{chord}</span>
@@ -300,7 +300,7 @@
                 <!-- Notes section -->
                 {#if options.showNotes && (shows[index].meta?.notes || getShowNotes(shows[index]))}
                     <div class="notes-section">
-                        <h4><T id="export.notes" />:</h4>
+                        <h4>Notes:</h4>
                         <div class="notes-content">
                             {shows[index].meta?.notes || getShowNotes(shows[index])}
                         </div>

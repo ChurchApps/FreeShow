@@ -870,10 +870,7 @@
         "line_spacing": "Line Spacing",
         "metadata_display": "Metadata Display",
         "artist": "Artist",
-        "key": "Key",
-        "song_key": "Key",
-        "chords_used": "Chords Used",
-        "notes": "Notes"
+        "key": "Key"
     },
     "context": {
         "to_dictionary": "Add to dictionary",

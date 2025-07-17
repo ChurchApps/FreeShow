@@ -199,14 +199,14 @@
             </CombinedInput>
             
             <CombinedInput>
-                <p><T id="export.chords_used" /></p>
+                <p>Chords Used</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.showChords} on:change={(e) => updatePdfOptions(e, "showChords")} />
                 </div>
             </CombinedInput>
             
             <CombinedInput>
-                <p><T id="export.notes" /></p>
+                <p>Notes</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.showNotes} on:change={(e) => updatePdfOptions(e, "showNotes")} />
                 </div>
