@@ -49,8 +49,8 @@
     $: hasChords = showHasChords(previewShow)
 
     const pdfTypeOptions = [
-        { id: "normal", name: "export.slides" },
-        { id: "chordSheet", name: "export.chord_sheet" }
+        { id: "normal", name: "Slides" },
+        { id: "chordSheet", name: "Chord Sheet" }
     ]
 
     function updatePdfOptions(e: any, key: string) {
@@ -68,7 +68,7 @@
                 <p><T id="export.type" /></p>
                 <Dropdown
                     options={pdfTypeOptions}
-                    value={pdfOptions.chordSheet ? "export.chord_sheet" : "export.slides"}
+                    value={pdfOptions.chordSheet ? "Chord Sheet" : "Slides"}
                     on:click={(e) => (pdfOptions.chordSheet = e.detail.id === "chordSheet")}
                 />
             </CombinedInput>

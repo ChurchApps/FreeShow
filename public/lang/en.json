@@ -871,6 +871,7 @@
         "metadata_display": "Metadata Display",
         "artist": "Artist",
         "key": "Key",
+        "song_key": "Key",
         "chords_used": "Chords Used",
         "notes": "Notes"
     },
