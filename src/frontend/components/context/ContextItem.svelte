@@ -214,11 +214,21 @@
                 else if ($overlays[id]?.displayDuration) enabled = true
             }
         },
+        toggle_output: () => {
+            let outputId = contextElem?.id || ""
+            disabled = !!$outputs[outputId]?.invisible
+        },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
+                return
+            }
+
+            let outputId = contextElem?.id || ""
+            if ($outputs[outputId]?.invisible) {
+                disabled = true
                 return
             }
 

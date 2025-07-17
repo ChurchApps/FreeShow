@@ -53,7 +53,7 @@
     const timerTypeNames = {
         counter: "timer.from_to",
         clock: "timer.to_time",
-        event: "timer.to_event",
+        event: "timer.to_event"
     }
 </script>
 
@@ -116,8 +116,8 @@
         <Icon id="edit" />
         </Button> -->
                         {#if timer.type === "counter"}
-                            <Button on:click={() => resetTimer(timer.id)} title={$dictionary.actions?.reset}>
-                                <Icon id="reset" />
+                            <Button on:click={() => resetTimer(timer.id)} title={$dictionary.media?.stop} disabled={!$activeTimers.find((a) => a.id === timer.id)}>
+                                <Icon id="stop" />
                             </Button>
                         {/if}
                         <!-- <Button on:click={() => deleteTimer(id)}>
