@@ -36,8 +36,6 @@
             // Chord sheet specific options
             artist: true,
             key: true,
-            tempo: false,
-            capo: false,
             fontSize: 12,
             chordFontSize: 10,
             margin: 20,
@@ -49,8 +47,8 @@
     $: hasChords = showHasChords(previewShow)
 
     const pdfTypeOptions = [
-        { id: false, name: "Normal PDF" },
-        { id: true, name: "Chord Sheet" }
+        { id: "normal", name: "Normal PDF" },
+        { id: "chordSheet", name: "Chord Sheet" }
     ]
 
     function updatePdfOptions(e: any, key: string) {
@@ -68,8 +66,8 @@
                 <p>Export Type</p>
                 <Dropdown
                     options={pdfTypeOptions}
-                    value={pdfOptions.chordSheet}
-                    on:click={(e) => (pdfOptions.chordSheet = e.detail.id)}
+                    value={pdfOptions.chordSheet ? "chordSheet" : "normal"}
+                    on:click={(e) => (pdfOptions.chordSheet = e.detail.id === "chordSheet")}
                 />
             </CombinedInput>
             <br />
@@ -188,20 +186,6 @@
                 <p>Show Key</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.key} on:change={(e) => (pdfOptions.key = e.detail)} />
-                </div>
-            </CombinedInput>
-            
-            <CombinedInput>
-                <p>Show Tempo</p>
-                <div class="alignRight">
-                    <Checkbox checked={pdfOptions.tempo} on:change={(e) => (pdfOptions.tempo = e.detail)} />
-                </div>
-            </CombinedInput>
-            
-            <CombinedInput>
-                <p>Show Capo</p>
-                <div class="alignRight">
-                    <Checkbox checked={pdfOptions.capo} on:change={(e) => (pdfOptions.capo = e.detail)} />
                 </div>
             </CombinedInput>
         {/if}

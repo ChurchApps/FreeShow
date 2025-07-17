@@ -236,12 +236,6 @@
                         {#if options.key}
                             <span class="key">Key: {getSongKey(shows[index])}</span>
                         {/if}
-                        {#if options.tempo && shows[index].meta?.tempo}
-                            <span class="tempo">Tempo: {shows[index].meta.tempo}</span>
-                        {/if}
-                        {#if options.capo && shows[index].meta?.capo}
-                            <span class="capo">Capo: {shows[index].meta.capo}</span>
-                        {/if}
                     </div>
                 </div>
 
@@ -472,7 +466,7 @@
         color: #666;
     }
 
-    .artist, .key, .tempo, .capo {
+    .artist, .key {
         font-weight: bold;
     }
 
