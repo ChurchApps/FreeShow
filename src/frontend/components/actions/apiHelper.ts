@@ -304,6 +304,71 @@ export function resetVariable(id: string) {
     updateVariable([], id, "setLog")
 }
 
+//TIMERS
+
+export function getTimersDetailed() {
+    const allTimers = get(timers)
+    const activeTimersList = get(activeTimers)
+    
+    return keysToID(allTimers).map(timer => ({
+        ...timer,
+        isActive: activeTimersList.some(activeTimer => activeTimer.id === timer.id),
+        currentTime: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.currentTime,
+        paused: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.paused
+    }))
+}
+
+export function pauseTimerById(id: string) {
+    if (get(outLocked)) return
+    
+    const timer = get(timers)[id]
+    if (!timer) return
+
+    // Set the specific timer to paused (similar to pauseAllTimers but for one timer)
+    activeTimers.update((active) => {
+        const timerIndex = active.findIndex((a) => a.id === id)
+        if (timerIndex >= 0) {
+            active[timerIndex].paused = true
+        }
+        return active
+    })
+}
+
+export function pauseTimerByName(name: string) {
+    if (get(outLocked)) return
+    
+    if (name.includes("{")) name = getDynamicValue(name)
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
+    if (!timerId) return
+
+    pauseTimerById(timerId)
+}
+
+export function stopTimerById(id: string) {
+    if (get(outLocked)) return
+    
+    const timer = get(timers)[id]
+    if (!timer) return
+
+    // Remove from active timers completely (this stops and resets the timer)
+    // This is the same as the existing resetTimer function
+    activeTimers.update((a) => {
+        return a.filter((activeTimer) => activeTimer.id !== id)
+    })
+}
+
+export function stopTimerByName(name: string) {
+    if (get(outLocked)) return
+    
+    if (name.includes("{")) name = getDynamicValue(name)
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
+    if (!timerId) return
+
+    stopTimerById(timerId)
+}
+
 // SHOW
 
 export async function changeShowLayout(data: API_layout) {

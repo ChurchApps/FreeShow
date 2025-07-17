@@ -75,7 +75,7 @@ export function ondrop(e: any, id: string) {
     console.info("NOT ASSIGNED!", sel.id + " => " + id)
 }
 
-export async function projectDropFolders(filePaths: string[], index: number = -1) {
+export async function projectDropFolders(filePaths: string[], index = -1) {
     const stats = await Promise.all(filePaths.map(async (path) => await requestMain(Main.FILE_INFO, path)))
     const folders = stats.filter((a) => a?.folder)
     if (!folders.length) return

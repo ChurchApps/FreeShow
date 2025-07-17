@@ -109,7 +109,7 @@
     }
 </script>
 
-<div class="website" class:clickable on:mouseover={mouseover} on:mouseleave={mouseleave}>
+<div class="website" class:clickable on:mouseover={mouseover} on:focus={mouseover} on:mouseleave={mouseleave}>
     {#if navigation && hover && $currentWindow === "output"}
         <div class="controls" style="zoom: {1 / ratio};">
             {#if !backDisabled || !forwardDisabled}

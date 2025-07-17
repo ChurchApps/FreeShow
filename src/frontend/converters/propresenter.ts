@@ -225,7 +225,7 @@ function convertToSlides(song: any, extension: string) {
         let slideIndex = -1
         groupSlides.forEach((slide) => {
             const items = getSlideItems(slide)
-            console.log(slide, items)
+            // console.log(slide, items)
             if (!items?.length) return
             slideIndex++
 
@@ -395,6 +395,7 @@ const latin1 = {
     e9: "é",
     fa: "ú",
     ed: "í",
+    f3: "ó",
     f4: "ô",
     "9e": "ž",
     c1: "Á",

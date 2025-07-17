@@ -388,8 +388,13 @@
 
         <CombinedInput>
             <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
-                <Icon id="save" right />
-                <T id="actions.save" />
+                {#if $eventEdit}
+                    <Icon id="save" right />
+                    <T id="actions.save" />
+                {:else}
+                    <Icon id="add" right />
+                    <T id="timer.create" />
+                {/if}
             </Button>
         </CombinedInput>
         {#if editEvent.group}

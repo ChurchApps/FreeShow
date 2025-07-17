@@ -6,8 +6,8 @@
     import { EffectRender } from "./effectRenderer"
 
     export let effect: Effect & { id?: string }
-    export let preview: boolean = false
-    export let edit: boolean = false
+    export let preview = false
+    export let edit = false
 
     let items: any[]
     $: items = effect?.items || [] // .filter((a) => !a.hidden)
@@ -173,7 +173,7 @@
         position: absolute;
         transform: translate(-50%, -50%);
 
-        left: 50%;
+        inset-inline-start: 50%;
         top: 50%;
 
         min-width: 10px;

@@ -12,7 +12,7 @@ const bibleTypes = {
     zefania: { name: "Zefania", func: convertZefaniaBible },
     osis: { name: "OSIS", func: convertOSISBible },
     beblia: { name: "Beblia", func: convertBebliaBible },
-    opensong: { name: "OpenSong", func: convertOpenSongBible },
+    opensong: { name: "OpenSong", func: convertOpenSongBible }
 }
 
 export function importBibles(data: any[]) {
@@ -25,13 +25,16 @@ export function importBibles(data: any[]) {
         const unsupported: { [key: string]: number } = {}
 
         data.forEach((file) => {
-            if (bibleTypes[file.type]) {
-                const name = bibleTypes[file.type].name
+            let type = file.type
+            if (type === "fsb" || !type) type = "freeshow"
+
+            if (bibleTypes[type]) {
+                const name = bibleTypes[type].name
                 if (!success[name]) success[name] = 0
                 success[name]++
-                bibleTypes[file.type].func([file])
+                bibleTypes[type].func([file])
             } else {
-                const id = file.type || file.name
+                const id = type || file.name
                 if (!unsupported[id]) unsupported[id] = 0
                 unsupported[id]++
             }

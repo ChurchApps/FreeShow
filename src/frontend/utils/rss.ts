@@ -45,7 +45,7 @@ export function getRSS(url: string, updateTime: number | string | undefined): RS
             // some feeds have all the text content in <![CDATA[ Text ]]> blocks!
             xmlText = xmlText.replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
 
-            let data = xml2json(xmlText)?.rss?.channel
+            const data = xml2json(xmlText)?.rss?.channel
             if (!data) return
 
             cachedData[queryKey] = { time: Date.now(), data }
@@ -57,8 +57,8 @@ export function getRSS(url: string, updateTime: number | string | undefined): RS
     return null
 }
 
-export function convertRSSToString(data: RSSjson | null, divider?: string, count: number = 5) {
-    let items = data?.item
+export function convertRSSToString(data: RSSjson | null, divider?: string, count = 5) {
+    const items = data?.item
     if (!Array.isArray(items)) return ""
 
     divider = divider || " | "

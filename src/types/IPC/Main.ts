@@ -1,4 +1,3 @@
-import type { Family } from "css-fonts"
 import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
@@ -58,7 +57,6 @@ export enum Main {
     ////
     SHOWS = "SHOWS",
     AUTO_UPDATE = "AUTO_UPDATE",
-    GET_SYSTEM_FONTS = "GET_SYSTEM_FONTS",
     URL = "URL",
     LANGUAGE = "LANGUAGE",
     GET_PATHS = "GET_PATHS",
@@ -230,7 +228,6 @@ export interface MainReturnPayloads {
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
     [Main.GET_DISPLAYS]: Display[]
-    [Main.GET_SYSTEM_FONTS]: Promise<{ fonts: Family[] }>
     [Main.GET_PATHS]: MainFilePaths
     [Main.SHOWS_PATH]: string
     [Main.DATA_PATH]: string

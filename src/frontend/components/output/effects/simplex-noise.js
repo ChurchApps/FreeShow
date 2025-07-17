@@ -28,8 +28,8 @@ Better rank ordering method by Stefan Gustavson in 2012.
  */
 // these __PURE__ comments help uglifyjs with dead code removal
 //
-const SQRT3 = /*#__PURE__*/ Math.sqrt(3.0);
-const SQRT5 = /*#__PURE__*/ Math.sqrt(5.0);
+const SQRT3 = /* #__PURE__*/ Math.sqrt(3.0);
+const SQRT5 = /* #__PURE__*/ Math.sqrt(5.0);
 const F2 = 0.5 * (SQRT3 - 1.0);
 const G2 = (3.0 - SQRT3) / 6.0;
 const F3 = 1.0 / 3.0;
@@ -40,7 +40,7 @@ const G4 = (5.0 - SQRT5) / 20.0;
 // is making this faster but I get ~5 million ops/sec more on the
 // benchmarks across the board or a ~10% speedup.
 const fastFloor = (x) => Math.floor(x) | 0;
-const grad2 = /*#__PURE__*/ new Float64Array([1, 1,
+const grad2 = /* #__PURE__*/ new Float64Array([1, 1,
     -1, 1,
     1, -1,
     -1, -1,
@@ -54,7 +54,7 @@ const grad2 = /*#__PURE__*/ new Float64Array([1, 1,
     0, -1]);
 // double seems to be faster than single or int's
 // probably because most operations are in double precision
-const grad3 = /*#__PURE__*/ new Float64Array([1, 1, 0,
+const grad3 = /* #__PURE__*/ new Float64Array([1, 1, 0,
     -1, 1, 0,
     1, -1, 0,
     -1, -1, 0,
@@ -67,7 +67,7 @@ const grad3 = /*#__PURE__*/ new Float64Array([1, 1, 0,
     0, 1, -1,
     0, -1, -1]);
 // double is a bit quicker here as well
-const grad4 = /*#__PURE__*/ new Float64Array([0, 1, 1, 1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, -1, -1,
+const grad4 = /* #__PURE__*/ new Float64Array([0, 1, 1, 1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, -1, -1,
     0, -1, 1, 1, 0, -1, 1, -1, 0, -1, -1, 1, 0, -1, -1, -1,
     1, 0, 1, 1, 1, 0, 1, -1, 1, 0, -1, 1, 1, 0, -1, -1,
     -1, 0, 1, 1, -1, 0, 1, -1, -1, 0, -1, 1, -1, 0, -1, -1,
@@ -77,6 +77,7 @@ const grad4 = /*#__PURE__*/ new Float64Array([0, 1, 1, 1, 0, 1, 1, -1, 0, 1, -1,
     -1, 1, 1, 0, -1, 1, -1, 0, -1, -1, 1, 0, -1, -1, -1, 0]);
 /**
  * Creates a 2D noise function
+ *
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction2D}
  */
@@ -101,7 +102,7 @@ export function createNoise2D(random = Math.random) {
         const y0 = y - Y0;
         // For the 2D case, the simplex shape is an equilateral triangle.
         // Determine which simplex we are in.
-        let i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
+        let i1; let j1; // Offsets for second (middle) corner of simplex in (i,j) coords
         if (x0 > y0) {
             i1 = 1;
             j1 = 0;
@@ -155,6 +156,7 @@ export function createNoise2D(random = Math.random) {
 }
 /**
  * Creates a 3D noise function
+ *
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction3D}
  */
@@ -165,7 +167,7 @@ export function createNoise3D(random = Math.random) {
     const permGrad3y = new Float64Array(perm).map(v => grad3[(v % 12) * 3 + 1]);
     const permGrad3z = new Float64Array(perm).map(v => grad3[(v % 12) * 3 + 2]);
     return function noise3D(x, y, z) {
-        let n0, n1, n2, n3; // Noise contributions from the four corners
+        let n0; let n1; let n2; let n3; // Noise contributions from the four corners
         // Skew the input space to determine which simplex cell we're in
         const s = (x + y + z) * F3; // Very nice and simple skew factor for 3D
         const i = fastFloor(x + s);
@@ -180,8 +182,8 @@ export function createNoise3D(random = Math.random) {
         const z0 = z - Z0;
         // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
         // Determine which simplex we are in.
-        let i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
-        let i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
+        let i1; let j1; let k1; // Offsets for second corner of simplex in (i,j,k) coords
+        let i2; let j2; let k2; // Offsets for third corner of simplex in (i,j,k) coords
         if (x0 >= y0) {
             if (y0 >= z0) {
                 i1 = 1;
@@ -291,6 +293,7 @@ export function createNoise3D(random = Math.random) {
 }
 /**
  * Creates a 4D noise function
+ *
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction4D}
  */
@@ -302,7 +305,7 @@ export function createNoise4D(random = Math.random) {
     const permGrad4z = new Float64Array(perm).map(v => grad4[(v % 32) * 4 + 2]);
     const permGrad4w = new Float64Array(perm).map(v => grad4[(v % 32) * 4 + 3]);
     return function noise4D(x, y, z, w) {
-        let n0, n1, n2, n3, n4; // Noise contributions from the five corners
+        let n0; let n1; let n2; let n3; let n4; // Noise contributions from the five corners
         // Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
         const s = (x + y + z + w) * F4; // Factor for 4D skewing
         const i = fastFloor(x + s);
@@ -444,6 +447,7 @@ export function createNoise4D(random = Math.random) {
  * Builds a random permutation table.
  * This is exported only for (internal) testing purposes.
  * Do not rely on this export.
+ *
  * @private
  */
 export function buildPermutationTable(random) {
@@ -463,4 +467,4 @@ export function buildPermutationTable(random) {
     }
     return p;
 }
-//# sourceMappingURL=simplex-noise.js.map
+// # sourceMappingURL=simplex-noise.js.map

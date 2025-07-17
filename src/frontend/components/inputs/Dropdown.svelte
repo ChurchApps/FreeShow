@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
     import { createEventDispatcher } from "svelte"
-    import { translate } from "../../utils/language"
-    import { language } from "../../stores"
+    import { slide } from "svelte/transition"
     import type { Option } from "../../../types/Main"
+    import { language } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { translate } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
 
     const dispatch = createEventDispatcher()
@@ -80,6 +81,9 @@
                 <span
                     id={formatId(option.name)}
                     style={option.style || ""}
+                    role="option"
+                    aria-selected={activeId ? option.id === activeId : option.name === value}
+                    tabindex="0"
                     on:click={() => {
                         if (disabled) return
                         active = false
@@ -88,6 +92,7 @@
                             dispatch("click", option)
                         }, 50)
                     }}
+                    on:keydown={triggerClickOnEnterSpace}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
                     {translate(option.name, { parts: true }) || option.name}

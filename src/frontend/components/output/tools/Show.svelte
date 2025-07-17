@@ -2,6 +2,7 @@
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
     import { activeFocus, activeShow, focusMode, presentationData, showsCache } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import T from "../../helpers/T.svelte"
 
     export let currentOutput: Output
@@ -33,7 +34,7 @@
 </script>
 
 {#if slide}
-    <span class="name" style="justify-content: space-between;" on:click={openShow}>
+    <span class="name" style="justify-content: space-between;" role="button" tabindex="0" on:click={openShow} on:keydown={triggerClickOnEnterSpace}>
         <p>
             {#if name.length}
                 {name}
@@ -64,5 +65,9 @@
 
     .name:hover {
         background-color: var(--primary-darker);
+    }
+    .name:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

@@ -4,6 +4,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs, styles } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -70,7 +71,7 @@
         screens.forEach((a, i) => {
             screens[i].previewBounds = {
                 x: a.bounds.x - (minPosX || 0),
-                y: a.bounds.y - (minPosY || 0),
+                y: a.bounds.y - (minPosY || 0)
             }
         })
     })
@@ -324,7 +325,10 @@
         {#if screens.length}
             <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
                 <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
-                <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
+                <div
+                    style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y -
+                        (minPosY ? minPosY : 0)}px;"
+                >
                     {#if currentScreen.screen}
                         <span style="z-index: 2;position: absolute;top: 50%;inset-inline-start: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
                     {/if}
@@ -346,12 +350,15 @@
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution || currentScreen.boundsLocked}
                         style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;inset-inline-start: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
+                        role="button"
+                        tabindex="0"
                         on:click={() => {
                             if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
 
                             // WIP this will not always change correct output if multiple & "activateOutput"
                             changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
+                        on:keydown={triggerClickOnEnterSpace}
                     >
                         {i + 1}
                     </div>
@@ -454,6 +461,10 @@
 
     .screen.disabled {
         opacity: 0.5;
+    }
+    .screen:focus:not(.disabled) {
+        outline: 42px solid var(--secondary);
+        outline-offset: 0;
     }
 
     .preview {

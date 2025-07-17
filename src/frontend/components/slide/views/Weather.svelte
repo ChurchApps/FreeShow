@@ -130,7 +130,7 @@
     .credits {
         position: absolute;
         bottom: 10px;
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translateX(-50%);
 
         opacity: 0.4;

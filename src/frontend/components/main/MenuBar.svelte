@@ -10,6 +10,7 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
 
     const menus: string[] = ["file", "edit", "view", "help"]
 

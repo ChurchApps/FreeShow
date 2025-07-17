@@ -180,7 +180,7 @@ export function clearOverlays(specificOutputId = "") {
     })
 }
 
-export function clearTimers(specificOutputId = "") {
+export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
     // clear slide timers
     setOutput("transition", null, false, specificOutputId)
 
@@ -189,7 +189,9 @@ export function clearTimers(specificOutputId = "") {
         if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })
 
-    // clear overlay timers
+    if (!clearOverlayTimers) return
+
+    // clear overlay/effect timers
     outputIds.forEach((outputId) => {
         Object.values(get(overlayTimers)).forEach((a) => {
             if (a.outputId === outputId) {

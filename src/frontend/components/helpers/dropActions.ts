@@ -141,7 +141,7 @@ export const dropActions = {
 
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
-            let extraFiles: string[] = []
+            const extraFiles: string[] = []
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)
@@ -868,6 +868,8 @@ const slideDrop = {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
                 return
             }
+
+            if (keys?.shiftKey) action.customData = { [action.triggers[0]]: { overrideCategoryAction: true } }
 
             newActions.push({ id: uid(), ...action })
         })

@@ -57,6 +57,10 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
             return
         }
 
+        // add "child" now converted to parent slide
+        delete layoutRef.remove
+        newLayout.push(layoutRef)
+
         const allNewChildIds = [layoutRef.id, ...Object.keys(layoutRef.children || {})]
 
         const newParentId = Object.keys(newData.slides).find((id) => newData.slides[id]?.children?.includes(layoutRef.id))
@@ -64,7 +68,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 
         allNewChildIds.forEach(getData)
 
-        function getData(slideId, i) {
+        function getData(slideId: string, i: number) {
             const newParentLayoutIndex = newData.layout.findIndex((a) => a.id === newParentId)
             if (!newData.layout[newParentLayoutIndex].children) newData.layout[newParentLayoutIndex].children = {}
 
@@ -105,7 +109,7 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
 
         if (parentIndex === previousParentIndex) groups[groups.length - 1].slides.push(slideRef)
         else {
-            let groupData: GroupData = { globalGroup }
+            const groupData: GroupData = { globalGroup }
             groups.push({ slides: [slideRef], groupData })
         }
 
@@ -214,7 +218,11 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
             function setAsParent() {
                 // const newValues: { group: string; color: string; globalGroup?: string } = { group: groupData.group || "", color: groupData.color || "" }
                 const newValues: GroupData = {}
-                if (groupData.globalGroup) newValues.globalGroup = groupData.globalGroup
+                if (groupData.globalGroup) {
+                    newValues.globalGroup = groupData.globalGroup
+                    newValues.group = ""
+                    newValues.color = ""
+                }
                 changeValues(newData.slides[slideId], newValues)
             }
 
@@ -847,10 +855,10 @@ export function breakLongLines(showId: string, breakPoint: number) {
         slide.items.forEach((item) => {
             let freezeStop = 0
             do {
-                let newLines: Line[] = []
+                const newLines: Line[] = []
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
-                    let lineText = line.text[0]
+                    const lineText = line.text[0]
                     if (!lineText) return
 
                     lineText.value = getLineText(line)

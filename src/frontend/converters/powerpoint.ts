@@ -3,14 +3,16 @@ import { uid } from "uid"
 import type { Item, Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { checkName } from "../components/helpers/show"
-import { activePopup, alertMessage, dictionary } from "../stores"
+import { activePopup, alertMessage, dictionary, drawerTabsData } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 
 export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    const categoryId = createCategory("presentation", "presentation", { isDefault: true })
+    // use selected category (or Presentation if no specific is selected)
+    let categoryId = get(drawerTabsData).shows?.activeSubTab
+    if (categoryId === "all" || categoryId === "unlabeled") categoryId = createCategory("presentation", "presentation", { isDefault: true })
 
     const tempShows: any[] = []
 
@@ -80,15 +82,27 @@ function convertPPTX(content: any) {
         if (!list?.["p:txBody"]?.length) return
 
         const lines: string[] = []
-        list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
-            if (!line?.["a:r"]) return
+        list["p:txBody"][0]?.["a:p"]?.forEach((paragraph: any) => {
+            // Check if paragraph has content
+            if (!paragraph["a:r"] && !paragraph["a:br"]) return
 
-            let value = ""
-            line["a:r"].forEach((a: any) => {
-                value += a["a:t"]?.[0] || ""
-            })
+            const textRuns = paragraph["a:r"] || []
+            const lineBreaks = paragraph["a:br"] || []
 
-            lines.push(value)
+            // If there are line breaks, split the text runs accordingly
+            if (lineBreaks.length > 0) {
+                textRuns.forEach((textRun: any) => {
+                    const text = textRun["a:t"]?.[0] || ""
+                    if (text.trim()) lines.push(text.trim())
+                })
+            } else {
+                // No line breaks, concatenate all text runs into one line
+                let paragraphText = ""
+                textRuns.forEach((textRun: any) => {
+                    paragraphText += textRun["a:t"]?.[0] || ""
+                })
+                if (paragraphText.trim()) lines.push(paragraphText.trim())
+            }
         })
         slide.push(lines)
     })

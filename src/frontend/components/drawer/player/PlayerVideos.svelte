@@ -77,7 +77,7 @@
             }}
         >
             <SelectElem id="player" data={video.rid} style="width: 100%;" draggable>
-                <img src={getThumbnail(video.id || "")} style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
+                <img src={getThumbnail(video.id || "")} alt="Video thumbnail for {video.name || 'video'}" style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
             </SelectElem>
         </Card>
     {/each}

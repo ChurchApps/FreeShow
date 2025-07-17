@@ -1,6 +1,7 @@
 <script lang="ts">
     import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
     import { activeDrawerTab, activePage, audioChannels, drawer } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let advanced = false
@@ -85,7 +86,7 @@
         </div>
     </div>
 {:else}
-    <div class="main" on:click={openAudioMix}>
+    <div class="main" on:click={openAudioMix} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Open audio mixer">
         <!-- <span class="left">
             <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
         </span>

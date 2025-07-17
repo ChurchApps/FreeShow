@@ -4,7 +4,7 @@ import { EXPORT, OUTPUT } from "../../../types/Channels"
 import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
-import type { Item, Slide, SlideData } from "../../../types/Show"
+import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
@@ -69,7 +69,7 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
+import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
@@ -83,7 +83,7 @@ import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
 import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
-import { clone, removeDuplicates } from "../helpers/array"
+import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
@@ -96,6 +96,7 @@ import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
 import { translate } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 
 interface ObjData {
     sel: Selected | null
@@ -256,6 +257,12 @@ const clickActions = {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
+        if (obj.contextElem?.classList.value.includes("#event")) {
+            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        // THIS MUST BE LAST (otherwise deleteing e.g. an event while the editbox is selected will delete that instead)
         // delete slide item using context menu, or menubar action
         if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
@@ -263,10 +270,6 @@ const clickActions = {
         }
         if (obj.contextElem?.classList.value.includes("stage_item")) {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
-            return
-        }
-        if (obj.contextElem?.classList.value.includes("#event")) {
-            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
 
@@ -728,7 +731,7 @@ const clickActions = {
             const template = get(templates)[id]
             if (!template) return
 
-            let files: string[] = []
+            const files: string[] = []
             template.items.forEach((item) => {
                 if (item.type === "media") getFile(item.src)
             })
@@ -940,7 +943,7 @@ const clickActions = {
         } else if (obj.sel.id === "show_drawer") {
             const showId = obj.sel.data[0].id
             activeShow.set({ type: "show", id: showId })
-            activeEdit.set({ type: "show", slide: 0, items: [], showId: showId })
+            activeEdit.set({ type: "show", slide: 0, items: [], showId })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
@@ -1047,13 +1050,13 @@ const clickActions = {
             const items = get(activeEdit).items
 
             if (get(activeEdit).id) {
-                const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-                const newState = !currentItems[items[0]][id]
+                const slideItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+                const toggleState = !slideItems[items[0]][id]
 
                 history({
                     id: "UPDATE",
                     oldData: { id: get(activeEdit).id },
-                    newData: { key: "items", subkey: id, data: newState, indexes: items },
+                    newData: { key: "items", subkey: id, data: toggleState, indexes: items },
                     location: { page: "edit", id: get(activeEdit).type + "_items", override: true }
                 })
 
@@ -1288,10 +1291,10 @@ const clickActions = {
     },
     place_under_slide: (obj: ObjData) => {
         if (obj.sel?.id === "effect") {
-            const setUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
+            const placeUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
             effects.update((a) => {
                 obj.sel!.data.forEach((id: string) => {
-                    a[id].placeUnderSlide = setUnder
+                    a[id].placeUnderSlide = placeUnder
                 })
                 return a
             })
@@ -1694,10 +1697,19 @@ export function removeGroup(data: any[]) {
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
-export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
+export async function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     const ref = getLayoutRef()
     const parents: any[] = []
     const childs: any[] = []
+
+    if (type === "delete") {
+        const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
+        const prompt = `${get(dictionary).confirm?.statement_slide_exists_layout} ${get(dictionary).confirm?.question_delete}`
+        if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
+    }
+
+    // sort so the correct slide indexes are removed
+    data = sortObjectNumbers(data, "index")
 
     // remove parents and delete childs
     data.forEach(({ index }: any) => {
@@ -1725,7 +1737,7 @@ export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
-export function format(id: string, obj: ObjData, data: any = null) {
+export async function format(id: string, obj: ObjData, data: any = null) {
     let slideIds: string[] = []
 
     const editing = get(activeEdit)
@@ -1771,7 +1783,8 @@ export function format(id: string, obj: ObjData, data: any = null) {
         ]
     }
 
-    slideIds.forEach((slide) => {
+    // async update
+    for (const slide of slideIds) {
         const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
         const newData: any = { style: { values: [] } }
 
@@ -1787,9 +1800,26 @@ export function format(id: string, obj: ObjData, data: any = null) {
         newData.style.values = newItems
 
         history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items, slide } })
-    })
+
+        await wait(10)
+    }
 
     refreshEditSlide.set(true)
+}
+
+function checkIfAddedToDifferentLayout(ref: LayoutRef[], data: any[]) {
+    let showLayouts = _show().layouts().get(null, true)
+    if (showLayouts.length < 2) return false
+
+    // don't check current
+    const currentLayoutId = _show().get("settings.activeLayout")
+    showLayouts = showLayouts.filter((a) => a.layoutId !== currentLayoutId)
+
+    // check if slide is added to any other layout
+    return data.find(({ index }) => {
+        const parentSlideId = ref[index]?.parent?.id ?? ref[index]?.id
+        return showLayouts.find((a) => a.slides.find((a) => a.id === parentSlideId))
+    })
 }
 
 const formatting = {

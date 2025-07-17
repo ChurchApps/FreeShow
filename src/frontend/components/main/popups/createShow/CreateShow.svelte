@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ShowObj } from "../../../../classes/Show"
-    import { convertText, getQuickExample } from "../../../../converters/txt"
+    import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { sortObject } from "../../../helpers/array"
@@ -61,10 +61,10 @@
     // OPTIONS
 
     const createOptions = [
-        { id: "text", name: "create_show.quick_lyrics", title: $dictionary.create_show?.quick_lyrics_tip, icon: "text" },
+        { id: "text", name: "create_show.quick_lyrics", title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
-        { id: "web", name: "create_show.web", title: $dictionary.create_show?.search_web, icon: "search" },
-        { id: "empty", name: "create_show.empty", title: $dictionary.new?.empty_show, icon: "add" }
+        { id: "web", name: "create_show.web", title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
+        { id: "empty", name: "create_show.empty", title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
     ]
     let selectedOption = ""
     function selectOption(id: string) {
@@ -138,22 +138,20 @@
     // SHORTCUTS
 
     function keydown(e: KeyboardEvent) {
-        if (!e.ctrlKey && !e.metaKey) return
-
-        if (e.key === "f") {
+        const ctrl = e.ctrlKey || e.metaKey
+        if (e.key === "f" && ctrl) {
             e.preventDefault()
-
-            if (document.activeElement?.closest("#name")) {
-                selectOption("web")
-            }
+            selectOption("web")
 
             return
         }
 
         if (e.key === "Enter") {
+            if (e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
+
             e.preventDefault()
 
-            if (document.activeElement?.closest("#name")) {
+            if (!ctrl) {
                 selectOption("text")
                 return
             }
@@ -161,6 +159,12 @@
             ;(document.activeElement as any)?.blur()
             textToShow()
         }
+    }
+
+    function getName(values) {
+        if (values.name) return values.name
+        if (values.text.trim().length) return trimNameFromString(values.text)
+        return $dictionary.main?.unnamed
     }
 </script>
 
@@ -241,20 +245,21 @@
         {/if}
 
         <CombinedInput>
-            <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
+            <Button title="{$dictionary.timer?.create} [Ctrl+Enter]" disabled={values.text.trim().length === 0} on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}
                         <!-- showIcon -->
                         <Icon id="add" right />
-                        <T id="new.show" />
+                        <T id="timer.create" />
+                        <!-- <T id="new.show" /> -->
                     {:else}
                         <Icon id="add" right white />
-                        <T id="new.empty_show" />
+                        <T id="timer.create" />
+                        <!-- <T id="create_show.empty" /> -->
+                        <!-- <T id="new.empty_show" /> -->
                     {/if}
 
-                    {#if values.name}
-                        <span class="name">{values.name}</span>
-                    {/if}
+                    <span class="name" style="border: none;">{getName(values)}</span>
                     <!-- <span class="name">({#if values.name}{values.name}{:else}<T id="main.unnamed" />{/if})</span> -->
                 </div>
             </Button>
@@ -301,7 +306,7 @@
 
     .name {
         opacity: 0.5;
-        margin-inline-start: 5px;
+        margin-inline-start: 15px;
         align-content: center;
     }
 </style>

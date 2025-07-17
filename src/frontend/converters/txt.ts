@@ -76,7 +76,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
                 return
             }
 
-            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase() === metaKey || get(dictionary).meta?.[key]?.toLowerCase() === metaKey)
+            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "") === metaKey || get(dictionary).meta?.[key]?.toLowerCase() === metaKey)
             if (!metadataKey) {
                 newLines.push(line)
                 return
@@ -250,7 +250,7 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
     while ((match = chordRegex.exec(chordLine)) !== null) {
         // Adjust chord position to attach to words instead of spaces
         let position = match.index
-        
+
         // If chord position is at a space, move it to the next word
         if (position < lyricLine.length && lyricLine[position] === " ") {
             // Find the next non-space character
@@ -258,10 +258,10 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
                 position++
             }
         }
-        
+
         chords.push({
             chord: match[0],
-            position: position,
+            position
         })
     }
 

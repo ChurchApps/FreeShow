@@ -29,6 +29,7 @@
         styles,
         textEditActive
     } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { wait } from "../../utils/common"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
@@ -351,7 +352,16 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
+    <div
+        class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}"
+        class:disabled={layoutSlide.disabled}
+        class:afterEnd={endIndex !== null && index > endIndex}
+        {style}
+        tabindex={0}
+        role="button"
+        on:click
+        on:keydown={triggerClickOnEnterSpace}
+    >
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
@@ -440,6 +450,7 @@
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
+                                    chords={item.chords?.enabled}
                                 />
                             {/if}
                         {/each}
@@ -489,16 +500,16 @@
                             </div>
                         {/if}
                         {#if slide.notes && icons}
-                            <p class="notes" title={slide.notes} on:click={openNotes}>
+                            <button class="notes" title={slide.notes} on:click={openNotes}>
                                 <Icon id="notes" white right />
                                 <span>{slide.notes}</span>
-                            </p>
+                            </button>
                         {/if}
 
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
-                        <span class="text">{@html name === null ? "" : name || "—"}</span>
+                        <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name || "—"}</span>
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
                             <Icon id="open_in_new" />
@@ -708,29 +719,28 @@
 
     .label .text {
         flex-grow: 1; /* Allow text to take available space */
-        margin-right: 5px; /* Space between text and button */
+        margin-inline: 15px 5px; /* Keep existing left margin if needed | Space between text and button */
         /* width: 100%; */ /* Potentially remove or adjust this if flex-grow is used */
-        margin-left: 15px; /* Keep existing left margin if needed */
-        margin-right: 15px; /* Keep existing right margin if needed, or adjust for button */
+        margin-inline-end: 15px; /* Keep existing right margin if needed, or adjust for button */
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .open-in-browser-btn {
+    /* .open-in-browser-btn {
         background: none;
         border: none;
-        color: inherit; /* Or a specific color if needed */
+        color: inherit;
         cursor: pointer;
-        padding: 0 4px; /* Adjust as needed */
-        margin-left: auto; /* Pushes it to the right if label is flex */
-        display: flex; /* To align icon nicely if needed */
+        padding: 0 4px;
+        margin-inline-start: auto;
+        display: flex;
         align-items: center;
     }
     .open-in-browser-btn:hover {
         opacity: 0.7;
-    }
+    } */
 
     hr {
         height: 100%;
