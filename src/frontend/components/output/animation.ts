@@ -3,8 +3,9 @@ import type { AnimationData } from "../../../types/Show"
 import { activeAnimate } from "../../stores"
 import { wait } from "../../utils/common"
 import { clone } from "../helpers/array"
+import { getExtension, getMediaType } from "../helpers/media"
 
-export async function updateAnimation(animationData: AnimationData, currentIndex: number, outSlide: any) {
+export async function updateAnimation(animationData: AnimationData, currentIndex: number, outSlide: any, background: any) {
     if (!animationData.animation) return {}
 
     // give time for initial element & prevent infinite loops
@@ -20,7 +21,7 @@ export async function updateAnimation(animationData: AnimationData, currentIndex
     activeAnimate.set({ slide: outSlide.index, index: currentIndex })
 
     // trigger animation action
-    await animations[currentAnimation.type](currentAnimation, animationData)
+    await animations[currentAnimation.type](currentAnimation, animationData, { background })
 
     // get next animation action
     let newIndex = currentIndex + 1
@@ -36,7 +37,7 @@ const animations = {
         const action: AnimationAction = { type: "change", id, key, value, extension, duration: 0 }
         animations.change(action, animationData)
     },
-    change: async ({ id, key, value: actionValue, extension, duration }: AnimationAction, animationData: AnimationData) => {
+    change: async ({ id, key, value: actionValue, extension, duration }: AnimationAction, animationData: AnimationData, { background }: any = {}) => {
         let value: string = (actionValue || 0).toString()
         if (extension) value += extension
 
@@ -48,10 +49,10 @@ const animations = {
             } else {
                 // zoom
                 key = "transform"
-                const videoElement = document.querySelector(`[data-id="${id}"] video`) || document.querySelector('.media video')
-                const isVideo = !!videoElement
-                initialValue = (isVideo) ? "transform-origin: center;transform: scale(1);" : ""
-                const randomScale = 1 + (Math.random() * 0.5) // This gives 1.0 to 1.5
+                const backgroundType = background.type || getMediaType(getExtension(background.id))
+                const isVideo = backgroundType === "video"
+                initialValue = isVideo ? "transform-origin: center;transform: scale(1);" : "transform: scale(1.3);"
+                const randomScale = 1.1 + Math.random() * 0.4 // 1.1 to 1.5
 
                 // Calculate safe translation bounds to keep image on screen
                 // For scale S, safe range is from (50/S)% to (100-50/S)%
@@ -61,9 +62,10 @@ const animations = {
                 let randomX = minPercent + Math.random() * (maxPercent - minPercent)
                 let randomY = minPercent + Math.random() * (maxPercent - minPercent)
 
+                // center video
                 if (isVideo) {
-                    randomX -= 50
-                    randomY -= 50 // center video
+                    randomX = 0
+                    randomY = 0
                 }
 
                 value = `translate(-${randomX}%, -${randomY}%) scale(${randomScale})`
@@ -113,7 +115,6 @@ function removePreviousKeys(array: string[] | undefined, key: string | undefined
     return array.filter((a) => !a.includes(key))
 }
 
-/*
-function randomNumBetween(min = 0, max) {
-    return Math.floor(Math.random() * (max - min + 1) + min)
-}*/
+// function randomNumBetween(min = 0, max) {
+//     return Math.floor(Math.random() * (max - min + 1) + min)
+// }

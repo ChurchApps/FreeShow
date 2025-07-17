@@ -235,7 +235,7 @@
         async function animate(currentIndex: number) {
             if (currentAnimationId !== currentId) return
 
-            animationData = await updateAnimation(animationData, currentIndex, slide)
+            animationData = await updateAnimation(animationData, currentIndex, slide, background)
             if (currentAnimationId !== currentId) {
                 animationData = {}
                 return
