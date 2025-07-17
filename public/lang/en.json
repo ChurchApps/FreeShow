@@ -862,8 +862,19 @@
         "chord_sheet": "Chord Sheet",
         "normal_pdf": "Normal PDF",
         "pdf_type": "What type of PDF would you like?",
+        "type": "Export Type",
         "rows": "Rows",
-        "columns": "Columns"
+        "columns": "Columns",
+        "chord_sheet_options": "Chord Sheet Options",
+        "lyrics_font_size": "Lyrics Font Size",
+        "chord_font_size": "Chord Font Size",
+        "margin": "Margin (mm)",
+        "line_spacing": "Line Spacing",
+        "metadata_display": "Metadata Display",
+        "artist": "Artist",
+        "key": "Key",
+        "chords_used": "Chords Used",
+        "notes": "Notes"
     },
     "context": {
         "to_dictionary": "Add to dictionary",
