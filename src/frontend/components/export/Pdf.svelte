@@ -620,27 +620,4 @@
         white-space: pre-wrap;
         word-wrap: break-word;
     }
-
-    .notes-section {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #ccc;
-        break-inside: avoid;
-        page-break-inside: avoid;
-    }
-
-    .notes-section h4 {
-        margin: 0 0 8px 0;
-        font-size: 12px;
-        color: black;
-        font-weight: bold;
-    }
-
-    .notes-content {
-        font-size: 11px;
-        line-height: 1.4;
-        color: #444;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
 </style>
