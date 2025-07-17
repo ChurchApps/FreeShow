@@ -42,7 +42,7 @@
                     {/if}
 
                     {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                        <Button style="position: absolute;inset-inline-end: 0;top: 0;height: 100%;min-height: 40px;border-start-end-radius: 4px;" title={$dictionary.actions?.close} on:click={() => activePopup.set(null)}>
+                        <Button style="position: absolute;inset-inline-end: 0;top: 0;height: 100%;min-height: 40px;border-start-end-radius: 4px;" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)}>
                             <Icon id="close" size={2} />
                         </Button>
                     {/if}

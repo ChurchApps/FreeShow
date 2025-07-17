@@ -186,13 +186,13 @@
         height: 80%;
         flex-wrap: wrap;
         place-items: start;
-        left: 0;
+        inset-inline-start: 0;
     }
     .icons.right {
         /* inset-inline-end: 2px; */
         flex-wrap: wrap-reverse;
         place-items: end;
-        right: 0;
+        inset-inline-end: 0;
     }
 
     .icons div {

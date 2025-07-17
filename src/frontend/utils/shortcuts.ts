@@ -391,7 +391,7 @@ function createNew() {
     }
 }
 
-function playMedia(e: Event, back: boolean = false) {
+function playMedia(e: Event, back = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
     const item = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -409,12 +409,12 @@ function playMedia(e: Event, back: boolean = false) {
         if (alreadyPlaying) {
             // play / pause video
             // WIP duplicate of MediaControls.svelte
-            let dataValues: any = {}
+            const dataValues: any = {}
             const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
             const videoData = get(videosData)[outputId] || {}
             activeOutputIds.forEach((id) => {
                 dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted, paused: !videoData.paused }
-                let keyOutput = get(outputs)[id].keyOutput
+                const keyOutput = get(outputs)[id].keyOutput
                 if (keyOutput) dataValues[keyOutput] = videoData
             })
 
@@ -432,7 +432,7 @@ function playMedia(e: Event, back: boolean = false) {
     }
 }
 
-export async function playFolder(path: string, back: boolean = false) {
+export async function playFolder(path: string, back = false) {
     const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
     const currentlyPlaying = currentOutput.out?.background?.path

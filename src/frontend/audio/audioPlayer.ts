@@ -288,7 +288,7 @@ export class AudioPlayer {
         return get(playingAudio)[id] || null
     }
 
-    static getAllPlaying(removePaused: boolean = true) {
+    static getAllPlaying(removePaused = true) {
         return get(playingAudioPaths).length
             ? get(playingAudioPaths)
             : Object.keys(get(playingAudio)).filter((id) => {

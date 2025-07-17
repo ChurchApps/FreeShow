@@ -166,24 +166,24 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     const ref = getLayoutRef()
     if (!ref[slideIndex]) return
 
-    const actions = clone(ref[slideIndex].data?.actions) || {}
+    const slideActions = clone(ref[slideIndex].data?.actions) || {}
 
     const id = uid()
-    if (!actions.slideActions) actions.slideActions = []
+    if (!slideActions.slideActions) slideActions.slideActions = []
     const actionValues: { [key: string]: any } = {}
     if (actionValue) actionValues[actionId] = actionValue
 
     const action = { id, triggers: [actionId], actionValues }
 
-    const existingIndex = actions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
-    if (allowMultiple || existingIndex < 0) actions.slideActions.push(action)
-    else actions.slideActions[existingIndex] = action
+    const existingIndex = slideActions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
+    if (allowMultiple || existingIndex < 0) slideActions.slideActions.push(action)
+    else slideActions.slideActions[existingIndex] = action
 
-    history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [slideIndex] } })
+    history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideActions, indexes: [slideIndex] } })
 }
 
-export function slideHasAction(actions: any, key: string) {
-    return actions?.slideActions?.find((a) => a.triggers?.includes(key))
+export function slideHasAction(slideActions: any, key: string) {
+    return slideActions?.slideActions?.find((a) => a.triggers?.includes(key))
 }
 
 export function getActionIcon(id: string) {

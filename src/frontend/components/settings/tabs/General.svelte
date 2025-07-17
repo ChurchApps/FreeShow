@@ -29,7 +29,7 @@
         disablePresenterControllerKeys: (e: any) => updateSpecial(e.target.checked, "disablePresenterControllerKeys")
     }
 
-    function updateSpecial(value: any, key: string, allowEmpty: boolean = false) {
+    function updateSpecial(value: any, key: string, allowEmpty = false) {
         special.update((a) => {
             if (!allowEmpty && !value) delete a[key]
             else a[key] = value

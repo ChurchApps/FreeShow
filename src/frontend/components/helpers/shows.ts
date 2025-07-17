@@ -387,9 +387,9 @@ export function _show(id = "active") {
                             if (!shows[id].slides[layoutSlide.id]) {
                                 console.error("MISSING SLIDE")
                                 // missing slides can cause index problems, this will delete the layout id
-                                showsCache.update((a) => {
-                                    a[id].layouts[layoutId].slides.splice(index, 1)
-                                    return a
+                                showsCache.update((cache) => {
+                                    cache[id].layouts[layoutId].slides.splice(index, 1)
+                                    return cache
                                 })
                                 return
                             }

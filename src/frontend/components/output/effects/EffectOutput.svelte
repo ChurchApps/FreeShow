@@ -6,7 +6,7 @@
 
     export let ids: string[]
     export let transition: Transition
-    export let mirror: boolean = false
+    export let mirror = false
 
     // $: transitionEnabled = !!((transition.type !== "none" && transition.duration) || transition.in || transition.out)
 

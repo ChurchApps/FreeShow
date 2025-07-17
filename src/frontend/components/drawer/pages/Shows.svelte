@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -37,9 +37,35 @@
     let previousSearchTokens: string[] = []
     let previousFilteredShows: any[] = clone(filteredStored)
 
+    $: drawerIsClosed = $drawer.height <= 40
+    let shouldUpdate = false
+    // update when drawer is opened if it has changes
+    $: if (shouldUpdate && !drawerIsClosed) search()
+
+    // reduce lag by only refreshing full list when not typing for 100 ms
+    let isTyping: NodeJS.Timeout | null = null
+    $: largeList = filteredStored.length > 300
+    $: if (searchValue && largeList) typing()
+    function typing() {
+        if (isTyping) clearTimeout(isTyping)
+        isTyping = setTimeout(() => {
+            isTyping = null
+            search()
+        }, 100)
+    }
+
     let createFromSearch = false
     $: if (formattedSearch !== undefined || filteredStored || $activeTagFilter) search()
     function search() {
+        if (isTyping) return
+        // don't update if drawer is closed
+        // updates to this lags the editor when moving/resizing items, if many shows in list
+        if (drawerIsClosed) {
+            shouldUpdate = true
+            return
+        }
+        shouldUpdate = false
+
         if (searchValue.length > 1) {
             const currentTokens = tokenize(formattedSearch)
             const isNarrowing = isRefinement(currentTokens, previousSearchTokens)

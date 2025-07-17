@@ -117,7 +117,7 @@
 
                             {#if slide.items}
                                 {#each slide.items as item}
-                                    <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} />
+                                    <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} />
                                 {/each}
                             {/if}
                         </Zoomed>

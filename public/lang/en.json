@@ -12,7 +12,9 @@
         "none": "None",
         "finished": "Finished",
         "open": "Open",
-        "system_open": "Open in system"
+        "system_open": "Open in system",
+        "yes": "Yes",
+        "no": "No"
     },
     "formats": {
         "show": "Show",
@@ -153,7 +155,7 @@
         "background": "Clear background",
         "slide": "Clear slide",
         "overlays": "Clear overlays",
-        "overlay": "Clear overlay",
+        "overlay": "Clear specific overlay",
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",
@@ -416,6 +418,7 @@
         "select_template": "Select template",
         "select_style": "Select style",
         "select_stage_layout": "Select stage layout",
+        "confirm": "Confirm",
         "custom_text": "Set custom text",
         "rename": "Rename",
         "color": "Color",
@@ -487,6 +490,10 @@
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
         "save_quit": "Save & Quit"
+    },
+    "confirm": {
+        "statement_slide_exists_layout": "Slide exists in a different layout!",
+        "question_delete": "Would you like to delete?"
     },
     "toast": {
         "saving": "Saving...",
@@ -576,7 +583,7 @@
         "rename": "Rename",
         "recolor": "Change color",
         "remove": "Remove",
-        "remove_group": "Remove group",
+        "remove_group": "Remove group from layout",
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "active_outputs": "Active outputs",
@@ -589,7 +596,7 @@
         "imported": "Imported!",
         "duplicate": "Duplicate",
         "delete": "Delete",
-        "delete_slide": "Delete slide",
+        "delete_slide": "Delete slide from show",
         "delete_group": "Delete group",
         "delete_all": "Delete all",
         "close": "Close",
@@ -708,6 +715,8 @@
         "start_timer": "Start timer",
         "pause_timers": "Pause active timers",
         "stop_timers": "Stop active timers",
+        "id_pause_timer": "Pause specific timer",
+        "id_stop_timer": "Stop specific timer",
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
         "remove_layers": "Remove layers",
@@ -1288,6 +1297,7 @@
         "connections": "Connections",
         "max_connections": "Max connections",
         "allowed_connections": "Allowed connections",
+        "use_hostname": "Use hostname instead of IP",
         "connect": "Connect by typing this in a web browser",
         "connect_qr": "Or scan this QR code",
         "restart": "Restart servers",

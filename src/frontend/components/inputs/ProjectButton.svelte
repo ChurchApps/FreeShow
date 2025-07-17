@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { ID } from "../../../types/Show"
-    import { activeEdit, activeProject, activeRename, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+    import { activeEdit, activeProject, activeRename, activeShow, dictionary, folders, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -12,6 +12,7 @@
     export let parent: ID
     export let id: ID
     export let recentlyUsed = false
+    export let interactedFolder: string = ""
     export let template = false
     // export let type: ShowType
     // export let created;
@@ -29,7 +30,7 @@
             let project = clone($projectTemplates[id])
             if (!project) return
 
-            project.parent = $projects[$activeProject || ""]?.parent || "/"
+            project.parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
             if (e.ctrlKey || e.metaKey) project.name = getProjectName() // use default project name
             let projectId = uid()
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })

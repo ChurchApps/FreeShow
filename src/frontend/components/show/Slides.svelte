@@ -426,7 +426,7 @@
                 <div class="grid">
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled) && ($slidesOptions.mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || $slidesOptions.mode === "groups" || !slide.disabled) && ($slidesOptions.mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}

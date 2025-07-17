@@ -39,7 +39,7 @@
         paused: false,
         muted: true,
         duration: 0,
-        loop: false,
+        loop: false
     }
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
     $: if (playingInOutput && $videosData[outputId]) setVideoData()
@@ -328,6 +328,7 @@
                     bind:volume={$volume}
                     loop={videoData.loop}
                 >
+                    <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
                     {/each}

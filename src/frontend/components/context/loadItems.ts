@@ -283,7 +283,9 @@ const loadActions = {
         const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
-        if (isItem) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
+        let isOverlay = get(activeEdit).type === "overlay"
+        // overlay items does not show up in stage view anyway
+        if (isItem && !isOverlay) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
 
         let currentBindings: string[] = []
         if (isItem) {

@@ -2,6 +2,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
     import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -100,7 +101,7 @@
         <p style="padding: 0 10px;"><T id="presentation_control.choose_window" />:</p>
         <div class="choose">
             {#each chooseWindow as screen}
-                <div class="screen" on:click={() => selectWindow(screen, true)}>
+                <div class="screen" role="button" tabindex="0" on:click={() => selectWindow(screen, true)} on:keydown={triggerClickOnEnterSpace}>
                     <Window id={screen.id} class="media" style="width: 100%;height: 100%;pointer-events: none;position: absolute;" />
                     <p title={screen.name}>{screen.name}</p>
                 </div>
@@ -142,5 +143,9 @@
 
     .screen:hover {
         filter: brightness(0.8);
+    }
+    .screen:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

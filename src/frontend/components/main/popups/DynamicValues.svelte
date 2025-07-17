@@ -2,6 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { activeEdit, activePage, activePopup, activeShow, activeStage, dictionary, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
@@ -225,14 +226,22 @@
                 <div class="grid">
                     {#each values as value, i}
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
-                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} on:click={(e) => applyValue(e, value.id)}>
+                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>
 
                             <p style="display: inline-flex;">
                                 <span style="color: var(--secondary);">{"{"}</span>
-                                {value.id}
+                                {#if value.id.startsWith("$")}
+                                    <span style="color: var(--secondary);">{"$"}</span>
+                                    {value.id.slice(1)}
+                                {:else}
+                                    <!-- variable_set_ -->
+                                    <!-- <span style="color: var(--secondary);">{value.id.slice(0, value.id.indexOf("_") + 1)}</span> -->
+                                    <!-- {value.id.slice(value.id.indexOf("_") + 1)} -->
+                                    {value.id}
+                                {/if}
                                 <span style="color: var(--secondary);">{"}"}</span>
                             </p>
                         </div>
@@ -284,6 +293,10 @@
         outline-offset: 0;
     }
     .value:active {
+        outline: 2px solid var(--secondary);
+        outline-offset: 0;
+    }
+    .value:focus {
         outline: 2px solid var(--secondary);
         outline-offset: 0;
     }

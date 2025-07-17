@@ -1,7 +1,6 @@
 // ----- FreeShow -----
 // Here are all the global app variables
 
-import type { Family } from "css-fonts"
 import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
@@ -154,7 +153,6 @@ export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
-export const systemFonts: Writable<Family[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
@@ -352,7 +350,6 @@ export const $ = {
     exportOptions,
     notFound,
     alertMessage,
-    systemFonts,
     previousShow,
     projectToolSize,
     forceClock,

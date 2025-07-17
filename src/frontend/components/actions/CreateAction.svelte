@@ -40,11 +40,10 @@
 
     const slideActions = [
         "start_show",
-        "set_template",
         "clear_background",
         "clear_overlays",
         "clear_audio",
-        "change_volume",
+        // "change_volume",
         "start_audio_stream",
         "start_playlist",
         "start_metronome",
@@ -82,6 +81,8 @@
             .filter(({ id }) => {
                 // don't show actions with no custom data
                 if (!actionData[id]) return false
+                // remove uncommon
+                if (commonOnly && !actionData[id].common) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't show action if incompatible with any existing action (and no wait action is added)
@@ -100,7 +101,7 @@
                 return true
             }),
         // custom special
-        ...((list && !full) || mode ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "popup.action" }])
+        ...((list && !full) || mode ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: true, section: "popup.action" }])
     ].map((a, i) => {
         if (i === 0) usedSections = []
 
@@ -147,20 +148,22 @@
     // SEARCH
 
     let searchedActions = clone(ACTIONS) // initially empty
-    $: if (ACTIONS) search()
+    $: if (ACTIONS || commonOnly !== undefined) search()
     let searchValue = ""
     // let previousSearchValue = ""
     function search(e: any = null) {
         searchValue = formatSearch(e?.target?.value || "")
 
+        let actionsList = clone(ACTIONS) //.filter((a) => (commonOnly ? a.common : true))
+
         if (searchValue.length < 2) {
-            searchedActions = clone(ACTIONS)
+            searchedActions = actionsList
             return
         }
 
-        let currentActionsList = clone(ACTIONS) // searchedActions
+        let currentActionsList = actionsList // searchedActions
         // reset if search value changed
-        // if (!searchValue.includes(previousSearchValue)) currentActionsList = clone(ACTIONS)
+        // if (!searchValue.includes(previousSearchValue)) currentActionsList = list
 
         searchedActions = currentActionsList.filter((a) => formatSearch(a.name || "").includes(searchValue))
 
@@ -173,6 +176,8 @@
     }
 
     const isChecked = (e: any) => e.target.checked
+
+    let commonOnly = full && mode !== "slide"
 </script>
 
 <svelte:window on:keydown={chooseAction} />
@@ -190,20 +195,33 @@
             <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
         </CombinedInput>
 
+        {#if mode !== "slide"}
+            <CombinedInput>
+                <p>Common only</p>
+                <span class="alignRight">
+                    <Checkbox checked={commonOnly} on:change={(e) => (commonOnly = isChecked(e))} />
+                </span>
+            </CombinedInput>
+        {/if}
+
         {#if searchedActions.length}
             <div class="buttons" style={searchValue.length ? "padding-top: 20px;" : ""}>
                 {#each searchedActions as action, i}
                     {#if action.section && !searchValue.length}
-                        <HRule title={action.section} />
+                        <!-- might not properly update always on common toggle, without the key refresh -->
+                        {#key action.section}
+                            <HRule title={action.section} />
+                        {/key}
                     {/if}
 
                     <!-- disabled={$popupData.existing.includes(action.id)} -->
+                    <!-- bold={action.common} -->
                     <Button
                         on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
                         outline={getActionTriggerId(actionId) === action.id}
                         active={(existingActionsFiltered || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
                         style="width: 100%;{searchValue.length && i === 0 ? 'background-color: var(--primary-lighter);' : ''}"
-                        bold={action.common}
+                        bold={false}
                     >
                         <Icon id={action.icon} right />
                         <p>{action.name}</p>

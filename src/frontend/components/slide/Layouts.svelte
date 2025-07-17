@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import { changeSlidesView } from "../../show/slides"
     import { actions, activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -59,7 +60,15 @@
         let currentLayout = e.detail?.id?.slice("layout_".length)
         if (!currentLayout) return
 
-        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+        const newName = e.detail.value
+        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+
+        if ($projects[$activeProject!]?.shows?.[$activeShow?.index ?? -1]?.layout === currentLayout) {
+            projects.update((a) => {
+                a[$activeProject!].shows[$activeShow!.index!].layoutInfo = { name: newName }
+                return a
+            })
+        }
     }
 
     function setLayout(id: string, layoutInfo) {
@@ -120,19 +129,19 @@
 {#if $slidesOptions.mode === "grid"}
     <!-- one at a time, in prioritized order -->
     {#if layouts?.[activeLayout]?.notes}
-        <div class="notes" title={$dictionary.tools?.notes} on:click={() => openTab("notes")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="notes" right white />
             {#if typeof layouts[activeLayout].notes === "string"}
                 <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
             {/if}
         </div>
     {:else if currentShow.message?.text}
-        <div class="notes" title={$dictionary.meta?.message} on:click={() => openTab("metadata")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="message" right white />
             <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-        <div class="notes" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")}>
+        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="info" right white />
             <p>
                 <!-- currentStyle.metadataDivider -->

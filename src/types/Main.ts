@@ -264,6 +264,7 @@ export interface ErrorLog {
 
 export type Popups =
     | "initialize"
+    | "confirm"
     | "custom_text"
     | "import"
     | "songbeamer_import"

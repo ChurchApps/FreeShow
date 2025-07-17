@@ -11,6 +11,13 @@ declare module "*.svelte" {
 
 // declare properties TypeScript don't allow
 
+type FontData = {
+    family: string
+    fullName: string
+    postscriptName: string
+    style: string
+}
+
 // window.
 interface Window {
     api: {
@@ -20,6 +27,7 @@ interface Window {
         getListeners: () => [string, number][]
         showFilePath: (file: File) => string
     }
+    queryLocalFonts: () => Promise<FontData[]>
 }
 
 // event.target.

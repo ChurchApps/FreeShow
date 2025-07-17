@@ -62,6 +62,13 @@ export async function sendMidi(data: any) {
     // port.close()
 }
 
+type MidiMessage = {
+    0: number
+    1: number
+    2: number
+    _from: any[]
+}
+
 let openedPorts: { [key: string]: any } = {}
 export async function receiveMidi(data: any) {
     // console.log("INPUT", data.input)
@@ -76,23 +83,22 @@ export async function receiveMidi(data: any) {
 
         if (port.name()) openedPorts[data.id] = port
 
-        await port.connect((msg: any) => {
-            const bytes = msg.toBytes() // .slice()
-            const status = bytes[0]
+        await port.connect((msg: MidiMessage) => {
+            if (typeof msg[0] !== "number" || typeof msg[1] !== "number" || typeof msg[2] !== "number") return
+
+            const status = msg[0]
             const channel = (status & 0x0f) + 1
             const typeCode = status & 0xf0
 
             if (typeCode === 0x90 || typeCode === 0x80) {
                 // Note On (0x90) or Note Off (0x80)
                 // noteon with velocity 0 is actually noteoff
-                const type: "noteon" | "noteoff" = typeCode === 0x90 && bytes[2] > 0 ? "noteon" : "noteoff"
-                const values = { note: bytes[1], velocity: bytes[2], channel }
+                const type: "noteon" | "noteoff" = typeCode === 0x90 && msg[2] > 0 ? "noteon" : "noteoff"
+                const values = { note: msg[1], velocity: msg[2], channel }
                 sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type })
             } else if (typeCode === 0xb0) {
                 // Control Change (0xB0)
-                const controller = bytes[1]
-                const value = bytes[2]
-                const values = { controller, value, channel }
+                const values = { controller: msg[1], value: msg[2], channel }
                 sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type: "control" })
             }
         })
@@ -108,8 +114,12 @@ export function stopMidi() {
 }
 
 function closeMidiOutPorts() {
-    Object.values(openedOutputPorts).forEach((port: any) => {
-        port.close()
+    Object.entries(openedOutputPorts).forEach(([key, port]: [string, any]) => {
+        try {
+            port.close()
+        } catch (err) {
+            console.error(`Error closing MIDI output port ${key}:`, err)
+        }
     })
 
     openedOutputPorts = {}
@@ -117,13 +127,21 @@ function closeMidiOutPorts() {
 
 export function closeMidiInPorts(id = "") {
     if (id && openedPorts[id]) {
-        openedPorts[id].close()
-        delete openedPorts[id]
+        try {
+            openedPorts[id].close()
+            delete openedPorts[id]
+        } catch (err) {
+            console.error(`Error closing MIDI input port ${id}:`, err)
+        }
         return
     }
 
-    Object.values(openedPorts).forEach((port: any) => {
-        port.close()
+    Object.entries(openedPorts).forEach(([key, port]: [string, any]) => {
+        try {
+            port.close()
+        } catch (err) {
+            console.error(`Error closing MIDI input port ${key}:`, err)
+        }
     })
 
     openedPorts = {}

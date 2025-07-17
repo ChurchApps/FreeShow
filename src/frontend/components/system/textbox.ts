@@ -115,19 +115,28 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
 }
 
 // const maxSize = 16
-export function resizeBox(e: any, mouse: TMouse, square: boolean, ratio: number) {
+export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio: number, mirror: boolean, forceSquare = false) {
     const itemElem = mouse.e.target.closest(".item")
     const styles: any = {}
-    let store: null | number = null
     const squareElem = mouse.e.target.closest(".square")
+    const squareIds = squareElem.classList[1]
 
     // const mouseLeft = (e.clientX - itemElem.closest(".slide").offsetLeft - itemElem.closest(".editArea").closest(".center").offsetLeft) / ratio
     // const mouseTop = (e.clientY - itemElem.closest(".slide").offsetTop - itemElem.closest(".editArea").closest(".center").offsetTop) / ratio
 
-    if (squareElem.classList[1].includes("w")) resizeLeft()
-    if (squareElem.classList[1].includes("n")) resizeTop()
-    if (squareElem.classList[1].includes("e")) resizeRight()
-    if (squareElem.classList[1].includes("s")) resizeBottom()
+    if (forceSquare) keepAspectRatio = true
+    const width = mouse.width
+    const height = mouse.height
+    const aspectRatio = forceSquare ? 1 : width / height
+
+    const corner = forceSquare || squareIds.length > 1
+
+    // WIP keepAspectRatio corners moving item as well (bottom right working fine)
+
+    if (squareIds.includes("w")) resizeLeft()
+    if (squareIds.includes("n")) resizeTop()
+    if (squareIds.includes("e")) resizeRight()
+    if (squareIds.includes("s")) resizeBottom()
 
     function resizeLeft() {
         const newLeft: number = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
@@ -141,42 +150,102 @@ export function resizeBox(e: any, mouse: TMouse, square: boolean, ratio: number)
         // if (newWidth < maxSize) return
 
         styles.left = newLeft
-        store = styles.width = newWidth
+        styles.width = newWidth
+
+        if (mirror) {
+            const widthDifference = mouse.width - styles.width
+            styles.width -= widthDifference
+
+            if (corner) return
+        }
+
+        if (!keepAspectRatio) return
+
+        styles.height = styles.width / aspectRatio
+
+        if (corner) return
+
+        const heightAdjustment = (height - styles.height) / 2
+        styles.top = mouse.top + heightAdjustment
     }
 
     function resizeTop() {
-        if (square && store !== null) {
-            styles.height = store
-            return
-        }
-
         const newTop: number = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
         const newHeight: number = mouse.height - newTop + mouse.top
+
         // if (mouseTop + maxSize > newTop + newHeight) return
         // if (newHeight < maxSize) return
 
         styles.top = newTop
-        store = styles.height = newHeight
+        styles.height = newHeight
+
+        if (mirror) {
+            const heightDifference = mouse.height - styles.height
+            styles.height -= heightDifference
+
+            if (corner) return
+        }
+
+        if (!keepAspectRatio) return
+
+        styles.width = styles.height * aspectRatio
+
+        if (corner) return
+
+        const widthAdjustment = (width - styles.width) / 2
+        styles.left = mouse.left + widthAdjustment
     }
 
     function resizeRight() {
-        if (square && store !== null) {
-            styles.width = store
+        styles.width = e.clientX / ratio - mouse.offset.width
+
+        if (mirror) {
+            const widthDifference = mouse.width - styles.width
+            styles.left = mouse.left + widthDifference
+            styles.width -= widthDifference
+
+            if (corner) return
+        }
+
+        if (!keepAspectRatio) {
+            styles.left = styles.left ?? mouse.left // only for snap
             return
         }
 
-        styles.left = mouse.left // only for snap
-        store = styles.width = e.clientX / ratio - mouse.offset.width
+        const newHeight = styles.width / aspectRatio
+        // if (!squareIds.includes("n")) styles.height = newHeight
+        styles.height = newHeight
+
+        if (corner) return
+
+        const heightAdjustment = (height - newHeight) / 2
+        styles.top = mouse.top + heightAdjustment
     }
 
     function resizeBottom() {
-        if (square && store !== null) {
-            styles.height = store
+        styles.height = e.clientY / ratio - mouse.offset.height
+
+        if (mirror) {
+            const heightDifference = mouse.height - styles.height
+            styles.top = mouse.top + heightDifference
+            styles.height -= heightDifference
+
+            if (corner) return
+        }
+
+        if (!keepAspectRatio) {
+            styles.top = styles.top ?? mouse.top // only for snap
             return
         }
 
-        styles.top = mouse.top // only for snap
-        styles.height = e.clientY / ratio - mouse.offset.height
+        const newWidth = styles.height * aspectRatio
+        // if (!squareIds.includes("w")) styles.width = newWidth
+        styles.width = newWidth
+
+        if (corner) return
+
+        const widthAdjustment = (width - newWidth) / 2
+        styles.left = mouse.left + widthAdjustment
     }
 
     return styles

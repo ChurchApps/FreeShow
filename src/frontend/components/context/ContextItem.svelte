@@ -214,11 +214,21 @@
                 else if ($overlays[id]?.displayDuration) enabled = true
             }
         },
+        toggle_output: () => {
+            let outputId = contextElem?.id || ""
+            disabled = !!$outputs[outputId]?.invisible
+        },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
+                return
+            }
+
+            let outputId = contextElem?.id || ""
+            if ($outputs[outputId]?.invisible) {
+                disabled = true
                 return
             }
 
@@ -281,7 +291,10 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") contextItemClick()
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            contextItemClick()
+        }
     }
 
     let shortcut = ""
@@ -296,7 +309,7 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
+<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown} role="menuitem">
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}

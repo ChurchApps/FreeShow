@@ -29,6 +29,7 @@ import {
     audioData,
     currentWindow,
     customMetadata,
+    dictionary,
     driveData,
     dynamicValueData,
     focusMode,
@@ -60,7 +61,7 @@ import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { addZero, joinTime, secondsToTime } from "./time"
+import { addZero, getMonthName, getWeekday, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 import { playFolder } from "../../utils/shortcuts"
 
@@ -844,30 +845,30 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             // outTransition.set({ duration })
             setOutput("transition", { duration }, false, outputId)
         } else {
-            clearTimers(outputId)
+            clearTimers(outputId, false)
         }
     }
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
-function playSlideActions(actions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
-    actions = clone(actions)
+function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
+    slideActions = clone(slideActions)
 
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
-            const existingIndex = actions.findIndex((a) => a.triggers?.[0] === id)
+            const existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
             outputIds.forEach((outputId) => {
                 if (id.includes("background")) setOutput("background", null, false, outputId)
                 else if (id.includes("overlays")) clearOverlays(outputId)
             })
-            actions.splice(existingIndex, 1)
+            slideActions.splice(existingIndex, 1)
         })
     }
 
-    actions.forEach((a) => {
+    slideActions.forEach((a) => {
         // no need to "re-run" actions triggered right before output
         if (shouldTriggerBefore(a)) return
 
@@ -1260,6 +1261,10 @@ const dynamicValues = {
     time_hours: () => addZero(new Date().getHours()),
     time_minutes: () => addZero(new Date().getMinutes()),
     time_seconds: () => addZero(new Date().getSeconds()),
+    // time_weeknum: () => "52",
+
+    time_str_day: () => getWeekday(new Date().getDay(), get(dictionary), true),
+    time_str_month: () => getMonthName(new Date().getMonth(), get(dictionary), true),
 
     // show
     show_name: ({ show }) => show.name || "",

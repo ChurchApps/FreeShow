@@ -4,6 +4,7 @@
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -181,7 +182,7 @@
 
         <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
 
-        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
             {#if !isMic && fullLength}
                 {joinTime(secondsToTime(duration))}
             {:else}
@@ -319,5 +320,13 @@
         bottom: 0;
         inset-inline-start: 0;
         width: 100%;
+    }
+
+    span[role="button"] {
+        cursor: pointer;
+    }
+    span[role="button"]:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

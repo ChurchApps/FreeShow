@@ -28,7 +28,8 @@
     <Button on:click={() => actionOnAllTimers("paused", !allPaused)} center dark>
         <Icon id={allPaused ? "play" : "pause"} white={allPaused} size={1.2} right />
         {#key allPaused}
-            <T id="media.{allPaused ? 'play' : 'pause'}" />
+            <T id={allPaused ? "media.play" : "actions.pause_timers"} />
+            <!-- <T id="media.{allPaused ? 'play' : 'pause'}" /> -->
         {/key}
     </Button>
 
@@ -40,8 +41,8 @@
         center
         dark
     >
-        <Icon id="reset" right />
-        <T id="actions.reset" />
+        <Icon id="stop" right />
+        <T id="actions.stop_timers" />
     </Button>
 </main>
 

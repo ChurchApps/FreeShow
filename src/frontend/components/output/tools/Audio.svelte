@@ -3,6 +3,7 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, metronome, outLocked, playingAudio, playingMetronome } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
@@ -126,7 +127,7 @@
 
             <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, path)} />
 
-            <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+            <span style={fullLength ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
                 {#if fullLength}
                     {joinTime(secondsToTime(duration))}
                 {:else}
@@ -166,5 +167,12 @@
     }
     .controls span {
         padding: 0 0.3em;
+    }
+    .controls span[role="button"] {
+        cursor: pointer;
+    }
+    .controls span[role="button"]:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

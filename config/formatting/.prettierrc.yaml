@@ -1,5 +1,7 @@
-trailingComma: "es5"
-printWidth: 250
+trailingComma: "none"
+printWidth: 500
 tabWidth: 4
 semi: false
 singleQuote: false
+bracketSameLine: true
+arrowParens: "avoid"
