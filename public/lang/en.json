@@ -859,6 +859,9 @@
         "original_text_size": "Original text size",
         "text": "Plain text",
         "slides": "Slides",
+        "chord_sheet": "Chord Sheet",
+        "normal_pdf": "Normal PDF",
+        "pdf_type": "What type of PDF would you like?",
         "rows": "Rows",
         "columns": "Columns"
     },

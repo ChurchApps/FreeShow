@@ -18,6 +18,7 @@
     import Loader from "../../Loader.svelte"
     import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
     import PdfExport from "./PdfExport.svelte"
+    import ChordSheetExport from "./ChordSheetExport.svelte"
 
     let previewShow: Show | null = null
     let showIds: string[] = []
@@ -25,6 +26,7 @@
 
     let exportType = ""
     let exportFormat = ""
+    let pdfType = "" // New state for PDF sub-type selection
 
     const excludedFormats = {
         project: ["show", "txt", "image"],
@@ -47,7 +49,7 @@
 
     ///
 
-    $: if (exportType && exportFormat) updateActive()
+    $: if (exportType && exportFormat && (exportFormat !== "pdf" || pdfType)) updateActive()
     async function updateActive() {
         loading = true
         showIds = getShowIdsFromType[exportType]?.() || []
@@ -101,13 +103,15 @@
             })
             loading = false
         } else {
-            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options: exportFormat === "pdf" ? pdfOptions : {} })
+            const options = exportFormat === "pdf" ? (pdfType === "chord-sheet" ? { ...chordSheetOptions, chordSheet: true } : pdfOptions) : {}
+            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options })
         }
 
         activePopup.set(null)
     }
 
     let pdfOptions: any = {}
+    let chordSheetOptions: any = {}
 
     function setSpecial(e: any, key: string) {
         let value = e?.target?.checked
@@ -139,11 +143,7 @@
     <div class="choose">
         {#each filterFormats(exportFormats) as format, i}
             <Button disabled={false} on:click={() => (exportFormat = format.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <!-- {#if format.id === "project"}
-                    <Icon id={format.id} size={4} white />
-                {:else} -->
                 <img src="./import-logos/{formatIcons[format.id || '']}.webp" alt="{format.id}-logo" draggable={false} />
-                <!-- {/if} -->
 
                 <p>
                     {#if format.name.includes("$:")}<T id={format.name} />{:else}{format.name}{/if}
@@ -151,8 +151,25 @@
             </Button>
         {/each}
     </div>
-{:else}
+{:else if exportFormat === "pdf" && !pdfType}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
+        <Icon id="back" size={2} white />
+    </Button>
+
+    <p><T id="export.pdf_type" /></p>
+
+    <div class="choose">
+        <Button on:click={() => (pdfType = "normal")} style="border: 2px solid var(--focus);">
+            <img src="./import-logos/pdf.webp" alt="normal-pdf-logo" draggable={false} />
+            <p><T id="export.normal_pdf" /></p>
+        </Button>
+        <Button on:click={() => (pdfType = "chord-sheet")}>
+            <img src="./import-logos/pdf.webp" alt="chord-sheet-logo" draggable={false} />
+            <p><T id="export.chord_sheet" /></p>
+        </Button>
+    </div>
+{:else}
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => exportFormat === "pdf" ? (pdfType = "") : (exportFormat = "")}>
         <Icon id="back" size={2} white />
     </Button>
 
@@ -162,14 +179,20 @@
         <p><T id={typeName} /></p>
         <p style="white-space: break-spaces;opacity: 0.6;"><T id="export.export_as" index={1} />&nbsp;</p>
         <p>
-            {#if formatName.includes("$:")}<T id={formatName} />{:else}{formatName}{/if}
+            {#if exportFormat === "pdf"}
+                {#if pdfType === "chord-sheet"}<T id="export.chord_sheet" />{:else}<T id="export.normal_pdf" />{/if}
+            {:else if formatName.includes("$:")}<T id={formatName} />{:else}{formatName}{/if}
         </p>
     </div>
 
     <hr />
 
     {#if exportFormat === "pdf"}
-        <PdfExport bind:pdfOptions {previewShow} />
+        {#if pdfType === "chord-sheet"}
+            <ChordSheetExport bind:chordSheetOptions {previewShow} />
+        {:else}
+            <PdfExport bind:pdfOptions {previewShow} />
+        {/if}
 
         <hr />
     {:else if exportFormat === "project"}
@@ -190,7 +213,7 @@
     {/if}
 
     <CombinedInput>
-        <Button style="width: 100%;" disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick} center dark>
+        <Button style="width: 100%;" disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows" || (exportFormat === "pdf" && !pdfType)} on:click={exportClick} center dark>
             <div style="display: flex;align-items: center;">
                 <Icon id="export" size={1.2} right />
                 <T id="export.export" />
