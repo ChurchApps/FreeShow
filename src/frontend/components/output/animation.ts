@@ -48,11 +48,25 @@ const animations = {
             } else {
                 // zoom
                 key = "transform"
-                initialValue = "transform-origin: center;transform: scale(1);"
+                const videoElement = document.querySelector(`[data-id="${id}"] video`) || document.querySelector('.media video')
+                const isVideo = !!videoElement
+                initialValue = (isVideo) ? "transform-origin: center;transform: scale(1);" : ""
                 const randomScale = 1 + (Math.random() * 0.5) // This gives 1.0 to 1.5
-                //const randomTranslateX = randomNumBetween(-8, 8) / 2
-                //const randomTranslateY = randomNumBetween(-8, 8) / 2
-                value = `scale(${randomScale})`
+
+                // Calculate safe translation bounds to keep image on screen
+                // For scale S, safe range is from (50/S)% to (100-50/S)%
+                const minPercent = 50 / randomScale
+                const maxPercent = 100 - minPercent
+
+                let randomX = minPercent + Math.random() * (maxPercent - minPercent)
+                let randomY = minPercent + Math.random() * (maxPercent - minPercent)
+
+                if (isVideo) {
+                    randomX -= 50
+                    randomY -= 50 // center video
+                }
+
+                value = `translate(-${randomX}%, -${randomY}%) scale(${randomScale})`
             }
         }
 
