@@ -7,9 +7,11 @@
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import NumberInput from "../../../inputs/NumberInput.svelte"
+    import Dropdown from "../../../inputs/Dropdown.svelte"
 
     export let pdfOptions: any
     export let previewShow: Show | null
+    export let showHasChords: (show: Show | null) => boolean
 
     let paper: any = null
 
@@ -29,8 +31,27 @@
             oneFile: false,
             originalTextSize: true,
             textSize: 80,
+            chordSheet: false, // Add chord sheet option
+            
+            // Chord sheet specific options
+            artist: true,
+            key: true,
+            tempo: false,
+            capo: false,
+            fontSize: 12,
+            chordFontSize: 10,
+            margin: 20,
+            spacing: 1.5,
+            columnsPerPage: 1,
         }
     }
+
+    $: hasChords = showHasChords(previewShow)
+
+    const pdfTypeOptions = [
+        { id: false, name: "Normal PDF" },
+        { id: true, name: "Chord Sheet" }
+    ]
 
     function updatePdfOptions(e: any, key: string) {
         pdfOptions[key] = e.target.checked
@@ -41,6 +62,18 @@
     <div class="options">
         <h4 style="text-align: center;"><T id="edit.options" /></h4>
         <br />
+
+        {#if hasChords}
+            <CombinedInput>
+                <p>Export Type</p>
+                <Dropdown
+                    options={pdfTypeOptions}
+                    value={pdfOptions.chordSheet}
+                    on:click={(e) => (pdfOptions.chordSheet = e.detail.id)}
+                />
+            </CombinedInput>
+            <br />
+        {/if}
 
         <div class="line">
             <Button
@@ -112,6 +145,66 @@
             <p><T id="settings.font_size" /></p>
             <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
         </CombinedInput>
+        
+        <!-- Chord Sheet Options -->
+        {#if pdfOptions.chordSheet}
+            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;">Chord Sheet Options</h5>
+            
+            <CombinedInput>
+                <p>Lyrics Font Size</p>
+                <NumberInput value={pdfOptions.fontSize} on:change={(e) => (pdfOptions.fontSize = e.detail)} min={8} max={24} />
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Chord Font Size</p>
+                <NumberInput value={pdfOptions.chordFontSize} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} min={6} max={20} />
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Page Margin (mm)</p>
+                <NumberInput value={pdfOptions.margin} on:change={(e) => (pdfOptions.margin = e.detail)} min={5} max={50} />
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Line Spacing</p>
+                <NumberInput value={pdfOptions.spacing} on:change={(e) => (pdfOptions.spacing = e.detail)} min={1} max={3} decimals={1} />
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Columns per Page</p>
+                <NumberInput value={pdfOptions.columnsPerPage} on:change={(e) => (pdfOptions.columnsPerPage = e.detail)} min={1} max={3} />
+            </CombinedInput>
+            
+            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;">Metadata Display</h5>
+            
+            <CombinedInput>
+                <p>Show Artist</p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.artist} on:change={(e) => (pdfOptions.artist = e.detail)} />
+                </div>
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Show Key</p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.key} on:change={(e) => (pdfOptions.key = e.detail)} />
+                </div>
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Show Tempo</p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.tempo} on:change={(e) => (pdfOptions.tempo = e.detail)} />
+                </div>
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p>Show Capo</p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.capo} on:change={(e) => (pdfOptions.capo = e.detail)} />
+                </div>
+            </CombinedInput>
+        {/if}
         <!-- <span>
     <p>repeats</p>
     <div class="alignRight">
