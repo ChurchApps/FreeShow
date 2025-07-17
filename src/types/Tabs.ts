@@ -24,6 +24,7 @@ export interface BibleCategories extends Category {
     attributionString?: string // API needs custom attribution
     books2?: any[] // api cache
     cacheUpdate?: Date
+    biblePreviewIndex?: number
     collection?: {
         versions: string[]
     }
