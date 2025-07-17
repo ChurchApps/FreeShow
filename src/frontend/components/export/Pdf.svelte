@@ -198,20 +198,25 @@
 
     function groupSlidesBySection(slides: any[]): any[] {
         const sections: any[] = []
-        let currentSection: any = null
+        
+        // Create a map to track slide numbers for each group
+        const groupCounts: { [key: string]: number } = {}
         
         slides.forEach((slide) => {
             const groupName = slide.group || "Verse"
             
-            if (!currentSection || currentSection.name !== groupName) {
-                currentSection = {
-                    name: groupName,
-                    slides: []
-                }
-                sections.push(currentSection)
+            // Increment the count for this group
+            groupCounts[groupName] = (groupCounts[groupName] || 0) + 1
+            
+            // Create individual section for each slide with numbered title
+            const numberedName = `${groupName} ${groupCounts[groupName]}`
+            
+            const section = {
+                name: numberedName,
+                slides: [slide]
             }
             
-            currentSection.slides.push(slide)
+            sections.push(section)
         })
         
         return sections

@@ -36,11 +36,11 @@
             // Chord sheet specific options
             artist: true,
             key: true,
-            fontSize: 12,
-            chordFontSize: 10,
+            fontSize: 15,
+            chordFontSize: 15,
             margin: 20,
-            spacing: 1.5,
-            columnsPerPage: 1,
+            spacing: 2,
+            columnsPerPage: 2,
         }
     }
 
@@ -56,8 +56,8 @@
     }
 </script>
 
-<div style="display: flex;gap: 20px;">
-    <div class="options">
+<div style="display: flex;gap: 20px;height: 100%;">
+    <div class="options" style="flex: 0 0 300px;">
         <h4 style="text-align: center;"><T id="edit.options" /></h4>
         <br />
 
@@ -66,35 +66,37 @@
                 <p>Export Type</p>
                 <Dropdown
                     options={pdfTypeOptions}
-                    value={pdfOptions.chordSheet ? "chordSheet" : "normal"}
+                    value={pdfOptions.chordSheet ? "Chord Sheet" : "Normal PDF"}
                     on:click={(e) => (pdfOptions.chordSheet = e.detail.id === "chordSheet")}
                 />
             </CombinedInput>
             <br />
         {/if}
 
-        <div class="line">
-            <Button
-                on:click={() => (pdfOptions.text = !pdfOptions.text)}
-                disabled={!pdfOptions.slides}
-                style={pdfOptions.text ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
-                bold={false}
-                center
-                dark
-            >
-                <T id="export.text" />
-            </Button>
-            <Button
-                on:click={() => (pdfOptions.slides = !pdfOptions.slides)}
-                disabled={!pdfOptions.text}
-                style={pdfOptions.slides ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
-                bold={false}
-                center
-                dark
-            >
-                <T id="export.slides" />
-            </Button>
-        </div>
+        {#if !pdfOptions.chordSheet}
+            <div class="line">
+                <Button
+                    on:click={() => (pdfOptions.text = !pdfOptions.text)}
+                    disabled={!pdfOptions.slides}
+                    style={pdfOptions.text ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.text" />
+                </Button>
+                <Button
+                    on:click={() => (pdfOptions.slides = !pdfOptions.slides)}
+                    disabled={!pdfOptions.text}
+                    style={pdfOptions.slides ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.slides" />
+                </Button>
+            </div>
+        {/if}
 
         <CombinedInput style="margin-top: 10px;">
             <p><T id="export.title" /></p>
@@ -102,47 +104,52 @@
                 <Checkbox checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} />
             </div>
         </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.metadata" /></p>
-            <div class="alignRight">
-                <Checkbox checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
-            </div>
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.page_numbers" /></p>
-            <div class="alignRight">
-                <Checkbox checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
-            </div>
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.groups" /></p>
-            <div class="alignRight">
-                <Checkbox checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
-            </div>
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.numbers" /></p>
-            <div class="alignRight">
-                <Checkbox checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
-            </div>
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.invert" /></p>
-            <div class="alignRight">
-                <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
-            </div>
-        </CombinedInput>
+        
+        {#if !pdfOptions.chordSheet}
+            <CombinedInput>
+                <p><T id="export.metadata" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="export.page_numbers" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="export.groups" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="export.numbers" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="export.invert" /></p>
+                <div class="alignRight">
+                    <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
+                </div>
+            </CombinedInput>
+        {/if}
 
-        <CombinedInput style="margin-top: 10px;">
-            <p><T id="export.original_text_size" /></p>
-            <div class="alignRight">
-                <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
-            </div>
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="settings.font_size" /></p>
-            <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
-        </CombinedInput>
+        {#if !pdfOptions.chordSheet}
+            <CombinedInput style="margin-top: 10px;">
+                <p><T id="export.original_text_size" /></p>
+                <div class="alignRight">
+                    <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="settings.font_size" /></p>
+                <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
+            </CombinedInput>
+        {/if}
         
         <!-- Chord Sheet Options -->
         {#if pdfOptions.chordSheet}
@@ -195,17 +202,19 @@
         <Checkbox checked={pdfOptions.repeats} on:change={(e) => updatePdfOptions(e, "repeats")} />
     </div>
   </span> -->
-        <CombinedInput>
-            <p><T id="export.rows" /></p>
-            <NumberInput disabled={!pdfOptions.slides} value={pdfOptions.grid[1]} min={1} max={7} on:change={(e) => (pdfOptions.grid[1] = e.detail)} />
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="export.columns" /></p>
-            <NumberInput disabled={pdfOptions.text} value={pdfOptions.grid[0]} min={1} max={6} on:change={(e) => (pdfOptions.grid[0] = e.detail)} />
-        </CombinedInput>
+        {#if !pdfOptions.chordSheet}
+            <CombinedInput>
+                <p><T id="export.rows" /></p>
+                <NumberInput disabled={!pdfOptions.slides} value={pdfOptions.grid[1]} min={1} max={7} on:change={(e) => (pdfOptions.grid[1] = e.detail)} />
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="export.columns" /></p>
+                <NumberInput disabled={pdfOptions.text} value={pdfOptions.grid[0]} min={1} max={6} on:change={(e) => (pdfOptions.grid[0] = e.detail)} />
+            </CombinedInput>
+        {/if}
     </div>
 
-    <div>
+    <div style="flex: 1; display: flex; flex-direction: column;">
         <h4 style="text-align: center;"><T id="export.preview" /></h4>
         <br />
         <div class="paper" bind:this={paper}>
@@ -234,10 +243,15 @@
 <style>
     .paper {
         background-color: white;
-        aspect-ratio: 210/297;
-        width: 800px;
+        width: 100%;
+        height: 100%;
+        min-width: 400px;
+        max-width: 600px;
         zoom: 0.4;
         overflow: auto;
+        aspect-ratio: 210/297;
+        flex: 1;
+        align-self: center;
     }
 
     .paper::-webkit-scrollbar-track,
