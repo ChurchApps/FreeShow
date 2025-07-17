@@ -36,6 +36,8 @@
             // Chord sheet specific options
             artist: true,
             key: true,
+            showChords: true,
+            showNotes: true,
             fontSize: 15,
             chordFontSize: 15,
             margin: 20,
@@ -63,7 +65,7 @@
 
         {#if hasChords}
             <CombinedInput>
-                <p>Export Type</p>
+                <p><T id="export.type" /></p>
                 <Dropdown
                     options={pdfTypeOptions}
                     value={pdfOptions.chordSheet ? "Chord Sheet" : "Normal PDF"}
@@ -153,46 +155,60 @@
         
         <!-- Chord Sheet Options -->
         {#if pdfOptions.chordSheet}
-            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;">Chord Sheet Options</h5>
+            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;"><T id="export.chord_sheet_options" /></h5>
             
             <CombinedInput>
-                <p>Lyrics Font Size</p>
+                <p><T id="export.lyrics_font_size" /></p>
                 <NumberInput value={pdfOptions.fontSize} on:change={(e) => (pdfOptions.fontSize = e.detail)} min={8} max={24} />
             </CombinedInput>
             
             <CombinedInput>
-                <p>Chord Font Size</p>
+                <p><T id="export.chord_font_size" /></p>
                 <NumberInput value={pdfOptions.chordFontSize} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} min={6} max={20} />
             </CombinedInput>
             
             <CombinedInput>
-                <p>Page Margin (mm)</p>
+                <p><T id="export.margin" /></p>
                 <NumberInput value={pdfOptions.margin} on:change={(e) => (pdfOptions.margin = e.detail)} min={5} max={50} />
             </CombinedInput>
             
             <CombinedInput>
-                <p>Line Spacing</p>
+                <p><T id="export.line_spacing" /></p>
                 <NumberInput value={pdfOptions.spacing} on:change={(e) => (pdfOptions.spacing = e.detail)} min={1} max={3} decimals={1} />
             </CombinedInput>
             
             <CombinedInput>
-                <p>Columns per Page</p>
+                <p><T id="export.columns" /></p>
                 <NumberInput value={pdfOptions.columnsPerPage} on:change={(e) => (pdfOptions.columnsPerPage = e.detail)} min={1} max={3} />
             </CombinedInput>
             
-            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;">Metadata Display</h5>
+            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;"><T id="export.metadata_display" /></h5>
             
             <CombinedInput>
-                <p>Show Artist</p>
+                <p><T id="export.artist" /></p>
                 <div class="alignRight">
-                    <Checkbox checked={pdfOptions.artist} on:change={(e) => (pdfOptions.artist = e.detail)} />
+                    <Checkbox checked={pdfOptions.artist} on:change={(e) => updatePdfOptions(e, "artist")} />
                 </div>
             </CombinedInput>
             
             <CombinedInput>
-                <p>Show Key</p>
+                <p><T id="export.key" /></p>
                 <div class="alignRight">
-                    <Checkbox checked={pdfOptions.key} on:change={(e) => (pdfOptions.key = e.detail)} />
+                    <Checkbox checked={pdfOptions.key} on:change={(e) => updatePdfOptions(e, "key")} />
+                </div>
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p><T id="export.chords_used" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.showChords} on:change={(e) => updatePdfOptions(e, "showChords")} />
+                </div>
+            </CombinedInput>
+            
+            <CombinedInput>
+                <p><T id="export.notes" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.showNotes} on:change={(e) => updatePdfOptions(e, "showNotes")} />
                 </div>
             </CombinedInput>
         {/if}

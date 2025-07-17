@@ -176,6 +176,25 @@
         return "C"
     }
 
+    function getShowNotes(show: Show): string {
+        // Get notes from the active layout
+        const activeLayoutId = show.settings?.activeLayout
+        if (activeLayoutId && show.layouts?.[activeLayoutId]?.notes) {
+            return show.layouts[activeLayoutId].notes.trim()
+        }
+        
+        // Fallback to first layout with notes
+        if (show.layouts) {
+            for (const layout of Object.values(show.layouts)) {
+                if (layout.notes && layout.notes.trim()) {
+                    return layout.notes.trim()
+                }
+            }
+        }
+        
+        return ""
+    }
+
     function createChordLine(text: string, chords: any[]): string {
         // Create a generous character array for chord placement
         const chordArray = new Array(Math.max(text.length + 20, 80)).fill(" ")
@@ -266,13 +285,23 @@
                 </div>
 
                 <!-- Chord diagram area (if space permits) -->
-                {#if getShowChords(shows[index]).length > 0}
+                {#if options.showChords && getShowChords(shows[index]).length > 0}
                     <div class="chord-diagrams">
                         <h4>Chords Used:</h4>
                         <div class="chord-list">
                             {#each getShowChords(shows[index]) as chord}
                                 <span class="chord-name">{chord}</span>
                             {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Notes section -->
+                {#if options.showNotes && (shows[index].meta?.notes || getShowNotes(shows[index]))}
+                    <div class="notes-section">
+                        <h4>Notes:</h4>
+                        <div class="notes-content">
+                            {shows[index].meta?.notes || getShowNotes(shows[index])}
                         </div>
                     </div>
                 {/if}
@@ -567,5 +596,51 @@
         font-weight: bold;
         font-size: 10px;
         border: 1px solid #ddd;
+    }
+
+    .notes-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .notes-section h4 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: black;
+        font-weight: bold;
+    }
+
+    .notes-content {
+        font-size: 11px;
+        line-height: 1.4;
+        color: #444;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .notes-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .notes-section h4 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: black;
+        font-weight: bold;
+    }
+
+    .notes-content {
+        font-size: 11px;
+        line-height: 1.4;
+        color: #444;
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
 </style>
