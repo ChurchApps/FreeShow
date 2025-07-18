@@ -163,6 +163,7 @@
 
     function getName(values) {
         if (values.name) return values.name
+        // WIP get from "title" metadata
         if (values.text.trim().length) return trimNameFromString(values.text)
         return $dictionary.main?.unnamed
     }

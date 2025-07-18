@@ -97,7 +97,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
     manage_groups: { label: "popup.manage_groups", icon: "edit" },
     manage_metadata: { label: "popup.manage_metadata", icon: "edit" },
-    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "SEPERATOR", "LOAD_slide_groups"] }, // "remove_group" (currently broken & probably not needed)
+    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "SEPERATOR", "LOAD_slide_groups"] }, // "remove_group" (currently broken & probably not needed) | , "SEPERATOR", "manage_groups"
     editSlideText: { label: "menu.edit", icon: "edit" }, // actions.edit_slide_text
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },

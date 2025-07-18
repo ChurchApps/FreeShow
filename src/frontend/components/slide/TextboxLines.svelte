@@ -237,7 +237,7 @@
                     class="break"
                     class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                    style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}"
+                    style="{style ? lineStyle : ''}{style ? line.align : ''}{listStyle}{item?.list?.enabled ? `color: ${getStyles(line.text[0].style).color || ''};` : ''}"
                 >
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}

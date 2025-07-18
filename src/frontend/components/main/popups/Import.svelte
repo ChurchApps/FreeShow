@@ -19,8 +19,8 @@
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
 
-    const text_formats: { name: string; extensions: string[]; id: string; tutorial?: string; popup?: Popups }[] = [
-        { name: "$formats.clipboard", extensions: [], id: "clipboard" },
+    const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string; popup?: Popups }[] = [
+        { name: "$formats.clipboard", extensions: [], id: "clipboard", shortcut: "Ctrl+Alt+I" },
         { name: "$formats.text", extensions: ["txt"], id: "txt" },
         { name: "CSV", extensions: ["csv"], id: "csv" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
@@ -120,6 +120,7 @@
                     displayTutorial(format)
                 }
             }}
+            title={format.shortcut ? ` [${format.shortcut}]` : ""}
             bold={false}
             center
         >
