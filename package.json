@@ -10,9 +10,9 @@
     "scripts": {
         "postinstall": "electron-builder install-app-deps",
         "---DEVELOPMENT---": "",
-        "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
-        "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
-        "build:frontend:dev": "cross-env NODE_ENV=development rollup --config config/building/rollup.config.mjs --watch",
+        "start": "node scripts/start.js",
+        "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
+        "build:frontend:dev": "npx cross-env NODE_ENV=development vite",
         "start:electron": "npm-run-all -p build:electron:dev:watch start:electron:dev",
         "build:electron:dev:watch": "tsc -w --p config/typescript/tsconfig.electron.json",
         "start:electron:dev": "npm-run-all -s build:electron:dev start:electron:script start:electron:run",
@@ -23,7 +23,7 @@
         "prebuild": "cross-env NODE_ENV=production node scripts/preBuild.js",
         "build": "cross-env NODE_ENV=production npm-run-all -s build:frontend:prod build:electron:prod",
         "postbuild": "cross-env NODE_ENV=production node scripts/postBuild.js",
-        "build:frontend:prod": "cross-env NODE_ENV=production rollup --config config/building/rollup.config.mjs",
+        "build:frontend:prod": "cross-env NODE_ENV=production vite build",
         "build:electron:prod": "cross-env NODE_ENV=production tsc --p config/typescript/tsconfig.electron.prod.json",
         "---RELEASE---": "",
         "prerelease": "npm run build",
@@ -56,6 +56,7 @@
         "@rollup/plugin-node-resolve": "^15.3.1",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^12.1.2",
+        "@sveltejs/vite-plugin-svelte": "^2.5.3",
         "@tsconfig/svelte": "^2.0.1",
         "@types/adm-zip": "^0.5.7",
         "@types/ebml": "^3.0.5",
@@ -93,7 +94,8 @@
         "svelte-preprocess": "^4.10.7",
         "tmp": "^0.2.3",
         "tslib": "^2.8.1",
-        "typescript": "^4.9.5"
+        "typescript": "^4.9.5",
+        "vite": "^4.5.14"
     },
     "dependencies": {
         "@discordjs/opus": "^0.10.0",
