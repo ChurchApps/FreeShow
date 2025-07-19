@@ -128,7 +128,6 @@ function createMain() {
 
 let isLoaded = false
 function mainWindowLoaded() {
-    console.log("mainWindowLoaded called - frontend sent LOADED message")
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
     isLoaded = true
 
@@ -151,20 +150,11 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
             await waitForBundle()
             openDevTools(window)
         }
-        window.loadURL("http://127.0.0.1:3000").catch(loadingFailed)
+        window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
     window.webContents.on("did-finish-load", () => {
-        console.log("Window finished loading, sending startup message")
         window.webContents.send(STARTUP, { channel: "TYPE", data: type })
-    })
-    
-    window.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
-        console.error("Window failed to load:", errorCode, errorDescription)
-    })
-    
-    window.webContents.on("console-message", (_event, _level, message) => {
-        console.log("Browser console:", message)
     })
 
     function loadingFailed(err: Error) {
