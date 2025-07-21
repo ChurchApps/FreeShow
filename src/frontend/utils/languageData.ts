@@ -24,6 +24,7 @@ export const languages = {
     cs_CZ: "Čeština", // Czech (Czech Republic)
     fi: "Suomi", // Finnish
     ar: "العربية", // Arabic
+    lt: "Lietuvių kalba" // Lithuanian
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -55,6 +56,7 @@ export const replace = {
     cs_CZ: ["cs-CZ", "cz", "cs"],
     fi: ["fi"],
     ar: ["ar"],
+    lt: ["lt"]
 }
 
 export const languageFlags = {
@@ -82,4 +84,5 @@ export const languageFlags = {
     cs_CZ: "🇨🇿",
     fi: "🇫🇮",
     ar: "🇪🇬",
+    lt: "🇱🇹"
 }

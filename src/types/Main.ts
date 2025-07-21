@@ -12,6 +12,7 @@ export interface OS {
 export interface Option {
     name: string
     extra?: string
+    extraInfo?: string
     data?: any
     id?: string | null
     icon?: string

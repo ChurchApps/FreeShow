@@ -71,6 +71,7 @@
     else stopBlinking()
     onDestroy(stopBlinking)
 
+    const INTERVAL = 1200
     let blinkingOff = false
     function startBlinking() {
         if (blinkingInterval) return
@@ -78,8 +79,8 @@
             blinkingOff = true
             setTimeout(() => {
                 blinkingOff = false
-            }, 250)
-        }, 500)
+            }, INTERVAL * 0.2)
+        }, INTERVAL)
     }
 
     function stopBlinking() {
