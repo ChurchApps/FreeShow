@@ -22,7 +22,7 @@ const inspectorConfig = {
 }
 
 export default [
-    mainApp(),
+    // mainApp(), // Now handled by Vite
     webServer("remote", { typescript: true }),
     webServer("stage"),
     webServer("controller"),
