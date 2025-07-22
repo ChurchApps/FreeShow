@@ -11,7 +11,9 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     let value = "#FFFFFF"
-    $: console.log(value)
+    let enableNoColor = $selected.id === "show"
+    console.log($selected, enableNoColor)
+
     onMount(() => {
         if ($selected.id === "slide") {
             let firstSelected = $selected.data[0]
@@ -91,7 +93,7 @@
     }
 </script>
 
-<Color {value} on:input={(e) => (value = e.detail)} visible />
+<Color {value} on:input={(e) => (value = e.detail)} {enableNoColor} visible />
 
 <CombinedInput style="margin-top: 10px;">
     <Button on:click={updateColor} style="width: 100%;" dark center>

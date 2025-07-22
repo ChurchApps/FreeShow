@@ -99,6 +99,12 @@
                     {#if option.extra}
                         ({option.extra})
                     {/if}
+
+                    {#if option.extraInfo}
+                        <div class="extra">
+                            {option.extraInfo}
+                        </div>
+                    {/if}
                 </span>
             {/each}
         </div>
@@ -181,6 +187,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: var(--border-radius);
+
+        position: relative;
     }
 
     button {
@@ -201,5 +209,23 @@
     span.active {
         background-color: var(--focus);
         color: var(--secondary);
+    }
+
+    .dropdown .extra {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+
+        display: flex;
+        justify-content: end;
+        align-items: center;
+        padding: 0 10px;
+
+        font-size: 0.8em;
+        background-color: transparent;
+        opacity: 0.5;
+
+        pointer-events: none;
     }
 </style>

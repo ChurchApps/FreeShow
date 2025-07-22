@@ -83,6 +83,11 @@
     {#if colorsList.length || (!showDisabled && !custom)}
         <div class="picker" style="padding: 10px;" class:visible class:clipRight>
             <div class="colors">
+                {#if enableNoColor}
+                    <div class="pickColor noColor" class:active={!value} title={$dictionary.settings?.remove} tabindex="0" role="button" aria-label="Remove color" on:click={() => change("", true)} on:keydown={triggerClickOnEnterSpace}>
+                        <Icon id="close" white />
+                    </div>
+                {/if}
                 {#each colorsList as color}
                     <div
                         class="pickColor"

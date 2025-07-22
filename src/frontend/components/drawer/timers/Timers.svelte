@@ -117,7 +117,7 @@
         </Button> -->
                         {#if timer.type === "counter"}
                             <Button on:click={() => resetTimer(timer.id)} title={$dictionary.media?.stop} disabled={!$activeTimers.find((a) => a.id === timer.id)}>
-                                <Icon id="stop" />
+                                <Icon id="stop" white={!isPlaying} />
                             </Button>
                         {/if}
                         <!-- <Button on:click={() => deleteTimer(id)}>
