@@ -1,4 +1,4 @@
-const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } = require("fs")
+const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync } = require("fs")
 const { join } = require("path")
 
 // app build file paths
@@ -10,6 +10,7 @@ deleteFolderRecursive(buildSveltePath)
 deleteFolderRecursive(buildElectronPath)
 deletePublicFile("preload.ts")
 deletePublicFile("preload.js.map")
+restoreDevelopmentHTML()
 
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
@@ -32,4 +33,14 @@ function deletePublicFile(fileName) {
     if (!existsSync(filePath)) return
 
     unlinkSync(filePath)
+}
+
+function restoreDevelopmentHTML() {
+    const sourceIndexPath = join(__dirname, "..", "public", "index.html")
+    const devIndexPath = join(__dirname, "..", "public", "index.dev.html")
+    
+    if (existsSync(devIndexPath)) {
+        const devContent = readFileSync(devIndexPath, "utf8")
+        writeFileSync(sourceIndexPath, devContent)
+    }
 }

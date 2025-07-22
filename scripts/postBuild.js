@@ -52,9 +52,9 @@ function copyPublicFolderAndMinify(folderPath, destinationPath) {
         // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
         // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
 
-        if (/\.png|\.ico|\.icns|\.html$/.exec(curPath)) {
-            const pngFile = readFileSync(curPath)
-            writeFileSync(newPath, pngFile)
+        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json$/.exec(curPath)) {
+            const fileContent = readFileSync(curPath)
+            writeFileSync(newPath, fileContent)
         }
     }
 }
@@ -163,11 +163,24 @@ function renameOpusBuild() {
     })
 }
 
+// Copy Vite-processed index.html to the correct location and fix paths
+function copyProductionHTML() {
+    // Copy the production HTML to replace the main index.html for packaging
+    const sourceIndexPath = join(__dirname, "..", "public", "index.html")
+    const prodIndexPath = join(__dirname, "..", "public", "index.prod.html")
+    
+    if (existsSync(prodIndexPath)) {
+        const prodContent = readFileSync(prodIndexPath, "utf8")
+        writeFileSync(sourceIndexPath, prodContent)
+    }
+}
+
 // EXECUTE
 
 const bundledElectronPath = join(__dirname, "..", "build")
 minifyJSFiles(getAllJSFiles(bundledElectronPath))
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
+copyProductionHTML() // Copy production HTML for packaging
 removeTsConfigs()
 
 // fix for OPUS electron vs node env
