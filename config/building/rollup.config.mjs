@@ -21,12 +21,15 @@ const inspectorConfig = {
     color: "#ff3c00",
 }
 
+// DEPRECATED: WebServers are now built using Vite (see vite.config.servers.mjs)
+// This configuration is kept for reference only
 export default [
     // mainApp(), // Now handled by Vite
-    webServer("remote", { typescript: true }),
-    webServer("stage"),
-    webServer("controller"),
-    webServer("output_stream"),
+    // Servers now built with Vite:
+    // webServer("remote", { typescript: true }),
+    // webServer("stage"),
+    // webServer("controller"),
+    // webServer("output_stream"),
     // webServer("cam"),
 ]
 

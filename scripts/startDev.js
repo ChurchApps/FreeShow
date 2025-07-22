@@ -84,13 +84,23 @@ process.on('exit', () => {
 // Start the development processes
 const rootDir = path.resolve(__dirname, '..')
 
-// Start rollup in watch mode
-startProcess(
-    'rollup',
-    'npx',
-    ['cross-env', 'NODE_ENV=development', 'rollup', '--config', 'config/building/rollup.config.mjs', '--watch', '--no-watch.clearScreen'],
-    { cwd: rootDir }
-)
+// Build servers once at startup (not in watch mode to avoid conflicts)
+console.log('[SHUTDOWN-DEBUG] startDev.js: Building server files once at startup')
+const buildServers = spawn('node', ['scripts/createServerFiles.js'], {
+    stdio: 'inherit',
+    shell: true,
+    cwd: rootDir,
+    env: { ...process.env, NODE_ENV: 'development' }
+})
+
+buildServers.on('exit', (code) => {
+    if (code !== 0) {
+        console.log('[SHUTDOWN-DEBUG] startDev.js: Server build failed, shutting down')
+        shutdown()
+        return
+    }
+    console.log('[SHUTDOWN-DEBUG] startDev.js: Server files built successfully')
+})
 
 // Start TypeScript compiler in watch mode
 startProcess(
@@ -135,6 +145,6 @@ setTimeout(() => {
             })
         }
     })
-}, 2000) // Give rollup time to build initially
+}, 2000) // Give vite time to build initially
 
 console.log('[SHUTDOWN-DEBUG] startDev.js: Setup complete, processes starting')

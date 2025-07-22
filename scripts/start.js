@@ -27,37 +27,53 @@ preBuild.on('close', (code) => {
         process.exit(code);
     }
 
-    console.log('Pre-build complete, starting development servers...');
+    console.log('Pre-build complete, building server files...');
 
-    // Start Vite
-    const vite = spawn('npx', ['vite'], {
+    // Build server files first
+    const buildServers = spawn('node', ['scripts/createServerFiles.js'], {
         stdio: 'inherit',
-        shell: true,
-        env: process.env
+        shell: false,
+        env: { ...process.env, NODE_ENV: 'development' }
     });
 
-    // Start Electron build and watch
-    setTimeout(() => {
-        console.log('Starting Electron...');
-        const electron = spawn('npm', ['run', 'start:electron'], {
+    buildServers.on('close', (serverCode) => {
+        if (serverCode !== 0) {
+            console.error('Server build failed');
+            process.exit(serverCode);
+        }
+
+        console.log('Server files built, starting development servers...');
+
+        // Start Vite
+        const vite = spawn('npx', ['vite'], {
             stdio: 'inherit',
             shell: true,
             env: process.env
         });
 
-        electron.on('error', (err) => {
-            console.error('Failed to start Electron:', err);
+        // Start Electron build and watch
+        setTimeout(() => {
+            console.log('Starting Electron...');
+            const electron = spawn('npm', ['run', 'start:electron'], {
+                stdio: 'inherit',
+                shell: true,
+                env: process.env
+            });
+
+            electron.on('error', (err) => {
+                console.error('Failed to start Electron:', err);
+            });
+        }, 5000); // Give Vite more time to start
+
+        vite.on('error', (err) => {
+            console.error('Failed to start Vite:', err);
         });
-    }, 5000); // Give Vite more time to start
 
-    vite.on('error', (err) => {
-        console.error('Failed to start Vite:', err);
-    });
-
-    // Handle process termination
-    process.on('SIGINT', () => {
-        console.log('\nShutting down development servers...');
-        vite.kill();
-        process.exit(0);
+        // Handle process termination
+        process.on('SIGINT', () => {
+            console.log('\nShutting down development servers...');
+            vite.kill();
+            process.exit(0);
+        });
     });
 });
