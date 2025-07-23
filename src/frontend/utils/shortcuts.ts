@@ -250,16 +250,22 @@ export const previewShortcuts = {
         else setOutput("transition", null)
     },
     PageDown: (e: KeyboardEvent) => {
-        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
+        // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        // if (!get(showsCache)[currentShow?.id || ""]) {
+        //     const outSlide = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide
+        //     if (!nooutput && outSlide?.type !== "ppt" && outSlide?.type !== "pdf") return
+        // }
         if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         nextSlideIndividual(e)
     },
     PageUp: (e: KeyboardEvent) => {
-        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
+        // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        // if (!get(showsCache)[currentShow?.id || ""]) {
+        //     const outSlide = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide
+        //     if (!nooutput && outSlide?.type !== "ppt" && outSlide?.type !== "pdf") return
+        // }
         if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()

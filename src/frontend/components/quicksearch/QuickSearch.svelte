@@ -51,13 +51,23 @@
                     <div class="values">
                         {#each values as value, i}
                             <Button
-                                style="gap: 10px;font-size: 1em;{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
+                                style="gap: 10px;font-size: 1em;color: {value.color || 'unset'};{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
                                 active={i === selectedIndex}
                                 on:click={() => selectQuicksearchValue(value)}
                                 bold={false}
                             >
                                 <Icon id={value.icon || value.type} />
-                                <p title={value.name}>{value.name}</p>
+                                <p title={value.name}>
+                                    {value.name}
+
+                                    {#if value.aliasMatch && !value.aliasMatch.startsWith("-")}
+                                        <span style="opacity: 0.5;font-style: italic;margin-left: 5px;font-size: 0.8em;">{value.aliasMatch}</span>
+                                    {/if}
+
+                                    {#if value.id.includes("http")}
+                                        <Icon id="launch" size={0.8} white />
+                                    {/if}
+                                </p>
                             </Button>
                         {/each}
                     </div>

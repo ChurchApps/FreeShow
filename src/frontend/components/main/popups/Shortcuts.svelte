@@ -40,6 +40,10 @@
         "actions.focus_mode": `${ctrl} + shift + f`,
         "show.change_view": `${ctrl} + shift + v`,
 
+        alt: "SEPERATOR",
+
+        "Show Import from Clipboard": `${ctrl} + alt + i`,
+
         clear: "SEPERATOR",
 
         "actions.remove_selection": "esc",
@@ -79,7 +83,13 @@
             <hr />
         {:else}
             <div>
-                <p><T {id} /></p>
+                <p>
+                    {#if id.includes(".")}
+                        <T {id} />
+                    {:else}
+                        {id}
+                    {/if}
+                </p>
                 <span class="shortcut">{shortcut}</span>
             </div>
         {/if}

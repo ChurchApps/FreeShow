@@ -160,7 +160,7 @@ export const dropActions = {
 
             // add folders
             if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
-        } else if (drag.id === "audio") {
+        } else if (drag.id === "audio" || drag.id === "audio_effect") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {
             data = data.map((a) => ({ id: a, type: "overlay" }))
@@ -298,7 +298,7 @@ export const dropActions = {
         }
 
         // audio playlist
-        if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
+        if (get(audioPlaylists)[drop.data] && (drag.id === "audio" || drag.id === "audio_effect")) {
             h.id = "UPDATE"
             h.location = { page: "drawer", id: "audio_playlist_key" }
 
@@ -538,6 +538,7 @@ const slideDrop = {
             history(h)
         })
     },
+    audio_effect: ({ drag, drop }: Data, h: History) => slideDrop.audio({ drag, drop }, h),
     microphone: ({ drag, drop }: Data, h: History) => {
         if (drop.index === undefined) return
         h.id = "SHOW_LAYOUT"

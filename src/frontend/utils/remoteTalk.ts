@@ -35,7 +35,7 @@ export const receiveREMOTE: any = {
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
-        initializeRemote()
+        initializeRemote(msg.id)
 
         return msg
     },
@@ -48,7 +48,7 @@ export const receiveREMOTE: any = {
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
-        initializeRemote()
+        initializeRemote(msg.id)
 
         return msg
     },
@@ -172,7 +172,7 @@ export const receiveREMOTE: any = {
 }
 
 let oldOutSlide = ""
-export function initializeRemote() {
+export async function initializeRemote(id: string) {
     send(REMOTE, ["ACCESS"])
 
     sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
@@ -185,10 +185,16 @@ export function initializeRemote() {
 
     const outSlide = currentOutput?.out?.slide
     const out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
-    if (out.slide !== null && outSlide?.id) {
+    if (out.slide !== null && outSlide?.id && outSlide?.id !== "temp") {
         oldOutSlide = outSlide.id
-        out.show = get(showsCache)[oldOutSlide] || {}
+        // output & thumbnail
+        out.show = await convertBackgrounds(get(showsCache)[oldOutSlide] || {})
         out.show.id = oldOutSlide
+
+        // slide thumbnails
+        setTimeout(async () => {
+            window.api.send(REMOTE, await receiveREMOTE.SHOW({ channel: "SHOW", id, data: oldOutSlide }))
+        })
     }
     send(REMOTE, ["OUT"], out)
 
@@ -200,7 +206,13 @@ export async function convertBackgrounds(show: Show, noLoad = false) {
     if (!show?.media) return {}
 
     show = clone(show)
-    const mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+    let mediaIds: string[] = []
+    show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
+        if (a.background) mediaIds.push(a.background)
+        Object.values(a.children || {}).forEach((child) => {
+            if (child.background) mediaIds.push(child.background)
+        })
+    })
 
     await Promise.all(
         mediaIds.map(async (id) => {

@@ -41,7 +41,7 @@
     $: outline = !!$playingAudio[path]
 </script>
 
-<SelectElem id="audio_effect" data={{ path, name }} style="width: calc(20% - 5px);">
+<SelectElem id="audio_effect" data={{ path, name }} style="width: calc(20% - 5px);" draggable>
     <Button
         class="context #audio_effect_button"
         {outline}

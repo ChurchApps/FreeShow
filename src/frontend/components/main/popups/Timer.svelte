@@ -108,6 +108,7 @@
 
     function toggleOverflow(e: any) {
         timer.overflow = e.target.checked
+        if (timer.overflow) overflowMenuOpened = true
     }
 
     const isChecked = (e: any) => e.target.checked
@@ -163,6 +164,10 @@
     function getSeconds(number: number) {
         return number - getMinutes(number) * 60
     }
+
+    let overflowMenuOpened = false
+
+    const MAX_MINUTES = 60 * 24 * 30 // 365
 </script>
 
 {#if !currentTimer?.id && !chosenType}
@@ -194,6 +199,69 @@
 
     {#if timer.type === "counter"}
         <CombinedInput style="margin-top: 10px;" textWidth={50}>
+            <div class="timerbox" style="border-right: 5px solid var(--focus);">
+                <p style="border: none;min-height: unset;" class="part">
+                    <T id="timer.from" />
+
+                    {#if Number(fromTime.h) > 0 || Number(fromTime.d) > 0}
+                        <span style="border: none;min-width: unset;flex: 0;font-weight: normal;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.9em;">
+                            {#if Number(fromTime.d)}{fromTime.d},
+                            {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
+                        </span>
+                    {/if}
+                </p>
+
+                <div style="border: none;" class="numbers">
+                    <NumberInput
+                        title={$dictionary.timer?.minutes}
+                        visibleTitle
+                        value={timer.start === undefined ? 5 : getMinutes(timer.start)}
+                        max={MAX_MINUTES}
+                        on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)}
+                        buttons={false}
+                    /><span style="padding: 0 10px;font-size: 0.9em;line-height: 1.7;border: none;">:</span><NumberInput
+                        title={$dictionary.timer?.seconds}
+                        visibleTitle
+                        value={timer.start === undefined ? 0 : getSeconds(timer.start)}
+                        max={59}
+                        on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))}
+                        buttons={false}
+                    />
+                </div>
+            </div>
+            <div class="timerbox">
+                <p style="border: none;min-height: unset;" class="part">
+                    <T id="timer.to" />
+
+                    {#if Number(toTime.h) > 0 || Number(toTime.d) > 0}
+                        <span style="border: none;min-width: unset;flex: 0;font-weight: normal;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.9em;">
+                            {#if Number(toTime.d)}{toTime.d},
+                            {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
+                        </span>
+                    {/if}
+                </p>
+
+                <div style="border: none;" class="numbers">
+                    <NumberInput
+                        title={$dictionary.timer?.minutes}
+                        visibleTitle
+                        value={timer.end === undefined ? 5 : getMinutes(timer.end)}
+                        max={MAX_MINUTES}
+                        on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)}
+                        buttons={false}
+                    /><span style="padding: 0 10px;font-size: 0.9em;line-height: 1.7;border: none;">:</span><NumberInput
+                        title={$dictionary.timer?.seconds}
+                        visibleTitle
+                        value={timer.end === undefined ? 0 : getSeconds(timer.end)}
+                        max={59}
+                        on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))}
+                        buttons={false}
+                    />
+                </div>
+            </div>
+        </CombinedInput>
+
+        <!-- <CombinedInput style="margin-top: 10px;" textWidth={50}>
             <p>
                 <span style="border: none;display: flex;align-items: center;min-width: 100px;"><T id="timer.from" /></span>
                 <span style="border: none;display: flex;align-items: center;justify-content: end;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
@@ -201,7 +269,7 @@
                     {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
                 </span>
             </p>
-            <NumberInput title={$dictionary.timer?.minutes} value={timer.start === undefined ? 5 : getMinutes(timer.start)} max={60 * 24 * 365} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
+            <NumberInput title={$dictionary.timer?.minutes} value={timer.start === undefined ? 5 : getMinutes(timer.start)} max={MAX_MINUTES} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
             <NumberInput title={$dictionary.timer?.seconds} value={timer.start === undefined ? 0 : getSeconds(timer.start)} max={59} on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
         </CombinedInput>
         <CombinedInput textWidth={50}>
@@ -212,9 +280,9 @@
                     {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
                 </span>
             </p>
-            <NumberInput title={$dictionary.timer?.minutes} value={timer.end === undefined ? 5 : getMinutes(timer.end)} max={60 * 24 * 365} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
+            <NumberInput title={$dictionary.timer?.minutes} value={timer.end === undefined ? 5 : getMinutes(timer.end)} max={MAX_MINUTES} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
             <NumberInput title={$dictionary.timer?.seconds} value={timer.end === undefined ? 0 : getSeconds(timer.end)} max={59} on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
-        </CombinedInput>
+        </CombinedInput> -->
 
         <!-- <div class="preview">
         <p><T id="timer.preview" /></p>
@@ -241,13 +309,21 @@
         </CombinedInput>
     {/if}
 
+    <!-- style="margin-top: 5px;" -->
     <CombinedInput textWidth={50}>
         <p><T id="timer.overflow" /></p>
         <div class="alignRight">
             <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
         </div>
+        <Button style="padding: 0 8.5px !important" class="submenu_open" disabled={!timer.overflow} on:click={() => (overflowMenuOpened = !overflowMenuOpened)}>
+            {#if overflowMenuOpened && timer.overflow}
+                <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+            {:else}
+                <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+            {/if}
+        </Button>
     </CombinedInput>
-    {#if timer.overflow}
+    {#if timer.overflow && overflowMenuOpened}
         <CombinedInput textWidth={50}>
             <p><T id="timer.overflow_color" /></p>
             <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
@@ -278,8 +354,8 @@
 
             <span style="border: none;flex: unset;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
                 {#if timer.type === "counter"}
-                    {#if Number(fromTime.d)}{fromTime.d},
-                    {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
+                    <!-- {#if Number(fromTime.d)}{fromTime.d},
+                    {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s} -->
                 {:else if timer.type === "clock"}
                     {#if Number(timeCountdownTime.d)}{timeCountdownTime.d},
                     {/if}{#if Number(timeCountdownTime.h)}{timeCountdownTime.h}:{/if}{timeCountdownTime.m}:{timeCountdownTime.s}
@@ -312,6 +388,29 @@
         gap: 10px;
         flex-direction: column;
         justify-content: center;
+    }
+
+    .timerbox {
+        flex: 1;
+        min-height: unset;
+    }
+
+    .part {
+        width: 100%;
+        padding: 5px 10px;
+        /* justify-content: center; */
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+
+    .numbers {
+        display: flex;
+        font-size: 3.5em;
+        font-weight: bold;
+    }
+    .numbers :global(input) {
+        /* padding: 16px 5px; */
+        padding: 6px 5px 22px 5px;
     }
 
     /* time input */

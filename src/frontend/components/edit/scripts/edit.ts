@@ -69,6 +69,16 @@ export function getBackgroundOpacity(itemEditValues, data) {
 }
 
 const drawerPages: { [key: string]: DrawerTabIds } = {
+    shows: "shows",
+    media: "media",
+    audio: "audio",
+    overlays: "overlays",
+    effects: "overlays",
+    templates: "templates",
+    scripture: "scripture",
+    calendar: "calendar",
+    functions: "functions",
+
     online: "media",
     screens: "media",
     cameras: "media",
@@ -76,10 +86,12 @@ const drawerPages: { [key: string]: DrawerTabIds } = {
     microphones: "audio",
     audio_streams: "audio",
 
+    action: "calendar",
+
     actions: "functions",
     timer: "functions",
     variables: "functions",
-    triggers: "functions",
+    triggers: "functions"
 }
 export function openDrawer(id: string, openPopup = false) {
     activePage.set("show")
@@ -88,12 +100,21 @@ export function openDrawer(id: string, openPopup = false) {
     const drawerPageId = drawerPages[id]
     if (!drawerPageId) return
 
-    drawerTabsData.update((a) => {
-        if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
-        a[drawerPageId].activeSubTab = id
+    // first subtab
+    if (id === "calendar") id = "event"
+    else if (id === "functions") id = "actions"
+    else if (id === "scripture")
+        id = "" // Object.keys(get(scriptures))[0]
+    else if (id === drawerPageId) id = "all"
 
-        return a
-    })
+    if (id) {
+        drawerTabsData.update((a) => {
+            if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
+            a[drawerPageId].activeSubTab = id
+
+            return a
+        })
+    }
 
     activeDrawerTab.set(drawerPageId)
 

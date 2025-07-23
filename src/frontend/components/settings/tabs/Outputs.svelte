@@ -5,7 +5,7 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, activeTriggerFunction, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
@@ -262,6 +262,7 @@
 
     // CREATE
 
+    $: if ($activeTriggerFunction === "create_output") createOutput({})
     async function createOutput(e: any) {
         const skipPopup = e.ctrlKey || e.metaKey
         let stageLayouts = keysToID($stageShows)
@@ -603,7 +604,8 @@
     <div style="display: flex;">
         <Button style="width: 100%;" on:click={createOutput} center>
             <Icon id="add" right />
-            <T id="settings.add" />
+            <!-- <T id="settings.add" /> -->
+            <T id="settings.new_output" />
         </Button>
     </div>
 </div>

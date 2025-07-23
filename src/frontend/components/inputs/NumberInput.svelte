@@ -6,6 +6,7 @@
 
     export let value: number
     export let title = ""
+    export let visibleTitle = false
     export let style = ""
     export let inputMultiplier = 1
     export let decimals = 0
@@ -98,6 +99,12 @@
 
     <span class="input" {title}>
         <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
+
+        {#if visibleTitle}
+            <div class="title">
+                {title}
+            </div>
+        {/if}
     </span>
 
     {#if buttons}
@@ -132,9 +139,22 @@
         height: 100%;
         /* font-size: 1.5em; */
         /* font-weight: bold; */
+
+        position: relative;
     }
 
     .input :global(input) {
         padding: 5px;
+    }
+
+    .title {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 0.18em;
+
+        pointer-events: none;
     }
 </style>

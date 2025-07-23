@@ -309,18 +309,18 @@ export function resetVariable(id: string) {
 export function getTimersDetailed() {
     const allTimers = get(timers)
     const activeTimersList = get(activeTimers)
-    
-    return keysToID(allTimers).map(timer => ({
+
+    return keysToID(allTimers).map((timer) => ({
         ...timer,
-        isActive: activeTimersList.some(activeTimer => activeTimer.id === timer.id),
-        currentTime: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.currentTime,
-        paused: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.paused
+        isActive: activeTimersList.some((activeTimer) => activeTimer.id === timer.id),
+        currentTime: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.currentTime,
+        paused: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.paused
     }))
 }
 
 export function pauseTimerById(id: string) {
     if (get(outLocked)) return
-    
+
     const timer = get(timers)[id]
     if (!timer) return
 
@@ -336,7 +336,7 @@ export function pauseTimerById(id: string) {
 
 export function pauseTimerByName(name: string) {
     if (get(outLocked)) return
-    
+
     if (name.includes("{")) name = getDynamicValue(name)
     const timersList = sortByClosestMatch(keysToID(get(timers)), name)
     const timerId = timersList[0]?.id
@@ -347,7 +347,7 @@ export function pauseTimerByName(name: string) {
 
 export function stopTimerById(id: string) {
     if (get(outLocked)) return
-    
+
     const timer = get(timers)[id]
     if (!timer) return
 
@@ -360,7 +360,7 @@ export function stopTimerById(id: string) {
 
 export function stopTimerByName(name: string) {
     if (get(outLocked)) return
-    
+
     if (name.includes("{")) name = getDynamicValue(name)
     const timersList = sortByClosestMatch(keysToID(get(timers)), name)
     const timerId = timersList[0]?.id
@@ -558,21 +558,96 @@ export function timerSeekTo(data: API_seek) {
 
 // SPECIAL
 
+function normalize(str: string) {
+    return str
+        .replace(/[ \-'’".!?]/g, "") // remove all spaces, and special characters
+        .toLowerCase()
+        .normalize("NFD") // Decompose accents
+        .replace(/[\u0300-\u036f]/g, "") // Remove accent marks
+}
+
 export function sortByClosestMatch(array: any[], value: string, key = "name") {
     if (!value) return array
 
-    // the object key must contain the input string
-    array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
+    const normalizedValue = normalize(value)
 
-    function similaritySort(a, b) {
-        const similarityA = 1 / (1 + levenshteinDistance(a[key].toLowerCase(), value.toLowerCase()))
-        const similarityB = 1 / (1 + levenshteinDistance(b[key].toLowerCase(), value.toLowerCase()))
+    // Filter: keep if name or any alias includes the value
+    array = array.filter((a) => {
+        const keyMatch = a[key] && normalize(a[key]).includes(normalizedValue)
+        const aliasMatch = Array.isArray(a.aliases) && a.aliases.some((alias) => normalize(alias).includes(normalizedValue))
+        return keyMatch || aliasMatch
+    })
 
-        return similarityB - similarityA
+    function getSimilarityScoreAndSource(item: any) {
+        const sources: { source: string; isAlias: boolean }[] = []
+
+        if (item[key]) {
+            sources.push({ source: item[key], isAlias: false })
+        }
+
+        if (Array.isArray(item.aliases)) {
+            for (const alias of item.aliases) {
+                sources.push({ source: alias, isAlias: true })
+            }
+        }
+
+        let bestScore = -Infinity
+        let bestSource: string | undefined
+        let isAlias = false
+
+        for (const { source, isAlias: aliasFlag } of sources) {
+            const score = normalizedSimilarity(normalize(source), normalizedValue)
+            if (score > bestScore) {
+                bestScore = score
+                bestSource = source
+                isAlias = aliasFlag
+            }
+        }
+
+        return { score: bestScore, alias: isAlias ? bestSource : undefined }
     }
 
-    return array.sort(similaritySort)
+    array = array.map((item) => {
+        const { score, alias } = getSimilarityScoreAndSource(item)
+        return {
+            ...item,
+            _similarityScore: score,
+            ...(alias ? { aliasMatch: alias } : {})
+        }
+    })
+
+    return array.sort((a, b) => b._similarityScore - a._similarityScore).map(({ _similarityScore, ...rest }) => rest)
 }
+
+// export function sortByClosestMatch(array: any[], value: string, key = "name") {
+//     if (!value) return array
+
+//     const normalizedValue = normalize(value)
+
+//     // Filter: check key or any alias includes the normalized value
+//     array = array.filter((a) => {
+//         const keyMatch = a[key] && normalize(a[key]).includes(normalizedValue)
+//         const aliasMatch = Array.isArray(a.aliases) && a.aliases.some((alias) => normalize(alias.toLowerCase().replaceAll(" ", "")).includes(normalizedValue))
+//         return keyMatch || aliasMatch
+//     })
+
+//     function similarityScore(item) {
+//         const targets = [...(item[key] ? [normalize(item[key])] : []), ...(Array.isArray(item.aliases) ? item.aliases.map(a => normalize(a).toLowerCase().replaceAll(" ", "")) : [])]
+
+//         const match = Math.max(...targets.map((t) => 1 / (1 + levenshteinDistance(t, normalizedValue))))
+//         // if (match !== normalize(item[key]))
+//         return match
+//     }
+
+//     return array.sort((a, b) => similarityScore(b) - similarityScore(a))
+// }
+
+function normalizedSimilarity(a: string, b: string): number {
+    const dist = levenshteinDistance(a, b)
+    const maxLength = Math.max(a.length, b.length)
+    return maxLength === 0 ? 1 : 1 - dist / maxLength
+}
+
 // WIP duplicate of files.ts
 function levenshteinDistance(a, b) {
     if (a.length === 0) return b.length
