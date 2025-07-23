@@ -39,6 +39,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     shortcuts: { label: "popup.shortcuts", icon: "shortcut", shortcuts: ["Ctrl+?"] },
     rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
     delete: { label: "actions.delete", icon: "delete", shortcuts: ["Del"] },
+    delete_remove: { label: "actions.remove", icon: "remove", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
@@ -204,8 +205,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "category_action", "use_as_archive"],
     category_overlays_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_templates_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
-    category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
-    category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
+    category_media_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
+    category_audio_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
@@ -308,9 +309,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
-    stage_item: ["rearrange_stage", "SEPERATOR", "duplicate", "delete"],
+    stage_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     stage_item_output: ["rearrange_stage", "SEPERATOR", "delete"],
-    stage_slide_text_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 

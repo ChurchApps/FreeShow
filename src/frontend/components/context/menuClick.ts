@@ -275,6 +275,7 @@ const clickActions = {
 
         console.error("COULD NOT DELETE", obj)
     },
+    delete_remove: (obj: ObjData) => clickActions.delete(obj),
     delete_all: (obj: ObjData) => {
         if (obj.contextElem?.classList.value.includes("#event")) {
             const group = get(events)[obj.contextElem.id].group

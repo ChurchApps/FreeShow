@@ -147,7 +147,7 @@
         }
 
         if (e.key === "Enter") {
-            if (e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
+            if (!ctrl && e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
 
             e.preventDefault()
 
