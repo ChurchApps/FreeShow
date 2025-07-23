@@ -101,7 +101,8 @@
             })
             loading = false
         } else {
-            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options: exportFormat === "pdf" ? pdfOptions : {} })
+            const options = exportFormat === "pdf" ? (pdfOptions.chordSheet ? { ...pdfOptions, chordSheet: true } : pdfOptions) : {}
+            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options })
         }
 
         activePopup.set(null)
@@ -115,6 +116,19 @@
             a[key] = value
             return a
         })
+    }
+
+    // Helper function to check if a show has chords
+    function showHasChords(show: Show | null): boolean {
+        if (!show) return false
+        
+        return Object.values(show.slides || {}).some(slide =>
+            slide.items?.some(item =>
+                item.lines?.some(line =>
+                    line.chords && line.chords.length > 0
+                )
+            )
+        )
     }
 </script>
 
@@ -139,11 +153,7 @@
     <div class="choose">
         {#each filterFormats(exportFormats) as format, i}
             <Button disabled={false} on:click={() => (exportFormat = format.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <!-- {#if format.id === "project"}
-                    <Icon id={format.id} size={4} white />
-                {:else} -->
                 <img src="./import-logos/{formatIcons[format.id || '']}.webp" alt="{format.id}-logo" draggable={false} />
-                <!-- {/if} -->
 
                 <p>
                     {#if format.name.includes("$:")}<T id={format.name} />{:else}{format.name}{/if}
@@ -169,7 +179,7 @@
     <hr />
 
     {#if exportFormat === "pdf"}
-        <PdfExport bind:pdfOptions {previewShow} />
+        <PdfExport bind:pdfOptions {previewShow} {showHasChords} />
 
         <hr />
     {:else if exportFormat === "project"}
