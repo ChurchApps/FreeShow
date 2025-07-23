@@ -35,9 +35,9 @@ function deletePublicFile(fileName) {
     unlinkSync(filePath)
 }
 
-const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
-const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
 function restoreDevelopmentHTML() {
+    const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+    const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
     const sourceIndexPath = join(__dirname, "..", "public", "index.html")
     let htmlContent = readFileSync(sourceIndexPath, "utf8")
     if (!htmlContent.includes(prodHTMLPaths)) return
