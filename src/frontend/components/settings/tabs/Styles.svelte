@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeStyle, activeTriggerFunction, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
@@ -128,6 +128,7 @@
 
     // CREATE
 
+    $: if ($activeTriggerFunction === "create_style") createStyle({})
     async function createStyle(e: any) {
         const skipPopup = e.ctrlKey || e.metaKey
         let type = skipPopup ? "normal" : await waitForPopupData("choose_style")
@@ -652,7 +653,8 @@
     <div style="display: flex;">
         <Button style="width: 100%;" on:click={createStyle} center>
             <Icon id="add" right />
-            <T id="settings.add" />
+            <!-- <T id="settings.add" /> -->
+            <T id="new.style" />
         </Button>
     </div>
 </div>

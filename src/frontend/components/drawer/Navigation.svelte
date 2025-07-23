@@ -253,9 +253,9 @@
             </Button>
         </div>
     {:else if id === "media" || id === "audio"}
-        <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.folder}>
+        <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.system_folder}>
             <Icon id="add" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.folder" />{/if}
+            {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
         </FolderPicker>
     {:else if id === "overlays"}
         <div class="tabs">
@@ -275,6 +275,7 @@
         <div class="tabs">
             <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
                 <Icon id="add" right={!$labelsDisabled} />
+                <!-- {#if !$labelsDisabled}<T id="popup.import_scripture" />{/if} -->
                 {#if !$labelsDisabled}<T id="new.scripture" />{/if}
             </Button>
         </div>
@@ -282,7 +283,7 @@
         <div class="tabs">
             <Button on:click={() => sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
                 <Icon id="add" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="actions.import" />{/if}
+                {#if !$labelsDisabled}<T id="actions.import_calendar" />{/if}
             </Button>
         </div>
     {/if}

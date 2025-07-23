@@ -75,7 +75,7 @@ export function convertEasyWorship(data: any) {
                 title: song?.title || "",
                 author: song.author || "",
                 copyright: song.copyright || "",
-                CCLI: song.reference_number || "",
+                CCLI: song.reference_number || ""
             }
         }
         if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
@@ -107,7 +107,7 @@ export function convertEasyWorship(data: any) {
 
 // https://asecuritysite.com/coding/asc2
 const replaceCodes: any = {
-    "u8211?": "–",
+    "u8211?": "–"
 }
 
 function decodeString(input) {
@@ -128,9 +128,11 @@ function createSlides({ words }: Words) {
     const newSlides: any[] = []
     let lines: any[] = []
 
+    // easyworship2 format not supported
+
     // .replaceAll('"', '\\"')
     words = words.replaceAll("\\", "").replaceAll("\r\n", "")
-    let index = words.indexOf("pardli0fi0ri0sb0slsa0") + 22
+    let index = words.indexOf("li0fi0ri0sb0slsa0", words.indexOf("pard")) + 22
     if (index < 22) index = words.indexOf("sdfsauto")
     words = words.slice(index, words.lastIndexOf("}"))
     if (words.charAt(words.length - 2) === "}") words = words.slice(0, words.length - 1)
@@ -209,15 +211,15 @@ function createSlides({ words }: Words) {
             const items = [
                 {
                     style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
-                    lines: slideLines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
-                },
+                    lines: slideLines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
+                }
             ]
             slides[id] = {
                 group: "",
                 color: null,
                 settings: {},
                 notes: "",
-                items,
+                items
             }
 
             const globalGroup = getGlobalGroup(group)

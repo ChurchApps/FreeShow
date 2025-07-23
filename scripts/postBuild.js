@@ -52,9 +52,9 @@ function copyPublicFolderAndMinify(folderPath, destinationPath) {
         // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
         // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
 
-        if (/\.png|\.ico|\.icns|\.html$/.exec(curPath)) {
-            const pngFile = readFileSync(curPath)
-            writeFileSync(newPath, pngFile)
+        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json$/.exec(curPath)) {
+            const fileContent = readFileSync(curPath)
+            writeFileSync(newPath, fileContent)
         }
     }
 }
@@ -75,15 +75,15 @@ function removeTsConfigs() {
 
 const minifyJSOptions = {
     mangle: {
-        toplevel: true,
+        toplevel: true
     },
     compress: {
-        passes: 2,
+        passes: 2
     },
     output: {
         beautify: false,
-        preamble: "/* uglified */",
-    },
+        preamble: "/* uglified */"
+    }
 }
 
 function minifyJSFiles(filePaths) {
@@ -163,11 +163,22 @@ function renameOpusBuild() {
     })
 }
 
+const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
+function setProductionHTML() {
+    const sourceIndexPath = join(__dirname, "..", "public", "index.html")
+    let htmlContent = readFileSync(sourceIndexPath, "utf8")
+    if (!htmlContent.includes(devScriptPath)) throw new Error("Dev script path changed!")
+    htmlContent = htmlContent.replace(devScriptPath, prodHTMLPaths)
+    writeFileSync(sourceIndexPath, htmlContent)
+}
+
 // EXECUTE
 
 const bundledElectronPath = join(__dirname, "..", "build")
 minifyJSFiles(getAllJSFiles(bundledElectronPath))
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
+setProductionHTML()
 removeTsConfigs()
 
 // fix for OPUS electron vs node env

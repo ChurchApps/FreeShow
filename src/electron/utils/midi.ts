@@ -84,19 +84,24 @@ export async function receiveMidi(data: any) {
         if (port.name()) openedPorts[data.id] = port
 
         await port.connect((msg: MidiMessage) => {
-            if (typeof msg[0] !== "number" || typeof msg[1] !== "number" || typeof msg[2] !== "number") return
+            // this return seems to not work properly in most cases
+            // if (typeof msg[0] !== "number" || typeof msg[1] !== "number" || typeof msg[2] !== "number") return
 
             const status = msg[0]
             const channel = (status & 0x0f) + 1
             const typeCode = status & 0xf0
 
-            if (typeCode === 0x90 || typeCode === 0x80) {
-                // Note On (0x90) or Note Off (0x80)
+            // Note On (0x90) or Note Off (0x80)
+            if (msg.toString().includes("Note") || typeCode === 0x90 || typeCode === 0x80) {
                 // noteon with velocity 0 is actually noteoff
-                const type: "noteon" | "noteoff" = typeCode === 0x90 && msg[2] > 0 ? "noteon" : "noteoff"
-                const values = { note: msg[1], velocity: msg[2], channel }
+                // const type: "noteon" | "noteoff" = typeCode === 0x90 && msg[2] > 0 ? "noteon" : "noteoff"
+
+                // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
+                const type: "noteon" | "noteoff" = msg.toString().includes("Off") ? "noteoff" : "noteon"
+
+                const values = { note: msg["1"], velocity: msg["2"], channel }
                 sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type })
-            } else if (typeCode === 0xb0) {
+            } else if (typeCode === 0xb0 || msg.toString().includes("Control")) {
                 // Control Change (0xB0)
                 const values = { controller: msg[1], value: msg[2], channel }
                 sendToMain(ToMain.RECEIVE_MIDI2, { id: data.id, values, type: "control" })

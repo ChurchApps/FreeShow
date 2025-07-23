@@ -1,4 +1,4 @@
-const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } = require("fs")
+const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync } = require("fs")
 const { join } = require("path")
 
 // app build file paths
@@ -10,6 +10,7 @@ deleteFolderRecursive(buildSveltePath)
 deleteFolderRecursive(buildElectronPath)
 deletePublicFile("preload.ts")
 deletePublicFile("preload.js.map")
+restoreDevelopmentHTML()
 
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
@@ -32,4 +33,15 @@ function deletePublicFile(fileName) {
     if (!existsSync(filePath)) return
 
     unlinkSync(filePath)
+}
+
+const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
+function restoreDevelopmentHTML() {
+    const sourceIndexPath = join(__dirname, "..", "public", "index.html")
+    let htmlContent = readFileSync(sourceIndexPath, "utf8")
+    if (!htmlContent.includes(prodHTMLPaths)) return
+
+    htmlContent = htmlContent.replace(prodHTMLPaths, devScriptPath)
+    writeFileSync(sourceIndexPath, htmlContent)
 }

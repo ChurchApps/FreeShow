@@ -200,11 +200,12 @@
         class="top context #drawer_top"
         on:mousedown={mousedown}
         on:click={click}
-        on:keydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault()
-                click(e)
-            }
+        on:keydown={() => {
+            // does not work and prevents search input keys
+            // if (e.key === "Enter" || e.key === " ") {
+            //     e.preventDefault()
+            //     click(e)
+            // }
         }}
         role="button"
         tabindex="0"
