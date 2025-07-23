@@ -28,7 +28,6 @@ export function openDevTools(window: BrowserWindow) {
 }
 
 // wait until the main bundle exists or dev server is ready
-// THIS MIGHT NOT BE NECESSARY WITH VITE
 export function waitForBundle() {
     const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "..", "public/build/bundle.js")
     const CHECK_INTERVAL = 2 // every 2 seconds
@@ -46,7 +45,8 @@ export function waitForBundle() {
 
             // For development, just wait a short time and assume Vite is ready
             // console.log(`Development mode: waiting for Vite to be ready... (attempt ${tries + 1})`)
-            if (tries >= 2) {
+            // if resolved before ready app will never load!
+            if (tries >= 3) {
                 // console.info("Assuming Vite dev server is ready! Loading interface...")
                 clearInterval(interval)
                 resolve(true)
