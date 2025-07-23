@@ -35,12 +35,13 @@ function deletePublicFile(fileName) {
     unlinkSync(filePath)
 }
 
+const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
 function restoreDevelopmentHTML() {
     const sourceIndexPath = join(__dirname, "..", "public", "index.html")
-    const devIndexPath = join(__dirname, "..", "public", "index.dev.html")
-    
-    if (existsSync(devIndexPath)) {
-        const devContent = readFileSync(devIndexPath, "utf8")
-        writeFileSync(sourceIndexPath, devContent)
-    }
+    let htmlContent = readFileSync(sourceIndexPath, "utf8")
+    if (!htmlContent.includes(prodHTMLPaths)) return
+
+    htmlContent = htmlContent.replace(prodHTMLPaths, devScriptPath)
+    writeFileSync(sourceIndexPath, htmlContent)
 }

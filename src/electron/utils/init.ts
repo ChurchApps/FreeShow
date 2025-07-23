@@ -28,6 +28,7 @@ export function openDevTools(window: BrowserWindow) {
 }
 
 // wait until the main bundle exists or dev server is ready
+// THIS MIGHT NOT BE NECESSARY WITH VITE
 export function waitForBundle() {
     const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "..", "public/build/bundle.js")
     const CHECK_INTERVAL = 2 // every 2 seconds
@@ -35,7 +36,7 @@ export function waitForBundle() {
 
     return new Promise((resolve) => {
         const interval = setInterval(async () => {
-            // Check if bundle file exists (production build)
+            // Check if bundle file exists - old Rollup code, only production build for Vite
             if (doesPathExist(BUNDLE_PATH)) {
                 console.info("Main bundle found! Loading interface...")
                 clearInterval(interval)
@@ -44,16 +45,17 @@ export function waitForBundle() {
             }
 
             // For development, just wait a short time and assume Vite is ready
-            console.log(`Development mode: waiting for Vite to be ready... (attempt ${tries + 1})`)
-            if (tries >= 4) { // Wait 10 seconds (5 * 2 second intervals)
-                console.info("Assuming Vite dev server is ready! Loading interface...")
+            // console.log(`Development mode: waiting for Vite to be ready... (attempt ${tries + 1})`)
+            if (tries >= 2) {
+                // console.info("Assuming Vite dev server is ready! Loading interface...")
                 clearInterval(interval)
                 resolve(true)
                 return
             }
 
             tries += 1
-            if (tries >= 60) { // 60 * 2 seconds = 120 seconds total timeout
+            if (tries >= 60) {
+                // 60 * 2 seconds = 120 seconds total timeout
                 clearInterval(interval)
                 app.quit()
                 throw new Error("Could not load app content. Please check console for any errors!")

@@ -75,15 +75,15 @@ function removeTsConfigs() {
 
 const minifyJSOptions = {
     mangle: {
-        toplevel: true,
+        toplevel: true
     },
     compress: {
-        passes: 2,
+        passes: 2
     },
     output: {
         beautify: false,
-        preamble: "/* uglified */",
-    },
+        preamble: "/* uglified */"
+    }
 }
 
 function minifyJSFiles(filePaths) {
@@ -163,16 +163,14 @@ function renameOpusBuild() {
     })
 }
 
-// Copy Vite-processed index.html to the correct location and fix paths
-function copyProductionHTML() {
-    // Copy the production HTML to replace the main index.html for packaging
+const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
+function setProductionHTML() {
     const sourceIndexPath = join(__dirname, "..", "public", "index.html")
-    const prodIndexPath = join(__dirname, "..", "public", "index.prod.html")
-    
-    if (existsSync(prodIndexPath)) {
-        const prodContent = readFileSync(prodIndexPath, "utf8")
-        writeFileSync(sourceIndexPath, prodContent)
-    }
+    let htmlContent = readFileSync(sourceIndexPath, "utf8")
+    if (!htmlContent.includes(devScriptPath)) throw new Error("Dev script path changed!")
+    htmlContent = htmlContent.replace(devScriptPath, prodHTMLPaths)
+    writeFileSync(sourceIndexPath, htmlContent)
 }
 
 // EXECUTE
@@ -180,7 +178,7 @@ function copyProductionHTML() {
 const bundledElectronPath = join(__dirname, "..", "build")
 minifyJSFiles(getAllJSFiles(bundledElectronPath))
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
-copyProductionHTML() // Copy production HTML for packaging
+setProductionHTML()
 removeTsConfigs()
 
 // fix for OPUS electron vs node env
