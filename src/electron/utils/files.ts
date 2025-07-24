@@ -211,6 +211,7 @@ export const dataFolderNames = {
     shows: "Shows",
     backups: "Backups",
     scriptures: "Bibles",
+    onlineMedia: "Online",
     mediaBundle: "Media",
     exports: "Exports",
     imports: "Imports",
@@ -218,7 +219,7 @@ export const dataFolderNames = {
     planningcenter: "Planning Center",
     recordings: "Recordings",
     audio: "Audio",
-    userData: "Config",
+    userData: "Config"
 }
 
 // DATA PATH
@@ -277,7 +278,7 @@ export function getPaths() {
         // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
-        music: app.getPath("music"),
+        music: app.getPath("music")
     }
 
     // this will create "documents/Shows" folder if it doesen't exist
@@ -843,7 +844,7 @@ const FIXES = {
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openSystemFolder(stores.SETTINGS.path)
-    },
+    }
 }
 function specialCaseFixer() {
     const defaultDataFolder = getDocumentsFolder(null, "", false)

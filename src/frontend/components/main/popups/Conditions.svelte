@@ -61,6 +61,7 @@
 
     const customOperators = {
         timer: [
+            { id: "isRunning", name: "$:conditions.is_running:$" },
             { id: "isAbove", name: "$:conditions.is_above:$" },
             { id: "isBelow", name: "$:conditions.is_below:$" },
             { id: "is", name: "$:conditions.is:$" },
@@ -71,10 +72,10 @@
     const customData = {
         timer: [{ id: "seconds", name: "$:conditions.seconds:$" }]
     }
-    const noData: string[] = [] // ["has_text"]
+    const noData: string[] = ["isRunning"] // ["has_text"]
 
     const elementOptions = {
-        timer: convertToOptions($timers),
+        timer: [{ id: "", name: "$:stage.first_active_timer:$" }, ...convertToOptions($timers)],
         variable: [
             ...convertToOptions($variables),
             ...keysToID($variables)
@@ -207,7 +208,7 @@
                         {#if value.id === "value"}
                             <TextInput placeholder={$dictionary.conditions?.empty} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("showItem", e, "value", i)} />
                         {:else if value.id === "seconds"}
-                            <NumberInput value={typeof input.seconds === "number" ? input.seconds : 0} on:change={(e) => setValue("showItem", Number(e.detail), "seconds", i)} />
+                            <NumberInput value={typeof input.seconds === "number" ? input.seconds : 0} max={800000} on:change={(e) => setValue("showItem", Number(e.detail), "seconds", i)} />
                         {/if}
                     {/if}
                 {/if}

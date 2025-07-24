@@ -10,7 +10,7 @@ import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { chumsDisconnect, chumsLoadServices, chumsStartupLoad } from "../chums"
 import { restoreFiles } from "../data/backup"
-import { downloadMedia } from "../data/downloadMedia"
+import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
@@ -128,7 +128,9 @@ export const mainResponses: MainResponses = {
     [Main.READ_EXIF]: (data) => readExifData(data),
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
-    [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
+    [Main.DOWNLOAD_LESSONS_MEDIA]: (data) => downloadLessonsMedia(data),
+    [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
+    [Main.MEDIA_IS_DOWNLOADED]: (data) => checkIfMediaDownloaded(data),
     [Main.NOW_PLAYING]: (data) => setPlayingState(data),
     [Main.NOW_PLAYING_UNSET]: (data) => unsetPlayingAudio(data),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),

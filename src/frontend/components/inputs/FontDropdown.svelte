@@ -66,7 +66,8 @@
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
-        if (nextScrollTimeout) return
+        const ctrl = e.ctrlKey || e.metaKey
+        if (nextScrollTimeout || !ctrl) return
 
         e.preventDefault()
         let index = fonts.findIndex((a) => a.family === value)

@@ -84,7 +84,9 @@ export enum Main {
     READ_EXIF = "READ_EXIF",
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
-    DOWNLOAD_MEDIA = "DOWNLOAD_MEDIA",
+    DOWNLOAD_LESSONS_MEDIA = "DOWNLOAD_LESSONS_MEDIA",
+    MEDIA_DOWNLOAD = "MEDIA_DOWNLOAD",
+    MEDIA_IS_DOWNLOADED = "MEDIA_IS_DOWNLOADED",
     NOW_PLAYING = "NOW_PLAYING",
     NOW_PLAYING_UNSET = "NOW_PLAYING_UNSET",
     // MEDIA_BASE64 = "MEDIA_BASE64",
@@ -158,7 +160,9 @@ export interface MainSendPayloads {
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
-    [Main.DOWNLOAD_MEDIA]: LessonsData[]
+    [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
+    [Main.MEDIA_DOWNLOAD]: { url: string; dataPath: string }
+    [Main.MEDIA_IS_DOWNLOADED]: { url: string; dataPath: string }
     [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string; unknownLang: string[] }
     [Main.NOW_PLAYING_UNSET]: { dataPath: string }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
@@ -243,6 +247,7 @@ export interface MainReturnPayloads {
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
+    [Main.MEDIA_IS_DOWNLOADED]: Promise<string | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]

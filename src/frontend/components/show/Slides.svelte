@@ -210,15 +210,31 @@
         }
     }
 
+    let altTimeout: NodeJS.Timeout | null = null
+    let altTemp = false
     let altKeyPressed = false
     function keydown(e: KeyboardEvent) {
+        if (!e.altKey && altTimeout) clearTimeout(altTimeout)
+
         if (e.altKey) {
-            e.preventDefault()
-            altKeyPressed = true
+            if (altTemp) return
+            altTemp = true
+            // e.preventDefault()
+
+            // only activate alt preview hide after a little time (still works instantly)
+            altTimeout = setTimeout(() => {
+                if (altTemp && document.hasFocus()) altKeyPressed = true
+            }, 300)
         }
     }
     function keyup(e) {
         if (e.altKey) return
+
+        altTemp = false
+        altKeyPressed = false
+    }
+    function blurred() {
+        altTemp = false
         altKeyPressed = false
     }
 
@@ -409,7 +425,7 @@
 
 <!-- TODO: tab enter not woring -->
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
 <Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>

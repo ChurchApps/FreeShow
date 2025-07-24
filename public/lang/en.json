@@ -792,6 +792,7 @@
         "is_not": "is not",
         "is_above": "is above",
         "is_below": "is below",
+        "is_running": "is running",
         "value": "value",
         "seconds": "seconds",
         "empty": "empty"
