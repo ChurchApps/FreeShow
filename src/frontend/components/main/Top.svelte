@@ -1,6 +1,6 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, saved, shows } from "../../stores"
+    import { activeEdit, activeProfile, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
@@ -39,6 +39,12 @@
             confirm = false
         }, 1800)
     }
+
+    // disabled tabs
+
+    let settingsDisabled = false
+    $: profile = $profiles[$activeProfile || ""]
+    $: settingsDisabled = Object.keys(profile?.access.settings || {}).length > 7
 </script>
 
 <div class="top" class:drag={!isWindows}>
@@ -65,7 +71,9 @@
     <span style="width: var(--navigation-width);justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
         <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
-        <TopButton id="settings" hideLabel />
+        {#if !settingsDisabled}
+            <TopButton id="settings" hideLabel />
+        {/if}
         <Button
             id="output_window_button"
             title={($outputDisplay ? (confirm ? $dictionary.menu?.again_confirm : $dictionary.menu?._title_display_stop) : $dictionary.menu?._title_display) + " [Ctrl+O]"}

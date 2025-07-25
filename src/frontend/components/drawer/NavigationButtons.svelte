@@ -1,6 +1,7 @@
 <script lang="ts">
     import { SelectIds } from "../../../types/Main"
     import { audioPlaylists, categories, overlayCategories, overlays, shows, templateCategories, templates } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import T from "../helpers/T.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -20,7 +21,9 @@
     if (id) length = {}
     $: {
         let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a) => !a?.private)
+        const profile = getAccess(id === "shows" ? "categories" : "")
+
+        if (id === "shows") list = Object.values($shows).filter((a) => !a?.private && profile[a?.category || ""] !== "none")
         else if (id === "overlays") list = Object.values($overlays)
         else if (id === "templates") list = Object.values($templates)
 
@@ -29,7 +32,7 @@
             length[button.id] = 0
 
             if (button.id === "all") {
-                length[button.id] = list.filter((a) => !categoryStores[id]?.()[a?.category]?.isArchive).length
+                length[button.id] = list.filter((a) => !categoryStores[id]?.()[a?.category]?.isArchive && profile[a?.category] !== "none").length
                 return
             }
 

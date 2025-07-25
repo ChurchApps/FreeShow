@@ -6,6 +6,7 @@
     import General from "./tabs/General.svelte"
     import Other from "./tabs/Other.svelte"
     import Outputs from "./tabs/Outputs.svelte"
+    import Profiles from "./tabs/Profiles.svelte"
     import Styles from "./tabs/Styles.svelte"
     import Theme from "./tabs/Theme.svelte"
 </script>
@@ -27,6 +28,8 @@
             <Connection />
         {:else if $settingsTab === "files"}
             <Files />
+        {:else if $settingsTab === "profiles"}
+            <Profiles />
         {:else if $settingsTab === "theme"}
             <Theme />
         {:else if $settingsTab === "other"}

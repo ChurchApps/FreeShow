@@ -250,6 +250,17 @@ export interface FileData {
     thumbnailPath?: string
 }
 
+export interface Profiles {
+    [key: string]: Profile
+}
+export interface Profile {
+    name: string
+    color: string
+    image: string
+    access: { [key: string]: { [key: string]: AccessType } }
+}
+export type AccessType = "none" | "read" | "write"
+
 export interface ErrorLog {
     time: Date
     os: string

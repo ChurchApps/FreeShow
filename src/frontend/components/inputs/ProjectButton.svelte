@@ -14,6 +14,7 @@
     export let recentlyUsed = false
     export let interactedFolder: string = ""
     export let template = false
+    export let readOnly = false
     // export let type: ShowType
     // export let created;
     // export let parent; // path
@@ -88,9 +89,17 @@
     let editActive = false
 </script>
 
-<button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
+<button
+    {id}
+    on:click={open}
+    on:dblclick={dblclick}
+    data-parent={parent}
+    class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}${readOnly ? "_readonly" : ""}`}
+    title={template ? $dictionary.actions?.project_template_tip : ""}
+    class:active
+>
     <Icon id={template ? "templates" : "project"} right />
-    <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed} />
+    <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed && !readOnly} />
 </button>
 
 <style>

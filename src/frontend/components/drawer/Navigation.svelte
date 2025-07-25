@@ -27,6 +27,7 @@
         variables,
         variableTags
     } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -61,18 +62,23 @@
     interface Button extends Category {
         id: string
         url?: string
+        readOnly?: boolean
     }
     let buttons: Button[] = []
     $: {
         if (id === "shows" && $dictionary) {
-            let categoriesList = keysToID($categories).filter((a) => !a.isArchive)
+            let profile = getAccess("categories")
+            let categoriesList = keysToID($categories).filter((a) => !a.isArchive && profile[a.id] !== "none")
             let archivedCategories = keysToID($categories).filter((a) => a.isArchive)
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledShows ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[])
+                ...(sortObject(categoriesList, "name") as Button[]).map((a) => {
+                    a.readOnly = profile.global === "read" || profile[a.id] === "read"
+                    return a
+                })
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -247,7 +253,7 @@
     </div>
     {#if id === "shows"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} disabled={getAccess("categories").global === "read"} center title={$dictionary.new?.category}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>

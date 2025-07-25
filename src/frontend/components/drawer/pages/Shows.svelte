@@ -13,6 +13,7 @@
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { getAccess } from "../../../utils/profile"
 
     export let id: string
     export let active: string | null
@@ -28,10 +29,15 @@
     //     if (JSON.stringify(updateSorted) !== JSON.stringify(updatedSorted)) updatedSorted = clone(showsSorted)
     // }
 
+    const profile = getAccess("categories")
+    const readOnly = profile.global === "read"
+
     let filteredShows: ShowList[] = []
     let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
-        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
+        active === "all"
+            ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
+            : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
@@ -179,7 +185,7 @@
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
-    <div class="column context #drawer_show">
+    <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
             {#if createFromSearch}
                 <div class="warning">
@@ -217,6 +223,7 @@
         class="context #drawer_new_show"
         center
         title="{$dictionary.tooltip?.show} [Ctrl+N]"
+        disabled={readOnly}
     >
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.show" />{/if}

@@ -30,6 +30,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     },
     sorted: {},
     styles: {},
+    profiles: {},
     openedFolders: ["default"],
     activeProject: null,
     alertUpdates: true,

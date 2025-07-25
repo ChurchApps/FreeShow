@@ -5,6 +5,7 @@ import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "
 import { GetLayout } from "./get"
 import { history } from "./history"
 import { _show } from "./shows"
+import { getAccess } from "../../utils/profile"
 
 // check if name exists and add number
 export function checkName(name = "", showId = "") {
@@ -136,7 +137,7 @@ export const metadataDisplayValues = [
     { id: "first", name: "$:show_at.first:$" },
     { id: "last", name: "$:show_at.last:$" },
     { id: "first_last", name: "$:show_at.first_last:$" },
-    { id: "always", name: "$:show_at.always:$" },
+    { id: "always", name: "$:show_at.always:$" }
 ]
 
 // create new slides
@@ -147,7 +148,7 @@ export function newSlide(data: { items?: Item[]; group?: string; globalGroup?: s
         settings: {},
         notes: "",
         items: [],
-        ...data,
+        ...data
     }
 }
 
@@ -171,7 +172,10 @@ export function updateShowsList(allShows: TrimmedShows) {
         if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
-    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true)
+    // const profile = getAccess("categories")
+    // const hiddenCategories = Object.entries(profile).filter(([_, type]) => type === "none").map(([id]) => id)
+
+    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true) // .filter((a) => !a.category || !hiddenCategories.includes(a.category))
     sortedShowsList.set(filteredShows)
 }
 
@@ -225,7 +229,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     const customId = getShowCacheId(showId, show)
     const template = {
         id: show.settings?.template,
-        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
+        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false
     }
 
     // sort by order when just one layout
