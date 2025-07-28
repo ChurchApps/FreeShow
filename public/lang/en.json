@@ -593,6 +593,7 @@
         "specific_outputs": "Specific outputs",
         "toggle_private": "Private",
         "view_private": "Show private",
+        "unlink_pco": "Unlink from Planning Center",
         "import": "Import",
         "export": "Export",
         "import_calendar": "Import calendar",
@@ -863,18 +864,9 @@
         "original_text_size": "Original text size",
         "text": "Plain text",
         "slides": "Slides",
-        "chord_sheet": "Chord Sheet",
-        "type": "Export Type",
         "rows": "Rows",
         "columns": "Columns",
-        "chord_sheet_options": "Chord Sheet Options",
-        "lyrics_font_size": "Lyrics Font Size",
-        "chord_font_size": "Chord Font Size",
-        "margin": "Margin (mm)",
-        "line_spacing": "Line Spacing",
-        "metadata_display": "Metadata Display",
-        "artist": "Artist",
-        "key": "Key"
+        "margin": "Margin"
     },
     "context": {
         "to_dictionary": "Add to dictionary",

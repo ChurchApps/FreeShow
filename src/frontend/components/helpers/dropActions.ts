@@ -80,7 +80,7 @@ export const dropActions = {
     },
     projects: ({ drag, drop }: Data, h: History) => {
         if (drag.id !== "folder" && drag.id !== "project") return
-        if (drop.data.type && drop.data.type !== "folder") return
+        if (drop.data.type && drop.data.type !== "folder" && drop.data.type !== "project") return
 
         h.location!.page = "show"
 
@@ -109,7 +109,8 @@ export const dropActions = {
             h.location!.id = "project_key"
         }
 
-        h.newData = { key: "parent", data: drop.data.id || "/" }
+        const newParent = drop.data.type === "project" ? get(projects)[drop.data.id]?.parent : drop.data.id
+        h.newData = { key: "parent", data: newParent || "/" }
 
         // move multiple
         ids.forEach((id) => {

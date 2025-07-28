@@ -818,6 +818,23 @@ const clickActions = {
             return a
         })
     },
+    unlink_pco: (obj: ObjData) => {
+        if (!obj.sel) return
+
+        showsCache.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                if (!a[b.id]) return
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+        shows.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+    },
     section: (obj) => {
         const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })

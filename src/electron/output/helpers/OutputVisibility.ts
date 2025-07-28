@@ -24,6 +24,7 @@ export class OutputVisibility {
         /// //
 
         if (data.output?.invisible) {
+            OutputHelper.setOutput(data.output.id!, { ...OutputHelper.getOutput(data.output.id!), invisible: true })
             if (window.isVisible()) this.hideWindow(window)
             // if just one output, send a message explaining why the button does not turn on?
             return

@@ -1,7 +1,26 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import {
+        actions,
+        activeFocus,
+        activeProject,
+        activeShow,
+        dictionary,
+        drawer,
+        focusMode,
+        folders,
+        fullColors,
+        labelsDisabled,
+        openedFolders,
+        projects,
+        projectTemplates,
+        projectView,
+        showRecentlyUsedProjects,
+        shows,
+        sorted,
+        special
+    } from "../../stores"
     import { getActionIcon } from "../actions/actions"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { getContrast } from "../helpers/color"
@@ -259,6 +278,8 @@
                     {#if $projects[$activeProject || ""]?.shows?.length}
                         {#each $projects[$activeProject || ""]?.shows as show, index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
+                            {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
+
                             <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <Button
@@ -288,7 +309,7 @@
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class="context #project_{getContextMenuId(show.type)}__project" icon />
+                                    <ShowButton id={show.id} {show} {index} class="context #{pcoLink ? 'pco_item__' : ''}project_{getContextMenuId(show.type)}__project" icon />
                                 {/if}
                             </SelectElem>
                         {/each}

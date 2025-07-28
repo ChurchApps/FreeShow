@@ -247,7 +247,7 @@ export interface List {
     enabled?: boolean
     style?: string
     interval?: number
-    items: ListItem[]
+    items?: ListItem[]
 }
 export interface ListItem {
     text: string

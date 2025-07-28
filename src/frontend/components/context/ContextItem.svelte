@@ -56,7 +56,7 @@
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         rename: () => {
-            hide = !!$shows[$selected.data[0]?.id]?.locked
+            disabled = !!$shows[$selected.data[0]?.id]?.locked // hide
         },
         delete: () => {
             hide = !!$shows[$selected.data[0]?.id]?.locked
@@ -66,7 +66,7 @@
             if (!show) return
 
             enabled = !!show.private
-            hide = !!(!enabled && show.locked)
+            disabled = !!(!enabled && show.locked) // hide
         },
         use_as_archive: () => {
             const categoryStores = {

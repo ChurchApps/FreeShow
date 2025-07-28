@@ -202,6 +202,8 @@ const triggerActions = {
         } else {
             activeShow.set({ id, type: "overlay" })
             activePage.set("show")
+
+            openDrawer("overlays")
         }
     },
     project: (id: string) => {
@@ -364,7 +366,7 @@ const mainPages = [
     { id: "shows", name: "tabs.shows", icon: "shows", aliases: ["category.song", "category.presentation", "-Library", "-Preview"] },
     { id: "media", name: "tabs.media", icon: "media", aliases: ["category.pictures", "category.videos", "-Photos", "-Images", "-Films"] },
     { id: "audio", name: "tabs.audio", icon: "audio", aliases: ["category.music", "media.volume", "audio.metronome", "audio.settings"] },
-    { id: "overlays", name: "tabs.overlays", icon: "overlays", aliases: ["-Props", "-Alerts", "-Popups", "-Notices"] },
+    { id: "overlays", name: "tabs.overlays", icon: "overlays", aliases: ["-Props", "-Alerts", "-Messages", "-Popups", "-Notices"] },
     { id: "templates", name: "tabs.templates", icon: "templates" },
     { id: "scripture", name: "tabs.scripture", icon: "scripture", aliases: ["-Bibles"] },
     { id: "calendar", name: "tabs.calendar", icon: "calendar", aliases: ["menu._title_calendar"] },
