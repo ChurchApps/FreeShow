@@ -21,11 +21,11 @@
     if (id) length = {}
     $: {
         let list: any[] = []
-        const profile = getAccess(id === "shows" ? "categories" : "")
+        const profile = getAccess(id)
 
         if (id === "shows") list = Object.values($shows).filter((a) => !a?.private && profile[a?.category || ""] !== "none")
-        else if (id === "overlays") list = Object.values($overlays)
-        else if (id === "templates") list = Object.values($templates)
+        else if (id === "overlays") list = Object.values($overlays).filter((a) => profile[a?.category || ""] !== "none")
+        else if (id === "templates") list = Object.values($templates).filter((a) => profile[a?.category || ""] !== "none")
 
         let totalLength = 0
         buttons.forEach((button) => {

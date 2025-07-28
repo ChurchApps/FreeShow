@@ -233,9 +233,11 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToFirstSlide",
     overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     overlay_card_default: ["preview", "SEPERATOR", "duplicate", "delete"],
+    overlay_card_readonly: ["preview"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     template_card_default: ["duplicate", "delete"],
+    template_card_readonly: ["preview"],
     effect_card: ["edit", "SEPERATOR", "display_duration", "SEPERATOR", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card_default: ["duplicate", "delete"],
     player_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "rename", "delete"],
@@ -313,6 +315,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
+    stage_slide_readonly: ["move_connections"],
     stage_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     stage_item_output: ["rearrange_stage", "SEPERATOR", "delete"],
     stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
@@ -328,7 +331,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // SETTINGS
     theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
-    profile_tab: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
+    profile_tab: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen_stage: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"]
 }

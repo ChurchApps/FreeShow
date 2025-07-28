@@ -2,6 +2,7 @@
     import type { StageLayout } from "../../../types/Stage"
     import { activeTimers, allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables, videosTime } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { getAccess } from "../../utils/profile"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -17,6 +18,9 @@
     export let active = false
     export let list = false
     export let selectable = true
+
+    const profile = getAccess("stage")
+    let readOnly = profile.global === "read" || profile[id] === "read"
 
     let ratio = 1
     $: stageOutputId = getStageOutputId($outputs)
@@ -37,7 +41,15 @@
 
 <!-- WIP duplicate of StageLayout.svelte (pretty much) -->
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-    <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} role="button" on:click on:keydown={triggerClickOnEnterSpace}>
+    <div
+        class="slide context #stage_slide{readOnly ? '_readonly' : ''}"
+        class:disabled={layout.disabled}
+        style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""}
+        tabindex={0}
+        role="button"
+        on:click
+        on:keydown={triggerClickOnEnterSpace}
+    >
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
@@ -56,7 +68,7 @@
             {:else}
               <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
             {/if} -->
-                        <HiddenInput value={layout.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} />
+                        <HiddenInput value={layout.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} allowEdit={!readOnly} />
                     </span>
                 </div>
             </SelectElem>

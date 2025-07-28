@@ -25,7 +25,7 @@
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
 
-    let profile = getAccess("categories")
+    let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
 
     // search

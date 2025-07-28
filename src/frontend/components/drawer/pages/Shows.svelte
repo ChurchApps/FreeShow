@@ -29,7 +29,7 @@
     //     if (JSON.stringify(updateSorted) !== JSON.stringify(updatedSorted)) updatedSorted = clone(showsSorted)
     // }
 
-    const profile = getAccess("categories")
+    const profile = getAccess("shows")
     const readOnly = profile.global === "read"
 
     let filteredShows: ShowList[] = []

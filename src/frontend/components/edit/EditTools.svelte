@@ -3,6 +3,7 @@
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import { newToast } from "../../utils/common"
+    import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -295,7 +296,8 @@
     const ignoreDefault = ["metadata", "message"]
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
-    $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked === true
+    let profile = getAccess("shows")
+    $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
     $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault && !ignoreDefault.includes($activeEdit.id || "") : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 

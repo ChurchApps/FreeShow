@@ -172,7 +172,7 @@ export function updateShowsList(allShows: TrimmedShows) {
         if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
-    // const profile = getAccess("categories")
+    // const profile = getAccess("shows")
     // const hiddenCategories = Object.entries(profile).filter(([_, type]) => type === "none").map(([id]) => id)
 
     const filteredShows: ShowList[] = removeValues(sortedShows, "private", true) // .filter((a) => !a.category || !hiddenCategories.includes(a.category))

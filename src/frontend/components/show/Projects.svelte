@@ -132,6 +132,8 @@
     }
 
     $: projectActive = !$projectView && $activeProject !== null
+    $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
+    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
 
     function createProject(folder: boolean = false) {
         let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
@@ -249,7 +251,7 @@
             </Button>
         </div>
     {:else}
-        <div id="projectArea" class="list context #project">
+        <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
                     {#if $projects[$activeProject || ""]?.shows?.length}
@@ -259,7 +261,7 @@
                                 {#if show.type === "section"}
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section context #project_section__project {show.color ? 'color-border' : ''}"
+                                        class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
                                         style="font-weight: bold;{$fullColors ? `background-color: ${show.color};color: ${getContrast(show.color || '')};` : `--border-color: ${show.color};color: ${show.color};`}"
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
@@ -284,7 +286,7 @@
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class="context #project_{getContextMenuId(show.type)}__project" icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #project_${getContextMenuId(show.type)}__project`} icon />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -299,7 +301,7 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length}
+{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

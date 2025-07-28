@@ -79,6 +79,7 @@ export type SelectIds =
     | "theme"
     | "style"
     | "output"
+    | "profile"
     | "tag"
     | "bible_book"
 

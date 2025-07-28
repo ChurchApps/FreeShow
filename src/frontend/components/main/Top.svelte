@@ -9,8 +9,11 @@
 
     export let isWindows = false
 
+    $: showProfile = profile?.access.categories || {}
+    $: isLocked = $shows[$activeShow?.id || ""]?.locked || showProfile.global === "read" || showProfile[$shows[$activeShow?.id || ""]?.category || ""] === "read"
+
     // && !$editHistory.length
-    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : $activeShow?.type === "pdf" || !$activeShow?.id
+    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
     $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
     let confirm = false

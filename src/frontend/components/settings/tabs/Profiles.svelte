@@ -68,7 +68,7 @@
         data[key] = accessData
         history({ id: "UPDATE", newData: { key: "access", data }, oldData: { id: profileId }, location: { page: "settings", id: "settings_profile", override: "profile_" + key } })
 
-        // if (key === "categories") updateShowsList($shows)
+        // if (key === "shows") updateShowsList($shows)
     }
 
     let edit: any
@@ -78,6 +78,8 @@
     // CREATE
 
     async function createProfile() {
+        // WIP presets for presenter / creator / manager
+
         if ($activeProfile === null) activeProfile.set("")
         profileId = uid()
         history({ id: "UPDATE", newData: { data: clone(defaultProfile), replace: { name: currentProfile.name + " 2", color: generateLightRandomColor() } }, oldData: { id: profileId }, location: { page: "settings", id: "settings_profile" } })
@@ -132,13 +134,13 @@
     $: projectsAccess = currentProfile.access.projects || {}
 
     $: showsCategoryList = sortByName(keysToID($categories)).filter((a) => !a.isArchive) //  && !a.default
-    $: showsCategoryAccess = currentProfile.access.categories || {}
+    $: showsCategoryAccess = currentProfile.access.shows || {}
 
     $: overlayCategoryList = sortByName(keysToID($overlayCategories))
-    $: overlayCategoryAccess = currentProfile.access.overlayCategories || {}
+    $: overlayCategoryAccess = currentProfile.access.overlays || {}
 
     $: templateCategoryList = sortByName(keysToID($templateCategories))
-    $: templateCategoryAccess = currentProfile.access.templateCategories || {}
+    $: templateCategoryAccess = currentProfile.access.templates || {}
 
     $: stageList = sortByName(keysToID($stageShows))
     $: stageAccess = currentProfile.access.stage || {}
@@ -209,11 +211,11 @@
 
     <CombinedInput>
         <p class="global"><T id="groups.global" /></p>
-        <MultiInputs inputs={noNoneInputs()} active={showsCategoryAccess.global || "write"} on:click={(e) => updateAccess("categories", "global", e.detail)} />
+        <MultiInputs inputs={noNoneInputs()} active={showsCategoryAccess.global || "write"} on:click={(e) => updateAccess("shows", "global", e.detail)} />
 
         {#if showsCategoryList.length}
-            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("categories")}>
-                {#if openedLists.includes("categories")}
+            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("shows")}>
+                {#if openedLists.includes("shows")}
                     <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                 {:else}
                     <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
@@ -221,14 +223,14 @@
             </Button>
         {/if}
     </CombinedInput>
-    {#if openedLists.includes("categories")}
+    {#if openedLists.includes("shows")}
         <!-- {#if showsCategoryList.length} -->
         {#each showsCategoryList as item}
             <CombinedInput>
                 <p>
                     {#if item.default}<T id={item.name} />{:else}{item.name}{/if}
                 </p>
-                <MultiInputs inputs={getInputs(showsCategoryAccess.global)} active={getAccessLevel(showsCategoryAccess, item.id)} on:click={(e) => updateAccess("categories", item.id, e.detail)} />
+                <MultiInputs inputs={getInputs(showsCategoryAccess.global)} active={getAccessLevel(showsCategoryAccess, item.id)} on:click={(e) => updateAccess("shows", item.id, e.detail)} />
             </CombinedInput>
         {/each}
         <!-- {:else}
@@ -238,7 +240,7 @@
         {/if} -->
     {/if}
 
-    <!-- WIP MEDIA -->
+    <!-- WIP MEDIA (+subtabs) -->
     <!-- WIP AUDIO -->
 
     <!-- OVERLAY CATEGORIES -->
@@ -251,11 +253,11 @@
 
     <CombinedInput>
         <p class="global"><T id="groups.global" /></p>
-        <MultiInputs inputs={noNoneInputs()} active={overlayCategoryAccess.global || "write"} on:click={(e) => updateAccess("overlayCategories", "global", e.detail)} />
+        <MultiInputs inputs={noNoneInputs()} active={overlayCategoryAccess.global || "write"} on:click={(e) => updateAccess("overlays", "global", e.detail)} />
 
         {#if overlayCategoryList.length}
-            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("overlayCategories")}>
-                {#if openedLists.includes("overlayCategories")}
+            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("overlays")}>
+                {#if openedLists.includes("overlays")}
                     <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                 {:else}
                     <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
@@ -263,13 +265,13 @@
             </Button>
         {/if}
     </CombinedInput>
-    {#if openedLists.includes("overlayCategories")}
+    {#if openedLists.includes("overlays")}
         {#each overlayCategoryList as item}
             <CombinedInput>
                 <p>
                     {#if item.default}<T id={item.name} />{:else}{item.name}{/if}
                 </p>
-                <MultiInputs inputs={getInputs(overlayCategoryAccess.global)} active={getAccessLevel(overlayCategoryAccess, item.id)} on:click={(e) => updateAccess("overlayCategories", item.id, e.detail)} />
+                <MultiInputs inputs={getInputs(overlayCategoryAccess.global)} active={getAccessLevel(overlayCategoryAccess, item.id)} on:click={(e) => updateAccess("overlays", item.id, e.detail)} />
             </CombinedInput>
         {/each}
     {/if}
@@ -284,11 +286,11 @@
 
     <CombinedInput>
         <p class="global"><T id="groups.global" /></p>
-        <MultiInputs inputs={accessInputs} active={templateCategoryAccess.global || "write"} on:click={(e) => updateAccess("templateCategories", "global", e.detail)} />
+        <MultiInputs inputs={accessInputs} active={templateCategoryAccess.global || "write"} on:click={(e) => updateAccess("templates", "global", e.detail)} />
 
         {#if templateCategoryList.length}
-            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("templateCategories")}>
-                {#if openedLists.includes("templateCategories")}
+            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleList("templates")}>
+                {#if openedLists.includes("templates")}
                     <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                 {:else}
                     <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
@@ -296,13 +298,13 @@
             </Button>
         {/if}
     </CombinedInput>
-    {#if openedLists.includes("templateCategories")}
+    {#if openedLists.includes("templates")}
         {#each templateCategoryList as item}
             <CombinedInput>
                 <p>
                     {#if item.default}<T id={item.name} />{:else}{item.name}{/if}
                 </p>
-                <MultiInputs inputs={getInputs(templateCategoryAccess.global)} active={getAccessLevel(templateCategoryAccess, item.id)} on:click={(e) => updateAccess("templateCategories", item.id, e.detail)} />
+                <MultiInputs inputs={getInputs(templateCategoryAccess.global)} active={getAccessLevel(templateCategoryAccess, item.id)} on:click={(e) => updateAccess("templates", item.id, e.detail)} />
             </CombinedInput>
         {/each}
     {/if}
@@ -363,7 +365,7 @@
                 {@const selected = profileId === currentProfile.id}
                 {@const active = $activeProfile === currentProfile.id}
 
-                <SelectElem id="style" data={{ id: currentProfile.id }} fill>
+                <SelectElem id="profile" data={{ id: currentProfile.id }} fill>
                     <Button border={selected} class={currentProfile.id ? "context #profile_tab" : ""} active={selected} style="width: 100%;" on:click={() => (profileId = currentProfile.id)} bold={false} center>
                         {#if !currentProfile.id}
                             <Icon id="admin" right white />
