@@ -30,7 +30,7 @@ if (!isProd) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
 // development settings
 export const OUTPUT_CONSOLE = false
-const RECORD_STARTUP_TIME = false
+const RECORD_STARTUP_TIME = true
 
 // get os platform
 export const isWindows: boolean = process.platform === "win32"
@@ -68,7 +68,13 @@ app.on("ready", startApp)
 function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
     setTimeout(createLoading)
-    updateDataPath({ load: true })
+
+    // Start these heavy operations in parallel, not blocking main window creation
+    Promise.resolve().then(() => { updateDataPath({ load: true }) }).catch(console.error)
+
+    // Start servers initialization early (asynchronously)
+    Promise.resolve().then(() => { require("./servers") }).catch(console.error)
+
     if (RECORD_STARTUP_TIME) console.timeEnd("Initial")
 
     createMain()

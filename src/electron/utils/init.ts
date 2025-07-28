@@ -9,8 +9,8 @@ export function mainWindowInitialize() {
     // midi
     // createVirtualMidi()
 
-    // express
-    require("../servers")
+    // servers are now started earlier in parallel in startApp() - no need to require here
+    //require("../servers")
 
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
