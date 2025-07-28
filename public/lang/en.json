@@ -537,6 +537,7 @@
         "project": "New project",
         "section": "New section",
         "style": "New style",
+        "profile": "New profile",
         "timer": "New timer",
         "variable": "New variable",
         "trigger": "New trigger",
@@ -1199,6 +1200,7 @@
         "theme": "Theme",
         "groups": "Groups",
         "styles": "Styles",
+        "profiles": "Profiles",
         "display_settings": "Outputs",
         "display": "Display",
         "connection": "Connection",
@@ -1329,6 +1331,15 @@
         "full": "Full",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
         "rss": "RSS"
+    },
+    "profile": {
+        "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",
+        "admin": "Admin",
+        "none": "None",
+        "read": "Read",
+        "write": "Write",
+        "set_active": "Set as active",
+        "choose_profile": "Choose a profile"
     },
     "sort": {
         "sort_by": "Sort by",

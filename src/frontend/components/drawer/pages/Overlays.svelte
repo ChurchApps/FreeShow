@@ -17,9 +17,13 @@
     import Card from "../Card.svelte"
     import OverlayActions from "./OverlayActions.svelte"
     import Effects from "../effects/Effects.svelte"
+    import { getAccess } from "../../../utils/profile"
 
     export let active: string | null
     export let searchValue = ""
+
+    const profile = getAccess("overlays")
+    $: readOnly = profile.global === "read" || profile[active || ""] === "read"
 
     $: resolution = getResolution(null, { $outputs, $styles })
 
@@ -68,8 +72,9 @@
             {:else if fullFilteredOverlays.length}
                 <div class="grid">
                     {#each fullFilteredOverlays as overlay}
+                        {@const isReadOnly = readOnly || profile[overlay.category || ""] === "read"}
                         <Card
-                            class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
+                            class="context #overlay_card{overlay.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}"
                             preview={$activePage === "edit" ? $activeEdit.type === "overlay" && $activeEdit.id === overlay.id : $activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
                             outlineColor={findMatchingOut(overlay.id, $outputs)}
                             active={findMatchingOut(overlay.id, $outputs) !== null}
@@ -128,6 +133,7 @@
                 history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
             }}
             center
+            disabled={readOnly}
             title={$dictionary.new?.effect}
         >
             <Icon id="add" right={!$labelsDisabled} />
@@ -140,6 +146,7 @@
                 history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
             }}
             center
+            disabled={readOnly}
             title={$dictionary.new?.overlay}
         >
             <Icon id="add" right={!$labelsDisabled} />

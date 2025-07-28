@@ -17,6 +17,7 @@
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
+    import { getAccess } from "../../utils/profile"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
@@ -122,6 +123,9 @@
 
         runAction($actions[customAction])
     }
+
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -164,7 +168,7 @@
                     {#each sortedLayouts as layout}
                         <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
                             <Button
-                                class={currentShow.locked ? "" : "context #layout"}
+                                class={isLocked ? "" : "context #layout"}
                                 on:click={() => {
                                     if (!edit) setLayout(layout.id, { name: layout.name })
                                 }}
@@ -177,7 +181,7 @@
                     {/each}
                 </span>
 
-                <Button disabled={currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                <Button disabled={isLocked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
                     <Icon id="add" />
                 </Button>
             {/if}
@@ -195,7 +199,7 @@
         {#if !multipleLayouts && layouts && !reference}
             <!-- left aligned to prevent accidental clicks -->
             <span style="width: 100%;">
-                <Button disabled={!layoutSlides.length || currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                <Button disabled={!layoutSlides.length || isLocked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
                     <Icon id="add" right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
                 </Button>
@@ -205,7 +209,7 @@
         <!-- RIGHT BUTTONS -->
 
         <!-- action button -->
-        {#if Object.keys($actions).length && !reference}
+        {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}
             <div class="seperator" />
 
             <Button class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
@@ -216,7 +220,7 @@
 
         <div class="seperator" />
 
-        {#if currentShow.locked}
+        {#if isLocked}
             <Button
                 on:click={() => {
                     alertMessage.set("show.locked_info")

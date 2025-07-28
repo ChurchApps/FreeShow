@@ -1,26 +1,8 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import {
-        actions,
-        activeFocus,
-        activeProject,
-        activeShow,
-        dictionary,
-        drawer,
-        focusMode,
-        folders,
-        fullColors,
-        labelsDisabled,
-        openedFolders,
-        projects,
-        projectTemplates,
-        projectView,
-        showRecentlyUsedProjects,
-        shows,
-        sorted,
-        special
-    } from "../../stores"
+    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, shows, sorted, special } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { getContrast } from "../helpers/color"
@@ -46,8 +28,11 @@
         projects.set(removeDuplicateValues($projects))
     }
 
+    let profile = getAccess("projects")
+    let readOnly = profile.global === "read"
+
     $: f = Object.entries($folders)
-        .filter(([_, a]) => !a.deleted)
+        .filter(([id, a]) => !a.deleted && profile[id] !== "none")
         .map(([id, folder]) => ({ ...folder, id, type: "folder" as const }))
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
@@ -83,6 +68,12 @@
     function sortFolders(parent = "/", index = 0, path = "") {
         let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
+            const rootParentId = path.split("/")[0] || folder.id!
+            if (profile[rootParentId] === "none") return
+
+            const isReadOnly = profile[rootParentId] === "read"
+            folder.readOnly = isReadOnly
+
             folderSorted.push(folder)
             if (folder.type !== "folder") return
 
@@ -141,6 +132,14 @@
     }
 
     $: projectActive = !$projectView && $activeProject !== null
+    $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
+    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
+
+    function createProject(folder: boolean = false) {
+        let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
+        if (profile[parent] === "none" || tree.find((a) => a.id === parent)?.readOnly) parent = "/"
+        history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
+    }
 
     let listScrollElem: HTMLElement | undefined
     let listOffset = -1
@@ -225,10 +224,10 @@
             {/each}
         </div>
     {:else if !projectActive}
-        <div id="projectsArea" class="list projects context #projects">
+        <div id="projectsArea" class="list projects {readOnly ? '' : 'context #projects'}">
             <Autoscroll offset={listOffset} bind:scrollElem={listScrollElem} timeout={150} smoothTimeout={0}>
                 <DropArea id="projects">
-                    <ProjectList {tree} />
+                    <ProjectList {tree} {readOnly} />
                 </DropArea>
             </Autoscroll>
         </div>
@@ -242,37 +241,17 @@
         {/if}
 
         <div id="projectsButtons" class="tabs">
-            <Button
-                style="flex: 0;padding: 0.2em 1.3em;"
-                on:click={() =>
-                    history({
-                        id: "UPDATE",
-                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
-                        location: { page: "show", id: "project_folder" }
-                    })}
-                center
-                title={$dictionary.new?.folder}
-            >
+            <Button style="flex: 0;padding: 0.2em 1.3em;" on:click={() => createProject(true)} center title={$dictionary.new?.folder} disabled={readOnly}>
                 <Icon id="folder" white />
             </Button>
             <div class="seperator"></div>
-            <Button
-                style="flex: 1;"
-                on:click={() =>
-                    history({
-                        id: "UPDATE",
-                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
-                        location: { page: "show", id: "project" }
-                    })}
-                center
-                title={$dictionary.new?.project}
-            >
+            <Button style="flex: 1;" on:click={() => createProject()} center title={$dictionary.new?.project} disabled={readOnly}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
             </Button>
         </div>
     {:else}
-        <div id="projectArea" class="list context #project">
+        <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
                     {#if $projects[$activeProject || ""]?.shows?.length}
@@ -284,7 +263,7 @@
                                 {#if show.type === "section"}
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section context #project_section__project {show.color ? 'color-border' : ''}"
+                                        class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
                                         style="font-weight: bold;{$fullColors ? `background-color: ${show.color};color: ${getContrast(show.color || '')};` : `--border-color: ${show.color};color: ${show.color};`}"
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
@@ -309,7 +288,7 @@
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class="context #{pcoLink ? 'pco_item__' : ''}project_{getContextMenuId(show.type)}__project" icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? 'pco_item__' : ''}project_${getContextMenuId(show.type)}__project`} icon />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -324,7 +303,7 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length}
+{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

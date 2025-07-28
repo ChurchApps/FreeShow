@@ -18,9 +18,13 @@
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
     import { getLayoutRef } from "../../helpers/show"
+    import { getAccess } from "../../../utils/profile"
 
     export let active: string | null
     export let searchValue = ""
+
+    const profile = getAccess("templates")
+    $: readOnly = profile.global === "read" || profile[active || ""] === "read"
 
     $: resolution = getResolution(null, { $outputs, $styles }) // $templates[active || ""]?.settings?.resolution
     let filteredTemplates: (Template & { id: string })[] = []
@@ -76,8 +80,9 @@
         {:else if fullFilteredTemplates.length}
             <div class="grid">
                 {#each fullFilteredTemplates as template}
+                    {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
                     <Card
-                        class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) ? '_default' : ''}"
+                        class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}"
                         preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
                         active={template.id === activeTemplate}
                         label={template.name}
@@ -151,6 +156,7 @@
             history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
         }}
         center
+        disabled={readOnly}
         title={$dictionary.new?.template}
     >
         <Icon id="add" right={!$labelsDisabled} />

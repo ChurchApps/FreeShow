@@ -13,6 +13,7 @@
     import SelectElem from "../system/SelectElem.svelte"
 
     export let tree: Tree[]
+    export let readOnly: boolean = false
 
     function checkIfShown(project: any) {
         let allOpened = true
@@ -50,19 +51,20 @@
             {@const opened = $openedFolders.includes(project.id || "")}
             {@const shown = checkIfShown(project)}
             {@const isEmpty = project.type === "folder" && foldersWithoutContent.includes(project.id || "")}
+            {@const isReadOnly = readOnly || project.readOnly}
 
             <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
                 <!-- , path: project.path -->
                 <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
                     {#if project.type === "folder" && (project.parent === "/" || shown)}
-                        <ProjectFolder {project} {opened} />
+                        <ProjectFolder {project} {opened} readOnly={isReadOnly} />
                     {:else if project.id && shown}
-                        <ProjectButton name={project.name} parent={project.parent} id={project.id} />
+                        <ProjectButton name={project.name} parent={project.parent} id={project.id} readOnly={isReadOnly} />
                     {/if}
                 </SelectElem>
             </div>
 
-            {#if shown && isEmpty}
+            {#if shown && isEmpty && !isReadOnly}
                 <!-- padding: 5px 0; -->
                 <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;">
                     <p style="opacity: 0.5;padding-bottom: 5px;"><T id="empty.general" /></p>

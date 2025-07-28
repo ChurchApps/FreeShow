@@ -18,11 +18,15 @@
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
+    import { getAccess } from "../../utils/profile"
 
     export let outputId = ""
     export let stageId = ""
     export let preview = false
     export let edit = true
+
+    const profile = getAccess("stage")
+    $: readOnly = profile.global === "read" || profile[stageLayoutId || ""] === "read"
 
     let lines: [string, number][] = []
     let mouse: any = null
@@ -147,13 +151,13 @@
             <!-- TODO: stage resolution... -->
             <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center={zoom >= 1}>
                 <!-- TODO: snapping to top left... -->
-                {#if edit}
+                {#if edit && !readOnly}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
                 {#key stageLayoutId}
                     {#each stageItems as item}
                         {#if (item.type || item.enabled !== false) && (edit || shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }))}
-                            <Stagebox {edit} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
+                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
                         {/if}
                     {/each}
                 {/key}

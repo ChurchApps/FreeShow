@@ -5,6 +5,7 @@ import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "
 import { GetLayout } from "./get"
 import { history } from "./history"
 import { _show } from "./shows"
+import { getAccess } from "../../utils/profile"
 
 // check if name exists and add number
 export function checkName(name = "", showId = "") {
@@ -172,7 +173,10 @@ export function updateShowsList(allShows: TrimmedShows) {
         if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
-    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true)
+    // const profile = getAccess("shows")
+    // const hiddenCategories = Object.entries(profile).filter(([_, type]) => type === "none").map(([id]) => id)
+
+    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true) // .filter((a) => !a.category || !hiddenCategories.includes(a.category))
     sortedShowsList.set(filteredShows)
 }
 

@@ -24,7 +24,7 @@
         "primary-darkest",
         "secondary",
         "text",
-        "secondary-text",
+        "secondary-text"
         // "textInvert",
         // "secondary-opacity",
         // "hover",
@@ -64,7 +64,7 @@
             let data = {
                 ...thisTheme,
                 default: false,
-                name: (key === "name" ? value : thisTheme.name) + " 2",
+                name: (key === "name" ? value : thisTheme.name) + " 2"
             }
             if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
 
@@ -143,7 +143,7 @@
                     bold={false}
                     center
                 >
-                    {#if active}<Icon id="theme" right white />{/if}
+                    {#if active}<Icon id="check" size={0.7} right white />{/if}
                     <HiddenInput style="color: {currentColors.secondary};" value={name} id={"theme_" + currentTheme.id} on:edit={(e) => updateTheme(e.detail.value, null, "name")} bind:edit />
                 </Button>
             </SelectElem>

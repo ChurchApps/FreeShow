@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -289,8 +290,11 @@
         })
     }
 
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+
     function createSlide() {
-        if (currentShow?.locked) return
+        if (isLocked) return
 
         history({ id: "SLIDES" })
         activePage.set("edit")
@@ -427,7 +431,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -468,7 +472,7 @@
                         <Center absolute size={2}>
                             <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
-                            <Button disabled={currentShow?.locked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                            <Button disabled={isLocked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
                                 <Icon id="add" right />
                                 <T id="new.slide" />
                             </Button>

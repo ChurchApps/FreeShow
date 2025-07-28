@@ -27,6 +27,7 @@
         variables,
         variableTags
     } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -61,18 +62,23 @@
     interface Button extends Category {
         id: string
         url?: string
+        readOnly?: boolean
     }
     let buttons: Button[] = []
     $: {
+        let profile = getAccess(id)
         if (id === "shows" && $dictionary) {
-            let categoriesList = keysToID($categories).filter((a) => !a.isArchive)
+            let categoriesList = keysToID($categories).filter((a) => !a.isArchive && profile[a.id] !== "none")
             let archivedCategories = keysToID($categories).filter((a) => a.isArchive)
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledShows ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[])
+                ...(sortObject(categoriesList, "name") as Button[]).map((a) => {
+                    a.readOnly = profile.global === "read" || profile[a.id] === "read"
+                    return a
+                })
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -92,7 +98,7 @@
                 ...(sortObject(keysToID($mediaFolders), "name") as Button[])
             ]
         } else if (id === "overlays") {
-            let categoriesList = keysToID($overlayCategories).filter((a) => !a.isArchive)
+            let categoriesList = keysToID($overlayCategories).filter((a) => !a.isArchive && profile[a.id] !== "none")
             let archivedCategories = keysToID($overlayCategories).filter((a) => a.isArchive)
 
             buttons = [
@@ -101,20 +107,26 @@
                 { id: "SEPERATOR", name: "" },
                 { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[])
+                ...(sortObject(categoriesList, "name") as Button[]).map((a) => {
+                    a.readOnly = profile.global === "read" || profile[a.id] === "read"
+                    return a
+                })
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
             }
         } else if (id === "templates") {
-            let categoriesList = keysToID($templateCategories).filter((a) => !a.isArchive)
+            let categoriesList = keysToID($templateCategories).filter((a) => !a.isArchive && profile[a.id] !== "none")
             let archivedCategories = keysToID($templateCategories).filter((a) => a.isArchive)
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 ...(activeSubTab === "unlabeled" || unlabeledTemplates ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(categoriesList, "name") as Button[])
+                ...(sortObject(categoriesList, "name") as Button[]).map((a) => {
+                    a.readOnly = profile.global === "read" || profile[a.id] === "read"
+                    return a
+                })
             ]
             if (archivedCategories.length) {
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
@@ -247,7 +259,7 @@
     </div>
     {#if id === "shows"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} disabled={getAccess("shows").global === "read"} center title={$dictionary.new?.category}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
@@ -259,14 +271,14 @@
         </FolderPicker>
     {:else if id === "overlays"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} disabled={getAccess("overlays").global === "read"} center title={$dictionary.new?.category}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
         </div>
     {:else if id === "templates"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} disabled={getAccess("templates").global === "read"} center title={$dictionary.new?.category}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
