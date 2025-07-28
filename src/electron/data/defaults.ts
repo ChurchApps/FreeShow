@@ -1,6 +1,6 @@
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
-export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: true }
+export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: null }
 
 export const defaultGroups = {
     break: { name: "break", default: true, color: "#f5255e" },

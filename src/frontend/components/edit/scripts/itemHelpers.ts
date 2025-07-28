@@ -51,7 +51,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
-        const timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
+        const timerId = options.timer?.id || sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
         newData.timer = { id: timerId, ...get(timers)[timerId] }
         if (get(timers)[timerId]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
     } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", showTime: true, seconds: false }

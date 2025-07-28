@@ -183,7 +183,7 @@
                 <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
             {/if}
 
-            {#if show.scheduleLength !== undefined}
+            {#if show.scheduleLength !== undefined && Number(show.scheduleLength)}
                 <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
             {/if}
         </span>

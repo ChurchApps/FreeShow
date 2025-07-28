@@ -817,6 +817,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
+        if (templateItem.list) item.list = templateItem.list
 
         // use original line reveal if style template does not have the value set
         const hasLineReveal = item.lineReveal
@@ -1128,7 +1129,11 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
             .slides([ref?.[outSlide.index ?? -1]?.id])
             .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
-    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
+
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealed = clickRevealItems.length ? !!outSlide.itemClickReveal : true
+
+    if (!maxLines) return { start: null, end: null, clickRevealed } // , index: 0, max: 0
 
     let progress = ((outSlide.line || 0) + 1) / maxLines
 
@@ -1163,14 +1168,12 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
         linesEnd = currentReveal
     }
 
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
-
     return {
         start: !!maxStyleLines ? start : null,
         end: !!maxStyleLines ? end : null,
         linesStart: !!linesRevealItems.length ? linesStart : null,
         linesEnd: !!linesRevealItems.length ? linesEnd : null,
-        clickRevealed: clickRevealItems.length ? !!outSlide.itemClickReveal : true
+        clickRevealed
     } // , index: linesIndex, max: maxStyleLines
 }
 

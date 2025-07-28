@@ -49,12 +49,12 @@
             })
 
             layoutSlides[show.id!] = a
-            
+
             // Create a display string for metadata while preserving the original object
             const metaDisplay = Object.values((show.meta || {}) as { [key: string]: string })
                 .filter((a) => a.length)
                 .join("; ")
-            
+
             // Preserve original meta object and add display string
             show.metaDisplay = metaDisplay
         })
@@ -92,19 +92,19 @@
     // Chord sheet helper functions
     function formatLyricsWithChords(slide: any): { text: string; isChord: boolean }[] {
         const lines: { text: string; isChord: boolean }[] = []
-        
+
         slide.items?.forEach((item: any) => {
             item.lines?.forEach((line: any) => {
                 if (!line.text || line.text.length === 0) return
-                
+
                 // Get text content
                 let textContent = ""
                 line.text.forEach((text: any) => {
                     textContent += text.value || ""
                 })
-                
+
                 if (!textContent.trim()) return
-                
+
                 // If there are chords, create chord line above lyrics
                 if (line.chords && line.chords.length > 0) {
                     const chordLine = createChordLine(textContent, line.chords)
@@ -112,17 +112,17 @@
                         lines.push({ text: chordLine, isChord: true })
                     }
                 }
-                
+
                 lines.push({ text: textContent, isChord: false })
             })
         })
-        
+
         return lines
     }
 
     function getShowChords(show: Show): string[] {
         const chords = new Set<string>()
-        
+
         Object.values(show.slides || {}).forEach((slide) => {
             slide.items?.forEach((item) => {
                 item.lines?.forEach((line) => {
@@ -132,7 +132,7 @@
                 })
             })
         })
-        
+
         return Array.from(chords).sort()
     }
 
@@ -141,13 +141,13 @@
         if (show.meta?.key && show.meta.key.trim()) {
             return show.meta.key.trim()
         }
-        
+
         // Second priority: derive from most common chord
         const chords = getShowChords(show)
         if (chords.length > 0) {
             // Find the most common chord (assuming it's likely the key)
             const chordCounts: { [key: string]: number } = {}
-            
+
             Object.values(show.slides || {}).forEach((slide) => {
                 slide.items?.forEach((item) => {
                     item.lines?.forEach((line) => {
@@ -160,19 +160,18 @@
                     })
                 })
             })
-            
+
             // Return the most frequent chord
-            const mostCommon = Object.entries(chordCounts)
-                .sort(([,a], [,b]) => b - a)[0]
-            
+            const mostCommon = Object.entries(chordCounts).sort(([, a], [, b]) => b - a)[0]
+
             if (mostCommon) {
                 return mostCommon[0]
             }
-            
+
             // Fallback to first chord
             return chords[0]
         }
-        
+
         // Final fallback
         return "C"
     }
@@ -183,7 +182,7 @@
         if (activeLayoutId && show.layouts?.[activeLayoutId]?.notes) {
             return show.layouts[activeLayoutId].notes.trim()
         }
-        
+
         // Fallback to first layout with notes
         if (show.layouts) {
             for (const layout of Object.values(show.layouts)) {
@@ -192,53 +191,53 @@
                 }
             }
         }
-        
+
         return ""
     }
 
     function createChordLine(text: string, chords: any[]): string {
         // Create a generous character array for chord placement
         const chordArray = new Array(Math.max(text.length + 20, 80)).fill(" ")
-        
+
         // Sort chords by position to handle overlaps properly
         const sortedChords = [...chords].sort((a, b) => (a.pos || 0) - (b.pos || 0))
-        
+
         sortedChords.forEach((chord) => {
-            const pos = Math.max(0, Math.min(chord.pos || 0, chordArray.length - ((chord.chord || chord.key || "").length)))
+            const pos = Math.max(0, Math.min(chord.pos || 0, chordArray.length - (chord.chord || chord.key || "").length))
             const chordStr = chord.chord || chord.key || ""
-            
+
             // Place chord at position, ensuring it fits
             for (let i = 0; i < chordStr.length && pos + i < chordArray.length; i++) {
                 chordArray[pos + i] = chordStr[i]
             }
         })
-        
+
         return chordArray.join("").trimEnd()
     }
 
     function groupSlidesBySection(slides: any[]): any[] {
         const sections: any[] = []
-        
+
         // Create a map to track slide numbers for each group
         const groupCounts: { [key: string]: number } = {}
-        
+
         slides.forEach((slide) => {
             const groupName = slide.group || "Verse"
-            
+
             // Increment the count for this group
             groupCounts[groupName] = (groupCounts[groupName] || 0) + 1
-            
+
             // Create individual section for each slide with numbered title
             const numberedName = `${groupName} ${groupCounts[groupName]}`
-            
+
             const section = {
                 name: numberedName,
                 slides: [slide]
             }
-            
+
             sections.push(section)
         })
-        
+
         return sections
     }
 </script>
@@ -247,13 +246,16 @@
     {#if shows.length}
         {#if options.chordSheet}
             <!-- Chord Sheet Export - Professional layout -->
-            <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5};">
+            <div
+                class="page chord-sheet-page"
+                style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5};"
+            >
                 <!-- Header -->
                 <div class="header">
                     {#if options.title && shows[index].name}
                         <h1 class="title">{shows[index].name}</h1>
                     {/if}
-                    
+
                     <div class="song-info">
                         {#if options.artist && shows[index].meta?.artist}
                             <span class="artist">by {shows[index].meta.artist}</span>
@@ -269,7 +271,7 @@
                     {#each groupSlidesBySection(layoutSlides[shows[index].id] || []) as section, sectionIndex}
                         <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[shows[index].id] || []).length - 1 ? '8px' : '15px'};">
                             <h3 class="section-title">{section.name}</h3>
-                            
+
                             {#each section.slides as slide, slideIndex}
                                 <div class="verse" style="margin-bottom: {slideIndex === section.slides.length - 1 ? '8px' : '12px'};">
                                     {#each formatLyricsWithChords(slide) as line}
@@ -485,7 +487,7 @@
     }
 
     .title {
-        font-size: 24px;
+        font-size: 3em;
         font-weight: bold;
         margin: 0 0 10px 0;
         text-align: center;
@@ -501,7 +503,8 @@
         color: #666;
     }
 
-    .artist, .key {
+    .artist,
+    .key {
         font-weight: bold;
     }
 
@@ -555,7 +558,7 @@
     }
 
     .chord-line .line-content {
-        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
         font-weight: bold;
         color: #0066cc;
         font-size: var(--chord-font-size, 10px);

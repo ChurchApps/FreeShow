@@ -81,6 +81,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     create_show: { label: "new.show_convert", icon: "slide" },
     // newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private" },
+    unlink_pco: { label: "actions.unlink_pco", icon: "bind" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
     section: { label: "new.section", icon: "section" },
     copy_to_template: { label: "actions.create_template", icon: "templates" },
@@ -269,6 +270,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "delete" removed as too many users thought it just removed the show from the project
     // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
     project_show: ["remove", "SEPERATOR", "private", "SEPERATOR", "rename"],
+    pco_item: ["unlink_pco"],
     project_section: ["recolor", "SEPERATOR", "remove"],
     project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",

@@ -305,6 +305,8 @@ export function storeSubscriber() {
 }
 
 const initalOutputData = {
+    LANGUAGE: "language",
+
     STYLES: "styles",
     TRANSITION: "transitionData",
     SHOWS: "showsCache",
