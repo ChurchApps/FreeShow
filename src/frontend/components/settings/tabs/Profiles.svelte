@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { activeProfile, categories, dictionary, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
+    import { activeProfile, activeTriggerFunction, categories, dictionary, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { generateLightRandomColor } from "../../helpers/color"
@@ -77,6 +77,7 @@
 
     // CREATE
 
+    $: if ($activeTriggerFunction === "create_profile") setTimeout(createProfile)
     async function createProfile() {
         // WIP presets for presenter / creator / manager
 

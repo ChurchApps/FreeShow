@@ -4,6 +4,7 @@
     import { changeSlidesView } from "../../show/slides"
     import { actions, activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { getAccess } from "../../utils/profile"
     import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -17,7 +18,6 @@
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { getAccess } from "../../utils/profile"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
