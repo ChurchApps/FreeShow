@@ -148,13 +148,11 @@ export function getFileStats(filePath: string, disableLog = false) {
 
 export function makeDir(folderPath: string) {
     try {
-        folderPath = fs.mkdirSync(folderPath, { recursive: true }) || folderPath
+        fs.mkdirSync(folderPath, { recursive: true })
     } catch (err) {
         console.error("Could not create a directory to path: " + folderPath + "! " + String(err))
         sendToMain(ToMain.ALERT, "Error: Could not create folder at: " + folderPath + "!")
     }
-
-    return folderPath
 }
 
 // SELECT DIALOGS
@@ -186,11 +184,11 @@ export function openSystemFolder(folderPath: string) {
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(folderPath: string | null = null, folderName = "Shows", shouldCreateFolder = true): string {
+export function getDocumentsFolder(folderPath: string | null = null, folderName = dataFolderNames.shows, shouldCreateFolder = true): string {
     const documentsFolderPath = [app.getPath("documents"), appFolderName]
     if (folderName) documentsFolderPath.push(folderName)
     if (!folderPath) folderPath = path.join(...documentsFolderPath)
-    if (!doesPathExist(folderPath) && shouldCreateFolder) folderPath = makeDir(folderPath)
+    if (!doesPathExist(folderPath) && shouldCreateFolder) makeDir(folderPath)
 
     return folderPath
 }
@@ -202,9 +200,7 @@ export function checkShowsFolder(folderPath: string): string {
         return folderPath
     }
 
-    if (doesPathExist(folderPath)) return folderPath
-
-    return makeDir(folderPath)
+    return createFolder(folderPath)
 }
 
 export const dataFolderNames = {
@@ -236,7 +232,8 @@ export function getExtension(name: string) {
 
 export function createFolder(folderPath: string) {
     if (doesPathExist(folderPath)) return folderPath
-    return makeDir(folderPath)
+    makeDir(folderPath)
+    return folderPath
 }
 
 // 2025-01-21_15-59

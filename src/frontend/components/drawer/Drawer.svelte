@@ -208,9 +208,9 @@
             //     click(e)
             // }
         }}
-        role="button"
-        tabindex="0"
     >
+        <!-- role="button"
+        tabindex="0" -->
         <span class="tabs">
             {#each tabs as tab, i}
                 {#if $drawerTabsData[tab.id]?.enabled !== false && getAccess(tab.id).global !== "none" && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}

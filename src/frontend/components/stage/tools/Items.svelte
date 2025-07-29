@@ -140,7 +140,7 @@
             <div class="flex">
                 <IconButton name title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
 
-                <Dropdown options={dynamicValues} value="" on:click={(e) => addItem("text", e.detail.name)} arrow />
+                <Dropdown options={dynamicValues} value="" on:click={(e) => addItem("text", e.detail.name)} title={$dictionary.actions?.dynamic_values} arrow />
             </div>
 
             <hr class="divider" />

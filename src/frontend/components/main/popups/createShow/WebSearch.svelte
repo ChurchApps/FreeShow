@@ -92,14 +92,31 @@
         dispatch("update", data)
     }
 
+    let tempBlocked: string[] = []
     function blockArtist(artist: string) {
+        const undo = tempBlocked.includes(artist)
+
         special.update((a) => {
             if (!a.blockedArtists) a.blockedArtists = []
-            a.blockedArtists.push(artist)
+
+            if (undo) {
+                const index = a.blockedArtists.indexOf(artist)
+                if (index > -1) a.blockedArtists.splice(index, 1)
+            } else {
+                a.blockedArtists.push(artist)
+            }
+
             return a
         })
 
-        if (songs) songs = filterBadArtists(songs)
+        if (undo) {
+            tempBlocked.splice(tempBlocked.indexOf(artist), 1)
+        } else {
+            tempBlocked.push(artist)
+        }
+        tempBlocked = tempBlocked
+
+        // if (songs) songs = filterBadArtists(songs)
     }
 </script>
 
@@ -125,18 +142,19 @@
             <tbody>
                 {#if songs}
                     {#each songs as song}
+                        {@const blocked = tempBlocked.includes(song.artist)}
                         <tr
                             on:click={(e) => {
-                                if (e.target?.closest("button")) return
+                                if (e.target?.closest("button") || e.target?.closest("path")) return
                                 getLyrics(song)
                             }}
                         >
                             <td class="title">{song.title}</td>
-                            <td class="flex-table">
+                            <td class="flex-table" style={blocked ? "text-decoration: line-through;" : ""}>
                                 {song.artist}
                                 {#if song.artist && song.source !== "Hymnary"}
-                                    <Button title={$dictionary.create_show?.block} style="padding: 2px;" on:click={() => blockArtist(song.artist)}>
-                                        <Icon style="opacity: 0.4;" id="block" white />
+                                    <Button title={blocked ? $dictionary.actions?.undo : $dictionary.create_show?.block} style="padding: 2px;" on:click={() => blockArtist(song.artist)}>
+                                        <Icon style="opacity: 0.4;" id={blocked ? "undo" : "block"} white />
                                     </Button>
                                 {/if}
                             </td>
