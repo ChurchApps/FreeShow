@@ -78,64 +78,65 @@
                 <Loader />
             </Center>
         {:else if fullFilteredTemplates.length}
-            <div class="grid">
+            <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
                 {#each fullFilteredTemplates as template}
                     {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
-                    <Card
-                        class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}"
-                        preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
-                        active={template.id === activeTemplate}
-                        label={template.name}
-                        renameId="template_{template.id}"
-                        icon={template.isDefault ? "protected" : null}
-                        color={template.color}
-                        {resolution}
-                        on:click={(e) => {
-                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
-                            if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
-                            if ($showsCache[$activeShow.id]?.locked) {
-                                alertMessage.set("show.locked_info")
-                                activePopup.set("alert")
-                                return
-                            }
 
-                            // one selected slides
-                            let ref = getLayoutRef()
-                            if ($selected.id === "slide" && $selected.data.length < ref.length) {
-                                $selected.data.forEach(({ index, showId }) => {
-                                    let slideId = ref[index]?.id
-                                    let slideSettings = _show(showId || "active")
-                                        .slides([slideId])
-                                        .get("settings")
-                                    let oldData = { style: clone(slideSettings) }
-                                    let newData = { style: { ...clone(slideSettings), template: template.id } }
+                    <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
+                        <Card
+                            width={100}
+                            preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
+                            active={template.id === activeTemplate}
+                            label={template.name}
+                            renameId="template_{template.id}"
+                            icon={template.isDefault ? "protected" : null}
+                            color={template.color}
+                            {resolution}
+                            on:click={(e) => {
+                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                                if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+                                if ($showsCache[$activeShow.id]?.locked) {
+                                    alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
+                                }
 
-                                    // WIP apply to all slides at once...
-                                    history({
-                                        id: "slideStyle",
-                                        oldData,
-                                        newData,
-                                        location: { page: "edit", show: $activeShow, slide: slideId }
+                                // one selected slides
+                                let ref = getLayoutRef()
+                                if ($selected.id === "slide" && $selected.data.length < ref.length) {
+                                    $selected.data.forEach(({ index, showId }) => {
+                                        let slideId = ref[index]?.id
+                                        let slideSettings = _show(showId || "active")
+                                            .slides([slideId])
+                                            .get("settings")
+                                        let oldData = { style: clone(slideSettings) }
+                                        let newData = { style: { ...clone(slideSettings), template: template.id } }
+
+                                        // WIP apply to all slides at once...
+                                        history({
+                                            id: "slideStyle",
+                                            oldData,
+                                            newData,
+                                            location: { page: "edit", show: $activeShow, slide: slideId }
+                                        })
                                     })
-                                })
 
-                                deselect()
-                                // WIP refresh slides (apply template)
-                                return
-                            }
+                                    deselect()
+                                    // WIP refresh slides (apply template)
+                                    return
+                                }
 
-                            history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
-                        }}
-                    >
-                        <!-- icons -->
-                        {#if template.settings?.actions?.length}
-                            <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
-                        {/if}
+                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
+                            }}
+                        >
+                            <!-- icons -->
+                            {#if template.settings?.actions?.length}
+                                <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
+                            {/if}
 
-                        <SelectElem id="template" data={template.id} fill draggable>
                             <TemplateSlide templateId={template.id} {template} preview />
-                        </SelectElem>
-                    </Card>
+                        </Card>
+                    </SelectElem>
                 {/each}
             </div>
         {:else}
@@ -173,8 +174,9 @@
         place-content: flex-start;
     }
 
-    .grid :global(.isSelected) {
-        outline: 5px solid var(--secondary-text) !important;
+    .grid :global(.selectElem) {
+        width: var(--width);
+        outline-offset: -3px;
     }
 
     .tabs {

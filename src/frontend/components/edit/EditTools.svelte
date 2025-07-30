@@ -411,9 +411,9 @@
                 {/if}
 
                 <!-- TODO: reset template/overlay -->
-                <Button style="flex: 1;" title={$dictionary.actions?.reset} on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
-                    <Icon id="reset" right />
-                    <T id="actions.reset" />
+                <Button style={isShow ? "" : "flex: 1;"} title={$dictionary.actions?.reset} on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
+                    <Icon id="reset" right={!isShow} white={isShow} />
+                    {#if !isShow}<T id="actions.reset" />{/if}
                 </Button>
 
                 {#if false && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}

@@ -580,7 +580,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         const existingId = Object.keys(existingBackgrounds).find((mediaId) => existingBackgrounds[mediaId].path === background.path)
                         if (existingId) id = existingId
 
-                        const bgId = _show(showId).media().add(background, id)
+                        const bgId = existingId ? id : _show(showId).media().add(background, id)
                         layoutValue.background = bgId
                     }
 

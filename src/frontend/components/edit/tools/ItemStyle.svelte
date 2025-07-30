@@ -90,9 +90,6 @@
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
 
-        // reverse to get same order as "Item" & "Items" etc., uses
-        allItems = allItems.reverse()
-
         /////
 
         let ref = getLayoutRef()

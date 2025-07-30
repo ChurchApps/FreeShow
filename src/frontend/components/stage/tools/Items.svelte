@@ -195,7 +195,7 @@
                             }
                         }}
                     >
-                        <span style="display: flex;flex: 1;">
+                        <span style="display: flex;flex: 1;overflow: hidden;">
                             <p style="margin-inline-end: 10px;">{i + 1}</p>
                             <Icon id={type === "icon" ? id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
                             <p style="margin-inline-start: 10px;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || $dictionary.items?.[type]}</p>

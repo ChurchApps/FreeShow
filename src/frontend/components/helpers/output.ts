@@ -826,7 +826,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // if (hasClickReveal) templateItem.clickReveal = true
 
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem[style]) item[style] = templateItem[style]
@@ -1106,9 +1106,9 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[]) {
+export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[], outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1117,6 +1117,10 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
+
+    function checkSpecificOutput(item: Item) {
+        return !item.bindings?.length || item.bindings.includes(outputId)
+    }
 }
 
 // , currentSlide: Slide | null = null

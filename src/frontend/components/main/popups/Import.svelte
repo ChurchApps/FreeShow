@@ -13,8 +13,8 @@
     const freeshow_formats = [
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
         { name: "$formats.project", extensions: ["project", "shows", "json", "zip"], id: "freeshow_project" }, // , "fsproject", "fsp"
-        { name: "$formats.template", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "freeshow_template" },
-        { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" }
+        { name: "$formats.template", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "freeshow_template" }
+        // { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" } // moved to settings
         // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]

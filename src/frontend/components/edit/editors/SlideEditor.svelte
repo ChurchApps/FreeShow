@@ -275,7 +275,7 @@
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed
-                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : Slide?.settings?.color || currentStyle.background || "black"}
+                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
                     {checkered}
                     border={checkered}
                     {resolution}

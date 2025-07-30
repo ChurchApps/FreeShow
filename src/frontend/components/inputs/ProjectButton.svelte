@@ -32,7 +32,9 @@
             if (!project) return
 
             project.parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
-            if (e.ctrlKey || e.metaKey) project.name = getProjectName() // use default project name
+            if (e.ctrlKey || e.metaKey)
+                project.name = getProjectName() // use default project name
+            else project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
             let projectId = uid()
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
             setTimeout(() => activeRename.set("project_" + projectId))

@@ -293,19 +293,25 @@
         {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
     </div> -->
     {:else if timer.type === "clock"}
-        <CombinedInput style="margin-top: 10px;" textWidth={50}>
-            <p><T id="timer.clock" /></p>
-            <!-- <Date value={to} on:change={(e) => (to = e.detail)} />x -->
-            <input type="time" step="2" bind:value={timer.time} />
+        <CombinedInput style="margin-top: 10px;">
+            <div class="timerbox">
+                <p style="border: none;min-height: unset;" class="part"><T id="timer.clock" /></p>
+
+                <!-- <Date value={to} on:change={(e) => (to = e.detail)} />x -->
+                <input type="time" step="2" bind:value={timer.time} />
+            </div>
         </CombinedInput>
     {:else if timer.type === "event"}
-        <CombinedInput style="margin-top: 10px;" textWidth={50}>
-            <p><T id="timer.event" /></p>
-            {#if eventList.length}
-                <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
-            {:else}
-                <div style="padding: 0 10px;display: flex;align-items: center;opacity: 0.5;"><T id="timer.no_events" /></div>
-            {/if}
+        <CombinedInput style="margin-top: 10px;">
+            <div class="timerbox">
+                <p style="border: none;min-height: unset;" class="part"><T id="timer.event" /></p>
+
+                {#if eventList.length}
+                    <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
+                {:else}
+                    <div style="padding: 0 10px;display: flex;align-items: center;opacity: 0.5;"><T id="timer.no_events" /></div>
+                {/if}
+            </div>
         </CombinedInput>
     {/if}
 
@@ -417,13 +423,15 @@
     input[type="time"] {
         background-color: var(--primary-darker);
         color: inherit;
-        width: 50%;
-        font-size: inherit;
         font-family: inherit;
         border: 0;
-        padding: 5px;
 
         transition: opacity 0.2s;
+
+        width: 100%;
+        font-size: 3.5em;
+        font-weight: bold;
+        padding: 5px 15px;
     }
 
     input:disabled {
@@ -434,6 +442,8 @@
         cursor: pointer;
         opacity: 0.8;
         filter: invert(1);
+
+        font-size: 0.5em;
     }
     input::-webkit-calendar-picker-indicator:hover {
         background-color: rgb(0 0 0 / 0.1);

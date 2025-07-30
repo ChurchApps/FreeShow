@@ -602,7 +602,7 @@
         <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
     </CombinedInput> -->
 {/if}
-<CombinedInput>
+<CombinedInput style="border-top: 2px solid var(--primary-lighter);">
     <p><T id="meta.message_template" /></p>
     <Button
         on:click={() => {

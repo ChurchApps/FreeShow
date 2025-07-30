@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { Themes } from "../../../../types/Settings"
-    import { dictionary, outputs, selected, theme, themes } from "../../../stores"
+    import { dataPath, dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
@@ -16,6 +16,8 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { defaultThemes } from "./defaultThemes"
+    import { sendMain } from "../../../IPC/main"
+    import { Main } from "../../../../types/IPC/Main"
 
     const colors: string[] = [
         "primary",
@@ -99,6 +101,11 @@
         updateThemeValues(defaultThemes.default)
     }
 
+    function importTheme() {
+        const format = { extensions: ["fstheme", "theme", "json"], name: translate("formats.theme") }
+        sendMain(Main.IMPORT, { channel: "freeshow_theme", format, settings: { path: $dataPath } })
+    }
+
     let edit = false
 </script>
 
@@ -167,6 +174,10 @@
                 <p><T id="settings.reset_themes" /></p>
             </Button>
         {/if}
+        <Button on:click={importTheme} center>
+            <Icon id="import" right />
+            <p><T id="actions.import" /></p>
+        </Button>
     </div>
 </div>
 
