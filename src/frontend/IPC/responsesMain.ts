@@ -8,7 +8,7 @@ import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
 import { getDynamicValue, getVariableValue } from "../components/edit/scripts/itemHelpers"
-import { clone } from "../components/helpers/array"
+import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
@@ -87,6 +87,7 @@ import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { convertMediaShout } from "../converters/mediashout"
 import { getSlidesText } from "../components/edit/scripts/textStyle"
+import { confirmCustom } from "../utils/popup"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -275,23 +276,54 @@ export const mainResponses: MainResponses = {
         pcoConnected.set(true)
         if (data.isFirstConnection) newToast("$main.finished")
     },
-    [ToMain.PCO_PROJECTS]: (data) => {
+    [ToMain.PCO_PROJECTS]: async (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
         createCategory("Planning Center")
 
+        const replaceIds: { [key: string]: string } = {}
+        const allShows = keysToID(get(shows))
+
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
-        data.shows.forEach((show) => {
+        for (const show of data.shows) {
             const id = show.id
 
+            // TODO: check if name contains scripture reference (and is empty), and load from active scripture
+
+            // first find any shows linked to the id
+            const linkedShow = allShows.find(({ quickAccess }) => quickAccess?.pcoLink === id)
+            if (linkedShow) {
+                replaceIds[id] = linkedShow.id
+                continue
+            }
+
+            // find existing show with same name and ask to replace.
+            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+            // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
+            if (existingShow) {
+                const useLocal = await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
+                if (useLocal) {
+                    replaceIds[id] = existingShow.id
+
+                    await loadShows([existingShow.id])
+                    showsCache.update((a) => {
+                        if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
+                        a[existingShow.id].quickAccess.pcoLink = id
+                        return a
+                    })
+
+                    continue
+                }
+            }
+
             // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) return
+            if (get(shows)[id]) continue
 
             delete show.id
-            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id) } })
-        })
+            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id), quickAccess: { pcoLink: id } } })
+        }
         setTempShows(tempShows)
 
         data.projects.forEach((pcoProject) => {
@@ -309,6 +341,9 @@ export const mainResponses: MainResponses = {
                 parent: folderId || "/",
                 shows: pcoProject.items || []
             }
+
+            // REPLACE IDS
+            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = pcoProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })

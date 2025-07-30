@@ -295,6 +295,10 @@
         timer_end: {
             name: "items.timer",
             list: () => convertToOptions($timers)
+        },
+        timer_start: {
+            name: "items.timer",
+            list: () => convertToOptions($timers)
         }
     }
     function getSpecificActivation(customActivation) {
@@ -481,7 +485,7 @@
             </CombinedInput>
 
             {#if activationMenuOpened}
-                {#if customActivation === "timer_end"}
+                {#if customActivation === "timer_end" || customActivation === "timer_start"}
                     <CombinedInput textWidth={38}>
                         <p><T id={specificActivations[customActivation]?.name} /></p>
                         <Dropdown

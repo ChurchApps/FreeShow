@@ -8,7 +8,7 @@ import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
-import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
+import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
@@ -55,6 +55,8 @@ export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
 export const drawerOpenedInEdit: Writable<boolean> = writable(false)
 export const activeStyle: Writable<string> = writable("")
+export const selectedProfile: Writable<string | null> = writable(null)
+export const activeProfile: Writable<string | null> = writable(null)
 export const settingsTab: Writable<SettingsTabs> = writable("general")
 export const projectView: Writable<boolean> = writable(false)
 export const showRecentlyUsedProjects: Writable<boolean> = writable(true)
@@ -296,6 +298,9 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
 export const outLocked: Writable<boolean> = writable(false) // false
+
+// PROFILES
+export const profiles: Writable<Profiles> = writable({}) // {}
 
 // MIDI
 export const actions: Writable<{ [key: string]: Action }> = writable({}) // {}

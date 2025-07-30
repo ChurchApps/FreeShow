@@ -48,6 +48,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { getAccess } from "../../utils/profile"
 
     export let showId: string
     export let slide: Slide
@@ -317,6 +318,9 @@
         }, 100)
     }
 
+    let profile = getAccess("shows")
+    $: isLocked = show?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
+
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
 
@@ -353,7 +357,7 @@
     {/if}
     <!-- content -->
     <div
-        class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}"
+        class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}"
         class:disabled={layoutSlide.disabled}
         class:afterEnd={endIndex !== null && index > endIndex}
         {style}
@@ -369,10 +373,10 @@
                 style={colorStyle}
                 id="slide"
                 data={{ index, showId }}
-                draggable={!$focusMode && !show.locked}
+                draggable={!$focusMode && !isLocked}
                 shiftRange={layoutSlides.map((_, index) => ({ index, showId }))}
                 onlyRightClickSelect={$focusMode}
-                selectable={!show.locked}
+                selectable={!isLocked}
                 trigger={list ? "column" : "row"}
             >
                 <!-- TODO: tab select on enter -->

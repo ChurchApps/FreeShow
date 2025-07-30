@@ -26,7 +26,8 @@
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
-        if (disabled || arrow || nextScrollTimeout) return
+        const ctrl = e.ctrlKey || e.metaKey
+        if (disabled || arrow || nextScrollTimeout || !ctrl) return
         e.preventDefault()
 
         let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))

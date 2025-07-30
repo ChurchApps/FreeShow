@@ -7,6 +7,7 @@
 
     export let project: any
     export let opened: boolean
+    export let readOnly: boolean = false
 
     let editActive = false
 
@@ -31,14 +32,14 @@
     }
 </script>
 
-<button id={project.id} class:opened class="folder context #folder__projects" on:click={(e) => toggle(e, project, opened)}>
+<button id={project.id} class:opened class="folder {readOnly ? 'context #folder_readonly' : 'context #folder__projects'}" on:click={(e) => toggle(e, project, opened)}>
     <span>
         {#if opened}
             <Icon id="folderOpen" right white />
         {:else}
             <Icon id="folder" right white />
         {/if}
-        <HiddenInput value={project.name} id={"folder_" + project.id} on:edit={(e) => edit(e, project.id || "")} bind:edit={editActive} />
+        <HiddenInput value={project.name} id={"folder_" + project.id} on:edit={(e) => edit(e, project.id || "")} bind:edit={editActive} allowEdit={!readOnly} />
     </span>
 </button>
 

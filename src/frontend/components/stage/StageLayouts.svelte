@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeStage, labelsDisabled, outputs, stageShows } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -13,7 +14,10 @@
         history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     }
 
-    $: sortedStageSlides = sortByName(keysToID($stageShows))
+    const profile = getAccess("stage")
+    const readOnly = profile.global === "read"
+
+    $: sortedStageSlides = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
 
     $: if ($activeStage.id === null && Object.keys($stageShows).length) setActiveStage()
     function setActiveStage() {
@@ -84,7 +88,7 @@
         </Center>
     {/if}
     <!-- Add -->
-    <Button on:click={addSlide} center dark>
+    <Button on:click={addSlide} disabled={readOnly} center dark>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
     </Button>

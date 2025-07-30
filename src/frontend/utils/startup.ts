@@ -118,7 +118,7 @@ async function getStoredData() {
 }
 
 async function startupOutput() {
-    setLanguage() // this is only needed for the context menu
+    setLanguage() // this is only needed for the context menu (and stage display)
     receive(OUTPUT, receiveOUTPUTasOUTPUT)
 
     // wait a bit on slow computers

@@ -259,7 +259,7 @@ export function setExampleTemplates() {
             isDefault: true,
             name: get(dictionary).tools?.metadata || "Metadata",
             color: null,
-            category: null,
+            category: "song", // "metadata"
             items: [
                 {
                     style: "top: 910px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
@@ -273,7 +273,7 @@ export function setExampleTemplates() {
             isDefault: true,
             name: get(dictionary).meta?.message || "Message",
             color: null,
-            category: null,
+            category: "song", // "metadata"
             items: [
                 {
                     style: "top: 50px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
@@ -835,34 +835,11 @@ export function setExampleTemplates() {
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
+                    list: { enabled: true },
                     lines: [
-                        {
-                            align: "text-align: start",
-                            text: [
-                                {
-                                    value: "• Bullet 1",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
-                                }
-                            ]
-                        },
-                        {
-                            align: "text-align: start",
-                            text: [
-                                {
-                                    value: "• Bullet 2",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
-                                }
-                            ]
-                        },
-                        {
-                            align: "text-align: start",
-                            text: [
-                                {
-                                    value: "• Bullet 3",
-                                    style: "font-size: 100px;font-weight: bold;line-height:1.2em;"
-                                }
-                            ]
-                        }
+                        { align: "text-align: start", text: [{ value: "Bullet 1", style: "font-size: 100px;font-weight: bold;line-height:1.2em;" }] },
+                        { align: "text-align: start", text: [{ value: "Bullet 2", style: "font-size: 100px;font-weight: bold;line-height:1.2em;" }] },
+                        { align: "text-align: start", text: [{ value: "Bullet 3", style: "font-size: 100px;font-weight: bold;line-height:1.2em;" }] }
                     ]
                 }
             ]

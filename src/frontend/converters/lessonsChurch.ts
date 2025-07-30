@@ -74,7 +74,7 @@ export async function convertLessonsPresentation(data: any) {
     const { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    sendMain(Main.DOWNLOAD_MEDIA, [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
+    sendMain(Main.DOWNLOAD_LESSONS_MEDIA, [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
     const replace = await receiveMessage()
     replace.forEach((r) => {
@@ -152,7 +152,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
         show.meta = {
             title: lesson.lessonTitle,
             name: lesson.lessonName,
-            venue: lesson.venueName,
+            venue: lesson.venueName
         }
 
         return { id: showId, show }
@@ -163,7 +163,7 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
     const newLesson: OlpLesson = clone({
         ...lesson,
         lessonTitle: lesson.lessonName,
-        messages: getMessages(lesson.sections),
+        messages: getMessages(lesson.sections)
     })
 
     return newLesson
@@ -236,7 +236,7 @@ function convertToSlides(groups) {
                 color: "",
                 settings: {},
                 notes: "",
-                items: [],
+                items: []
             }
 
             const currentLayoutData: any = { background: mediaId }

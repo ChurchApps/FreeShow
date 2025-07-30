@@ -2,14 +2,14 @@ import { type ICommonTagsResult, parseFile } from "music-metadata"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDocumentsFolder, makeDir, writeFile } from "../utils/files"
+import { createFolder, dataFolderNames, deleteFile, doesPathExist, getDocumentsFolder, writeFile } from "../utils/files"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
 
 // let currentContent = ""
 export async function setPlayingState(data: { dataPath: string; filePath: string; name: string; unknownLang: string[] }) {
-    const documentsPath = makeDir(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
+    const documentsPath = createFolder(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
 
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)

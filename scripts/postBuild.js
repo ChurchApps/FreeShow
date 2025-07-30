@@ -168,7 +168,7 @@ const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"
 function setProductionHTML() {
     const sourceIndexPath = join(__dirname, "..", "public", "index.html")
     let htmlContent = readFileSync(sourceIndexPath, "utf8")
-    if (!htmlContent.includes(devScriptPath)) throw new Error("Dev script path changed!")
+    if (!htmlContent.includes(devScriptPath) && !htmlContent.includes(prodHTMLPaths)) throw new Error("Dev script path changed!")
     htmlContent = htmlContent.replace(devScriptPath, prodHTMLPaths)
     writeFileSync(sourceIndexPath, htmlContent)
 }

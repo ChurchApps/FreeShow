@@ -23,6 +23,7 @@
     import { getUsedChords } from "../scripts/chords"
     import { setCaretAtEnd } from "../scripts/textStyle"
     import { getLayoutRef } from "../../helpers/show"
+    import { getAccess } from "../../../utils/profile"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -238,6 +239,9 @@
         })
     )
 
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+
     // remove overflow if scrollbars are flickering over 25 times per second
     let hideOverflow = false
     // let changedTimes: number = 0
@@ -271,7 +275,7 @@
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed
-                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : Slide?.settings?.color || currentStyle.background || "black"}
+                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
                     {checkered}
                     border={checkered}
                     {resolution}
@@ -307,7 +311,7 @@
                     </div>
 
                     <!-- edit -->
-                    {#if !$showsCache[currentShowId || ""]?.locked}
+                    {#if !isLocked}
                         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {/if}
 

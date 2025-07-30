@@ -21,6 +21,7 @@
         selected
     } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { getAccess } from "../../utils/profile"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -207,12 +208,12 @@
             //     click(e)
             // }
         }}
-        role="button"
-        tabindex="0"
     >
+        <!-- role="button"
+        tabindex="0" -->
         <span class="tabs">
             {#each tabs as tab, i}
-                {#if $drawerTabsData[tab.id]?.enabled !== false && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
+                {#if $drawerTabsData[tab.id]?.enabled !== false && getAccess(tab.id).global !== "none" && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
                     <Button
                         id={tab.id}
                         on:click={() => openDrawerTab(tab)}

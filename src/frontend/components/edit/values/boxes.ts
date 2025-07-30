@@ -135,7 +135,7 @@ export const boxes: Box = {
                 { name: "no_wrap", id: "nowrap", input: "checkbox", value: false }
             ],
             lines: [
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 2, inputMultiplier: 10 }, extension: "em" },
                 { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
                 { name: "line_radius", id: "specialStyle.lineRadius", input: "number", value: 0, values: { max: 100 } },
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },

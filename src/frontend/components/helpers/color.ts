@@ -81,6 +81,30 @@ export function getContrast(hex: string) {
     return color
 }
 
+export function generateRandomHexColor() {
+    // random number between 0 and 16777215 (FFFFFF in hex)
+    let randomColor = Math.floor(Math.random() * 16777215).toString(16)
+
+    // pad with leading zeros to ensure 6 characters
+    return `#${randomColor.padStart(6, "0")}`
+}
+
+// generate lighter color that has high contrast to dark background
+export function generateLightRandomColor() {
+    const minBrightness = 150
+    let r = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+    let g = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+    let b = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+
+    // RGB to hex
+    const toHex = (c) => {
+        const hex = c.toString(16)
+        return hex.length === 1 ? "0" + hex : hex
+    }
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
 // GRADIENT
 
 export function splitGradientValue(gradientStr: string) {

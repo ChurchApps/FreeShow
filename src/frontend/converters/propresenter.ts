@@ -364,8 +364,8 @@ function arrangeLayouts(arrangements, sequences) {
 
 function splitTextToLines(text: string) {
     let lines: Line[] = []
-    const data = text.split("\n\n")
-    lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText }] }))
+    const data = text.replaceAll("\n\n", "<br>").split("<br>")
+    lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText.trim() }] }))
 
     return lines
 }

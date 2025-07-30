@@ -60,6 +60,7 @@ export type SaveListSettings =
     | "outputs"
     | "sorted"
     | "styles"
+    | "profiles"
     | "outLocked"
     | "ports"
     | "disabledServers"

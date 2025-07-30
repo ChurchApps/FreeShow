@@ -32,17 +32,17 @@
             originalTextSize: true,
             textSize: 80,
             chordSheet: false, // Add chord sheet option
-            
+
             // Chord sheet specific options
             artist: true,
             key: true,
-            showChords: true,
+            showChords: false,
             showNotes: true,
             fontSize: 15,
             chordFontSize: 15,
             margin: 20,
             spacing: 2,
-            columnsPerPage: 2,
+            columnsPerPage: 2
         }
     }
 
@@ -60,19 +60,13 @@
 
 <div style="display: flex;gap: 20px;height: 100%;">
     <div class="options" style="flex: 0 0 300px;">
-        <h4 style="text-align: center;"><T id="edit.options" /></h4>
-        <br />
+        <h4 style="text-align: center;margin-bottom: 10px;"><T id="edit.options" /></h4>
 
         {#if hasChords}
-            <CombinedInput>
-                <p><T id="export.type" /></p>
-                <Dropdown
-                    options={pdfTypeOptions}
-                    value={pdfOptions.chordSheet ? "Chord Sheet" : "Slides"}
-                    on:click={(e) => (pdfOptions.chordSheet = e.detail.id === "chordSheet")}
-                />
+            <CombinedInput style="margin-bottom: 10px;">
+                <p><T id="clock.type" /></p>
+                <Dropdown options={pdfTypeOptions} value={pdfOptions.chordSheet ? "Chord Sheet" : "Slides"} on:click={(e) => (pdfOptions.chordSheet = e.detail.id === "chordSheet")} />
             </CombinedInput>
-            <br />
         {/if}
 
         {#if !pdfOptions.chordSheet}
@@ -100,13 +94,13 @@
             </div>
         {/if}
 
-        <CombinedInput style="margin-top: 10px;">
+        <!-- <CombinedInput style="margin-top: 10px;">
             <p><T id="export.title" /></p>
             <div class="alignRight">
                 <Checkbox checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} />
             </div>
-        </CombinedInput>
-        
+        </CombinedInput> -->
+
         {#if !pdfOptions.chordSheet}
             <CombinedInput>
                 <p><T id="export.metadata" /></p>
@@ -152,65 +146,65 @@
                 <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
             </CombinedInput>
         {/if}
-        
+
         <!-- Chord Sheet Options -->
         {#if pdfOptions.chordSheet}
-            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;"><T id="export.chord_sheet_options" /></h5>
-            
             <CombinedInput>
-                <p><T id="export.lyrics_font_size" /></p>
+                <p><T id="edit.font_size" /></p>
                 <NumberInput value={pdfOptions.fontSize} on:change={(e) => (pdfOptions.fontSize = e.detail)} min={8} max={24} />
             </CombinedInput>
-            
+
             <CombinedInput>
-                <p><T id="export.chord_font_size" /></p>
-                <NumberInput value={pdfOptions.chordFontSize} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} min={6} max={20} />
-            </CombinedInput>
-            
-            <CombinedInput>
-                <p><T id="export.margin" /></p>
+                <p><T id="export.margin" /> (mm)</p>
                 <NumberInput value={pdfOptions.margin} on:change={(e) => (pdfOptions.margin = e.detail)} min={5} max={50} />
             </CombinedInput>
-            
+
             <CombinedInput>
-                <p><T id="export.line_spacing" /></p>
+                <p><T id="edit.line_spacing" /></p>
                 <NumberInput value={pdfOptions.spacing} on:change={(e) => (pdfOptions.spacing = e.detail)} min={1} max={3} decimals={1} />
             </CombinedInput>
-            
+
             <CombinedInput>
                 <p><T id="export.columns" /></p>
                 <NumberInput value={pdfOptions.columnsPerPage} on:change={(e) => (pdfOptions.columnsPerPage = e.detail)} min={1} max={3} />
             </CombinedInput>
-            
-            <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;"><T id="export.metadata_display" /></h5>
+
+            <h5 style="margin: 10px 0;text-align: center;color: var(--text);"><T id="edit.chords" /></h5>
+
+            <CombinedInput>
+                <p><T id="edit.font_size" /></p>
+                <NumberInput value={pdfOptions.chordFontSize} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} min={6} max={20} />
+            </CombinedInput>
+
+            <!-- <h5 style="margin-top: 20px; margin-bottom: 10px; text-align: center;">Metadata Display</h5>
             
             <CombinedInput>
-                <p><T id="export.artist" /></p>
+                <p>Artist</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.artist} on:change={(e) => updatePdfOptions(e, "artist")} />
                 </div>
             </CombinedInput>
             
             <CombinedInput>
-                <p><T id="export.key" /></p>
+                <p>Key</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.key} on:change={(e) => updatePdfOptions(e, "key")} />
                 </div>
-            </CombinedInput>
-            
-            <CombinedInput>
+            </CombinedInput> -->
+
+            <!-- <CombinedInput>
                 <p>Chords Used</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.showChords} on:change={(e) => updatePdfOptions(e, "showChords")} />
                 </div>
-            </CombinedInput>
-            
-            <CombinedInput>
+            </CombinedInput> -->
+
+            <!-- <CombinedInput>
                 <p>Notes</p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.showNotes} on:change={(e) => updatePdfOptions(e, "showNotes")} />
                 </div>
-            </CombinedInput>
+            </CombinedInput> -->
         {/if}
         <!-- <span>
     <p>repeats</p>

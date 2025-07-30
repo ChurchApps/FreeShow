@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -210,15 +211,31 @@
         }
     }
 
+    let altTimeout: NodeJS.Timeout | null = null
+    let altTemp = false
     let altKeyPressed = false
     function keydown(e: KeyboardEvent) {
+        if (!e.altKey && altTimeout) clearTimeout(altTimeout)
+
         if (e.altKey) {
-            e.preventDefault()
-            altKeyPressed = true
+            if (altTemp) return
+            altTemp = true
+            // e.preventDefault()
+
+            // only activate alt preview hide after a little time (still works instantly)
+            altTimeout = setTimeout(() => {
+                if (altTemp && document.hasFocus()) altKeyPressed = true
+            }, 300)
         }
     }
     function keyup(e) {
         if (e.altKey) return
+
+        altTemp = false
+        altKeyPressed = false
+    }
+    function blurred() {
+        altTemp = false
         altKeyPressed = false
     }
 
@@ -273,8 +290,11 @@
         })
     }
 
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+
     function createSlide() {
-        if (currentShow?.locked) return
+        if (isLocked) return
 
         history({ id: "SLIDES" })
         activePage.set("edit")
@@ -409,9 +429,9 @@
 
 <!-- TODO: tab enter not woring -->
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -452,7 +472,7 @@
                         <Center absolute size={2}>
                             <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
-                            <Button disabled={currentShow?.locked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                            <Button disabled={isLocked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
                                 <Icon id="add" right />
                                 <T id="new.slide" />
                             </Button>

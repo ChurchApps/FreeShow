@@ -47,7 +47,8 @@ import {
     triggers,
     variables,
     videoMarkers,
-    effects
+    effects,
+    profiles
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
@@ -133,13 +134,13 @@ export function cut(clip: Clipboard | null = null) {
     if (window.getSelection()?.toString()) {
         const selection = window.getSelection()!
         navigator.clipboard.writeText(selection.toString())
-        selection.deleteFromDocument();
+        selection.deleteFromDocument()
         console.info("CUTTED TEXT", selection.toString())
         return
     }
     // Handle other types
     const copyData = copy(clip)
-    if (!copyData) return 
+    if (!copyData) return
     deleteAction(copyData)
 
     console.info("CUTTED:", copyData)
@@ -909,6 +910,11 @@ const deleteActions = {
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])
     },
+    profile: (data: any) => {
+        data.forEach(({ id }) => {
+            history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_profile" } })
+        })
+    },
     tag: (data: any) => {
         const tagId = data[0]?.id || ""
         history({ id: "UPDATE", newData: { id: tagId }, location: { page: "show", id: "tag" } })
@@ -1072,6 +1078,13 @@ const duplicateActions = {
             const output = clone(get(outputs)[id])
             id = uid()
             history({ id: "UPDATE", newData: { data: output, replace: { name: output.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
+        })
+    },
+    profile: (data: any) => {
+        data.forEach(({ id }) => {
+            const profile = clone(get(profiles)[id])
+            id = uid()
+            history({ id: "UPDATE", newData: { data: profile, replace: { name: profile.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })
         })
     },
     action: (data: any) => {

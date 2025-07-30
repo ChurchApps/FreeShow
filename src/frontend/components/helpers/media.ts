@@ -7,7 +7,7 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
+import { dataPath, loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
@@ -525,4 +525,12 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
         }
         img.onerror = () => resolve("")
     })
+}
+
+export async function downloadOnlineMedia(url: string) {
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, dataPath: get(dataPath) })
+    if (downloadedPath) return downloadedPath
+
+    sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
+    return url
 }

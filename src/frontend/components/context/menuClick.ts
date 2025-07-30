@@ -48,6 +48,7 @@ import {
     overlays,
     popupData,
     previousShow,
+    profiles,
     projects,
     projectTemplates,
     projectView,
@@ -171,7 +172,7 @@ const clickActions = {
         if (!id) return
         const data = obj.sel?.data?.[0] || {}
 
-        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
+        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile"]
         const renameByIdDirect = ["overlay", "template", "player", "layout", "effect"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
@@ -818,6 +819,23 @@ const clickActions = {
             return a
         })
     },
+    unlink_pco: (obj: ObjData) => {
+        if (!obj.sel) return
+
+        showsCache.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                if (!a[b.id]) return
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+        shows.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+    },
     section: (obj) => {
         const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
@@ -948,9 +966,12 @@ const clickActions = {
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
-            activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
+
+            // properly set content when edit set to same type as preview, but different id
+            // e.g. overlay opened in preview, then edited, then trying to edit another overlay will reset to preview without timeout
+            setTimeout(() => activeEdit.set({ type: obj.sel!.id as any, id: obj.sel!.data[0], items: [] }))
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
@@ -1519,6 +1540,17 @@ const clickActions = {
                 if (currentOutput.stageOutput) newOutput.stageOutput = currentOutput.stageOutput
 
                 history({ id: "UPDATE", newData: { data: newOutput }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
+            })
+
+            return
+        }
+
+        if (obj.sel?.id === "profile") {
+            obj.sel.data.forEach(({ id }) => {
+                const currentProfile = clone(get(profiles)[id])
+                currentProfile.access = {}
+
+                history({ id: "UPDATE", newData: { data: currentProfile }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })
             })
 
             return

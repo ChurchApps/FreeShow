@@ -580,7 +580,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         const existingId = Object.keys(existingBackgrounds).find((mediaId) => existingBackgrounds[mediaId].path === background.path)
                         if (existingId) id = existingId
 
-                        const bgId = _show(showId).media().add(background, id)
+                        const bgId = existingId ? id : _show(showId).media().add(background, id)
                         layoutValue.background = bgId
                     }
 
@@ -986,17 +986,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
             const key: string | null = data.key || null
 
             if (initializing) {
-                data.remember = { showId: get(activeShow)?.id }
+                data.remember = { showId: data.showId || get(activeShow)?.id }
             }
 
             if (!deleting) {
                 data.previousData = clone(_show(data.remember.showId).slides(data.slides).items(data.items).get()[0])
 
-                _show().slides(data.slides).items(data.items).set({ key, values: data.data })
+                _show(data.remember.showId).slides(data.slides).items(data.items).set({ key, values: data.data })
             } else {
                 if (!data.previousData) return
 
-                _show().slides(data.slides).items(data.items).set({ values: data.previousData })
+                _show(data.remember.showId).slides(data.slides).items(data.items).set({ values: data.previousData })
             }
 
             if (!initializing) return

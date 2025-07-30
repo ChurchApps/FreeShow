@@ -41,6 +41,10 @@
             customTriggers: { changeUserData: { reset: true } }
         } as SaveData)
 
+        // WIP reset error log / other config files
+        // all content in FreeShow/ folder, including Shows/Scripture files are not deleted
+        // media cache is not deleted
+
         clearAll()
         drawSettings.set({})
 

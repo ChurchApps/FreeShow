@@ -14,6 +14,7 @@
     import { clearBackground } from "../output/clear"
     import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
+    import { getAccess } from "../../utils/profile"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -23,6 +24,9 @@
     $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
+
+    let profile = getAccess("shows")
+    let readOnly = profile.global === "read" || profile[show.category] === "read"
 
     // search
     $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
@@ -163,7 +167,7 @@
 </script>
 
 <div id="show_{id}" class="main">
-    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} {outline} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
+    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} {outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon || show.locked}
                 <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
@@ -179,7 +183,7 @@
                 <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
             {/if}
 
-            {#if show.scheduleLength !== undefined}
+            {#if show.scheduleLength !== undefined && Number(show.scheduleLength)}
                 <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
             {/if}
         </span>

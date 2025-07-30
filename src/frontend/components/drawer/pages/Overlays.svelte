@@ -17,9 +17,13 @@
     import Card from "../Card.svelte"
     import OverlayActions from "./OverlayActions.svelte"
     import Effects from "../effects/Effects.svelte"
+    import { getAccess } from "../../../utils/profile"
 
     export let active: string | null
     export let searchValue = ""
+
+    const profile = getAccess("overlays")
+    $: readOnly = profile.global === "read" || profile[active || ""] === "read"
 
     $: resolution = getResolution(null, { $outputs, $styles })
 
@@ -66,45 +70,47 @@
                     <Loader />
                 </Center>
             {:else if fullFilteredOverlays.length}
-                <div class="grid">
+                <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
                     {#each fullFilteredOverlays as overlay}
-                        <Card
-                            class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
-                            preview={$activePage === "edit" ? $activeEdit.type === "overlay" && $activeEdit.id === overlay.id : $activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
-                            outlineColor={findMatchingOut(overlay.id, $outputs)}
-                            active={findMatchingOut(overlay.id, $outputs) !== null}
-                            label={overlay.name}
-                            renameId="overlay_{overlay.id}"
-                            icon={overlay.isDefault ? "protected" : null}
-                            color={overlay.color}
-                            {resolution}
-                            showPlayOnHover
-                            on:click={(e) => {
-                                if ($outLocked || e.ctrlKey || e.metaKey) return
-                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                        {@const isReadOnly = readOnly || profile[overlay.category || ""] === "read"}
 
-                                setOutput("overlays", overlay.id, true)
-                            }}
-                            on:dblclick={(e) => {
-                                if (e.ctrlKey || e.metaKey) return
-                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                        <SelectElem id="overlay" data={overlay.id} class="context #overlay_card{overlay.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
+                            <Card
+                                width={100}
+                                preview={$activePage === "edit" ? $activeEdit.type === "overlay" && $activeEdit.id === overlay.id : $activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
+                                outlineColor={findMatchingOut(overlay.id, $outputs)}
+                                active={findMatchingOut(overlay.id, $outputs) !== null}
+                                label={overlay.name}
+                                renameId="overlay_{overlay.id}"
+                                icon={overlay.isDefault ? "protected" : null}
+                                color={overlay.color}
+                                {resolution}
+                                showPlayOnHover
+                                on:click={(e) => {
+                                    if ($outLocked || e.ctrlKey || e.metaKey) return
+                                    if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                                activeShow.set({ id: overlay.id, type: "overlay" })
-                                activePage.set("show")
-                                if ($focusMode) focusMode.set(false)
-                            }}
-                        >
-                            <!-- icons -->
-                            <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
+                                    setOutput("overlays", overlay.id, true)
+                                }}
+                                on:dblclick={(e) => {
+                                    if (e.ctrlKey || e.metaKey) return
+                                    if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                            <SelectElem id="overlay" data={overlay.id} fill draggable>
+                                    activeShow.set({ id: overlay.id, type: "overlay" })
+                                    activePage.set("show")
+                                    if ($focusMode) focusMode.set(false)
+                                }}
+                            >
+                                <!-- icons -->
+                                <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
+
                                 <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
                                     {#each overlay.items as item}
                                         <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
                                     {/each}
                                 </Zoomed>
-                            </SelectElem>
-                        </Card>
+                            </Card>
+                        </SelectElem>
                     {/each}
                 </div>
             {:else}
@@ -128,6 +134,7 @@
                 history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
             }}
             center
+            disabled={readOnly}
             title={$dictionary.new?.effect}
         >
             <Icon id="add" right={!$labelsDisabled} />
@@ -140,6 +147,7 @@
                 history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
             }}
             center
+            disabled={readOnly}
             title={$dictionary.new?.overlay}
         >
             <Icon id="add" right={!$labelsDisabled} />
@@ -157,8 +165,9 @@
         place-content: flex-start;
     }
 
-    .grid :global(.isSelected) {
-        outline: 5px solid var(--secondary-text) !important;
+    .grid :global(.selectElem) {
+        width: var(--width);
+        outline-offset: -3px;
     }
 
     .tabs {

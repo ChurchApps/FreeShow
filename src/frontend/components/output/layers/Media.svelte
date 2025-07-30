@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground } from "../../../../types/Show"
-    import { getExtension, getMediaType } from "../../helpers/media"
+    import { downloadOnlineMedia, getExtension, getMediaType } from "../../helpers/media"
     import Image from "../../media/Image.svelte"
     import Video from "../../media/Video.svelte"
 
@@ -19,6 +19,11 @@
 
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
+
+    $: if (path.includes("http")) download()
+    async function download() {
+        path = await downloadOnlineMedia(path)
+    }
 
     // retry on error
     let retryCount = 0
