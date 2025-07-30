@@ -3,7 +3,7 @@
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, os, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -16,7 +16,11 @@
         // getAudioOutputs()
         if ($showsPath) sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
-            if (a.key === "disableHardwareAcceleration") disableHardwareAcceleration = a.value
+            if (a.key === "disableHardwareAcceleration") {
+                let value = a.value
+                if (a.value === null) value = $os.platform === "darwin"
+                disableHardwareAcceleration = !!value
+            }
         })
         if ($showsPath)
             requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
@@ -51,7 +55,7 @@
     }
 
     // hardware acceleration
-    let disableHardwareAcceleration = true
+    let disableHardwareAcceleration = $os.platform === "darwin"
     function toggleHardwareAcceleration(e: any) {
         disableHardwareAcceleration = e.target.checked
         sendMain(Main.SET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })

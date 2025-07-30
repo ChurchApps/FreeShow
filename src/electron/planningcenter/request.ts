@@ -2,7 +2,7 @@ import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../types/Show"
-import { downloadMedia } from "../data/downloadMedia"
+import { downloadLessonsMedia } from "../data/downloadMedia"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
@@ -200,7 +200,7 @@ export async function pcoLoadServices(dataPath: string) {
         })
     )
 
-    downloadMedia(downloadableMedia)
+    downloadLessonsMedia(downloadableMedia)
 
     sendToMain(ToMain.PCO_PROJECTS, { shows, projects })
 }

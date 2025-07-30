@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { Themes } from "../../../../types/Settings"
-    import { dictionary, outputs, selected, theme, themes } from "../../../stores"
+    import { dataPath, dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
@@ -16,6 +16,8 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { defaultThemes } from "./defaultThemes"
+    import { sendMain } from "../../../IPC/main"
+    import { Main } from "../../../../types/IPC/Main"
 
     const colors: string[] = [
         "primary",
@@ -24,7 +26,7 @@
         "primary-darkest",
         "secondary",
         "text",
-        "secondary-text",
+        "secondary-text"
         // "textInvert",
         // "secondary-opacity",
         // "hover",
@@ -64,7 +66,7 @@
             let data = {
                 ...thisTheme,
                 default: false,
-                name: (key === "name" ? value : thisTheme.name) + " 2",
+                name: (key === "name" ? value : thisTheme.name) + " 2"
             }
             if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
 
@@ -97,6 +99,11 @@
         theme.set("default")
         themes.set(clone(defaultThemes))
         updateThemeValues(defaultThemes.default)
+    }
+
+    function importTheme() {
+        const format = { extensions: ["fstheme", "theme", "json"], name: translate("formats.theme") }
+        sendMain(Main.IMPORT, { channel: "freeshow_theme", format, settings: { path: $dataPath } })
     }
 
     let edit = false
@@ -143,7 +150,7 @@
                     bold={false}
                     center
                 >
-                    {#if active}<Icon id="theme" right white />{/if}
+                    {#if active}<Icon id="check" size={0.7} right white />{/if}
                     <HiddenInput style="color: {currentColors.secondary};" value={name} id={"theme_" + currentTheme.id} on:edit={(e) => updateTheme(e.detail.value, null, "name")} bind:edit />
                 </Button>
             </SelectElem>
@@ -167,6 +174,10 @@
                 <p><T id="settings.reset_themes" /></p>
             </Button>
         {/if}
+        <Button on:click={importTheme} center>
+            <Icon id="import" right />
+            <p><T id="actions.import" /></p>
+        </Button>
     </div>
 </div>
 

@@ -61,7 +61,7 @@
 
 <!-- #category_${id}_button__category_${id} -->
 <Button
-    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button`}
+    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button${category.readOnly ? "_readonly" : ""}`}
     active={category.id === $drawerTabsData[id]?.[isSubmenu ? "activeSubmenu" : "activeSubTab"]}
     {red}
     on:click={(e) => {

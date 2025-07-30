@@ -2,12 +2,17 @@
     import type { MediaStyle } from "../../../../types/Main"
     import { activeShow, dictionary, media, outLocked, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
-    import { getMediaStyle } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import VideoShow from "../VideoShow.svelte"
 
     $: show = $activeShow
+
+    $: if (show?.id.includes("http")) download()
+    async function download() {
+        show!.id = await downloadOnlineMedia(show!.id)
+    }
 
     $: outputId = getActiveOutputs($outputs)[0]
     $: currentOutput = $outputs[outputId] || {}

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeEdit, activePage, activeShow, editHistory, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -86,6 +87,9 @@
     let clonedHistory: any[] = []
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
+
+    let profile = getAccess("shows")
+    $: isLocked = $shows[currentShowId]?.locked || profile.global === "read" || profile[$shows[currentShowId]?.category || ""] === "read"
 </script>
 
 <!-- WIP history keyboard navigation up/down? -->
@@ -134,7 +138,7 @@
     {/if}
 {:else if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
     <Slides />
-    <Button disabled={$shows[currentShowId]?.locked} on:click={addSlide} center dark>
+    <Button disabled={isLocked} on:click={addSlide} center dark>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.slide" />{/if}
     </Button>

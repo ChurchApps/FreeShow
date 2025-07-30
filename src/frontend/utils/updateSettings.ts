@@ -74,7 +74,8 @@ import {
     videoMarkers,
     videosData,
     videosTime,
-    effects
+    effects,
+    profiles
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -269,6 +270,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     sorted: (v: any) => sorted.set(v),
     styles: (v: any) => styles.set(v),
+    profiles: (v: any) => profiles.set(v),
     remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),
     categories: (v: any) => categories.set(v),

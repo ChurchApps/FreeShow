@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
     import { activeStage, outputs, stageShows } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { getItemKeys } from "../edit/scripts/itemClipboard"
     import { addStyleString } from "../edit/scripts/textStyle"
     import { boxes } from "../edit/values/boxes"
@@ -22,6 +23,9 @@
         items: { name: "tools.items", icon: "items" },
         slide: { name: "edit.options", icon: "options", overflow: true } // tools.slide
     }
+
+    const profile = getAccess("stage")
+    $: readOnly = profile.global === "read" || profile[$activeStage.id!] === "read"
 
     let selectedItemIds: string[] = []
     $: selectedItemIds = $activeStage.items || []
@@ -171,34 +175,36 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="main border stageTools">
-    <Tabs {tabs} bind:active />
-    <!-- labels={false} -->
-    {#if active === "text"}
-        <div class="content">
-            <BoxStyle />
-        </div>
-    {:else if active === "item"}
-        <div class="content">
-            <ItemStyle />
-        </div>
-    {:else if active === "items"}
-        <div class="content">
-            <Items />
-        </div>
-    {:else if active === "slide"}
-        <div class="content">
-            <SlideStyle />
-        </div>
-    {/if}
-
-    <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
-        {#if active !== "items"}
-            <Button style="flex: 1;" on:click={resetStageStyle} dark center>
-                <Icon id="reset" right />
-                <T id={"actions.reset"} />
-            </Button>
+    {#if !readOnly}
+        <Tabs {tabs} bind:active />
+        <!-- labels={false} -->
+        {#if active === "text"}
+            <div class="content">
+                <BoxStyle />
+            </div>
+        {:else if active === "item"}
+            <div class="content">
+                <ItemStyle />
+            </div>
+        {:else if active === "items"}
+            <div class="content">
+                <Items />
+            </div>
+        {:else if active === "slide"}
+            <div class="content">
+                <SlideStyle />
+            </div>
         {/if}
-    </span>
+
+        <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
+            {#if active !== "items"}
+                <Button style="flex: 1;" on:click={resetStageStyle} dark center>
+                    <Icon id="reset" right />
+                    <T id={"actions.reset"} />
+                </Button>
+            {/if}
+        </span>
+    {/if}
 </div>
 
 <style>

@@ -23,6 +23,7 @@ import {
     openedFolders,
     overlays,
     playerVideos,
+    profiles,
     projects,
     projectTemplates,
     projectView,
@@ -558,6 +559,13 @@ export const _updaters = {
                     return a
                 })
             }, 100)
+        }
+    },
+    settings_profile: {
+        store: profiles,
+        select: (id: string, data, initializing: boolean) => {
+            if (!initializing || data.key) return
+            activeRename.set("profile_" + id)
         }
     }
 }

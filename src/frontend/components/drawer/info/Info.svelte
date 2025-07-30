@@ -17,7 +17,7 @@
     export let bibles: Bible[]
 </script>
 
-<div class="main context #drawer_info">
+<div class="main {(id !== 'shows' && id !== 'media') || $activeShow !== null ? 'context #drawer_info' : ''}">
     {#if !$forceClock && id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
         <ShowInfo />
     {:else if !$forceClock && id === "media" && ($activeRecording || $activeShow?.type === "video" || $activeShow?.type === "image" || ["online", "screens"].includes($drawerTabsData.media?.activeSubTab || ""))}

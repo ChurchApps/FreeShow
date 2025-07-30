@@ -19,25 +19,26 @@
         { id: "ease", name: "$:easings.ease:$" },
         { id: "ease-in", name: "$:easings.ease-in:$" },
         { id: "ease-out", name: "$:easings.ease-out:$" },
-        { id: "ease-in-out", name: "$:easings.ease-in-out:$" },
+        { id: "ease-in-out", name: "$:easings.ease-in-out:$" }
     ]
 
     const types = [
         { id: "change", name: "$:animate.change:$" },
         // { id: "set", name: "$:animate.set:$" },
-        { id: "wait", name: "$:animate.wait:$" },
+        { id: "wait", name: "$:animate.wait:$" }
     ]
     const ids = [
         { id: "text", name: "$:animate.text:$" },
         { id: "item", name: "$:animate.item:$" },
-        { id: "background", name: "$:animate.background:$" },
+        { id: "background", name: "$:animate.background:$" }
     ]
     // const setIds = [
     //     { id: "text", name: "$:animate.text:$" },
     //     { id: "item", name: "$:animate.item:$" },
     // ]
     const backgroundKeys = [
-        { id: "zoom", name: "$:actions.zoom:$" },
+        { id: "zoom", name: "$:actions.zoom:$" }
+        // TODO: "speed" - video playback speed
         // { id: "filter", name: "$:edit.filters:$" },
     ]
     const textKeys = [
@@ -46,7 +47,7 @@
 
         { id: "line-height", values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, data: { extension: "em" }, name: "$:edit.line_height:$" },
         { id: "letter-spacing", values: { max: 100, min: -1000 }, data: { extension: "px" }, name: "$:edit.letter_spacing:$" },
-        { id: "word-spacing", values: { min: -100 }, data: { extension: "px" }, name: "$:edit.word_spacing:$" },
+        { id: "word-spacing", values: { min: -100 }, data: { extension: "px" }, name: "$:edit.word_spacing:$" }
     ]
     const itemKeys = [
         { id: "left", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.x:$" },
@@ -56,7 +57,7 @@
 
         { id: "rotate", values: { max: 360 }, data: { extension: "deg" }, name: "$:edit.rotation:$" },
         { id: "opacity", values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, name: "$:edit.opacity:$" },
-        { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: "$:edit.corner_radius:$" },
+        { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: "$:edit.corner_radius:$" }
     ]
 
     const DEFAULT_ANIMATION: AnimationAction = { type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }

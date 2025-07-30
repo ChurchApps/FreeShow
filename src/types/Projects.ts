@@ -55,4 +55,5 @@ export interface Tree extends Folder {
     shows?: []
     index?: number
     path?: string
+    readOnly?: boolean
 }

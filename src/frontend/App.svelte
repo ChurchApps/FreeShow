@@ -9,11 +9,12 @@
     import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
+    import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, timers } from "./stores"
+    import { activeProfile, activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, timers } from "./stores"
     import { focusArea, logerror, mainClick, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -64,6 +65,8 @@
 
         {#if $currentWindow === "output"}
             <MainOutput />
+        {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
+            <ProfileSelector />
         {:else if $loaded}
             <Popup />
             <QuickSearch />

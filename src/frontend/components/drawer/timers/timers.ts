@@ -5,6 +5,7 @@ import { activeTimers, events, timers } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
+import { customActionActivation } from "../../actions/actions"
 
 export function getShowTimers(showRef: any) {
     let list: string[] = []
@@ -161,6 +162,8 @@ export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedSt
 
         return a
     })
+
+    if (index < 0) customActionActivation(`timer_start___` + id)
 
     // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
 }

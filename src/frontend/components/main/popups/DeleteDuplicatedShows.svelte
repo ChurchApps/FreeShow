@@ -37,7 +37,8 @@
                     if (compareShowText === showText) dIds.push(id)
                 })
 
-                if (dIds.length > 1) deleteIds.push(...dIds)
+                dIds.shift()
+                if (dIds.length) deleteIds.push(...dIds)
             })
         )
 
@@ -153,7 +154,7 @@
 
     /////
 
-    function getIds(index: number): string[] {
+    function getIds(index: number, _updater = null): string[] {
         return data[index]?.ids || []
     }
 
@@ -180,7 +181,7 @@
     </Button>
 
     <div class="shows">
-        {#each getIds(manualIndex) as showId, i}
+        {#each getIds(manualIndex, data) as showId, i}
             {@const show = $shows[showId] || {}}
             <div class="show">
                 <p style="display: flex;align-items: center;justify-content: space-between;padding: 5px 0;">

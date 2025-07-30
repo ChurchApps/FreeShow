@@ -21,7 +21,7 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
 
     let gotMatch = false
 
-    if (e?.altKey) lines = []
+    if (e?.altKey || e?.shiftKey || e?.ctrlKey) lines = []
     else snapBox()
 
     function snapBox() {
@@ -131,7 +131,7 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
 
     const corner = forceSquare || squareIds.length > 1
 
-    // WIP keepAspectRatio corners moving item as well (bottom right working fine)
+    // WIP keepAspectRatio corners moving item as well (bottom right & top left working fine)
 
     if (squareIds.includes("w")) resizeLeft()
     if (squareIds.includes("n")) resizeTop()
@@ -159,6 +159,14 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
             if (corner) return
         }
 
+        // fix for top left corner
+        if (corner && keepAspectRatio) {
+            styles.height = styles.width / aspectRatio
+            styles.left = mouse.left + mouse.width - styles.width
+            styles.top = mouse.top + mouse.height - styles.height
+            return
+        }
+
         if (!keepAspectRatio) return
 
         styles.height = styles.width / aspectRatio
@@ -184,6 +192,14 @@ export function resizeBox(e: any, mouse: TMouse, keepAspectRatio: boolean, ratio
             styles.height -= heightDifference
 
             if (corner) return
+        }
+
+        // fix for top left corner
+        if (corner && keepAspectRatio) {
+            styles.width = styles.height * aspectRatio
+            styles.top = mouse.top + mouse.height - styles.height
+            styles.left = mouse.left + mouse.width - styles.width
+            return
         }
 
         if (!keepAspectRatio) return

@@ -1,5 +1,6 @@
-import { Main } from "./../../../types/IPC/Main"
 import { get } from "svelte/store"
+import { uid } from "uid"
+import { sendMain } from "../../IPC/main"
 import {
     actions,
     activeEdit,
@@ -20,10 +21,12 @@ import {
     openToolsTab,
     outputs,
     overlays,
+    profiles,
     projects,
     projectView,
     quickSearchActive,
     refreshEditSlide,
+    selectedProfile,
     settingsTab,
     showRecentlyUsedProjects,
     showsCache,
@@ -36,15 +39,14 @@ import {
 import { triggerFunction } from "../../utils/common"
 import { translate } from "../../utils/language"
 import { showSearch } from "../../utils/search"
+import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { menuClick } from "../context/menuClick"
 import { openDrawer } from "../edit/scripts/edit"
 import { keysToID } from "../helpers/array"
-import { runAction } from "../actions/actions"
-import { history } from "../helpers/history"
-import { sendMain } from "../../IPC/main"
-import { uid } from "uid"
 import { duplicate } from "../helpers/clipboard"
+import { history } from "../helpers/history"
+import { Main } from "./../../../types/IPC/Main"
 
 interface QuickSearchValue {
     type: keyof typeof triggerActions
@@ -80,6 +82,10 @@ export function quicksearch(searchValue: string) {
 
     // styles
     addValues(sort(keysToID(get(styles))).slice(0, 5), "settings_styles", "styles")
+    if (shouldReturn()) return trimValues()
+
+    // profiles
+    addValues(sort(keysToID(get(profiles))).slice(0, 5), "settings_profiles", "profiles")
     if (shouldReturn()) return trimValues()
 
     // stage layouts
@@ -191,6 +197,11 @@ const triggerActions = {
         settingsTab.set("styles")
         activePage.set("settings")
     },
+    settings_profiles: (id: string) => {
+        selectedProfile.set(id)
+        settingsTab.set("profiles")
+        activePage.set("settings")
+    },
     stage_layout: (id: string) => {
         activeStage.set({ id, items: [] })
         activePage.set("stage")
@@ -202,6 +213,8 @@ const triggerActions = {
         } else {
             activeShow.set({ id, type: "overlay" })
             activePage.set("show")
+
+            openDrawer("overlays")
         }
     },
     project: (id: string) => {
@@ -268,6 +281,10 @@ const triggerActions = {
         }
         if (id === "style") {
             triggerFunction("create_style")
+            return
+        }
+        if (id === "profile") {
+            triggerFunction("create_profile")
             return
         }
 
@@ -361,12 +378,12 @@ const mainPages = [
     { id: "draw", name: "menu.draw", icon: "draw" },
     { id: "settings", name: "menu.settings", icon: "settings" },
     // drawer tabs
-    { id: "shows", name: "tabs.shows", icon: "shows", aliases: ["category.song", "category.presentation"] },
+    { id: "shows", name: "tabs.shows", icon: "shows", aliases: ["category.song", "category.presentation", "-Library", "-Preview"] },
     { id: "media", name: "tabs.media", icon: "media", aliases: ["category.pictures", "category.videos", "-Photos", "-Images", "-Films"] },
     { id: "audio", name: "tabs.audio", icon: "audio", aliases: ["category.music", "media.volume", "audio.metronome", "audio.settings"] },
-    { id: "overlays", name: "tabs.overlays", icon: "overlays", aliases: ["-Props", "-Alerts", "-Popups", "-Notices"] },
+    { id: "overlays", name: "tabs.overlays", icon: "overlays", aliases: ["-Props", "-Alerts", "-Messages", "-Popups", "-Notices"] },
     { id: "templates", name: "tabs.templates", icon: "templates" },
-    { id: "scripture", name: "tabs.scripture", icon: "scripture", aliases: ["-Bible"] },
+    { id: "scripture", name: "tabs.scripture", icon: "scripture", aliases: ["-Bibles"] },
     { id: "calendar", name: "tabs.calendar", icon: "calendar", aliases: ["menu._title_calendar"] },
     { id: "functions", name: "tabs.functions", icon: "functions" },
     // other
@@ -437,6 +454,7 @@ const popups = [
     { id: "audio_stream", name: "new.audio_stream", icon: "add", data: { drawerTab: "audio_streams" } },
     { id: "output", name: "settings.new_output", icon: "add", data: { settingsTab: "display_settings" } },
     { id: "style", name: "new.style", icon: "add", data: { settingsTab: "styles" } },
+    { id: "profile", name: "new.profile", icon: "add", data: { settingsTab: "profiles" } },
     { id: "edit_event", name: "new.event", icon: "add", data: { drawerTab: "calendar" } },
     { id: "edit_event", name: "new.event_action", icon: "add", data: { drawerTab: "action" } },
     // custom (no popup)
@@ -498,6 +516,7 @@ const settings = [
         icon: "files",
         aliases: ["settings.autosave", "settings.auto_backup", "settings.data_location", "settings.show_location", "settings.user_data_location", "settings.cloud", "-Cloud sync", "-Sync", "settings.backup_all", "settings.restore"]
     },
+    { id: "profiles", name: "settings.profiles", icon: "profiles" },
     { id: "theme", name: "settings.theme", icon: "theme" }
     // { id: "other", name: "settings.other", icon: "other" }
 ]

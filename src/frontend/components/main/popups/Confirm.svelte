@@ -23,7 +23,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p>{prompt}</p>
+<p>{@html prompt}</p>
 
 <CombinedInput style="margin-top: 20px;">
     <Button style="flex: 1;" on:click={close} center dark>

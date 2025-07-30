@@ -817,6 +817,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
+        if (templateItem.list) item.list = templateItem.list
 
         // use original line reveal if style template does not have the value set
         const hasLineReveal = item.lineReveal
@@ -825,7 +826,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // if (hasClickReveal) templateItem.clickReveal = true
 
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem[style]) item[style] = templateItem[style]
@@ -1105,9 +1106,9 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[]) {
+export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[], outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1116,6 +1117,10 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
+
+    function checkSpecificOutput(item: Item) {
+        return !item.bindings?.length || item.bindings.includes(outputId)
+    }
 }
 
 // , currentSlide: Slide | null = null
@@ -1128,7 +1133,11 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
             .slides([ref?.[outSlide.index ?? -1]?.id])
             .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
-    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
+
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealed = clickRevealItems.length ? !!outSlide.itemClickReveal : true
+
+    if (!maxLines) return { start: null, end: null, clickRevealed } // , index: 0, max: 0
 
     let progress = ((outSlide.line || 0) + 1) / maxLines
 
@@ -1163,14 +1172,12 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
         linesEnd = currentReveal
     }
 
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
-
     return {
         start: !!maxStyleLines ? start : null,
         end: !!maxStyleLines ? end : null,
         linesStart: !!linesRevealItems.length ? linesStart : null,
         linesEnd: !!linesRevealItems.length ? linesEnd : null,
-        clickRevealed: clickRevealItems.length ? !!outSlide.itemClickReveal : true
+        clickRevealed
     } // , index: linesIndex, max: maxStyleLines
 }
 

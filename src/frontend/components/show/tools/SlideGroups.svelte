@@ -12,11 +12,14 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
+    import { getAccess } from "../../../utils/profile"
 
     $: showId = $activeShow?.id || ""
     $: showGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
 
-    $: layoutSlides = $showsCache[showId]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
+    $: currentShow = $showsCache[showId]
+
+    $: layoutSlides = currentShow?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
         let count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
@@ -30,7 +33,8 @@
 
     $: sortedGroups = sortByName(globalGroups, "group")
 
-    $: isLocked = $showsCache[showId]?.locked
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: displayGlobalGroups = $globalGroupViewEnabled
     $: if (showId) updateGroupView()

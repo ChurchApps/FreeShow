@@ -14,6 +14,7 @@ export const customActionActivations = [
     { id: "video_end", name: "$:actions.activate_video_ending:$" },
     { id: "audio_start", name: "$:actions.activate_audio_starting:$" },
     { id: "audio_end", name: "$:actions.activate_audio_ending:$" },
+    { id: "timer_start", name: "$:actions.activate_timer_starting:$", inputs: true },
     { id: "timer_end", name: "$:actions.activate_timer_ending:$", inputs: true },
     { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
     { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
@@ -21,7 +22,7 @@ export const customActionActivations = [
     { id: "show_created", name: "$:actions.activate_show_created:$" },
     { id: "show_opened", name: "$:actions.activate_show_opened:$" },
     { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
-    { id: "midi_signal_received", name: "$:midi.activate:$", inputs: true },
+    { id: "midi_signal_received", name: "$:midi.activate:$", inputs: true }
 ]
 
 // WIP Custom activations

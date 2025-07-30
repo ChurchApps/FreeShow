@@ -276,8 +276,12 @@ export function getItemKeys(isBox = false) {
     let itemKeys: string[] = []
 
     Object.values(itemEdits).forEach((values) => {
-        itemKeys.push(...values.map((a) => a.key || ""))
-        // WIP transform not working with this
+        itemKeys.push(
+            ...values.map((a) => {
+                const key = a.id === "style" ? a.key : a.id
+                return key || ""
+            })
+        )
     })
 
     // gradient
