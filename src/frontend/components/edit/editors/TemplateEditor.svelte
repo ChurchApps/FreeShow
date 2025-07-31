@@ -92,7 +92,7 @@
         zoomOpened = false
     }
 
-    const ignoreDefault = ["metadata", "message"]
+    const ignoreDefault = ["metadata", "message", "double"]
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />

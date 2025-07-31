@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -13,6 +14,9 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
+
+    const profile = getAccess("functions")
+    const readOnly = profile.variables === "read"
 
     const typeOrder = { number: 1, text: 2 }
     $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
@@ -51,7 +55,7 @@
 
 <svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
 
-<div class="variables context #variables">
+<div class="variables context #variables{readOnly ? '_readonly' : ''}">
     {#if filteredVariablesSearch.length}
         <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
@@ -62,7 +66,7 @@
                 {@const max = Number(variable.maxValue ?? maxDefault)}
 
                 <SelectElem style="width: calc(25% - 5px);" id="variable" data={variable} draggable>
-                    <div class="variable numberBox context #variable">
+                    <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
                             <Button title={$dictionary.actions?.reset} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
                                 <Icon id="reset" white />
@@ -143,7 +147,7 @@
                 {@const number = Number(variable.number) || 0}
 
                 <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
-                    <div class="variable numberBox context #variable">
+                    <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
                             <Button disabled={$randomNumberVariable[variable.id]} title={$dictionary.actions?.reset} on:click={() => resetVariable(variable.id)}>
                                 <Icon id="reset" white />
@@ -193,7 +197,7 @@
                 {/if}
 
                 <SelectElem id="variable" data={variable} draggable>
-                    <div class="variable context #variable">
+                    <div class="variable context #variable{readOnly ? '_readonly' : ''}">
                         <span style="padding-inline-start: 5px;">
                             <Icon id={variable.type} right />
                             <p>
@@ -223,7 +227,7 @@
 </div>
 
 <div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("variable")} center title={$dictionary.new?.variable}>
+    <Button style="flex: 1;" on:click={() => activePopup.set("variable")} disabled={readOnly} center title={$dictionary.new?.variable}>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.variable" />{/if}
     </Button>

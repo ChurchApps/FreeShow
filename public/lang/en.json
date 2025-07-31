@@ -1340,7 +1340,8 @@
         "read": "Read",
         "write": "Write",
         "set_active": "Set as active",
-        "choose_profile": "Choose a profile"
+        "choose_profile": "Choose a profile",
+        "choose_admin": "Only continue if you know what you are doing. Choose admin profile?"
     },
     "sort": {
         "sort_by": "Sort by",

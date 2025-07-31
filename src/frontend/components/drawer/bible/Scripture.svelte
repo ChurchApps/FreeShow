@@ -96,6 +96,7 @@
         }
 
         bookId = $openScripture.book
+        getBook()
 
         setTimeout(() => {
             chapterId = Number($openScripture.chapter)
@@ -106,7 +107,7 @@
             activeVerses = $openScripture.verses
             if (bibles[0]) bibles[0].activeVerses = activeVerses
 
-            if ($openScripture.play) setTimeout(() => playScripture.set(true))
+            if ($openScripture.play) setTimeout(() => playScripture.set(true), 50)
 
             openScripture.set(null)
         }, 100)

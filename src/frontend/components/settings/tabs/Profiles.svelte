@@ -143,6 +143,10 @@
     $: templateCategoryList = sortByName(keysToID($templateCategories))
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
+    const functions: string[] = ["actions", "timers", "variables", "triggers"]
+    $: functionsList = functions.map((id) => ({ id, name: `tabs.${id}` }))
+    $: functionsAccess = currentProfile.access.functions || {}
+
     $: stageList = sortByName(keysToID($stageShows))
     $: stageAccess = currentProfile.access.stage || {}
 
@@ -312,6 +316,20 @@
 
     <!-- WIP SCRIPTURE? -->
     <!-- WIP CALENDAR / ACTION / TIMERS -->
+
+    <!-- DRAWER -->
+
+    <h3>
+        <Icon id="functions" white />
+        <T id="tabs.functions" />
+    </h3>
+
+    {#each functionsList as item}
+        <CombinedInput>
+            <p><T id={item.name} /></p>
+            <MultiInputs inputs={getInputs(functionsAccess.global, 0)} active={getAccessLevel(functionsAccess, item.id)} on:click={(e) => updateAccess("functions", item.id, e.detail)} />
+        </CombinedInput>
+    {/each}
 
     <!-- STAGE -->
 

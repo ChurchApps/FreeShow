@@ -68,7 +68,7 @@
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 
-    const ignoreDefault = ["metadata", "message"]
+    const ignoreDefault = ["metadata", "message", "double"]
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>

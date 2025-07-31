@@ -250,7 +250,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     camera_card: ["edit", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
+    actions_readonly: ["action_tag_filter"],
     action: ["edit", "SEPERATOR", "disable", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
+    action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
     scripture_chapter: ["create_show"],
 
@@ -283,9 +285,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"
     global_timer: ["edit", "SEPERATOR", "play", "SEPERATOR", "duplicate", "delete"], // , "reset"
+    global_timer_readonly: ["play"], // , "reset"
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
+    variables_readonly: ["variable_tag_filter"],
     variable: ["edit", "SEPERATOR", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
+    variable_readonly: ["variable_tag_filter"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],
     // AUDIO STREAM

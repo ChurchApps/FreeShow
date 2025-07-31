@@ -66,6 +66,7 @@
         {#if $currentWindow === "output"}
             <MainOutput />
         {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
+            <Popup />
             <ProfileSelector />
         {:else if $loaded}
             <Popup />

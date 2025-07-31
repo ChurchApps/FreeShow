@@ -132,7 +132,10 @@ const clickActions = {
     // view
     focus_mode: () => {
         const project = get(projects)[get(activeProject) || ""]
-        if (!project?.shows?.length) return
+        if (!project?.shows?.length) {
+            newToast("$empty.project_select")
+            return
+        }
 
         previousShow.set(null)
         activeShow.set(null)
