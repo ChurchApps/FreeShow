@@ -214,7 +214,7 @@ export interface LessonFile {
 export interface Variable {
     id?: string
     name: string
-    type: "number" | "random_number" | "text"
+    type: "number" | "random_number" | "text" | "text_set"
     tags?: string[]
 
     // number
@@ -234,6 +234,11 @@ export interface Variable {
     // text
     text?: string
     enabled?: boolean
+
+    // text set
+    activeTextSet?: number
+    textSetKeys?: string[]
+    textSets?: { [key: string]: string }[]
 }
 
 export interface Trigger {

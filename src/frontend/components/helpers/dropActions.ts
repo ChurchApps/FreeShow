@@ -372,7 +372,7 @@ export const dropActions = {
             drag.data.forEach((a) => {
                 const name = getVariableNameId(a.name || "")
                 if (!name) return
-                addItem("text", null, {}, `{variable_${name}}`)
+                addItem("text", null, {}, `{$${name}}`)
             })
         }
     },
@@ -811,7 +811,7 @@ const slideDrop = {
 
         const slides = variables.map((a) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getItem(a) }))
         function getItem(a): Item[] {
-            const variableId = `{variable_${getVariableNameId(a.name || "")}}`
+            const variableId = `{$${getVariableNameId(a.name || "")}}`
             const lines = [{ align: "", text: [{ value: variableId, style: "font-size: 150px;" }] }]
             return [{ type: "text", style: DEFAULT_ITEM_STYLE, lines }]
         }

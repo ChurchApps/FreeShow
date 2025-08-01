@@ -289,7 +289,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
     variables_readonly: ["variable_tag_filter"],
-    variable: ["edit", "SEPERATOR", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
+    variable: ["edit", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
     variable_readonly: ["variable_tag_filter"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],

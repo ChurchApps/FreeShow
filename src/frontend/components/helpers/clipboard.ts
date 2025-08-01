@@ -1090,7 +1090,7 @@ const duplicateActions = {
     action: (data: any) => {
         actions.update((a) => {
             data.forEach(({ id }) => {
-                const newAction = clone(get(actions)[id])
+                const newAction = clone(a[id])
                 newAction.name += " 2"
 
                 const newId = uid()
@@ -1103,11 +1103,29 @@ const duplicateActions = {
     global_timer: (data: any) => {
         timers.update((a) => {
             data.forEach(({ id }) => {
-                const newTimer = clone(get(timers)[id])
+                const newTimer = clone(a[id])
                 newTimer.name += " 2"
 
                 const newId = uid()
                 a[newId] = newTimer
+            })
+
+            return a
+        })
+    },
+    variable: (data: any) => {
+        variables.update((a) => {
+            data.forEach(({ id }, i) => {
+                const newVariable = clone(a[id])
+                newVariable.name = ""
+
+                const newId = uid()
+                a[newId] = newVariable
+
+                if (i === 0) {
+                    selected.set({ id: "variable", data: [{ id: newId }] })
+                    activePopup.set("variable")
+                }
             })
 
             return a

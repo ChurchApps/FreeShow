@@ -646,6 +646,7 @@
         "mode": "Mode",
         "increment": "Increment",
         "decrement": "Decrement",
+        "expression": "Expression",
         "manage_subtitles": "Manage subtitles",
         "toggle_time_marker": "Toggle time markers",
         "add_time_marker": "Add time marker",
@@ -1474,13 +1475,15 @@
         "number": "Number",
         "random_number": "Random number",
         "text": "Text",
+        "text_set": "Text set",
         "step": "Step",
         "default_value": "Default value",
         "value": "Value",
         "randomize": "Randomize",
         "set_state": "Set state",
         "minimum": "Minimum",
-        "maximum": "Maximum"
+        "maximum": "Maximum",
+        "add_set": "Add set"
     },
     "month": {
         "1": "January",

@@ -149,11 +149,10 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: "text" | "number" | "random_number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" | "randomize" | "reset" // default: "enabled"
+    key?: "text" | "number" | "random_number" | "text_set" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" | "expression" | "randomize" | "reset" | "next" | "previous" // default: "enabled"
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
-
 
 export interface API_midi extends MidiValues {
     type: "noteon" | "noteoff" | "control"
@@ -349,10 +348,10 @@ export const API_ACTIONS = {
     get_playing_audio_time: () => getPlayingAudioTime(),
     get_playing_audio_time_left: () => getPlayingAudioDuration() - getPlayingAudioTime(),
     get_playing_audio_data: () => getPlayingAudioData(),
-    
+
     get_variables: () => getVariables(),
     get_variable: (data: { id?: string; name?: string }) => getVariable(data),
-    
+
     get_timers: () => getTimersDetailed(),
 
     get_playlists: () => getPlaylists(),

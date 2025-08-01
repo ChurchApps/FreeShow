@@ -1101,14 +1101,23 @@ export function getDynamicIds(noVariables = false) {
 
     // WIP sort by type & name
     const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
-    const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
-    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
+    const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
+    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+    const variableTextSets: string[] = []
+    variablesList
+        .filter((a) => a.type === "text_set")
+        .forEach((set) => {
+            const name = `$` + getVariableNameId(set.name)
+            set.textSetKeys?.filter(Boolean).forEach((key) => {
+                variableTextSets.push(`${name}__${getVariableNameId(key)}`)
+            })
+        })
 
     const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name)) || []
 
     const mergedValues = [...mainValues, ...metaValues]
     if (rssValues.length) mergedValues.push(...rssValues)
-    mergedValues.push(...variableValues, ...variableSetNameValues)
+    mergedValues.push(...variableValues, ...variableSetNameValues, ...variableTextSets)
     return mergedValues
 }
 
@@ -1154,11 +1163,22 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
             const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
-            const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+
+            if (!variable && nameId.includes("__")) {
+                const textSetId = nameId.slice(0, nameId.indexOf("__"))
+                variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
+            }
             if (!variable) return ""
 
             if (variable.type === "number") return Number(variable.number || 0).toString()
             if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+            if (variable.type === "text_set") {
+                const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+                const setId = nameId.slice(nameId.indexOf("__") + 2)
+                const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
+                return currentSet[setName] || ""
+            }
 
             if (variable.enabled === false) return ""
             if (variable.text?.includes(dynamicId)) return variable.text || ""

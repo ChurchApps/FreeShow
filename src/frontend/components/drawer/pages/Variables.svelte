@@ -42,12 +42,14 @@
     const typeNames = {
         number: "variables.number",
         randomNumber: "variables.random_number",
-        text: "variables.text"
+        text: "variables.text",
+        text_set: "variables.text_set"
     }
 
     $: numberVariables = filteredVariablesSearch.filter((a) => a.type === "number")
     $: randomNumberVariables = filteredVariablesSearch.filter((a) => a.type === "random_number")
-    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number")
+    $: textSetVariables = filteredVariablesSearch.filter((a) => a.type === "text_set")
+    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
 
     const minDefault = 0
     const maxDefault = 1000
@@ -57,7 +59,7 @@
 
 <div class="variables context #variables{readOnly ? '_readonly' : ''}">
     {#if filteredVariablesSearch.length}
-        <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
+        <div class="row" style={randomNumberVariables.length + textSetVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
@@ -142,7 +144,7 @@
             <h5><T id={typeNames.randomNumber} /></h5>
         {/if}
 
-        <div class="row" style={numberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
+        <div class="row" style={numberVariables.length + textSetVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each randomNumberVariables as variable}
                 {@const number = Number(variable.number) || 0}
 
@@ -199,7 +201,7 @@
                 <SelectElem id="variable" data={variable} draggable>
                     <div class="variable context #variable{readOnly ? '_readonly' : ''}">
                         <span style="padding-inline-start: 5px;">
-                            <Icon id={variable.type} right />
+                            <Icon id={variable.type === "text_set" ? "increase_text" : variable.type} right />
                             <p>
                                 {#if variable.name?.length}
                                     {variable.name}
@@ -214,6 +216,59 @@
                                 <TextInput placeholder={$dictionary.variables?.value || ""} value={variable.text || ""} on:change={(e) => updateVariable(e, variable.id, "text")} />
                                 <Checkbox checked={variable.enabled ?? true} on:change={(e) => updateVariable(e, variable.id, "enabled")} />
                             {/if}
+                        </span>
+                    </div>
+                </SelectElem>
+            {/each}
+        </div>
+
+        {#if numberVariables.length + randomNumberVariables.length + otherVariables.length && textSetVariables.length}
+            <h5><T id={typeNames.text_set} /></h5>
+        {/if}
+
+        <div class="list">
+            {#each textSetVariables as variable}
+                {@const activeSet = variable.activeTextSet ?? 0}
+
+                <SelectElem id="variable" data={variable} draggable>
+                    <div class="variable context #variable{readOnly ? '_readonly' : ''}">
+                        <span style="padding-inline-start: 5px;">
+                            <Icon id={"increase_text"} right />
+                            <p style="display: flex;gap: 8px;">
+                                {#if variable.name?.length}
+                                    {variable.name}
+                                {:else}
+                                    <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                                {/if}
+
+                                {#if variable.textSetKeys?.length ?? 1 > 1}
+                                    <span style="opacity: 0.5;font-size: 0.8em;">{variable.textSetKeys?.length ?? 1}</span>
+                                {/if}
+                            </p>
+                        </span>
+
+                        <span style="gap: 5px;width: 70%;">
+                            <p style="display: flex;flex: 1;">
+                                <span style="color: var(--secondary);">#</span>
+                                <NumberInput
+                                    title={$dictionary.variables?.set_number}
+                                    style="width: 40px;"
+                                    value={activeSet + 1}
+                                    min={1}
+                                    max={variable.textSets?.length ?? 1}
+                                    on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")}
+                                    buttons={false}
+                                />
+                            </p>
+
+                            <Button disabled={activeSet === 0} on:click={() => updateVariable(Math.max(activeSet - 1, 0), variable.id, "activeTextSet")}>
+                                <Icon id="back" right />
+                                <T id="media.previous" />
+                            </Button>
+                            <Button disabled={activeSet === (variable.textSets?.length ?? 1) - 1} on:click={() => updateVariable(Math.min(activeSet + 1, (variable.textSets?.length ?? 1) - 1), variable.id, "activeTextSet")}>
+                                <Icon id="arrow_forward" right />
+                                <T id="media.next" />
+                            </Button>
                         </span>
                     </div>
                 </SelectElem>
@@ -305,6 +360,7 @@
         position: absolute;
         top: 5px;
         inset-inline-end: 5px;
+        z-index: 1;
     }
     .reset :global(button) {
         padding: 5px !important;
