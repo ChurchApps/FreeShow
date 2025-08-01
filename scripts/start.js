@@ -51,6 +51,13 @@ preBuild.on("close", (code) => {
             env: process.env
         })
 
+        // Start server watch mode
+        const serverWatch = spawn("node", ["scripts/vite/watchServers.js"], {
+            stdio: "inherit",
+            shell: false,
+            env: process.env
+        })
+
         // Start Electron build and watch
         setTimeout(() => {
             console.log("Starting Electron...")
@@ -69,10 +76,15 @@ preBuild.on("close", (code) => {
             console.error("Failed to start Vite:", err)
         })
 
+        serverWatch.on("error", (err) => {
+            console.error("Failed to start server watch:", err)
+        })
+
         // Handle process termination
         process.on("SIGINT", () => {
             console.log("\nShutting down development servers...")
             vite.kill()
+            serverWatch.kill()
             process.exit(0)
         })
     })
