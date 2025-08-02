@@ -7,5 +7,8 @@
     "prettier.singleQuote": false,
     "prettier.semi": false,
     "typescript.preferences.quoteStyle": "double",
-    "typescript.preferences.importModuleSpecifier": "non-relative"
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
 }
