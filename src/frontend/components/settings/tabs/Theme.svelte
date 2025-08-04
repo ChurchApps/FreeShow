@@ -117,18 +117,18 @@
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.font_size" /></p>
-    <NumberInput value={$themes[$theme]?.font?.size.replace("em", "") ?? 1} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
+    <NumberInput value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1)} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.border_radius" /></p>
-    <NumberInput value={$themes[$theme]?.border?.radius?.replace("px", "") || 0} max={30} step={5} on:change={(e) => updateTheme(e.detail + "px", "radius", "border")} />
+    <NumberInput value={Number($themes[$theme]?.border?.radius?.replace("px", "") || 0)} max={30} step={5} on:change={(e) => updateTheme(e.detail + "px", "radius", "border")} />
 </CombinedInput>
 
 <h3><T id="settings.colors" /></h3>
 {#each colors as color}
     <CombinedInput>
         <p><T id={"theme." + color} /></p>
-        <Color value={$themes[$theme]?.colors?.[color]} on:input={(e) => updateTheme(e.detail, color)} />
+        <Color value={$themes[$theme]?.colors?.[color] || ""} on:input={(e) => updateTheme(e.detail, color)} />
     </CombinedInput>
 {/each}
 

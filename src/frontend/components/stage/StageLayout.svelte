@@ -26,7 +26,7 @@
     export let edit = true
 
     const profile = getAccess("stage")
-    $: readOnly = profile.global === "read" || profile[stageLayoutId || ""] === "read"
+    $: readOnly = profile.global === "read" || profile[stageLayoutId || ""] === "read" || profile[stageLayoutId || ""] === "none"
 
     let lines: [string, number][] = []
     let mouse: any = null

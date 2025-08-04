@@ -49,7 +49,7 @@
 <div class="section">
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
-        <Color bind:value={settings.backgroundColor} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
+        <Color value={settings.backgroundColor || ""} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
     </CombinedInput>
     <CombinedInput>
         <p><T id="edit.background_media" /></p>

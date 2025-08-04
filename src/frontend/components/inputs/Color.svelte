@@ -64,7 +64,7 @@
     const modes = ["normal", "gradient"]
     $: selectedMode = allowGradients ? getCurrentMode(value) : "normal"
     function getCurrentMode(value: string) {
-        if (value.includes("gradient")) return "gradient"
+        if (typeof value === "string" && value.includes("gradient")) return "gradient"
         return "normal"
     }
 

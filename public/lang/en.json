@@ -1101,6 +1101,7 @@
         "overflow": "Overflow when reached end",
         "overflow_color": "Overflow color",
         "overflow_blink": "Blink when overflowing",
+        "overflow_blink_offset": "Start blinking early",
         "preview": "Preview",
         "clock": "Clock",
         "event": "Event",

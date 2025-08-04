@@ -854,6 +854,7 @@ const clickActions = {
         // find existing with the same name
         const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
         if (existing) id = existing[0]
+        else activeRename.set("project_" + id)
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },

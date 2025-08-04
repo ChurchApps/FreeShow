@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
-    import { activePopup, dictionary, events, timers } from "../../../stores"
+    import { dictionary, events, timers } from "../../../stores"
     import { getDateString } from "../../drawer/calendar/calendar"
     import { getTimer } from "../../drawer/timers/timers"
     import Icon from "../../helpers/Icon.svelte"
@@ -82,6 +82,10 @@
         if (new Date(event.from).getTime() > today.getTime()) eventList.push({ id, name: `${getDateString(new Date(event.from))}: ${event.name}`, date: event.from })
     }
 
+    function updateTime(e: any) {
+        timer.time = e.target?.value
+    }
+
     let eventTime: Date
     let eventCountdown: any = { m: "00", s: "00" }
     function updateEvent(e: any) {
@@ -113,28 +117,30 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    // timer
-    function createTimer() {
+    // TODO: history
+
+    // auto save edits
+    $: if (timer && (!created || chosenType)) editTimer()
+
+    let created = false
+    function editTimer() {
+        let id = currentTimer?.id
+
+        const doesNotExist = !id
+        if (doesNotExist) {
+            // create timer
+            id = uid()
+            created = true
+        }
+
         timers.update((a) => {
-            let id = uid()
             a[id] = getNewTimer()
             return a
         })
-        activePopup.set(null)
-    }
 
-    // TODO: history
-
-    function editTimer() {
-        let id: string = currentTimer.id
-        let newTimer: any = getNewTimer()
-
-        timers.update((a) => {
-            a[id] = newTimer
-            return a
-        })
-
-        activePopup.set(null)
+        if (doesNotExist) {
+            currentTimer = { id }
+        }
     }
 
     function getNewTimer() {
@@ -170,7 +176,7 @@
     const MAX_MINUTES = 60 * 24 * 30 // 365
 </script>
 
-{#if !currentTimer?.id && !chosenType}
+{#if (!currentTimer?.id || created) && !chosenType}
     <div class="buttons">
         {#each timerTypes as type}
             <Button
@@ -186,7 +192,7 @@
         {/each}
     </div>
 {:else}
-    {#if !currentTimer?.id}
+    {#if created}
         <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
             <Icon id="back" size={2} white />
         </Button>
@@ -194,11 +200,11 @@
 
     <CombinedInput textWidth={50}>
         <p><T id="inputs.name" /></p>
-        <TextInput value={timer.name} on:change={changeName} autoselect={!currentTimer?.id} />
+        <TextInput value={timer.name} on:change={changeName} autoselect={created} />
     </CombinedInput>
 
     {#if timer.type === "counter"}
-        <CombinedInput style="margin-top: 10px;" textWidth={50}>
+        <CombinedInput style="margin-top: 10px;max-width: 800px;" textWidth={50}>
             <div class="timerbox" style="border-right: 5px solid var(--focus);">
                 <p style="border: none;min-height: unset;" class="part">
                     <T id="timer.from" />
@@ -295,16 +301,34 @@
     {:else if timer.type === "clock"}
         <CombinedInput style="margin-top: 10px;">
             <div class="timerbox">
-                <p style="border: none;min-height: unset;" class="part"><T id="timer.clock" /></p>
+                <p style="border: none;min-height: unset;" class="part">
+                    <T id="timer.clock" />
+
+                    {#if Number(timeCountdownTime.m) > 0 || Number(timeCountdownTime.s) > 0}
+                        <span style="border: none;min-width: unset;flex: 0;font-weight: normal;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.9em;">
+                            {#if Number(timeCountdownTime.d)}{timeCountdownTime.d},
+                            {/if}{#if Number(timeCountdownTime.h)}{timeCountdownTime.h}:{/if}{timeCountdownTime.m}:{timeCountdownTime.s}
+                        </span>
+                    {/if}
+                </p>
 
                 <!-- <Date value={to} on:change={(e) => (to = e.detail)} />x -->
-                <input type="time" step="2" bind:value={timer.time} />
+                <input type="time" step="2" value={timer.time} on:change={updateTime} />
             </div>
         </CombinedInput>
     {:else if timer.type === "event"}
         <CombinedInput style="margin-top: 10px;">
             <div class="timerbox">
-                <p style="border: none;min-height: unset;" class="part"><T id="timer.event" /></p>
+                <p style="border: none;min-height: unset;" class="part">
+                    <T id="timer.event" />
+
+                    {#if Number(eventCountdown.m) > 0 || Number(eventCountdown.s) > 0}
+                        <span style="border: none;min-width: unset;flex: 0;font-weight: normal;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.9em;">
+                            {#if Number(eventCountdown.d)}{eventCountdown.d},
+                            {/if}{#if Number(eventCountdown.h)}{eventCountdown.h}:{/if}{eventCountdown.m}:{eventCountdown.s}
+                        </span>
+                    {/if}
+                </p>
 
                 {#if eventList.length}
                     <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
@@ -321,13 +345,15 @@
         <div class="alignRight">
             <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
         </div>
-        <Button style="padding: 0 8.5px !important" class="submenu_open" disabled={!timer.overflow} on:click={() => (overflowMenuOpened = !overflowMenuOpened)}>
-            {#if overflowMenuOpened && timer.overflow}
-                <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-            {:else}
-                <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-            {/if}
-        </Button>
+        {#if timer.overflow}
+            <Button style="padding: 0 8.5px !important" class="submenu_open" disabled={!timer.overflow} on:click={() => (overflowMenuOpened = !overflowMenuOpened)}>
+                {#if overflowMenuOpened && timer.overflow}
+                    <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                {:else}
+                    <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                {/if}
+            </Button>
+        {/if}
     </CombinedInput>
     {#if timer.overflow && overflowMenuOpened}
         <CombinedInput textWidth={50}>
@@ -342,36 +368,11 @@
         </CombinedInput>
         {#if timer.overflowBlink}
             <CombinedInput textWidth={50}>
-                <p><T id="edit.offset" /> (<T id="conditions.seconds" />)</p>
+                <p><T id="timer.overflow_blink_offset" /> <span style="opacity: 0.5;display: inline-flex;align-items: center;padding-left: 10px;font-size: 0.9em;">(<T id="conditions.seconds" />)</span></p>
                 <NumberInput value={timer.overflowBlinkOffset || 0} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={(e) => (timer.overflowBlinkOffset = Number(e.detail))} />
             </CombinedInput>
         {/if}
     {/if}
-
-    <CombinedInput style="margin-top: 10px;" textWidth={50}>
-        <Button style="width: 100%;" disabled={timer?.type === "event" && !timer?.event} center dark on:click={() => (currentTimer?.id ? editTimer() : createTimer())}>
-            <Icon id={currentTimer?.id ? "edit" : "add"} right />
-            {#if currentTimer?.id}
-                <!-- <T id="edit.update" /> -->
-                <T id="timer.edit" />
-            {:else}
-                <T id="timer.create" />
-            {/if}
-
-            <span style="border: none;flex: unset;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
-                {#if timer.type === "counter"}
-                    <!-- {#if Number(fromTime.d)}{fromTime.d},
-                    {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s} -->
-                {:else if timer.type === "clock"}
-                    {#if Number(timeCountdownTime.d)}{timeCountdownTime.d},
-                    {/if}{#if Number(timeCountdownTime.h)}{timeCountdownTime.h}:{/if}{timeCountdownTime.m}:{timeCountdownTime.s}
-                {:else if timer.type === "event"}
-                    {#if Number(eventCountdown.d)}{eventCountdown.d},
-                    {/if}{#if Number(eventCountdown.h)}{eventCountdown.h}:{/if}{eventCountdown.m}:{eventCountdown.s}
-                {/if}
-            </span>
-        </Button>
-    </CombinedInput>
 {/if}
 
 <style>

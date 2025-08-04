@@ -5,8 +5,11 @@
     import StageSlide from "../../stage/StageSlide.svelte"
     import Center from "../../system/Center.svelte"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import { getAccess } from "../../../utils/profile"
 
-    let stageLayouts = sortByName(keysToID($stageShows))
+    const profile = getAccess("stage")
+
+    let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
 
     let active = $popupData.active || ""
 
