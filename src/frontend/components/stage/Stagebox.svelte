@@ -5,6 +5,7 @@
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
+    import { getSortedStageItems } from "../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
@@ -41,7 +42,32 @@
 
         console.log(e)
         activeStage.update((ae) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey && ae.items.length > 0) {
+                // Shift selection: select range between last selected and current
+                const sortedItems = getSortedStageItems()
+                const itemIds = sortedItems.map(item => item.id)
+                
+                const lastSelectedId = ae.items[ae.items.length - 1]
+                const lastSelectedIndex = itemIds.indexOf(lastSelectedId)
+                const currentIndex = itemIds.indexOf(id)
+                
+                if (lastSelectedIndex !== -1 && currentIndex !== -1) {
+                    const startIndex = Math.min(lastSelectedIndex, currentIndex)
+                    const endIndex = Math.max(lastSelectedIndex, currentIndex)
+                    const rangeIds = itemIds.slice(startIndex, endIndex + 1)
+                    
+                    // Add range to selection, avoiding duplicates
+                    const newSelection = [...ae.items]
+                    rangeIds.forEach(itemId => {
+                        if (!newSelection.includes(itemId)) {
+                            newSelection.push(itemId)
+                        }
+                    })
+                    ae.items = newSelection
+                } else {
+                    ae.items = [id]
+                }
+            } else if (e.ctrlKey || e.metaKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
