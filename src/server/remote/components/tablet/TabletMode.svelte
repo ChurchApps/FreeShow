@@ -6,7 +6,7 @@
     import Tabs from "../../../common/components/Tabs.svelte"
     import { getGroupName } from "../../../common/util/show"
     import { translate } from "../../util/helpers"
-    import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
+    import { GetLayout, getNextSlide, nextSlide } from "../../util/output"
     import { send } from "../../util/socket"
     import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
     import AddGroups from "../pages/AddGroups.svelte"
@@ -148,6 +148,28 @@
     function toggleFullscreen() {
         isFullscreen = !isFullscreen
     }
+
+    function playSlide(index: number) {
+        if (!$activeShow) return
+
+        const showId = $activeShow.id
+        const layoutId = $activeShow.settings.activeLayout
+
+        if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === outNumber) {
+            // reveal lines if it exists
+            const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
+            if (revealExists) {
+                send("API:next_slide")
+            }
+            return
+        }
+
+        send("API:index_select_slide", { showId, layoutId, index })
+        _set("outShow", $activeShow)
+        // _set("outSlide", index) // ??
+        // send("API:get_cleared") // ??
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -202,13 +224,7 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span
-                                    style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
-                                    on:click={() => {
-                                        send("API:index_select_slide", { showId: $activeShow.id, index: i, layoutId: $activeShow.settings.activeLayout })
-                                        _set("outShow", $activeShow)
-                                    }}
-                                >
+                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" on:click={() => playSlide(i)}>
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -232,18 +248,7 @@
                             {/if}
                         {/each}
                     {:else}
-                        <Slides
-                            {dictionary}
-                            {scrollElem}
-                            on:click={(e) => {
-                                let index = e.detail
-                                send("API:index_select_slide", { showId: $activeShow.id, index, layoutId: $activeShow.settings.activeLayout })
-                                _set("outShow", $activeShow)
-                                _set("outSlide", index)
-                            }}
-                            outSlide={outNumber}
-                            columns={3}
-                        />
+                        <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={outNumber} columns={3} />
                     {/if}
                 </div>
 
@@ -305,9 +310,9 @@
                 {#if $outShow && layout}
                     <div class="buttons" style="display: flex;width: 100%;">
                         <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                        <Button style="flex: 1;" on:click={previous} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
+                        <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
                         <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outNumber + 1}/{totalSlides}</span>
-                        <Button style="flex: 1;" on:click={next} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                        <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
                         <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
                     </div>
                 {/if}

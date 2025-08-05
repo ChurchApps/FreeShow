@@ -43,6 +43,7 @@ import { addToPos, getIndexes, mover } from "./mover"
 import { checkName, getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
+import { getAccess } from "../../utils/profile"
 
 function getId(drag: Selected): string {
     const id = ""
@@ -71,6 +72,21 @@ export const dropActions = {
 
         const id: string = getId(drag)
         if (slideDrop[id]) {
+            const show = _show().get()
+            if (show?.locked) {
+                alertMessage.set("show.locked_info")
+                activePopup.set("alert")
+                return
+            }
+
+            const profile = getAccess("shows")
+            const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+            if (readOnly) {
+                alertMessage.set("profile.locked")
+                activePopup.set("alert")
+                return
+            }
+
             history = slideDrop[id]({ drag, drop }, history, keys)
             return history
         }
@@ -189,8 +205,17 @@ export const dropActions = {
             const indexes: number[] = []
             // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
-                if (_show().get()?.locked) {
+                const show = _show().get()
+                if (show?.locked) {
                     alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
+                const profile = getAccess("shows")
+                const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+                if (readOnly) {
+                    alertMessage.set("profile.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -225,8 +250,17 @@ export const dropActions = {
 
             // create slide from template if dropping on a slide
             if (drop.trigger) {
-                if (_show().get()?.locked) {
+                const show = _show().get()
+                if (show?.locked) {
                     alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
+                const profile = getAccess("shows")
+                const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+                if (readOnly) {
+                    alertMessage.set("profile.locked")
                     activePopup.set("alert")
                     return
                 }

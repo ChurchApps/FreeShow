@@ -17,6 +17,7 @@
         playScripture,
         resized,
         scriptureHistory,
+        scriptureMode,
         scriptures,
         scripturesCache,
         scriptureSettings,
@@ -919,7 +920,6 @@
         return shortName
     }
 
-    let gridMode = false
     let history = false
 
     // Track which bible to display in the reference bar (for bilingual collections)
@@ -1048,7 +1048,7 @@
                     <T id="empty.general" />
                 </Center>
             {/if}
-        {:else if gridMode}
+        {:else if $scriptureMode === "grid"}
             <!-- GRID MODE -->
             <div class="grid">
                 <div class="books">
@@ -1072,7 +1072,7 @@
                                         autoComplete = false
                                     })}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
-                                    style="color: {color};"
+                                    style="color: {color};white-space: nowrap;"
                                     title={book.customName || book.name}
                                 >
                                     {name}
@@ -1293,8 +1293,8 @@
         </Button>
 
         <div class="seperator" />
-        <Button disabled={history} on:click={() => (gridMode = !gridMode)} title={$dictionary.show?.[gridMode ? "grid" : "list"]}>
-            <Icon size={1.3} id={gridMode ? "grid" : "list"} white />
+        <Button disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title={$dictionary.show?.[$scriptureMode === "grid" ? "grid" : "list"]}>
+            <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </Button>
 
         <div class="seperator" />

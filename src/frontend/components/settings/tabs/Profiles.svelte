@@ -131,23 +131,23 @@
         openedLists = openedLists
     }
 
-    $: projectsList = sortByName(keysToID($folders).filter((a) => a.parent === "/"))
+    $: projectsList = sortByName(keysToID($folders).filter((a) => a.name && a.parent === "/"))
     $: projectsAccess = currentProfile.access.projects || {}
 
-    $: showsCategoryList = sortByName(keysToID($categories)).filter((a) => !a.isArchive) //  && !a.default
+    $: showsCategoryList = sortByName(keysToID($categories)).filter((a) => a.name && !a.isArchive) //  && !a.default
     $: showsCategoryAccess = currentProfile.access.shows || {}
 
-    $: overlayCategoryList = sortByName(keysToID($overlayCategories))
+    $: overlayCategoryList = sortByName(keysToID($overlayCategories)).filter((a) => a.name)
     $: overlayCategoryAccess = currentProfile.access.overlays || {}
 
-    $: templateCategoryList = sortByName(keysToID($templateCategories))
+    $: templateCategoryList = sortByName(keysToID($templateCategories)).filter((a) => a.name)
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
     const functions: string[] = ["actions", "timers", "variables", "triggers"]
     $: functionsList = functions.map((id) => ({ id, name: `tabs.${id}` }))
     $: functionsAccess = currentProfile.access.functions || {}
 
-    $: stageList = sortByName(keysToID($stageShows))
+    $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
 
     // "display_settings" (can change position still), "connection" (can use still)

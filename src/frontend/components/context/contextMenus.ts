@@ -238,7 +238,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     template_card_default: ["duplicate", "delete"],
-    template_card_readonly: ["preview"],
+    template_card_readonly: [],
     effect_card: ["edit", "SEPERATOR", "display_duration", "SEPERATOR", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card_default: ["duplicate", "delete"],
     player_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "rename", "delete"],

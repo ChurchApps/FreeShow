@@ -82,7 +82,9 @@ function autoBackup() {
             a.autoBackupPrevious = now - 3600000
             return a
         })
-        save(false, { backup: true, isAutoBackup: true })
+
+        // 20% chance of backing up all shows as well (just in case)
+        save(false, { backup: true, isAutoBackup: true, backupShows: Math.random() < 0.2 })
     }
 }
 

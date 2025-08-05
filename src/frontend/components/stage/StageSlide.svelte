@@ -27,6 +27,8 @@
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
     function edit(e: any) {
+        if (readOnly) return
+
         let name = e.detail.value
         stageShows.update((a) => {
             a[id].name = name

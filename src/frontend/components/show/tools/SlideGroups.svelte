@@ -60,7 +60,7 @@
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
                             if (isLocked) {
-                                alertMessage.set("show.locked_info")
+                                alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                 activePopup.set("alert")
                                 return
                             }
@@ -73,7 +73,7 @@
                         }}
                         on:keydown={createKeydownHandler((e) => {
                             if (isLocked) {
-                                alertMessage.set("show.locked_info")
+                                alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                 activePopup.set("alert")
                                 return
                             }
@@ -115,7 +115,7 @@
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
                                 if (isLocked) {
-                                    alertMessage.set("show.locked_info")
+                                    alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
                                     return
                                 }
@@ -127,7 +127,7 @@
                             }}
                             on:keydown={createKeydownHandler((e) => {
                                 if (isLocked) {
-                                    alertMessage.set("show.locked_info")
+                                    alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
                                     return
                                 }

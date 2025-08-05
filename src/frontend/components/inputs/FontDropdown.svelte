@@ -90,6 +90,7 @@
         if (!id) return
 
         setTimeout(() => {
+            if (!self) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)

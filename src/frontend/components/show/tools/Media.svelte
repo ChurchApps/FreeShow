@@ -5,8 +5,9 @@
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { translate } from "../../../utils/language"
+    import { getAccess } from "../../../utils/profile"
     import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { getActionName, getActionTriggerId, runAction } from "../../actions/actions"
@@ -117,6 +118,20 @@
     } else mics = []
 
     function setBG(id: string, key: string, value: boolean) {
+        if (show.locked) {
+            alertMessage.set("show.locked_info")
+            activePopup.set("alert")
+            return
+        }
+
+        const profile = getAccess("shows")
+        const readOnly = profile.global === "read" || profile[show.category || ""] === "read"
+        if (readOnly) {
+            alertMessage.set("profile.locked")
+            activePopup.set("alert")
+            return
+        }
+
         showsCache.update((a) => {
             let bgs = a[$activeShow!.id].media
             if (!bgs[id]) return a // old media

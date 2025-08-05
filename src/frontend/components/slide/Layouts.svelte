@@ -59,7 +59,7 @@
 
     function changeName(e: any) {
         let currentLayout = e.detail?.id?.slice("layout_".length)
-        if (!currentLayout) return
+        if (!currentLayout || isLocked) return
 
         const newName = e.detail.value
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -175,7 +175,7 @@
                                 active={activeLayout === layout.id}
                                 center
                             >
-                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
+                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit allowEdit={!isLocked} />
                             </Button>
                         </SelectElem>
                     {/each}
@@ -223,7 +223,7 @@
         {#if isLocked}
             <Button
                 on:click={() => {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                     activePopup.set("alert")
                 }}
                 title={$dictionary.show?.locked}

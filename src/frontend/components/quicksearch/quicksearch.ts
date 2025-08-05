@@ -47,6 +47,7 @@ import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
 import { Main } from "./../../../types/IPC/Main"
+import { getAccess } from "../../utils/profile"
 
 interface QuickSearchValue {
     type: keyof typeof triggerActions
@@ -162,12 +163,21 @@ const triggerActions = {
         }
 
         if (data.globalGroup) {
-            // WIP check if locked
-            if (get(showsCache)[get(activeShow)!.id]?.locked) {
+            const show = get(showsCache)[get(activeShow)!.id]
+            if (show?.locked) {
                 alertMessage.set("show.locked_info")
                 activePopup.set("alert")
                 return
             }
+
+            const profile = getAccess("shows")
+            const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+            if (readOnly) {
+                alertMessage.set("profile.locked")
+                activePopup.set("alert")
+                return
+            }
+
             history({ id: "SLIDES", newData: { data: [{ ...data.globalGroup, id: uid() }] } })
             return
         }
@@ -490,7 +500,7 @@ const settings = [
             "settings.auto_shortcut_first_letter"
         ]
     },
-    { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "-Livestream", "-Stage"] },
+    { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "-Livestream", "-Stage", "-HDMI"] },
     {
         id: "styles",
         name: "settings.styles",
@@ -509,7 +519,7 @@ const settings = [
             "meta.display_metadata"
         ]
     },
-    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "Chums"] },
+    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "Chums", "-Network", "-LAN"] },
     {
         id: "files",
         name: "settings.files",
@@ -553,86 +563,93 @@ const faq = [
     { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
-    { id: "http://youtu.be/FeQ70DDsDPw", name: "Understanding Conditions", icon: "youtube" },
-    { id: "http://youtu.be/SsckYv_JD00", name: "Emergency Messages", icon: "youtube" },
-    { id: "http://youtu.be/3UFsD3vlhqg", name: "Add Stage Display Notes for Your Pastor", icon: "youtube" },
-    { id: "http://youtu.be/MEmu5g_2fts", name: "Show 2 Verses on 1 Slide", icon: "youtube", aliases: ["-scripture", "-bible"] },
-    { id: "http://youtu.be/uyyHESkdEwg", name: "Manage Pictures in Your Livestream", icon: "youtube" },
-    { id: "http://youtu.be/89skyZYD4jo", name: "Livestream Lower Thirds w/OBS+FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/Xnh1ddZldBc", name: "Bullet Points", icon: "youtube" },
-    { id: "http://youtu.be/2iQq1mWKw4Y", name: "How to Setup a Vertical Display", icon: "youtube" },
-    { id: "http://youtu.be/4dL8p0_OIqY", name: "How to Connect FreeShow to a Screen and OBS", icon: "youtube" },
-    { id: "http://youtu.be/ZLS5HgBsSaM", name: "Fireworks Effect", icon: "youtube" },
-    { id: "http://youtu.be/2KnCfvXBabQ", name: "Countdown Timer Setup", icon: "youtube" },
-    { id: "http://youtu.be/lxPHFwQEZWM", name: "How to Backup and Restore", icon: "youtube" },
-    { id: "http://youtu.be/h0nCm2D2dCg", name: "How to Use Chords", icon: "youtube" },
-    { id: "http://youtu.be/vxMqvUrVMo4", name: "Pre Record Shows for Easy Playback", icon: "youtube" },
-    { id: "http://youtu.be/YT5Dil_54Rw", name: "Get MIDI Signals Into FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/moCy2bjWpvo", name: "Gradients and SFX", icon: "youtube" },
-    { id: "http://youtu.be/-Db08iXoYzI", name: "Cool Music Visualizer Affect", icon: "youtube" },
-    { id: "http://youtu.be/rvrkaMbvGBs", name: "Start Your Video When You Want with Time Markers for Videos", icon: "youtube" },
-    { id: "http://youtu.be/hxPU8ZSoDhE", name: "Import Bibles, Templates, & Projects", icon: "youtube" },
-    { id: "http://youtu.be/GLNMQRH-F1c", name: "Download and Create Custom Organic Templates", icon: "youtube" },
-    { id: "http://youtu.be/XP3y8kW3c6k", name: "Create Gradient Backgrounds", icon: "youtube" },
-    { id: "http://youtu.be/DEbn8XLrQJA", name: "Actions Are Your Best Friend", icon: "youtube" },
-    { id: "http://youtu.be/Jm4forUHP9M", name: "Using MIDI Outputs", icon: "youtube" },
-    { id: "http://youtu.be/r2R_TcvGCqQ", name: "Make Multiple Versions of the Same Song", icon: "youtube" },
-    { id: "http://youtu.be/H7iqWjXzlpw", name: "Autoplay Your Playlists", icon: "youtube" },
-    { id: "http://youtu.be/b6Q5qe9Re44", name: "Schedule Shows to Start Automatically", icon: "youtube" },
-    { id: "http://youtu.be/CFPZVG_UY3s", name: "Customize Scriptures in Stage Display", icon: "youtube" },
-    { id: "http://youtu.be/y3wUt--XFOs", name: "Loop Videos", icon: "youtube" },
-    { id: "http://youtu.be/J5qM3xVv7yo", name: "Control the Show from Stage View", icon: "youtube" },
-    { id: "http://youtu.be/LVKtNrP2y-Y", name: "Stage View Made Simple", icon: "youtube" },
-    { id: "http://youtu.be/Y6Kdmvdc1PM", name: "Customize Companion Buttons for FreeShow & OBS", icon: "youtube" },
-    { id: "http://youtu.be/HWN1Mp0bRsM", name: "Use Bitfocus Companion with FreeShow & OBS", icon: "youtube" },
-    { id: "http://youtu.be/7_q0zNe7N8o", name: "Best Ways to Use Keynote with FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/gM4uqQxHlKg", name: "Setup Audio for Livestream with FreeShow & OBS", icon: "youtube" },
-    { id: "http://youtu.be/1FpO7DiA3bs", name: "The Secret Power of Variables", icon: "youtube" },
-    { id: "http://youtu.be/aZI25Woh5s4", name: "Organize Your Content Better w/Categories", icon: "youtube" },
-    { id: "http://youtu.be/nXAoQ3ADPyE", name: "Setting Up Your Outputs the Right Way", icon: "youtube" },
-    { id: "http://youtu.be/61WDOgihjqY", name: "Change the Look of Your Bible Collection Styles", icon: "youtube" },
-    { id: "http://youtu.be/HwvZZgncg2U", name: "Show Camera & Scriptures Side-by-Side", icon: "youtube" },
-    { id: "http://youtu.be/Siv9jAxRIn4", name: "Best Practices for Using Videos", icon: "youtube" },
-    { id: "http://youtu.be/qt52fpuW7Wo", name: "Create a ScoreBoard", icon: "youtube" },
-    { id: "http://youtu.be/dsW4FWb4VRs", name: "Change the Look of Your Show", icon: "youtube" },
-    { id: "http://youtu.be/yUpwGu7fY64", name: "How to Add Captions", icon: "youtube" },
-    { id: "http://youtu.be/wGbSi3cBCTk", name: "How to Play Youtube Videos", icon: "youtube" },
-    { id: "http://youtu.be/FDoauL0p-9A", name: "Add Automation", icon: "youtube" },
-    { id: "http://youtu.be/6sfXbmCEkww", name: "Overlay Timers", icon: "youtube" },
-    { id: "http://youtu.be/3hQDgP4hdZw", name: "How to Add Slide Notes in Freeshow", icon: "youtube" },
-    { id: "http://youtu.be/yaBPnKsT8QU", name: "How to Edit Templates", icon: "youtube" },
-    { id: "http://youtu.be/7Ykl-E_DIsE", name: "Understanding Media", icon: "youtube" },
-    { id: "http://youtu.be/_D7BdZczAwA", name: "Build an Entire Service Presentation", icon: "youtube" },
-    { id: "http://youtu.be/c3tTdq3A2eM", name: "Understanding How to Create and Edit Shows", icon: "youtube" },
-    { id: "http://youtu.be/7tgpybjHaUg", name: "Customize Scripture Lower-Thirds for Livestream and Service", icon: "youtube" },
-    { id: "http://youtu.be/8dnB4Zxuuv8", name: "Understand the Audio Tab", icon: "youtube" },
-    { id: "http://youtu.be/nNBLCVvf7B4", name: "How to Use Your ATEM Mini with FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/zQXpKic0qCU", name: "How to Make Bigger Scripture Text", icon: "youtube" },
-    { id: "http://youtu.be/ZgDWnVK2qGY", name: "How to Import Spanish Bibles", icon: "youtube" },
-    { id: "http://youtu.be/Y6RewwgscWU", name: "Blended Screens - Multi-Projector/Monitor Presentation", icon: "youtube" },
-    { id: "http://youtu.be/aoILB9x92hA", name: "How to Change Scripture Color", icon: "youtube" },
-    { id: "http://youtu.be/Hb60X-QdNrU", name: "Scrolling Text", icon: "youtube" },
-    { id: "http://youtu.be/U0FE2ROEHLo", name: "Optimize Performance", icon: "youtube" },
-    { id: "http://youtu.be/k3wKUMw5zlY", name: "Scripture Search", icon: "youtube" },
-    { id: "http://youtu.be/7VGm5tvq_7I", name: "Use Your Yolobox + FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/l-HyJIILaxw", name: "Fixing Glitchy Slide Transitions", icon: "youtube" },
-    { id: "http://youtu.be/kN8hoez6bkQ", name: "Understanding OverLays", icon: "youtube" },
-    { id: "http://youtu.be/NJdPaHMc8FQ", name: "Download Bibles", icon: "youtube" },
-    { id: "http://youtu.be/XUYjbzKHP7U", name: "Zoom with Lower Thirds with FreeShow", icon: "youtube" },
-    { id: "http://youtu.be/DGnscG6qzgo", name: "Edit Slides Fast with Quick Timer", icon: "youtube" },
-    { id: "http://youtu.be/ikzQwB0r7rc", name: "Cloud Sync", icon: "youtube" },
-    { id: "http://youtu.be/o6OFAT-uvpM", name: "Easy Action Shortcuts", icon: "youtube" },
-    { id: "http://youtu.be/gukCeIWNBB8", name: "Loop Slides", icon: "youtube" },
-    { id: "http://youtu.be/ArLVr_Bsoww", name: "Create and Edit Overlays", icon: "youtube" },
-    { id: "http://youtu.be/OxqJ7Z-VvYs", name: "Virtual Outputs", icon: "youtube" },
-    { id: "http://youtu.be/Bo2TatjZJf0", name: "Display Multiple Bible Versions at Once", icon: "youtube" },
-    { id: "http://youtu.be/mzGclx6C9vY", name: "Multiple Ways to Show Scriptures", icon: "youtube" },
-    { id: "http://youtu.be/3hZ9GNUS10s", name: "How to Navigate Scriptures Fast", icon: "youtube" },
-    { id: "http://youtu.be/RVqV1nNjqgY", name: "Learn Timer Settings", icon: "youtube" },
-    { id: "http://youtu.be/Twh5RlMtXI8", name: "How to Adjust Background Video in Real-time", icon: "youtube" },
-    { id: "http://youtu.be/CmSXXyvtVpg", name: "How to Make a Music Playlist", icon: "youtube" },
-    { id: "http://youtu.be/iSWum8-52k0", name: "Understanding Output Settings", icon: "youtube" },
-    { id: "http://youtu.be/Mz-Vk-fvCqk", name: "Edit Photos", icon: "youtube" }
+    { id: "https://youtu.be/1ioOmYJxXPM", name: "Actions & Project Templates", icon: "youtube" },
+    { id: "https://youtu.be/Gwfw59sgW2Y", name: "Livestream & Backgrounds", icon: "youtube" },
+    { id: "https://youtu.be/7xJAeexrtkA", name: "Stage & Timers", icon: "youtube" },
+    { id: "https://youtu.be/ljbKz2uqHL4", name: "Setting Up Styles & Templates", icon: "youtube" },
+    { id: "https://youtu.be/GgiLGc5fUNw", name: "Setting Up Shows & Outputs", icon: "youtube" },
+    { id: "https://youtu.be/EHlE8q_1jcY", name: "How to Import Files & Bibles", icon: "youtube" },
+    { id: "https://youtu.be/sCyVzfwn6hg", name: "Expand Your Computer Displays for More Outputs", icon: "youtube" },
+    { id: "https://youtu.be/FeQ70DDsDPw", name: "Understanding Conditions", icon: "youtube" },
+    { id: "https://youtu.be/SsckYv_JD00", name: "Emergency Messages", icon: "youtube" },
+    { id: "https://youtu.be/3UFsD3vlhqg", name: "Add Stage Display Notes for Your Pastor", icon: "youtube" },
+    { id: "https://youtu.be/MEmu5g_2fts", name: "Show 2 Verses on 1 Slide", icon: "youtube", aliases: ["-scripture", "-bible"] },
+    { id: "https://youtu.be/uyyHESkdEwg", name: "Manage Pictures in Your Livestream", icon: "youtube" },
+    { id: "https://youtu.be/89skyZYD4jo", name: "Livestream Lower Thirds w/OBS+FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/Xnh1ddZldBc", name: "Bullet Points", icon: "youtube" },
+    { id: "https://youtu.be/2iQq1mWKw4Y", name: "How to Setup a Vertical Display", icon: "youtube" },
+    { id: "https://youtu.be/4dL8p0_OIqY", name: "How to Connect FreeShow to a Screen and OBS", icon: "youtube" },
+    { id: "https://youtu.be/ZLS5HgBsSaM", name: "Fireworks Effect", icon: "youtube" },
+    { id: "https://youtu.be/2KnCfvXBabQ", name: "Countdown Timer Setup", icon: "youtube" },
+    { id: "https://youtu.be/lxPHFwQEZWM", name: "How to Backup and Restore", icon: "youtube" },
+    { id: "https://youtu.be/h0nCm2D2dCg", name: "How to Use Chords", icon: "youtube" },
+    { id: "https://youtu.be/vxMqvUrVMo4", name: "Pre Record Shows for Easy Playback", icon: "youtube" },
+    { id: "https://youtu.be/YT5Dil_54Rw", name: "Get MIDI Signals Into FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/moCy2bjWpvo", name: "Gradients and SFX", icon: "youtube" },
+    { id: "https://youtu.be/-Db08iXoYzI", name: "Cool Music Visualizer Affect", icon: "youtube" },
+    { id: "https://youtu.be/rvrkaMbvGBs", name: "Start Your Video When You Want with Time Markers for Videos", icon: "youtube" },
+    { id: "https://youtu.be/hxPU8ZSoDhE", name: "Import Bibles, Templates, & Projects", icon: "youtube" },
+    { id: "https://youtu.be/GLNMQRH-F1c", name: "Download and Create Custom Organic Templates", icon: "youtube" },
+    { id: "https://youtu.be/XP3y8kW3c6k", name: "Create Gradient Backgrounds", icon: "youtube" },
+    { id: "https://youtu.be/DEbn8XLrQJA", name: "Actions Are Your Best Friend", icon: "youtube" },
+    { id: "https://youtu.be/Jm4forUHP9M", name: "Using MIDI Outputs", icon: "youtube" },
+    { id: "https://youtu.be/r2R_TcvGCqQ", name: "Make Multiple Versions of the Same Song", icon: "youtube" },
+    { id: "https://youtu.be/H7iqWjXzlpw", name: "Autoplay Your Playlists", icon: "youtube" },
+    { id: "https://youtu.be/b6Q5qe9Re44", name: "Schedule Shows to Start Automatically", icon: "youtube" },
+    { id: "https://youtu.be/CFPZVG_UY3s", name: "Customize Scriptures in Stage Display", icon: "youtube" },
+    { id: "https://youtu.be/y3wUt--XFOs", name: "Loop Videos", icon: "youtube" },
+    { id: "https://youtu.be/J5qM3xVv7yo", name: "Control the Show from Stage View", icon: "youtube" },
+    { id: "https://youtu.be/LVKtNrP2y-Y", name: "Stage View Made Simple", icon: "youtube" },
+    { id: "https://youtu.be/Y6Kdmvdc1PM", name: "Customize Companion Buttons for FreeShow & OBS", icon: "youtube" },
+    { id: "https://youtu.be/HWN1Mp0bRsM", name: "Use Bitfocus Companion with FreeShow & OBS", icon: "youtube" },
+    { id: "https://youtu.be/7_q0zNe7N8o", name: "Best Ways to Use Keynote with FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/gM4uqQxHlKg", name: "Setup Audio for Livestream with FreeShow & OBS", icon: "youtube" },
+    { id: "https://youtu.be/1FpO7DiA3bs", name: "The Secret Power of Variables", icon: "youtube" },
+    { id: "https://youtu.be/aZI25Woh5s4", name: "Organize Your Content Better w/Categories", icon: "youtube" },
+    { id: "https://youtu.be/nXAoQ3ADPyE", name: "Setting Up Your Outputs the Right Way", icon: "youtube" },
+    { id: "https://youtu.be/61WDOgihjqY", name: "Change the Look of Your Bible Collection Styles", icon: "youtube" },
+    { id: "https://youtu.be/HwvZZgncg2U", name: "Show Camera & Scriptures Side-by-Side", icon: "youtube" },
+    { id: "https://youtu.be/Siv9jAxRIn4", name: "Best Practices for Using Videos", icon: "youtube" },
+    { id: "https://youtu.be/qt52fpuW7Wo", name: "Create a ScoreBoard", icon: "youtube" },
+    { id: "https://youtu.be/dsW4FWb4VRs", name: "Change the Look of Your Show", icon: "youtube" },
+    { id: "https://youtu.be/yUpwGu7fY64", name: "How to Add Captions", icon: "youtube" },
+    { id: "https://youtu.be/wGbSi3cBCTk", name: "How to Play Youtube Videos", icon: "youtube" },
+    { id: "https://youtu.be/FDoauL0p-9A", name: "Add Automation", icon: "youtube" },
+    { id: "https://youtu.be/6sfXbmCEkww", name: "Overlay Timers", icon: "youtube" },
+    { id: "https://youtu.be/3hQDgP4hdZw", name: "How to Add Slide Notes in Freeshow", icon: "youtube" },
+    { id: "https://youtu.be/yaBPnKsT8QU", name: "How to Edit Templates", icon: "youtube" },
+    { id: "https://youtu.be/7Ykl-E_DIsE", name: "Understanding Media", icon: "youtube" },
+    { id: "https://youtu.be/_D7BdZczAwA", name: "Build an Entire Service Presentation", icon: "youtube" },
+    { id: "https://youtu.be/c3tTdq3A2eM", name: "Understanding How to Create and Edit Shows", icon: "youtube" },
+    { id: "https://youtu.be/7tgpybjHaUg", name: "Customize Scripture Lower-Thirds for Livestream and Service", icon: "youtube" },
+    { id: "https://youtu.be/8dnB4Zxuuv8", name: "Understand the Audio Tab", icon: "youtube" },
+    { id: "https://youtu.be/nNBLCVvf7B4", name: "How to Use Your ATEM Mini with FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/zQXpKic0qCU", name: "How to Make Bigger Scripture Text", icon: "youtube" },
+    { id: "https://youtu.be/ZgDWnVK2qGY", name: "How to Import Spanish Bibles", icon: "youtube" },
+    { id: "https://youtu.be/Y6RewwgscWU", name: "Blended Screens - Multi-Projector/Monitor Presentation", icon: "youtube" },
+    { id: "https://youtu.be/aoILB9x92hA", name: "How to Change Scripture Color", icon: "youtube" },
+    { id: "https://youtu.be/Hb60X-QdNrU", name: "Scrolling Text", icon: "youtube" },
+    { id: "https://youtu.be/U0FE2ROEHLo", name: "Optimize Performance", icon: "youtube" },
+    { id: "https://youtu.be/k3wKUMw5zlY", name: "Scripture Search", icon: "youtube" },
+    { id: "https://youtu.be/7VGm5tvq_7I", name: "Use Your Yolobox + FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/l-HyJIILaxw", name: "Fixing Glitchy Slide Transitions", icon: "youtube" },
+    { id: "https://youtu.be/kN8hoez6bkQ", name: "Understanding OverLays", icon: "youtube" },
+    { id: "https://youtu.be/NJdPaHMc8FQ", name: "Download Bibles", icon: "youtube" },
+    { id: "https://youtu.be/XUYjbzKHP7U", name: "Zoom with Lower Thirds with FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/DGnscG6qzgo", name: "Edit Slides Fast with Quick Timer", icon: "youtube" },
+    { id: "https://youtu.be/ikzQwB0r7rc", name: "Cloud Sync", icon: "youtube" },
+    { id: "https://youtu.be/o6OFAT-uvpM", name: "Easy Action Shortcuts", icon: "youtube" },
+    { id: "https://youtu.be/gukCeIWNBB8", name: "Loop Slides", icon: "youtube" },
+    { id: "https://youtu.be/ArLVr_Bsoww", name: "Create and Edit Overlays", icon: "youtube" },
+    { id: "https://youtu.be/OxqJ7Z-VvYs", name: "Virtual Outputs", icon: "youtube" },
+    { id: "https://youtu.be/Bo2TatjZJf0", name: "Display Multiple Bible Versions at Once", icon: "youtube" },
+    { id: "https://youtu.be/mzGclx6C9vY", name: "Multiple Ways to Show Scriptures", icon: "youtube" },
+    { id: "https://youtu.be/3hZ9GNUS10s", name: "How to Navigate Scriptures Fast", icon: "youtube" },
+    { id: "https://youtu.be/RVqV1nNjqgY", name: "Learn Timer Settings", icon: "youtube" },
+    { id: "https://youtu.be/Twh5RlMtXI8", name: "How to Adjust Background Video in Real-time", icon: "youtube" },
+    { id: "https://youtu.be/CmSXXyvtVpg", name: "How to Make a Music Playlist", icon: "youtube" },
+    { id: "https://youtu.be/iSWum8-52k0", name: "Understanding Output Settings", icon: "youtube" },
+    { id: "https://youtu.be/Mz-Vk-fvCqk", name: "Edit Photos", icon: "youtube" }
 ]
 
 function getFaq() {

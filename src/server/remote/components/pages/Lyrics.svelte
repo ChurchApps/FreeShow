@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getGroupName } from "../../../common/util/show"
-    import { GetLayout, next, previous } from "../../util/output"
+    import { GetLayout } from "../../util/output"
+    import { send } from "../../util/socket"
     import { _set, activeShow, activeTab, outLayout, outShow, outSlide } from "../../util/stores"
 
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
@@ -9,8 +10,8 @@
     $: slides = $outShow?.slides || {}
 
     function click(e: any) {
-        if (e.clientX < window.innerWidth / 3) previous()
-        else next()
+        if (e.clientX < window.innerWidth / 3) send("API:previous_slide")
+        else send("API:next_slide")
     }
 
     let lyricsScroll: any

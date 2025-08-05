@@ -17,11 +17,10 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
-    const defaultName = "Counter"
     let currentTimer = getSelected("timer", 0)
     let timer: Timer = {
         type: "counter",
-        name: defaultName,
+        name: "",
         start: 300,
         end: 0,
         event: "",
@@ -67,15 +66,6 @@
         Object.entries($events).forEach(addEvent)
         eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? -1 : 1))
         timer.event = eventList[0]?.id || ""
-
-        // set unique timer name
-        if (timer.name === defaultName && !currentTimer?.id) {
-            let count = 1
-            while (Object.values($timers).find((a) => a.name === defaultName + (count > 1 ? ` ${count}` : ""))) {
-                count++
-            }
-            timer.name = defaultName + (count > 1 ? ` ${count}` : "")
-        }
     })
 
     const addEvent = ([id, event]: any) => {
@@ -104,10 +94,23 @@
     }
     $: if (timer.event && eventList.length) updateEventName()
     const updateEventName = () => (timerNames.event = eventList.find((a) => a.id === timer.event)?.name)
-    $: if (timer.type && (!timer.name || Object.values(timerNames).includes(timer.name))) timer.name = timerNames[timer.type] || $dictionary.timer?.counter || "Timer"
 
     function changeName(e: any) {
-        timer.name = e.target.value
+        let newName = e.target.value
+
+        if (!newName) {
+            timer.name = ""
+            return
+        }
+
+        // set unique timer name
+        let count = 1
+        while (Object.values($timers).find((a) => a.name === newName + (count > 1 ? ` ${count}` : ""))) {
+            count++
+        }
+        newName = newName + (count > 1 ? ` ${count}` : "")
+
+        timer.name = newName
     }
 
     function toggleOverflow(e: any) {
@@ -120,10 +123,10 @@
     // TODO: history
 
     // auto save edits
-    $: if (timer && (!created || chosenType)) editTimer()
+    $: if (timer && ((!created && currentTimer?.id) || chosenType)) updateTimer()
 
     let created = false
-    function editTimer() {
+    function updateTimer() {
         let id = currentTimer?.id
 
         const doesNotExist = !id
@@ -145,6 +148,8 @@
 
     function getNewTimer() {
         let newTimer: Timer = { name: timer.name, type: timer.type }
+
+        // if (!newTimer.name && timer.type) newTimer.name = timerNames[timer.type] || $dictionary.timer?.counter || "Timer"
 
         if (timer.id) newTimer.id = timer.id
         if (timer.type === "event") newTimer.event = timer.event

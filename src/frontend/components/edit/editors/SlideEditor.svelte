@@ -359,14 +359,14 @@
 
             <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- no need to add chords on scripture/events -->
-                {#if !currentShow?.reference?.type && Slide}
+                {#if !currentShow?.reference?.type && Slide && !isLocked}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
                         <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                         {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                     </Button>
                 {/if}
 
-                {#if !$focusMode}
+                {#if !$focusMode && !isLocked}
                     {#if Slide}
                         <div class="seperator" />
                     {/if}

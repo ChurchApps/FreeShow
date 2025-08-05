@@ -1,5 +1,6 @@
 <script lang="ts">
     import { effects, fullColors, overlays, playerVideos, templates } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -17,9 +18,18 @@
     // RENAME!! (duplicate of NavigationButton.svelte)
 
     const nameCategories = {
-        overlay: (c: { name: string; id: string }) => overlays.update((a) => setName(a, c)),
-        template: (c: { name: string; id: string }) => templates.update((a) => setName(a, c)),
-        effect: (c: { name: string; id: string }) => effects.update((a) => setName(a, c)),
+        overlay: (c: { name: string; id: string }) => {
+            if (getAccess("overlays").global === "read" || getAccess("overlays")[c.id] === "read") return
+            overlays.update((a) => setName(a, c))
+        },
+        template: (c: { name: string; id: string }) => {
+            if (getAccess("templates").global === "read" || getAccess("templates")[c.id] === "read") return
+            templates.update((a) => setName(a, c))
+        },
+        effect: (c: { name: string; id: string }) => {
+            if (getAccess("overlays").global === "read" || getAccess("overlays")[c.id] === "read") return
+            effects.update((a) => setName(a, c))
+        },
         player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c))
     }
     const setName = (a: any, { name, id }: any, nameKey = "name") => {
