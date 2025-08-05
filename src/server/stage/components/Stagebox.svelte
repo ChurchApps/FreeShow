@@ -10,7 +10,7 @@
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { activeTimers, background, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
+    import { activeTimers, background, output, outputSlideCache, progressData, showsCache, stream, timers, variables } from "../util/stores"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
@@ -20,6 +20,193 @@
     export let stageLayout: StageLayout
     export let id: string
     export let item: any // Item | StageItem
+    
+    // Add condition checking
+    function checkConditions(item: any): boolean {
+        // Try to get conditions from stageShows store like frontend does
+        let conditions = null
+        if (stageLayout?.showId && $showsCache[stageLayout.showId]) {
+            const currentShow = $showsCache[stageLayout.showId]
+            
+            // Find the stage layout that matches our current layout
+            if (currentShow.layouts && stageLayout.id) {
+                const stageLayoutData = currentShow.layouts[stageLayout.id]
+                
+                if (stageLayoutData && stageLayoutData.items) {
+                    const itemData = stageLayoutData.items.find((layoutItem: any) => {
+                        return layoutItem.id === item.id || 
+                               (layoutItem.type === item.type && layoutItem.name === item.name)
+                    })
+                    
+                    if (itemData && itemData.conditions) {
+                        conditions = itemData.conditions
+                    }
+                }
+            }
+        }
+        
+        // Get conditionValue from the same source
+        let conditionValue = "all" // default
+        if (stageLayout?.showId && $showsCache[stageLayout.showId]) {
+            const currentShow = $showsCache[stageLayout.showId]
+            if (currentShow.layouts && stageLayout.id) {
+                const stageLayoutData = currentShow.layouts[stageLayout.id]
+                if (stageLayoutData && stageLayoutData.items) {
+                    const itemData = stageLayoutData.items.find((layoutItem: any) => {
+                        return layoutItem.id === item.id || 
+                               (layoutItem.type === item.type && layoutItem.name === item.name)
+                    })
+                    if (itemData && itemData.conditionValue) {
+                        conditionValue = itemData.conditionValue
+                    }
+                }
+            }
+        }
+        
+        if (!conditions || !Array.isArray(conditions) || conditions.length === 0) {
+            return true
+        }
+
+        const isAllScenario = conditionValue === "all"
+        
+        for (const condition of conditions) {
+            const isMatch = isConditionMet(condition)
+            
+            if (isAllScenario) {
+                // ALL scenario: if any condition fails, item is not visible
+                if (!isMatch) {
+                    return false
+                }
+            } else {
+                // ANY scenario: if any condition passes, item is visible
+                if (isMatch) {
+                    return true
+                }
+            }
+        }
+        
+        // ALL scenario: all conditions passed
+        // ANY scenario: no conditions passed
+        return isAllScenario
+    }
+
+    function isConditionMet(condition: any): boolean {
+        if (!condition) return true
+
+        const conditionValues: boolean[] = condition.values.map((cVal: any) => {
+            const element = cVal.element || "text"
+            let elementId = cVal.elementId || ""
+            if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
+
+            let operator = cVal.operator || "is"
+            if (element === "timer") operator = cVal.operator || "isRunning"
+
+            const data = cVal.data || "value"
+            let dataValue: string | number = cVal.value ?? ""
+            if (data === "seconds") dataValue = (cVal.seconds || 0).toString()
+
+            let value = ""
+            if (element === "text") {
+                // For text elements, we could check the actual text content of the item
+                // For now, return empty string (text conditions may need specific implementation)
+                value = item?.text || item?.content || ""
+            }
+            else if (element === "timer") value = getTimerValue(elementId)
+            else if (element === "variable") value = getVariableValue(elementId)
+            else if (element === "dynamicValue") value = getDynamicValue(elementId)
+
+            if (operator === "is") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower === dataValueLower
+            } else if (operator === "isNot") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower !== dataValueLower
+            } else if (operator === "has") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower.includes(dataValueLower)
+            } else if (operator === "hasNot") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return !valueLower.includes(dataValueLower)
+            } else if (operator === "isRunning") {
+                if (element === "timer") return isTimerRunning(elementId)
+            } else if (operator === "isAbove") {
+                return Number(value) > Number(dataValue)
+            } else if (operator === "isBelow") {
+                return Number(value) < Number(dataValue)
+            }
+
+            return true
+        })
+
+        const scenario = condition.scenario || "all"
+        const filteredValues = [...new Set(conditionValues)]
+
+        if (scenario === "all") {
+            return filteredValues.length === 1 && filteredValues[0] === true
+        } else if (scenario === "some") {
+            return filteredValues.includes(true)
+        } else if (scenario === "none") {
+            return filteredValues.length === 1 && filteredValues[0] === false
+        }
+
+        return true
+    }
+
+    function getFirstActiveTimer(): string {
+        let firstTimerId = $activeTimers[0]?.id
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        return firstTimerId
+    }
+
+    function getTimerValue(timerId: string): string {
+        const timer = $timers[timerId]
+        if (!timer) return "0"
+        // TODO: implement proper timer value calculation
+        return "0"
+    }
+
+    function getVariableValue(variableId: string): string {
+        const variable = $variables[variableId]
+        if (!variable) return ""
+        return variable.value?.toString() || ""
+    }
+
+    function isTimerRunning(timerId: string): boolean {
+        const timer = $timers[timerId]
+        if (!timer) return false
+        // Check if timer is in activeTimers
+        return $activeTimers.some(activeTimer => activeTimer.id === timerId)
+    }
+
+    function getDynamicValue(elementId: string): string {
+        // Handle different dynamic value types
+        if (elementId.startsWith("meta_")) {
+            const metaKey = elementId.substring(5) // Remove "meta_" prefix
+            // For server-side, we need to access the show data through the stageLayout parameter
+            if (stageLayout && stageLayout.showId) {
+                const currentShow = $showsCache[stageLayout.showId]
+                if (currentShow && currentShow.meta) {
+                    // Case-insensitive search for meta key
+                    const actualKey = Object.keys(currentShow.meta).find(key => key.toLowerCase() === metaKey.toLowerCase())
+                    if (actualKey) {
+                        return currentShow.meta[actualKey].toString()
+                    }
+                }
+            }
+        }
+        // Add other dynamic value types as needed
+        return ""
+    }
+    
+    let isItemVisible: boolean = true
+    let isHidden: boolean = false
+    
+    $: isItemVisible = checkConditions(item)
+    $: isHidden = !isItemVisible || isDisabledVariable
 
     $: currentOutput = $output
     $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
@@ -101,7 +288,7 @@
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
-<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};">
+<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable class:isHidden style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};">
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -211,6 +398,10 @@
     }
 
     .isDisabledVariable {
+        display: none;
+    }
+    
+    .isHidden {
         display: none;
     }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout } from "../../../types/Stage"
-    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, showsCache, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
@@ -133,6 +133,187 @@
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
+    // Add condition checking for frontend
+    function checkConditions(item: any): boolean {
+        // Get conditions from stageShows store instead of item prop
+        const stageItemData = $stageShows[$activeStage.id || ""]?.items?.[id]
+        const conditions = stageItemData?.conditions
+        
+        if (!conditions || Object.keys(conditions).length === 0) {
+            return true
+        }
+        
+        // If conditions exist but empty, hide the item
+        if (Object.values(conditions).every((condition: any) => !condition.values || condition.values.length === 0)) {
+            return false
+        }
+        
+        // Check all conditions
+        for (const key in conditions) {
+            const condition = conditions[key]
+            const conditionResult = isConditionMet(condition)
+            if (!conditionResult) {
+                return false
+            }
+        }
+        
+        return true
+    }
+
+    function isConditionMet(condition: any): boolean {
+        if (!condition) return true
+
+        const conditionValues: boolean[] = condition.values.map((cVal: any) => {
+            const element = cVal.element || "text"
+            let elementId = cVal.elementId || ""
+            if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
+
+            let operator = cVal.operator || "is"
+            if (element === "timer") operator = cVal.operator || "isRunning"
+
+            const data = cVal.data || "value"
+            let dataValue: string | number = cVal.value ?? ""
+            if (data === "seconds") dataValue = (cVal.seconds || 0).toString()
+
+            let value = ""
+            if (element === "text") {
+                // For text elements, we could check the actual text content of the item
+                // For now, return empty string (text conditions may need specific implementation)
+                value = item?.text || item?.content || ""
+            }
+            else if (element === "timer") {
+                value = getTimerValue(elementId)
+            }
+            else if (element === "variable") {
+                value = getVariableValue(elementId)
+            }
+            else if (element === "dynamicValue") {
+                value = getDynamicValue(elementId)
+            }
+
+            if (operator === "is") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower === dataValueLower
+            } else if (operator === "isNot") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower !== dataValueLower
+            } else if (operator === "has") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return valueLower.includes(dataValueLower)
+            } else if (operator === "hasNot") {
+                const valueLower = value.toLowerCase()
+                const dataValueLower = dataValue.toString().toLowerCase()
+                return !valueLower.includes(dataValueLower)
+            } else if (operator === "isRunning") {
+                if (element === "timer") return isTimerRunning(elementId)
+            } else if (operator === "isAbove") {
+                return Number(value) > Number(dataValue)
+            } else if (operator === "isBelow") {
+                return Number(value) < Number(dataValue)
+            }
+
+            return true
+        })
+
+        const scenario = condition.scenario || "all"
+        const filteredValues = [...new Set(conditionValues)]
+
+        if (scenario === "all") {
+            return filteredValues.length === 1 && filteredValues[0] === true
+        } else if (scenario === "some") {
+            return filteredValues.includes(true)
+        } else if (scenario === "none") {
+            return filteredValues.length === 1 && filteredValues[0] === false
+        }
+
+        return true
+    }
+
+    function getFirstActiveTimer(): string {
+        let firstTimerId = $activeTimers[0]?.id
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        return firstTimerId
+    }
+
+    function getTimerValue(timerId: string): string {
+        const timer = $timers[timerId]
+        if (!timer) return "0"
+        // TODO: implement proper timer value calculation
+        return "0"
+    }
+
+    function getVariableValue(variableId: string): string {
+        const variable = $variables[variableId]
+        if (!variable) return ""
+        return variable.value?.toString() || ""
+    }
+
+    function isTimerRunning(timerId: string): boolean {
+        const timer = $timers[timerId]
+        if (!timer) return false
+        // Check if timer is in activeTimers
+        return $activeTimers.some(activeTimer => activeTimer.id === timerId)
+    }
+
+    function getDynamicValue(elementId: string): string {
+        // Handle different dynamic value types
+        if (elementId.startsWith("meta_")) {
+            const metaKey = elementId.substring(5) // Remove "meta_" prefix
+            
+            // Get the current show data first
+            const currentShowData = $stageShows[$activeStage.id || ""]
+            const stageOutputId = currentShowData?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
+            const currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+            const currentSlide = currentOutput.out?.slide
+            
+            let metaValue = null
+            
+            // Primary: Look in the actual show data from showsCache
+            if (currentSlide && currentSlide.id && $showsCache[currentSlide.id]) {
+                const showData = $showsCache[currentSlide.id]
+                if (showData.meta) {
+                    // Case-insensitive search for meta key
+                    const actualKey = Object.keys(showData.meta).find(key => key.toLowerCase() === metaKey.toLowerCase())
+                    if (actualKey) {
+                        metaValue = showData.meta[actualKey]
+                    }
+                }
+            }
+            
+            // Fallback: Check if meta exists in the stage show data (less likely but possible)
+            if (metaValue === null && currentShowData && currentShowData.meta) {
+                const actualKey = Object.keys(currentShowData.meta).find(key => key.toLowerCase() === metaKey.toLowerCase())
+                if (actualKey) {
+                    metaValue = currentShowData.meta[actualKey]
+                }
+            }
+            
+            if (metaValue !== null) {
+                return metaValue.toString() // Keep original case for comparison
+            }
+        }
+        // Add other dynamic value types as needed
+        return ""
+    }
+    
+    $: isItemVisible = checkConditions(item)
+    $: isHidden = !isItemVisible || isDisabledVariable
+    $: shouldShowEmptyContent = !isItemVisible && edit // Show empty content in edit mode when condition is false
+
+    // ACTIONS
+
+    // conditions
+    function removeConditions() {
+        stageShows.update((a) => {
+            if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
+            delete a[$activeStage.id!].items[id].conditions
+            return a
+        })
+    }
+
     let firstTimerId = ""
     $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
@@ -176,17 +357,6 @@
 
     $: newItem = clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id } })
 
-    // ACTIONS
-
-    // conditions
-    function removeConditions() {
-        stageShows.update((a) => {
-            if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
-            delete a[$activeStage.id!].items[id].conditions
-            return a
-        })
-    }
-
     $: contextId = item.type === "text" ? "stage_text_item" : item.type === "current_output" ? "stage_item_output" : "stage_item"
 </script>
 
@@ -199,6 +369,7 @@
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
+    class:isHidden={!edit && isHidden}
     class:isOutput={!!$currentWindow}
     style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
     on:mousedown={mousedown}
@@ -221,7 +392,7 @@
             {/if}
 
             <!-- conditions -->
-            {#if Object.values(item?.conditions || {}).length}
+            {#if Object.values($stageShows[$activeStage.id || ""]?.items?.[id]?.conditions || {}).length}
                 <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
@@ -253,22 +424,33 @@
                 <!-- refresh to update auto sizes -->
                 <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
                 {#key currentSlide?.id || currentSlide?.index}
-                    <SlideText
-                        {currentSlide}
-                        {slideOffset}
-                        stageItem={item}
-                        chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
-                        ref={{ type: "stage", id }}
-                        autoSize={item.auto !== false}
-                        {fontSize}
-                        {textStyle}
-                        style={item.type ? item.keepStyle : false}
-                    />
+                    {#if shouldShowEmptyContent}
+                        <!-- Show empty content when condition is false in edit mode -->
+                        <div style="opacity: 0.3; font-style: italic;">Condition not met</div>
+                    {:else}
+                        <SlideText
+                            {currentSlide}
+                            {slideOffset}
+                            stageItem={item}
+                            chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
+                            ref={{ type: "stage", id }}
+                            autoSize={item.auto !== false}
+                            {fontSize}
+                            {textStyle}
+                            style={item.type ? item.keepStyle : false}
+                        />
+                    {/if}
                 {/key}
             {:else if item.type === "slide_notes" || id.includes("notes")}
-                <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {#if shouldShowEmptyContent}
+                    <div style="opacity: 0.3; font-style: italic;">Condition not met</div>
+                {:else}
+                    <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {/if}
             {:else if item.type === "text"}
-                {#if edit}
+                {#if shouldShowEmptyContent}
+                    <div style="opacity: 0.3; font-style: italic;">Condition not met</div>
+                {:else if edit}
                     {#key $refreshEditSlide}
                         <span class="edit_item" style="pointer-events: initial;--font-size: {fontSize}px;">
                             <EditboxLines item={stageItemToItem(item)} ref={{ type: "stage", id }} index={-1} />
@@ -278,30 +460,38 @@
                     <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto} isStage />
                 {/if}
             {:else if item.type}
-                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} />
+                {#if shouldShowEmptyContent}
+                    <div style="opacity: 0.3; font-style: italic;">Condition not met</div>
+                {:else}
+                    <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} />
+                {/if}
             {:else}
                 <!-- OLD CODE -->
-                <div>
-                    {#if id.includes("slide_tracker")}
-                        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
-                    {:else if id.includes("clock")}
-                        <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                    {:else if id.includes("video")}
-                        <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
-                    {:else if id.includes("first_active_timer")}
-                        <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
-                    {:else if id.includes("timers")}
-                        {#if $timers[id.split("#")[1]]}
-                            <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                {#if shouldShowEmptyContent}
+                    <div style="opacity: 0.3; font-style: italic;">Condition not met</div>
+                {:else}
+                    <div>
+                        {#if id.includes("slide_tracker")}
+                            <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                        {:else if id.includes("clock")}
+                            <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
+                        {:else if id.includes("video")}
+                            <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
+                        {:else if id.includes("first_active_timer")}
+                            <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        {:else if id.includes("timers")}
+                            {#if $timers[id.split("#")[1]]}
+                                <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                            {/if}
+                        {:else if id.includes("variables")}
+                            {#if $variables[id.split("#")[1]]}
+                                <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
+                            {/if}
+                        {:else}
+                            {id}
                         {/if}
-                    {:else if id.includes("variables")}
-                        {#if $variables[id.split("#")[1]]}
-                            <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
-                        {/if}
-                    {:else}
-                        {id}
-                    {/if}
-                </div>
+                    </div>
+                {/if}
             {/if}
         </span>
     </div>
@@ -357,6 +547,10 @@
         opacity: 0.5;
     }
     .isDisabledVariable.isOutput {
+        display: none;
+    }
+    
+    .isHidden {
         display: none;
     }
 
