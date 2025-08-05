@@ -171,4 +171,10 @@
         justify-content: center;
         align-items: center;
     }
+
+    /* .zoom {
+        transition:
+            0.2s inset-inline-start,
+            0.2s top;
+    } */
 </style>

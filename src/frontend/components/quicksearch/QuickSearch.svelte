@@ -32,7 +32,7 @@
         if (!$quickSearchActive || !values) return
 
         if (e.key === "Enter") {
-            selectQuicksearchValue(values[selectedIndex])
+            selectQuicksearchValue(values[selectedIndex], e.ctrlKey || e.metaKey)
             selectedIndex = 0
         } else if (e.key === "ArrowDown") selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
         else if (e.key === "ArrowUp") selectedIndex = Math.max(0, selectedIndex - 1)
@@ -53,7 +53,7 @@
                             <Button
                                 style="gap: 10px;font-size: 1em;color: {value.color || 'unset'};{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
                                 active={i === selectedIndex}
-                                on:click={() => selectQuicksearchValue(value)}
+                                on:click={(e) => selectQuicksearchValue(value, e.ctrlKey || e.metaKey)}
                                 bold={false}
                             >
                                 <Icon id={value.icon || value.type} />

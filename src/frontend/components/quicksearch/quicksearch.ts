@@ -322,7 +322,9 @@ const triggerActions = {
     faq: (id: string) => {
         sendMain(Main.URL, id)
     },
-    show: (id: string) => {
+    show: (id: string, _data: any, control: boolean) => {
+        const currentIndex = get(activeShow)?.index
+
         const newShow: any = { id, type: "show" }
         activeShow.set(newShow)
 
@@ -331,11 +333,20 @@ const triggerActions = {
         if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [], showId: get(activeShow)?.id })
 
         if (get(activePage) === "edit") refreshEditSlide.set(true)
-        else activePage.set("show")
+        else {
+            activePage.set("show")
+
+            // add to project
+            if (control) {
+                let newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
+                history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id } }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_ref" } })
+                activeShow.set({ ...newShow, index: newIndex })
+            }
+        }
     }
 }
 
-export function selectQuicksearchValue(value: QuickSearchValue) {
+export function selectQuicksearchValue(value: QuickSearchValue, control: boolean) {
     if (!triggerActions[value.type]) {
         console.error("Unknown Quick search type:", value.type)
         return
@@ -344,7 +355,7 @@ export function selectQuicksearchValue(value: QuickSearchValue) {
     if (get(focusMode) && value.id !== "focus_mode") focusMode.set(false)
     quickSearchActive.set(false)
 
-    triggerActions[value.type](value.id, value.data)
+    triggerActions[value.type](value.id, value.data, control)
 }
 
 // HELPERS
