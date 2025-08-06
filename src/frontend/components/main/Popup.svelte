@@ -27,28 +27,34 @@
             popupTimeout = null
         }, 100)
     }
+
+    $: isWindows = $os.platform === "win32"
 </script>
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
-                <div style="position: relative;">
-                    {#if popupId !== "alert"}
-                        {#key popupId}
-                            <h2 style="text-align: center;padding: 10px 50px;"><T id="popup.{popupId}" /></h2>
-                        {/key}
-                    {/if}
+                <div style="position: relative;{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}">
+                    <div class="headerContent" style="margin: 10px 20px;position: relative;">
+                        {#if popupId !== "alert"}
+                            {#key popupId}
+                                <h2 style="font-size: 1.38em;"><T id="popup.{popupId}" /></h2>
+                            {/key}
+                        {/if}
 
-                    {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                        <Button style="position: absolute;inset-inline-end: 0;top: 0;height: 100%;min-height: 40px;border-start-end-radius: 4px;" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)}>
-                            <Icon id="close" size={2} />
-                        </Button>
-                    {/if}
+                        {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
+                            <Button class="popup-close" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)}>
+                                <Icon id="close" size={1.3} white />
+                            </Button>
+                        {/if}
+                    </div>
                 </div>
-                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
-                    <svelte:component this={popups[popupId]} />
+                <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;">
+                    <div class="body">
+                        <svelte:component this={popups[popupId]} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -92,15 +98,30 @@
         background-color: var(--primary);
 
         /* border-radius: var(--border-radius); */
-        border-radius: 4px;
+        border-radius: 12px;
 
-        overflow-y: auto;
+        /* overflow-y: auto; */
         /* overflow-x: hidden; */
 
         min-width: 50%;
         min-height: 50px;
         max-width: 100%;
         max-height: 100%;
+
+        border: 2px solid var(--primary-lighter);
+    }
+
+    .scroll {
+        overflow: auto;
+        /* 40px(popup margin) - 4px(popup border) - 35.2px(popup header) - 20px(body padding) - 25px(menubar) */
+        max-height: calc(100vh - 99.2px - var(--top-height));
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        margin: 20px;
+        min-width: 38vw;
     }
 
     /* .fill {
@@ -115,12 +136,26 @@
         max-height: 150px;
     } */
 
+    .card :global(.popup-close),
     .card :global(.popup-back) {
         position: absolute;
-        inset-inline-start: 0;
+        inset-inline-end: -10px;
         top: 0;
-        min-height: 58px;
+        height: 100%;
+        padding: 0.4em !important;
+        border-radius: 6px;
+        aspect-ratio: 1;
+        justify-content: center;
+    }
 
-        border-start-start-radius: 4px;
+    .card :global(.popup-back) {
+        inset-inline-start: 0;
+
+        max-height: 35.2px;
+        margin-top: 10px;
+        margin-left: 10px;
+    }
+    .card:has(.popup-back) h2 {
+        margin-left: 40px;
     }
 </style>

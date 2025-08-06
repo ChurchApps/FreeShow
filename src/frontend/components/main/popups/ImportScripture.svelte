@@ -126,7 +126,7 @@
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
-        { id: "local", name: "$:cloud.local:$", icon: "scripture" },
+        { id: "local", name: "$:cloud.local:$", icon: "scripture" }
     ]
 
     function goBack() {
@@ -143,7 +143,7 @@
 
 {#if importType}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={goBack}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 {/if}
 

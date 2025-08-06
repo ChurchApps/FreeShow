@@ -96,7 +96,7 @@
 
 {#if revert}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 {/if}
 

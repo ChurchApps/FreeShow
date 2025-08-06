@@ -213,7 +213,7 @@
 
 {#if editCropping}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editCropping = false)}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <p class="tip"><T id="screen.cropping_tip" /></p>
@@ -252,7 +252,7 @@
     </div>
 {:else if editEdgeBlending}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <p class="tip"><T id="screen.edge_blending_tip" /></p>

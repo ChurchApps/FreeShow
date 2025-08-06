@@ -28,7 +28,7 @@
 
     const excludedFormats = {
         project: ["show", "txt", "image"],
-        all_shows: ["project", "pdf", "image"],
+        all_shows: ["project", "pdf", "image"]
     }
     function filterFormats(exportFormats) {
         return clone(exportFormats).filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
@@ -39,7 +39,7 @@
         txt: "txt",
         pdf: "pdf",
         project: "zip",
-        image: "jpg",
+        image: "jpg"
     }
 
     $: typeName = exportTypes.find((a) => a.id === exportType)?.name || ""
@@ -84,7 +84,7 @@
                     notes: "",
                     created: previewShow.timestamps.created,
                     parent: "/",
-                    shows: showIds.map((id) => ({ type: "show", id })),
+                    shows: showIds.map((id) => ({ type: "show", id }))
                 }
             }
 
@@ -121,14 +121,8 @@
     // Helper function to check if a show has chords
     function showHasChords(show: Show | null): boolean {
         if (!show) return false
-        
-        return Object.values(show.slides || {}).some(slide =>
-            slide.items?.some(item =>
-                item.lines?.some(line =>
-                    line.chords && line.chords.length > 0
-                )
-            )
-        )
+
+        return Object.values(show.slides || {}).some((slide) => slide.items?.some((item) => item.lines?.some((line) => line.chords && line.chords.length > 0)))
     }
 </script>
 
@@ -145,7 +139,7 @@
     </div>
 {:else if !exportFormat}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <p><T id="export.option_format" /></p>
@@ -163,7 +157,7 @@
     </div>
 {:else}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <!-- margin-bottom: 10px; -->

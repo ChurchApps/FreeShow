@@ -177,7 +177,7 @@
 
 {#if manualDeletion}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (manualDeletion = false)}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <div class="shows">

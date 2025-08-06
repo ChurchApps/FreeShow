@@ -3,6 +3,7 @@
     import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
+    import { translate } from "../../../../utils/language"
     import { sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import Icon from "../../../helpers/Icon.svelte"
@@ -11,15 +12,15 @@
     import Button from "../../../inputs/Button.svelte"
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../../inputs/Dropdown.svelte"
+    import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
     import NumberInput from "../../../inputs/NumberInput.svelte"
     import TextArea from "../../../inputs/TextArea.svelte"
-    import TextInput from "../../../inputs/TextInput.svelte"
     import WebSearch from "./WebSearch.svelte"
 
     const isChecked = (e: any) => e.target.checked
     const changeValue = (e: any, key = "text") => {
-        values[key] = e.target.value || ""
+        values[key] = e.target?.value || e.detail || ""
 
         // store text if popup is closed
         quickTextCache.set({ name: values.name, text: values.text })
@@ -172,15 +173,11 @@
 <svelte:window on:keydown={keydown} />
 
 {#if !selectedOption}
-    <CombinedInput textWidth={30}>
-        <p><T id="show.name" /></p>
-        <TextInput id="name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} style="height: 30px;" />
-    </CombinedInput>
+    <div class="list">
+        <MaterialTextInput label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
 
-    <CombinedInput textWidth={30}>
-        <p><T id="show.category" /></p>
-        <Dropdown options={cats} value={selectedCategory?.name} on:click={(e) => (selectedCategory = e.detail)} />
-    </CombinedInput>
+        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translate(a.name, { parts: true }), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} />
+    </div>
 
     <div class="choose">
         {#each createOptions as type, i}
@@ -192,7 +189,7 @@
     </div>
 {:else}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 {/if}
 
@@ -269,6 +266,12 @@
 {/if}
 
 <style>
+    .list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
     .choose {
         margin-top: 20px;
 

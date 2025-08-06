@@ -160,7 +160,7 @@
 
 {#if editTemplate && template}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <CombinedInput textWidth={30}>
@@ -192,7 +192,7 @@
     {/if}
 {:else if editEmitter && emitter}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")}>
-        <Icon id="back" size={2} white />
+        <Icon id="back" size={1.3} white />
     </Button>
 
     <CombinedInput textWidth={30}>
