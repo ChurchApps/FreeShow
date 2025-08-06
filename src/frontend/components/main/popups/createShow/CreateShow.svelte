@@ -4,7 +4,7 @@
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translate } from "../../../../utils/language"
-    import { sortObject } from "../../../helpers/array"
+    import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import Icon from "../../../helpers/Icon.svelte"
     import { checkName } from "../../../helpers/show"
@@ -13,6 +13,7 @@
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
+    import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
     import NumberInput from "../../../inputs/NumberInput.svelte"
     import TextArea from "../../../inputs/TextArea.svelte"
@@ -62,11 +63,17 @@
     // OPTIONS
 
     const createOptions = [
-        { id: "text", name: "create_show.quick_lyrics", title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
+        { id: "text", name: translate("create_show.quick_lyrics"), title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
-        { id: "web", name: "create_show.web", title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
-        { id: "empty", name: "create_show.empty", title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
+        { id: "web", name: translate("create_show.web"), title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
+        { id: "empty", name: translate("create_show.empty"), title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
     ]
+    $: resolvedCreateOptions = clone(createOptions).map((a: any) => {
+        if (a.id === "text") a.colored = values.text.length
+        if (a.id === "web") a.disabled = !values.name?.trim()
+        return a
+    })
+
     let selectedOption = ""
     function selectOption(id: string) {
         if (id === "empty") {
@@ -174,19 +181,12 @@
 
 {#if !selectedOption}
     <div class="list">
-        <MaterialTextInput label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
+        <MaterialTextInput id="name" label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
 
         <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translate(a.name, { parts: true }), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} />
     </div>
 
-    <div class="choose">
-        {#each createOptions as type, i}
-            <Button title={type.title} disabled={type.id === "web" && !values.name?.trim()} on:click={() => selectOption(type.id)} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <Icon id={type.icon} size={4} white={type.id !== "text" || !values.text.length} />
-                <p><T id={type.name} /></p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />
 {:else}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")}>
         <Icon id="back" size={1.3} white />
@@ -270,33 +270,8 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-    }
 
-    .choose {
-        margin-top: 20px;
-
-        width: 100%;
-        display: flex;
-        align-self: center;
-        justify-content: space-between;
-        gap: 10px;
-    }
-
-    .choose :global(button) {
-        width: 180px;
-        height: 180px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
-        flex: 1;
-
-        /* border-radius: 3px; */
-    }
-    .choose p {
-        display: flex;
-        align-items: center;
+        margin-bottom: 20px;
     }
 
     .header {

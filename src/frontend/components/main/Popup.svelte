@@ -29,6 +29,11 @@
     }
 
     $: isWindows = $os.platform === "win32"
+
+    let scrolled = false
+    function scroll(e) {
+        scrolled = e.target.scrollTop > 0
+    }
 </script>
 
 {#if popupId !== null}
@@ -36,8 +41,8 @@
         <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
-                <div style="position: relative;{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}">
-                    <div class="headerContent" style="margin: 10px 20px;position: relative;">
+                <div class="headerContent" style="{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
+                    <div class="headerMargin">
                         {#if popupId !== "alert"}
                             {#key popupId}
                                 <h2 style="font-size: 1.38em;"><T id="popup.{popupId}" /></h2>
@@ -51,7 +56,7 @@
                         {/if}
                     </div>
                 </div>
-                <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;">
+                <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;" on:scroll={scroll}>
                     <div class="body">
                         <svelte:component this={popups[popupId]} />
                     </div>
@@ -68,12 +73,14 @@
 
     .popup {
         position: absolute;
-        background-color: rgb(0 0 0 / 0.8);
+        background-color: rgb(0 0 0 / 0.7);
         /* pointer-events: none; */
         width: 100%;
         height: 100%;
         padding: 20px var(--navigation-width);
         z-index: 5000;
+
+        backdrop-filter: blur(3px);
 
         font-size: 1.2em;
 
@@ -97,6 +104,9 @@
         position: relative;
         background-color: var(--primary);
 
+        /* background-color: rgba(41, 44, 54, 0.8);
+        backdrop-filter: blur(4px); */
+
         /* border-radius: var(--border-radius); */
         border-radius: 12px;
 
@@ -109,6 +119,18 @@
         max-height: 100%;
 
         border: 2px solid var(--primary-lighter);
+    }
+
+    .headerContent {
+        position: relative;
+        display: flex;
+
+        transition: 0.2s box-shadow ease;
+    }
+    .headerMargin {
+        margin: 10px 20px;
+        position: relative;
+        width: 100%;
     }
 
     .scroll {

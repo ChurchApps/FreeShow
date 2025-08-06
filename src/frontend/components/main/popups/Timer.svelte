@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
     import { dictionary, events, timers } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { getDateString } from "../../drawer/calendar/calendar"
     import { getTimer } from "../../drawer/timers/timers"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,6 +15,7 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
@@ -33,9 +35,9 @@
 
     let chosenType = ""
     const timerTypes: any = [
-        { id: "counter", name: "$:timer.from_to:$", translate: true, icon: "timer" },
-        { id: "clock", name: "$:timer.to_time:$", translate: true, icon: "clock" },
-        { id: "event", name: "$:timer.to_event:$", translate: true, icon: "calendar" }
+        { id: "counter", name: translate("timer.from_to"), translate: true, icon: "timer" },
+        { id: "clock", name: translate("timer.to_time"), translate: true, icon: "clock" },
+        { id: "event", name: translate("timer.to_event"), translate: true, icon: "calendar" }
     ]
 
     // counter
@@ -182,20 +184,7 @@
 </script>
 
 {#if (!currentTimer?.id || created) && !chosenType}
-    <div class="buttons">
-        {#each timerTypes as type}
-            <Button
-                on:click={() => {
-                    chosenType = type.id
-                    timer.type = type.id
-                }}
-                style={type.id === "counter" ? "border: 2px solid var(--focus);" : ""}
-            >
-                <Icon id={type.icon} size={5} white />
-                <p><T id={type.name} /></p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice options={timerTypes} on:click={(e) => (chosenType = timer.type = e.detail)} />
 {:else}
     {#if created}
         <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
@@ -381,27 +370,6 @@
 {/if}
 
 <style>
-    .buttons p {
-        display: flex;
-        align-items: center;
-    }
-
-    div.buttons {
-        display: flex;
-        gap: 10px;
-        align-self: center;
-    }
-
-    div.buttons :global(button) {
-        width: 200px;
-        height: 200px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
-    }
-
     .timerbox {
         flex: 1;
         min-height: unset;

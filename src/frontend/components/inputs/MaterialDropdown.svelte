@@ -59,10 +59,57 @@
         }
     }
 
+    let nextScrollTimeout: NodeJS.Timeout | null = null
+    function handleScrolling(e: any) {
+        const ctrl = e.ctrlKey || e.metaKey
+        if (disabled || nextScrollTimeout || !ctrl) return
+        e.preventDefault()
+
+        let index = options.findIndex((a) => a.value === value)
+        if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
+        else index = Math.max(0, index - 1)
+
+        const newValue = options[index].value
+        if (value === newValue) return
+
+        dispatch("change", newValue)
+
+        // slow down trackpad scrolling
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
+    }
+
+    // scroll to active
+
+    let scrollElem: HTMLUListElement | null = null
+    $: if (open) setTimeout(scrollToActive)
+    function scrollToActive() {
+        if (!scrollElem) return
+        if (scrollElem.offsetHeight >= scrollElem.scrollHeight) return
+
+        const activeIndex = options.findIndex((a) => a.value === value)
+        const activeElem = scrollElem?.querySelectorAll("li")?.[activeIndex]
+        scrollElem.scrollTo(0, activeElem.offsetTop)
+    }
+
+    // blur focus
+
+    function handleFocusOut(event: FocusEvent) {
+        if (!dropdownEl.contains(event.relatedTarget as Node)) {
+            open = false
+        }
+    }
+
     onMount(() => {
         document.addEventListener("click", handleClickOutside)
+        document.addEventListener("focusout", handleFocusOut, true)
+
         return () => {
             document.removeEventListener("click", handleClickOutside)
+            document.removeEventListener("focusout", handleFocusOut, true)
         }
     })
 
@@ -88,7 +135,7 @@
 <div class="textfield {disabled ? 'disabled' : ''}" bind:this={dropdownEl}>
     <div class="background" />
 
-    <div class="input edit dropdown-trigger" role="button" tabindex={disabled ? undefined : 0} on:click={() => toggleDropdown()} on:keydown={handleKeydown} aria-haspopup="listbox" aria-expanded={open}>
+    <div class="input edit dropdown-trigger" role="button" tabindex={disabled ? undefined : 0} on:click={() => toggleDropdown()} on:keydown={handleKeydown} on:wheel={handleScrolling} aria-haspopup="listbox" aria-expanded={open}>
         <span class="selected-text">{options.find((o) => o.value === value)?.label || ""}</span>
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
@@ -99,9 +146,9 @@
     <span class="underline" />
 
     {#if open}
-        <ul class="dropdown" role="listbox" tabindex="-1" transition:flyFade>
+        <ul class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
             {#each options as option, i}
-                <li role="option" class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
+                <li role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
                     {option.label}
                 </li>
             {/each}
@@ -123,6 +170,10 @@
         background-color: var(--primary-darkest);
         border-radius: 4px 4px 0 0;
         z-index: 0;
+    }
+
+    .textfield:not(:has(.dropdown)):not(:disabled):hover .input {
+        background-color: var(--hover);
     }
 
     .dropdown-trigger {
@@ -202,11 +253,11 @@
 
     .dropdown {
         position: absolute;
-        top: calc(100% + 2px);
+        top: 100%;
         left: 0;
         right: 0;
         background-color: var(--primary-darkest);
-        border: 1px solid var(--secondary);
+        /* border: 1px solid var(--secondary); */
         border-radius: 0 0 4px 4px;
         z-index: 10;
         list-style: none;
