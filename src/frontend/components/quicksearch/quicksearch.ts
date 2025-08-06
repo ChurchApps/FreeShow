@@ -303,6 +303,11 @@ const triggerActions = {
             return
         }
 
+        if (id === "error_log") {
+            sendMain(Main.OPEN_LOG)
+            return
+        }
+
         activePopup.set(id as any)
     },
     settings: (id: string) => {
@@ -483,7 +488,9 @@ const popups = [
     { id: "project", name: "new.project", icon: "add" },
     { id: "overlay", name: "new.overlay", icon: "add", data: { drawerTab: "overlays" } },
     { id: "effect", name: "new.effect", icon: "add", data: { drawerTab: "effects" } },
-    { id: "template", name: "new.template", icon: "add", data: { drawerTab: "templates" } }
+    { id: "template", name: "new.template", icon: "add", data: { drawerTab: "templates" } },
+    // logs
+    { id: "error_log", name: "actions.open_error_log", icon: "document", data: { settingsTab: "other" }, aliases: ["-Freeze"] },
 ]
 
 function getPopups() {
@@ -574,6 +581,8 @@ const faq = [
     { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
+    { id: "https://youtu.be/v08hZMJuPfY", name: "Find Anything in FreeShow with Quick Search", icon: "youtube" },
+    { id: "https://youtu.be/r_e9f502wD8", name: "Profiles", icon: "youtube" },
     { id: "https://youtu.be/1ioOmYJxXPM", name: "Actions & Project Templates", icon: "youtube" },
     { id: "https://youtu.be/Gwfw59sgW2Y", name: "Livestream & Backgrounds", icon: "youtube" },
     { id: "https://youtu.be/7xJAeexrtkA", name: "Stage & Timers", icon: "youtube" },

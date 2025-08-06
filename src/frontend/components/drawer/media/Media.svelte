@@ -94,12 +94,14 @@
 
     // get list of files & folders
     let prevActive: null | string = null
+    let prevTab: string = ""
     $: {
-        if (prevActive === "online") activeView = "all"
+        if (prevActive === "online" && active !== "online") activeView = "all"
+        if (active !== "online") prevTab = ""
 
         if (active === "online") {
-            // WIP this resets on zoom
-            activeView = "image"
+            if (onlineTab !== prevTab) activeView = "image"
+            prevTab = onlineTab
 
             prevActive = active
         } else if (active === "favourites") {
@@ -233,13 +235,16 @@
         sortedFiles = files.sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
     }
 
-    const debouncedColumnUpdate = debounce((deltaY: number) => {
-        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (deltaY < 0 ? -100 : 100) / 100)) })
-    }, { wait: 50 }) // 50ms debounce for responsive column adjustments
+    const debouncedColumnUpdate = debounce(
+        (deltaY: number) => {
+            mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (deltaY < 0 ? -100 : 100) / 100)) })
+        },
+        { wait: 50 }
+    ) // 50ms debounce for responsive column adjustments
 
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
-        
+
         e.preventDefault()
         debouncedColumnUpdate(e.deltaY)
     }

@@ -30,7 +30,7 @@
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
         let seperatorId = ""
-        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "rss_"]
+        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "timer_", "rss_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
@@ -55,6 +55,7 @@
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
         if (id === "meta_") return "tools.metadata"
+        if (id === "timer_") return "items.timer"
         if (id === "rss_") return "settings.rss"
         if (id === "$") return "items.variable"
         return ""
@@ -226,7 +227,14 @@
                 <div class="grid">
                     {#each values as value, i}
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
-                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
+                        <div
+                            class="value"
+                            class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""}
+                            role="button"
+                            tabindex="0"
+                            on:click={(e) => applyValue(e, value.id)}
+                            on:keydown={triggerClickOnEnterSpace}
+                        >
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>

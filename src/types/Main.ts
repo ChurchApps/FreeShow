@@ -1,6 +1,5 @@
 import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
-import type { ShowRef } from "./Projects"
 import type { Cropping } from "./Settings"
 
 export interface OS {
@@ -271,8 +270,6 @@ export interface ErrorLog {
     time: Date
     os: string
     version: string
-    active: { window: string; page: string; show: ShowRef | null; edit: ActiveEdit }
-    drawer: { active: string }
     type: string
     source: string
     message: string

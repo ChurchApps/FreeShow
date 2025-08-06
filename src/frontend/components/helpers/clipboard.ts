@@ -116,7 +116,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
-        mediaPaste(clip.data)
+        mediaPaste(clip.data[0])
         return
     }
 
@@ -182,7 +182,7 @@ export function duplicate(clip: Clipboard | null = null) {
 export function selectAll(data: any = {}) {
     const activeElem = document.activeElement
     if (activeElem?.nodeName === "INPUT" || activeElem?.nodeName === "TEXTAREA") {
-        ;(activeElem as HTMLInputElement).select()
+        ; (activeElem as HTMLInputElement).select()
         return
     }
 
@@ -479,7 +479,7 @@ const copyActions = {
             if (!mediaCopyKeys.includes(key)) return
             mediaData[key] = value
         })
-        return { origin: path, data: mediaData, type: data[0]?.type }
+        return [{ origin: path, data: mediaData, type: data[0]?.type }]
     },
     // project items
     show: (data: any) => {
@@ -1133,17 +1133,23 @@ const duplicateActions = {
     }
 }
 
-const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume"]
+const videoKeys = ["speed", "volume"]
+const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume", "videoType"]
 function mediaPaste(data: any) {
     if (!data || get(selected).id !== "media") return
 
+    const selectedMedia = get(selected).data || []
+    const multipleTypes = (new Set(selectedMedia.map(a => a.type))).size > 1
+
     media.update((a) => {
-        ;(get(selected).data || []).forEach(({ path, type }) => {
-            // only paste on media with same type & don't paste back on itself
-            if (type !== data.type || path === data.path) return
+        selectedMedia.forEach(({ path, type }) => {
+            // only paste on media with same type (if mixed selection) & don't paste back on itself
+            if ((multipleTypes && type !== data.type) || path === data.path) return
 
             if (!a[path]) a[path] = {}
             mediaCopyKeys.forEach((key) => {
+                if (videoKeys.includes(key) && type !== "video") return
+
                 if (data.data[key] === undefined) delete a[path][key]
                 else a[path][key] = data.data[key]
             })
