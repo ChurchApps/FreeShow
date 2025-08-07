@@ -80,7 +80,7 @@ export const actionData = {
     emit_action: { SECTION: "actions.emit_data", common: true, canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
     // ACTION
-    run_action: { SECTION: "popup.action", common: true, canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },
+    run_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },
     toggle_action: { canAddMultiple: true, name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
 
     // SPECIAL

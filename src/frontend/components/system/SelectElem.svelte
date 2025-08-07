@@ -214,7 +214,9 @@
                 newData = $selected.data.filter((a) => JSON.stringify(a) !== JSON.stringify(data))
             } else if (selectMultiple) {
                 // && $selected.id === id
-                newData = [...$selected.data, data]
+                let selectedData = $selected.data ?? []
+                if (!Array.isArray(selectedData)) selectedData = [$selected.data]
+                newData = [...selectedData, data]
             } else if (rightClick) newData = [data]
         }
 

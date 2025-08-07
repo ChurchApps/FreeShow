@@ -101,7 +101,7 @@
                 <Button
                     style="padding: 3px;{getCustomStyle(specialData)}"
                     redHover
-                    title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name && action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
+                    title="{$dictionary.actions?.remove}: <b>{translate(customData.name)}</b>{action.name && action.name !== translate(customData.name) ? `\n${action.name}` : ''}"
                     {zoom}
                     on:click={(e) => deleteSlideAction(e, action.id || actionId)}
                 >

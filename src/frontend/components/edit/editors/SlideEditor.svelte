@@ -8,7 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -69,8 +69,13 @@
     $: if (bgPath) loadBackground()
     let thumbnailPath = ""
     async function loadBackground() {
+        if (bgPath.includes("http")) return download()
+
         let newPath = await loadThumbnail(bgPath, mediaSize.big)
         if (newPath) thumbnailPath = newPath
+    }
+    async function download() {
+        thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -359,14 +364,14 @@
 
             <div class="actions" style="height: 100%;justify-content: end;">
                 <!-- no need to add chords on scripture/events -->
-                {#if !currentShow?.reference?.type && Slide}
+                {#if !currentShow?.reference?.type && Slide && !isLocked}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
                         <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                         {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                     </Button>
                 {/if}
 
-                {#if !$focusMode}
+                {#if !$focusMode && !isLocked}
                     {#if Slide}
                         <div class="seperator" />
                     {/if}
@@ -385,7 +390,7 @@
                 {#if zoomOpened}
                     <div class="zoom_container" transition:slide={{ duration: 150 }}>
                         <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                            <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                            <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                         </Button>
                         <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
                             <Icon size={1.3} id="add" white />

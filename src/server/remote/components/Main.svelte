@@ -6,7 +6,6 @@
     import Textarea from "../../common/components/Textarea.svelte"
     import TextInput from "../../common/components/TextInput.svelte"
     import { translate } from "../util/helpers"
-    import { next, previous } from "../util/output"
     import { send } from "../util/socket"
     import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
@@ -46,8 +45,8 @@
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 
         // WIP keyboard shortcuts same as main app
-        if ([" ", "ArrowRight", "PageDown"].includes(e.key)) next()
-        else if (["ArrowLeft", "PageUp"].includes(e.key)) previous()
+        if ([" ", "ArrowRight", "PageDown"].includes(e.key)) send("API:next_slide")
+        else if (["ArrowLeft", "PageUp"].includes(e.key)) send("API:previous_slide")
         else if (e.key === "Escape") send("API:clear_all")
     }
 

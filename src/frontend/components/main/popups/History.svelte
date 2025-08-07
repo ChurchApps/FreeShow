@@ -120,7 +120,7 @@
                     <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                         {historyIdToString[itemId] || itemId}
                     </span>
-                    <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                    <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
                 </p>
             </Button>
         {/each}
@@ -131,7 +131,7 @@
                     <span style={item.version || historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                         {historyIdToString[itemId] || itemId}
                     </span>
-                    <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                    <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
                 </p>
             </Button>
         {/each}

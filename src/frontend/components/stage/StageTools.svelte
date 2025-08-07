@@ -25,7 +25,7 @@
     }
 
     const profile = getAccess("stage")
-    $: readOnly = profile.global === "read" || profile[$activeStage.id!] === "read"
+    $: readOnly = profile.global === "read" || profile[$activeStage.id!] === "read" || profile[$activeStage.id!] === "none"
 
     let selectedItemIds: string[] = []
     $: selectedItemIds = $activeStage.items || []

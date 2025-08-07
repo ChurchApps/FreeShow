@@ -75,7 +75,7 @@
 </script>
 
 {#if item.type === "media"}
-    <MediaItem {item} {preview} {mirror} {edit} />
+    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {preview} {mirror} {edit} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}

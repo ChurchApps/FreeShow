@@ -21,3 +21,4 @@ test-results/
 *.iml
 *.ipr
 *.iws
+.serena

@@ -11,7 +11,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
 
     const alwaysEnabledIds = ["time", "show", "$"]
-    const toggleSections = ["time", "show", "slide_text", "video", "audio", "meta", "rss", "$"]
+    const toggleSections = ["time", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "$"]
     function getTitle(id: string) {
         if (id === "time") return "timer.time"
         if (id === "show") return "guide_title.show"
@@ -19,6 +19,7 @@
         if (id === "video") return "edit.video"
         if (id === "audio") return "tools.audio"
         if (id === "meta") return "tools.metadata"
+        if (id === "timer") return "items.timer"
         if (id === "rss") return "settings.rss"
         if (id === "$") return "items.variable"
         return ""

@@ -70,7 +70,7 @@
             {#if !$labelsDisabled}<T id="show.update" />{/if}
         </Button>
     {:else if show?.reference?.type === "scripture"}
-        <p title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
+        <p data-title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
         <Button on:click={openTab} style="white-space: nowrap;">
             <Icon id="scripture" right={!$labelsDisabled} />

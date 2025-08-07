@@ -107,7 +107,7 @@
     </span>
 
     {#if category.action && $actions[category.action]}
-        <span style="padding: 0 5px;" title={$actions[category.action].name}>
+        <span style="padding: 0 5px;" data-title={$actions[category.action].name}>
             <Icon id={getActionIcon(category.action)} size={0.8} white />
         </span>
     {/if}

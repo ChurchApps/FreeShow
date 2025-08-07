@@ -180,47 +180,43 @@
 
 <CombinedInput textWidth={30}>
     <p><T id="settings.data_location" /></p>
-    <span class="path" title={$dataPath || ""}>
-        <FolderPicker style="width: 100%;" id="DATA" center={false} path={$dataPath}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p>
-                {#if $dataPath}
-                    {$dataPath}
-                {:else}
-                    <T id="inputs.change_folder" />
-                {/if}
-            </p>
-        </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
-            <Icon id="launch" white />
-        </Button>
-    </span>
+    <FolderPicker title={$dataPath || ""} style="width: 100%;" id="DATA" center={false} path={$dataPath}>
+        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
+        <p>
+            {#if $dataPath}
+                {$dataPath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </p>
+    </FolderPicker>
+    <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
+        <Icon id="launch" white />
+    </Button>
 </CombinedInput>
 
 <CombinedInput textWidth={30}>
     <p><T id="settings.show_location" /></p>
-    <span class="path" title={$showsPath || ""}>
-        <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
-        <!-- title={$dictionary.inputs?.change_folder} -->
-        <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p>
-                {#if $showsPath}
-                    {$showsPath}
-                {:else}
-                    <T id="inputs.change_folder" />
-                {/if}
-            </p>
-        </FolderPicker>
-        <Button
-            title={$dictionary.main?.system_open}
-            on:click={() => {
-                if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
-            }}
-        >
-            <Icon id="launch" white />
-        </Button>
-    </span>
+    <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
+    <!-- title={$dictionary.inputs?.change_folder} -->
+    <FolderPicker title={$showsPath || ""} style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
+        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
+        <p>
+            {#if $showsPath}
+                {$showsPath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </p>
+    </FolderPicker>
+    <Button
+        title={$dictionary.main?.system_open}
+        on:click={() => {
+            if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
+        }}
+    >
+        <Icon id="launch" white />
+    </Button>
 </CombinedInput>
 
 <CombinedInput>
@@ -230,7 +226,7 @@
     </div>
 </CombinedInput>
 
-<h3 title={$dictionary.cloud?.info}>
+<h3 data-title={$dictionary.cloud?.info}>
     <Icon id="cloud" white />
     <T id="settings.cloud" />
 </h3>
@@ -329,8 +325,8 @@
         <T id="actions.reset" />
     </Button> -->
     <CombinedInput style="background-color: initial;border-bottom: 0;">
-        <Button style="width: 50%;padding: 8px !important;" on:click={backup} center>
-            <span style="display: flex;align-items: center;" title={$dictionary.settings?.backup_info}>
+        <Button style="width: 50%;padding: 8px !important;" title={$dictionary.settings?.backup_info} on:click={backup} center>
+            <span style="display: flex;align-items: center;">
                 <Icon id="export" style="margin-inline-start: 0.5em;" size={1.3} right />
                 <p><T id="settings.backup_all" /></p>
             </span>
@@ -356,15 +352,6 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
-    }
-
-    .path {
-        display: flex;
-        align-items: center;
-        max-width: 70%;
-    }
-    .path :global(button) {
-        white-space: nowrap;
     }
 
     /* cloud */

@@ -6,10 +6,6 @@ import { keysToID, removeDuplicates, sortByName } from "../components/helpers/ar
 import { getActiveOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
-    activeDrawerTab,
-    activeEdit,
-    activePage,
-    activeShow,
     activeTriggerFunction,
     allOutputs,
     autosave,
@@ -25,7 +21,7 @@ import {
     resized,
     serverData,
     toastMessages,
-    version,
+    version
 } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
@@ -155,9 +151,6 @@ export function logerror(err) {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),
-        active: { window: get(currentWindow) || "main", page: get(activePage), show: get(activeShow), edit: get(activeEdit) },
-        drawer: { active: get(drawer)?.height > 40 ? get(activeDrawerTab) : "CLOSED" },
-        // lastUndo: get(undoHistory)[get(undoHistory).length - 1],
         type: err.type,
         source: err.type === "unhandledrejection" ? "See stack" : `${err.filename} - ${err.lineno}:${err.colno}`,
         message: msg,

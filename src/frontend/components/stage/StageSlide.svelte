@@ -27,6 +27,8 @@
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
     function edit(e: any) {
+        if (readOnly) return
+
         let name = e.detail.value
         stageShows.update((a) => {
             a[id].name = name
@@ -59,7 +61,7 @@
                         {/if}
                     {/each}
                 </Zoomed>
-                <div class="label" title={layout.name}>
+                <div class="label" data-title={layout.name}>
                     <!-- no need to display index number -->
                     <!-- <span style="position: absolute;display: contents;">{index + 1}</span> -->
                     <span class="text">

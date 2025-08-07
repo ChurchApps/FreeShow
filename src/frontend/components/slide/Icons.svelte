@@ -2,7 +2,8 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Media, Slide, SlideData } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeShow, activeTimers, dictionary, outputs, shows } from "../../stores"
+    import { activePopup, activeShow, activeTimers, alertMessage, dictionary, outputs, shows } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { send } from "../../utils/request"
     import { videoExtensions } from "../../values/extensions"
     import { clone } from "../helpers/array"
@@ -33,22 +34,40 @@
 
     $: currentShow = $shows[$activeShow?.id || ""] || {}
 
+    function hasAccess() {
+        if (currentShow.locked) {
+            alertMessage.set("show.locked_info")
+            activePopup.set("alert")
+            return false
+        }
+
+        const profile = getAccess("shows")
+        const readOnly = profile.global === "read" || profile[currentShow.category || ""] === "read"
+        if (readOnly) {
+            alertMessage.set("profile.locked")
+            activePopup.set("alert")
+            return false
+        }
+
+        return true
+    }
+
     function removeLayout(key: string) {
-        if (currentShow.locked) return
+        if (!hasAccess()) return
 
         history({ id: "SHOW_LAYOUT", newData: { key, indexes: [index] } })
     }
 
     // TODO: history
     function mute() {
-        if (currentShow.locked) return
+        if (!hasAccess()) return
 
         _show()
             .media([layoutSlide.background || ""])
             .set({ key: "muted", value: false })
     }
     function removeLoop() {
-        if (currentShow.locked) return
+        if (!hasAccess()) return
 
         _show()
             .media([layoutSlide.background || ""])
@@ -56,7 +75,7 @@
     }
 
     function resetTimer() {
-        if (currentShow.locked) return
+        if (!hasAccess()) return
 
         activeTimers.update((a) => {
             a = a.filter((_a, i) => !timer.includes(i))

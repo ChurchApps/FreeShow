@@ -10,8 +10,12 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
+    import { getAccess } from "../../../utils/profile"
 
     export let searchValue
+
+    const profile = getAccess("functions")
+    const readOnly = profile.timers === "read"
 
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
@@ -73,12 +77,12 @@
 
             <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
             <SelectElem id="global_timer" data={timer} draggable>
-                <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
+                <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer{readOnly ? '_readonly' : ''}" style="display: flex;justify-content: space-between;padding: 3px;">
                     <div style="display: flex;width: 50%;">
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
                             <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
-                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" title={timer.name}>
+                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" data-title={timer.name}>
                             {#if timer.name}
                                 {timer.name}
                             {:else}
@@ -135,7 +139,7 @@
 {/if}
 
 <div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer}>
+    <Button style="flex: 1;" on:click={() => activePopup.set("timer")} disabled={readOnly} center title={$dictionary.new?.timer}>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.timer" />{/if}
     </Button>

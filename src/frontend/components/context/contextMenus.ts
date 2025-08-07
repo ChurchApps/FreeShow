@@ -64,6 +64,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     changeIcon: { label: "context.changeIcon", icon: "star" },
     category_action: { label: "popup.category_action", icon: "actions" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
+    archive: { label: "actions.archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
@@ -238,7 +239,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     template_card_default: ["duplicate", "delete"],
-    template_card_readonly: ["preview"],
+    template_card_readonly: [],
     effect_card: ["edit", "SEPERATOR", "display_duration", "SEPERATOR", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card_default: ["duplicate", "delete"],
     player_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "rename", "delete"],
@@ -250,7 +251,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     camera_card: ["edit", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
+    actions_readonly: ["action_tag_filter"],
     action: ["edit", "SEPERATOR", "disable", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
+    action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
     scripture_chapter: ["create_show"],
 
@@ -259,7 +262,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projectsTab: ["import"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "archive", "SEPERATOR", "sort_projects_by"], // "open",
     project_button_readonly: ["export", "SEPERATOR", "sort_projects_by"],
     project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
@@ -283,9 +286,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"
     global_timer: ["edit", "SEPERATOR", "play", "SEPERATOR", "duplicate", "delete"], // , "reset"
+    global_timer_readonly: ["play"], // , "reset"
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
-    variable: ["edit", "SEPERATOR", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
+    variables_readonly: ["variable_tag_filter"],
+    variable: ["edit", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "variable_tag_set", "variable_tag_filter"],
+    variable_readonly: ["variable_tag_filter"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],
     // AUDIO STREAM

@@ -265,6 +265,7 @@ export const boxes: Box = {
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
                 // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false }, // , hidden: true
+                { name: "media.speed", id: "speed", input: "number", slider: true, value: 1, values: { min: 0.1, max: 15, step: 0.1, decimals: 1, fixed: 1 } },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
                 // WIP crop image

@@ -261,6 +261,7 @@ export function changeVariable(data: API_variable) {
 
     let key = data.key
     if (variable.type === "random_number" && !key) key = "randomize"
+    if (variable.type === "text_set" && !key) key = "next"
     else if (!key) key = "enabled"
 
     if (key === "randomize") {
@@ -269,15 +270,33 @@ export function changeVariable(data: API_variable) {
     } else if (key === "reset") {
         resetVariable(id)
         return
+    } else if (key === "next" || key === "previous") {
+        const activeSet = variable.activeTextSet ?? 0
+        const newValue = key === "next" ? Math.min(activeSet + 1, (variable.textSets?.length ?? 1) - 1) : Math.max(activeSet - 1, 0)
+        updateVariable(newValue, id, "activeTextSet")
+        updateVariable(newValue, id, "activeTextSet")
+        return
     }
 
     let value
-    if (data.variableAction || variable.type === "number") {
+    if (key === "expression") {
+        const stringValue = (data.value || "").toString()
+        const replacedValues = stringValue.includes("{") ? getDynamicValue(stringValue) : stringValue
+        console.log(replacedValues)
+        const calculated = new Function(`return ${replacedValues}`)()
+        console.log(calculated)
+        value = Number(calculated)
+        key = "number"
+    } else if (data.variableAction || variable.type === "number") {
         value = Number(variable.number || variable.default || 0)
         if (data.variableAction === "increment" || key === "increment") value += Number(data.value || variable.step || 1)
         else if (data.variableAction === "decrement" || key === "decrement") value -= Number(data.value || variable.step || 1)
         else if (!data.variableAction) value = Number(data.value || variable.default || 0)
         key = "number"
+    } else if (variable.type === "text_set") {
+        // if (key === "value") {
+        key = "activeTextSet" as any
+        value = Number(data.value ?? 1)
     } else if (data.value !== undefined) {
         value = data.value
         if (key === "value" && typeof value !== "boolean") key = variable.type
@@ -287,7 +306,7 @@ export function changeVariable(data: API_variable) {
     }
     if (value === undefined) return
 
-    updateVariable(value, id, key)
+    updateVariable(value, id, key!)
 }
 function getVariables() {
     return keysToID(get(variables))

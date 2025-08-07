@@ -68,7 +68,7 @@
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 
-    const ignoreDefault = ["metadata", "message"]
+    const ignoreDefault = ["metadata", "message", "double"]
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
@@ -95,8 +95,17 @@
                             on:click={(e) => {
                                 if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
                                 if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+
                                 if ($showsCache[$activeShow.id]?.locked) {
                                     alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
+                                }
+
+                                const profile = getAccess("shows")
+                                const readOnly = profile.global === "read" || profile[$showsCache[$activeShow.id]?.category || ""] === "read"
+                                if (readOnly) {
+                                    alertMessage.set("profile.locked")
                                     activePopup.set("alert")
                                     return
                                 }

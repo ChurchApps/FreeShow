@@ -59,7 +59,7 @@
 
     function changeName(e: any) {
         let currentLayout = e.detail?.id?.slice("layout_".length)
-        if (!currentLayout) return
+        if (!currentLayout || isLocked) return
 
         const newName = e.detail.value
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -133,19 +133,19 @@
 {#if $slidesOptions.mode === "grid"}
     <!-- one at a time, in prioritized order -->
     {#if layouts?.[activeLayout]?.notes}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="notes" right white />
             {#if typeof layouts[activeLayout].notes === "string"}
                 <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
             {/if}
         </div>
     {:else if currentShow.message?.text}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="message" right white />
             <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="info" right white />
             <p>
                 <!-- currentStyle.metadataDivider -->
@@ -175,7 +175,7 @@
                                 active={activeLayout === layout.id}
                                 center
                             >
-                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
+                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit allowEdit={!isLocked} />
                             </Button>
                         </SelectElem>
                     {/each}
@@ -212,7 +212,7 @@
         {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}
             <div class="seperator" />
 
-            <Button class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
+            <Button disabled={!layoutSlides.length} class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
                 <Icon size={1.1} id={customAction ? getActionIcon(customAction) : "actions"} white={!customAction} right={!!customAction} />
                 {#if customAction}<p>{$actions[customAction].name}</p>{/if}
             </Button>
@@ -223,7 +223,7 @@
         {#if isLocked}
             <Button
                 on:click={() => {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                     activePopup.set("alert")
                 }}
                 title={$dictionary.show?.locked}
@@ -241,16 +241,16 @@
 
         <div class="seperator" />
 
-        <Button class="context #slideViews" on:click={changeSlidesView} title="{$dictionary.show?.change_view}: {$dictionary.show?.[$slidesOptions.mode]} [Ctrl+Shift+V]">
+        <Button disabled={!layoutSlides.length} class="context #slideViews" on:click={changeSlidesView} title="{$dictionary.show?.change_view}: {$dictionary.show?.[$slidesOptions.mode]} [Ctrl+Shift+V]">
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>
-        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+        <Button disabled={!layoutSlides.length} on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
             <Icon size={1.3} id="zoomIn" white />
         </Button>
         {#if zoomOpened}
             <div class="zoom_container" transition:slide={{ duration: 150 }}>
                 <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
-                    <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
+                    <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
                 </Button>
                 <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
                     <Icon size={1.3} id="add" white />

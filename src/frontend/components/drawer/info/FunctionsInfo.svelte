@@ -5,8 +5,12 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import TimerInfo from "../timers/TimerInfo.svelte"
+    import { getAccess } from "../../../utils/profile"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
+
+    const profile = getAccess("functions")
+    $: readOnly = profile[type] === "read"
 
     let isMounted = false
     onMount(() => (isMounted = true))
@@ -38,7 +42,7 @@
             <T id="popup.action_history" />
         </Button>
     {/if}
-    <Button style="width: 100%;" on:click={() => activePopup.set("manage_emitters")} center dark>
+    <Button style="width: 100%;" on:click={() => activePopup.set("manage_emitters")} disabled={readOnly} center dark>
         <Icon id="emitter" right />
         <T id="popup.manage_emitters" />
     </Button>

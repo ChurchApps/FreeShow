@@ -59,7 +59,7 @@ export const mainResponses: MainResponses = {
     [Main.IS_DEV]: () => !isProd,
     [Main.GET_TEMP_PATHS]: () => getTempPaths(),
     // APP
-    [Main.VERSION]: () => app.getVersion(),
+    [Main.VERSION]: () => getVersion(),
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => machineIdSync(),
     [Main.IP]: () => os.networkInterfaces(),
@@ -232,6 +232,15 @@ export function loadShow(msg: { id: string; path: string | null; name: string })
     return show
 }
 
+function getVersion() {
+    try {
+        return app.getVersion()
+    } catch (err) {
+        console.error("Could not get version:", err)
+        return "0.0.0"
+    }
+}
+
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
 }
@@ -282,13 +291,13 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
         OutputHelper.getAllOutputs().forEach((output) => {
             if (output.window) windows.push(output.window)
         })
-        ;[mainWindow!, ...windows].forEach((window) => {
-            const mediaId = window?.getMediaSourceId()
-            const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
-            if (windowsAlreadyExists) return
+            ;[mainWindow!, ...windows].forEach((window) => {
+                const mediaId = window?.getMediaSourceId()
+                const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
+                if (windowsAlreadyExists) return
 
-            screens.push({ name: window?.getTitle(), id: mediaId })
-        })
+                screens.push({ name: window?.getTitle(), id: mediaId })
+            })
 
         return screens
     }
@@ -341,7 +350,7 @@ export function createLog(err: Error) {
     return {
         time: new Date(),
         os: process.platform || "Unknown",
-        version: app.getVersion(),
+        version: getVersion(),
         type: "Uncaught Exception",
         source: "See stack",
         message: err.message,

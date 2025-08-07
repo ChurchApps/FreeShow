@@ -7,7 +7,7 @@
     import { disablePopupClose } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
     function mousedown(e: any) {
         if (popupId && disablePopupClose.includes(popupId)) return
@@ -27,28 +27,41 @@
             popupTimeout = null
         }, 100)
     }
+
+    $: isWindows = $os.platform === "win32"
+
+    let scrolled = false
+    $: if (popupId === null) scrolled = false
+    function scroll(e) {
+        scrolled = e.target.scrollTop > 0
+    }
 </script>
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
-                <div style="position: relative;">
-                    {#if popupId !== "alert"}
-                        {#key popupId}
-                            <h2 style="text-align: center;padding: 10px 50px;"><T id="popup.{popupId}" /></h2>
-                        {/key}
-                    {/if}
+                <div class="headerContent" style="{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
+                    <div class="headerMargin">
+                        {#if popupId !== "alert"}
+                            {#key popupId}
+                                <!-- margin-top: -5px; -->
+                                <h2 style="font-size: 1.3em;margin-top: -2px;"><T id="popup.{popupId}" /></h2>
+                            {/key}
+                        {/if}
 
-                    {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                        <Button style="position: absolute;inset-inline-end: 0;top: 0;height: 100%;min-height: 40px;border-start-end-radius: 4px;" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)}>
-                            <Icon id="close" size={2} />
-                        </Button>
-                    {/if}
+                        {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
+                            <MaterialButton class="popup-close" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)} white>
+                                <Icon id="close" size={1.3} />
+                            </MaterialButton>
+                        {/if}
+                    </div>
                 </div>
-                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
-                    <svelte:component this={popups[popupId]} />
+                <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;" on:scroll={scroll}>
+                    <div class="body">
+                        <svelte:component this={popups[popupId]} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,12 +75,14 @@
 
     .popup {
         position: absolute;
-        background-color: rgb(0 0 0 / 0.8);
+        background-color: rgb(0 0 0 / 0.55);
         /* pointer-events: none; */
         width: 100%;
         height: 100%;
         padding: 20px var(--navigation-width);
         z-index: 5000;
+
+        backdrop-filter: blur(4px);
 
         font-size: 1.2em;
 
@@ -91,16 +106,55 @@
         position: relative;
         background-color: var(--primary);
 
-        /* border-radius: var(--border-radius); */
-        border-radius: 4px;
+        /* background-color: rgba(41, 44, 54, 0.8);
+        backdrop-filter: blur(4px); */
 
-        overflow-y: auto;
+        /* border-radius: var(--border-radius); */
+        border-radius: 10px;
+
+        /* overflow-y: auto; */
         /* overflow-x: hidden; */
 
         min-width: 50%;
         min-height: 50px;
         max-width: 100%;
         max-height: 100%;
+
+        border: 2px solid var(--primary-lighter);
+        box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
+    }
+
+    .headerContent {
+        position: relative;
+        display: flex;
+
+        z-index: 1;
+
+        transition: 0.2s box-shadow ease;
+
+        min-height: 56px;
+    }
+    .headerMargin {
+        margin: 10px 20px;
+        position: relative;
+        width: 100%;
+
+        display: flex;
+        align-items: center;
+    }
+
+    .scroll {
+        overflow: auto;
+        overflow-x: hidden;
+        /* 40px(popup margin) - 4px(popup border) - 35.2px(popup header) - 20px(body padding) - 25px(menubar) */
+        max-height: calc(100vh - 99.2px - var(--top-height));
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        margin: 20px;
+        min-width: 38vw;
     }
 
     /* .fill {
@@ -115,12 +169,62 @@
         max-height: 150px;
     } */
 
-    .card :global(.popup-back) {
+    .card :global(.popup-close),
+    .card :global(.popup-back),
+    .card :global(.popup-options) {
         position: absolute;
-        inset-inline-start: 0;
+        inset-inline-end: -10px;
         top: 0;
-        min-height: 58px;
+        height: 100%;
+        padding: 0.4em !important;
+        border-radius: 4px;
+        aspect-ratio: 1;
+        justify-content: center;
 
-        border-start-start-radius: 4px;
+        z-index: 1;
+    }
+
+    .card :global(.popup-back) {
+        inset-inline-start: 0;
+
+        max-height: 35.2px;
+        margin-top: 10px;
+        margin-left: 10px;
+    }
+    .card:has(.popup-back) h2 {
+        margin-left: 35px;
+    }
+
+    .card :global(.popup-options) {
+        inset-inline-end: 42px;
+
+        max-height: 35.2px;
+        margin-top: 10px;
+        margin-right: 10px;
+
+        /* overflow: visible; */
+    }
+
+    .card :global(.popup-options .state) {
+        position: absolute;
+        bottom: 0; /* -1px; */
+        right: 0; /* -1px; */
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--primary-darkest);
+        color: var(--text);
+        padding: 2px;
+        border-radius: 50%;
+
+        font-size: 0.65em;
+        opacity: 0.8;
+
+        width: 18px;
+        height: 18px;
+
+        pointer-events: none;
     }
 </style>

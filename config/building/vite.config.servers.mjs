@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import sveltePreprocess from 'svelte-preprocess'
 import { resolve } from 'path'
-import { copyFileSync, mkdirSync, existsSync } from 'fs'
+import { copyFileSync, mkdirSync, existsSync, readFileSync, createReadStream } from 'fs'
 
 const production = process.env.NODE_ENV === 'production'
 
@@ -24,6 +24,59 @@ if (!serverId || !servers[serverId]) {
 }
 
 const serverConfig = servers[serverId]
+
+// Plugin to transform index.html for development
+function htmlTransformPlugin() {
+  return {
+    name: 'html-transform',
+    transformIndexHtml(html) {
+      if (production) return html
+      // In development, replace script tags for Vite module loading
+      return html
+        .replace('<script src="client.js"></script>', '<script type="module" src="/main.ts"></script>')
+        .replace('<link href="styles.css" rel="stylesheet" />', '')
+    }
+  }
+}
+
+// Plugin to serve static assets in development
+function staticAssetsPlugin(serverId) {
+  return {
+    name: 'static-assets',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        // Serve manifest.json
+        if (req.url === '/manifest.json') {
+          const manifestPath = resolve(process.cwd(), `src/server/${serverId}/manifest.json`)
+          if (existsSync(manifestPath)) {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(readFileSync(manifestPath, 'utf-8'))
+            return
+          }
+        }
+        // Serve icon.png
+        if (req.url === '/icon.png') {
+          const iconPath = resolve(process.cwd(), 'src/server/icon.png')
+          if (existsSync(iconPath)) {
+            res.setHeader('Content-Type', 'image/png')
+            createReadStream(iconPath).pipe(res)
+            return
+          }
+        }
+        // Serve sw.js
+        if (req.url === '/sw.js') {
+          const swPath = resolve(process.cwd(), 'src/server/sw.js')
+          if (existsSync(swPath)) {
+            res.setHeader('Content-Type', 'application/javascript')
+            createReadStream(swPath).pipe(res)
+            return
+          }
+        }
+        next()
+      })
+    }
+  }
+}
 
 // Copy static files for the server
 function copyServerFiles(id) {
@@ -92,7 +145,7 @@ export default defineConfig({
     copyServerFilesPlugin(serverId),
   ],
   root: `src/server/${serverId}`,
-  publicDir: false,
+  publicDir: production ? false : '../../../public',
   build: {
     outDir: resolve(process.cwd(), `build/electron/${serverId}`),
     emptyOutDir: true,
@@ -124,5 +177,13 @@ export default defineConfig({
   server: {
     port: 3001 + Object.keys(servers).indexOf(serverId),
     strictPort: false,
+    hmr: true,
+    watch: {
+      usePolling: false,
+    },
+    fs: {
+      // Allow serving files from project root
+      allow: ['../../../'],
+    },
   },
 })

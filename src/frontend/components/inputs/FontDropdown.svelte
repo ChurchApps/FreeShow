@@ -90,6 +90,7 @@
         if (!id) return
 
         setTimeout(() => {
+            if (!self) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
@@ -144,7 +145,7 @@
     on:keydown={keydown}
 />
 
-<div bind:this={self} class="dropdownElem" title={value || ""} style={$$props.style || ""}>
+<div bind:this={self} class="dropdownElem" data-title={value || ""} style={$$props.style || ""}>
     <button style={activeFont?.fonts[activeFont.default]?.css || `font-family: ${typeof activeFont === "string" ? activeFont : activeFont?.fonts[0]?.name};`} on:click={() => (active = !active)} on:wheel={wheel}>
         <p>{value || "—"}</p>
     </button>

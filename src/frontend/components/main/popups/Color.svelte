@@ -25,9 +25,9 @@
         } else if ($selected.id === "overlay") value = $overlays[$selected.data[0]].color || ""
         else if ($selected.id === "template") value = $templates[$selected.data[0]].color || ""
         else if ($selected.id === "effect") value = $effects[$selected.data[0]].color || ""
-        else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color
-        else if ($selected.id === "profile") value = $profiles[$selected.data[0].id].color
-        else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color
+        else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color || ""
+        else if ($selected.id === "profile") value = $profiles[$selected.data[0].id].color || ""
+        else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color || ""
         else if ($selected.id === "show") value = $projects[$activeProject || ""]?.shows[$selected.data[0].index].color || ""
     })
 

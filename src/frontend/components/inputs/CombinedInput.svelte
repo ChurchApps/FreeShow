@@ -6,7 +6,7 @@
     $: customStyle = style + ";--text-width: " + textWidth + "%"
 </script>
 
-<div class="input" {title} style={customStyle}>
+<div class="input" data-title={title} style={customStyle}>
     <slot />
 </div>
 

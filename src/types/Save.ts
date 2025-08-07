@@ -110,4 +110,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }
+export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }
