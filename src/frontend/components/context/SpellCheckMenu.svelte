@@ -23,7 +23,7 @@
 
 {#if misspelled && suggestions.length}
     {#each suggestions as suggestion}
-        <div on:click={() => fixSpelling(suggestion)} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" title={$dictionary.context?.correct}>
+        <div on:click={() => fixSpelling(suggestion)} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" data-title={$dictionary.context?.correct}>
             <span style="display: flex;align-items: center;gap: 10px;">
                 <Icon id="fix_misspelling" />
                 <p style="display: flex;align-items: center;gap: 5px;font-weight: bold;">

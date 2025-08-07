@@ -1,22 +1,22 @@
 <script lang="ts">
     import { uid } from "uid"
+    import { Main } from "../../../../types/IPC/Main"
     import type { Emitter, EmitterTemplate, EmitterTemplateValue } from "../../../../types/Show"
+    import { requestMain } from "../../../IPC/main"
     import { dictionary, emitters } from "../../../stores"
     import { emitterData, formatData } from "../../actions/emitters"
+    import MidiValues from "../../actions/MidiValues.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import DynamicList from "../../input/DynamicList.svelte"
+    import HRule from "../../input/HRule.svelte"
     import { getValues } from "../../input/inputs"
     import Inputs from "../../input/Inputs.svelte"
-    import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import HRule from "../../input/HRule.svelte"
-    import { requestMain } from "../../../IPC/main"
-    import { Main } from "../../../../types/IPC/Main"
-    import MidiValues from "../../actions/MidiValues.svelte"
 
     $: emittersList = sortByName(sortByName(keysToID($emitters)), "type")
 
@@ -159,9 +159,9 @@
 </script>
 
 {#if editTemplate && template}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <CombinedInput textWidth={30}>
         <p><T id="midi.name" /></p>
@@ -191,9 +191,9 @@
         </div>
     {/if}
 {:else if editEmitter && emitter}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <CombinedInput textWidth={30}>
         <p><T id="midi.name" /></p>

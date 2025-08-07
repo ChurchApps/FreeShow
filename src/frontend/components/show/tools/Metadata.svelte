@@ -130,7 +130,7 @@
             {#each Object.entries(values) as [key, value]}
                 <CombinedInput textWidth={40}>
                     {#if $dictionary.meta?.[key]}
-                        <p style="overflow: hidden;display: block;align-content: center;" title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
+                        <p style="overflow: hidden;display: block;align-content: center;" data-title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
                     {:else}
                         <p style="overflow: hidden;display: block;align-content: center;text-transform: capitalize;">{key}</p>
                     {/if}
@@ -149,7 +149,7 @@
     {#if slideBackgrounds.length}
         <div class="styling">
             <div>
-                <p title="{$dictionary.meta?.auto_media} (EXIF from .JPEG)"><T id="meta.auto_media" /></p>
+                <p data-title="{$dictionary.meta?.auto_media} (EXIF from .JPEG)"><T id="meta.auto_media" /></p>
                 <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
             </div>
         </div>
@@ -172,7 +172,7 @@
         {#if metadata.override}
             <!-- meta display -->
             <CombinedInput style="margin-top: 10px;">
-                <p title={$dictionary.meta?.display_metadata}><T id="meta.display_metadata" /></p>
+                <p data-title={$dictionary.meta?.display_metadata}><T id="meta.display_metadata" /></p>
                 <Button
                     on:click={() => {
                         popupData.set({
@@ -214,7 +214,7 @@
             {#if (metadata.display || "never") !== "never"}
                 <!-- meta template -->
                 <CombinedInput>
-                    <p title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
+                    <p data-title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
                     <Button
                         on:click={() => {
                             popupData.set({
@@ -251,12 +251,12 @@
             {/if}
             <!-- message display -->
             <!-- <CombinedInput>
-                <p title={$dictionary.meta?.display_message}><T id="meta.display_message" /></p>
+                <p data-title={$dictionary.meta?.display_message}><T id="meta.display_message" /></p>
                 <Dropdown options={metaDisplay} value={metaDisplay.find((a) => a.id === (message.display || outputShowSettings.displayMessage || "never"))?.name || "—"} on:click={(e) => updateData()} />
             </CombinedInput> -->
             <!-- message template -->
             <CombinedInput>
-                <p title={$dictionary.meta?.message_template}><T id="meta.message_template" /></p>
+                <p data-title={$dictionary.meta?.message_template}><T id="meta.message_template" /></p>
                 <Button
                     on:click={() => {
                         popupData.set({

@@ -1,23 +1,26 @@
 <script lang="ts">
     import { uid } from "uid"
     import { dictionary, drawerTabsData, selected, variables } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { clone } from "../../helpers/array"
+    import { createStore, updateStore } from "../../helpers/historyStores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import { createStore, updateStore } from "../../helpers/historyStores"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let chosenType = ""
     const types = [
-        { id: "number", name: "$:variables.number:$", icon: "number" },
-        { id: "random_number", name: "$:variables.random_number:$", icon: "unknown" },
-        { id: "text", name: "$:variables.text:$", icon: "text" },
-        { id: "text_set", name: "$:variables.text_set:$", icon: "increase_text" }
+        { id: "number", name: translate("variables.number"), icon: "number" },
+        { id: "random_number", name: translate("variables.random_number"), icon: "unknown" },
+        { id: "text", name: translate("variables.text"), icon: "text" },
+        { id: "text_set", name: translate("variables.text_set"), icon: "increase_text" }
     ]
 
     const DEFAULT_VARIABLE = {
@@ -181,33 +184,21 @@
             return a
         })
     }
-
-    $: console.log(
-        currentVariable.textSetKeys,
-        currentVariable.textSetKeys?.find((a) => a === "")
-    )
 </script>
 
 {#if !existing && !chosenType}
-    <div class="buttons">
-        {#each types as type}
-            <Button
-                on:click={() => {
-                    chosenType = type.id
-                    updateValue(type.id, "type")
-                }}
-                style={type.id === "counter" ? "border: 2px solid var(--focus);" : ""}
-            >
-                <Icon id={type.icon} size={5} white />
-                <p><T id={type.name} /></p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice
+        options={types}
+        on:click={(e) => {
+            chosenType = e.detail
+            updateValue(chosenType, "type")
+        }}
+    />
 {:else}
     {#if !existing}
-        <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
-            <Icon id="back" size={2} white />
-        </Button>
+        <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")} white>
+            <Icon id="back" size={1.3} />
+        </MaterialButton>
     {/if}
 
     <CombinedInput textWidth={30}>
@@ -364,27 +355,6 @@
 {/if}
 
 <style>
-    .buttons p {
-        display: flex;
-        align-items: center;
-    }
-
-    div.buttons {
-        display: flex;
-        gap: 10px;
-        align-self: center;
-    }
-
-    div.buttons :global(button) {
-        width: 200px;
-        height: 200px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
-    }
-
     /* text set */
 
     .text_set {

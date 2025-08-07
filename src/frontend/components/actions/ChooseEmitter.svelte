@@ -85,7 +85,7 @@
     {#if emitter?.description}
         <CombinedInput textWidth={38}>
             <p><T id="midi.description" /></p>
-            <p style="opacity: 0.5;overflow: hidden;" title={emitter.description}>{emitter.description}</p>
+            <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.description}>{emitter.description}</p>
         </CombinedInput>
     {/if}
 
@@ -98,7 +98,7 @@
         {#if emitter?.templates?.[activeTemplate]?.description}
             <CombinedInput textWidth={38}>
                 <p><T id="midi.description" /></p>
-                <p style="opacity: 0.5;overflow: hidden;" title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
+                <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
             </CombinedInput>
         {/if}
 
@@ -145,6 +145,6 @@
 
     <CombinedInput textWidth={38}>
         <p><T id="timer.preview" /></p>
-        <p style="opacity: 0.5;overflow: hidden;" title={dataPreview}>{dataPreview}</p>
+        <p style="opacity: 0.5;overflow: hidden;" data-title={dataPreview}>{dataPreview}</p>
     </CombinedInput>
 {/if}

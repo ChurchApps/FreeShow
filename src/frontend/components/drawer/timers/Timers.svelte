@@ -82,7 +82,7 @@
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
                             <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
-                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" title={timer.name}>
+                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" data-title={timer.name}>
                             {#if timer.name}
                                 {timer.name}
                             {:else}

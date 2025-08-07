@@ -93,7 +93,7 @@
         let currentRecording: Recording = {
             id: uid(5),
             layoutAtRecording: layoutSequence,
-            sequence: sequence,
+            sequence: sequence
         }
 
         let layout = clone(showLayout)
@@ -232,7 +232,7 @@
     {#if settingsOpened && recordingData}
         <div class="settings">
             <CombinedInput textWidth={70}>
-                <p title={$dictionary.recording?.use_duration_tip}><T id="recording.use_duration" /></p>
+                <p data-title={$dictionary.recording?.use_duration_tip}><T id="recording.use_duration" /></p>
                 <div class="alignRight">
                     <Checkbox checked={useDurationTime} on:change={(e) => setSpecialValue("useDurationTime", isChecked(e))} />
                 </div>

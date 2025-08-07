@@ -84,7 +84,7 @@
     {#if zoomOpened}
         <div class="zoom_container" transition:slide={{ duration: 150 }}>
             <Button style="padding: 0 !important;width: 100%;" on:click={() => textEditZoom.set(10)} bold={false} center>
-                <p class="text" title={$dictionary.actions?.resetZoom}>{(($textEditZoom / 10) * 100).toFixed()}%</p>
+                <p class="text" data-title={$dictionary.actions?.resetZoom}>{(($textEditZoom / 10) * 100).toFixed()}%</p>
             </Button>
             <Button disabled={$textEditZoom >= 20} on:click={() => textEditZoom.set(Math.min(20, $textEditZoom + 1))} title={$dictionary.actions?.zoomIn}>
                 <Icon size={1.3} id="add" white />

@@ -31,7 +31,7 @@
 </script>
 
 <main>
-    <h2 style="text-align: center;padding: 10px;" title={show?.name}>
+    <h2 style="text-align: center;padding: 10px;" data-title={show?.name}>
         {#if show?.name.length}
             {show.name}
         {:else}

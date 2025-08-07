@@ -43,7 +43,7 @@
     <PlayerInfo />
 {:else}
     <main style="overflow-y: auto;">
-        <h2 style="text-align: center;padding: 10px;" title={name}>
+        <h2 style="text-align: center;padding: 10px;" data-title={name}>
             {#if name.length}
                 {name}
             {:else}

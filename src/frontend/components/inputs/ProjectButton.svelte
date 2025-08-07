@@ -100,7 +100,7 @@
     on:dblclick={dblclick}
     data-parent={parent}
     class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}${readOnly ? "_readonly" : ""}`}
-    title={template ? $dictionary.actions?.project_template_tip : ""}
+    data-title={template ? $dictionary.actions?.project_template_tip : ""}
     class:active
 >
     <Icon id={template ? "templates" : $projects[id]?.archived ? "archive" : "project"} white={$projects[id]?.archived} right />

@@ -1011,7 +1011,7 @@
                                     match.api ? 500 : 10
                                 )
                             }}
-                            title={formatBibleText(match.text)}
+                            data-title={formatBibleText(match.text)}
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
@@ -1037,7 +1037,7 @@
                                     setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
                                 })
                             }}
-                            title={formatBibleText(verse.text)}
+                            data-title={formatBibleText(verse.text)}
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
@@ -1073,7 +1073,7 @@
                                     })}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                     style="color: {color};white-space: nowrap;"
-                                    title={book.customName || book.name}
+                                    data-title={book.customName || book.name}
                                 >
                                     {name}
                                 </span>
@@ -1133,7 +1133,7 @@
                                         }
                                     })}
                                     class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                                    title={$dictionary.tooltip?.scripture}
+                                    data-title={$dictionary.tooltip?.scripture}
                                 >
                                     {id}
                                     <!-- WIP style position not very good -->
@@ -1231,7 +1231,7 @@
                                 }
                             })}
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                            title={$dictionary.tooltip?.scripture}
+                            data-title={$dictionary.tooltip?.scripture}
                         >
                             <span class="v" style="white-space: nowrap;">
                                 {id}

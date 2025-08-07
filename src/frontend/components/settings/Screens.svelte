@@ -12,6 +12,7 @@
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
 
     export let activateOutput = false
@@ -212,9 +213,9 @@
 </script>
 
 {#if editCropping}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editCropping = false)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editCropping = false)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <p class="tip"><T id="screen.cropping_tip" /></p>
 
@@ -251,9 +252,9 @@
         </div>
     </div>
 {:else if editEdgeBlending}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <p class="tip"><T id="screen.edge_blending_tip" /></p>
 
