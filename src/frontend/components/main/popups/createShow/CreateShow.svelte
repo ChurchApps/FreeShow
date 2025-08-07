@@ -158,6 +158,7 @@
             if (!ctrl && e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
 
             e.preventDefault()
+            if (e.target?.closest("button")) return
 
             if (!ctrl) {
                 selectOption("text")

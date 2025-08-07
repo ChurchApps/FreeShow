@@ -55,7 +55,7 @@
     class="label"
     class:alignRight={icon}
     class:padding={!renameId}
-    {title}
+    data-title={title}
     class:list={mode !== "grid"}
     style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : mode !== "list" ? `border-bottom: 2px solid ${color};` : ""}
 >

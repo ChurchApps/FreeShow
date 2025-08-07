@@ -97,7 +97,7 @@
                     {#if file.type === "image" && timer}
                         <div>
                             <div class="button">
-                                <div style="padding: 3px;" title={$dictionary.preview?.nextTimer}>
+                                <div style="padding: 3px;" data-title={$dictionary.preview?.nextTimer}>
                                     <Icon id="clock" size={0.9} white />
                                 </div>
                             </div>
@@ -109,7 +109,7 @@
                     {#if file.type === "video"}
                         <div>
                             <div class="button">
-                                <div style="padding: 3px;" title={$dictionary.actions?.next_after_media}>
+                                <div style="padding: 3px;" data-title={$dictionary.actions?.next_after_media}>
                                     <Icon id="forward" size={0.9} white />
                                 </div>
                             </div>

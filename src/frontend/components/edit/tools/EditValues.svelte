@@ -474,7 +474,7 @@
                     {@const variablesList = sortByName(keysToID($variables)).map((a) => ({ ...a, name: a.name || a.id }))}
                     <CombinedInput>
                         {#if variablesList.length}
-                            <!-- <p title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
+                            <!-- <p data-title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
                             <Dropdown style="width: 100%;" value={variablesList.find((a) => a.id === input.value)?.name || "—"} options={variablesList} on:click={(e) => valueChange(e, input)} />
                         {:else}
                             <Button on:click={() => openDrawer("variables", true)} style="width: 100%;" center>
@@ -563,7 +563,7 @@
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}
                         <CombinedInput>
-                            <p title={$dictionary[input.name?.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name?.includes(".") ? input.name.split(".")[1] : input.name || ""]}>
+                            <p data-title={$dictionary[input.name?.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name?.includes(".") ? input.name.split(".")[1] : input.name || ""]}>
                                 {#key input.name}
                                     <T id={input.name?.includes(".") ? input.name : "edit." + input.name} />
                                 {/key}
@@ -579,7 +579,7 @@
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}
                         <CombinedInput style={input.slider ? "border-bottom: 1px solid var(--primary-lighter);" : ""}>
-                            <p title={input.title || $dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                            <p data-title={input.title || $dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
                                 {#key input.name}
                                     <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
                                 {/key}

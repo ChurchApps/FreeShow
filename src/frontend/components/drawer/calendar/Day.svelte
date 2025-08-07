@@ -53,7 +53,7 @@
                         class="event context #event"
                         style="color: {event.color || 'unset'}"
                         id={event.id}
-                        title={customName}
+                        data-title={customName}
                         role="button"
                         tabindex="0"
                         on:click={() => {

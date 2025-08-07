@@ -92,7 +92,7 @@
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id={variable.type} right />
-                            <p title={variable.name}>
+                            <p data-title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}
@@ -168,7 +168,7 @@
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id="unknown" right />
-                            <p title={variable.name}>
+                            <p data-title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}

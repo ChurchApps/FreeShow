@@ -98,13 +98,6 @@
         flex-direction: column;
         gap: 10px;
     }
-    .buttons :global(button) {
-        background-color: var(--primary);
-        /* background-color: var(--secondary);
-    color: var(--secondary-text);
-    font-size: 1em;
-    margin: 10px; */
-    }
 
     @media screen and (max-height: 500px) {
         h1 {

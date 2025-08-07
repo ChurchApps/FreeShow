@@ -16,7 +16,11 @@
     {#each options as option, i}
         <MaterialButton title={option.title} disabled={option.disabled} class={i === 0 ? "first" : i === options.length - 1 ? "last" : ""} variant="outlined" on:click={() => click(option.id)} white>
             <div class="list">
-                <Icon id={option.icon} size={5} white={!option.colored} />
+                {#if option.icon.includes(".webp")}
+                    <img src={option.icon} alt="{option.id}-logo" draggable={false} />
+                {:else}
+                    <Icon id={option.icon} size={5} white={!option.colored} />
+                {/if}
                 <p>{option.name}</p>
             </div>
         </MaterialButton>
@@ -26,6 +30,8 @@
 <style>
     .choice {
         display: flex;
+        justify-content: center; /* space-evenly; */
+        flex-wrap: wrap;
         width: 100%;
 
         gap: 9px;
@@ -38,7 +44,8 @@
     .choice :global(button) {
         flex: 1;
         aspect-ratio: 1;
-        max-height: 250px;
+        min-width: 160px;
+        max-width: 280px;
 
         /* border-radius: 0; */
     }
@@ -66,5 +73,17 @@
 
         justify-content: center;
         align-items: center;
+    }
+
+    .list p {
+        max-width: 150px;
+        /* white-space: normal; */
+    }
+
+    img {
+        height: 100px;
+        max-width: 100%;
+        object-fit: contain;
+        padding: 10px;
     }
 </style>

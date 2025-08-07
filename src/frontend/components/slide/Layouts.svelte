@@ -133,19 +133,19 @@
 {#if $slidesOptions.mode === "grid"}
     <!-- one at a time, in prioritized order -->
     {#if layouts?.[activeLayout]?.notes}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.tools?.notes} on:click={() => openTab("notes")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="notes" right white />
             {#if typeof layouts[activeLayout].notes === "string"}
                 <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
             {/if}
         </div>
     {:else if currentShow.message?.text}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.meta?.message} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="message" right white />
             <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-        <div class="notes" role="button" tabindex="0" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
+        <div class="notes" role="button" tabindex="0" data-title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")} on:keydown={triggerClickOnEnterSpace}>
             <Icon id="info" right white />
             <p>
                 <!-- currentStyle.metadataDivider -->
@@ -250,7 +250,7 @@
         {#if zoomOpened}
             <div class="zoom_container" transition:slide={{ duration: 150 }}>
                 <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
-                    <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
+                    <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
                 </Button>
                 <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
                     <Icon size={1.3} id="add" white />

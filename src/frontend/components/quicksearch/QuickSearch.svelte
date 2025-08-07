@@ -57,7 +57,7 @@
                                 bold={false}
                             >
                                 <Icon id={value.icon || value.type} />
-                                <p title={value.name}>
+                                <p data-title={value.name}>
                                     {value.name}
 
                                     {#if value.aliasMatch && !value.aliasMatch.startsWith("-")}

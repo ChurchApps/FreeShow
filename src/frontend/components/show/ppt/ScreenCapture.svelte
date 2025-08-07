@@ -103,7 +103,7 @@
             {#each chooseWindow as screen}
                 <div class="screen" role="button" tabindex="0" on:click={() => selectWindow(screen, true)} on:keydown={triggerClickOnEnterSpace}>
                     <Window id={screen.id} class="media" style="width: 100%;height: 100%;pointer-events: none;position: absolute;" />
-                    <p title={screen.name}>{screen.name}</p>
+                    <p data-title={screen.name}>{screen.name}</p>
                 </div>
             {/each}
         </div>

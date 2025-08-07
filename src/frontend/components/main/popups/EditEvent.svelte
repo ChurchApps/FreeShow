@@ -277,16 +277,16 @@
         <CombinedInput textWidth={30}>
             <p><T id="timer.from" /></p>
             <div style="display: flex;">
-                <input style="flex: 2;" type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-                <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
+                <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
+                <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
             </div>
         </CombinedInput>
         {#if selectedType === "event"}
             <CombinedInput textWidth={30}>
                 <p><T id="timer.to" /></p>
                 <div style="display: flex;">
-                    <input style="flex: 2;" type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-                    <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
+                    <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
+                    <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
                 </div>
             </CombinedInput>
         {/if}

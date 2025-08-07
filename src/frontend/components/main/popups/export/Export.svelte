@@ -5,6 +5,7 @@
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, dataPath, dictionary, projects, showsCache, showsPath, special } from "../../../../stores"
+    import { translate } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
     import { clone } from "../../../helpers/array"
@@ -14,6 +15,7 @@
     import Button from "../../../inputs/Button.svelte"
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
+    import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
     import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
@@ -31,7 +33,13 @@
         all_shows: ["project", "pdf", "image"]
     }
     function filterFormats(exportFormats) {
-        return clone(exportFormats).filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
+        return clone(exportFormats)
+            .filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
+            .map((a) => {
+                a.name = translate(a.name, { parts: true })
+                a.icon = `./import-logos/${formatIcons[a.id]}.webp`
+                return a
+            })
     }
 
     const formatIcons = {
@@ -124,37 +132,26 @@
 
         return Object.values(show.slides || {}).some((slide) => slide.items?.some((item) => item.lines?.some((line) => line.chords && line.chords.length > 0)))
     }
+
+    $: exportTypesList = clone(exportTypes).map((a: any) => {
+        a.name = translate(a.name, { parts: true })
+        if (!getShowIdsFromType[a.id || ""]?.(false)?.length) a.disabled = true
+        return a
+    })
 </script>
 
 {#if !exportType}
-    <p><T id="export.option_type" /></p>
+    <p style="margin-bottom: 10px;"><T id="export.option_type" /></p>
 
-    <div class="choose">
-        {#each exportTypes as type, i}
-            <Button disabled={!getShowIdsFromType[type.id || ""]?.(false)?.length} on:click={() => (exportType = type.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <Icon id={type.icon || ""} size={4} white />
-                <p><T id={type.name} /></p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice options={exportTypesList} on:click={(e) => (exportType = e.detail)} />
 {:else if !exportFormat}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
         <Icon id="back" size={1.3} white />
     </Button>
 
-    <p><T id="export.option_format" /></p>
+    <p style="margin-bottom: 10px;"><T id="export.option_format" /></p>
 
-    <div class="choose">
-        {#each filterFormats(exportFormats) as format, i}
-            <Button disabled={false} on:click={() => (exportFormat = format.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <img src="./import-logos/{formatIcons[format.id || '']}.webp" alt="{format.id}-logo" draggable={false} />
-
-                <p>
-                    {#if format.name.includes("$:")}<T id={format.name} />{:else}{format.name}{/if}
-                </p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice options={filterFormats(exportFormats)} on:click={(e) => (exportFormat = e.detail)} />
 {:else}
     <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
         <Icon id="back" size={1.3} white />
@@ -207,38 +204,6 @@
 {/if}
 
 <style>
-    .choose {
-        margin-top: 20px;
-
-        width: 100%;
-        display: flex;
-        align-self: center;
-        justify-content: space-between;
-        gap: 10px;
-    }
-
-    .choose :global(button) {
-        width: 180px;
-        height: 180px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
-        flex: 1;
-    }
-    .choose p {
-        display: flex;
-        align-items: center;
-    }
-
-    img {
-        height: 100px;
-        max-width: 100%;
-        object-fit: contain;
-        padding: 10px;
-    }
-
     hr {
         border: none;
         height: 2px;

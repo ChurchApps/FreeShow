@@ -1,7 +1,26 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, shows, sorted, special } from "../../stores"
+    import {
+        actions,
+        activeFocus,
+        activeProject,
+        activeShow,
+        dictionary,
+        drawer,
+        focusMode,
+        folders,
+        fullColors,
+        labelsDisabled,
+        openedFolders,
+        projects,
+        projectTemplates,
+        projectView,
+        showRecentlyUsedProjects,
+        shows,
+        sorted,
+        special
+    } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
@@ -282,13 +301,13 @@
                                         </p>
 
                                         {#if triggerAction && $actions[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" title={$actions[triggerAction].name}>
+                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? 'pco_item__' : ''}project_${getContextMenuId(show.type)}__project`} icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} icon />
                                 {/if}
                             </SelectElem>
                         {/each}

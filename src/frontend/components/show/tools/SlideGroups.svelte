@@ -85,7 +85,7 @@
                             }
                         })}
                     >
-                        <p title={slide.group}>
+                        <p data-title={slide.group}>
                             {slide.group || "—"}
                             {#if groupCount > 1}<span class="shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
                         </p>
@@ -138,7 +138,7 @@
                                 }
                             })}
                         >
-                            <p title={slide.group}>
+                            <p data-title={slide.group}>
                                 {slide.group || "—"}
                                 {#if $groups[slide.id]?.shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
                             </p>

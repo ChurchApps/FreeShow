@@ -97,7 +97,7 @@
         </Button>
     {/if}
 
-    <span class="input" {title}>
+    <span class="input" data-title={title}>
         <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
 
         {#if visibleTitle}

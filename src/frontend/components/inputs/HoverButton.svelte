@@ -16,7 +16,7 @@
     }
 </script>
 
-<div style={$$props.style} on:click on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" title={$$props.title}>
+<div style={$$props.style} on:click on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" data-title={$$props.title}>
     <slot />
     <div class="overlay" class:reveal>
         <Icon id={icon} {size} white />

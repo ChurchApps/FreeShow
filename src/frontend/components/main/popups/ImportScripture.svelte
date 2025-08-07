@@ -15,6 +15,8 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import { translate } from "../../../utils/language"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -126,7 +128,7 @@
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
-        { id: "local", name: "$:cloud.local:$", icon: "scripture" }
+        { id: "local", name: translate("cloud.local"), icon: "scripture" }
     ]
 
     function goBack() {
@@ -171,7 +173,7 @@
                     <Button bold={false} on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                         <Icon id="scripture_alt" right />{bible.nameLocal || bible.name}
                         {#if bible.description && bible.description.toLowerCase() !== "common" && !(bible.nameLocal || bible.name).includes(bible.description)}
-                            <span class="description" title={bible.description}>({bible.description})</span>
+                            <span class="description" data-title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>
                 {/each}
@@ -183,7 +185,7 @@
                         <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                             <Icon id="scripture_alt" right />{bible.name}
                             {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
-                                <span class="description" title={bible.description}>({bible.description})</span>
+                                <span class="description" data-title={bible.description}>({bible.description})</span>
                             {/if}
                         </Button>
                     {/each}
@@ -228,42 +230,10 @@
         </Button>
     </CombinedInput>
 {:else}
-    <div class="choose">
-        {#each importTypes as type, i}
-            <Button on:click={() => (importType = type.id)} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
-                <Icon id={type.icon || ""} size={4} white />
-                <p>
-                    {#if type.name.includes("$:")}<T id={type.name} />{:else}{type.name}{/if}
-                </p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice options={importTypes} on:click={(e) => (importType = e.detail)} />
 {/if}
 
 <style>
-    .choose {
-        width: 100%;
-        display: flex;
-        align-self: center;
-        justify-content: space-between;
-        gap: 10px;
-    }
-
-    .choose :global(button) {
-        width: 180px;
-        height: 180px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
-        flex: 1;
-    }
-    .choose p {
-        display: flex;
-        align-items: center;
-    }
-
     .list {
         display: flex;
         flex-direction: column;

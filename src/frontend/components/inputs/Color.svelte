@@ -84,7 +84,7 @@
         <div class="picker" style="padding: 10px;" class:visible class:clipRight>
             <div class="colors">
                 {#if enableNoColor}
-                    <div class="pickColor noColor" class:active={!value} title={$dictionary.settings?.remove} tabindex="0" role="button" aria-label="Remove color" on:click={() => change("", true)} on:keydown={triggerClickOnEnterSpace}>
+                    <div class="pickColor noColor" class:active={!value} data-title={$dictionary.settings?.remove} tabindex="0" role="button" aria-label="Remove color" on:click={() => change("", true)} on:keydown={triggerClickOnEnterSpace}>
                         <Icon id="close" white />
                     </div>
                 {/if}
@@ -93,7 +93,7 @@
                         class="pickColor"
                         class:disabled={disabledColors.includes(color.value)}
                         class:active={value === color.value}
-                        title={color.name}
+                        data-title={color.name}
                         style="background: {color.value};"
                         tabindex="0"
                         role="button"
@@ -168,7 +168,7 @@
                                 <div
                                     class="pickColor"
                                     class:active={value === color.value}
-                                    title={color.name}
+                                    data-title={color.name}
                                     style="background: {color.value};"
                                     tabindex="0"
                                     role="button"
@@ -201,7 +201,7 @@
                                     <div
                                         class="pickColor noColor"
                                         class:active={!value}
-                                        title={$dictionary.settings?.remove}
+                                        data-title={$dictionary.settings?.remove}
                                         tabindex="0"
                                         role="button"
                                         aria-label="Remove color"
@@ -220,7 +220,7 @@
                                     <div
                                         class="pickColor"
                                         class:active={value === color.value}
-                                        title={color.name}
+                                        data-title={color.name}
                                         style="background-color: {color.value};"
                                         tabindex="0"
                                         role="button"

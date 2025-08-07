@@ -31,6 +31,7 @@
     $: isWindows = $os.platform === "win32"
 
     let scrolled = false
+    $: if (popupId === null) scrolled = false
     function scroll(e) {
         scrolled = e.target.scrollTop > 0
     }
@@ -73,14 +74,14 @@
 
     .popup {
         position: absolute;
-        background-color: rgb(0 0 0 / 0.7);
+        background-color: rgb(0 0 0 / 0.55);
         /* pointer-events: none; */
         width: 100%;
         height: 100%;
         padding: 20px var(--navigation-width);
         z-index: 5000;
 
-        backdrop-filter: blur(3px);
+        backdrop-filter: blur(4px);
 
         font-size: 1.2em;
 
@@ -108,7 +109,7 @@
         backdrop-filter: blur(4px); */
 
         /* border-radius: var(--border-radius); */
-        border-radius: 12px;
+        border-radius: 10px;
 
         /* overflow-y: auto; */
         /* overflow-x: hidden; */
@@ -119,11 +120,14 @@
         max-height: 100%;
 
         border: 2px solid var(--primary-lighter);
+        box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
     }
 
     .headerContent {
         position: relative;
         display: flex;
+
+        z-index: 1;
 
         transition: 0.2s box-shadow ease;
     }
@@ -165,9 +169,11 @@
         top: 0;
         height: 100%;
         padding: 0.4em !important;
-        border-radius: 6px;
+        border-radius: 4px;
         aspect-ratio: 1;
         justify-content: center;
+
+        z-index: 1;
     }
 
     .card :global(.popup-back) {
