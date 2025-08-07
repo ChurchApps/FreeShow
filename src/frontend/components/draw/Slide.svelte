@@ -15,12 +15,32 @@
     $: resolution = getOutputResolution(outputId, $outputs, true)
     let ratio = 0
 
+    let mouseStartPos = { x: 0, y: 0, drawX: 0, drawY: 0 }
     let initial: ["x" | "y", number] = ["y", 0]
     let parent: HTMLElement | undefined
     function onMouseMove(e: any) {
         let slide = e.target.closest(".slide")
 
-        if ((!e.buttons && $drawSettings[$drawTool]?.hold) || e.target.closest(".parent") !== parent || !slide) {
+        if ($drawTool === "zoom" && $drawSettings[$drawTool]?.hold) {
+            if (!slide || slide?.closest(".previewOutput")) return
+
+            if (!e.buttons) {
+                mouseStartPos = { x: e.clientX, y: e.clientY, drawX: $draw?.x ?? slide.offsetWidth / ratio / 2, drawY: $draw?.y ?? slide.offsetHeight / ratio / 2 }
+                return
+            }
+
+            const MOVE_SPEED = e.ctrlKey || e.metaKey ? 3 : 1.5
+            let mouseMoveDiff = { x: (mouseStartPos.x - e.clientX) * MOVE_SPEED, y: (mouseStartPos.y - e.clientY) * MOVE_SPEED }
+
+            const inverted = $drawSettings[$drawTool]?.size < 100
+            const newX = Math.min(Math.max(inverted ? mouseStartPos.drawX - mouseMoveDiff.x : mouseStartPos.drawX + mouseMoveDiff.x, 0), slide.offsetWidth / ratio)
+            const newY = Math.min(Math.max(inverted ? mouseStartPos.drawY - mouseMoveDiff.y : mouseStartPos.drawY + mouseMoveDiff.y, 0), slide.offsetHeight / ratio)
+            draw.set({ x: newX, y: newY })
+            return
+        }
+
+        if ((!e.buttons && $drawSettings[$drawTool]?.hold) || e.target.closest(".parent") !== parent || !slide || slide?.closest(".previewOutput")) {
+            if ($drawTool === "zoom") return
             draw.set(null)
             initial = ["y", 0]
             return
@@ -73,7 +93,7 @@
 
 <svelte:window
     on:mouseup={() => {
-        if ($drawSettings[$drawTool]?.hold) draw.set(null)
+        if ($drawSettings[$drawTool]?.hold && $drawTool !== "zoom") draw.set(null)
     }}
     on:mousemove={onMouseMove}
 />

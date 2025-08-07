@@ -293,7 +293,7 @@
         }
     }
 
-    const ignoreDefault = ["metadata", "message"]
+    const ignoreDefault = ["metadata", "message", "double"]
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     let profile = getAccess("shows")

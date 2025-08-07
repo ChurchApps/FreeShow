@@ -26,22 +26,25 @@
         let doubleClick = e.detail === 2
 
         if (e.target.closest(".edit") || e.target.querySelector(".edit") || editActive || doubleClick) return
+        const ctrl = e.ctrlKey || e.metaKey
 
         if (template) {
             let project = clone($projectTemplates[id])
             if (!project) return
 
             project.parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
-            if (e.ctrlKey || e.metaKey)
-                project.name = getProjectName() // use default project name
-            else project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
+
+            if (project.name.includes("{") ? !ctrl : ctrl)
+                project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
+            else project.name = getProjectName() // use default (auto) project name
+
             let projectId = uid()
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
             setTimeout(() => activeRename.set("project_" + projectId))
             return
         }
 
-        if (e.ctrlKey || e.metaKey) return
+        if (ctrl) return
 
         // set back to saved if opening, as project used time is changed
         if ($saved) setTimeout(() => saved.set(true), 10)
@@ -97,10 +100,10 @@
     on:dblclick={dblclick}
     data-parent={parent}
     class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}${readOnly ? "_readonly" : ""}`}
-    title={template ? $dictionary.actions?.project_template_tip : ""}
+    data-title={template ? $dictionary.actions?.project_template_tip : ""}
     class:active
 >
-    <Icon id={template ? "templates" : "project"} right />
+    <Icon id={template ? "templates" : $projects[id]?.archived ? "archive" : "project"} white={$projects[id]?.archived} right />
     <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed && !readOnly} />
 </button>
 

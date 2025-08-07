@@ -12,6 +12,7 @@
     import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
+    import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
     import { activeProfile, activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, timers } from "./stores"
@@ -62,10 +63,12 @@
 
     <main style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending}" class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
         <ContextMenu />
+        <TooltipManager />
 
         {#if $currentWindow === "output"}
             <MainOutput />
         {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
+            <Popup />
             <ProfileSelector />
         {:else if $loaded}
             <Popup />

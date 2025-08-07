@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, dictionary, labelsDisabled, triggers } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -9,6 +10,9 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
+
+    const profile = getAccess("functions")
+    const readOnly = profile.triggers === "read"
 
     $: sortedTriggers = sortByName(keysToID($triggers))
     $: filteredTriggersSearch = searchValue.length > 1 ? sortedTriggers.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTriggers
@@ -50,7 +54,7 @@
     <div class="triggers" class:center={filteredTriggersSearch.length <= 10}>
         {#each filteredTriggersSearch as trigger}
             <SelectElem class={status.id === trigger.id ? status.type || "pending" : ""} id="trigger" data={trigger} draggable>
-                <Button style="flex: 1;padding: 0;" class="context #trigger" title={formatTriggerValue(trigger.value)} on:click={() => buttonClick(trigger.id)}>
+                <Button style="flex: 1;padding: 0;" class="context #trigger{readOnly ? '_readonly' : ''}" title={formatTriggerValue(trigger.value)} on:click={() => buttonClick(trigger.id)}>
                     <p>
                         {#if trigger.name?.length}
                             {trigger.name}
@@ -72,7 +76,7 @@
 {/if}
 
 <div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("trigger")} center title={$dictionary.new?.trigger}>
+    <Button style="flex: 1;" on:click={() => activePopup.set("trigger")} disabled={readOnly} center title={$dictionary.new?.trigger}>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.trigger" />{/if}
     </Button>

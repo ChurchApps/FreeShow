@@ -1,6 +1,5 @@
 import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
-import type { ShowRef } from "./Projects"
 import type { Cropping } from "./Settings"
 
 export interface OS {
@@ -214,7 +213,7 @@ export interface LessonFile {
 export interface Variable {
     id?: string
     name: string
-    type: "number" | "random_number" | "text"
+    type: "number" | "random_number" | "text" | "text_set"
     tags?: string[]
 
     // number
@@ -234,6 +233,11 @@ export interface Variable {
     // text
     text?: string
     enabled?: boolean
+
+    // text set
+    activeTextSet?: number
+    textSetKeys?: string[]
+    textSets?: { [key: string]: string }[]
 }
 
 export interface Trigger {
@@ -266,8 +270,6 @@ export interface ErrorLog {
     time: Date
     os: string
     version: string
-    active: { window: string; page: string; show: ShowRef | null; edit: ActiveEdit }
-    drawer: { active: string }
     type: string
     source: string
     message: string

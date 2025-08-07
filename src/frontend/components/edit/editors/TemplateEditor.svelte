@@ -92,7 +92,7 @@
         zoomOpened = false
     }
 
-    const ignoreDefault = ["metadata", "message"]
+    const ignoreDefault = ["metadata", "message", "double"]
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -116,7 +116,7 @@
             {#if zoomOpened}
                 <div class="zoom_container" transition:slide={{ duration: 150 }}>
                     <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                        <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                     </Button>
                     <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
                         <Icon size={1.3} id="add" white />

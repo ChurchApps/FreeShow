@@ -30,7 +30,8 @@
             hold: false
         },
         zoom: {
-            size: 200
+            size: 200,
+            hold: false
         },
         particles: {
             color: "#1e1eb4",

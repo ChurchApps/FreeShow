@@ -12,9 +12,10 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
+import { playFolder } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
-import { playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
@@ -54,16 +55,15 @@ import {
     videosData,
     videosTime
 } from "./../../stores"
-import { clone } from "./array"
+import { clone, keysToID } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { addZero, getMonthName, getWeekday, joinTime, secondsToTime } from "./time"
+import { addZero, getMonthName, getWeekday, joinTime, joinTimeBig, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
-import { playFolder } from "../../utils/shortcuts"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -87,7 +87,7 @@ export function checkInput(e: any) {
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
     e.preventDefault()
-    ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
 
     const selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)
@@ -968,7 +968,7 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 
     setTimeout(() => {
         // defocus search input
-        ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
     }, 10)
 
     return true
@@ -1095,20 +1095,32 @@ const customTriggers = {
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false) {
     const mainValues = Object.keys(dynamicValues)
-    const metaValues = Object.keys(getCustomMetadata()).map((id) => `meta_` + id.replaceAll(" ", "_").toLowerCase())
+    const metaValues = Object.keys(getCustomMetadata()).map((id) => `meta_${id.replaceAll(" ", "_").toLowerCase()}`)
 
-    if (noVariables) return [...mainValues, ...metaValues]
+    const mergedValues = [...mainValues, ...metaValues]
+    if (noVariables) return mergedValues
+
+    const timersList = Object.values(get(timers)).map(({ name }) => `timer_${getVariableNameId(name)}`)
+
+    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_${getVariableNameId(name)}`) || []
 
     // WIP sort by type & name
     const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
-    const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
-    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
+    const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
+    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+    const variableTextSets: string[] = []
+    variablesList
+        .filter((a) => a.type === "text_set")
+        .forEach((set) => {
+            const name = `$` + getVariableNameId(set.name)
+            set.textSetKeys?.filter(Boolean).forEach((key) => {
+                variableTextSets.push(`${name}__${getVariableNameId(key)}`)
+            })
+        })
 
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name)) || []
-
-    const mergedValues = [...mainValues, ...metaValues]
+    if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)
-    mergedValues.push(...variableValues, ...variableSetNameValues)
+    mergedValues.push(...variableValues, ...variableSetNameValues, ...variableTextSets)
     return mergedValues
 }
 
@@ -1128,17 +1140,17 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles"]
-    ;[...getDynamicIds(), ...customIds].forEach((dynamicId) => {
-        let textHasValue = text.includes(dynamicValueText(dynamicId))
-        if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
-        if (!textHasValue) return
+        ;[...getDynamicIds(), ...customIds].forEach((dynamicId) => {
+            let textHasValue = text.includes(dynamicValueText(dynamicId))
+            if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
+            if (!textHasValue) return
 
-        const newValue = getDynamicValueText(dynamicId, currentShow)
-        text = text.replaceAll(dynamicValueText(dynamicId), newValue)
+            const newValue = getDynamicValueText(dynamicId, currentShow)
+            text = text.replaceAll(dynamicValueText(dynamicId), newValue)
 
-        // $ = variable_
-        if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
-    })
+            // $ = variable_
+            if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
+        })
 
     return text
 
@@ -1154,15 +1166,39 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
             const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
-            const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+
+            if (!variable && nameId.includes("__")) {
+                const textSetId = nameId.slice(0, nameId.indexOf("__"))
+                variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
+            }
             if (!variable) return ""
 
             if (variable.type === "number") return Number(variable.number || 0).toString()
             if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+            if (variable.type === "text_set") {
+                const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+                const setId = nameId.slice(nameId.indexOf("__") + 2)
+                const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
+                return currentSet[setName] || ""
+            }
 
             if (variable.enabled === false) return ""
             if (variable.text?.includes(dynamicId)) return variable.text || ""
             return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id: dynamicId })
+        }
+
+        if (dynamicId.includes("timer_")) {
+            const nameId = dynamicId.slice(6)
+            const timer = keysToID(get(timers)).find((a) => getVariableNameId(a.name) === nameId)
+            if (!timer) return "00:00"
+
+            const today = new Date()
+            const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
+            const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
+            console.log(timer, timeValue)
+
+            return timeValue
         }
 
         if (dynamicId.includes("rss_")) {
@@ -1236,6 +1272,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const outputStyleNames = outputStyeIds.map((styleId) => get(styles)[styleId]?.name).filter(Boolean)
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
         }
+
+        if (!dynamicValues[dynamicId]) return ""
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
 

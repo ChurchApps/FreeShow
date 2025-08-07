@@ -20,12 +20,14 @@
         variable: () => variableTags
     }
 
-    let type: string = $popupData.type || "show"
+    let type: keyof typeof store = $popupData.type || "show"
     let tags: (Tag & { id: string })[] = []
 
     let emptyTag = false
     onMount(getTags)
     function getTags() {
+        if (!store[type]) return
+
         tags = sortByName(keysToID(get(store[type]())))
 
         emptyTag = !!tags.find((a) => !a.name)

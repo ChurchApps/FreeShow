@@ -646,6 +646,7 @@
         "mode": "Mode",
         "increment": "Increment",
         "decrement": "Decrement",
+        "expression": "Expression",
         "manage_subtitles": "Manage subtitles",
         "toggle_time_marker": "Toggle time markers",
         "add_time_marker": "Add time marker",
@@ -706,6 +707,8 @@
         "play_on_midi": "Activate on MIDI signal",
         "play_on_midi_tip": "Activate this specific slide when receiving chosen MIDI signal",
         "send_midi": "Send MIDI signal",
+        "archive": "Archive",
+        "show_archived": "Show archived",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
         "delete_empty_shows": "Delete empty shows",
         "delete_thumbnail_cache": "Delete thumbnail cache",
@@ -1100,6 +1103,7 @@
         "overflow": "Overflow when reached end",
         "overflow_color": "Overflow color",
         "overflow_blink": "Blink when overflowing",
+        "overflow_blink_offset": "Start blinking early",
         "preview": "Preview",
         "clock": "Clock",
         "event": "Event",
@@ -1340,7 +1344,9 @@
         "read": "Read",
         "write": "Write",
         "set_active": "Set as active",
-        "choose_profile": "Choose a profile"
+        "choose_profile": "Choose a profile",
+        "choose_admin": "Only continue if you know what you are doing. Choose admin profile?",
+        "locked": "Your selected profile has restricted access to this!"
     },
     "sort": {
         "sort_by": "Sort by",
@@ -1473,13 +1479,15 @@
         "number": "Number",
         "random_number": "Random number",
         "text": "Text",
+        "text_set": "Text set",
         "step": "Step",
         "default_value": "Default value",
         "value": "Value",
         "randomize": "Randomize",
         "set_state": "Set state",
         "minimum": "Minimum",
-        "maximum": "Maximum"
+        "maximum": "Maximum",
+        "add_set": "Add set"
     },
     "month": {
         "1": "January",

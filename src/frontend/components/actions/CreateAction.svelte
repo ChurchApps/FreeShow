@@ -57,10 +57,11 @@
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition"]
-    // remove run action if creating an action (not "template" or "slide")
-    if (!mode) removeActions.push("run_action")
-    // remove toggle action from anything other than drawer actions
-    else removeActions.push("toggle_action")
+    // // remove run action if creating an action (not "template" or "slide")
+    // if (!mode) removeActions.push("run_action")
+    // // remove toggle action from anything other than drawer actions
+    // else removeActions.push("toggle_action")
+    if (mode) removeActions.push("toggle_action")
     // slide action only
     if (mode !== "slide") removeActions.push("start_slide_timers")
 

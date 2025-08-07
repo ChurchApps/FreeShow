@@ -3,7 +3,8 @@
     import Stagebox from "./Stagebox.svelte"
     import { getStyleResolution } from "../../common/util/getStyleResolution"
     import { clone } from "../../common/util/helpers"
-    import { stageLayout } from "../util/stores"
+    import { activeTimers, output, stageLayout, variables } from "../util/stores"
+    import { getSlideTextItems, shouldItemBeShown } from "../util/itemHelpers"
 
     let width: number = 0
     let height: number = 0
@@ -19,7 +20,7 @@
             <!-- dynamicResolution={show.settings.autoStretch !== false} -->
             <Zoomed show={$stageLayout} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${$stageLayout.settings.color || "#000000"};`} dynamicResolution disableStyle>
                 {#each Object.entries($stageLayout.items) as [id, item]}
-                    {#if item.type || item.enabled !== false}
+                    {#if (item.type || item.enabled !== false) && shouldItemBeShown(item, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, { $activeTimers, $variables })}
                         {#key $stageLayout}
                             <Stagebox stageLayout={$stageLayout} {id} item={clone(item)} />
                         {/key}

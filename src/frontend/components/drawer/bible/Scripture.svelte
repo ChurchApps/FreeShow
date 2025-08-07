@@ -17,6 +17,7 @@
         playScripture,
         resized,
         scriptureHistory,
+        scriptureMode,
         scriptures,
         scripturesCache,
         scriptureSettings,
@@ -96,6 +97,7 @@
         }
 
         bookId = $openScripture.book
+        getBook()
 
         setTimeout(() => {
             chapterId = Number($openScripture.chapter)
@@ -106,7 +108,7 @@
             activeVerses = $openScripture.verses
             if (bibles[0]) bibles[0].activeVerses = activeVerses
 
-            if ($openScripture.play) setTimeout(() => playScripture.set(true))
+            if ($openScripture.play) setTimeout(() => playScripture.set(true), 50)
 
             openScripture.set(null)
         }, 100)
@@ -918,7 +920,6 @@
         return shortName
     }
 
-    let gridMode = false
     let history = false
 
     // Track which bible to display in the reference bar (for bilingual collections)
@@ -1010,7 +1011,7 @@
                                     match.api ? 500 : 10
                                 )
                             }}
-                            title={formatBibleText(match.text)}
+                            data-title={formatBibleText(match.text)}
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
@@ -1036,7 +1037,7 @@
                                     setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
                                 })
                             }}
-                            title={formatBibleText(verse.text)}
+                            data-title={formatBibleText(verse.text)}
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
@@ -1047,7 +1048,7 @@
                     <T id="empty.general" />
                 </Center>
             {/if}
-        {:else if gridMode}
+        {:else if $scriptureMode === "grid"}
             <!-- GRID MODE -->
             <div class="grid">
                 <div class="books">
@@ -1071,8 +1072,8 @@
                                         autoComplete = false
                                     })}
                                     class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
-                                    style="color: {color};"
-                                    title={book.customName || book.name}
+                                    style="color: {color};white-space: nowrap;"
+                                    data-title={book.customName || book.name}
                                 >
                                     {name}
                                 </span>
@@ -1132,7 +1133,7 @@
                                         }
                                     })}
                                     class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                                    title={$dictionary.tooltip?.scripture}
+                                    data-title={$dictionary.tooltip?.scripture}
                                 >
                                     {id}
                                     <!-- WIP style position not very good -->
@@ -1230,7 +1231,7 @@
                                 }
                             })}
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                            title={$dictionary.tooltip?.scripture}
+                            data-title={$dictionary.tooltip?.scripture}
                         >
                             <span class="v" style="white-space: nowrap;">
                                 {id}
@@ -1292,8 +1293,8 @@
         </Button>
 
         <div class="seperator" />
-        <Button disabled={history} on:click={() => (gridMode = !gridMode)} title={$dictionary.show?.[gridMode ? "grid" : "list"]}>
-            <Icon size={1.3} id={gridMode ? "grid" : "list"} white />
+        <Button disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title={$dictionary.show?.[$scriptureMode === "grid" ? "grid" : "list"]}>
+            <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </Button>
 
         <div class="seperator" />

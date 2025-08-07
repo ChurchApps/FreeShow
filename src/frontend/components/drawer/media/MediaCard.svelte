@@ -143,14 +143,8 @@
 
     // Memoized media style computation
     let mediaStyle: MediaStyle = {}
-    let cachedMediaPath = ""
-    let cachedMediaStyle: MediaStyle = {}
-    $: {
-        if (path && (cachedMediaPath !== path || JSON.stringify($media[path]) !== JSON.stringify(cachedMediaStyle))) {
-            mediaStyle = getMediaStyle($media[path], $currentStyle)
-            cachedMediaPath = path
-            cachedMediaStyle = $media[path] || {}
-        }
+    $: if (path && JSON.stringify($media[path]) !== JSON.stringify(mediaStyle)) {
+        mediaStyle = getMediaStyle($media[path], $currentStyle)
     }
 
     // fixed resolution

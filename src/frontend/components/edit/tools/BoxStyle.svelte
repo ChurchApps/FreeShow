@@ -14,6 +14,7 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { boxes, setBoxInputValue } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
+    import { getExtension, getMediaType } from "../../helpers/media"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -163,8 +164,11 @@
     }
     $: if (id === "media" && item) {
         setBoxInputValue(box, "default", "src", "value", item.src || "")
-        // WIP does not update:
-        // setBoxInputValue(box, "default", "muted", "hidden", getMediaType(item.src || "") !== "video")
+        setBoxInputValue(box, "default", "speed", "value", item.speed ?? 1)
+
+        const extension = getExtension(item.src || "")
+        setBoxInputValue(box, "default", "muted", "hidden", getMediaType(extension) !== "video")
+        setBoxInputValue(box, "default", "speed", "hidden", getMediaType(extension) !== "video")
     }
     $: if (id === "web" && item) {
         setBoxInputValue(box, "default", "web.src", "value", item?.web?.src || "")

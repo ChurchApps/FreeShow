@@ -11,7 +11,7 @@ import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from "../stores"
 import { setTempShows } from "./importHelpers"
 
-const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli"]
+const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "f"]
 const chorus = ["start_of_chorus", "soc"]
 // const verse = ["start_of_verse", "sov"]
 // const end = ["end_of_chorus", "eoc", "end_of_verse", "eov"]
@@ -42,16 +42,31 @@ export function convertChordPro(data: any) {
                     return
                 }
 
-                const sectionStart = line.includes("start_of_")
+                const sectionStart = line.includes("start_of_") || line.includes("{c:")
                 if (newSection || sectionStart) {
                     newSection = false
 
                     const trimmed = line.trim()
                     if (trimmed[trimmed.length - 1] === ":" || sectionStart) {
-                        // WIP "Bridge (x2):"
+                        if (slides[slides.length - 1].group) {
+                            slides.push(clone(defaultSlide))
+                        }
+
+                        // get repeats - "Bridge (x2):" | "{c:Intro 2 (2x)}"
+                        const regex = /(?:x(\d+)|(\d+)x)/
+                        const match = trimmed.match(regex)
+                        if (match) {
+                            const repeatCount = Number(match[1] || match[2])
+                            if (!isNaN(repeatCount)) (slides[slides.length - 1] as any).repeat = repeatCount
+                        }
+
                         let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
                         group = group.replace("(x)", "").trim()
-                        if (sectionStart) group = trimmed.slice(trimmed.lastIndexOf("_") + 1, trimmed.indexOf("}"))
+                        if (sectionStart) {
+                            const start = line.includes("{c:") ? group.indexOf(":") : group.lastIndexOf("_")
+                            const end = group.includes("}") ? group.indexOf("}") : group.length
+                            group = group.slice(start + 1, end)
+                        }
 
                         let globalGroup = getGlobalGroup(group)
 
@@ -64,6 +79,8 @@ export function convertChordPro(data: any) {
                     }
                 }
 
+                line = line.replace("{soc}", "").replace("{eoc}", "")
+
                 // comment
                 if (line[0] === "#") {
                     notes += line.slice(2) + "\n"
@@ -75,10 +92,15 @@ export function convertChordPro(data: any) {
                 // {title: Amazing Grace}
                 // Title: 10,000 Reasons (Bless the Lord)
                 if (line.includes(":")) {
-                    let metaKey = metaKeys.find((a) => line.toLowerCase().includes(a + ":"))
+                    let metaKey = line.startsWith("{d_") ? "d_" : metaKeys.find((a) => line.toLowerCase().includes(a + ":"))
                     if (metaKey) {
+                        if (metaKey === "t") metaKey = "title"
                         if (metaKey === "lyricist") metaKey = "author"
-                        if (metaKey === "ccli") metaKey = "CCLI"
+                        if (metaKey === "su") metaKey = "publisher"
+                        if (metaKey === "ccli" || metaKey === "d_ccli") metaKey = "CCLI"
+                        if (metaKey === "f") metaKey = "copyright"
+                        if (metaKey === "k") metaKey = "key"
+                        if (metaKey === "d_") metaKey = line.slice(3, line.indexOf(":"))
                         metadata[metaKey] = line.slice(line.indexOf(":") + 1).trim()
                         metadata[metaKey] = metadata[metaKey].replaceAll("}", "")
 
@@ -130,6 +152,7 @@ export function convertChordPro(data: any) {
                 const chords: any[] = []
                 let isChord = false
                 let letterIndex = 0
+                line = line.replaceAll("[/]", " ").replaceAll("[|]", "")
                 line.split("").forEach((char) => {
                     if ((char === "[" || char === "]") && !line.slice(0, -2).includes(":")) {
                         isChord = char === "["
@@ -158,7 +181,26 @@ export function convertChordPro(data: any) {
                 notes += extraMetadata.join("\n")
             }
 
-            const show = createShow({ slides, metadata, name, notes })
+            // repeat repeated slides
+            let newSlides: Slide[] = []
+            slides.forEach((slide) => {
+                const repeat: number = (slide as any).repeat ?? 1
+                delete (slide as any).repeat
+                slide.id = uid()
+
+                // replace with matching
+                if (!slide.items.length) {
+                    const matching = slides.find((a) => a.group === slide.group && a.items)
+                    slide.items = matching?.items || []
+                    if (matching?.id) slide.id = matching.id
+                }
+
+                ;[...new Array(repeat)].map(() => {
+                    newSlides.push(slide)
+                })
+            })
+
+            const show = createShow({ slides: newSlides, metadata, name, notes })
             tempShows.push({ id: uid(), show })
         })
 
@@ -178,7 +220,9 @@ function createShow({ slides, metadata, name, notes }) {
     const layouts = getLayout(slides)
     const newSlides: any = {}
     layouts.forEach(({ id }, i) => {
-        newSlides[id] = slides[i]
+        const slide = slides[i]
+        delete slide.id
+        newSlides[id] = slide
     })
 
     show.name = checkName(name)
@@ -193,6 +237,6 @@ function createShow({ slides, metadata, name, notes }) {
 }
 
 function getLayout(slides: Slide[]) {
-    const layout: any[] = slides.map(() => ({ id: uid() }))
+    const layout: any[] = slides.map((a) => ({ id: a.id || uid() }))
     return layout
 }

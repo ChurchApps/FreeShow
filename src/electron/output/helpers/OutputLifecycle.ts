@@ -8,6 +8,7 @@ import { setDataNDI } from "../../ndi/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
+import { OutputVisibility } from "./OutputVisibility"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -132,7 +133,12 @@ export class OutputLifecycle {
 
     static setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
         window.on("ready-to-show", () => {
-            getMainWindow()?.focus()
+            // focus back on main window if output window is not on top
+            const mainWindow = getMainWindow()
+            if (mainWindow) {
+                const windowNotCoveringMain = OutputVisibility.amountCovered(window.getBounds(), mainWindow.getBounds()) < 0.5
+                if (windowNotCoveringMain) mainWindow.focus()
+            }
 
             window.setMenu(null)
             window.setTitle(name || "Output")

@@ -213,7 +213,7 @@
         <div class="actions">
             <!-- button -->
             {#if item?.button?.press || item?.button?.release}
-                <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                     <span style="padding: 5px;z-index: 3;font-size: 0;">
                         <Icon id="button" white />
                     </span>
@@ -222,7 +222,7 @@
 
             <!-- conditions -->
             {#if Object.values(item?.conditions || {}).length}
-                <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
                     </Button>

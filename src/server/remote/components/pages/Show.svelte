@@ -4,7 +4,7 @@
     import Dropdown from "../../../common/components/Dropdown.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import { translate } from "../../util/helpers"
-    import { GetLayout, next, previous } from "../../util/output"
+    import { GetLayout } from "../../util/output"
     import { send } from "../../util/socket"
     import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
@@ -71,6 +71,27 @@
 
         send("API:set_plain_text", { id: $activeShow?.id, value: textValue })
     }
+
+    function playSlide(index: number) {
+        if (!$activeShow) return
+
+        const showId = $activeShow.id
+        const layoutId = $activeShow.settings.activeLayout
+
+        if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === slideNum) {
+            // reveal lines if it exists
+            const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
+            if (revealExists) {
+                send("API:next_slide") // , { onlyCurrentReveal: true }
+            }
+            return
+        }
+
+        send("API:index_select_slide", { showId, layoutId, index })
+        _set("outShow", $activeShow)
+        send("API:get_cleared")
+    }
 </script>
 
 <!-- GetLayout($activeShow, $activeShow?.settings?.activeLayout).length -->
@@ -103,16 +124,7 @@
         </div>
     {:else}
         <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
-            <Slides
-                {dictionary}
-                {scrollElem}
-                on:click={(e) => {
-                    send("API:index_select_slide", { showId: $activeShow.id, layoutId: $activeShow.settings.activeLayout, index: e.detail })
-                    _set("outShow", $activeShow)
-                    send("API:get_cleared")
-                }}
-                outSlide={slideNum}
-            />
+            <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={slideNum} />
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
@@ -125,9 +137,9 @@
             {#if $activeShow.id === $outShow?.id}
                 <div class="buttons" style="display: flex;width: 100%;">
                     <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                    <Button style="flex: 1;" on:click={previous} disabled={slideNum <= 0} center><Icon size={1.8} id="previous" /></Button>
+                    <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} center><Icon size={1.8} id="previous" /></Button>
                     <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{slideNum + 1}/{totalSlides}</span>
-                    <Button style="flex: 1;" on:click={next} disabled={slideNum + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                    <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
                     <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
                 </div>
             {/if}

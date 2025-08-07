@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, special } from "../../../stores"
+    import { activePopup, dictionary, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextArea from "../../inputs/TextArea.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
 
     let id = "splash"
 
@@ -40,11 +40,7 @@
 
 <!-- <svelte:window on:keydown={keydown} /> -->
 
-<CombinedInput>
-    <div style="width: 100%;height: 150px;">
-        <TextArea value={text} on:input={(e) => changeValue(e)} autofocus />
-    </div>
-</CombinedInput>
+<MaterialTextarea label="edit.text" rows={5} placeholder="{$dictionary.empty?.text}..." value={text} on:input={(e) => changeValue(e)} autofocus />
 
 <CombinedInput style="margin-top: 10px;">
     <Button on:click={save} style="width: 100%;" center dark>

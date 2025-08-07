@@ -1,22 +1,26 @@
 <script lang="ts">
     import { uid } from "uid"
     import { dictionary, drawerTabsData, selected, variables } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { clone } from "../../helpers/array"
+    import { createStore, updateStore } from "../../helpers/historyStores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import { createStore, updateStore } from "../../helpers/historyStores"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let chosenType = ""
     const types = [
-        { id: "number", name: "$:variables.number:$", icon: "number" },
-        { id: "random_number", name: "$:variables.random_number:$", icon: "unknown" },
-        { id: "text", name: "$:variables.text:$", icon: "text" }
+        { id: "number", name: translate("variables.number"), icon: "number" },
+        { id: "random_number", name: translate("variables.random_number"), icon: "unknown" },
+        { id: "text", name: translate("variables.text"), icon: "text" },
+        { id: "text_set", name: translate("variables.text_set"), icon: "increase_text" }
     ]
 
     const DEFAULT_VARIABLE = {
@@ -106,28 +110,95 @@
     $: max = Number(currentVariable.maxValue ?? maxDefault)
 
     const DEFAULT_SET = { name: "", minValue: 1, maxValue: 1000 }
+
+    // TEXT SET
+
+    function addTextSet() {
+        if (!currentVariable.textSets) currentVariable.textSets = [{}]
+        currentVariable.textSets.push({})
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
+    function removeTextSet(index: number) {
+        if (!currentVariable.textSets?.[index]) return
+
+        currentVariable.textSets.splice(index, 1)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
+    function addTextSetVariable() {
+        if (!currentVariable.textSetKeys) currentVariable.textSetKeys = [""]
+        currentVariable.textSetKeys.push("")
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
+    function removeTextSetVariable(index: number) {
+        if (!currentVariable.textSetKeys?.[index]) return
+
+        currentVariable.textSetKeys.splice(index, 1)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
+    function updateTextSetVariableName(index: number, e: any) {
+        if (!currentVariable.textSetKeys) currentVariable.textSetKeys = [""]
+
+        let value = e.target?.value || ""
+        while (currentVariable.textSetKeys.find((name, i) => i !== index && name === value)) value += " 2"
+        currentVariable.textSetKeys[index] = value
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
+    function updateTextSetValue(index: number, name: string, e: any) {
+        if (!currentVariable.textSets) currentVariable.textSets = [{}]
+
+        if (!currentVariable.textSets[index]) currentVariable.textSets[index] = {}
+        const value = e.target?.value || ""
+        currentVariable.textSets[index][name] = value
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
 </script>
 
 {#if !existing && !chosenType}
-    <div class="buttons">
-        {#each types as type}
-            <Button
-                on:click={() => {
-                    chosenType = type.id
-                    updateValue(type.id, "type")
-                }}
-                style={type.id === "counter" ? "border: 2px solid var(--focus);" : ""}
-            >
-                <Icon id={type.icon} size={5} white />
-                <p><T id={type.name} /></p>
-            </Button>
-        {/each}
-    </div>
+    <MaterialMultiChoice
+        options={types}
+        on:click={(e) => {
+            chosenType = e.detail
+            updateValue(chosenType, "type")
+        }}
+    />
 {:else}
     {#if !existing}
-        <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
-            <Icon id="back" size={2} white />
-        </Button>
+        <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")} white>
+            <Icon id="back" size={1.3} />
+        </MaterialButton>
     {/if}
 
     <CombinedInput textWidth={30}>
@@ -215,7 +286,7 @@
                 center
             >
                 <Icon id="add" right />
-                <T id="settings.add" />
+                <T id="variables.add_set" />
             </Button>
         </CombinedInput>
         <!-- {/if} -->
@@ -232,28 +303,83 @@
                 {/each}
             </div>
         {/if}
+    {:else if currentVariable.type === "text_set"}
+        {#each currentVariable.textSets?.length ? currentVariable.textSets : [{}] as textSet, i}
+            <div class="text_set" style={i === 0 ? "margin-top: 10px;" : "border-top: 2px solid var(--primary-lighter);"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
+                <p style="border: none;min-height: unset;" class="part"><span style="color: var(--secondary);">#</span>{i + 1}</p>
+
+                {#each currentVariable.textSetKeys ?? [""] as key, keyIndex}
+                    <CombinedInput>
+                        {#if i === 0}
+                            <TextInput style="flex: 1;" placeholder={$dictionary.inputs?.name} disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:change={(e) => updateTextSetVariableName(keyIndex, e)} />
+                        {:else}
+                            <p>{key}</p>
+                        {/if}
+                        <TextInput placeholder={$dictionary.variables?.value} disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
+
+                        {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
+                            <Button on:click={() => removeTextSetVariable(keyIndex)} title={$dictionary.actions?.delete} style="padding: 8px;">
+                                <Icon id="delete" />
+                            </Button>
+                        {/if}
+                    </CombinedInput>
+                {/each}
+
+                {#if i === 0}
+                    <CombinedInput>
+                        <Button on:click={addTextSetVariable} disabled={!currentVariable.textSetKeys?.length || currentVariable.textSetKeys.find((a) => !a) === ""} style="width: 100%;" center>
+                            <Icon id="add" right />
+                            <T id="new.variable" />
+                        </Button>
+                    </CombinedInput>
+                {/if}
+                <!-- removed to clear up confusion in regards to the main variables being editable here -->
+                <!-- || (currentVariable.textSets?.length || 1) > 1 -->
+                {#if i > 0}
+                    <div class="delete">
+                        <Button on:click={() => removeTextSet(i)} title={$dictionary.actions?.delete} style="padding: 8px;">
+                            <Icon id="delete" />
+                        </Button>
+                    </div>
+                {/if}
+            </div>
+        {/each}
+
+        <CombinedInput style="margin-top: 5px;">
+            <Button on:click={addTextSet} disabled={!currentVariable.textSets?.length} style="width: 100%;" center>
+                <Icon id="add" right />
+                <T id="variables.add_set" />
+            </Button>
+        </CombinedInput>
     {/if}
 {/if}
 
 <style>
-    .buttons p {
-        display: flex;
-        align-items: center;
+    /* text set */
+
+    .text_set {
+        flex: 1;
+        min-height: unset;
+
+        position: relative;
+
+        background-color: var(--primary-darker);
+    }
+    .text_set.active {
+        border: 2px solid var(--secondary) !important;
     }
 
-    div.buttons {
-        display: flex;
-        gap: 10px;
-        align-self: center;
+    .part {
+        width: 100%;
+        padding: 5px 10px;
+        /* justify-content: center; */
+        font-size: 0.8em;
+        font-weight: bold;
     }
 
-    div.buttons :global(button) {
-        width: 200px;
-        height: 200px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
+    .delete {
+        position: absolute;
+        top: 0;
+        right: 0;
     }
 </style>

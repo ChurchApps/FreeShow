@@ -20,6 +20,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -341,9 +342,9 @@
         />
     {:else}
         {#if actionActivationSelector}
-            <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
-                <Icon id="back" size={2} white />
-            </Button>
+            <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)} white>
+                <Icon id="back" size={1.3} />
+            </MaterialButton>
 
             <div class="buttons">
                 {#each customActionActivations as activation}
@@ -368,9 +369,9 @@
             </div>
             <!-- <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} /> -->
         {:else if actionSelector !== null}
-            <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)}>
-                <Icon id="back" size={2} white />
-            </Button>
+            <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)} white>
+                <Icon id="back" size={1.3} />
+            </MaterialButton>
 
             <CreateAction
                 mainId={id}

@@ -155,6 +155,8 @@
     }
 
     function rename(e: any) {
+        if (readOnly) return
+
         const name = checkName(e.detail.value, id)
         historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name } }], replace: true }, location: { page: "drawer" } })
         // WIP this does not update in the shows drawer before refresh (if checkName updates the name)
@@ -177,7 +179,7 @@
                 <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-inline-end: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
             {/if}
 
-            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
+            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
 
             {#if show.layoutInfo?.name}
                 <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>

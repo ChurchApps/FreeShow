@@ -9,14 +9,49 @@ import { OutputHelper } from "../output/OutputHelper"
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
+
 // TODO: audio
 export class NdiReceiver {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
-    timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static receiverTimeout = -1 // 5000 // looks like this timeout exits the app even if the request is successful (if video() is called rapidly)
     static NDI_RECEIVERS: { [key: string]: { frameRate: number; interval?: NodeJS.Timeout } } = {}
 
+    private static isCreatingReceiver = false
     private static findSourcesInterval: NodeJS.Timeout | null = null
+    static allActiveReceivers: { [key: string]: any } = {}
+    static sendToOutputs: string[] = []
+
+    private static async createReceiverSerialized(source: { name: string; urlAddress: string }, lowbandwidth: boolean = false): Promise<any> {
+        const timeoutMs = 10000
+
+        // Wait for any existing receiver creation to complete
+        while (this.isCreatingReceiver) await new Promise(resolve => setTimeout(resolve, 50))
+        this.isCreatingReceiver = true
+
+        try {
+            const grandiose = require("grandiose")
+            const config: any = {
+                source: {
+                    name: source.name,
+                    urlAddress: source.urlAddress
+                },
+                colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA,
+                allowVideoFields: false
+            }
+            if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
+
+            await new Promise(resolveTimeout => setTimeout(resolveTimeout, 100))
+
+            const receiverPromise = grandiose.receive(config)
+            const timeoutPromise = new Promise((_, reject) => { setTimeout(() => reject(new Error("NDI receiver creation timeout")), timeoutMs) })
+
+            const receiver = await Promise.race([receiverPromise, timeoutPromise])
+            return receiver
+        } finally {
+            this.isCreatingReceiver = false
+        }
+    }
+
     static async findStreamsNDI(): Promise<{ name: string; urlAddress: string }[]> {
         if (this.ndiDisabled) return []
         const grandiose = require("grandiose")
@@ -44,22 +79,50 @@ export class NdiReceiver {
         })
     }
 
-    static allActiveReceivers: { [key: string]: any } = {}
     static async receiveStreamFrameNDI({ source }: { source: { name: string; urlAddress: string; id: string } }) {
         if (this.ndiDisabled) return
-        const grandiose = require("grandiose")
-
-        // https://github.com/Streampunk/grandiose/issues/12
-        if (!this.allActiveReceivers[source.id]) {
-            this.allActiveReceivers[source.id] = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA })
-        }
-        // , allowVideoFields: false
-
         try {
-            const rawFrame = await this.allActiveReceivers[source.id].video(this.receiverTimeout)
-            const videoFrame = rawFrame.data
+            if (!this.allActiveReceivers[source.id]) {
+                try {
+                    this.allActiveReceivers[source.id] = await this.createReceiverSerialized({ name: source.name, urlAddress: source.urlAddress || source.id }, true)
+                } catch (error) {
+                    delete this.allActiveReceivers[source.id]
+                    throw error
+                }
+            }
 
-            // Issue with NDI 6.2: COLOR_FORMAT_RGBX_RGBA is incorrect (green tinted), using BGRA and converting back to RGBA (this worked fine without using NDI 6.1.1)
+            const receiver = this.allActiveReceivers[source.id]
+            if (!receiver) return
+
+            if (typeof receiver.video !== 'function') {
+                delete this.allActiveReceivers[source.id]
+                return
+            }
+
+            await new Promise(resolveTimeout => setTimeout(resolveTimeout, 200))
+            let rawFrame: any = null
+
+            const maxRetries = 3
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    rawFrame = await receiver.video(500)
+                    break
+                } catch (videoError: any) {
+                    const isConnectionEvent = videoError.message && videoError.message.includes("source change")
+                    if (isConnectionEvent && attempt < maxRetries - 1) continue
+                    else { delete this.allActiveReceivers[source.id]; return }
+                }
+            }
+
+            if (!rawFrame) return
+
+            if (!rawFrame.data || !rawFrame.xres || !rawFrame.yres) return
+
+            const videoFrame = rawFrame.data
+            if (!videoFrame || videoFrame.length === 0) return
+            const expectedSize = rawFrame.xres * rawFrame.yres * 4
+            if (videoFrame.length !== expectedSize) return
+
             for (let i = 0; i < videoFrame.length; i += 4) {
                 const b = videoFrame[i]
                 videoFrame[i] = videoFrame[i + 2] // B -> R
@@ -67,7 +130,7 @@ export class NdiReceiver {
             }
 
             rawFrame.data = videoFrame
-            this.sendBuffer(source.id, videoFrame)
+            this.sendBuffer(source.id, rawFrame)
         } catch (err) {
             console.error(err)
         }
@@ -84,10 +147,8 @@ export class NdiReceiver {
         })
     }
 
-    static sendToOutputs: string[] = []
     static async captureStreamNDI({ source, outputId }: { source: { name: string; urlAddress: string; id: string }; outputId: string }) {
         if (this.ndiDisabled) return
-        const grandiose = require("grandiose")
 
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
         if (this.NDI_RECEIVERS[source.id]) return
@@ -96,7 +157,7 @@ export class NdiReceiver {
         // this.NDI_RECEIVERS[source.id] = { frameRate: frameRate || 0.1 }
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
-            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA })
+            this.allActiveReceivers[source.id] = receiver = await this.createReceiverSerialized({ name: source.name, urlAddress: source.urlAddress || source.id }, false)
         }
 
         const frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)

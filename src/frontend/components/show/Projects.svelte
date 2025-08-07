@@ -1,7 +1,26 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, shows, sorted, special } from "../../stores"
+    import {
+        actions,
+        activeFocus,
+        activeProject,
+        activeShow,
+        dictionary,
+        drawer,
+        focusMode,
+        folders,
+        fullColors,
+        labelsDisabled,
+        openedFolders,
+        projects,
+        projectTemplates,
+        projectView,
+        showRecentlyUsedProjects,
+        shows,
+        sorted,
+        special
+    } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
@@ -54,7 +73,10 @@
             sortedProjects = sortedProjects.reverse()
         }
 
-        tree = [...sortedFolders, ...sortedProjects]
+        // sort by archived state
+        sortedProjects = sortedProjects.sort((a, b) => (!!a.archived === !!b.archived ? 0 : a.archived ? 1 : -1))
+
+        tree = [...(sortedFolders as any), ...sortedProjects]
 
         // update parents (if folders are missing)
         tree = tree.map((a) => ({ ...a, parent: !$folders[a.parent] || $folders[a.parent].deleted ? "/" : a.parent }))
@@ -282,13 +304,13 @@
                                         </p>
 
                                         {#if triggerAction && $actions[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" title={$actions[triggerAction].name}>
+                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? 'pco_item__' : ''}project_${getContextMenuId(show.type)}__project`} icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} icon />
                                 {/if}
                             </SelectElem>
                         {/each}

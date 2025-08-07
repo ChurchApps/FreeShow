@@ -43,6 +43,7 @@ import {
     projects,
     shows,
     showsCache,
+    slideVideoData,
     special,
     stageShows,
     styles,
@@ -193,7 +194,14 @@ const receiveOUTPUTasMAIN: any = {
             previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
         }
     },
-    MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows))
+    MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
+    MAIN_SLIDE_VIDEO: (data: { id: string; path: string; data: any }) => {
+        slideVideoData.update(a => {
+            if (!a[data.id]) a = { [data.id]: {} }
+            a[data.id][data.path] = data.data
+            return a
+        })
+    }
 }
 
 let previousOutputs = ""

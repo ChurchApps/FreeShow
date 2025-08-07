@@ -1106,9 +1106,9 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[], outputId: string) {
+export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items.filter(checkSpecificOutput)
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []

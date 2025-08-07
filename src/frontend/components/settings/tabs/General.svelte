@@ -153,7 +153,7 @@
 </h3>
 
 <CombinedInput style="border-bottom: 3px solid var(--primary-lighter);">
-    <p title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
+    <p data-title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words || ""} on:change={inputs.capitalizeWords} />
 </CombinedInput>
 

@@ -5,7 +5,7 @@
     import { clone, convertToOptions, keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
-    import { getDynamicIds } from "../../helpers/showActions"
+    import { getDynamicIds, getVariableNameId } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -13,6 +13,7 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import { getItemText } from "../../edit/scripts/textStyle"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -34,6 +35,43 @@
     let item = slide?.items[itemIndex]
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
+
+    onMount(() => {
+        if (item?.conditions) return
+        // guess most likely condition
+
+        // timer
+        if (item?.type === "timer") {
+            setLikelyValue("timer", "element")
+            setLikelyValue(item?.timer?.id || "", "elementId")
+            setLikelyValue("isRunning", "operator")
+            return
+        }
+
+        const text = getItemText(item)
+
+        // dynamic value / variable
+        if (text.includes("{")) {
+            const isVariable = text.includes("{$") || text.includes("{variable_")
+            setLikelyValue(isVariable ? "variable" : "dynamicValue", "element")
+
+            let valueId = text.replace("{", "").replace("}", "")
+            if (isVariable) valueId = valueId.replace("$", "").replace("variable_", "")
+            const variableId = keysToID($variables).find((a) => getVariableNameId(a.name) === valueId)?.id || ""
+            setLikelyValue(isVariable ? variableId : valueId, "elementId")
+
+            setLikelyValue("isNot", "operator")
+
+            let emptyValue = ""
+            if (text.includes("{video_")) emptyValue = "00:00"
+            setLikelyValue(emptyValue, "value")
+            return
+        }
+    })
+
+    function setLikelyValue(value: string, input: string) {
+        setValue("showItem", value, input, 0)
+    }
 
     const scenarios = [
         { id: "all", name: "$:conditions.all_conditions:$" },

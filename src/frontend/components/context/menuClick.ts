@@ -132,7 +132,10 @@ const clickActions = {
     // view
     focus_mode: () => {
         const project = get(projects)[get(activeProject) || ""]
-        if (!project?.shows?.length) return
+        if (!project?.shows?.length) {
+            newToast("$empty.project_select")
+            return
+        }
 
         previousShow.set(null)
         activeShow.set(null)
@@ -609,6 +612,14 @@ const clickActions = {
             return a
         }
     },
+    archive: (obj: ObjData) => {
+        obj.sel?.data?.forEach(({ id }) => {
+            let project = get(projects)[id]
+            if (!project) return
+
+            history({ id: "UPDATE", newData: { key: "archived", data: !project.archived }, oldData: { id }, location: { page: "show", id: "project_key" } })
+        })
+    },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
     },
@@ -851,6 +862,7 @@ const clickActions = {
         // find existing with the same name
         const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
         if (existing) id = existing[0]
+        else activeRename.set("project_" + id)
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },

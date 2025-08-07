@@ -84,6 +84,7 @@
         id_start_timer: () => convertToOptions($timers),
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
+        // WIP remove all actions that reference this action and so on - to prevent infinite loop
         run_action: () => convertToOptions($actions).filter((a) => a.name && a.id !== mainId),
         set_template: () => convertToOptions($templates),
         toggle_output: () => convertToOptions($outputs)

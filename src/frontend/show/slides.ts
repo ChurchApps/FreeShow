@@ -57,9 +57,8 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
             return
         }
 
-        // add "child" now converted to parent slide
+        // "child" converted to parent slide will be removed from layout if this key is not removed
         delete layoutRef.remove
-        newLayout.push(layoutRef)
 
         const allNewChildIds = [layoutRef.id, ...Object.keys(layoutRef.children || {})]
 
@@ -612,10 +611,10 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
 
     // add chords
     const chordLines = clone(lines.map((a) => a.chords || []))
-    ;[...firstLines, ...secondLines].forEach((line) => {
-        const oldLineChords = chordLines.shift()
-        if (oldLineChords?.length) line.chords = oldLineChords
-    })
+        ;[...firstLines, ...secondLines].forEach((line) => {
+            const oldLineChords = chordLines.shift()
+            if (oldLineChords?.length) line.chords = oldLineChords
+        })
 
     // create new slide
     const newSlide = clone(_show().slides([slideRef.id]).get()[0])

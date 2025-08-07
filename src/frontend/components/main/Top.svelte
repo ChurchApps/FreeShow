@@ -9,8 +9,9 @@
 
     export let isWindows = false
 
-    $: showProfile = profile?.access.categories || {}
-    $: isLocked = $shows[$activeShow?.id || ""]?.locked || showProfile.global === "read" || showProfile[$shows[$activeShow?.id || ""]?.category || ""] === "read"
+    $: show = $shows[$activeShow?.id || ""]
+    $: showProfile = profile?.access.shows || {}
+    $: isLocked = show?.locked || showProfile.global === "read" || showProfile[show?.category || ""] === "read"
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id

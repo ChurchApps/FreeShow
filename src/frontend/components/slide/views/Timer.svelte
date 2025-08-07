@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeDrawerTab, activeTimers, drawer, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
@@ -15,6 +15,7 @@
     export let today: Date
     export let style = ""
     export let edit = false
+    export let showMs = false
 
     $: ref = { id }
     $: timer = $timers[id] || {}
@@ -23,6 +24,37 @@
     let currentTime: number
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
+
+    let ms = 0
+    let msInterval: NodeJS.Timeout | null = null
+    $: if (showMs && timeValue && mounted) runMs()
+    function runMs() {
+        const timer = $activeTimers.find((a) => a.id === id)
+        if (!timer || timer.paused) {
+            ms = 0
+            return
+        }
+
+        ms = 0
+        if (msInterval) return
+
+        msInterval = setInterval(() => {
+            // ms = Math.min(ms + 1, 99)
+            ms++
+            if (ms > 99 && msInterval) {
+                ms = 0
+                clearInterval(msInterval)
+                msInterval = null
+            }
+        }, 10)
+    }
+
+    let mounted = false
+    onMount(() => setTimeout(() => (mounted = true), 800))
+
+    onDestroy(() => {
+        if (msInterval) clearInterval(msInterval)
+    })
 
     $: if (Object.keys(timer).length) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     else currentTime = 0
@@ -101,7 +133,7 @@
                     <span>-</span>
                 {/if}
 
-                {timeValue}
+                {timeValue}{#if showMs}.{ms.toString().padStart(2, "0")}{/if}
             {/if}
         </div>
     </div>
