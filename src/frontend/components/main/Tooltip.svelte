@@ -9,7 +9,7 @@
 </script>
 
 {#if visible}
-    <div class="tooltip" style="top: {y}px; left: {x}px; {style}" transition:fade={{ duration: 80 }}>
+    <div class="tooltip" style="top: {y}px; left: {x}px; {style}" transition:fade={{ duration: 150 }}>
         {#each parsed as part}
             <span class={part.isShortcut ? "shortcut" : ""}>{@html part.text.replaceAll("\n", "<br>")}</span>
         {/each}

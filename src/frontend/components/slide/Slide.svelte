@@ -31,6 +31,7 @@
     } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { wait } from "../../utils/common"
+    import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -39,7 +40,7 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
+    import { checkMedia, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
@@ -48,7 +49,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { getAccess } from "../../utils/profile"
 
     export let showId: string
     export let slide: Slide
@@ -166,6 +166,8 @@
     $: if (bgPath && !disableThumbnails) loadBackground()
     let thumbnailPath = ""
     async function loadBackground() {
+        if (bgPath.includes("http")) return download()
+
         if (ghostBackground) {
             if (isFirstGhost) {
                 // create image (if not created) when it's first slide after actual background
@@ -188,6 +190,9 @@
 
         let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
         if (newPath) thumbnailPath = newPath
+    }
+    async function download() {
+        thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
     let mediaStyle: MediaStyle = {}

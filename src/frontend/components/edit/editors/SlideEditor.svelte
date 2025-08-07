@@ -8,7 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -69,8 +69,13 @@
     $: if (bgPath) loadBackground()
     let thumbnailPath = ""
     async function loadBackground() {
+        if (bgPath.includes("http")) return download()
+
         let newPath = await loadThumbnail(bgPath, mediaSize.big)
         if (newPath) thumbnailPath = newPath
+    }
+    async function download() {
+        thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
