@@ -212,7 +212,7 @@
         {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}
             <div class="seperator" />
 
-            <Button class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
+            <Button disabled={!layoutSlides.length} class="context #edit_custom_action" on:click={runCustomAction} title={customAction ? `${$dictionary.actions?.run_action}: ${$actions[customAction].name}` : $dictionary.show?.custom_action_tip}>
                 <Icon size={1.1} id={customAction ? getActionIcon(customAction) : "actions"} white={!customAction} right={!!customAction} />
                 {#if customAction}<p>{$actions[customAction].name}</p>{/if}
             </Button>
@@ -241,10 +241,10 @@
 
         <div class="seperator" />
 
-        <Button class="context #slideViews" on:click={changeSlidesView} title="{$dictionary.show?.change_view}: {$dictionary.show?.[$slidesOptions.mode]} [Ctrl+Shift+V]">
+        <Button disabled={!layoutSlides.length} class="context #slideViews" on:click={changeSlidesView} title="{$dictionary.show?.change_view}: {$dictionary.show?.[$slidesOptions.mode]} [Ctrl+Shift+V]">
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>
-        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+        <Button disabled={!layoutSlides.length} on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
             <Icon size={1.3} id="zoomIn" white />
         </Button>
         {#if zoomOpened}

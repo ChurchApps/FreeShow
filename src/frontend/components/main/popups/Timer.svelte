@@ -15,6 +15,7 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -187,9 +188,9 @@
     <MaterialMultiChoice options={timerTypes} on:click={(e) => (chosenType = timer.type = e.detail)} />
 {:else}
     {#if created}
-        <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
-            <Icon id="back" size={1.3} white />
-        </Button>
+        <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")} white>
+            <Icon id="back" size={1.3} />
+        </MaterialButton>
     {/if}
 
     <CombinedInput textWidth={50}>

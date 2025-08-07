@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     let currentOutput: (Output & { id: string }) | null = null
@@ -39,9 +40,9 @@
 </script>
 
 {#if !currentOutput?.invisible}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 {/if}
 
 <div style="min-width: 650px;">

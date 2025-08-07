@@ -2,8 +2,9 @@
     import { createEventDispatcher } from "svelte"
     import Icon from "../helpers/Icon.svelte"
 
-    export let variant: "contained" | "outlined" | "text" = "contained"
+    export let variant: "contained" | "outlined" | "text" = "text"
     export let title: string = ""
+    export let info: string = ""
     export let icon: string = ""
     export let white: boolean = false
     export let disabled = false
@@ -47,26 +48,34 @@
 </script>
 
 <button
+    data-testid={$$props["data-testid"]}
     bind:this={button}
     class="{variant} {$$props.class}"
     tabindex={disabled ? -1 : 0}
     aria-disabled={disabled}
     data-title={title}
+    class:white
     {disabled}
     style="
     background-color: {variant === 'contained' ? 'var(--secondary)' : 'transparent'};
     color: {white ? 'var(--text)' : variant === 'contained' ? 'var(--secondary-text)' : 'var(--secondary)'};
     border-color: {white ? 'rgb(255 255 255 / 0.08)' : variant === 'outlined' ? 'var(--secondary)' : 'transparent'};
+    {$$props.style || ''}
   "
     on:mousedown={triggerRipple}
     on:keydown={handleKey}
     on:click={click}
 >
     {#if icon}
-        <Icon id={icon} {white} />
+        <Icon id={icon} white={white || variant === "contained"} />
     {/if}
 
     <slot />
+
+    {#if info}
+        <span class="info">{info}</span>
+    {/if}
+
     {#each ripples as { x, y, size, id } (id)}
         <span class="ripple" style="top: {y}px; left: {x}px; width: {size}px; height: {size}px;" on:animationend={() => handleAnimationEnd(id)} />
     {/each}
@@ -85,6 +94,7 @@
         border-radius: 4px;
         cursor: pointer;
         transition:
+            opacity 0.4s ease,
             box-shadow 0.2s ease,
             background-color 0.2s ease,
             border 0.2s ease;
@@ -104,6 +114,9 @@
 
     button:not(.contained):active {
         background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    button:not(.contained):active:hover {
+        background-color: rgba(255, 255, 255, 0.06) !important;
     }
 
     button.contained {
@@ -134,6 +147,10 @@
         outline-offset: 2px;
     }
 
+    button.white :global(svg) {
+        fill: currentColor;
+    }
+
     .ripple {
         position: absolute;
         border-radius: 50%;
@@ -149,5 +166,11 @@
             transform: scale(2.5);
             opacity: 0;
         }
+    }
+
+    .info {
+        opacity: 0.8;
+        margin-inline-start: 2px;
+        font-weight: normal;
     }
 </style>

@@ -15,6 +15,7 @@
     import Link from "../../inputs/Link.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
@@ -97,9 +98,9 @@
 </script>
 
 {#if options}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (options = false)}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (options = false)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <CombinedInput>
         <p><T id="settings.port" /></p>

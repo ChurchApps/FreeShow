@@ -13,6 +13,7 @@
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let chosenType = ""
     const types = [
@@ -195,9 +196,9 @@
     />
 {:else}
     {#if !existing}
-        <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
-            <Icon id="back" size={1.3} white />
-        </Button>
+        <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")} white>
+            <Icon id="back" size={1.3} />
+        </MaterialButton>
     {/if}
 
     <CombinedInput textWidth={30}>

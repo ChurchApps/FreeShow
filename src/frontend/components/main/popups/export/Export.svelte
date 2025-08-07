@@ -15,6 +15,7 @@
     import Button from "../../../inputs/Button.svelte"
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
@@ -145,17 +146,17 @@
 
     <MaterialMultiChoice options={exportTypesList} on:click={(e) => (exportType = e.detail)} />
 {:else if !exportFormat}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <p style="margin-bottom: 10px;"><T id="export.option_format" /></p>
 
     <MaterialMultiChoice options={filterFormats(exportFormats)} on:click={(e) => (exportFormat = e.detail)} />
 {:else}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <!-- margin-bottom: 10px; -->
     <div style="display: flex;">

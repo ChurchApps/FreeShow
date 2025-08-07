@@ -1,23 +1,24 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
     import type { Themes } from "../../../../types/Settings"
+    import { sendMain } from "../../../IPC/main"
     import { dataPath, dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
+    import { getSystemFontsList } from "../../helpers/fonts"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import FontDropdown from "../../inputs/FontDropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { defaultThemes } from "./defaultThemes"
-    import { sendMain } from "../../../IPC/main"
-    import { Main } from "../../../../types/IPC/Main"
 
     const colors: string[] = [
         "primary",
@@ -107,14 +108,17 @@
     }
 
     let edit = false
+
+    let fontsList: { label: string; value: string; style: string }[] = []
+    onMount(async () => {
+        fontsList = await getSystemFontsList()
+    })
 </script>
 
-<!-- <h3><T id="settings.font" /></h3> -->
-<CombinedInput>
-    <p><T id="settings.font_family" /></p>
-    <!-- <Dropdown options={fonts} value={$themes[$theme]?.font?.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
-    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:click={(e) => updateTheme(e.detail || "", "family", "font")} />
-</CombinedInput>
+<MaterialDropdown options={fontsList} value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} label="settings.font_family" on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
+
+<br />
+
 <CombinedInput>
     <p><T id="settings.font_size" /></p>
     <NumberInput value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1)} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />

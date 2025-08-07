@@ -17,6 +17,7 @@
     import Loader from "../Loader.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import { translate } from "../../../utils/language"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -144,9 +145,9 @@
 </script>
 
 {#if importType}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={goBack}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={goBack} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 {/if}
 
 {#if importType === "api"}

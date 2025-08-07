@@ -8,6 +8,8 @@
     export let id = ""
     export let placeholder = ""
 
+    export let rows = 8
+
     export let center = false
     export let disabled = false
     export let autofocus = false
@@ -15,25 +17,24 @@
 
     const dispatch = createEventDispatcher()
 
-    function select(elem: HTMLInputElement) {
+    function select(elem: HTMLTextAreaElement) {
         if (autoselect) elem.select()
     }
 
     function input(e: Event) {
-        value = (e.target as HTMLInputElement).value
-        console.log(value)
+        value = (e.target as HTMLTextAreaElement).value
         dispatch("input", value)
     }
 
     function change(e: Event) {
-        const value = (e.target as HTMLInputElement).value
+        const value = (e.target as HTMLTextAreaElement).value
         dispatch("change", value)
     }
 </script>
 
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
     <div class="background" />
-    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} />
+    <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows} />
     <label for={id}><T id={label} /></label>
     <span class="underline" />
 </div>
@@ -43,6 +44,11 @@
         position: relative;
         width: 100%;
         color: var(--text);
+
+        display: flex;
+
+        /* transition: 0.22s height ease; */
+        /* height: 50px; */
     }
 
     .textfield.centered {
@@ -64,11 +70,29 @@
         border: none;
         outline: none;
         background: transparent;
-        font-size: 1rem;
+        font-size: inherit; /* 1rem; */
         padding: 1.25rem 0.75rem 0.5rem;
         color: var(--text);
         font-family: inherit;
+        /* line-height: 1.4; */
+
+        /* resize: vertical; */
+        resize: none;
+
+        /* height: 100%;
+        overflow: hidden; */
     }
+
+    /* .textfield:has(.input:focus),
+    .textfield:has(.input:not(:placeholder-shown)) {
+        height: auto;
+        / * height: 200px; * /
+    }
+    .input:focus,
+    .input:not(:placeholder-shown) {
+        min-height: 4rem;
+        overflow-y: auto;
+    } */
 
     .input::placeholder {
         color: var(--text);
@@ -78,15 +102,15 @@
     }
     .input:not(:focus)::placeholder {
         opacity: 0;
+        line-height: 0;
     }
 
     .input:disabled {
         color: var(--text);
-        opacity: 0.3;
+        opacity: 0.6;
         cursor: not-allowed;
     }
 
-    /* Label base */
     label {
         position: absolute;
         left: 0.75rem;
@@ -99,17 +123,22 @@
         z-index: 1;
     }
 
-    /* Float label if focused or has content */
     .input:focus + label,
     .input:not(:placeholder-shown) + label {
-        top: 0.25rem;
+        left: 0;
+        top: 0;
+        /* because of scrolling */
+        background-color: var(--primary-darkest);
+        padding: 0.25rem 10px;
+        border-radius: 4px;
+        /* width: calc(100% - 20px); */
+
         font-size: 0.75rem;
         color: var(--secondary);
         font-weight: 500;
         opacity: 1;
     }
 
-    /* Underline animation on focus */
     .underline {
         position: absolute;
         bottom: 0;

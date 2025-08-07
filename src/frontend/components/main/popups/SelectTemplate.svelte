@@ -6,15 +6,15 @@
     import Card from "../../drawer/Card.svelte"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Icon from "../../helpers/Icon.svelte"
 
     let revert = $popupData.revert
 
@@ -95,9 +95,9 @@
 <svelte:window on:keydown={chooseTemplate} />
 
 {#if revert}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 {/if}
 
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">

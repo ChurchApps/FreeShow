@@ -100,3 +100,41 @@ function fontDataToCssString(fontData: FontData) {
 
     return `font: ${fontStyle} ${fontWeight} ${stretch}1em '${fontData.family}';`
 }
+
+// web fonts
+const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica", "Fantasy", "monospace"]
+// does not work with ''
+const noQuotes = ["Fantasy", "monospace"]
+function getFontName(value: string) {
+    if (!value) return ""
+    if (noQuotes.includes(value)) return value
+    return `'${value}'`
+}
+
+export async function getSystemFontsList() {
+    // { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] }
+    const fonts: Family[] = defaultFonts.map((name) => {
+        const css = `font: 1em ${getFontName(name)}`
+        return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
+    })
+
+    let loadedFonts = await getFontsList()
+    if (!loadedFonts.length) return []
+
+    return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
+}
+
+function addFonts(fonts: Family[], newFonts: Family[]) {
+    // join and remove duplicates
+    fonts = fonts.filter((font1) => !newFonts.find((font2) => font2.family === font1.family))
+    fonts = [...newFonts, ...fonts]
+    // sort
+    fonts = fonts.sort((a, b) => a.family.localeCompare(b.family))
+    // add default app font
+    // if (system) {
+    //     const noFont = { family: "", default: 0, fonts: [{ name: "", path: "", style: "", css: "" }] }
+    //     fonts = [noFont, ...fonts]
+    // }
+
+    return fonts
+}

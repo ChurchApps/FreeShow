@@ -8,7 +8,8 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextArea from "../../inputs/TextArea.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import Center from "../../system/Center.svelte"
     import Date from "../../system/Date.svelte"
     import Loader from "../Loader.svelte"
@@ -176,9 +177,9 @@
 </script>
 
 {#if manualDeletion}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (manualDeletion = false)}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (manualDeletion = false)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 
     <div class="shows">
         {#each getIds(manualIndex, data) as showId, i}
@@ -191,7 +192,7 @@
                 </p>
 
                 {#if loadedTexts[i]}
-                    <TextArea value={loadedTexts[i]} style="min-height: 180px;" disabled />
+                    <MaterialTextarea label="edit.text" rows={5} value={loadedTexts[i]} disabled />
                 {/if}
 
                 <Button style="width: 100%;" on:click={() => deleteAtIndex(i)} center red>

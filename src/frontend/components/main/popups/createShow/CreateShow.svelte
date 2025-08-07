@@ -9,14 +9,14 @@
     import Icon from "../../../helpers/Icon.svelte"
     import { checkName } from "../../../helpers/show"
     import T from "../../../helpers/T.svelte"
-    import Button from "../../../inputs/Button.svelte"
     import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
+    import MaterialTextarea from "../../../inputs/MaterialTextarea.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
     import NumberInput from "../../../inputs/NumberInput.svelte"
-    import TextArea from "../../../inputs/TextArea.svelte"
     import WebSearch from "./WebSearch.svelte"
 
     const isChecked = (e: any) => e.target.checked
@@ -189,20 +189,24 @@
 
     <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />
 {:else}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 {/if}
 
 {#if selectedOption === "text"}
-    <div class="header"><T id="create_show.quick_lyrics" /></div>
+    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
     <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
-    <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
 {:else if selectedOption === "web"}
     <WebSearch query={values.name} on:update={updateLyrics} />
 {/if}
 
 {#if selectedOption === "text"}
+    <MaterialButton class="popup-options" title={$dictionary.edit?.options} on:click={() => (showMore = !showMore)} white={!showMore}>
+        <Icon id="options" size={1.3} />
+        {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
+    </MaterialButton>
+
     <div class="create" style="margin-top: 10px;">
         {#if showMore}
             <CombinedInput>
@@ -227,42 +231,20 @@
                     }}
                 />
             </CombinedInput>
-        {:else}
-            <CombinedInput>
-                <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
-                    <div class="text" style="display: flex;align-items: center;padding: 0;">
-                        <!-- settings -->
-                        <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
-                        <T id="edit.options" />
-
-                        {#if Number($splitLines)}
-                            <span class="name" style="font-size: 0.8em;">({$splitLines})</span>
-                        {/if}
-                    </div>
-                </Button>
-            </CombinedInput>
         {/if}
 
-        <CombinedInput>
-            <Button title="{$dictionary.timer?.create} [Ctrl+Enter]" disabled={values.text.trim().length === 0} on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
-                <div class="text" style="display: flex;align-items: center;padding: 0;">
-                    {#if values.text.trim().length > 0}
-                        <!-- showIcon -->
-                        <Icon id="add" right />
-                        <T id="timer.create" />
-                        <!-- <T id="new.show" /> -->
-                    {:else}
-                        <Icon id="add" right white />
-                        <T id="timer.create" />
-                        <!-- <T id="create_show.empty" /> -->
-                        <!-- <T id="new.empty_show" /> -->
-                    {/if}
-
-                    <span class="name" style="border: none;">{getName(values)}</span>
-                    <!-- <span class="name">({#if values.name}{values.name}{:else}<T id="main.unnamed" />{/if})</span> -->
-                </div>
-            </Button>
-        </CombinedInput>
+        <MaterialButton
+            on:click={textToShow}
+            variant="contained"
+            title="{$dictionary.timer?.create} [Ctrl+Enter]"
+            disabled={values.text.trim().length === 0}
+            info={getName(values)}
+            style="width: 100%;margin-top: 10px;"
+            icon="add"
+            data-testid="create.show.popup.new.show"
+        >
+            <T id="timer.create" />
+        </MaterialButton>
     </div>
 {/if}
 
@@ -273,20 +255,5 @@
         gap: 5px;
 
         margin-bottom: 20px;
-    }
-
-    .header {
-        text-align: center;
-        font-size: 0.9em;
-        padding: 5px 0;
-        background: var(--primary-darkest);
-        font-weight: 600;
-        opacity: 0.9;
-    }
-
-    .name {
-        opacity: 0.5;
-        margin-inline-start: 15px;
-        align-content: center;
     }
 </style>

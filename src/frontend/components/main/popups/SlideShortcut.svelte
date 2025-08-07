@@ -5,7 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let id = $popupData.id
     let index = $popupData.index
@@ -64,9 +64,9 @@
 <svelte:window on:keydown={keydown} />
 
 {#if revert}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
-        <Icon id="back" size={1.3} white />
-    </Button>
+    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)} white>
+        <Icon id="back" size={1.3} />
+    </MaterialButton>
 {/if}
 
 <p style="text-align: center;opacity: 0.7;" class:existing>
