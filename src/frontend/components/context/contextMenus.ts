@@ -64,6 +64,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     changeIcon: { label: "context.changeIcon", icon: "star" },
     category_action: { label: "popup.category_action", icon: "actions" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
+    archive: { label: "actions.archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
@@ -261,7 +262,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projectsTab: ["import"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "archive", "SEPERATOR", "sort_projects_by"], // "open",
     project_button_readonly: ["export", "SEPERATOR", "sort_projects_by"],
     project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],

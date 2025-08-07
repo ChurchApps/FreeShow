@@ -17,6 +17,7 @@
         outputs,
         overlayCategories,
         overlays,
+        projects,
         redoHistory,
         scriptures,
         selected,
@@ -77,6 +78,11 @@
 
             const isArchive = !!categoryStores[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
             enabled = isArchive
+        },
+        archive: () => {
+            const projectId = $selected.data?.[0]?.id
+            let project = $projects[projectId]
+            enabled = !!project.archived
         },
         edit: () => {
             if ($selected.id !== "show_drawer" || !$shows[$selected.data[0]?.id]?.locked) return

@@ -13,6 +13,7 @@ export interface Project {
     used?: number // used to create startup "last used" list
     parent: string
     shows: ProjectShowRef[]
+    archived?: boolean
 }
 
 export interface ProjectShowRef extends ShowRef {
@@ -51,9 +52,11 @@ export interface Folder {
     type?: "folder"
 }
 
-export interface Tree extends Folder {
-    shows?: []
+export interface Tree extends Project {
+    shows: any[]
     index?: number
     path?: string
     readOnly?: boolean
+    type?: "project" | "folder"
+    // created: number
 }

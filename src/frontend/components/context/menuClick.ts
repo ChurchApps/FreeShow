@@ -612,6 +612,14 @@ const clickActions = {
             return a
         }
     },
+    archive: (obj: ObjData) => {
+        obj.sel?.data?.forEach(({ id }) => {
+            let project = get(projects)[id]
+            if (!project) return
+
+            history({ id: "UPDATE", newData: { key: "archived", data: !project.archived }, oldData: { id }, location: { page: "show", id: "project_key" } })
+        })
+    },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
     },
