@@ -143,12 +143,15 @@ export function updateSettings(data: any) {
     sendMain(Main.START, { ports: customPorts, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
 
     // theme
-    const currentTheme = get(themes)[data.theme]
+    let currentTheme = get(themes)[data.theme]
     if (currentTheme) {
-        // update colors (upgrading from < v0.9.2)
-        if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
+        // update colors (pre 0.9.2 or 1.4.9)
+        const pre092 = currentTheme.colors.secondary?.toLowerCase() === "#e6349c"
+        const pre149 = currentTheme.colors.primary?.toLowerCase() === "#292c36"
+        if (data.theme === "default" && (pre092 || pre149)) {
             themes.update((a) => {
                 a.default = clone(defaultThemes.default)
+                currentTheme = a.default
                 return a
             })
         }

@@ -113,7 +113,7 @@
     {/if}
 
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={($outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock) + " [Ctrl+L]"} center>
-        <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} />
+        <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} white={$outLocked} />
     </Button>
     <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition} center>
         <Icon size={1.2} id="transition" white={!!customTransition} />

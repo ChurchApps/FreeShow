@@ -47,7 +47,7 @@
 <div class="main">
     {#each activeTabs as tab}
         <Button id="button" on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
-            <Icon id={tab} right />
+            <Icon id={tab} right white={$settingsTab === tab} />
             <p style="margin: 5px;"><T id="settings.{tab}" /></p>
         </Button>
     {/each}

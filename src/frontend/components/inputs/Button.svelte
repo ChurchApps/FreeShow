@@ -82,9 +82,6 @@
     button.red:focus:not(:disabled):not(.active) {
         background-color: rgb(255 0 0 / 0.3);
     }
-    button.red:not(:disabled) :global(svg) {
-        fill: var(--text);
-    }
 
     button:not(:disabled):not(.active) {
         cursor: pointer;
@@ -137,9 +134,9 @@
         box-sizing: content-box;
         border: 0 !important; /* remove CombinedInput border */
     }
-    button.active :global(svg) {
+    /* button.active :global(svg) {
         fill: var(--text);
-    }
+    } */
 
     button:disabled {
         opacity: 0.5;

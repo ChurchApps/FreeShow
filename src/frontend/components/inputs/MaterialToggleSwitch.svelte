@@ -93,7 +93,7 @@
         position: relative;
         width: 40px;
         height: 22px;
-        background-color: var(--primary);
+        background-color: var(--primary-lighter);
         border-radius: 22px;
         transition:
             background-color 0.2s ease,
@@ -124,7 +124,7 @@
     }
     .hidden-input:checked + .toggle-label + .switch .thumb {
         transform: translateX(18px);
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
     }
 
     .underline {

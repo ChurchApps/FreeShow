@@ -10,6 +10,7 @@
     export let iconSize: number = 1
     export let white: boolean = false
     export let disabled = false
+    export let gradient = false
     let button
 
     // automatically do white icon if no content
@@ -62,7 +63,7 @@
     class:white
     {disabled}
     style="
-    background-color: {variant === 'contained' ? 'var(--secondary)' : 'transparent'};
+    background: {variant === 'contained' ? (gradient ? 'linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 30%, #d100db 50%, #f0008c 100%)' : 'var(--secondary)') : 'transparent'};
     color: {white ? 'var(--text)' : variant === 'contained' ? 'var(--secondary-text)' : 'var(--secondary)'};
     border-color: {white ? 'rgb(255 255 255 / 0.08)' : variant === 'outlined' ? 'var(--secondary)' : 'transparent'};
     {$$props.style || ''}
@@ -101,7 +102,7 @@
         transition:
             opacity 0.4s ease,
             box-shadow 0.2s ease,
-            background-color 0.2s ease,
+            background 0.2s ease,
             border 0.2s ease;
         display: inline-flex;
         align-items: center;
@@ -114,14 +115,22 @@
     }
 
     button:not(.contained):hover {
-        background-color: rgba(255, 255, 255, 0.01) !important;
+        background: rgba(255, 255, 255, 0.01) !important;
     }
-
     button:not(.contained):active {
-        background-color: rgba(255, 255, 255, 0.04) !important;
+        background: rgba(255, 255, 255, 0.04) !important;
     }
     button:not(.contained):active:hover {
-        background-color: rgba(255, 255, 255, 0.06) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+    }
+    button.contained:hover {
+        filter: brightness(1.05);
+    }
+    button.contained:active {
+        filter: brightness(1.09);
+    }
+    button.contained:active:hover {
+        filter: brightness(1.13);
     }
 
     button.contained {
@@ -144,7 +153,7 @@
     }
 
     button.contained:disabled {
-        background-color: var(--primary-lighter) !important;
+        background: var(--primary-lighter) !important;
     }
     button:not(.white).outlined:disabled {
         /* border-color: var(--primary-darkest) !important; */

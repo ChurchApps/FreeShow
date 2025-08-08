@@ -334,7 +334,7 @@
                     {#if !activateOutput}
                         <Button class="lock" on:click={lockScreen} red={currentScreen.boundsLocked} center>
                             <div style="display: contents;" title={currentScreen.boundsLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock}>
-                                <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} />
+                                <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} white={currentScreen.boundsLocked} />
                             </div>
                         </Button>
                     {/if}

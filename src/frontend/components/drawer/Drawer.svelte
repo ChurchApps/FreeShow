@@ -222,7 +222,7 @@
                         class="context #drawer_top"
                         title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]"
                     >
-                        <Icon id={tab.icon} size={1.3} />
+                        <Icon id={tab.icon} size={1.3} white={$activeDrawerTab === tab.id} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}
