@@ -1,11 +1,10 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, dictionary, os } from "../../stores"
+    import { activePopup, os } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
-    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -52,9 +51,7 @@
                         {/if}
 
                         {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                            <MaterialButton class="popup-close" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)} white>
-                                <Icon id="close" size={1.3} />
-                            </MaterialButton>
+                            <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close [esc]" on:click={() => activePopup.set(null)} />
                         {/if}
                     </div>
                 </div>
@@ -203,6 +200,10 @@
         margin-right: 10px;
 
         /* overflow: visible; */
+    }
+    .card :global(.popup-options.active) {
+        color: var(--secondary) !important;
+        background-color: var(--primary-darkest) !important;
     }
 
     .card :global(.popup-options .state) {

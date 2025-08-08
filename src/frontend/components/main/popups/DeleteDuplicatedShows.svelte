@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Show } from "../../../../types/Show"
-    import { activePage, activePopup, dictionary, popupData, shows, showsCache } from "../../../stores"
+    import { activePage, activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -177,9 +177,7 @@
 </script>
 
 {#if manualDeletion}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (manualDeletion = false)} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (manualDeletion = false)} />
 
     <div class="shows">
         {#each getIds(manualIndex, data) as showId, i}

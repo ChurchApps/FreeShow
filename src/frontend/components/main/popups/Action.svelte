@@ -19,8 +19,8 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -342,9 +342,7 @@
         />
     {:else}
         {#if actionActivationSelector}
-            <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)} white>
-                <Icon id="back" size={1.3} />
-            </MaterialButton>
+            <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionActivationSelector = false)} />
 
             <div class="buttons">
                 {#each customActionActivations as activation}
@@ -369,9 +367,7 @@
             </div>
             <!-- <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} /> -->
         {:else if actionSelector !== null}
-            <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)} white>
-                <Icon id="back" size={1.3} />
-            </MaterialButton>
+            <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionSelector = null)} />
 
             <CreateAction
                 mainId={id}

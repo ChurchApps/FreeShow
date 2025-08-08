@@ -2,10 +2,10 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { cubicOut } from "svelte/easing"
     import { fade, fly } from "svelte/transition"
-    import T from "../helpers/T.svelte"
     import { formatSearch } from "../../utils/search"
-    import MaterialButton from "./MaterialButton.svelte"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import MaterialButton from "./MaterialButton.svelte"
 
     export let value: string = ""
     export let label: string
@@ -78,6 +78,8 @@
 
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault()
+            if (searchValue && event.key === " ") return
+
             if (open && highlightedIndex >= 0) {
                 selectOption(options[highlightedIndex].value)
             } else {
@@ -114,7 +116,7 @@
             searchValue = ""
             highlightedIndex = options.findIndex((o) => o.value === value)
             scrollToHighlighted()
-        } else {
+        } else if (event.key.length === 1) {
             searchValue = formatSearch(searchValue + event.key, true)
 
             let activeIndex = options.findIndex((a) => formatSearch(a.value, true).startsWith(searchValue))
@@ -167,6 +169,8 @@
     let scrollElem: HTMLUListElement | null = null
     $: if (open) setTimeout(scrollToHighlighted)
     function scrollToHighlighted() {
+        if (highlightedIndex < 0 && allowEmpty) return scrollElem?.scrollTo(0, 0)
+
         if (!scrollElem || highlightedIndex < 0) return
         if (scrollElem.offsetHeight >= scrollElem.scrollHeight) return
 
@@ -213,6 +217,13 @@
     }
 
     $: selected = options.find((o) => o.value === value)
+
+    // let renderedOptions: typeof options = []
+    // $: if (open) {
+    //     // only show the first few immediately (for large lists) - can't scroll to highlighted
+    //     renderedOptions = options.slice(0, 20)
+    //     setTimeout(() => (renderedOptions = options), 82)
+    // }
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" bind:this={dropdownEl}>
@@ -242,7 +253,7 @@
 
     {#if allowEmpty && value}
         <div class="remove">
-            <MaterialButton on:click={() => selectOption("")} white>
+            <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
                 <Icon id="close" size={1.2} />
             </MaterialButton>
         </div>
@@ -262,6 +273,10 @@
                 </li>
             {/each}
         </ul>
+
+        {#if searchValue}
+            <div class="search">{searchValue}</div>
+        {/if}
     {/if}
 </div>
 
@@ -271,6 +286,8 @@
         width: 100%;
         color: var(--text);
         user-select: none;
+
+        border-bottom: 1.2px solid var(--primary-lighter);
     }
 
     .background {
@@ -410,5 +427,21 @@
     .disabled {
         pointer-events: none;
         opacity: 0.35;
+    }
+
+    .search {
+        position: absolute;
+        right: 12px;
+        top: calc(100% + 6px);
+
+        background-color: var(--primary-darkest);
+        color: var(--text);
+        border: 1px solid var(--primary-lighter);
+
+        opacity: 0.8;
+        padding: 10px;
+        border-radius: 4px;
+
+        z-index: 10;
     }
 </style>

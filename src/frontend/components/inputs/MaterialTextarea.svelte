@@ -45,6 +45,8 @@
         width: 100%;
         color: var(--text);
 
+        border-bottom: 1.2px solid var(--primary-lighter);
+
         display: flex;
 
         /* transition: 0.22s height ease; */

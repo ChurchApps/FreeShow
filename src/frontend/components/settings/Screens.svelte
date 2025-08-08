@@ -213,9 +213,7 @@
 </script>
 
 {#if editCropping}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editCropping = false)} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editCropping = false)} />
 
     <p class="tip"><T id="screen.cropping_tip" /></p>
 
@@ -252,9 +250,7 @@
         </div>
     </div>
 {:else if editEdgeBlending}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editEdgeBlending = false)} />
 
     <p class="tip"><T id="screen.edge_blending_tip" /></p>
 

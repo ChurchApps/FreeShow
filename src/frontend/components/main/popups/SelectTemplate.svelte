@@ -6,7 +6,6 @@
     import Card from "../../drawer/Card.svelte"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -95,9 +94,7 @@
 <svelte:window on:keydown={chooseTemplate} />
 
 {#if revert}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
 
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">

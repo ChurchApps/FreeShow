@@ -1,14 +1,19 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
 
     export let variant: "contained" | "outlined" | "text" = "text"
     export let title: string = ""
     export let info: string = ""
     export let icon: string = ""
+    export let iconSize: number = 1
     export let white: boolean = false
     export let disabled = false
     let button
+
+    // automatically do white icon if no content
+    if (!$$props.slot) white = true
 
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
@@ -53,7 +58,7 @@
     class="{variant} {$$props.class}"
     tabindex={disabled ? -1 : 0}
     aria-disabled={disabled}
-    data-title={title}
+    data-title={translateText(title)}
     class:white
     {disabled}
     style="
@@ -67,7 +72,7 @@
     on:click={click}
 >
     {#if icon}
-        <Icon id={icon} white={white || variant === "contained"} />
+        <Icon id={icon} size={iconSize} white={white || variant === "contained"} />
     {/if}
 
     <slot />
@@ -136,6 +141,18 @@
     button:disabled {
         opacity: 0.5;
         pointer-events: none;
+    }
+
+    button.contained:disabled {
+        background-color: var(--primary-lighter) !important;
+    }
+    button:not(.white).outlined:disabled {
+        /* border-color: var(--primary-darkest) !important; */
+        border-color: var(--text) !important;
+        color: var(--text) !important;
+    }
+    button:not(.white).outlined:disabled :global(svg) {
+        fill: var(--text) !important;
     }
 
     button:hover {
