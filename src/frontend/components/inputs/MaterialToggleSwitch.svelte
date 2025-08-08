@@ -83,7 +83,7 @@
         position: relative;
         font-size: 1.1rem;
         color: var(--text);
-        /* opacity: 0.8; */
+        opacity: 0.9;
         z-index: 1;
         user-select: none;
         pointer-events: none;

@@ -9,30 +9,38 @@
     import Profiles from "./tabs/Profiles.svelte"
     import Styles from "./tabs/Styles.svelte"
     import Theme from "./tabs/Theme.svelte"
+
+    $: tabId = $settingsTab
+
+    let scrolled = false
+    $: if (tabId === null) scrolled = false
+    function scroll(e) {
+        scrolled = e.target.scrollTop > 0
+    }
 </script>
 
 <main>
-    <h2>
-        {#key $settingsTab}
-            <T id="settings.{$settingsTab}" />
+    <h2 style={scrolled ? "box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);" : ""}>
+        {#key tabId}
+            <T id="settings.{tabId}" />
         {/key}
     </h2>
-    <div class="scroll">
-        {#if $settingsTab === "general"}
+    <div class="scroll" on:scroll={scroll}>
+        {#if tabId === "general"}
             <General />
-        {:else if $settingsTab === "display_settings"}
+        {:else if tabId === "display_settings"}
             <Outputs />
-        {:else if $settingsTab === "styles"}
+        {:else if tabId === "styles"}
             <Styles />
-        {:else if $settingsTab === "connection"}
+        {:else if tabId === "connection"}
             <Connection />
-        {:else if $settingsTab === "files"}
+        {:else if tabId === "files"}
             <Files />
-        {:else if $settingsTab === "profiles"}
+        {:else if tabId === "profiles"}
             <Profiles />
-        {:else if $settingsTab === "theme"}
+        {:else if tabId === "theme"}
             <Theme />
-        {:else if $settingsTab === "other"}
+        {:else if tabId === "other"}
             <Other />
         {/if}
     </div>
@@ -45,20 +53,25 @@
         height: 100%;
 
         position: relative;
+
+        --padding: 120px;
     }
 
     h2 {
-        text-align: center;
-        font-size: 1.8em;
-        padding: 20px 0;
+        padding: 15px var(--padding);
+        font-size: 1.6em;
         color: var(--text);
+
+        transition: 0.2s box-shadow ease;
+
+        border-bottom: 1px solid var(--primary-lighter);
     }
 
     .scroll {
         overflow-y: auto;
         /* overflow-x: hidden; */
         height: 100%;
-        padding: 0 50px;
+        padding: 20px var(--padding);
     }
 
     div:not(.scroll) {

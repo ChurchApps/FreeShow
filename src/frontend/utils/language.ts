@@ -2,9 +2,10 @@ import { get } from "svelte/store"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
+import { sortByName } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
 import { currentWindow, dictionary, language, localeDirection } from "../stores"
-import { replace } from "./languageData"
+import { languageFlags, languages, replace } from "./languageData"
 import { send } from "./request"
 
 // https://medium.com/i18n-and-l10n-resources-for-developers/a-step-by-step-guide-to-svelte-localization-with-svelte-i18n-v3-2c3ff0d645b8
@@ -121,3 +122,14 @@ export { setLanguage, translate }
 const fullWidth = ["zh", "ja", "ko"]
 export const getLeftParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "（" : "(")
 export const getRightParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "）" : ")")
+
+// dropdown selector
+export function getLanguageList() {
+    let options: { label: string; value: string; prefix?: string }[] = Object.keys(languages).map((id) => ({ label: languages[id], value: id }))
+    options = sortByName(options, "label")
+
+    // add flags after sorting
+    options = options.map((a) => ({ ...a, prefix: languageFlags[a.value] || "" }))
+
+    return options
+}

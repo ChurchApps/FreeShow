@@ -15,7 +15,7 @@
     import MaterialTextarea from "../../../inputs/MaterialTextarea.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
-    import List from "../../List.svelte"
+    import List from "../../../input/List.svelte"
     import WebSearch from "./WebSearch.svelte"
 
     const changeValue = (e: any, key = "text") => {

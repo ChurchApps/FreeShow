@@ -1,11 +1,16 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import T from "../helpers/T.svelte"
+    import { translateText } from "../../utils/language"
+    import MaterialButton from "./MaterialButton.svelte"
+    import Icon from "../helpers/Icon.svelte"
 
-    export let value: string = ""
+    export let value: string
+    export let defaultValue: string = ""
     export let label: string
 
     export let id = ""
+    export let title = ""
     export let placeholder = ""
 
     export let center = false
@@ -21,7 +26,6 @@
 
     function input(e: Event) {
         value = (e.target as HTMLInputElement).value
-        console.log(value)
         dispatch("input", value)
     }
 
@@ -31,7 +35,7 @@
     }
 </script>
 
-<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
+<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)}>
     <div class="background" />
 
     <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} />
@@ -39,6 +43,14 @@
     <label for={id}><T id={label} /></label>
 
     <span class="underline" />
+
+    {#if defaultValue && value !== defaultValue}
+        <div class="remove">
+            <MaterialButton on:click={() => dispatch("change", defaultValue)} title="actions.reset" white>
+                <Icon id="reset" white />
+            </MaterialButton>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -141,7 +153,19 @@
         opacity: 0.3;
     }
 
-    .textfield:not(:has(.input:focus)) .input:not(:disabled):hover {
+    .textfield:not(:has(.input:focus)):not(:has(.remove:hover)) .input:not(:disabled):hover {
         background-color: var(--hover);
+    }
+
+    .remove {
+        position: absolute;
+        top: 50%;
+        right: 4px;
+        transform: translateY(-50%);
+
+        z-index: 2;
+    }
+    .remove :global(button) {
+        padding: 0.75rem;
     }
 </style>

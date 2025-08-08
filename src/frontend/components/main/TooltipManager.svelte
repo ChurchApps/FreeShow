@@ -115,6 +115,8 @@
         }
 
         if (currentTarget !== target) {
+            if (timeout) clearTimeout(timeout)
+            timeout = null
             currentTarget = target
         }
 

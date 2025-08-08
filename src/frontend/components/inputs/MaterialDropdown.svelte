@@ -12,7 +12,8 @@
     export let id = ""
     export let disabled = false
     export let allowEmpty = false
-    export let options: { label: string; value: string; style?: string }[] = []
+    export let flags = false
+    export let options: { label: string; value: string; prefix?: string; style?: string }[] = []
 
     const dispatch = createEventDispatcher()
     let open = false
@@ -119,8 +120,8 @@
         } else if (event.key.length === 1) {
             searchValue = formatSearch(searchValue + event.key, true)
 
-            let activeIndex = options.findIndex((a) => formatSearch(a.value, true).startsWith(searchValue))
-            if (activeIndex < 0) activeIndex = options.findIndex((a) => formatSearch(a.value, true).includes(searchValue))
+            let activeIndex = options.findIndex((a) => formatSearch(a.label, true).startsWith(searchValue))
+            if (activeIndex < 0) activeIndex = options.findIndex((a) => formatSearch(a.label, true).includes(searchValue))
             if (activeIndex < 0) return
 
             // enter to select
@@ -226,7 +227,7 @@
     // }
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
     <div class="background" />
 
     <div
@@ -242,7 +243,10 @@
         aria-haspopup="listbox"
         aria-expanded={open}
     >
-        <span class="selected-text" style={selected?.style ?? null}>{selected?.label || ""}</span>
+        <span class="selected-text" style={selected?.style ?? null}>
+            {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
+            {selected?.label || ""}
+        </span>
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
         </svg>
@@ -254,7 +258,7 @@
     {#if allowEmpty && value}
         <div class="remove">
             <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
-                <Icon id="close" size={1.2} />
+                <Icon id="close" size={1.2} white />
             </MaterialButton>
         </div>
     {/if}
@@ -269,6 +273,7 @@
 
             {#each options as option, i}
                 <li style={option.style || null} role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
+                    {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
                 </li>
             {/each}
@@ -288,6 +293,20 @@
         user-select: none;
 
         border-bottom: 1.2px solid var(--primary-lighter);
+    }
+
+    .textfield.flags {
+        font-family:
+            "NotoColorEmojiLimited",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Oxygen-Sans,
+            Ubuntu,
+            Cantarell,
+            "Helvetica Neue",
+            sans-serif !important;
     }
 
     .background {
@@ -363,6 +382,10 @@
         color: var(--secondary);
         font-weight: 500;
         opacity: 1;
+    }
+
+    .prefix {
+        padding-right: 5px;
     }
 
     .underline {

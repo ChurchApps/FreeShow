@@ -2,16 +2,17 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, guideActive, showsPath, timeFormat } from "../../../stores"
+    import { activePopup, dataPath, guideActive, language, showsPath, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
+    import { getLanguageList, setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
-    import HRule from "../../input/HRule.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
@@ -54,10 +55,7 @@
 
     <p style="margin-top: 25px;margin-bottom: 10px;font-style: italic;opacity: 0.7;"><T id="setup.change_later" />:</p>
 
-    <CombinedInput textWidth={30}>
-        <p><T id="settings.language" /></p>
-        <LocaleSwitcher />
-    </CombinedInput>
+    <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
 
     <CombinedInput textWidth={30}>
         <p><T id="settings.use24hClock" /></p>
