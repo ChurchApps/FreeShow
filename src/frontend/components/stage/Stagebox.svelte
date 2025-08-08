@@ -43,29 +43,13 @@
         console.log(e)
         activeStage.update((ae) => {
             if (e.shiftKey && ae.items.length > 0) {
-                // Shift selection: select range between last selected and current
-                const sortedItems = getSortedStageItems()
-                const itemIds = sortedItems.map(item => item.id)
-                
-                const lastSelectedId = ae.items[ae.items.length - 1]
-                const lastSelectedIndex = itemIds.indexOf(lastSelectedId)
-                const currentIndex = itemIds.indexOf(id)
-                
-                if (lastSelectedIndex !== -1 && currentIndex !== -1) {
-                    const startIndex = Math.min(lastSelectedIndex, currentIndex)
-                    const endIndex = Math.max(lastSelectedIndex, currentIndex)
-                    const rangeIds = itemIds.slice(startIndex, endIndex + 1)
-                    
-                    // Add range to selection, avoiding duplicates
-                    const newSelection = [...ae.items]
-                    rangeIds.forEach(itemId => {
-                        if (!newSelection.includes(itemId)) {
-                            newSelection.push(itemId)
-                        }
-                    })
-                    ae.items = newSelection
+                // Shift selection: toggle the current item in selection
+                if (ae.items.includes(id)) {
+                    // If already selected, remove it
+                    ae.items = ae.items.filter(itemId => itemId !== id)
                 } else {
-                    ae.items = [id]
+                    // If not selected, add it to selection
+                    ae.items.push(id)
                 }
             } else if (e.ctrlKey || e.metaKey) {
                 if (ae.items.includes(id)) {
