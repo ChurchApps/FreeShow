@@ -74,6 +74,9 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
     if (get(selected).id) copyData = get(selected)
     else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
+    else if (get(activePage) === "stage" && get(activeStage).items?.length) {
+        copyData = { id: "stage_item", data: get(activeStage) }
+    }
 
     if (!copyData?.id || !copyActions[copyData.id]) {
         if (copyData?.id) console.info("No copy action:", copyData)
@@ -489,6 +492,20 @@ const copyActions = {
             projectItems.push(item)
         })
         return projectItems
+    },
+    stage_item: (data: any) => {
+        const stageId: string = data.id || ""
+        const selectedItemIds: string[] = data.items || []
+        const stage = get(stageShows)[stageId]
+        
+        if (!stage || !selectedItemIds.length) return []
+        
+        const copiedItems = selectedItemIds.map((itemId) => {
+            const item = clone(stage.items[itemId])
+            return item
+        })
+        
+        return copiedItems
     }
 }
 
@@ -641,6 +658,33 @@ const pasteActions = {
         projects.update((a) => {
             if (!a[get(activeProject) || ""]?.shows) return a
             a[get(activeProject) || ""].shows.push(...data)
+            return a
+        })
+    },
+    stage_item: (data: any) => {
+        const stageId = get(activeStage).id
+        if (!stageId || !data?.length) return
+
+        const stage = clone(get(stageShows)[stageId])
+        const newItemIds: string[] = []
+
+        data.forEach((item) => {
+            const newItemId = uid(5)
+            stage.items[newItemId] = clone(item)
+            newItemIds.push(newItemId)
+        })
+
+        history({ 
+            id: "UPDATE", 
+            newData: { data: stage.items, key: "items" }, 
+            oldData: { id: stageId }, 
+            location: { page: "stage", id: "stage_item_content" } 
+        })
+        updateSortedStageItems()
+
+        // Select the newly pasted items
+        activeStage.update((a) => {
+            a.items = newItemIds
             return a
         })
     }
