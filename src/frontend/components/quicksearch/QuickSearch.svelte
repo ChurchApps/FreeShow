@@ -24,7 +24,7 @@
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
         if (((e.ctrlKey || e.metaKey) && e.key === "g") || e.key === "F8") {
-            // toggle quick search instead of just activating it
+            // toggle quick search
             quickSearchActive.set(!$quickSearchActive)
             return
         }
