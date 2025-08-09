@@ -99,11 +99,11 @@
 
         background-color: var(--primary);
         /* border-radius: var(--border-radius); */
-        border-radius: 4px;
+        border-radius: 10px;
         padding: 10px;
 
-        box-shadow: 0 0 3px rgb(0 0 0 / 0.4);
-        border: 2px solid var(--primary-darkest);
+        box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
+        border: 2px solid var(--primary-lighter);
     }
 
     .values {
