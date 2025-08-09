@@ -24,8 +24,8 @@
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
         if (((e.ctrlKey || e.metaKey) && e.key === "g") || e.key === "F8") {
-            // refocus on search bar?
-            quickSearchActive.set(true)
+            // toggle quick search instead of just activating it
+            quickSearchActive.set(!$quickSearchActive)
             return
         }
 
