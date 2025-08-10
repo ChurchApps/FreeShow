@@ -41,6 +41,14 @@
     function previous() {
         send("API:scripture_previous")
     }
+    
+    function goBack() {
+        if (depth > 0) {
+            depth--
+        } else {
+            openScripture("")
+        }
+    }
 
     // SEARCH
 
@@ -98,15 +106,16 @@
         <p style="font-size: 0.8em;">{translate("actions.back", $dictionary)}</p>
     </Button>
 {:else}
-    <h2 class="header" style="display: inline;">
-        {#if openedScripture}
-            {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
-        {:else}
-            {translate("tabs.scripture", $dictionary)}
-        {/if}
-    </h2>
-
     {#if openedScripture}
+        <div style="display: flex; align-items: center; margin-bottom: 0.5rem; position: relative; z-index: 100;">
+            <Button on:click={goBack} center style="padding: 0.4rem; position: absolute; left: 0; z-index: 101;" dark={depth === 0}>
+                <Icon size={1.2} id="back" />
+            </Button>
+            <h2 class="header" style="flex: 1; text-align: center; margin: 0;">
+                {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
+            </h2>
+        </div>
+        
         <div class="bible">
             {#if $scriptureCache[openedScripture]}
                 <!-- {tablet} -->
@@ -143,6 +152,9 @@
             {/if}
         {/if}
     {:else if sortedBibles.length}
+        <h2 class="header" style="margin-bottom: 0.5rem;">
+            {translate("tabs.scripture", $dictionary)}
+        </h2>
         {#each sortedBibles as scripture}
             <Button
                 on:click={() => {
