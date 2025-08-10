@@ -1,7 +1,7 @@
 import type { Item, Show } from "../../../types/Show"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, overlays, scriptures } from "./stores"
+import { _, _get, _set, _update, currentScriptureState, overlays, scriptures } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -84,6 +84,36 @@ export const receiver = {
     },
     OUT_DATA: (data: any) => {
         _set("outData", data)
+        
+        // Check if current slide is scripture and extract active verse
+        if (data?.slide?.id === "temp" && data?.slide?.tempItems?.length > 0) {
+            // This is a scripture slide, try to extract the current reference
+            const scriptureItems = data.slide.tempItems
+            
+            // Look for verse reference in the slide items
+            for (const item of scriptureItems) {
+                if (item?.lines?.length > 0) {
+                    for (const line of item.lines) {
+                        if (line?.text?.length > 0) {
+                            for (const textItem of line.text) {
+                                if (textItem?.meta?.scriptureReference) {
+                                    // Parse the scripture reference
+                                    const ref = textItem.meta.scriptureReference
+                                    const refParts = ref.split(":")
+                                    if (refParts.length >= 2) {
+                                        const verseRange = refParts[1]
+                                        const firstVerse = verseRange.split("-")[0]
+                                        _update("currentScriptureState", "verse", parseInt(firstVerse) || 1)
+                                    }
+                                    return
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         send("API:get_cleared")
     },
     FOLDERS: (data: any) => {
@@ -118,6 +148,9 @@ export const receiver = {
     },
     SCRIPTURE: (data: any) => {
         scriptures.set(data)
+    },
+    ACTIVE_SCRIPTURE: (data: any) => {
+        currentScriptureState.set(data)
     },
     GET_SCRIPTURE: (data: any) => {
         if (!data) return

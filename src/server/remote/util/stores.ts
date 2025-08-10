@@ -46,6 +46,7 @@ export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
 export let scriptureViewList = writable(false)
+export let currentScriptureState = writable({ book: 0, chapter: 0, verse: 0, scriptureId: "" })
 export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})
@@ -85,6 +86,7 @@ export const _ = {
     projects,
     project,
     scriptures,
+    currentScriptureState,
     mediaCache,
     textCache,
     groupsCache,

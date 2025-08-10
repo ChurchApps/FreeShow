@@ -79,7 +79,7 @@
     function updateActive() {
         if (!loaded) return
 
-        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses } })
+        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses, scriptureId: active } })
         cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
     }
 
@@ -1008,7 +1008,7 @@
                                         playOrClearScripture(true)
                                         resetContentSearch()
                                     },
-                                    match.api ? 500 : 10
+                                    match.api ? 50 : 10
                                 )
                             }}
                             data-title={formatBibleText(match.text)}

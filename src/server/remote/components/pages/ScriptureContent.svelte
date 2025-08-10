@@ -2,7 +2,7 @@
     import type { Bible } from "../../../../types/Bible"
     import Loading from "../../../common/components/Loading.svelte"
     import { send } from "../../util/socket"
-    import { scriptureViewList } from "../../util/stores"
+    import { currentScriptureState, scriptureViewList } from "../../util/stores"
 
     export let id: string
     export let scripture: Bible
@@ -15,6 +15,36 @@
     $: books = scripture.books || []
     $: chapters = books[activeBook]?.chapters || []
     $: verses = chapters[activeChapter]?.verses || []
+
+    // Update local state when scripture state changes from main app
+    let lastUpdateTime = 0
+    $: if ($currentScriptureState) {
+        // Extract the scripture state (could be under 'api' or 'bible' key)
+        const scriptureState = $currentScriptureState.api || $currentScriptureState.bible;
+        if (scriptureState && scriptureState.scriptureId === id) {
+            // Prevent rapid updates that might interfere with local interactions
+            const now = Date.now()
+            if (now - lastUpdateTime >= 100) {
+                lastUpdateTime = now
+                
+                activeBook = scriptureState.bookId
+                
+                // Handle chapterId format differences (API vs local bibles)
+                if (typeof scriptureState.chapterId === "string" && scriptureState.chapterId.includes(".")) {
+                    // API format like "GEN.1" - extract chapter number and convert to 0-based index
+                    activeChapter = parseInt(scriptureState.chapterId.split(".")[1]) - 1
+                } else if (typeof scriptureState.chapterId === "number") {
+                    // Local bible format (already 0-based index)
+                    activeChapter = scriptureState.chapterId
+                }
+                
+                if (scriptureState.activeVerses && scriptureState.activeVerses.length > 0) {
+                    // Use the first verse for highlighting
+                    activeVerse = parseInt(scriptureState.activeVerses[0]) || 0
+                }
+            }
+        }
+    }
 
     // COLORS
 
@@ -155,7 +185,8 @@
             {#if verses.length}
                 {#each verses as verse, i}
                     {@const id = verse.number ?? i + 1}
-                    <p style="color: var(--text);font-weight: normal;" on:click={() => playScripture(id)} class:active={activeVerse === id}>
+                    {@const isActive = activeVerse == id}
+                    <p style="color: var(--text);font-weight: normal;" on:click={() => playScripture(id)} class:active={isActive}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                             {id}
                         </span>

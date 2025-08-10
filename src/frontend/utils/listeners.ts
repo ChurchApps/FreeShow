@@ -7,6 +7,7 @@ import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } 
 import {
     $,
     activeProject,
+    activeScripture,
     activeShow,
     audioData,
     cachedShowsData,
@@ -131,6 +132,9 @@ export function storeSubscriber() {
     })
     scriptures.subscribe((data) => {
         send(REMOTE, ["SCRIPTURE"], data)
+    })
+    activeScripture.subscribe((data) => {
+        send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
     })
 
     outputs.subscribe((data) => {
