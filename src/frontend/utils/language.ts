@@ -76,7 +76,7 @@ function setLanguage(locale = "", init = false) {
 
 // new translate function
 // can take a "main.yes" into "Yes", or "main.yes [y]" into "Yes [y]"
-export function translateText(text: string) {
+export function translateText(text: string, _updater: any = null) {
     if (typeof text !== "string" || !text) return ""
 
     const dict = get(dictionary)

@@ -100,6 +100,8 @@
         getBook()
 
         setTimeout(() => {
+            if ($openScripture === null) return
+
             chapterId = Number($openScripture.chapter)
             if ($openScripture.api) chapterId = bookId + "." + chapterId
             else chapterId--

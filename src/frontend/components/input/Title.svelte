@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { dictionary } from "../../stores"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
 
     export let label: string
     export let icon: string
@@ -9,7 +10,7 @@
 
 <h3 class:center>
     <Icon id={icon} white />
-    <T id={label} />
+    {translateText(label, $dictionary)}
 </h3>
 
 <style>
@@ -17,10 +18,13 @@
         color: var(--text);
         text-transform: uppercase;
         font-size: 0.9em;
-        margin: 20px 0;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        /* margin: 20px 0; */
 
         display: flex;
         align-items: center;
+        /* justify-content: center; */
         gap: 10px;
     }
 

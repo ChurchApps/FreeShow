@@ -7,13 +7,15 @@
     import T from "../helpers/T.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let value: string = ""
     export let label: string
+    export let value: string
+    export let defaultValue: string = ""
+    export let options: { label: string; value: string; prefix?: string; style?: string }[]
+
     export let id = ""
     export let disabled = false
     export let allowEmpty = false
     export let flags = false
-    export let options: { label: string; value: string; prefix?: string; style?: string }[] = []
 
     const dispatch = createEventDispatcher()
     let open = false
@@ -225,6 +227,22 @@
     //     renderedOptions = options.slice(0, 20)
     //     setTimeout(() => (renderedOptions = options), 82)
     // }
+
+    // RESET
+
+    let resetFromValue = ""
+    function reset() {
+        resetFromValue = value
+        dispatch("change", defaultValue)
+        setTimeout(() => {
+            resetFromValue = ""
+        }, 3000)
+    }
+
+    function undoReset() {
+        dispatch("change", resetFromValue)
+        resetFromValue = ""
+    }
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
@@ -260,6 +278,19 @@
             <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
                 <Icon id="close" size={1.2} white />
             </MaterialButton>
+        </div>
+    {/if}
+    {#if defaultValue}
+        <div class="remove">
+            {#if value !== defaultValue}
+                <MaterialButton on:click={reset} title="actions.reset" white>
+                    <Icon id="reset" white />
+                </MaterialButton>
+            {:else if resetFromValue}
+                <MaterialButton on:click={undoReset} title="actions.undo" white>
+                    <Icon id="undo" white />
+                </MaterialButton>
+            {/if}
         </div>
     {/if}
 
