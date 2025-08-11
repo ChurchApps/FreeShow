@@ -2,6 +2,7 @@
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeStyle, activeTriggerFunction, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
+    import { waitForPopupData } from "../../../utils/popup"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
@@ -20,7 +21,6 @@
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { waitForPopupData } from "../../../utils/popup"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -157,11 +157,31 @@
             history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
         }
     }
+
+    // $: bgImage = currentStyle.backgroundImage
+    // function editBackgroundImage() {
+    //     activeEdit.set({ type: "media", id: bgImage, items: [] })
+    //     activePage.set("edit")
+    // }
+
+    // $: setTimeout(() => (templateBackgroundImage = "2"))
 </script>
 
-<div class="info">
-    <p><T id="settings.styles_hint" /></p>
-</div>
+<!-- <MaterialColorInput label="edit.background_color" value={currentStyle.background || "#000000"} defaultValue="#000000" on:input={(e) => updateStyle(e, "background")} />
+<InputRow>
+    <MaterialMediaPicker
+        label="edit.background_media{templateBackgroundImage ? ' - (settings.overrided_value)' : ''}"
+        value={bgImage}
+        filter={{ name: "Media files", extensions: mediaExtensions }}
+        on:change={(e) => updateStyle(e, "backgroundImage")}
+        allowEmpty
+    />
+    {#if bgImage}
+        <MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />
+    {/if}
+</InputRow>
+
+<br /> -->
 
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
@@ -660,23 +680,6 @@
 </div>
 
 <style>
-    .info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 38px;
-        margin: 5px 0;
-        margin-bottom: 15px;
-        font-style: italic;
-        opacity: 0.8;
-    }
-
-    .info p {
-        white-space: initial;
-    }
-
     h3 {
         color: var(--text);
         text-transform: uppercase;

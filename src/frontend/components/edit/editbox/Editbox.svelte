@@ -41,7 +41,7 @@
                 return ae
             }
 
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) {
                 if (ae.items.includes(index)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
                 } else {

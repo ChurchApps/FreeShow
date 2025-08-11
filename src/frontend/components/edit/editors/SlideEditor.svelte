@@ -24,6 +24,9 @@
     import { setCaretAtEnd } from "../scripts/textStyle"
     import { getLayoutRef } from "../../helpers/show"
     import { getAccess } from "../../../utils/profile"
+    import { transposeText } from "../../../utils/chordTranspose"
+    import { formatText } from "../../show/formatTextEditor"
+    import { getPlainEditorText } from "../../show/getTextEditor"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -227,6 +230,17 @@
         chordsMode = !chordsMode
     }
 
+    // transpose chords - same as TextEditor
+    function transposeUp() {
+        const text = getPlainEditorText("", false)
+        formatText(transposeText(text, 1), currentShowId)
+    }
+    
+    function transposeDown() {
+        const text = getPlainEditorText("", false)
+        formatText(transposeText(text, -1), currentShowId)
+    }
+
     $: slideFilter = getSlideFilter(layoutSlide)
 
     onMount(() =>
@@ -343,6 +357,15 @@
                     <div class="notes" style="font-size: 0.8em;">{currentShow?.name || ""}</div>
                 {/if}
                 {#if chordsMode && Slide}
+                    <div class="transpose-toolbar">
+                        <Button class="transpose-btn" on:click={transposeUp} title={$dictionary.edit?.transpose_up}>
+                            <Icon id="arrow_up" size={1.3} white />
+                        </Button>
+                        <Button class="transpose-btn" on:click={transposeDown} title={$dictionary.edit?.transpose_down}>
+                            <Icon id="arrow_down" size={1.3} white />
+                        </Button>
+                    </div>
+
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
                     </Button>
@@ -470,6 +493,10 @@
         align-items: center;
 
         white-space: nowrap;
+    }
+
+    .transpose-toolbar {
+        display: flex;
     }
 
     /* fixed height for consistent heights */

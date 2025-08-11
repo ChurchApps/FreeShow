@@ -314,7 +314,7 @@
 <div class="filler" />
 <div class="bottom">
     <Button style="width: 100%;padding: 12px;border-top: 2px solid var(--primary-lighter);" on:click={() => activePopup.set("reset_all")} center red>
-        <Icon id="reset" right /><T id="settings.reset_all" />
+        <Icon id="reset" right white /><T id="settings.reset_all" />
     </Button>
 </div>
 

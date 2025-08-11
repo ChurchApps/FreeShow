@@ -1,21 +1,26 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import T from "../helpers/T.svelte"
+    import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
 
     export let checked: boolean = false
+    export let defaultValue: boolean | null = null
     export let label: string
     export let title: string = ""
+    export let data: any = null
     export let id = ""
     export let disabled = false
     export let center = false
+
+    // might not be a boolean - maybe undefined
+    $: checkedValue = !!checked
 
     const dispatch = createEventDispatcher()
 
     function toggle() {
         if (disabled) return
-        checked = !checked
-        dispatch("change", checked)
+        checkedValue = !checkedValue
+        dispatch("change", checkedValue)
     }
 
     function onKeyDown(e: KeyboardEvent) {
@@ -28,14 +33,19 @@
     }
 </script>
 
-<div class="togglefield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} role="switch" aria-checked={checked} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
+<div class="togglefield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} role="switch" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
     <div class="background" />
     <div class="hover" />
 
-    <input type="checkbox" bind:checked {id} {disabled} class="hidden-input" tabindex="-1" aria-hidden="true" />
+    <input type="checkbox" bind:checked={checkedValue} {id} {disabled} class="hidden-input" tabindex="-1" aria-hidden="true" />
 
     <label for={id} class="toggle-label">
-        <T id={label} />
+        {translateText(label, $dictionary)}
+
+        {#if data}<span class="data">{data}</span>{/if}
+
+        <!-- data-title={translateText("info.changed")} -->
+        {#if defaultValue !== null}<span class="changed" class:hidden={defaultValue === checkedValue}></span>{/if}
     </label>
 
     <div class="switch">
@@ -151,7 +161,36 @@
         width: 100%;
         height: 100%;
     }
-    .togglefield:not(:disabled):hover .hover {
+    .togglefield:not(.disabled):hover .hover {
         background-color: var(--hover);
+    }
+
+    .data {
+        font-size: 0.7em;
+        opacity: 0.5;
+    }
+
+    label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+
+        width: 100%;
+    }
+
+    .changed {
+        width: 5px;
+        height: 5px;
+
+        background-color: var(--text);
+
+        border-radius: 50%;
+
+        transition: 0.2s opacity ease;
+        opacity: 0.12;
+    }
+    .changed.hidden {
+        opacity: 0;
     }
 </style>

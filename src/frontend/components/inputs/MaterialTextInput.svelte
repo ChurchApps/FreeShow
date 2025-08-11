@@ -33,6 +33,22 @@
         const value = (e.target as HTMLInputElement).value
         dispatch("change", value)
     }
+
+    // RESET
+
+    let resetFromValue = ""
+    function reset() {
+        resetFromValue = value
+        dispatch("change", defaultValue)
+        setTimeout(() => {
+            resetFromValue = ""
+        }, 3000)
+    }
+
+    function undoReset() {
+        dispatch("change", resetFromValue)
+        resetFromValue = ""
+    }
 </script>
 
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)}>
@@ -44,11 +60,17 @@
 
     <span class="underline" />
 
-    {#if defaultValue && value !== defaultValue}
+    {#if defaultValue}
         <div class="remove">
-            <MaterialButton on:click={() => dispatch("change", defaultValue)} title="actions.reset" white>
-                <Icon id="reset" white />
-            </MaterialButton>
+            {#if value !== defaultValue}
+                <MaterialButton on:click={reset} title="actions.reset" white>
+                    <Icon id="reset" white />
+                </MaterialButton>
+            {:else if resetFromValue}
+                <MaterialButton on:click={undoReset} title="actions.undo" white>
+                    <Icon id="undo" white />
+                </MaterialButton>
+            {/if}
         </div>
     {/if}
 </div>
