@@ -33,6 +33,9 @@
         .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
     let depth = 0
+    let currentBook = ""
+    let currentChapter = ""
+    let currentVerse = ""
 
     function next() {
         // WIP change preview index
@@ -357,8 +360,20 @@
             <Button on:click={goBack} center style="padding: 0.4rem; position: absolute; left: 0; z-index: 101;" dark={depth === 0}>
                 <Icon size={1.2} id="back" />
             </Button>
-            <h2 class="header" style="flex: 1; text-align: center; margin: 0;">
+            <h2 class="header" style="flex: 1; text-align: center; margin: 0; line-height: 1.3;">
                 {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
+                {#if depth > 0}
+                    <br>
+                    <span style="color: #666; font-size: 0.8em; font-weight: normal; margin-top: 0.1rem; display: inline-block;">
+                        {#if depth === 1 && currentBook}
+                            {currentBook}
+                        {:else if depth === 2 && currentBook && currentChapter}
+                            {currentBook} {currentChapter}
+                        {:else if depth === 3 && currentBook && currentChapter && currentVerse}
+                            {currentBook} {currentChapter}:{currentVerse}
+                        {/if}
+                    </span>
+                {/if}
             </h2>
             <Button on:click={() => (openScriptureSearch = true)} center style="padding: 0.4rem; position: absolute; right: 0; z-index: 101;" dark={depth === 0}>
                 <Icon size={1.2} id="search" />
@@ -368,7 +383,14 @@
         <div class="bible">
             {#if $scriptureCache[openedScripture]}
                 <!-- {tablet} -->
-                <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} bind:depth />
+                <ScriptureContent 
+                    id={collectionId || openedScripture} 
+                    scripture={$scriptureCache[openedScripture]} 
+                    bind:depth 
+                    bind:currentBook
+                    bind:currentChapter
+                    bind:currentVerse
+                />
             {:else}
                 <Loading />
             {/if}
@@ -421,9 +443,23 @@
 
 <style>
     p {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-wrap: break-word;
+    }
+
+    .header {
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+
+    .header span {
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 
     .bible {

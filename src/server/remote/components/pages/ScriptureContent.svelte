@@ -7,6 +7,9 @@
     export let id: string
     export let scripture: Bible
     export let tablet: boolean = false
+    export let currentBook: string = ""
+    export let currentChapter: string = ""
+    export let currentVerse: string = ""
 
     let activeBook = -1
     let activeChapter = -1
@@ -15,6 +18,11 @@
     $: books = scripture.books || []
     $: chapters = books[activeBook]?.chapters || []
     $: verses = chapters[activeChapter]?.verses || []
+
+    // Update current location strings for parent component
+    $: currentBook = books[activeBook]?.name || ""
+    $: currentChapter = chapters[activeChapter]?.number?.toString() || ""
+    $: currentVerse = activeVerse?.toString() || ""
 
     // Update local state when scripture state changes from main app
     let lastUpdateTime = 0
