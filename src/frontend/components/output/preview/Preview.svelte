@@ -217,7 +217,7 @@
     // LINES
 
     $: outSlide = currentOutput.out?.slide
-    $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
+    $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
     $: amountOfLinesToShow = getFewestOutputLines($outputs)
