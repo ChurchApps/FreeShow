@@ -150,27 +150,7 @@
                         if (!e.target?.closest(".up")) {
                             selected.set({ id: null, data: [] })
                             activeEdit.update((ae) => {
-                                if (e.shiftKey && ae.items.length > 0) {
-                                    // Shift selection: select range between last selected and current
-                                    const lastSelectedIndex = ae.items[ae.items.length - 1]
-                                    const startIndex = Math.min(lastSelectedIndex, index)
-                                    const endIndex = Math.max(lastSelectedIndex, index)
-                                    
-                                    // Create range of indices
-                                    const rangeIndices = []
-                                    for (let i = startIndex; i <= endIndex; i++) {
-                                        rangeIndices.push(i)
-                                    }
-                                    
-                                    // Add range to selection, avoiding duplicates
-                                    const newSelection = [...ae.items]
-                                    rangeIndices.forEach(idx => {
-                                        if (!newSelection.includes(idx)) {
-                                            newSelection.push(idx)
-                                        }
-                                    })
-                                    ae.items = newSelection
-                                } else if (e.ctrlKey || e.metaKey) {
+                                if (e.ctrlKey || e.metaKey) {
                                     if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
                                     else ae.items.push(index)
                                 } else if (!ae.items.includes(index)) ae.items = [index]

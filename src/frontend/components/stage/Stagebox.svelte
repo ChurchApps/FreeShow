@@ -42,16 +42,7 @@
 
         console.log(e)
         activeStage.update((ae) => {
-            if (e.shiftKey && ae.items.length > 0) {
-                // Shift selection: toggle the current item in selection
-                if (ae.items.includes(id)) {
-                    // If already selected, remove it
-                    ae.items = ae.items.filter(itemId => itemId !== id)
-                } else {
-                    // If not selected, add it to selection
-                    ae.items.push(id)
-                }
-            } else if (e.ctrlKey || e.metaKey) {
+            if (e.ctrlKey || e.metaKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
