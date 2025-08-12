@@ -15,6 +15,7 @@
         border-bottom-right-radius: 0;
     }
 
+    .row :global(.togglefield:not(:first-child)),
     .row :global(.textfield:not(:first-child)),
     .row :global(button:not(:first-child)) {
         border-left: 1px solid var(--primary-lighter) !important;

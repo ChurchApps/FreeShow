@@ -2,32 +2,15 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import {
-        activePage,
-        activePopup,
-        activeShow,
-        companion,
-        connections,
-        dataPath,
-        disabledServers,
-        maxConnections,
-        outputs,
-        pcoConnected,
-        chumsConnected,
-        popupData,
-        ports,
-        remotePassword,
-        serverData,
-        activeTriggerFunction,
-        dictionary
-    } from "../../../stores"
-    import { pcoSync, chumsSync } from "../../../utils/startup"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, chumsConnected, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, serverData } from "../../../stores"
+    import { chumsSync, pcoSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import Title from "../../input/Title.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let ip = "localhost"
 
@@ -52,18 +35,18 @@
         ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "localhost"
     }
 
-    function reset() {
-        remotePassword.set(randomNumber(1000, 9999).toString())
-        ports.set({ remote: 5510, stage: 5511 })
-        maxConnections.set(10)
-        disabledServers.set({})
-        serverData.set({})
-    }
-
-    const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
+    // WIP reset in popups
+    // function reset() {
+    //     remotePassword.set(randomNumber(1000, 9999).toString())
+    //     ports.set({ remote: 5510, stage: 5511 })
+    //     maxConnections.set(10)
+    //     disabledServers.set({})
+    //     serverData.set({})
+    // }
+    // const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 
     function toggleServer(e: any, id: string) {
-        let value = e.target.checked
+        let value = e.detail
 
         disabledServers.update((a) => {
             a[id] = !value
@@ -88,7 +71,7 @@
     }
 
     function toggleCompanion(e: any) {
-        let value = e.target.checked
+        let value = e.detail
 
         companion.update((a) => {
             a.enabled = value
@@ -160,6 +143,78 @@
     }
 </script>
 
+{#each servers as server}
+    {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
+    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+
+    <InputRow>
+        <MaterialButton
+            style="flex: 1;justify-content: space-between;"
+            {disabled}
+            on:click={() => {
+                popupData.set({ ip, id: server.id })
+                activePopup.set("connect")
+            }}
+        >
+            <span style="display: flex;align-items: center;justify-content: center;gap: 15px;">
+                <Icon id={server.icon} size={1.1} />
+
+                {server.name}
+
+                {#if server.id === "companion"}
+                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">WebSocket/REST/OSC/Companion</span>
+                {/if}
+                {#if connections}
+                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connections}</span>
+                {/if}
+            </span>
+
+            {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
+                <span style="border: none;display: flex;align-items: center;justify-content: end;">
+                    <Icon id="volume" />
+                </span>
+            {/if}
+        </MaterialButton>
+
+        {#if server.id === "companion"}
+            <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
+        {:else}
+            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+        {/if}
+    </InputRow>
+{/each}
+
+<!-- Planning Center -->
+<Title label="Planning Center" icon="list" />
+
+<InputRow>
+    <MaterialButton on:click={pcoConnect} style="flex: 1;border-bottom: 2px solid var(--{$pcoConnected ? 'connected' : 'disconnected'}) !important;" icon={$pcoConnected ? "logout" : "login"}>
+        <T id="settings.{$pcoConnected ? 'disconnect_from' : 'connect_to'}" replace={["Planning Center"]} />
+    </MaterialButton>
+    {#if $pcoConnected}
+        <MaterialButton icon="cloud_sync" on:click={syncPCO}>
+            <T id="cloud.sync" />
+        </MaterialButton>
+    {/if}
+</InputRow>
+
+<!-- Chums -->
+<Title label="Chums" icon="list" />
+
+<InputRow>
+    <MaterialButton on:click={chumsConnect} style="flex: 1;border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'}) !important;" icon={$chumsConnected ? "logout" : "login"}>
+        <T id="settings.{$chumsConnected ? 'disconnect_from' : 'connect_to'}" replace={["Chums"]} />
+    </MaterialButton>
+    {#if $chumsConnected}
+        <MaterialButton icon="cloud_sync" on:click={syncChums}>
+            <T id="cloud.sync" />
+        </MaterialButton>
+        <MaterialButton title="chums.sync_categories_description" icon="options" on:click={() => activePopup.set("chums_sync_categories")}>
+            <T id="chums.sync_categories" />
+        </MaterialButton>
+    {/if}
+</InputRow>
+
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={restart} center>
         <Icon id="refresh" right />
@@ -172,145 +227,7 @@
   <TextInput style="max-width: 50%;" value={$os.name} light />
 </div> -->
 
-{#each servers as server}
-    {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
-    <CombinedInput>
-        <span style="width: 100%;">
-            <Button
-                style="width: 100%;"
-                on:click={() => {
-                    popupData.set({ ip, id: server.id })
-                    activePopup.set("connect")
-                }}
-                {disabled}
-            >
-                <div style="margin: 0;border: none;">
-                    <Icon id={server.icon} size={1.1} right />
-                    <p style="min-width: fit-content;padding-inline-end: 0;">
-                        {server.name}
-                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-inline-start: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
-                        {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
-                    </p>
-                </div>
-                {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
-                    <span style="border: none;display: flex;align-items: center;justify-content: end;">
-                        <Icon id="volume" />
-                    </span>
-                {/if}
-            </Button>
-        </span>
-        <span class="alignRight" style="padding-inline-start: 10px;">
-            {#if server.id === "companion"}
-                <Checkbox checked={$companion?.enabled === true} on:change={toggleCompanion} />
-            {:else}
-                <Checkbox checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
-            {/if}
-        </span>
-    </CombinedInput>
-{/each}
-
-<!-- Planning Center -->
-<h3>Planning Center</h3>
-
-<CombinedInput style="border-bottom: 2px solid var(--{$pcoConnected ? 'connected' : 'disconnected'});">
-    <Button on:click={pcoConnect} style="width: 100%;" center>
-        <Icon id={$pcoConnected ? "logout" : "login"} right />
-        {#if $pcoConnected}
-            <T id="settings.disconnect_from" replace={["Planning Center"]} />
-        {:else}
-            <T id="settings.connect_to" replace={["Planning Center"]} />
-        {/if}
-    </Button>
-    {#if $pcoConnected}
-        <Button on:click={syncPCO}>
-            <Icon id="cloud_sync" right />
-            <p><T id="cloud.sync" /></p>
-        </Button>
-    {/if}
-</CombinedInput>
-
-<!-- Chums -->
-<h3>Chums</h3>
-
-<CombinedInput style="border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'});">
-    <Button on:click={chumsConnect} style="width: 100%;" center>
-        <Icon id={$chumsConnected ? "logout" : "login"} right />
-        {#if $chumsConnected}
-            <T id="settings.disconnect_from" replace={["Chums"]} />
-        {:else}
-            <T id="settings.connect_to" replace={["Chums"]} />
-        {/if}
-    </Button>
-    {#if $chumsConnected}
-        <Button on:click={syncChums}>
-            <Icon id="cloud_sync" right />
-            <p><T id="cloud.sync" /></p>
-        </Button>
-        <Button title={$dictionary.chums?.sync_categories_description} on:click={() => activePopup.set("chums_sync_categories")}>
-            <Icon id="settings" right />
-            <p><T id="chums.sync_categories" /></p>
-        </Button>
-    {/if}
-</CombinedInput>
-
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
-
-<div class="filler" />
-<div class="bottom">
-    <Button style="width: 100%;" on:click={reset} center>
-        <Icon id="reset" right />
-        <T id="actions.reset" />
-    </Button>
-</div>
-
-<style>
-    div:not(.scroll):not(.bottom):not(.filler) {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
-        min-height: 38px;
-    }
-
-    .connections {
-        display: flex;
-        align-items: center;
-        padding-inline-start: 10px;
-        opacity: 0.5;
-        font-weight: normal;
-    }
-
-    .filler {
-        height: 48px;
-    }
-    .bottom {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-        width: 100%;
-        background-color: var(--primary-darkest);
-
-        display: flex;
-        flex-direction: column;
-    }
-
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-</style>

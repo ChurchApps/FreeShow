@@ -78,7 +78,7 @@
     {#if allowEmpty && value}
         <div class="remove">
             <MaterialButton on:click={() => dispatch("change", "")} title="clear.general" white>
-                <Icon id="close" size={1.2} white />
+                <Icon id="close" white />
             </MaterialButton>
         </div>
     {/if}

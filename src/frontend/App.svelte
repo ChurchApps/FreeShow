@@ -51,8 +51,9 @@
     $: document.documentElement.setAttribute("dir", $localeDirection)
     $: document.documentElement.setAttribute("lang", $language)
 
-    $: console.log(getContrast(""))
-    $: console.log(getContrast($themes[$theme]?.colors?.secondary || ""))
+    $: contrastColor = getContrast($themes[$theme]?.colors?.secondary || "")
+    $: secondaryContrast = contrastColor === "#000000" ? `--secondary-text: ${contrastColor};` : ""
+    $: globalStyle = `${isWindows ? "height: calc(100% - 25px);" : ""}${secondaryContrast}${blending}`
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:click={mainClick} on:error={logerror} on:unhandledrejection={logerror} />
@@ -65,11 +66,7 @@
         <MenuBar />
     {/if}
 
-    <main
-        style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending};{getContrast($themes[$theme]?.colors?.secondary || '') === '#000000' ? '--secondary-text: #000000;' : ''}"
-        class:closeAd={$closeAd}
-        class:background={$currentWindow === "output"}
-    >
+    <main style={globalStyle} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
         <ContextMenu />
         <TooltipManager />
 
