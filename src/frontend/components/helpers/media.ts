@@ -65,12 +65,21 @@ export function joinPath(path: string[]): string {
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
 
-    // already encoded
+    // already encoded or special URL
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
     // can't load file paths with "#"
-    path = path.replaceAll("#", "%23")
+    // Ensure proper file:// protocol for absolute paths on Linux
+    if (path.startsWith("/") && !path.startsWith("file://")) {
+        path = `file://${path}`
+    }
 
+    // Encode problematic characters
+    // TODO: Check if these can be removed (since encodeURIComponent does this).
+    path = path.replaceAll("#", "%23")
+    path = path.replaceAll(" ", "%20")
+
+    // Encode the filename portion
     const splittedPath = splitPath(path)
     const fileName = splittedPath.pop() || ""
     const encodedName = encodeURIComponent(fileName)
@@ -427,7 +436,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // seek video
         if (!isImage) {
-            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ; (mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             await wait(400)
         }
 
