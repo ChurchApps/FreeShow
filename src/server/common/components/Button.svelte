@@ -66,7 +66,7 @@
         /* background-color: var(--secondary-opacity); */
         /* background-color: var(--primary-darkest); */
         background-color: var(--primary-darker);
-        color: var(--secondary-text);
+        color: var(--text);
         outline: none;
     }
     button.active.border {

@@ -332,7 +332,7 @@
         /* outline: 2px solid red;
     outline-offset: 2px; */
         background-color: var(--focus);
-        outline: 2px solid var(--secondary-text);
+        outline: 2px solid var(--text);
         opacity: 0.9;
 
         /* filter: invert(1); */

@@ -4,6 +4,7 @@
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
+    import { getContrast } from "./components/helpers/color"
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
@@ -15,7 +16,7 @@
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeProfile, activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, timers } from "./stores"
+    import { activeProfile, activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
     import { focusArea, logerror, mainClick, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -49,6 +50,9 @@
     // set language direction
     $: document.documentElement.setAttribute("dir", $localeDirection)
     $: document.documentElement.setAttribute("lang", $language)
+
+    $: console.log(getContrast(""))
+    $: console.log(getContrast($themes[$theme]?.colors?.secondary || ""))
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:click={mainClick} on:error={logerror} on:unhandledrejection={logerror} />
@@ -61,7 +65,11 @@
         <MenuBar />
     {/if}
 
-    <main style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending}" class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
+    <main
+        style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending};{getContrast($themes[$theme]?.colors?.secondary || '') === '#000000' ? '--secondary-text: #000000;' : ''}"
+        class:closeAd={$closeAd}
+        class:background={$currentWindow === "output"}
+    >
         <ContextMenu />
         <TooltipManager />
 

@@ -1,10 +1,10 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
+    import { debounce } from "@tanstack/pacer"
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
-    import { debounce } from "@tanstack/pacer"
     import {
         activeEdit,
         activeFocus,
@@ -326,8 +326,7 @@
             .filter((a) => a.extension)
             .map((file) => {
                 let type = getMediaType(file.extension)
-                let name = file.name.slice(0, file.name.lastIndexOf("."))
-                return { name, path: file.path, type }
+                return { name: file.name, path: file.path, type }
             })
 
         selected.set({ id: "media", data })

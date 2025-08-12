@@ -117,7 +117,7 @@
     }
 
     svg.white {
-        /* fill: var(--text); */
+        /* fill: var(--secondary-text); */
         fill: currentColor;
     }
 
