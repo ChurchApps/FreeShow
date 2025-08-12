@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import T from "../helpers/T.svelte"
+    import { translateText } from "../../utils/language"
 
     export let value: number = 0
     export let label: string
@@ -99,7 +99,7 @@
         </div>
     </div>
 
-    <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}><T id={label} /></label>
+    <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}>{translateText(label)}</label>
 
     <span class="underline" />
 </div>
@@ -110,6 +110,8 @@
         width: 100%;
         color: var(--text);
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
 
     .textfield.centered {

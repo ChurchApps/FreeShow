@@ -9,6 +9,7 @@
     import OutputsTabs from "./tabs/OutputsTabs.svelte"
     import Profiles from "./tabs/Profiles.svelte"
     import Styles from "./tabs/Styles.svelte"
+    import StylesTabs from "./tabs/StylesTabs.svelte"
     import Theme from "./tabs/Theme.svelte"
 
     $: tabId = $settingsTab
@@ -61,6 +62,8 @@
     <div class="tabs">
         {#if tabId === "display_settings"}
             <OutputsTabs />
+        {:else if tabId === "styles"}
+            <StylesTabs />
         {/if}
     </div>
 </main>

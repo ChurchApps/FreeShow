@@ -1,15 +1,16 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import type { Popups } from "../../../types/Main"
     import { activePopup, popupData } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
     import MaterialButton from "./MaterialButton.svelte"
-    import type { Popups } from "../../../types/Main"
 
+    export let id: string = ""
     export let label: string
-    export let value: string
-    export let nameObject: any = {}
+    export let value: any
+    export let defaultValue: any = null
+    export let name: string
     export let icon = ""
     export let popupId: Popups
 
@@ -21,7 +22,7 @@
     function openPopup() {
         if (disabled) return
 
-        popupData.set({ active: value, trigger: (id) => dispatch("change", id) })
+        popupData.set({ active: value, id, trigger: (value) => dispatch("change", value) })
         activePopup.set(popupId)
     }
 
@@ -36,9 +37,25 @@
             return
         }
     }
+
+    // RESET
+
+    let resetFromValue = ""
+    function reset() {
+        resetFromValue = value
+        dispatch("change", defaultValue)
+        setTimeout(() => {
+            resetFromValue = ""
+        }, 3000)
+    }
+
+    function undoReset() {
+        dispatch("change", resetFromValue)
+        resetFromValue = ""
+    }
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)}>
+<div {id} class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)}>
     <div class="background" />
 
     <div
@@ -53,29 +70,57 @@
     >
         <span class="selected-text">
             {#if value}
-                {#if icon}<Icon id={icon} />{/if}
+                <!-- {#if icon}<Icon id={icon} white />{/if} -->
 
-                {#if nameObject[value]?.name ?? value}
-                    {nameObject[value]?.name ?? value}
+                {#if name}
+                    {translateText(name)}
                 {:else}
-                    <span style="opacity: 0.7;font-style: italic;"><T id="main.unnamed" /></span>
+                    <span style="opacity: 0.7;font-style: italic;">{translateText("main.unnamed")}</span>
                 {/if}
             {/if}
         </span>
 
-        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 0h24v24H0z" fill="none" /><path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z" />
-        </svg>
+        <div class="arrow">
+            {#if icon}
+                <Icon id={icon} white />
+            {:else}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0h24v24H0z" fill="none" /><path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z" />
+                </svg>
+            {/if}
+
+            <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0h24v24H0z" fill="none" /><path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z" />
+            </svg>
+            {#if icon}
+                <span class="subicon">
+                    <Icon class="arrow" size={0.8} id={icon} white />
+                </span>
+            {/if} -->
+        </div>
     </div>
 
-    <label class:selected={value}><T id={label} /></label>
+    <label class:selected={value}>{translateText(label)}</label>
     <span class="underline" />
 
     {#if allowEmpty && value}
         <div class="remove">
-            <MaterialButton on:click={() => dispatch("change", null)} title="clear.general" white>
+            <MaterialButton {disabled} on:click={() => dispatch("change", null)} title="clear.general" white>
                 <Icon id="close" size={1.2} white />
             </MaterialButton>
+        </div>
+    {/if}
+    {#if defaultValue}
+        <div class="remove">
+            {#if JSON.stringify(value) !== JSON.stringify(defaultValue)}
+                <MaterialButton {disabled} on:click={reset} title="actions.reset" white>
+                    <Icon id="reset" white />
+                </MaterialButton>
+            {:else if resetFromValue}
+                <MaterialButton on:click={undoReset} title="actions.undo" white>
+                    <Icon id="undo" white />
+                </MaterialButton>
+            {/if}
         </div>
     {/if}
 </div>
@@ -88,6 +133,8 @@
         user-select: none;
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
 
     .background {
@@ -96,6 +143,10 @@
         background-color: var(--primary-darkest);
         border-radius: 4px 4px 0 0;
         z-index: 0;
+    }
+
+    .input {
+        height: 100%;
     }
 
     .textfield:not(:has(.dropdown)):not(:has(.remove:hover)):not(:disabled):hover .input {
@@ -146,6 +197,15 @@
         color: var(--text);
         transform: translateY(-0.4rem);
     }
+
+    /* .subicon {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+
+        border-radius: 50%;
+        background-color: var(--primary-darkest);
+    } */
 
     label {
         position: absolute;

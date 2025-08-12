@@ -20,6 +20,8 @@
         let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)
 
         if (e.key === "ArrowDown") {
+            e.preventDefault()
+
             nextTab = Math.min(activeTabs.length - 1, currentTabIndex + 1)
 
             if ((currentTabIndex + 1 >= activeTabs.length || $settingsTab === "profiles") && !activeTabs.includes("profiles")) {
@@ -27,6 +29,8 @@
                 return
             }
         } else if (e.key === "ArrowUp") {
+            e.preventDefault()
+
             nextTab = Math.max(0, currentTabIndex - 1)
         }
 

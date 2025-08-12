@@ -68,6 +68,8 @@
         outline: none; /* remove default focus outline */
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
     .togglefield.centered {
         justify-content: center;

@@ -21,7 +21,7 @@
         [3, 2],
         // cinematography
         [1.85, 1],
-        [2.39, 1],
+        [2.39, 1]
         // vertical
         // [9, 16],
     ]
@@ -31,15 +31,12 @@
     const alignOptions = [
         { id: "center", name: "$:edit.align_center:$" },
         { id: "start", name: "$:edit.align_start:$" },
-        { id: "end", name: "$:edit.align_end:$" },
+        { id: "end", name: "$:edit.align_end:$" }
     ]
 
     const isChecked = (e: any) => e.target.checked
 
     function setAspectRatio(value: any) {
-        if ($popupData.action !== "style_ratio") return
-        // if (!value.width || !value.height) return
-
         if ($popupData.trigger) {
             $popupData.trigger(value)
         }

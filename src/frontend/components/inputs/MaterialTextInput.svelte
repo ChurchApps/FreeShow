@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import T from "../helpers/T.svelte"
     import { translateText } from "../../utils/language"
-    import MaterialButton from "./MaterialButton.svelte"
     import Icon from "../helpers/Icon.svelte"
+    import MaterialButton from "./MaterialButton.svelte"
+    import { dictionary } from "../../stores"
 
     export let value: string
     export let defaultValue: string = ""
@@ -56,7 +56,7 @@
 
     <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} />
 
-    <label for={id}><T id={label} /></label>
+    <label for={id}>{translateText(label, $dictionary)}</label>
 
     <span class="underline" />
 
@@ -82,6 +82,8 @@
         color: var(--text);
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
 
     .textfield.centered {

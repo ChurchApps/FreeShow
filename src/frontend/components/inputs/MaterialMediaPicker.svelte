@@ -27,8 +27,6 @@
     const PICK_ID = uid()
     const dispatch = createEventDispatcher()
     let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
-        console.log(data)
-
         if (data.id !== PICK_ID || data.channel !== "MEDIA" || !data.files?.length) return
 
         dispatch("change", multiple ? data.files : data.files[0])
@@ -65,7 +63,7 @@
             {#if value}{getFileName(value)}{/if}
         </span>
 
-        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             {#if multiple}
                 <path d="M0 0h24v24H0z" fill="none" /><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
             {:else}
@@ -74,7 +72,7 @@
         </svg>
     </div>
 
-    <label class:selected={value}>{translateText(label)}</label>
+    <label class:selected={value}>{@html translateText(label)}</label>
     <span class="underline" />
 
     {#if allowEmpty && value}
@@ -94,6 +92,8 @@
         user-select: none;
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
 
     .background {
@@ -102,6 +102,10 @@
         background-color: var(--primary-darkest);
         border-radius: 4px 4px 0 0;
         z-index: 0;
+    }
+
+    .input {
+        height: 100%;
     }
 
     .textfield:not(:has(.dropdown)):not(:has(.remove:hover)):not(:disabled):hover .input {

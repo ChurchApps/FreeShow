@@ -4,7 +4,7 @@
     import type { Option } from "../../../types/Main"
     import { language } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
-    import { translate } from "../../utils/language"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
 
     const dispatch = createEventDispatcher()
@@ -73,7 +73,7 @@
         {#if arrow}
             <Icon id="expand" size={1.2} white />
         {:else}
-            {translate(normalizedValue, { parts: true }) || value}
+            {translateText(normalizedValue) || value}
         {/if}
     </button>
     {#if active}
@@ -96,7 +96,7 @@
                     on:keydown={triggerClickOnEnterSpace}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
-                    {translate(option.name, { parts: true }) || option.name}
+                    {translateText(option.name) || option.name}
                     {#if option.extra}
                         ({option.extra})
                     {/if}
