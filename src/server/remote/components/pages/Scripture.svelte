@@ -44,14 +44,6 @@
     function previous() {
         send("API:scripture_previous")
     }
-    
-    function goBack() {
-        if (depth > 0) {
-            depth--
-        } else {
-            openScripture("")
-        }
-    }
 
     // SEARCH
 
@@ -356,28 +348,10 @@
     </div>
 {:else}
     {#if openedScripture}
-        <div style="display: flex; align-items: center; margin-bottom: 0.5rem; position: relative; z-index: 100;">
-            <Button on:click={goBack} center style="padding: 0.4rem; position: absolute; left: 0; z-index: 101;" dark={depth === 0}>
-                <Icon size={1.2} id="back" />
-            </Button>
+        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
             <h2 class="header" style="flex: 1; text-align: center; margin: 0; line-height: 1.3;">
                 {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
-                {#if depth > 0}
-                    <br>
-                    <span style="color: #666; font-size: 0.8em; font-weight: normal; margin-top: 0.1rem; display: inline-block;">
-                        {#if depth === 1 && currentBook}
-                            {currentBook}
-                        {:else if depth === 2 && currentBook && currentChapter}
-                            {currentBook} {currentChapter}
-                        {:else if depth === 3 && currentBook && currentChapter && currentVerse}
-                            {currentBook} {currentChapter}:{currentVerse}
-                        {/if}
-                    </span>
-                {/if}
             </h2>
-            <Button on:click={() => (openScriptureSearch = true)} center style="padding: 0.4rem; position: absolute; right: 0; z-index: 101;" dark={depth === 0}>
-                <Icon size={1.2} id="search" />
-            </Button>
         </div>
         
         <div class="bible">
