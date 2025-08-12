@@ -133,7 +133,7 @@
         "socket.io": "^4.8.1",
         "socket.io-client": "^4.8.1",
         "sqlite-to-json": "^0.1.3",
-        "sqlite3": "5.1.7",
+        "sqlite3": "5.1.6",
         "uid": "^2.0.2",
         "ultimate-guitar": "^2.0.3",
         "word-extractor": "^1.0.4",
