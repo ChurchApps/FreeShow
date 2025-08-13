@@ -3,6 +3,7 @@
     import Loading from "../../../common/components/Loading.svelte"
     import { send } from "../../util/socket"
     import { currentScriptureState, scriptureViewList } from "../../util/stores"
+ 
 
     export let id: string
     export let scripture: Bible
@@ -28,7 +29,8 @@
     let lastUpdateTime = 0
     $: if ($currentScriptureState) {
         // Extract the scripture state (could be under 'api' or 'bible' key)
-        const scriptureState = $currentScriptureState.api || $currentScriptureState.bible;
+        const source: any = $currentScriptureState as any
+        const scriptureState: any = source.api || source.bible || source
         if (scriptureState && scriptureState.scriptureId === id) {
             // Prevent rapid updates that might interfere with local interactions
             const now = Date.now()
@@ -90,9 +92,22 @@
         send("API:start_scripture", { id, reference: `${books[activeBook]?.number ?? activeBook + 1}.${activeChapter + 1}.${activeVerse}` })
     }
 
-    // OPEN ONE AT A TIME
+    // NAVIGATION
 
-    export let depth = 0
+export let depth = 0
+
+export function goBack() {
+        if (depth > 0) {
+            if (depth === 2) {
+                activeVerse = 0
+            } else if (depth === 1) {
+                activeChapter = -1
+            }
+            depth--
+        }
+    }
+
+ 
 
     // let dispatch = createEventDispatcher()
     // if (depth !== undefined) dispatch("depth", depth)
@@ -122,13 +137,7 @@
     }
 </script>
 
-{#if depth}
-    <h2 class="header" style="position: absolute;top: 0;">
-        {books[activeBook]?.name || ""}
-        {#if depth === 2}{chapters[activeChapter]?.number}{/if}
-        <!-- {#if activeVerse}:{activeVerse}{/if} -->
-    </h2>
-{/if}
+<!-- Header handled by parent -->
 
 <!-- GRID MODE -->
 <div class="grid" class:tablet>
@@ -142,14 +151,17 @@
                         {@const color = getColorCode(books, i)}
                         {@const name = getShortName(book.name, i)}
 
-                        <span
+                    <span
                             id={id.toString()}
-                            on:click={() => {
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
                                 activeVerse = 0
                                 activeChapter = -1
                                 activeBook = i
                                 depth++
                             }}
+                        on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
                             class:active={activeBook === i}
                             style="color: {color};"
                             title={book.name}
@@ -172,11 +184,14 @@
                     {@const id = chapter.number ?? i + 1}
                     <span
                         id={id.toString()}
+                        role="button"
+                        tabindex="0"
                         on:mousedown={() => {
                             activeVerse = 0
                             activeChapter = i
                             depth++
                         }}
+                        on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = i; depth++; })()}
                         class:active={activeChapter === i}
                     >
                         {id}
@@ -194,12 +209,12 @@
                 {#each verses as verse, i}
                     {@const id = verse.number ?? i + 1}
                     {@const isActive = activeVerse == id}
-                    <p style="color: var(--text);font-weight: normal;" on:click={() => playScripture(id)} class:active={isActive}>
+                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === 'Enter' && playScripture(id)} class:active={isActive}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                             {id}
                         </span>
                         {#if $scriptureViewList}{formatBibleText(verse.text || verse.value)}{/if}
-                    </p>
+                    </button>
                 {/each}
             {:else}
                 <Loading />
@@ -271,7 +286,7 @@
         flex-wrap: nowrap;
     }
 
-    .grid p,
+    .grid .verse-button,
     .grid span {
         display: flex;
         justify-content: center;
@@ -283,10 +298,22 @@
 
         font-weight: 600;
     }
-    .grid .verses.list p {
+    .grid .verses.list .verse-button {
         align-items: unset;
         justify-content: unset;
         padding: 10px 0;
+    }
+    .verse-button {
+        display: flex;
+        align-items: unset;
+        justify-content: unset;
+        padding: 10px 0;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
     }
     .grid .verses.list span {
         max-width: 50px;
@@ -307,7 +334,7 @@
         font-weight: bold;
     }
 
-    .grid div p:hover {
+    .grid div .verse-button:hover {
         background-color: var(--hover);
     }
 

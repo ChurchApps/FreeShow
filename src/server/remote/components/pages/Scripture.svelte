@@ -32,7 +32,8 @@
         .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
         .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
-    let depth = 0
+	let depth = 0
+	let scriptureContentRef: any
     let currentBook = ""
     let currentChapter = ""
     let currentVerse = ""
@@ -53,10 +54,19 @@
         triggerScriptureSearch = false
     }
 
-    let openScriptureSearch = false
-    let searchValue = ""
-    let searchResults = []
-    let searchResult = { reference: "", referenceFull: "", verseText: "" }
+    function closeSearch() {
+        openScriptureSearch = false
+        // Ensure the current scripture is loaded when returning
+        if (openedScripture && !$scriptureCache[openedScripture]) {
+            send("GET_SCRIPTURE", { id: openedScripture })
+        }
+    }
+
+	let openScriptureSearch = false
+	let searchValue = ""
+	type SearchItem = { reference: string; referenceFull: string; verseText: string }
+	let searchResults: SearchItem[] = []
+	let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
     $: updateSearch(searchValue, $scriptureCache, openedScripture)
 
     function formatBookSearch(search: string): string {
@@ -81,7 +91,7 @@
             if (bookName === search) return true
             
             // Handle common abbreviations
-            const abbreviations = {
+            const abbreviations: Record<string, string> = {
                 'jh': 'john',
                 'jn': 'john', 
                 'jo': 'john',
@@ -205,13 +215,14 @@
         return chapter.verses?.[verseNumber - 1] || null
     }
 
-    function searchInBible(books: any[], searchTerm: string): any[] {
-        const results = []
+    type RawSearchHit = { book: any; chapter: any; verse: any; reference: string; referenceFull: string; verseText: string }
+    function searchInBible(books: any[], searchTerm: string): RawSearchHit[] {
+        const results: RawSearchHit[] = []
         const searchLower = searchTerm.toLowerCase()
 
         books.forEach((book) => {
-            book.chapters?.forEach((chapter, chapterIndex) => {
-                chapter.verses?.forEach((verse, verseIndex) => {
+            book.chapters?.forEach((chapter: any) => {
+                chapter.verses?.forEach((verse: any) => {
                     if (verse.text.toLowerCase().includes(searchLower)) {
                         results.push({
                             book: book,
@@ -226,7 +237,7 @@
             })
         })
 
-        return results.slice(0, 50) // Limit to 50 results
+        return results.slice(0, 50)
     }
 
     function updateSearch(searchVal: string, scriptureCache: any, openedScriptureId: string) {
@@ -265,7 +276,7 @@
                         }
                     } else {
                         // Whole chapter
-                        searchResults = chapter.verses?.map((verse, index) => ({
+                        searchResults = chapter.verses?.map((verse: any) => ({
                             reference: `${book.number}.${chapter.number}.${verse.number}`,
                             referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
                             verseText: verse.text
@@ -281,9 +292,9 @@
 
         // If not a valid reference, search for text content
         const textResults = searchInBible(books, searchVal)
-        searchResults = textResults
-        if (textResults.length > 0) {
-            searchResult = textResults[0]
+        searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        if (searchResults.length > 0) {
+            searchResult = searchResults[0]
         } else {
             searchResult = { reference: "", referenceFull: "", verseText: "" }
         }
@@ -291,10 +302,7 @@
     function playSearchVerse(reference?: string) {
         const ref = reference || searchResult.reference
         if (!ref) return
-        
-        // Parse the reference to navigate to the verse
-        const [bookNumber, chapterNumber, verseNumber] = ref.split('.').map(Number)
-        
+
         // Set depth to verse level (2) and navigate to the specific verse
         depth = 2
         
@@ -319,12 +327,17 @@
 
 {#if openScriptureSearch}
     <div style="height: 100%; display: flex; flex-direction: column;">
-        <input type="text" class="input" placeholder="Search" autofocus bind:value={searchValue} />
+        <div class="search-bar-row">
+            <button class="header-action" aria-label="Back" on:click={closeSearch}>
+                <Icon id="back" size={1.2} />
+            </button>
+            <input type="text" class="input search-input" placeholder="Search" autofocus bind:value={searchValue} />
+        </div>
 
         <div style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
             {#if searchResults.length > 0}
                 {#each searchResults.slice(0, 20) as result}
-                    <div class="verse" on:click={() => playSearchVerse(result.reference)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
+                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === 'Enter' ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
                         <b style="color: white;">{result.referenceFull}</b>
                         <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                     </div>
@@ -341,29 +354,43 @@
             {/if}
         </div>
 
-        <Button on:click={() => (openScriptureSearch = false)} style="width: 100%;" center dark>
-            <Icon id="back" right />
-            <p style="font-size: 0.8em;">{translate("actions.back", $dictionary)}</p>
-        </Button>
+        
     </div>
 {:else}
     {#if openedScripture}
-        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-            <h2 class="header" style="flex: 1; text-align: center; margin: 0; line-height: 1.3;">
-                {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
-            </h2>
-        </div>
+		<div class="header-bar" style="margin-bottom: 0.5rem;">
+			<button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
+				<Icon id="back" size={1.2} />
+			</button>
+			<div class="header-center">
+				<h2 class="header-title">
+					{$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
+				</h2>
+				<div class="header-ref">
+					{#if depth}
+						{#if currentBook}{currentBook}{/if}
+					{#if currentChapter}
+						 {currentChapter}{#if +currentVerse > 0}:{currentVerse}{/if}
+						{/if}
+					{/if}
+				</div>
+			</div>
+			<button class="header-action" aria-label="Search scripture" on:click={() => (openScriptureSearch = true)}>
+				<Icon id="search" size={1.2} />
+			</button>
+		</div>
         
         <div class="bible">
             {#if $scriptureCache[openedScripture]}
                 <!-- {tablet} -->
-                <ScriptureContent 
+				<ScriptureContent 
                     id={collectionId || openedScripture} 
                     scripture={$scriptureCache[openedScripture]} 
                     bind:depth 
                     bind:currentBook
                     bind:currentChapter
                     bind:currentVerse
+					bind:this={scriptureContentRef}
                 />
             {:else}
                 <Loading />
@@ -430,11 +457,59 @@
         max-width: 100%;
     }
 
-    .header span {
-        white-space: normal;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
+	/* Unified header bar with title, ref and actions */
+	.header-bar {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.5rem;
+		overflow: hidden;
+		padding-top: 4px;
+		padding-bottom: 4px;
+	}
+	.header-center {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		min-width: 0; /* enable ellipsis in children */
+		line-height: 1; /* keep block height tight so actions don't shift */
+	}
+	.header-title {
+		margin: 0;
+		line-height: 1.1;
+		font-weight: 700;
+		font-size: clamp(1rem, 3.2vw, 1.25rem);
+		max-width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.header-ref {
+		margin-top: 0;
+		font-size: 0.9em;
+		color: var(--text);
+		opacity: 0.9;
+		max-width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.header-action {
+		background: transparent;
+		border: none;
+		padding: 4px;
+		display: flex;
+		align-items: center;
+		cursor: pointer;
+		color: var(--secondary);
+		border-radius: 6px;
+		margin-top: 2px;
+	}
+	.header-action:hover {
+		background-color: var(--hover);
+	}
 
     .bible {
         flex: 1;
@@ -465,6 +540,14 @@
 
         border-bottom: 2px solid var(--secondary);
     }
+	.search-bar-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.search-input {
+		flex: 1;
+	}
     .input:active,
     .input:focus {
         outline: 2px solid var(--secondary);
