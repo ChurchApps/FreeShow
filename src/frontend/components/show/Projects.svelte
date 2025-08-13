@@ -30,6 +30,7 @@
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
+    import BottomButton from "../inputs/BottomButton.svelte"
     import Button from "../inputs/Button.svelte"
     import ProjectButton from "../inputs/ProjectButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
@@ -323,16 +324,13 @@
             </Autoscroll>
         </div>
     {/if}
-</div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <div class="tabs">
-        <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
-            <Icon id="section" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<p><T id="new.section" /></p>{/if}
-        </Button>
-    </div>
-{/if}
+    {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
+        <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} on:click={addSection}>
+            {#if !$labelsDisabled}<T id="new.section" />{/if}
+        </BottomButton>
+    {/if}
+</div>
 
 <style>
     .main {
@@ -379,6 +377,10 @@
     .list.projects :global(.droparea) {
         /* this is to be able to right click and add a folder/project at "root" level */
         padding-bottom: 10px;
+    }
+    .list#projectArea :global(.droparea) {
+        /* "new" button */
+        padding-bottom: 40px;
     }
 
     .list :global(.section) {

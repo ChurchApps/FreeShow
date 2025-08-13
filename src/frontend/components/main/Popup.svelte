@@ -168,7 +168,8 @@
 
     .card :global(.popup-close),
     .card :global(.popup-back),
-    .card :global(.popup-options) {
+    .card :global(.popup-options),
+    .card :global(.popup-reset) {
         position: absolute;
         inset-inline-end: -10px;
         top: 0;
@@ -227,5 +228,13 @@
         height: 18px;
 
         pointer-events: none;
+    }
+
+    .card :global(.popup-reset) {
+        inset-inline-end: 85px;
+
+        max-height: 35.2px;
+        margin-top: 10px;
+        margin-right: 10px;
     }
 </style>

@@ -6,6 +6,7 @@
     import FilesButtons from "./tabs/FilesButtons.svelte"
     import General from "./tabs/General.svelte"
     import Other from "./tabs/Other.svelte"
+    import OtherButtons from "./tabs/OtherButtons.svelte"
     import Outputs from "./tabs/Outputs.svelte"
     import OutputsTabs from "./tabs/OutputsTabs.svelte"
     import Profiles from "./tabs/Profiles.svelte"
@@ -81,6 +82,8 @@
             <ProfilesTabs />
         {:else if tabId === "theme"}
             <ThemeTabs />
+        {:else if tabId === "other"}
+            <OtherButtons />
         {/if}
     </div>
 </main>

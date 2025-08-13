@@ -21,7 +21,7 @@
     {/if}
 </div>
 
-{#if open}
+{#if arrow && open}
     <div class="menu">
         <slot name="menu" />
     </div>

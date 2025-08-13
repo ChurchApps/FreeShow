@@ -82,11 +82,15 @@
 
 <style>
     .main {
+        position: relative;
+
         overflow-y: auto;
+
         display: flex;
         flex-direction: column;
-        background-color: var(--primary-darker);
         flex: 1;
+
+        background-color: var(--primary-darker);
     }
 
     .warning {

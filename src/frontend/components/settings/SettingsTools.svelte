@@ -1,14 +1,18 @@
 <script lang="ts">
     import { Main } from "../../../types/IPC/Main"
+    import type { Popups } from "../../../types/Main"
     import { sendMain } from "../../IPC/main"
     import { activePopup, dataPath, settingsTab } from "../../stores"
-    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
     $: openedTab = $settingsTab
 
     // OPEN
+
+    function open(id: Popups) {
+        activePopup.set(id)
+    }
 
     function openLog() {
         sendMain(Main.OPEN_LOG)
@@ -26,61 +30,54 @@
 
 {#if openedTab === "general"}
     <div class="bottom">
-        <Button on:click={() => activePopup.set("manage_groups")}>
-            <Icon id="groups" style="margin-inline-start: 0.5em;" right />
-            <p><T id="popup.manage_groups" /></p>
-        </Button>
-        <Button on:click={() => activePopup.set("manage_metadata")}>
-            <Icon id="info" style="margin-inline-start: 0.5em;" right />
-            <p><T id="popup.manage_metadata" /></p>
-        </Button>
-        <Button on:click={() => activePopup.set("manage_dynamic_values")}>
-            <Icon id="dynamic" style="margin-inline-start: 0.5em;" right />
-            <p><T id="popup.manage_dynamic_values" /></p>
-        </Button>
-        <Button on:click={() => activePopup.set("manage_icons")}>
-            <Icon id="star" style="margin-inline-start: 0.5em;" right />
-            <p><T id="popup.manage_icons" /></p>
-        </Button>
-        <Button on:click={() => activePopup.set("manage_colors")}>
-            <Icon id="color" style="margin-inline-start: 0.5em;" right />
-            <p><T id="popup.manage_colors" /></p>
-        </Button>
+        <MaterialButton variant="outlined" icon="groups" on:click={() => open("manage_groups")} small>
+            <T id="popup.manage_groups" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="info" on:click={() => open("manage_metadata")} small>
+            <T id="popup.manage_metadata" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="dynamic" on:click={() => open("manage_dynamic_values")} small>
+            <T id="popup.manage_dynamic_values" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="star" on:click={() => open("manage_icons")} small>
+            <T id="popup.manage_icons" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="color" on:click={() => open("manage_colors")} small>
+            <T id="popup.manage_colors" />
+        </MaterialButton>
     </div>
 {:else if openedTab === "other"}
     <div class="bottom">
-        <Button on:click={openLog}>
-            <Icon id="document" style="margin-inline-start: 0.5em;" right />
-            <p><T id="actions.open_error_log" /></p>
-        </Button>
-        <Button on:click={openCache}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p><T id="actions.open_cache_folder" /></p>
-        </Button>
-        <Button on:click={openAppData}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p><T id="actions.open_app_data_folder" /></p>
-        </Button>
-        <Button on:click={openUserData}>
-            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-            <p><T id="actions.open_user_data_folder" /></p>
-        </Button>
+        <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
+            <T id="actions.open_error_log" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="folder" on:click={openCache} small>
+            <T id="actions.open_cache_folder" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="folder" on:click={openAppData} small>
+            <T id="actions.open_app_data_folder" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="folder" on:click={openUserData} small>
+            <T id="actions.open_user_data_folder" />
+        </MaterialButton>
     </div>
 {/if}
 
 <style>
     .bottom {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-        width: 100%;
-        background-color: var(--primary-darkest);
-
         display: flex;
         flex-direction: column;
+        gap: 2px;
+
+        padding: 5px;
+        padding-bottom: 7px;
+
+        overflow-y: auto;
     }
 
-    .bottom p {
-        padding: 0 5px;
+    .bottom :global(button) {
+        justify-content: left;
+        /* border-width: 0; */
+        box-shadow: none;
     }
 </style>
