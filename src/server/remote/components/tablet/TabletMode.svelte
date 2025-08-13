@@ -170,12 +170,59 @@
         // _set("outSlide", index) // ??
         // send("API:get_cleared") // ??
     }
+
+	// RESIZERS
+	let leftWidth: number = 290
+	let rightWidth: number = 290
+	const minPanel = 200
+	const minCenter = 300
+
+	let dragging: "left" | "right" | null = null
+	let startX = 0
+	let startLeft = 0
+	let startRight = 0
+
+	function onPointerDownLeft(e: PointerEvent) {
+		dragging = "left"
+		startX = e.clientX
+		startLeft = leftWidth
+		window.addEventListener("pointermove", onPointerMove)
+		window.addEventListener("pointerup", onPointerUp, { once: true })
+	}
+	function onPointerDownRight(e: PointerEvent) {
+		dragging = "right"
+		startX = e.clientX
+		startRight = rightWidth
+		window.addEventListener("pointermove", onPointerMove)
+		window.addEventListener("pointerup", onPointerUp, { once: true })
+	}
+	function onPointerMove(e: PointerEvent) {
+		if (!dragging) return
+		const total = window.innerWidth
+		const resizers = 12 // two resizers of 6px each
+		const delta = e.clientX - startX
+		if (dragging === "left") {
+			let proposed = startLeft + delta
+			proposed = Math.max(minPanel, proposed)
+			const maxLeft = total - rightWidth - resizers - minCenter
+			leftWidth = Math.min(proposed, Math.max(minPanel, maxLeft))
+		} else if (dragging === "right") {
+			let proposed = startRight - delta
+			proposed = Math.max(minPanel, proposed)
+			const maxRight = total - leftWidth - resizers - minCenter
+			rightWidth = Math.min(proposed, Math.max(minPanel, maxRight))
+		}
+	}
+	function onPointerUp() {
+		dragging = null
+		window.removeEventListener("pointermove", onPointerMove)
+	}
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 {#if !isFullscreen}
-    <div class="left">
+    <div class="left" style={`width:${leftWidth}px`}>
         <div class="flex">
             {#if activeTab === "shows"}
                 <Shows tablet />
@@ -188,6 +235,10 @@
 
         <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
     </div>
+{/if}
+
+{#if !isFullscreen}
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft}></div>
 {/if}
 
 <div class="center">
@@ -224,7 +275,7 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" on:click={() => playSlide(i)}>
+                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={(e) => (e.key === 'Enter' ? playSlide(i) : null)}>
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -291,7 +342,11 @@
 </div>
 
 {#if !isFullscreen}
-    <div class="right" style="jutsify-content: space-between;">
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight}></div>
+{/if}
+
+{#if !isFullscreen}
+    <div class="right" style={`jutsify-content: space-between; width:${rightWidth}px`}>
         {#if !$isCleared.all}
             <div class="top flex">
                 {#if $outShow && layout}
@@ -354,14 +409,37 @@
     }
 
     .left {
-        border-inline-end: 4px solid var(--primary-lighter);
+        border-inline-end: 0;
     }
     .right {
-        border-inline-start: 4px solid var(--primary-lighter);
+        border-inline-start: 0;
     }
 
     .center {
         flex: 1;
+    }
+
+    /* Resizers */
+    .resizer {
+        position: relative;
+        width: 10px; /* generous hit-area */
+        cursor: col-resize;
+        background: transparent;
+        /* overlap adjacent panes so there's no visual gap */
+        margin-inline: -5px;
+    }
+    .resizer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px; /* single visual line */
+        transform: translateX(-50%);
+        background-color: var(--primary-lighter);
+    }
+    .resizer:hover::before {
+        background-color: var(--primary-darkest);
     }
 
     /* ///// */

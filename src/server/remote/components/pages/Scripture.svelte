@@ -358,7 +358,7 @@
     </div>
 {:else}
     {#if openedScripture}
-		<div class="header-bar" style="margin-bottom: 0.5rem;">
+		<div class="header-bar" style="margin-bottom: 0.5rem;" class:has-ref={!!depth}>
 			<button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
 				<Icon id="back" size={1.2} />
 			</button>
@@ -466,7 +466,11 @@
 		overflow: hidden;
 		padding-top: 4px;
 		padding-bottom: 4px;
+		/* Match the darker show header style */
+		background-color: var(--primary-darker);
+		border-bottom: 2px solid var(--primary-lighter);
 	}
+	.header-bar.has-ref { padding-top: 8px; padding-bottom: 8px; }
 	.header-center {
 		flex: 1;
 		display: flex;
@@ -485,6 +489,8 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		/* Ensure translation label is white like the show header */
+		color: var(--text);
 	}
 	.header-ref {
 		margin-top: 0;
@@ -496,6 +502,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	.header-bar.has-ref .header-ref { margin-top: 6px; }
 	.header-action {
 		background: transparent;
 		border: none;
