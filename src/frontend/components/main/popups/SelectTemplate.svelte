@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Card from "../../drawer/Card.svelte"
@@ -26,9 +26,24 @@
     $: active = $popupData.active || ""
 
     // multiple types (scripture)
-    let types: any[] = []
-    $: types = $popupData.types || []
-    $: values = $popupData.values || []
+    const id = $popupData.id
+    let types: { id: string; name: string }[] = []
+    let values: { id: string; name: string }[] = []
+    if (id === "scripture") {
+        const scriptureTemplateTypes = Object.values($scriptures).find((a) => a.collection)
+            ? [
+                  { id: "", name: "$:example.default:$ (1)" },
+                  { id: "_2", name: "2" },
+                  { id: "_3", name: "3" },
+                  { id: "_4", name: "4" }
+              ]
+            : []
+
+        const currentStyle = $styles[$activeStyle]
+
+        types = scriptureTemplateTypes
+        values = scriptureTemplateTypes.map((a) => currentStyle["templateScripture" + a.id] || "")
+    }
 
     let selectedType = types[0]?.id || ""
 
@@ -59,7 +74,7 @@
     }
 
     function selectTemplate(template: any, keyboard = false) {
-        if ($popupData.action !== "select_template") return
+        // if ($popupData.action !== "select_template") return
 
         let previousValue = value
         // update before closing
@@ -67,7 +82,8 @@
 
         setTimeout(() => {
             if ($popupData.trigger) {
-                $popupData.trigger(value, selectedType)
+                if (selectedType) $popupData.trigger({ value, type: selectedType })
+                else $popupData.trigger(value)
                 // } else {
                 //     popupData.set({ ...$popupData, templateId: value })
             }

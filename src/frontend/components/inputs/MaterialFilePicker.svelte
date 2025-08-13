@@ -1,30 +1,39 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
-    import type { Popups } from "../../../types/Main"
-    import { activePopup, popupData } from "../../stores"
+    import { createEventDispatcher, onDestroy } from "svelte"
+    import { uid } from "uid"
+    import { Main } from "../../../types/IPC/Main"
+    import { ToMain } from "../../../types/IPC/ToMain"
+    import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
+    import { getFileName } from "../helpers/media"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let id: string = ""
     export let label: string
-    export let value: any
-    export let defaultValue: any = null
-    export let name: string
-    export let icon = ""
-    export let popupId: Popups
+    export let value: string | undefined
+    export let title: string = ""
+    export let filter: { name: string; extensions: string[] }
+    export let icon: string = ""
+    export let multiple: boolean = false
 
     export let disabled = false
     export let allowEmpty = false
 
-    const dispatch = createEventDispatcher()
-
-    function openPopup() {
+    function pickMedia() {
         if (disabled) return
 
-        popupData.set({ active: value, id, trigger: (value) => dispatch("change", value) })
-        activePopup.set(popupId)
+        // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
+        sendMain(Main.OPEN_FILE, { channel: "MEDIA", id: PICK_ID, filter, multiple })
     }
+
+    const PICK_ID = uid()
+    const dispatch = createEventDispatcher()
+    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
+        if (data.id !== PICK_ID || data.channel !== "MEDIA" || !data.files?.length) return
+
+        dispatch("change", multiple ? data.files : data.files[0])
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     // SELECT
 
@@ -33,29 +42,13 @@
 
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault()
-            openPopup()
+            pickMedia()
             return
         }
     }
-
-    // RESET
-
-    let resetFromValue = ""
-    function reset() {
-        resetFromValue = value
-        dispatch("change", defaultValue)
-        setTimeout(() => {
-            resetFromValue = ""
-        }, 3000)
-    }
-
-    function undoReset() {
-        dispatch("change", resetFromValue)
-        resetFromValue = ""
-    }
 </script>
 
-<div {id} class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)}>
+<div class="textfield {disabled ? 'disabled' : ''}" data-title={value || translateText(title || "edit.choose_media")}>
     <div class="background" />
 
     <div
@@ -64,63 +57,37 @@
         tabindex={disabled ? undefined : 0}
         on:click={(e) => {
             if (e.target?.closest(".remove")) return
-            openPopup()
+            pickMedia()
         }}
         on:keydown={handleKeydown}
     >
         <span class="selected-text">
-            {#if value}
-                <!-- {#if icon}<Icon id={icon} white />{/if} -->
-
-                {#if name}
-                    {translateText(name)}
-                {:else}
-                    <span style="opacity: 0.7;font-style: italic;">{translateText("main.unnamed")}</span>
-                {/if}
-            {/if}
+            {#if value}{getFileName(value)}{/if}
         </span>
 
         <div class="arrow">
             {#if icon}
                 <Icon id={icon} white />
             {:else}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" /><path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    {#if multiple}
+                        <path d="M0 0h24v24H0z" fill="none" /><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
+                    {:else}
+                        <path d="M0 0h24v24H0z" fill="none" /><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    {/if}
                 </svg>
             {/if}
-
-            <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0h24v24H0z" fill="none" /><path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z" />
-            </svg>
-            {#if icon}
-                <span class="subicon">
-                    <Icon class="arrow" size={0.8} id={icon} white />
-                </span>
-            {/if} -->
         </div>
     </div>
 
-    <label class:selected={value}>{translateText(label)}</label>
+    <label class:selected={value}>{@html translateText(label)}</label>
     <span class="underline" />
 
     {#if allowEmpty && value}
         <div class="remove">
-            <MaterialButton {disabled} on:click={() => dispatch("change", null)} title="clear.general" white>
+            <MaterialButton on:click={() => dispatch("change", "")} title="clear.general" white>
                 <Icon id="close" white />
             </MaterialButton>
-        </div>
-    {/if}
-    {#if defaultValue}
-        <div class="remove">
-            {#if JSON.stringify(value) !== JSON.stringify(defaultValue)}
-                <MaterialButton {disabled} on:click={reset} title="actions.reset" white>
-                    <Icon id="reset" white />
-                </MaterialButton>
-            {:else if resetFromValue}
-                <MaterialButton on:click={undoReset} title="actions.undo" white>
-                    <Icon id="undo" white />
-                </MaterialButton>
-            {/if}
         </div>
     {/if}
 </div>
@@ -197,15 +164,6 @@
         color: var(--text);
         transform: translateY(-0.4rem);
     }
-
-    /* .subicon {
-        position: absolute;
-        bottom: -5px;
-        right: -5px;
-
-        border-radius: 50%;
-        background-color: var(--primary-darkest);
-    } */
 
     label {
         position: absolute;

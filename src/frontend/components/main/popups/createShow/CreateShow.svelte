@@ -190,7 +190,7 @@
 {/if}
 
 {#if selectedOption === "text"}
-    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title="edit.options" on:click={() => (showMore = !showMore)}>
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title="edit.options" on:click={() => (showMore = !showMore)} white>
         {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
     </MaterialButton>
 

@@ -39,14 +39,16 @@
 
     <input type="checkbox" bind:checked={checkedValue} {id} {disabled} class="hidden-input" tabindex="-1" aria-hidden="true" />
 
-    <label for={id} class="toggle-label">
-        {translateText(label, $dictionary)}
+    {#if label}
+        <label for={id} class="toggle-label">
+            {translateText(label, $dictionary)}
 
-        {#if data}<span class="data">{data}</span>{/if}
+            {#if data}<span class="data">{data}</span>{/if}
 
-        <!-- data-title={translateText("info.changed")} -->
-        {#if defaultValue !== null}<span class="changed" class:hidden={defaultValue === checkedValue}></span>{/if}
-    </label>
+            <!-- data-title={translateText("info.changed")} -->
+            {#if defaultValue !== null}<span class="changed" class:hidden={defaultValue === checkedValue}></span>{/if}
+        </label>
+    {/if}
 
     <div class="switch">
         <div class="thumb" />
@@ -68,6 +70,8 @@
         outline: none; /* remove default focus outline */
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
     .togglefield.centered {
         justify-content: center;
@@ -128,11 +132,11 @@
         filter: invert(0.08);
     }
 
-    .hidden-input:checked + .toggle-label + .switch {
+    .togglefield:has(.hidden-input:checked) .switch {
         background-color: var(--secondary);
         opacity: 1;
     }
-    .hidden-input:checked + .toggle-label + .switch .thumb {
+    .togglefield:has(.hidden-input:checked) .switch .thumb {
         transform: translateX(18px);
         background-color: var(--primary-darker);
     }

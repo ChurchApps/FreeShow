@@ -5,10 +5,11 @@
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
-    import { getSortedStageItems } from "../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../helpers/array"
+    import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
+    import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import SlideItems from "../slide/SlideItems.svelte"
@@ -22,8 +23,6 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
-    import Button from "../inputs/Button.svelte"
-    import Icon from "../helpers/Icon.svelte"
 
     export let id: string
     export let item: StageItem

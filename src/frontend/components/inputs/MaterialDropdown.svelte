@@ -2,9 +2,10 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { cubicOut } from "svelte/easing"
     import { fade, fly } from "svelte/transition"
+    import { dictionary } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
     export let label: string
@@ -270,13 +271,13 @@
         </svg>
     </div>
 
-    <label for={id} class:selected={value}><T id={label} /></label>
+    <label for={id} class:selected={value}>{@html translateText(label, $dictionary)}</label>
     <span class="underline" />
 
     {#if allowEmpty && value}
         <div class="remove">
             <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
-                <Icon id="close" size={1.2} white />
+                <Icon id="close" white />
             </MaterialButton>
         </div>
     {/if}
@@ -298,7 +299,7 @@
         <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
             {#if allowEmpty}
                 <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption("")}>
-                    <T id="main.none" />
+                    {translateText("main.none")}
                 </li>
             {/if}
 
@@ -324,6 +325,8 @@
         user-select: none;
 
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        height: 50px;
     }
 
     .textfield.flags {

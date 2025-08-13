@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { BLACKMAGIC, OUTPUT } from "../../../../types/Channels"
     import type { Output } from "../../../../types/Output"
     import { activeTriggerFunction, currentOutputSettings, ndiData, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
@@ -7,12 +6,10 @@
     import { waitForPopupData } from "../../../utils/popup"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import { addOutput, enableStageOutput, refreshOut } from "../../helpers/output"
+    import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
 
     let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
@@ -145,160 +142,17 @@
 
             addOutput(false, styleId)
         }
-
-        checkScroll()
     }
-
-    let tabsElem: HTMLDivElement | undefined
-    let isScrollable = false
-    function checkScroll() {
-        if (!tabsElem) return
-        isScrollable = tabsElem.scrollWidth > tabsElem.clientWidth
-    }
-
-    onMount(checkScroll)
 
     let edit: any
 </script>
 
-<div class="row">
-    {#if outputsList.length > 1}
-        <div class="tabs" class:isScrollable bind:this={tabsElem}>
-            {#each outputsList as output}
-                {@const active = $currentOutputSettings === output.id}
+<Tabs id="output" tabs={outputsList} value={$currentOutputSettings || ""} newLabel="settings.new_output" class="context #output_screen" on:open={(e) => currentOutputSettings.set(e.detail)} on:create={createOutput} let:tab>
+    {#if tab.stageOutput}<Icon id="stage" right />{/if}
+    {#if tab.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
+    <HiddenInput value={tab.name} id={"output_" + tab.id} on:edit={(e) => updateOutput("name", e.detail.value, tab.id)} bind:edit />
 
-                <SelectElem id="output" data={{ id: output.id }} fill>
-                    <button class="tab context #output_screen{output.stageOutput ? '_stage' : ''}" class:active on:click={() => currentOutputSettings.set(output.id || "")}>
-                        {#if output.stageOutput}<Icon id="stage" right />{/if}
-                        {#if output.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
-                        <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
-
-                        {#if output.color}
-                            <div class="color" style="--color: {output.color};"></div>
-                        {/if}
-                    </button>
-                </SelectElem>
-            {/each}
-        </div>
+    {#if tab.color}
+        <div class="color" style="--color: {tab.color};"></div>
     {/if}
-
-    <MaterialButton title="settings.new_output" class={outputsList.length > 1 ? "small" : ""} style={outputsList.length > 1 ? "" : "flex: 1;"} on:click={createOutput}>
-        <Icon id="add" size={1.2} white={outputsList.length > 1} />
-        {#if outputsList.length <= 1}
-            <!-- "settings.add" -->
-            <T id="settings.new_output" />
-        {/if}
-    </MaterialButton>
-</div>
-
-<style>
-    .row {
-        display: flex;
-
-        background-color: var(--primary);
-
-        height: 50px;
-    }
-
-    .row :global(button.small) {
-        transform: translateY(4px);
-
-        border-radius: 15px;
-        height: 40px;
-        aspect-ratio: 1;
-    }
-    .row:not(:has(.isScrollable)) :global(button.small) {
-        transform: translate(-10px, 4px);
-    }
-
-    .tabs {
-        --radius: 15px;
-
-        display: flex;
-
-        flex: 1;
-
-        overflow-x: auto;
-
-        padding: 0 var(--radius);
-    }
-
-    button.tab {
-        background-color: inherit;
-        color: inherit;
-        font-family: inherit;
-        font-size: inherit;
-        border: none;
-
-        height: 100%;
-
-        position: relative;
-        display: flex;
-        align-items: center;
-        width: 100%;
-
-        padding: 10px 20px;
-        border: none;
-        background-color: transparent;
-        cursor: pointer;
-
-        transition: background-color 0.12s ease;
-
-        border-radius: 0 0 var(--radius) var(--radius);
-
-        /* border-bottom: 2px solid var(--primary); */
-    }
-    button.tab:not(.active):hover {
-        background-color: var(--hover);
-    }
-
-    .tab .color {
-        position: absolute;
-        left: var(--radius);
-        bottom: 5px;
-
-        width: calc(100% - var(--radius) * 2);
-        height: 2px;
-
-        background-color: var(--color);
-    }
-
-    .tabs :not(:first-child) .tab::before {
-        content: "";
-        position: absolute;
-        left: -2px; /* hidden under active */
-        top: 42%;
-        transform: translateY(-50%);
-
-        width: 2px;
-        height: 45%;
-        background-color: var(--primary-lighter);
-    }
-
-    .tab.active {
-        background-color: var(--primary-darker);
-        z-index: 1;
-
-        /* border-bottom: 2px solid var(--secondary); */
-    }
-
-    /* concave rounding */
-    .tabs .tab.active::before,
-    .tabs .tab.active::after {
-        transform: initial;
-
-        content: "";
-        position: absolute;
-        top: 0;
-        width: var(--radius);
-        height: var(--radius);
-    }
-    .tabs .tab.active::before {
-        left: calc(var(--radius) * -1);
-        background: radial-gradient(circle at 0 100%, transparent var(--radius), var(--primary-darker) 0px);
-    }
-    .tabs .tab.active::after {
-        right: calc(var(--radius) * -1);
-        background: radial-gradient(circle at 100% 100%, transparent var(--radius), var(--primary-darker) 0px);
-    }
-</style>
+</Tabs>

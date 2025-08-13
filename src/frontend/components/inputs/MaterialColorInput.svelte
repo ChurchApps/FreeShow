@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
+    import { translateText } from "../../utils/language"
     import { defaultColors, getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
     export let value: string = "#000000"
@@ -37,6 +37,7 @@
         value = c
         dispatch("change", value)
         dispatch("input", value)
+
         pickerOpen = false
     }
 
@@ -60,17 +61,61 @@
         selectColor(resetFromValue)
         resetFromValue = ""
     }
+
+    function handleKey(event) {
+        if (disabled) return
+
+        if (event.key === "Escape") {
+            if (!pickerOpen) return
+            event.preventDefault()
+            pickerOpen = false
+            setTimeout(() => document.getElementById(pickerId)?.focus())
+            return
+        }
+
+        if (event.key === "Enter" || event.key === " ") {
+            const picker = event.target?.closest(".colorpicker")
+            if (picker) return
+
+            const pickColor = event.target?.closest(".pickColor")
+            if (pickColor) {
+                selectColor(pickColor.getAttribute("data-value"))
+                document.getElementById(pickerId)?.focus()
+                return
+            }
+
+            togglePicker()
+        }
+    }
 </script>
 
 <svelte:window on:mousedown={mousedown} />
 
-<div id={pickerId} class="textfield {disabled ? 'disabled' : ''}" style="--outline-color: {getContrast(value)};">
-    <div class="background" />
+<div id={pickerId} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};" on:keydown={handleKey}>
+    <div class="background" on:click={togglePicker} />
 
     <div class="color-display" style="background:{value || 'transparent'};" on:click={togglePicker}></div>
 
-    <label><T id={label} /></label>
+    <label>{@html translateText(label)}</label>
     <span class="underline" />
+
+    {#if pickerOpen}
+        <div class="picker">
+            {#if enableNoColor}
+                <div data-value={""} class="pickColor noColor" data-title={translateText("settings.remove")} tabindex="0" on:click={() => selectColor("")}>
+                    <Icon id="close" white />
+                </div>
+            {/if}
+            {#each defaultColors as c}
+                <div data-value={c.value} class="pickColor {value === c.value ? 'active' : ''}" data-title={c.name} tabindex="0" style="background:{c.value};--outline-color: {getContrast(c.value)};" on:click={() => selectColor(c.value)}></div>
+            {/each}
+
+            <div class="color" style="background: {value};">
+                <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
+                <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={input} on:change={change} />
+            </div>
+        </div>
+    {/if}
 
     {#if defaultValue}
         <div class="remove">
@@ -85,24 +130,6 @@
             {/if}
         </div>
     {/if}
-
-    {#if pickerOpen}
-        <div class="picker">
-            {#if enableNoColor}
-                <div class="pickColor noColor" on:click={() => selectColor("")}>
-                    <Icon id="close" white />
-                </div>
-            {/if}
-            {#each defaultColors as c}
-                <div class="pickColor {value === c.value ? 'active' : ''}" style="background:{c.value};" on:click={() => selectColor(c.value)}></div>
-            {/each}
-
-            <div class="color" style="background: {value};">
-                <p style="color: var(--outline-color);"><T id="actions.choose_custom" /></p>
-                <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={input} on:change={change} />
-            </div>
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -110,7 +137,20 @@
         position: relative;
         width: 100%;
         border-bottom: 1.2px solid var(--primary-lighter);
+
+        cursor: pointer;
+
+        --margin: 6px;
+        height: 50px;
     }
+    .textfield.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    /* .textfield:not(.disabled):hover .input {
+        background-color: var(--hover);
+    } */
+
     .background {
         position: absolute;
         inset: 0;
@@ -120,34 +160,35 @@
     .color-display {
         position: relative;
 
-        height: 3rem;
-        border-radius: 4px;
+        border-radius: 3px;
         border: 2px solid transparent;
-        cursor: pointer;
 
-        transition: 0.2s background-color;
+        transition:
+            0.2s background-color,
+            0.1s border-color;
 
+        top: var(--margin);
+        height: calc(100% - (var(--margin) * 2));
+        margin-right: var(--margin);
         /* margin-left: 200px; */
+        margin-left: 50%;
+
+        top: 50%;
+        transform: translateY(-50%);
     }
     .color-display:hover {
-        outline: 2px solid var(--outline-color);
-        outline-offset: -2px;
+        border-color: var(--outline-color);
     }
     label {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
         left: 0.75rem;
-        font-size: 1.1rem;
-        color: var(--outline-color);
-        opacity: 0.8;
-        transition: all 0.2s ease;
 
-        padding: 10px;
-        /* background-color: var(--primary-darkest); */
-        background-color: rgb(0 0 0 / 0.8);
-        color: var(--text);
-        border-radius: 4px;
+        font-size: 1.1rem;
+        opacity: 0.8;
+
+        transition: all 0.2s ease;
 
         pointer-events: none;
     }
@@ -162,19 +203,22 @@
         transform-origin: left;
         transition: transform 0.2s ease;
     }
-    .textfield:not(.disabled):hover .underline {
+    /* .textfield:not(.disabled):active .underline */
+    .textfield:focus .underline {
         transform: scaleX(1);
     }
     .picker {
         position: absolute;
-        top: 100%;
-        left: 0;
+        top: calc(100% - var(--margin));
+        left: 50%;
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-radius: 8px;
         display: flex;
         flex-wrap: wrap;
         z-index: 10;
+
+        cursor: default;
 
         --width: 200px;
         --padding: 10px;
@@ -200,12 +244,18 @@
         /* width: 40px !important; */
         aspect-ratio: 1;
         /* flex: 1; */
+
+        border: 2px solid transparent;
+        transition: 0.1s border-color;
+
+        outline-offset: 2px;
     }
     .pickColor:hover {
-        border: 2px solid #ddd !important;
+        /* border-color: var(--outline-color); */
+        border-color: var(--primary-darker);
     }
     .pickColor.active {
-        border: 2px solid var(--secondary);
+        border-color: var(--secondary);
     }
 
     .noColor {
@@ -219,6 +269,9 @@
         top: 50%;
         right: 4px;
         transform: translateY(-50%);
+    }
+    .remove :global(svg) {
+        color: var(--outline-color);
     }
 
     /* default picker */
@@ -236,10 +289,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+
+        border: 2px solid transparent;
+        transition: 0.1s border-color;
     }
-    .color:hover {
-        outline: 2px solid var(--outline-color) !important;
-        outline-offset: -2px;
+    .color:hover,
+    .color:has(input:focus) {
+        border-color: var(--outline-color);
     }
 
     input[type="color"] {
@@ -247,6 +303,8 @@
 
         opacity: 0;
         width: 100%;
-        border: none;
+        height: 100%;
+
+        cursor: pointer;
     }
 </style>

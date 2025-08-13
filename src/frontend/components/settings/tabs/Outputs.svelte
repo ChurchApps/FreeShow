@@ -279,14 +279,14 @@
 
 {#if stageId}
     <InputRow>
-        <MaterialPopupButton label="stage.stage_layout" value={stageId} nameObject={$stageShows} icon="stage" popupId="select_stage_layout" on:change={(e) => updateOutput("stageOutput", e.detail)} />
+        <MaterialPopupButton label="stage.stage_layout" value={stageId} name={$stageShows[stageId]?.name} icon="stage" popupId="select_stage_layout" on:change={(e) => updateOutput("stageOutput", e.detail)} />
         {#if $stageShows[stageId]}
             <MaterialButton title="titlebar.edit" icon="edit" on:click={editStage} />
         {/if}
     </InputRow>
 {:else}
     <InputRow>
-        <MaterialPopupButton label="settings.active_style" value={styleId} nameObject={$styles} icon="styles" popupId="select_style" on:change={(e) => updateOutput("style", e.detail)} allowEmpty />
+        <MaterialPopupButton label="settings.active_style" value={styleId} name={$styles[styleId]?.name} icon="styles" popupId="select_style" on:change={(e) => updateOutput("style", e.detail)} allowEmpty />
         {#if $styles[styleId]}
             <MaterialButton title="titlebar.edit" icon="edit" on:click={editStyle} />
         {/if}
@@ -299,7 +299,13 @@
 <!-- window -->
 <Title label="settings.window" icon="window" />
 
-<MaterialPopupButton label="settings.output_screen" value={outputLabel} icon={currentOutput?.invisible ? "stage" : currentOutput?.boundsLocked ? "locked" : "screen"} popupId={currentOutput?.invisible ? "change_output_values" : "choose_screen"} />
+<MaterialPopupButton
+    label="settings.output_screen"
+    value={outputLabel}
+    name={outputLabel}
+    icon={currentOutput?.invisible ? "stage" : currentOutput?.boundsLocked ? "locked" : "screen"}
+    popupId={currentOutput?.invisible ? "change_output_values" : "choose_screen"}
+/>
 <MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} disabled={currentOutput?.invisible} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
 
 <!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->

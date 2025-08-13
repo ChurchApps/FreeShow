@@ -108,7 +108,20 @@ export class NdiReceiver {
                     rawFrame = await receiver.video(500)
                     break
                 } catch (videoError: any) {
-                    const isConnectionEvent = videoError.message && videoError.message.includes("source change")
+                    const errorMessage = videoError.message || ''
+
+                    // Handle non-video data (might be metadata or audio)
+                    // Failure to do so make NDI feed sluggish
+                    if (errorMessage.includes('Non-video data received')) {
+                        if (attempt < maxRetries - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 100))
+                            continue
+                        }
+                        // Don't delete receiver for non-video data
+                        return
+                    }
+
+                    const isConnectionEvent = errorMessage.includes("source change")
                     if (isConnectionEvent && attempt < maxRetries - 1) continue
                     else { delete this.allActiveReceivers[source.id]; return }
                 }
@@ -164,6 +177,9 @@ export class NdiReceiver {
         this.NDI_RECEIVERS[source.id].frameRate = Math.round(1000 / frameRate)
 
         let gettingFrame = false
+        let consecutiveErrors = 0
+        const maxConsecutiveErrors = 10
+
         if (this.NDI_RECEIVERS[source.id].interval) clearInterval(this.NDI_RECEIVERS[source.id].interval)
         this.NDI_RECEIVERS[source.id].interval = setInterval(async () => {
             if (gettingFrame) return
@@ -183,9 +199,13 @@ export class NdiReceiver {
 
                 rawFrame.data = videoFrame
                 this.sendBuffer(source.id, rawFrame)
-            } catch (err) {
-                console.error(err)
-                this.stopReceiversNDI({ id: source.id })
+                consecutiveErrors = 0
+            } catch (err: any) {
+                consecutiveErrors++
+                if (consecutiveErrors >= maxConsecutiveErrors) {
+                    console.error(`NDI source ${source.id}: Too many consecutive errors, stopping receiver`)
+                    this.stopReceiversNDI({ id: source.id })
+                }
             }
 
             gettingFrame = false
