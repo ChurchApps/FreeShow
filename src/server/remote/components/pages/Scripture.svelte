@@ -360,7 +360,7 @@
     {#if openedScripture}
 		<div class="header-bar" style="margin-bottom: 0.5rem;" class:has-ref={!!depth}>
 			<button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
-				<Icon id="back" size={1.2} />
+				<Icon id="back" size={1.5} />
 			</button>
 			<div class="header-center">
 				<h2 class="header-title">
@@ -376,7 +376,7 @@
 				</div>
 			</div>
 			<button class="header-action" aria-label="Search scripture" on:click={() => (openScriptureSearch = true)}>
-				<Icon id="search" size={1.2} />
+				<Icon id="search" size={1.5} />
 			</button>
 		</div>
         
@@ -460,16 +460,17 @@
 	/* Unified header bar with title, ref and actions */
 	.header-bar {
 		display: flex;
-		align-items: flex-start;
+		align-items: center; /* vertically center icons */
 		justify-content: space-between;
 		gap: 0.5rem;
 		overflow: hidden;
-		padding-top: 4px;
-		padding-bottom: 4px;
+		padding-top: 8px;
+		padding-bottom: 8px;
 		/* Match the darker show header style */
 		background-color: var(--primary-darker);
 		border-bottom: 2px solid var(--primary-lighter);
 	}
+	/* keep same vertical rhythm even when reference exists */
 	.header-bar.has-ref { padding-top: 8px; padding-bottom: 8px; }
 	.header-center {
 		flex: 1;
@@ -479,22 +480,28 @@
 		text-align: center;
 		min-width: 0; /* enable ellipsis in children */
 		line-height: 1; /* keep block height tight so actions don't shift */
+		justify-content: flex-start;
 	}
 	.header-title {
 		margin: 0;
 		line-height: 1.1;
 		font-weight: 700;
-		font-size: clamp(1rem, 3.2vw, 1.25rem);
+		font-size: clamp(1.15rem, 6vw, 1.6rem);
 		max-width: 100%;
+		/* let JS autosizer control wrapping and width */
 		white-space: nowrap;
 		overflow: hidden;
-		text-overflow: ellipsis;
+		text-overflow: clip;
 		/* Ensure translation label is white like the show header */
 		color: var(--text);
 	}
+	/* When reference is present, allow the title to scale smaller to avoid clipping */
+	.header-bar.has-ref .header-title {
+		font-size: clamp(0.95rem, 4.5vw, 1.4rem);
+	}
 	.header-ref {
 		margin-top: 0;
-		font-size: 0.9em;
+		font-size: clamp(0.95rem, 4.5vw, 1.1rem);
 		color: var(--text);
 		opacity: 0.9;
 		max-width: 100%;
@@ -503,6 +510,15 @@
 		text-overflow: ellipsis;
 	}
 	.header-bar.has-ref .header-ref { margin-top: 6px; }
+	/* When no reference, let title use two lines (avoid ellipsis) and hide the ref row */
+	.header-bar:not(.has-ref) .header-title {
+		white-space: normal;
+		text-align: center;
+		overflow-wrap: anywhere;
+	}
+	.header-bar:not(.has-ref) .header-ref { display: none; }
+	/* Center the title vertically when no reference line is shown */
+	.header-bar:not(.has-ref) .header-center { justify-content: center; }
 	.header-action {
 		background: transparent;
 		border: none;
@@ -517,6 +533,9 @@
 	.header-action:hover {
 		background-color: var(--hover);
 	}
+
+	/* Slightly larger icon hit area and size */
+	.header-action { transform: scale(1.0); }
 
     .bible {
         flex: 1;
