@@ -466,6 +466,7 @@
 		overflow: hidden;
 		padding-top: 8px;
 		padding-bottom: 8px;
+		min-height: 52px; /* larger touch target */
 		/* Match the darker show header style */
 		background-color: var(--primary-darker);
 		border-bottom: 2px solid var(--primary-lighter);
@@ -522,13 +523,15 @@
 	.header-action {
 		background: transparent;
 		border: none;
-		padding: 4px;
+		padding: 0 12px; /* tall clickable area */
 		display: flex;
 		align-items: center;
+		align-self: stretch; /* fill header height */
 		cursor: pointer;
 		color: var(--secondary);
 		border-radius: 6px;
-		margin-top: 2px;
+		margin-top: 0;
+		min-width: 44px; /* accessible hit size */
 	}
 	.header-action:hover {
 		background-color: var(--hover);

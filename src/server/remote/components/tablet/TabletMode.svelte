@@ -172,10 +172,34 @@
     }
 
 	// RESIZERS
-	let leftWidth: number = 290
-	let rightWidth: number = 290
+	let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290") || 290
+	let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290") || 290
 	const minPanel = 200
 	const minCenter = 300
+
+	function clampPersistedWidths() {
+		const total = window.innerWidth
+		const resizers = 12
+		// Re-read in case values changed outside
+		const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth))
+		const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth))
+		if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
+		if (!Number.isNaN(storedRight)) rightWidth = storedRight
+		// Clamp to available space and minimums
+		leftWidth = Math.max(minPanel, Math.min(leftWidth, Math.max(minPanel, total - rightWidth - resizers - minCenter)))
+		rightWidth = Math.max(minPanel, Math.min(rightWidth, Math.max(minPanel, total - leftWidth - resizers - minCenter)))
+	}
+
+	function persistWidths() {
+		localStorage.setItem("tablet.leftWidth", String(leftWidth))
+		localStorage.setItem("tablet.rightWidth", String(rightWidth))
+	}
+
+	let initializedWidths = false
+	$: if (!initializedWidths) {
+		clampPersistedWidths()
+		initializedWidths = true
+	}
 
 	let dragging: "left" | "right" | null = null
 	let startX = 0
@@ -216,6 +240,7 @@
 	function onPointerUp() {
 		dragging = null
 		window.removeEventListener("pointermove", onPointerMove)
+		persistWidths()
 	}
 </script>
 
