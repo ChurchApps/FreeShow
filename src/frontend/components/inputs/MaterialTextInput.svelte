@@ -56,7 +56,7 @@
 
     <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} />
 
-    <label for={id}>{translateText(label, $dictionary)}</label>
+    <label for={id}>{@html translateText(label, $dictionary)}</label>
 
     <span class="underline" />
 

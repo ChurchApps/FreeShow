@@ -271,7 +271,7 @@
         </svg>
     </div>
 
-    <label for={id} class:selected={value}>{translateText(label, $dictionary)}</label>
+    <label for={id} class:selected={value}>{@html translateText(label, $dictionary)}</label>
     <span class="underline" />
 
     {#if allowEmpty && value}

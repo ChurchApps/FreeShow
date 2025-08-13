@@ -13,7 +13,7 @@
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
-    import MaterialMediaPicker from "../../inputs/MaterialMediaPicker.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleButtons from "../../inputs/MaterialToggleButtons.svelte"
@@ -162,7 +162,7 @@
 />
 
 <InputRow>
-    <MaterialMediaPicker
+    <MaterialFilePicker
         label="edit.background_media{templateBackgroundImage && bgImage ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;">settings.overrided_value<span>' : ''}"
         value={bgImage}
         filter={{ name: "Media files", extensions: mediaExtensions }}

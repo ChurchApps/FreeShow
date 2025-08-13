@@ -140,6 +140,7 @@
 
         cursor: pointer;
 
+        --margin: 6px;
         height: 50px;
     }
     .textfield.disabled {
@@ -166,12 +167,14 @@
             0.2s background-color,
             0.1s border-color;
 
-        --margin: 6px;
         top: var(--margin);
         height: calc(100% - (var(--margin) * 2));
-        margin: var(--margin);
+        margin-right: var(--margin);
         /* margin-left: 200px; */
         margin-left: 50%;
+
+        top: 50%;
+        transform: translateY(-50%);
     }
     .color-display:hover {
         border-color: var(--outline-color);

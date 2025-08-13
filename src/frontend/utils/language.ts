@@ -84,7 +84,7 @@ export function translateText(text: string, _updater: any = null) {
     // WIP temporary fix until all values are changed
     text = text.replace("$:", "").replace(":$", "")
 
-    return text.replace(/\$?([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/g, (match, key1, key2) => {
+    return text.replace(/\$?([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/g, (match, key1, key2) => {
         if (dict[key1] && dict[key1][key2]) {
             return dict[key1][key2]
         }

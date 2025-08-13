@@ -5,10 +5,11 @@
 
     export let label: string
     export let icon: string
+    export let title: string = ""
     export let center: boolean = false
 </script>
 
-<h3 class:center>
+<h3 class:center data-title={translateText(title)}>
     <Icon id={icon} white />
     {translateText(label, $dictionary)}
 </h3>

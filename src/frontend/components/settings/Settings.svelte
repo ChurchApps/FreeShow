@@ -3,14 +3,18 @@
     import T from "../helpers/T.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
+    import FilesButtons from "./tabs/FilesButtons.svelte"
     import General from "./tabs/General.svelte"
     import Other from "./tabs/Other.svelte"
     import Outputs from "./tabs/Outputs.svelte"
     import OutputsTabs from "./tabs/OutputsTabs.svelte"
     import Profiles from "./tabs/Profiles.svelte"
+    import ProfilesTabs from "./tabs/ProfilesTabs.svelte"
     import Styles from "./tabs/Styles.svelte"
     import StylesTabs from "./tabs/StylesTabs.svelte"
     import Theme from "./tabs/Theme.svelte"
+    import ThemeButtons from "./tabs/ThemeButtons.svelte"
+    import ThemeTabs from "./tabs/ThemeTabs.svelte"
 
     $: tabId = $settingsTab
 
@@ -21,8 +25,9 @@
     }
 
     const hints = {
-        display_settings: "outputs_hint",
-        styles: "styles_hint"
+        display_settings: "settings.outputs_hint",
+        styles: "settings.styles_hint",
+        profiles: "profile.profiles_hint"
     }
 </script>
 
@@ -35,7 +40,13 @@
         </h2>
 
         {#if hints[tabId]}
-            <p class="hint"><T id="settings.{hints[tabId]}" /></p>
+            <p class="hint"><T id={hints[tabId]} /></p>
+        {/if}
+
+        {#if tabId === "theme"}
+            <div class="buttons">
+                <ThemeButtons />
+            </div>
         {/if}
     </div>
 
@@ -64,6 +75,12 @@
             <OutputsTabs />
         {:else if tabId === "styles"}
             <StylesTabs />
+        {:else if tabId === "files"}
+            <FilesButtons />
+        {:else if tabId === "profiles"}
+            <ProfilesTabs />
+        {:else if tabId === "theme"}
+            <ThemeTabs />
         {/if}
     </div>
 </main>
@@ -76,7 +93,7 @@
 
         position: relative;
 
-        --padding: 120px;
+        --padding: 150px;
     }
 
     .title {
@@ -110,7 +127,14 @@
         /* align-self: flex-end; */
     }
 
+    .buttons {
+        display: flex;
+        gap: 5px;
+    }
+
     .scroll {
+        position: relative;
+
         overflow-y: auto;
         /* overflow-x: hidden; */
         height: 100%;
