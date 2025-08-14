@@ -177,6 +177,8 @@
     let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
     const minPanel = 200
     const minCenter = 300
+    const defaultWidth = 290
+    const snapThreshold = 20 // pixels to snap
 
     function clampPersistedWidths() {
         const total = window.innerWidth
@@ -206,10 +208,12 @@
     let startX = 0
     let startLeft = 0
     let startRight = 0
+    let isSnapping = false
 
     function onPointerDownLeft(e: PointerEvent) {
         e.preventDefault()
         dragging = "left"
+        isSnapping = false
         startX = e.clientX
         startLeft = leftWidth
         window.addEventListener("pointermove", onPointerMove)
@@ -220,6 +224,7 @@
     function onPointerDownRight(e: PointerEvent) {
         e.preventDefault()
         dragging = "right"
+        isSnapping = false
         startX = e.clientX
         startRight = rightWidth
         window.addEventListener("pointermove", onPointerMove)
@@ -235,12 +240,30 @@
         const delta = e.clientX - startX
         
         if (dragging === "left") {
-            const proposed = startLeft + delta
+            let proposed = startLeft + delta
             const maxLeft = total - rightWidth - resizers - minCenter
+            
+            // Snap to default position
+            if (Math.abs(proposed - defaultWidth) < snapThreshold) {
+                proposed = defaultWidth
+                isSnapping = true
+            } else {
+                isSnapping = false
+            }
+            
             leftWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxLeft)))
         } else if (dragging === "right") {
-            const proposed = startRight - delta
+            let proposed = startRight - delta
             const maxRight = total - leftWidth - resizers - minCenter
+            
+            // Snap to default position
+            if (Math.abs(proposed - defaultWidth) < snapThreshold) {
+                proposed = defaultWidth
+                isSnapping = true
+            } else {
+                isSnapping = false
+            }
+            
             rightWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxRight)))
         }
     }
@@ -285,7 +308,7 @@
 {/if}
 
 {#if !isFullscreen}
-	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft}></div>
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft} class:snapping={dragging === "left" && isSnapping}></div>
 {/if}
 
 <div class="center">
@@ -389,7 +412,7 @@
 </div>
 
 {#if !isFullscreen}
-	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight}></div>
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight} class:snapping={dragging === "right" && isSnapping}></div>
 {/if}
 
 {#if !isFullscreen}
@@ -469,12 +492,17 @@
     /* Resizers */
     .resizer {
         position: relative;
-        width: 10px; /* generous hit-area */
+        z-index: 1;
+        width: 6px;
+        background: var(--primary-darker);
         cursor: col-resize;
-        background: transparent;
-        /* overlap adjacent panes so there's no visual gap */
-        margin-inline: -5px;
+        transition: background 0.2s ease;
+        user-select: none;
+        /* Expand touch area */
+        padding: 0 2px;
+        margin: 0 -2px;
     }
+
     .resizer::before {
         content: "";
         position: absolute;
@@ -484,9 +512,26 @@
         width: 2px; /* single visual line */
         transform: translateX(-50%);
         background-color: var(--primary-lighter);
+        transition: background-color 0.2s ease, width 0.2s ease;
     }
+
+    .resizer:hover,
+    .resizer:focus {
+        background: var(--primary-darkest);
+        outline: none;
+    }
+
     .resizer:hover::before {
         background-color: var(--primary-darkest);
+    }
+
+    .resizer:focus {
+        box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .resizer.snapping::before {
+        background-color: var(--primary);
+        width: 4px;
     }
 
     /* ///// */
@@ -560,28 +605,5 @@
     .fullscreen button:hover,
     .fullscreen button:active {
         background-color: var(--primary-lighter);
-    }
-
-    .resizer {
-        position: relative;
-        z-index: 1;
-        width: 6px;
-        background: var(--primary-darker);
-        cursor: col-resize;
-        transition: background 0.2s ease;
-        user-select: none;
-        /* Expand touch area */
-        padding: 0 2px;
-        margin: 0 -2px;
-    }
-
-    .resizer:hover,
-    .resizer:focus {
-        background: var(--primary-darkest);
-        outline: none;
-    }
-
-    .resizer:focus {
-        box-shadow: 0 0 0 2px var(--primary);
     }
 </style>
