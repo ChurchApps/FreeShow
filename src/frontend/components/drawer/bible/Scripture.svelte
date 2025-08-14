@@ -89,8 +89,7 @@
     let firstBibleId = ""
 
     // select book & chapter when opening bible show reference
-    // Reduce cascading open delays to minimize transient references on remote
-    $: if ($openScripture) setTimeout(openReference, 10)
+    $: if ($openScripture) setTimeout(openReference, 200)
     function openReference() {
         if ($openScripture?.book === undefined) {
             openScripture.set(null)
