@@ -153,6 +153,14 @@ export function goBack() {
             if (depth === 1) {
                 // leaving chapters -> books: clear chapter selection
                 activeChapter = -1
+                // When going back from chapters, highlight the current book
+                if (displayedBookIndex >= 0) activeBook = displayedBookIndex
+            } else if (depth === 2) {
+                // leaving verses -> chapters: preserve displayed chapter highlight
+                activeVerse = 0
+                // When going back from verses, highlight the current chapter and book
+                if (displayedBookIndex >= 0) activeBook = displayedBookIndex
+                if (displayedChapterIndex >= 0) activeChapter = displayedChapterIndex
             }
             depth--
         }
@@ -169,7 +177,132 @@ export function goBack() {
         depth = 0
     }
 
-    // NAV CONTROLS (for cleared state): chapter unless a verse is highlighted
+    // Parse scripture reference from slide content and extract highlighting info
+    function parseScriptureReference(reference: string): { bookIndex: number, chapterIndex: number, verseNumber: number } | null {
+        if (!reference || !books || books.length === 0) return null
+        
+        // Match patterns like "Genesis 1:1", "1 John 2:3", "Psalm 23:1-6", etc.
+        const match = reference.match(/^(.+?)\s+(\d+):(\d+)(?:-\d+)?$/)
+        if (!match) return null
+        
+        const [, bookName, chapterStr, verseStr] = match
+        const chapterNumber = parseInt(chapterStr, 10)
+        const verseNumber = parseInt(verseStr, 10)
+        
+        // Find the book by name (case insensitive) in the current scripture collection
+        const bookIndex = books.findIndex(book => {
+            // Try exact match first
+            if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
+                return true
+            }
+            
+            // Try matching common book name variations
+            const normalizedBookName = bookName.toLowerCase().trim()
+            const normalizedScriptureName = book.name.toLowerCase()
+            
+            // Handle common abbreviations and variations
+            const commonMappings: { [key: string]: string[] } = {
+                'genesis': ['gen', 'ge'],
+                '1 john': ['1john', '1 jn', 'i john'],
+                '2 john': ['2john', '2 jn', 'ii john'],
+                '3 john': ['3john', '3 jn', 'iii john'],
+                'psalms': ['psalm', 'ps'],
+                'revelation': ['rev', 're'],
+                'matthew': ['matt', 'mt'],
+                'mark': ['mk'],
+                'luke': ['lk'],
+                'john': ['jn'],
+                // Add more mappings as needed
+            }
+            
+            // Check if the scripture book name matches any variations of the reference book name
+            for (const [canonical, variations] of Object.entries(commonMappings)) {
+                if (canonical === normalizedScriptureName || variations.includes(normalizedScriptureName)) {
+                    if (canonical === normalizedBookName || variations.includes(normalizedBookName)) {
+                        return true
+                    }
+                }
+            }
+            
+            // Try partial match as fallback
+            return normalizedScriptureName.includes(normalizedBookName) || 
+                   normalizedBookName.includes(normalizedScriptureName)
+        })
+        
+        if (bookIndex === -1) {
+            return null
+        }
+        
+        // Convert chapter number to chapter index (chapters are 0-based arrays)
+        const chapterIndex = chapterNumber - 1
+        
+        return { bookIndex, chapterIndex, verseNumber }
+    }
+
+    // Extract scripture reference from outShow slide content
+    function extractScriptureFromSlide(): { bookIndex: number, chapterIndex: number, verseNumber: number } | null {
+        if (!$outShow?.slides || $outSlide === null) return null
+        
+        const currentSlideId = Object.keys($outShow.slides)[$outSlide]
+        if (!currentSlideId || !$outShow.slides[currentSlideId]) return null
+        
+        const slide = $outShow.slides[currentSlideId]
+        if (!slide.items) return null
+        
+        // Look through all slide items for scripture references
+        for (const item of slide.items) {
+            if (!item.lines || !Array.isArray(item.lines)) continue
+            
+            for (const line of item.lines) {
+                if (!line.text || !Array.isArray(line.text)) continue
+                
+                for (const textItem of line.text) {
+                    if (textItem && textItem.value && typeof textItem.value === 'string') {
+                        // Check if this looks like a scripture reference
+                        if (textItem.value.match(/^.+?\s+\d+:\d+/)) {
+                            const parsed = parseScriptureReference(textItem.value)
+                            if (parsed) {
+                                return parsed
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null
+    }
+
+    // Initialize highlighting from slide content when scripture state is empty
+    $: if (scripture && Array.isArray(scripture.books) && 
+           displayedBookIndex === -1 && displayedChapterIndex === -1 && displayedVerseNumber === 0 &&
+           $outShow && $outSlide !== null) {
+        
+        const slideScripture = extractScriptureFromSlide()
+        if (slideScripture) {
+            displayedBookIndex = slideScripture.bookIndex
+            displayedChapterIndex = slideScripture.chapterIndex
+            displayedVerseNumber = slideScripture.verseNumber
+        }
+            }
+    // This ensures that when user reloads the page and a verse is already active, 
+    // the navigation will show the correct highlights when they browse back
+    $: if (scripture && Array.isArray(scripture.books) && displayedBookIndex >= 0 && depth === 0) {
+        // At depth 0 (books view), always ensure activeBook matches displayedBookIndex
+        if (activeBook !== displayedBookIndex) {
+            activeBook = displayedBookIndex
+            if (displayedChapterIndex >= 0) {
+                activeChapter = displayedChapterIndex
+            }
+            if (displayedVerseNumber > 0) {
+                activeVerse = displayedVerseNumber
+            }
+        }
+    }
+    
+    import { outShow, outSlide } from "../../util/stores"
+
+    // NAV CONTROLS: navigate to next/previous chapter or verse
     export function forward() {
         // If a verse is highlighted at verse-level, move to next verse
         if (depth === 2 && activeVerse > 0) {
@@ -208,10 +341,7 @@ export function goBack() {
         }
     }
 
- 
-
-    // let dispatch = createEventDispatcher()
-    // if (depth !== undefined) dispatch("depth", depth)
+    // TEXT FORMATTING
 
     function formatBibleText(text: string | undefined) {
         if (!text) return ""
@@ -265,6 +395,7 @@ export function goBack() {
                         on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
                             class:active={activeBook === i}
                             class:displayed={i === displayedBookIndex}
+                            class:output={i === displayedBookIndex}
                             style="color: {color};"
                             title={book.name}
                         >
@@ -297,6 +428,7 @@ export function goBack() {
                         on:keydown={(e) => e.key === 'Enter' && (() => { if (activeChapter !== i) activeVerse = 0; activeChapter = i; depth++; })()}
                     class:active={activeChapter === i}
                     class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
+                    class:output={i === displayedChapterIndex && activeBook === displayedBookIndex}
                     >
                         {chapterUiId}
                     </span>
@@ -466,6 +598,13 @@ export function goBack() {
 
     .grid .active {
         background-color: var(--focus);
+    }
+    /* Highlight currently displayed scripture elements */
+    .grid .books .output,
+    .grid .chapters .output {
+        background-color: var(--focus);
+        box-shadow: inset 0 0 0 2px var(--secondary);
+        border-radius: 6px;
     }
     /* Distinguish displayed reference vs browsing selection at verse depth */
     .grid .verses .displayed {
