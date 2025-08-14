@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Bible } from "../../../../types/Bible"
     import Loading from "../../../common/components/Loading.svelte"
+        import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
     import { currentScriptureState, scriptureViewList } from "../../util/stores"
  
@@ -25,36 +26,33 @@
     $: currentChapter = chapters[activeChapter]?.number?.toString() || ""
     $: currentVerse = activeVerse?.toString() || ""
 
-    // Update local state when scripture state changes from main app
+    // Update local state when scripture state changes from main app (normalized shape)
     let lastUpdateTime = 0
-    $: if ($currentScriptureState) {
-        // Extract the scripture state (could be under 'api' or 'bible' key)
-        const source: any = $currentScriptureState as any
-        const scriptureState: any = source.api || source.bible || source
-        if (scriptureState && scriptureState.scriptureId === id) {
-            // Prevent rapid updates that might interfere with local interactions
-            const now = Date.now()
-            if (now - lastUpdateTime >= 100) {
-                lastUpdateTime = now
-                
-                activeBook = scriptureState.bookId
-                
-                // Handle chapterId format differences (API vs local bibles)
-                if (typeof scriptureState.chapterId === "string" && scriptureState.chapterId.includes(".")) {
-                    // API format like "GEN.1" - extract chapter number and convert to 0-based index
-                    activeChapter = parseInt(scriptureState.chapterId.split(".")[1]) - 1
-                } else if (typeof scriptureState.chapterId === "number") {
-                    // Local bible format (already 0-based index)
-                    activeChapter = scriptureState.chapterId
-                }
-                
-                if (scriptureState.activeVerses && scriptureState.activeVerses.length > 0) {
-                    // Use the first verse for highlighting
-                    activeVerse = parseInt(scriptureState.activeVerses[0]) || 0
-                }
-            }
+    const unsubscribeScripture = currentScriptureState.subscribe((state) => {
+        if (!state || state.scriptureId !== id) return
+        const now = Date.now()
+        if (now - lastUpdateTime < 100) return
+        lastUpdateTime = now
+
+        const bookIndex = state.bookId
+        const chapterIndex = state.chapterId
+        const verseList = state.activeVerses
+
+        const targetBook = Number.isInteger(bookIndex) && bookIndex >= 0 && bookIndex < (books?.length || 0) ? books[bookIndex] : undefined
+        const numChapters = targetBook?.chapters?.length || 0
+
+        if (targetBook) {
+            activeBook = bookIndex
         }
-    }
+        if (Number.isInteger(chapterIndex) && chapterIndex >= -1 && chapterIndex < numChapters) {
+            activeChapter = chapterIndex
+        }
+        if (Array.isArray(verseList) && verseList.length > 0) {
+            const first = parseInt(String(verseList[0]), 10)
+            if (Number.isFinite(first) && first >= 0) activeVerse = first
+        }
+    })
+    onDestroy(() => unsubscribeScripture())
 
     // COLORS
 

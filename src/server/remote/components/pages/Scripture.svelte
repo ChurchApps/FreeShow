@@ -65,9 +65,10 @@
 	let openScriptureSearch = false
 	let searchValue = ""
 	type SearchItem = { reference: string; referenceFull: string; verseText: string }
-	let searchResults: SearchItem[] = []
-	let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
+    let searchResults: SearchItem[] = []
+    let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
     $: updateSearch(searchValue, $scriptureCache, openedScripture)
+
 
     function formatBookSearch(search: string): string {
         return search
@@ -334,7 +335,7 @@
             <input type="text" class="input search-input" placeholder="Search" autofocus bind:value={searchValue} />
         </div>
 
-        <div style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
+        <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
             {#if searchResults.length > 0}
                 {#each searchResults.slice(0, 20) as result}
                     <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === 'Enter' ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
@@ -586,4 +587,15 @@
         color: inherit;
         opacity: 0.4;
     }
+
+    /* FreeShow UI scrollbar for scripture search (desktop) */
+    .search-scroll {
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .search-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .search-scroll::-webkit-scrollbar-track,
+    .search-scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .search-scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .search-scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 </style>

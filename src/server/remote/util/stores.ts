@@ -46,7 +46,7 @@ export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
 export let scriptureViewList = writable(false)
-export let currentScriptureState = writable({ book: 0, chapter: 0, verse: 0, scriptureId: "" })
+export let currentScriptureState = writable({ scriptureId: "", bookId: -1, chapterId: -1, activeVerses: [] as number[] })
 export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})

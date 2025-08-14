@@ -212,6 +212,7 @@
 		startLeft = leftWidth
 		window.addEventListener("pointermove", onPointerMove)
 		window.addEventListener("pointerup", onPointerUp, { once: true })
+		window.addEventListener("pointercancel", onPointerUp, { once: true })
 	}
 	function onPointerDownRight(e: PointerEvent) {
 		dragging = "right"
@@ -219,6 +220,7 @@
 		startRight = rightWidth
 		window.addEventListener("pointermove", onPointerMove)
 		window.addEventListener("pointerup", onPointerUp, { once: true })
+		window.addEventListener("pointercancel", onPointerUp, { once: true })
 	}
 	function onPointerMove(e: PointerEvent) {
 		if (!dragging) return
@@ -244,7 +246,7 @@
 	}
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:resize={clampPersistedWidths} />
 
 {#if !isFullscreen}
     <div class="left" style={`width:${leftWidth}px`}>
@@ -371,7 +373,7 @@
 {/if}
 
 {#if !isFullscreen}
-    <div class="right" style={`jutsify-content: space-between; width:${rightWidth}px`}>
+    <div class="right" style={`justify-content: space-between; width:${rightWidth}px`}>
         {#if !$isCleared.all}
             <div class="top flex">
                 {#if $outShow && layout}
@@ -478,6 +480,17 @@
 
         overflow-y: auto;
     }
+
+    /* Center panel scroll (slides list) */
+    .scroll {
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     /* ///// */
 

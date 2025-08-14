@@ -204,6 +204,7 @@
         dragOffsetY = e.clientY - (rect.top + thumbTop)
         window.addEventListener("pointermove", onThumbPointerMove)
         window.addEventListener("pointerup", onThumbPointerUp, { once: true })
+        window.addEventListener("pointercancel", onThumbPointerUp, { once: true })
     }
 
     function onThumbPointerMove(e: PointerEvent) {
@@ -234,8 +235,8 @@
         <!-- {#each shows as showObj}
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->
-		<div class="scroll-wrap">
-			<div class="scroll" class:hide-native={enableCustomScrollbar} bind:this={scrollElem} on:scroll={handleScroll} on:resize={updateScrollbarMetrics}>
+               <div class="scroll-wrap">
+                       <div class="scroll" class:hide-native={enableCustomScrollbar} bind:this={scrollElem} on:scroll={handleScroll}>
 				{#each filteredShows as show}
 					{#if searchValue.length <= 1 || show.match}
 						<ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
@@ -294,7 +295,7 @@
 		-webkit-overflow-scrolling: touch;
 		touch-action: pan-y;
 		overscroll-behavior: contain;
-        /* Firefox */
+        /* FreeShow UI scrollbar */
         scrollbar-width: thin;
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
@@ -302,14 +303,12 @@
     .hide-native {
         scrollbar-width: none; /* Firefox */
     }
-    .hide-native::-webkit-scrollbar {
-        width: 0; height: 0; /* WebKit */
-    }
-    /* WebKit */
-	.scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .hide-native::-webkit-scrollbar { width: 0; height: 0; }
+    /* WebKit FreeShow UI */
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .scroll::-webkit-scrollbar-track,
     .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-	.scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
     .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
 	/* Larger, easier scrollbar on touch devices */
