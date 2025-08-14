@@ -6,7 +6,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureViewList } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureViewList, outSlide, outShow } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
 
@@ -39,11 +39,20 @@
     let currentVerse = ""
 
     function next() {
-        // WIP change preview index
-        send("API:scripture_next")
+        if ($isCleared.all) {
+            // When cleared: if a verse is highlighted, move verse; otherwise move chapter/book
+            scriptureContentRef?.forward?.()
+        } else {
+            // Live: use existing API trigger to advance verse/selection
+            send("API:scripture_next")
+        }
     }
     function previous() {
-        send("API:scripture_previous")
+        if ($isCleared.all) {
+            scriptureContentRef?.backward?.()
+        } else {
+            send("API:scripture_previous")
+        }
     }
 
     // SEARCH
@@ -399,22 +408,39 @@
         </div>
 
         {#if $isCleared.all}
-            <div style="display: flex;">
-                <Button on:click={() => (depth ? depth-- : openScripture(""))} style="width: 100%;" center dark>
-                    <Icon id="back" right />
-                    <p style="font-size: 0.8em;">{translate("actions.back", $dictionary)}</p>
-                </Button>
-
-                {#if depth === 2}
-                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                    </Button>
-                {/if}
-            </div>
+            {#if depth === 2}
+                <div class="cleared-controls" style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
+                    {#if +currentVerse > 0 || ($outShow && $outSlide !== null)}
+                        <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
+                        <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {:else}
+                        <Button style="flex: 1;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
+                </div>
+            {/if}
         {:else}
-            <div class="buttons" style="display: flex;width: 100%;background-color: var(--primary-darker);">
-                <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
-                <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+            <div class="buttons" style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
+                {#if depth === 2}
+                    {#if +currentVerse > 0}
+                        <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
+                        <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {:else}
+                        <Button style="flex: 1;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
+                {:else}
+                    <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
+                    <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+                {/if}
             </div>
             {#if !tablet}
                 <Clear />

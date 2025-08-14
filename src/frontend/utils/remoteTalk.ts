@@ -196,7 +196,10 @@ export async function initializeRemote(id: string) {
             window.api.send(REMOTE, await receiveREMOTE.SHOW({ channel: "SHOW", id, data: oldOutSlide }))
         })
     }
-    send(REMOTE, ["OUT"], out)
+    // Targeted initial state to this connection:
+    // Use sendData so the proper OUT payload is constructed (handles scripture 'temp' etc.)
+    sendData(REMOTE, { id, channel: "OUT" })
+    sendData(REMOTE, { id, channel: "OUT_DATA" })
 
     send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))

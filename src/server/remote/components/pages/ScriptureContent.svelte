@@ -17,40 +17,48 @@
     let activeChapter = -1
     let activeVerse = 0
 
+    // Track what is actually displayed on the output
+    let displayedBookIndex = -1
+    let displayedChapterIndex = -1
+    let displayedVerseNumber = 0
+
     $: books = scripture.books || []
     $: chapters = books[activeBook]?.chapters || []
     $: verses = chapters[activeChapter]?.verses || []
 
-    // Update current location strings for parent component
+    // Update current location strings for parent component based on where we are visiting (browsing)
     $: currentBook = books[activeBook]?.name || ""
-    $: currentChapter = chapters[activeChapter]?.number?.toString() || ""
-    $: currentVerse = activeVerse?.toString() || ""
+    $: currentChapter = (() => {
+        const num = chapters[activeChapter]?.number
+        return num !== undefined && num !== null ? String(num) : ""
+    })()
+    $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update local state when scripture state changes from main app (normalized shape)
-    let lastUpdateTime = 0
+    let applyTimer: any
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state || state.scriptureId !== id) return
-        const now = Date.now()
-        if (now - lastUpdateTime < 100) return
-        lastUpdateTime = now
+        // Debounce to coalesce quick consecutive updates (prevents transient wrong labels)
+        if (applyTimer) clearTimeout(applyTimer)
+        applyTimer = setTimeout(() => {
+            const bookIndex = state.bookId
+            const chapterIndex = state.chapterId
+            const verseList = state.activeVerses
 
-        const bookIndex = state.bookId
-        const chapterIndex = state.chapterId
-        const verseList = state.activeVerses
+            const targetBook = Number.isInteger(bookIndex) && bookIndex >= 0 && bookIndex < (books?.length || 0) ? books[bookIndex] : undefined
+            // Always capture what is currently displayed
+            if (Number.isInteger(bookIndex)) displayedBookIndex = bookIndex
+            if (Number.isInteger(chapterIndex)) displayedChapterIndex = chapterIndex
+            if (Array.isArray(verseList) && verseList.length > 0) {
+                const first = parseInt(String(verseList[0]), 10)
+                if (Number.isFinite(first) && first >= 0) displayedVerseNumber = first
+            }
 
-        const targetBook = Number.isInteger(bookIndex) && bookIndex >= 0 && bookIndex < (books?.length || 0) ? books[bookIndex] : undefined
-        const numChapters = targetBook?.chapters?.length || 0
-
-        if (targetBook) {
-            activeBook = bookIndex
-        }
-        if (Number.isInteger(chapterIndex) && chapterIndex >= -1 && chapterIndex < numChapters) {
-            activeChapter = chapterIndex
-        }
-        if (Array.isArray(verseList) && verseList.length > 0) {
-            const first = parseInt(String(verseList[0]), 10)
-            if (Number.isFinite(first) && first >= 0) activeVerse = first
-        }
+            // Keep browsing state independent; do not override active selection with displayed
+            // Only set activeBook when entering a valid target to keep context sensible
+            if (targetBook && activeBook < 0) activeBook = bookIndex
+            // Do not force activeChapter/activeVerse from displayed; label reflects browsing, highlight reflects displayed
+        }, 180)
     })
     onDestroy(() => unsubscribeScripture())
 
@@ -96,13 +104,62 @@ export let depth = 0
 
 export function goBack() {
         if (depth > 0) {
-            if (depth === 2) {
-                activeVerse = 0
-            } else if (depth === 1) {
+            // Preserve activeVerse so highlight remains when returning to verse depth
+            if (depth === 1) {
+                // leaving chapters -> books: clear chapter selection
                 activeChapter = -1
             }
             depth--
         }
+    }
+
+    // Allow parent to set selection immediately from a numeric reference string like "5.12.3"
+    export function setReferenceFromString(reference: string) {
+        const parts = String(reference || "").split(".")
+        if (parts.length < 2) return
+        const bookNum = Math.max(parseInt(parts[0] || ""), 1)
+        const chapterNum = Math.max(parseInt(parts[1] || ""), 1)
+        const verseNum = Math.max(parseInt(parts[2] || "0"), 0)
+
+        // Map numeric book to index
+        const bookIndex = (books || []).findIndex((b: any, i: number) => (Number.isFinite(b?.number) ? b.number : i + 1) === bookNum)
+        if (bookIndex >= 0) activeBook = bookIndex
+        activeChapter = chapterNum - 1
+        activeVerse = verseNum
+        depth = 2
+    }
+
+    // NAV CONTROLS (for cleared state): chapter unless a verse is highlighted
+    export function forward() {
+        // If a verse is highlighted at verse-level, move to next verse
+        if (depth === 2 && activeVerse > 0) {
+            const total = verses.length
+            if (total > 0) activeVerse = Math.min(activeVerse + 1, total)
+            return
+        }
+        // Otherwise move to next chapter (when at or viewing verse/chapter level)
+        if (depth >= 1) {
+            const totalChapters = chapters.length
+            if (totalChapters > 0) activeChapter = Math.min(Math.max(activeChapter, 0) + 1, totalChapters - 1)
+        }
+    }
+
+    export function backward() {
+        // If a verse is highlighted at verse-level, move to previous verse
+        if (depth === 2 && activeVerse > 0) {
+            if (verses.length > 0) activeVerse = Math.max(activeVerse - 1, 1)
+            return
+        }
+        // Otherwise move to previous chapter
+        if (depth >= 1) {
+            const totalChapters = chapters.length
+            if (totalChapters > 0) activeChapter = Math.max(Math.min(activeChapter, totalChapters - 1) - 1, 0)
+        }
+    }
+
+    // Desktop scrollbar styling for list view container
+    $: if (typeof window !== 'undefined') {
+        // no-op binding for reactivity
     }
 
  
@@ -161,6 +218,7 @@ export function goBack() {
                             }}
                         on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
                             class:active={activeBook === i}
+                            class:displayed={i === displayedBookIndex}
                             style="color: {color};"
                             title={book.name}
                         >
@@ -184,13 +242,15 @@ export function goBack() {
                         id={id.toString()}
                         role="button"
                         tabindex="0"
-                        on:mousedown={() => {
-                            activeVerse = 0
+                on:mousedown={() => {
+                            // Only reset verse highlight when switching to a different chapter
+                            if (activeChapter !== i) activeVerse = 0
                             activeChapter = i
                             depth++
                         }}
                         on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = i; depth++; })()}
-                        class:active={activeChapter === i}
+                    class:active={activeChapter === i}
+                    class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
                     >
                         {id}
                     </span>
@@ -206,8 +266,9 @@ export function goBack() {
             {#if verses.length}
                 {#each verses as verse, i}
                     {@const id = verse.number ?? i + 1}
+                    {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && id === displayedVerseNumber}
                     {@const isActive = activeVerse == id}
-                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === 'Enter' && playScripture(id)} class:active={isActive}>
+                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === 'Enter' && playScripture(id)} class:active={isActive} class:displayed={isDisplayed}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                             {id}
                         </span>
@@ -282,7 +343,15 @@ export function goBack() {
     .grid .verses.list {
         flex-direction: column;
         flex-wrap: nowrap;
+        /* FreeShow UI scrollbar styling (desktop) */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .grid .verses.list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .grid .verses.list::-webkit-scrollbar-track,
+    .grid .verses.list::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .grid .verses.list::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .grid .verses.list::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     .grid .verse-button,
     .grid span {
@@ -338,5 +407,10 @@ export function goBack() {
 
     .grid .active {
         background-color: var(--focus);
+    }
+    /* Distinguish displayed reference vs browsing selection at verse depth */
+    .grid .verses .displayed {
+        box-shadow: inset 0 0 0 2px var(--secondary);
+        border-radius: 6px;
     }
 </style>
