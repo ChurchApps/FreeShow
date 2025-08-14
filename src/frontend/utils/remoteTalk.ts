@@ -173,7 +173,7 @@ export const receiveREMOTE: any = {
 
 let oldOutSlide = ""
 export async function initializeRemote(id: string) {
-    send(REMOTE, ["ACCESS"])
+    window.api.send(REMOTE, { id, channel: "ACCESS", data: null })
 
     sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
     send(REMOTE, ["FOLDERS"], { folders: get(folders), opened: get(openedFolders) })
