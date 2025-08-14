@@ -22,9 +22,24 @@
     let displayedChapterIndex = -1
     let displayedVerseNumber = 0
 
-    $: books = scripture.books || []
+    $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
+    $: if (depth === 1) {
+        // If we entered chapters for an API bible and chapters are missing, request them once
+        const bookObj: any = books[activeBook]
+        if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
+            send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: activeBook })
+        }
+    }
     $: verses = chapters[activeChapter]?.verses || []
+    $: if (depth === 2) {
+        // If we entered verses for an API bible and verses are missing, request them once
+        const bookObj: any = books[activeBook]
+        const chapterObj: any = chapters[activeChapter]
+        if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
+            send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
+        }
+    }
 
     // Update current location strings for parent component based on where we are visiting (browsing)
     $: currentBook = books[activeBook]?.name || ""
@@ -53,9 +68,13 @@
                 : 0
             const hasVerse = Number.isFinite(latestVerse) && latestVerse > 0
 
-            const sameBook = hasBook && bookIndex === displayedBookIndex
-            const sameChapter = hasChapter && chapterIndex === displayedChapterIndex
+            const sameBook = hasBook ? bookIndex === displayedBookIndex : true
+            const sameChapter = hasChapter ? chapterIndex === displayedChapterIndex : true
             const safeToApplyAll = hasBook && hasChapter && hasVerse
+
+            // opportunistically accept partial updates for book/chapter to keep display in sync
+            if (hasBook && displayedBookIndex !== bookIndex) displayedBookIndex = bookIndex
+            if (hasChapter && displayedChapterIndex !== chapterIndex) displayedChapterIndex = chapterIndex
 
             // Case 1: within the same chapter, only verse changed → update verse immediately
             if (hasVerse && sameBook && sameChapter) {
@@ -80,8 +99,7 @@
                 return
             }
 
-            // Otherwise, ignore partial updates (book-only or chapter-only) to avoid transient wrong refs
-            // We will apply when the remaining parts arrive in the next tick
+            // Otherwise, wait for missing parts (no forced depth change)
         }, 260)
     })
     onDestroy(() => {
@@ -138,6 +156,17 @@ export function goBack() {
             }
             depth--
         }
+    }
+
+    // Reset internal selection when the bound scripture object changes (e.g. API <-> local)
+    $: if (!scripture || !Array.isArray(scripture.books)) {
+        activeBook = -1
+        activeChapter = -1
+        activeVerse = 0
+        displayedBookIndex = -1
+        displayedChapterIndex = -1
+        displayedVerseNumber = 0
+        depth = 0
     }
 
     // NAV CONTROLS (for cleared state): chapter unless a verse is highlighted
@@ -219,12 +248,12 @@ export function goBack() {
                 {#key books}
                     {#each books as book, i}
                         <!-- this uses index instead of number! -->
-                        {@const id = i + 1}
+                        {@const bookUiId = i + 1}
                         {@const color = getColorCode(books, i)}
                         {@const name = getShortName(book.name, i)}
 
                     <span
-                            id={id.toString()}
+                            id={bookUiId.toString()}
                         role="button"
                         tabindex="0"
                         on:mousedown={() => {
@@ -254,9 +283,9 @@ export function goBack() {
         <div class="chapters context #scripture_chapter" style="text-align: center;" class:center={!chapters?.length}>
             {#if chapters?.length}
                 {#each chapters as chapter, i}
-                    {@const id = chapter.number ?? i + 1}
+                    {@const chapterUiId = Number(chapter.number) || i + 1}
                     <span
-                        id={id.toString()}
+                        id={chapterUiId.toString()}
                         role="button"
                         tabindex="0"
                         on:mousedown={() => {
@@ -269,7 +298,7 @@ export function goBack() {
                     class:active={activeChapter === i}
                     class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
                     >
-                        {id}
+                        {chapterUiId}
                     </span>
                 {/each}
             {:else}
@@ -282,7 +311,7 @@ export function goBack() {
         <div class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
             {#if verses.length}
                 {#each verses as verse, i}
-                    {@const id = verse.number ?? i + 1}
+                    {@const id = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && id === displayedVerseNumber}
                     {@const isActive = activeVerse == id}
                     <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === 'Enter' && playScripture(id)} class:active={isActive} class:displayed={isDisplayed}>
@@ -328,7 +357,15 @@ export function goBack() {
 
         position: relative;
         scroll-behavior: smooth;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .grid div::-webkit-scrollbar { width: 8px; height: 8px; }
+    .grid div::-webkit-scrollbar-track,
+    .grid div::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .grid div::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .grid div::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     /* .grid .content */
     .grid .books {

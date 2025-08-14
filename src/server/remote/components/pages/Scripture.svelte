@@ -20,13 +20,17 @@
     function openScripture(id: string, collection: string = "") {
         openedScripture = id
         collectionId = collection
+        // reset browsing state when switching between bibles (API/local)
+        depth = 0
+        currentBook = ""
+        currentChapter = ""
+        currentVerse = ""
         localStorage.setItem("scripture", id)
         localStorage.setItem("collectionId", collection)
     }
 
-    // WIP collections: remove with API Bibles, get correct ID etc.
+    // Include both local and API bibles; keep original sorting
     $: sortedBibles = keysToID($scriptures)
-        .filter((a) => !a.api && (!a.collection || !$scriptures[a.collection.versions[0]]?.api))
         .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
         .sort((a: any, b: any) => (b.customName || b.name).localeCompare(a.customName || a.name))
         .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
@@ -58,6 +62,7 @@
     // UI control visibility
     $: showControlsBar = depth === 2 || !$isCleared.all
     $: showPrevNext = depth !== 2 || (+currentVerse > 0 || ($isCleared.all ? ($outShow && $outSlide !== null) : false))
+    $: centerOnlyToggle = depth === 2 && !showPrevNext
 
     // SEARCH
 
@@ -412,7 +417,7 @@
         </div>
 
         {#if showControlsBar}
-            <div class="buttons" style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
+            <div class="buttons" class:center-toggle={centerOnlyToggle} style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
                 {#if showPrevNext}
                     <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
                     <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
@@ -564,6 +569,11 @@
         background-color: var(--primary-darker);
     }
 
+    /* Center toggle when arrows are hidden */
+    .buttons.center-toggle {
+        justify-content: center;
+    }
+
     /* text input */
 
     .input {
@@ -595,14 +605,20 @@
         opacity: 0.4;
     }
 
-    /* FreeShow UI scrollbar for scripture search (desktop) */
-    .search-scroll {
+    /* FreeShow UI scrollbar */
+    .search-scroll,
+    .bible {
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .search-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .search-scroll::-webkit-scrollbar,
+    .bible::-webkit-scrollbar { width: 8px; height: 8px; }
     .search-scroll::-webkit-scrollbar-track,
-    .search-scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .search-scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .search-scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .bible::-webkit-scrollbar-track,
+    .search-scroll::-webkit-scrollbar-corner,
+    .bible::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .search-scroll::-webkit-scrollbar-thumb,
+    .bible::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .search-scroll::-webkit-scrollbar-thumb:hover,
+    .bible::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 </style>
