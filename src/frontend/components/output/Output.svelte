@@ -379,7 +379,7 @@
         <!-- metadata -->
         {#if metadataValue || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
+            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
         {/if}
 
         <!-- effects -->

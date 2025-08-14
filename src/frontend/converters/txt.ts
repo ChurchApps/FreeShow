@@ -78,7 +78,10 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
             const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "") === metaKey || get(dictionary).meta?.[key]?.toLowerCase() === metaKey)
             if (!metadataKey) {
-                newLines.push(line)
+                // create slide with unknown metadata
+                // newLines.push(line)
+                // add unknown metadata to show, without adding it globally
+                plainTextMetadata[meta[0]] = meta[1]
                 return
             }
 
@@ -490,9 +493,9 @@ function checkRepeats(labeled: { type: string; text: string }[]) {
             const repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
             // remove
             a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length + 1, a.text.length)
-            ;[...Array(Number(repeatNumber))].map(() => {
-                newLabels.push(a)
-            })
+                ;[...Array(Number(repeatNumber))].map(() => {
+                    newLabels.push(a)
+                })
         } else newLabels.push(a)
     })
     return newLabels

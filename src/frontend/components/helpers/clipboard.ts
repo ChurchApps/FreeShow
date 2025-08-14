@@ -497,14 +497,14 @@ const copyActions = {
         const stageId: string = data.id || ""
         const selectedItemIds: string[] = data.items || []
         const stage = get(stageShows)[stageId]
-        
+
         if (!stage || !selectedItemIds.length) return []
-        
+
         const copiedItems = selectedItemIds.map((itemId) => {
             const item = clone(stage.items[itemId])
             return item
         })
-        
+
         return copiedItems
     }
 }
@@ -674,11 +674,11 @@ const pasteActions = {
             newItemIds.push(newItemId)
         })
 
-        history({ 
-            id: "UPDATE", 
-            newData: { data: stage.items, key: "items" }, 
-            oldData: { id: stageId }, 
-            location: { page: "stage", id: "stage_item_content" } 
+        history({
+            id: "UPDATE",
+            newData: { data: stage.items, key: "items" },
+            oldData: { id: stageId },
+            location: { page: "stage", id: "stage_item_content" }
         })
         updateSortedStageItems()
 
@@ -903,6 +903,22 @@ const deleteActions = {
         if (data.length < _show().layouts().get().length) {
             data.forEach((id: string) => {
                 history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
+            })
+
+            // remove from active project if any
+            projects.update(a => {
+                if (!a[get(activeProject) || ""]?.shows) return a
+
+                data.forEach((layoutId: string) => {
+                    a[get(activeProject) || ""].shows.forEach(show => {
+                        if (show.layout !== layoutId) return
+
+                        delete show.layout
+                        delete show.layoutInfo
+                    })
+                })
+
+                return a
             })
         } else {
             newToast("$error.keep_one_layout")
