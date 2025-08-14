@@ -1,13 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { SelectIds } from "../../../types/Main"
-    import { actions, activeDrawerTab, audioPlaylists, drawerTabsData } from "../../stores"
+    import { actions, activeActionTagFilter, activeDrawerTab, activeVariableTagFilter, audioPlaylists, drawerTabsData } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getActionIcon } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { clone } from "../helpers/array"
 
     export let category: any
 
@@ -18,12 +19,14 @@
     $: count = category.count || 0
     $: readOnly = category.readOnly || false
 
+    export let parentId: string = ""
     export let isSubmenu = false
     $: submenu = category.submenu || {}
 
     export let active: string
 
-    $: isActive = active === id
+    $: submenuActive = isSubmenu ? $activeActionTagFilter.includes(id) || $activeVariableTagFilter.includes(id) : false
+    $: isActive = submenuActive || active === id
 
     $: drawerId = $activeDrawerTab
     $: selectId = `category_${drawerId}${drawerId === "scripture" ? "___" + icon : ""}` as SelectIds
@@ -33,8 +36,10 @@
         const { ctrl, shift } = e.detail
         if (ctrl || shift) return
 
+        if (category.openTrigger) category.openTrigger(id)
+
         drawerTabsData.update((a) => {
-            a[drawerId].activeSubTab = id
+            a[drawerId].activeSubTab = parentId || id
             return a
         })
     }
@@ -51,12 +56,13 @@
 
     // SUB MENU
 
-    $: submenuOpened = $drawerTabsData[drawerId]?.openedSubmenus?.includes(id)
+    $: openedSubmenus = $drawerTabsData[drawerId]?.openedSubmenus || []
+    $: submenuOpened = openedSubmenus.includes(id)
 
     function openSubMenu() {
         drawerTabsData.update((a) => {
             if (!a[drawerId]) return a
-            let opened = a[drawerId].openedSubmenus || []
+            let opened = clone(openedSubmenus)
 
             let existingIndex = opened.findIndex((menuId) => menuId === id) ?? -1
             if (existingIndex < 0) opened.push(id)
@@ -74,7 +80,7 @@
 
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} on:click={click}>
-        <div>
+        <div style="max-width: 85%;" data-title={translateText(label)}>
             <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} white={isActive || isSubmenu} />
             {#if noEdit || isSubmenu}
                 <p style="margin: 5px;">
@@ -115,7 +121,7 @@
 {#if !isSubmenu && submenuOpened && submenu?.options?.length}
     <div class="submenus">
         {#each submenu.options as option}
-            <svelte:self category={option} {active} isSubmenu />
+            <svelte:self parentId={id} category={option} {active} isSubmenu />
         {/each}
     </div>
 {/if}

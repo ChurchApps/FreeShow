@@ -56,20 +56,6 @@
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel({ detail }: any) {
-        let e: any = detail.event
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-
-        slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -1 : 1))) })
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
-    }
-
     let disableAutoScroll = false
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
@@ -431,7 +417,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -489,5 +475,7 @@
         display: flex;
         flex-wrap: wrap;
         padding: 5px;
+
+        padding-bottom: 60px;
     }
 </style>

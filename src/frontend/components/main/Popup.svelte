@@ -41,20 +41,20 @@
         <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
-                <div class="headerContent" style="{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
-                    <div class="headerMargin">
-                        {#if popupId !== "alert"}
+                {#if popupId !== "alert"}
+                    <div class="headerContent" style="border-bottom: 1px solid var(--primary-lighter);{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
+                        <div class="headerMargin">
                             {#key popupId}
                                 <!-- margin-top: -5px; -->
                                 <h2 style="font-size: 1.3em;margin-top: -2px;"><T id="popup.{popupId}" /></h2>
                             {/key}
-                        {/if}
 
-                        {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                            <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close [esc]" on:click={() => activePopup.set(null)} />
-                        {/if}
+                            {#if !disablePopupClose.includes(popupId)}
+                                <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close [esc]" on:click={() => activePopup.set(null)} />
+                            {/if}
+                        </div>
                     </div>
-                </div>
+                {/if}
                 <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;" on:scroll={scroll}>
                     <div class="body">
                         <svelte:component this={popups[popupId]} />

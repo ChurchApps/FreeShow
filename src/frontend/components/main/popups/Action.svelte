@@ -20,7 +20,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -325,6 +325,8 @@
     $: if (action?.midiEnabled && !customActivation) {
         updateValue("customActivation", "midi_signal_received")
     }
+
+    $: showMore = action.keypressActivate || customActivation
 </script>
 
 <!-- min-height: 50vh; -->
@@ -383,17 +385,15 @@
                 full
             />
         {:else if mode !== "slide_midi"}
-            <!-- on:keydown={nameKeydown} -->
-            <CombinedInput textWidth={38}>
-                <p><T id="midi.name" /></p>
-                {#key action.name}
-                    <TextInput value={action.name} on:change={(e) => updateValue("name", e)} autofocus={!action.name} />
-                {/key}
-            </CombinedInput>
+            <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={!action.name} />
+        {/if}
+
+        {#if !mode && !actionSelector && !actionActivationSelector}
+            <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
         {/if}
 
         <!-- if not slide specific trigger action -->
-        {#if !mode && !actionSelector && !actionActivationSelector}
+        {#if showMore && !mode && !actionSelector && !actionActivationSelector}
             <CombinedInput textWidth={38}>
                 <p><T id="midi.activate_keypress" /></p>
                 <Button
@@ -495,11 +495,19 @@
                     <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} simple />
                 {/if}
             {/if}
+
+            <hr />
         {/if}
 
         {#if mode !== "slide_midi" && !actionSelector && !actionActivationSelector}
             <!-- {#if action.triggers?.length}<hr />{/if} -->
-            <hr />
+            {#if !mode && !actionSelector && !actionActivationSelector}
+                {#if !showMore}
+                    <div style="height: 10px;"></div>
+                {/if}
+            {:else}
+                <hr />
+            {/if}
 
             <!-- multiple actions -->
             <div class="actions">

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activePopup, audioStreams, dictionary, labelsDisabled, playingAudio } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
+    import { audioStreams, playingAudio } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import Button from "../../inputs/Button.svelte"
@@ -34,13 +33,6 @@
         <T id="empty.general" />
     </Center>
 {/if}
-
-<div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("audio_stream")} center title={$dictionary.new?.audio_stream}>
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.audio_stream" />{/if}
-    </Button>
-</div>
 
 <style>
     .streams {

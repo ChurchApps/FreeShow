@@ -58,6 +58,7 @@
         ],
         [
             { id: "online", label: "media.online", icon: "web" },
+            "SEPERATOR",
             { id: "screens", label: "live.screens", icon: "screen" },
             { id: "cameras", label: "live.cameras", icon: "camera" }
         ],

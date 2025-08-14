@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { drawer } from "../../stores"
+    import { drawer, openedFolders } from "../../stores"
     import MaterialButton from "./MaterialButton.svelte"
 
     export let title: string = ""
@@ -21,7 +21,7 @@
 
     let scrollActive = false
     $: drawerHeight = $drawer.height
-    $: if (scrollElem || drawerHeight) setTimeout(updateScroll, 20)
+    $: if (scrollElem || drawerHeight || $openedFolders) setTimeout(updateScroll, 20)
     function updateScroll() {
         if (!scrollElem) return
         scrollActive = scrollElem.scrollHeight > scrollElem.clientHeight
@@ -31,7 +31,7 @@
 <div class="bottom" class:scrollActive class:large on:click={(e) => click(e, true)}>
     <div class="buttonDiv">
         <!-- variant="contained" -->
-        <MaterialButton variant="outlined" class={$$props.class} {title} {icon} {disabled} on:click={click} small={!large}>
+        <MaterialButton variant="outlined" class={$$props.class} style={$$props.style} {title} {icon} {disabled} on:click={click} small={!large}>
             <slot />
         </MaterialButton>
     </div>
@@ -70,6 +70,7 @@
     }
     .bottom.large .buttonDiv {
         box-shadow: 1px 1px 3px rgb(0 0 0 / 0.6);
+        border-radius: 50px;
     }
 
     .bottom :global(button) {
@@ -78,6 +79,8 @@
     .bottom.large :global(button) {
         padding: 0.45rem 1.25rem;
         font-size: 1em;
+
+        border-radius: 50px;
 
         border-width: 2px;
         border-color: var(--secondary) !important;

@@ -61,7 +61,7 @@
     let showMore = false
 </script>
 
-<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title="edit.options" on:click={() => (showMore = !showMore)} white />
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
 {#if showMore}
     <MaterialButton class="popup-reset" icon="reset" iconSize={1.1} title="actions.reset" on:click={reset} white />

@@ -118,6 +118,8 @@
         /* border-bottom: 1px solid var(--primary-darker); */
         border-left: 4px solid var(--primary-darker);
         border-radius: 0;
+
+        justify-content: space-between;
     }
 
     hr {

@@ -136,6 +136,8 @@
         background-color: var(--primary-darkest) !important;
         /* background-color: var(--primary-lighter) !important; */
         /* border-bottom: 1px solid var(--secondary) !important; */
+        /* border-top: 1px solid var(--primary-lighter) !important;
+        border-bottom: 1px solid var(--primary-lighter) !important; */
         border-left: 4px solid var(--secondary) !important;
         cursor: default;
     }
