@@ -130,10 +130,12 @@
         setTimeout(() => (loadingStarted = true), 10)
         // initialize custom scrollbar metrics
         setTimeout(updateScrollbarMetrics, 0)
-        window.addEventListener("resize", updateScrollbarMetrics)
+        window.addEventListener("resize", handleResize)
         return () => {
-            window.removeEventListener("resize", updateScrollbarMetrics)
+            window.removeEventListener("resize", handleResize)
             window.removeEventListener("pointermove", onThumbPointerMove)
+            if (scrollRaf !== null) cancelAnimationFrame(scrollRaf)
+            if (resizeRaf !== null) cancelAnimationFrame(resizeRaf)
         }
     })
 
@@ -191,9 +193,21 @@
 		const ratio = scrollable === 0 ? 0 : scrollElem.scrollTop / scrollable
 		thumbTop = Math.min(maxThumbTop, Math.max(0, ratio * maxThumbTop))
     }
-
+    let scrollRaf: number | null = null
     function handleScroll() {
-        updateScrollbarMetrics()
+        if (scrollRaf !== null) return
+        scrollRaf = requestAnimationFrame(() => {
+            updateScrollbarMetrics()
+            scrollRaf = null
+        })
+    }
+    let resizeRaf: number | null = null
+    function handleResize() {
+        if (resizeRaf !== null) return
+        resizeRaf = requestAnimationFrame(() => {
+            updateScrollbarMetrics()
+            resizeRaf = null
+        })
     }
 
     function onThumbPointerDown(e: PointerEvent) {
@@ -243,7 +257,7 @@
 					{/if}
 				{/each}
 				{#if enableCustomScrollbar}
-				<div class="scrollbar" style={`top:${scrollElem?.getBoundingClientRect ? scrollElem.getBoundingClientRect().top + window.scrollY : 0}px; bottom:96px;`}>
+                <div class="scrollbar" style={`top:${scrollElem?.getBoundingClientRect ? scrollElem.getBoundingClientRect().top + window.scrollY : 0}px; bottom:var(--bottom-actions-height, 96px);`}>
 					<div
 						class="scrollbar-thumb"
 						style={`height:${thumbHeight}px; transform: translateY(${thumbTop}px);`}
@@ -280,6 +294,9 @@
 {/if}
 
 <style>
+    :global(:root) {
+        --bottom-actions-height: 96px;
+    }
     .scroll-wrap { position: relative; display: contents; }
     .scroll {
         display: flex;
@@ -288,7 +305,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         /* ensure content and scrollbar don't sit under the bottom action bar */
-        padding-bottom: 96px;
+        padding-bottom: var(--bottom-actions-height, 96px);
 		/* keep room for scrollbar so content isn't underneath */
 		scrollbar-gutter: stable both-edges;
 		/* mobile/touch improvements */

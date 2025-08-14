@@ -46,7 +46,18 @@ export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
 export let scriptureViewList = writable(false)
-export let currentScriptureState = writable({ scriptureId: "", bookId: -1, chapterId: -1, activeVerses: [] as number[] })
+export type CurrentScriptureState = {
+    scriptureId: string
+    bookId: number
+    chapterId: number
+    activeVerses: number[]
+}
+export let currentScriptureState: Writable<CurrentScriptureState> = writable({
+    scriptureId: "",
+    bookId: -1,
+    chapterId: -1,
+    activeVerses: [],
+})
 export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})

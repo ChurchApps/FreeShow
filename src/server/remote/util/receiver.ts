@@ -122,21 +122,38 @@ export const receiver = {
     ACTIVE_SCRIPTURE: (data: any) => {
         const source: any = data?.api || data?.bible || data || {}
         const scriptureId: string = String(source.scriptureId || source.id || "")
-        const normalized: { scriptureId: string; bookId: number; chapterId: number; activeVerses: number[] } = {
+
+        type NormalizedScriptureState = {
+            scriptureId: string
+            bookId: number
+            chapterId: number
+            activeVerses: number[]
+        }
+
+        const normalized: NormalizedScriptureState = {
             scriptureId,
-            bookId: typeof source.bookId === "number" ? source.bookId : -1,
+            // Treat numeric bookId as zero-based if provided and valid, else -1
+            bookId: Number.isInteger(source.bookId) && source.bookId >= 0 ? (source.bookId as number) : -1,
+            // Normalize chapterId consistently to zero-based when provided as a string like "book.chapter"
+            // If numeric and integer, assume it is already zero-based (upstream contract)
             chapterId: (() => {
-                if (typeof source.chapterId === "number") return source.chapterId
-                if (typeof source.chapterId === "string") {
-                    const parts = source.chapterId.split(".")
-                    const num = parseInt(parts[1] || parts[0], 10)
+                const chapter = source.chapterId
+                if (Number.isInteger(chapter)) return chapter as number
+                if (typeof chapter === "string") {
+                    const parts = chapter.split(".")
+                    const num = parseInt(parts[1] ?? parts[0], 10)
                     return Number.isFinite(num) ? num - 1 : -1
                 }
                 return -1
             })(),
-            activeVerses: Array.isArray(source.activeVerses)
-                ? source.activeVerses.map((v: any) => parseInt(v, 10)).filter((n: number) => Number.isFinite(n) && n > 0)
-                : [],
+            // Sanitize, dedupe and sort verses to make "latest" deterministic
+            activeVerses: (() => {
+                const raw = Array.isArray(source.activeVerses) ? source.activeVerses : []
+                const nums: number[] = raw
+                    .map((v: any) => parseInt(v, 10))
+                    .filter((n: number): n is number => Number.isFinite(n) && n > 0)
+                return Array.from(new Set<number>(nums)).sort((a: number, b: number) => a - b)
+            })(),
         }
         currentScriptureState.set(normalized)
     },

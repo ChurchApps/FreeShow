@@ -172,8 +172,8 @@
     }
 
 	// RESIZERS
-	let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290") || 290
-	let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290") || 290
+	let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290", 10) || 290
+	let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
 	const minPanel = 200
 	const minCenter = 300
 
@@ -181,8 +181,8 @@
 		const total = window.innerWidth
 		const resizers = 12
 		// Re-read in case values changed outside
-		const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth))
-		const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth))
+		const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
+		const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
 		if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
 		if (!Number.isNaN(storedRight)) rightWidth = storedRight
 		// Clamp to available space and minimums

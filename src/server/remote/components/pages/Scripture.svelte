@@ -55,6 +55,10 @@
         }
     }
 
+    // UI control visibility
+    $: showControlsBar = depth === 2 || !$isCleared.all
+    $: showPrevNext = depth !== 2 || (+currentVerse > 0 || ($isCleared.all ? ($outShow && $outSlide !== null) : false))
+
     // SEARCH
 
     $: if (triggerScriptureSearch) triggerSearch()
@@ -214,13 +218,13 @@
     }
 
     function findChapter(book: any, value: string): any {
-        const chapterNumber = parseInt(value)
+        const chapterNumber = parseInt(value, 10)
         if (isNaN(chapterNumber) || chapterNumber < 1) return null
         return book.chapters?.[chapterNumber - 1] || null
     }
 
     function findVerse(chapter: any, value: string): any {
-        const verseNumber = parseInt(value)
+        const verseNumber = parseInt(value, 10)
         if (isNaN(verseNumber) || verseNumber < 1) return null
         return chapter.verses?.[verseNumber - 1] || null
     }
@@ -407,42 +411,19 @@
             {/if}
         </div>
 
-        {#if $isCleared.all}
-            {#if depth === 2}
-                <div class="cleared-controls" style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
-                    {#if +currentVerse > 0 || ($outShow && $outSlide !== null)}
-                        <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
-                        <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
-                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
-                    {:else}
-                        <Button style="flex: 1;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
-                    {/if}
-                </div>
-            {/if}
-        {:else}
+        {#if showControlsBar}
             <div class="buttons" style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
-                {#if depth === 2}
-                    {#if +currentVerse > 0}
-                        <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
-                        <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
-                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
-                    {:else}
-                        <Button style="flex: 1;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
-                    {/if}
-                {:else}
+                {#if showPrevNext}
                     <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
                     <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
                 {/if}
+                {#if depth === 2}
+                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                    </Button>
+                {/if}
             </div>
-            {#if !tablet}
+            {#if !$isCleared.all && !tablet}
                 <Clear />
             {/if}
         {/if}

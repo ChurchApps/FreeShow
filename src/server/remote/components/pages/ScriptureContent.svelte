@@ -35,7 +35,7 @@
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update local state when scripture state changes from main app (normalized shape)
-    let applyTimer: any
+    let applyTimer: ReturnType<typeof setTimeout> | null = null
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state) return
         // Debounce to coalesce quick consecutive updates (prevents transient wrong labels)
@@ -66,15 +66,17 @@
 
             // Case 2: full change (book + chapter + verse) arrived together → apply atomically
             if (safeToApplyAll) {
-                // Update all displayed indices together
+                // Update displayed indices (reflect what's on output)
                 displayedBookIndex = bookIndex
                 displayedChapterIndex = chapterIndex
                 displayedVerseNumber = latestVerse
 
-                activeBook = bookIndex
-                activeChapter = chapterIndex
-                activeVerse = latestVerse
-                depth = 2
+                // Only update active browsing selection when already at verse depth
+                if (depth === 2) {
+                    activeBook = bookIndex
+                    activeChapter = chapterIndex
+                    activeVerse = latestVerse
+                }
                 return
             }
 
@@ -82,7 +84,10 @@
             // We will apply when the remaining parts arrive in the next tick
         }, 260)
     })
-    onDestroy(() => unsubscribeScripture())
+    onDestroy(() => {
+        unsubscribeScripture()
+        if (applyTimer) clearTimeout(applyTimer)
+    })
 
     // COLORS
 
@@ -139,8 +144,13 @@ export function goBack() {
     export function forward() {
         // If a verse is highlighted at verse-level, move to next verse
         if (depth === 2 && activeVerse > 0) {
-            const total = verses.length
-            if (total > 0) activeVerse = Math.min(activeVerse + 1, total)
+            const verseNumbers: number[] = verses.map((v: any, i: number) => (v?.number ?? i + 1))
+            const currentIndex = verseNumbers.indexOf(activeVerse)
+            if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
+                activeVerse = verseNumbers[currentIndex + 1]
+            } else if (verseNumbers.length > 0) {
+                activeVerse = verseNumbers[verseNumbers.length - 1]
+            }
             return
         }
         // Otherwise move to next chapter (when at or viewing verse/chapter level)
@@ -153,7 +163,13 @@ export function goBack() {
     export function backward() {
         // If a verse is highlighted at verse-level, move to previous verse
         if (depth === 2 && activeVerse > 0) {
-            if (verses.length > 0) activeVerse = Math.max(activeVerse - 1, 1)
+            const verseNumbers: number[] = verses.map((v: any, i: number) => (v?.number ?? i + 1))
+            const currentIndex = verseNumbers.indexOf(activeVerse)
+            if (currentIndex > 0) {
+                activeVerse = verseNumbers[currentIndex - 1]
+            } else if (verseNumbers.length > 0) {
+                activeVerse = verseNumbers[0]
+            }
             return
         }
         // Otherwise move to previous chapter
@@ -211,7 +227,7 @@ export function goBack() {
                             id={id.toString()}
                         role="button"
                         tabindex="0"
-                        on:click={() => {
+                        on:mousedown={() => {
                                 activeVerse = 0
                                 activeChapter = -1
                                 activeBook = i
@@ -243,13 +259,13 @@ export function goBack() {
                         id={id.toString()}
                         role="button"
                         tabindex="0"
-                on:mousedown={() => {
+                        on:mousedown={() => {
                             // Only reset verse highlight when switching to a different chapter
                             if (activeChapter !== i) activeVerse = 0
                             activeChapter = i
                             depth++
                         }}
-                        on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = i; depth++; })()}
+                        on:keydown={(e) => e.key === 'Enter' && (() => { if (activeChapter !== i) activeVerse = 0; activeChapter = i; depth++; })()}
                     class:active={activeChapter === i}
                     class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
                     >
@@ -392,6 +408,11 @@ export function goBack() {
         /* min-width: 82px; */
         /* min-width: 33%; */
         min-width: 25%;
+    }
+    /* Make interactive book/chapter items show pointer cursor like verse buttons */
+    .grid .books span,
+    .grid .chapters span {
+        cursor: pointer;
     }
     .grid .big span {
         min-width: 40px;
