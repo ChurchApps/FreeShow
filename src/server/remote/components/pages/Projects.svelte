@@ -58,5 +58,13 @@
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 </style>
