@@ -7,7 +7,6 @@
     import { emitterData, formatData } from "../../actions/emitters"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import DynamicList from "../../input/DynamicList.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -159,9 +158,7 @@
 </script>
 
 {#if editTemplate && template}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editTemplate = "")} />
 
     <CombinedInput textWidth={30}>
         <p><T id="midi.name" /></p>
@@ -191,9 +188,7 @@
         </div>
     {/if}
 {:else if editEmitter && emitter}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editEmitter = "")} />
 
     <CombinedInput textWidth={30}>
         <p><T id="midi.name" /></p>

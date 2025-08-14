@@ -336,6 +336,7 @@ function getSlideItems(slide: any) {
 function makeParentSlide(slide, { label, color = "" }) {
     slide.group = label
     if (color) slide.color = rgbStringToHex(color)
+    if (color === "#000000") slide.color = "#ffffff"
 
     // set global group
     if (label.toLowerCase() === "group") label = "verse"
@@ -737,9 +738,9 @@ function getColorValue(color: { red: number; green: number; blue: number; alpha:
     if (!color) return ""
 
     color = {
-        red: color.red || 0,
-        green: color.green || 0,
-        blue: color.blue || 0,
+        red: color.red || 255,
+        green: color.green || 255,
+        blue: color.blue || 255,
         alpha: color.alpha || 1
     }
 

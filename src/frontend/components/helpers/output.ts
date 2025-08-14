@@ -1208,6 +1208,7 @@ export interface OutputMetadata {
     transition?: any
     value?: string
     media?: boolean
+    condition?: any
 
     messageStyle?: string
     messageTransition?: any
@@ -1228,6 +1229,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
     metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
+    metadata.condition = templatesUpdater[templateId]?.items?.[0]?.conditions || {}
 
     const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId]?.items?.[0])
     // if (metadataTemplateValue || metadata.message || currentStyle)

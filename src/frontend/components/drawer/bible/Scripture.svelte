@@ -79,7 +79,7 @@
     function updateActive() {
         if (!loaded) return
 
-        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses } })
+        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses, scriptureId: active } })
         cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
     }
 
@@ -100,6 +100,8 @@
         getBook()
 
         setTimeout(() => {
+            if ($openScripture === null) return
+
             chapterId = Number($openScripture.chapter)
             if ($openScripture.api) chapterId = bookId + "." + chapterId
             else chapterId--
@@ -108,10 +110,10 @@
             activeVerses = $openScripture.verses
             if (bibles[0]) bibles[0].activeVerses = activeVerses
 
-            if ($openScripture.play) setTimeout(() => playScripture.set(true), 50)
+            if ($openScripture.play) setTimeout(() => playScripture.set(true), 10)
 
             openScripture.set(null)
-        }, 100)
+        }, 10)
     }
 
     function createBiblesList() {
@@ -1008,7 +1010,7 @@
                                         playOrClearScripture(true)
                                         resetContentSearch()
                                     },
-                                    match.api ? 500 : 10
+                                    match.api ? 50 : 10
                                 )
                             }}
                             data-title={formatBibleText(match.text)}

@@ -7,7 +7,9 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -16,7 +18,7 @@
     const profile = getAccess("functions")
     const readOnly = profile.actions === "read"
 
-    function addMidi() {
+    function newAction() {
         popupData.set({})
         activePopup.set("action")
     }
@@ -107,12 +109,11 @@
     {/if}
 </div>
 
-<div class="tabs">
-    <Button style="width: 100%;" on:click={addMidi} disabled={readOnly} title={$dictionary.new?.action} center>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.action" on:click={newAction}>
         {#if !$labelsDisabled}<T id="new.action" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .actions {
@@ -140,11 +141,6 @@
         width: 100%;
         justify-content: space-between;
         text-align: start;
-    }
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
     }
 
     .key {

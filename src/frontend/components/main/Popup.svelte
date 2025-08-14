@@ -1,11 +1,10 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, dictionary, os } from "../../stores"
+    import { activePopup, os } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
-    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -42,22 +41,20 @@
         <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
-                <div class="headerContent" style="{popupId === 'alert' ? '' : 'border-bottom: 1px solid var(--primary-lighter);'}{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
-                    <div class="headerMargin">
-                        {#if popupId !== "alert"}
+                {#if popupId !== "alert"}
+                    <div class="headerContent" style="border-bottom: 1px solid var(--primary-lighter);{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
+                        <div class="headerMargin">
                             {#key popupId}
                                 <!-- margin-top: -5px; -->
                                 <h2 style="font-size: 1.3em;margin-top: -2px;"><T id="popup.{popupId}" /></h2>
                             {/key}
-                        {/if}
 
-                        {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                            <MaterialButton class="popup-close" title="{$dictionary.actions?.close} [esc]" on:click={() => activePopup.set(null)} white>
-                                <Icon id="close" size={1.3} />
-                            </MaterialButton>
-                        {/if}
+                            {#if !disablePopupClose.includes(popupId)}
+                                <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close [esc]" on:click={() => activePopup.set(null)} />
+                            {/if}
+                        </div>
                     </div>
-                </div>
+                {/if}
                 <div class="scroll" style="--top-height: {isWindows ? MENU_BAR_HEIGHT : 0}px;" on:scroll={scroll}>
                     <div class="body">
                         <svelte:component this={popups[popupId]} />
@@ -171,7 +168,8 @@
 
     .card :global(.popup-close),
     .card :global(.popup-back),
-    .card :global(.popup-options) {
+    .card :global(.popup-options),
+    .card :global(.popup-reset) {
         position: absolute;
         inset-inline-end: -10px;
         top: 0;
@@ -204,6 +202,10 @@
 
         /* overflow: visible; */
     }
+    .card :global(.popup-options.active) {
+        color: var(--secondary) !important;
+        background-color: var(--primary-darkest) !important;
+    }
 
     .card :global(.popup-options .state) {
         position: absolute;
@@ -226,5 +228,13 @@
         height: 18px;
 
         pointer-events: none;
+    }
+
+    .card :global(.popup-reset) {
+        inset-inline-end: 85px;
+
+        max-height: 35.2px;
+        margin-top: 10px;
+        margin-right: 10px;
     }
 </style>

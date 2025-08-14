@@ -1,16 +1,18 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { activePopup, activeTimers, dictionary, disableDragging, labelsDisabled, timers } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Slider from "../../inputs/Slider.svelte"
     import Timer from "../../slide/views/Timer.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
-    import { getAccess } from "../../../utils/profile"
 
     export let searchValue
 
@@ -138,12 +140,11 @@
     </Center>
 {/if}
 
-<div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("timer")} disabled={readOnly} center title={$dictionary.new?.timer}>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.timer" on:click={() => activePopup.set("timer")}>
         {#if !$labelsDisabled}<T id="new.timer" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .timers {

@@ -6,20 +6,18 @@
     import { translate } from "../../../../utils/language"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
-    import Icon from "../../../helpers/Icon.svelte"
     import { checkName } from "../../../helpers/show"
     import T from "../../../helpers/T.svelte"
-    import Checkbox from "../../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
+    import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
     import MaterialTextarea from "../../../inputs/MaterialTextarea.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
-    import NumberInput from "../../../inputs/NumberInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
+    import List from "../../../input/List.svelte"
     import WebSearch from "./WebSearch.svelte"
 
-    const isChecked = (e: any) => e.target.checked
     const changeValue = (e: any, key = "text") => {
         values[key] = e.target?.value || e.detail || ""
 
@@ -181,79 +179,44 @@
 <svelte:window on:keydown={keydown} />
 
 {#if !selectedOption}
-    <div class="list">
+    <List bottom={20}>
         <MaterialTextInput id="name" label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
-
         <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translate(a.name, { parts: true }), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} />
-    </div>
+    </List>
 
     <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />
 {:else}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (selectedOption = "")} />
 {/if}
 
 {#if selectedOption === "text"}
-    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
-    <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
-{:else if selectedOption === "web"}
-    <WebSearch query={values.name} on:update={updateLyrics} />
-{/if}
-
-{#if selectedOption === "text"}
-    <MaterialButton class="popup-options" title={$dictionary.edit?.options} on:click={() => (showMore = !showMore)} white={!showMore}>
-        <Icon id="options" size={1.3} />
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white>
         {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
     </MaterialButton>
 
-    <div class="create" style="margin-top: 10px;">
-        {#if showMore}
-            <CombinedInput>
-                <p><T id="create_show.auto_groups" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={$special.autoGroups !== false} on:change={(e) => special.set({ ...$special, autoGroups: isChecked(e) })} />
-                </div>
-            </CombinedInput>
-            <CombinedInput title={$dictionary.create_show?.format_new_show_tip}>
-                <p><T id="create_show.format_new_show" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={$formatNewShow} on:change={(e) => formatNewShow.set(isChecked(e))} />
-                </div>
-            </CombinedInput>
-            <CombinedInput title={$dictionary.create_show?.split_lines_tip}>
-                <p><T id="create_show.split_lines" /></p>
-                <NumberInput
-                    value={$splitLines}
-                    max={100}
-                    on:change={(e) => {
-                        splitLines.set(Number(e.detail))
-                    }}
-                />
-            </CombinedInput>
-        {/if}
+    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
+    <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
 
-        <MaterialButton
-            on:click={textToShow}
-            variant="contained"
-            title="{$dictionary.timer?.create} [Ctrl+Enter]"
-            disabled={values.text.trim().length === 0}
-            info={getName(values)}
-            style="width: 100%;margin-top: 10px;"
-            icon="add"
-            data-testid="create.show.popup.new.show"
-        >
-            <T id="timer.create" />
-        </MaterialButton>
-    </div>
+    {#if showMore}
+        <List top={5}>
+            <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} on:change={(e) => special.set({ ...$special, autoGroups: e.detail })} />
+            <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} on:change={(e) => formatNewShow.set(e.detail)} />
+            <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={(e) => splitLines.set(e.detail)} />
+        </List>
+    {/if}
+
+    <MaterialButton
+        on:click={textToShow}
+        variant="contained"
+        title="timer.create [Ctrl+Enter]"
+        disabled={values.text.trim().length === 0}
+        info={getName(values)}
+        style="width: 100%;margin-top: 20px;"
+        icon="add"
+        data-testid="create.show.popup.new.show"
+    >
+        <T id="timer.create" />
+    </MaterialButton>
+{:else if selectedOption === "web"}
+    <WebSearch query={values.name} on:update={updateLyrics} />
 {/if}
-
-<style>
-    .list {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-
-        margin-bottom: 20px;
-    }
-</style>

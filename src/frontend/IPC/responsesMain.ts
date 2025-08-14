@@ -8,6 +8,7 @@ import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
 import { getDynamicValue, getVariableValue } from "../components/edit/scripts/itemHelpers"
+import { getSlidesText } from "../components/edit/scripts/textStyle"
 import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
@@ -26,6 +27,7 @@ import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
 import { createCategory, importShow, importSpecific, importTemplate, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
+import { convertMediaShout } from "../converters/mediashout"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong } from "../converters/opensong"
 import { convertPowerpoint } from "../converters/powerpoint"
@@ -80,14 +82,11 @@ import {
     windowState
 } from "../stores"
 import { newToast } from "../utils/common"
-import { validateKeys } from "../utils/drive"
+import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { convertMediaShout } from "../converters/mediashout"
-import { getSlidesText } from "../components/edit/scripts/textStyle"
-import { confirmCustom } from "../utils/popup"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -433,18 +432,6 @@ export const mainResponses: MainResponses = {
 
         if (!receiveFOLDER[a.channel]) return
         receiveFOLDER[a.channel]()
-    },
-    [ToMain.OPEN_FILE2]: (a) => {
-        const receiveFILE = {
-            GOOGLE_KEYS: () => {
-                const path = a.files[0]
-                const file = a.content[path]
-                if (file) validateKeys(file)
-            }
-        }
-
-        if (!receiveFILE[a.channel]) return
-        receiveFILE[a.channel]()
     },
     [ToMain.IMPORT2]: (a) => {
         const mainData = a.data

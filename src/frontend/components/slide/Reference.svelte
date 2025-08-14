@@ -105,5 +105,7 @@
     p {
         padding: 0 10px;
         opacity: 0.8;
+
+        max-width: 500px;
     }
 </style>

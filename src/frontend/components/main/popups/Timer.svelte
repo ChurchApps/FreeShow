@@ -188,9 +188,7 @@
     <MaterialMultiChoice options={timerTypes} on:click={(e) => (chosenType = timer.type = e.detail)} />
 {:else}
     {#if created}
-        <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")} white>
-            <Icon id="back" size={1.3} />
-        </MaterialButton>
+        <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (chosenType = "")} />
     {/if}
 
     <CombinedInput textWidth={50}>

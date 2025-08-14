@@ -2,18 +2,17 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
+    import BottomButton from "../../inputs/BottomButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getAccess } from "../../../utils/profile"
 
     export let id: string
     export let active: string | null
@@ -180,14 +179,31 @@
     }
 
     $: sortType = $sorted.shows?.type || "name"
+
+    function createShow(e: any) {
+        const { ctrl } = e.detail
+        console.log(ctrl)
+        if (ctrl) {
+            history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
+        } else {
+            activePopup.set("show")
+        }
+    }
+
+    let listElem: HTMLElement | null = null
+    let scrollElem: HTMLElement | null = null
+    $: if (listElem && active) setTimeout(updateScrollElem)
+    function updateScrollElem() {
+        scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
-    <div class="column {readOnly ? '' : 'context #drawer_show'}">
+    <div bind:this={listElem} class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
-            {#if createFromSearch}
+            {#if createFromSearch && searchValue.length}
                 <div class="warning">
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0].toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
@@ -211,24 +227,10 @@
         {/if}
     </div>
 </Autoscroll>
-<div class="tabs">
-    <Button
-        id="newShowBtn"
-        style="flex: 1;"
-        on:click={(e) => {
-            if (e.ctrlKey || e.metaKey) {
-                history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
-            } else activePopup.set("show")
-        }}
-        class="context #drawer_new_show"
-        center
-        title="{$dictionary.tooltip?.show} [Ctrl+N]"
-        disabled={readOnly}
-    >
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.show" />{/if}
-    </Button>
-</div>
+
+<BottomButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} {scrollElem} on:click={createShow} large>
+    {#if !$labelsDisabled}<T id="new.show" />{/if}
+</BottomButton>
 
 <style>
     .column {
@@ -245,17 +247,12 @@
         background-color: var(--primary-darkest);
     }
 
+    .column :global(svelte-virtual-list-viewport) {
+        padding-bottom: 60px;
+    }
+
     /* THIS don't work with virtual list */
     /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
         background-color: var(--primary-darkest);
     } */
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
-    }
-
-    /* .column.hidden :global(button) {
-    display: none;
-  } */
 </style>

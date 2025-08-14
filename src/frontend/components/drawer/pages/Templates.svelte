@@ -1,15 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Template } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import { deselect } from "../../helpers/select"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Loader from "../../main/Loader.svelte"
     import Actions from "../../slide/Actions.svelte"
     import Center from "../../system/Center.svelte"
@@ -17,8 +19,6 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
-    import { getLayoutRef } from "../../helpers/show"
-    import { getAccess } from "../../../utils/profile"
 
     export let active: string | null
     export let searchValue = ""
@@ -159,20 +159,12 @@
         {/if}
     </DropArea>
 </div>
-<div class="tabs">
-    <Button
-        style="flex: 1;"
-        on:click={() => {
-            history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
-        }}
-        center
-        disabled={readOnly}
-        title={$dictionary.new?.template}
-    >
-        <Icon id="add" right={!$labelsDisabled} />
+
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.template" on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "template" } })}>
         {#if !$labelsDisabled}<T id="new.template" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .grid {
@@ -186,10 +178,5 @@
     .grid :global(.selectElem) {
         width: var(--width);
         outline-offset: -3px;
-    }
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
     }
 </style>

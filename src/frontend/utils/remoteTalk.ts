@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { Main } from "../../types/IPC/Main"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
-import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
+import { fetchBible, loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
@@ -156,10 +156,69 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        const id = msg.data?.id
+        const { id, bookKey, chapterKey, bookIndex, chapterIndex } = msg.data || {}
         if (!id) return
 
-        // if (get(scriptures)[id]?.collection) id = get(scriptures)[id].collection!.versions[0]
+        const scriptureEntry: any = get(scriptures)[id]
+        const isApi = scriptureEntry?.api === true
+
+        if (isApi) {
+            const apiId = scriptureEntry?.id || id
+            
+            if (bookKey && !chapterKey) {
+                // Fetch chapters only (mirror drawer behavior: some APIs include a 0 entry)
+                let chapters: any[] = await fetchBible("chapters", apiId, { 
+                    bookId: bookKey, 
+                    versesList: [], 
+                    chapterId: `${bookKey}.1` 
+                })
+                if (chapters?.[0] && Number.parseInt(chapters[0].number, 10) === 0) {
+                    chapters = chapters.slice(1)
+                }
+                const mapped = (chapters || []).map((c: any, i: number) => ({
+                    number: Number.isFinite(Number.parseInt(c.number, 10)) ? Number.parseInt(c.number, 10) : i + 1,
+                    keyName: c.keyName,
+                }))
+                msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
+                return msg
+            }
+            
+            if (bookKey && chapterKey) {
+                // Fetch verses only
+                const versesMeta: any[] = await fetchBible("verses", apiId, { 
+                    bookId: bookKey, 
+                    chapterId: chapterKey, 
+                    versesList: [] 
+                })
+                const versesTextResp: any[] = await fetchBible("versesText", apiId, { 
+                    bookId: bookKey, 
+                    chapterId: chapterKey, 
+                    versesList: versesMeta 
+                })
+                // Build the verses consistent with drawer's convertVerses (index-based mapping)
+                const mappedVerses = (versesTextResp || []).map((d: any, i: number) => ({
+                    number: (versesMeta?.[i]?.number) || i + 1,
+                    text: d?.content || d?.text || "",
+                }))
+                msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
+                return msg
+            }
+            
+            // Initial: prefer cached books2 from scriptures store; fallback to fetch
+            const objectId = Object.entries(get(scriptures)).find(([_id, a]: any) => a?.id === id)?.[0] || id
+            const cachedBooks: any[] = (get(scriptures) as any)[objectId]?.books2 || []
+            const books: any[] = cachedBooks.length
+                ? cachedBooks
+                : await fetchBible("books", apiId, { versesList: [], bookId: "GEN", chapterId: "GEN.1" })
+            const mappedBooks = (books || []).map((b: any, i: number) => ({
+                name: b.name,
+                number: b.number || i + 1,
+                keyName: b.keyName,
+                chapters: [],
+            }))
+            msg.data.bible = { books: mappedBooks }
+            return msg
+        }
 
         const listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
@@ -172,32 +231,47 @@ export const receiveREMOTE: any = {
 }
 
 let oldOutSlide = ""
-export async function initializeRemote(id: string) {
-    send(REMOTE, ["ACCESS"])
 
+export async function initializeRemote(id: string) {
+    // Send access confirmation to remote client
+    window.api.send(REMOTE, { id, channel: "ACCESS", data: null })
+
+    // Send initial data to remote client
     sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
     send(REMOTE, ["FOLDERS"], { folders: get(folders), opened: get(openedFolders) })
     send(REMOTE, ["PROJECT"], get(activeProject))
 
+    // Get current output state
     const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    // this is actually aspect ratio
-    const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
+    const styleRes = currentOutput?.style ? 
+        get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : 
+        null
 
     const outSlide = currentOutput?.out?.slide
-    const out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
+    const out: any = { 
+        slide: outSlide ? outSlide.index : null, 
+        layout: outSlide?.layout || null, 
+        styleRes 
+    }
+    
     if (out.slide !== null && outSlide?.id && outSlide?.id !== "temp") {
         oldOutSlide = outSlide.id
-        // output & thumbnail
+        // Output & thumbnail
         out.show = await convertBackgrounds(get(showsCache)[oldOutSlide] || {})
         out.show.id = oldOutSlide
 
-        // slide thumbnails
+        // Send slide thumbnails asynchronously
         setTimeout(async () => {
             window.api.send(REMOTE, await receiveREMOTE.SHOW({ channel: "SHOW", id, data: oldOutSlide }))
         })
     }
-    send(REMOTE, ["OUT"], out)
+    
+    // Send targeted initial state to this connection
+    // Use sendData so the proper OUT payload is constructed (handles scripture 'temp' etc.)
+    sendData(REMOTE, { id, channel: "OUT" })
+    sendData(REMOTE, { id, channel: "OUT_DATA" })
 
+    // Send additional data
     send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }

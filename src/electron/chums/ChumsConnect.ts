@@ -23,7 +23,7 @@ export class ChumsConnect {
     <head>
         <title>Success!</title>
     </head>
-    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+    <body style="padding: 80px;background: #242832;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
         <h1 style="color: #f0008c;">Success!</h1>
         <p>You can close this page</p>
     </body>
@@ -33,7 +33,7 @@ export class ChumsConnect {
     <head>
         <title>Error!</title>
     </head>
-    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+    <body style="padding: 80px;background: #242832;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
         <h1>Could not complete authentication!</h1>
         <p>{error_msg}</p>
     </body>
@@ -164,7 +164,7 @@ export class ChumsConnect {
             // console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
             httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                 if (err || data === null) {
-                    this.disconnect();
+                    this.disconnect()
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
                     resolve(null)
                     return

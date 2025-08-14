@@ -4,6 +4,7 @@
     import type { BibleCategories } from "../../../../types/Tabs"
     import { sendMain } from "../../../IPC/main"
     import { dictionary, labelsDisabled, language, scriptures } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
     import { customBibleData } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
@@ -12,12 +13,11 @@
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
-    import { translate } from "../../../utils/language"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -145,9 +145,7 @@
 </script>
 
 {#if importType}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={goBack} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={goBack} />
 {/if}
 
 {#if importType === "api"}

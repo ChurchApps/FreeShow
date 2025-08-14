@@ -20,6 +20,8 @@
         let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)
 
         if (e.key === "ArrowDown") {
+            e.preventDefault()
+
             nextTab = Math.min(activeTabs.length - 1, currentTabIndex + 1)
 
             if ((currentTabIndex + 1 >= activeTabs.length || $settingsTab === "profiles") && !activeTabs.includes("profiles")) {
@@ -27,6 +29,8 @@
                 return
             }
         } else if (e.key === "ArrowUp") {
+            e.preventDefault()
+
             nextTab = Math.max(0, currentTabIndex - 1)
         }
 
@@ -47,7 +51,7 @@
 <div class="main">
     {#each activeTabs as tab}
         <Button id="button" on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
-            <Icon id={tab} right />
+            <Icon id={tab} right white={$settingsTab === tab} />
             <p style="margin: 5px;"><T id="settings.{tab}" /></p>
         </Button>
     {/each}

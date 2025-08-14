@@ -6,8 +6,10 @@
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { clone, keysToID, sortByName } from "../helpers/array"
+    import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
+    import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import SlideItems from "../slide/SlideItems.svelte"
@@ -21,8 +23,6 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
-    import Button from "../inputs/Button.svelte"
-    import Icon from "../helpers/Icon.svelte"
 
     export let id: string
     export let item: StageItem
@@ -41,7 +41,7 @@
 
         console.log(e)
         activeStage.update((ae) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
@@ -86,7 +86,7 @@
     function deselect(e: any) {
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
-        if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+        if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
                 ae.items = []
                 return ae

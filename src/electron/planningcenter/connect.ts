@@ -38,7 +38,7 @@ const HTML_success = `
     <head>
         <title>Success!</title>
     </head>
-    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+    <body style="padding: 80px;background: #242832;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
         <h1 style="color: #f0008c;">Success!</h1>
         <p>You can close this page</p>
     </body>
@@ -47,7 +47,7 @@ const HTML_error = `
     <head>
         <title>Error!</title>
     </head>
-    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+    <body style="padding: 80px;background: #242832;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
         <h1>Could not complete authentication!</h1>
         <p>{error_msg}</p>
     </body>
@@ -60,8 +60,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
     const redirect_uri = `http://localhost:${PCO_PORT}${path}`
 
     // Generate PKCE values
-    const codeVerifier = generateCodeVerifier();
-    const codeChallenge = generateCodeChallenge(codeVerifier);
+    const codeVerifier = generateCodeVerifier()
+    const codeChallenge = generateCodeChallenge(codeVerifier)
 
     const server = app.listen(PCO_PORT, () => {
         console.info(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
@@ -112,7 +112,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             })
         })
 
-        const URL = `${PCO_API_URL}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+        const URL = `${PCO_API_URL}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256`
 
         openURL(URL)
     })
@@ -166,14 +166,14 @@ async function handleRefreshFailure(scope: PCOScopes): Promise<PCOAuthData> {
 }
 
 function generateCodeVerifier() {
-    const array = new Uint8Array(32);
-    randomFillSync(array);
-    return Buffer.from(array).toString("base64url");
+    const array = new Uint8Array(32)
+    randomFillSync(array)
+    return Buffer.from(array).toString("base64url")
 }
 
 function generateCodeChallenge(verifier: string) {
-    const hash = createHash("sha256").update(verifier).digest();
-    return Buffer.from(hash).toString("base64url");
+    const hash = createHash("sha256").update(verifier).digest()
+    return Buffer.from(hash).toString("base64url")
 }
 
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {

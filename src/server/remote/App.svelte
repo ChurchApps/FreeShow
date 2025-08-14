@@ -28,8 +28,8 @@
 <svelte:head>
     <style>
         :root {
-            --primary: #292c36;
-            --primary-lighter: #363945;
+            --primary: #242832;
+            --primary-lighter: #2f3542;
             --primary-darker: #191923;
             --primary-darkest: #12121c;
             --text: #f0f0ff;
@@ -71,6 +71,22 @@
             height: 100%;
             /* width: 100vw;
 height: 100vh; */
+        }
+
+        /* Match FreeShow main app scrollbar */
+        :global(::-webkit-scrollbar) {
+            width: 8px;
+            height: 8px;
+        }
+        :global(::-webkit-scrollbar-track),
+        :global(::-webkit-scrollbar-corner) {
+            background: rgb(255 255 255 / 0.05);
+        }
+        :global(::-webkit-scrollbar-thumb) {
+            background: rgb(255 255 255 / 0.3);
+        }
+        :global(::-webkit-scrollbar-thumb:hover) {
+            background: rgb(255 255 255 / 0.5);
         }
 
         h1 {

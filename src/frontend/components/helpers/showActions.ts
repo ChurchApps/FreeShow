@@ -555,7 +555,8 @@ export function previousSlide(e: any, customOutputId?: string) {
             return
         }
 
-        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index--
+        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index--
+        if (!layout[index]) return
 
         // get slide line
         const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
@@ -625,13 +626,14 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
     if (!layout?.[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
-    while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
+    while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
 
     if (end) {
         index = layout.length - 1
-        while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
+        while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
     }
 
+    if (!layout[index]) return null
     return index
 }
 

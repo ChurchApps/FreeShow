@@ -17,6 +17,8 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import { getLayoutRef } from "../../helpers/show"
 
+    let currentValue = $popupData.active || ""
+
     // VALUES
 
     const iconSize = 60
@@ -33,6 +35,13 @@
 
     function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
+
+        if ($popupData.trigger) {
+            value = { ...styleTransition, [selectedType]: updateSpecific(styleTransition[selectedType] || {}, key, value, reset) }
+            currentValue = value
+            $popupData.trigger(value)
+            return
+        }
 
         if (isItem) {
             // WIP duplicate of SetTime.svelte ++
@@ -91,6 +100,7 @@
 
             history({ id: "UPDATE", newData: { key: "transition", data: value }, oldData: { id: popupDataId }, location: { page: "settings", id: "settings_style", override: "style_" + key } })
         } else {
+            // global
             transitionData.update((a: any) => {
                 a[id] = updateSpecific(a[id], key, value, reset)
                 return a
@@ -145,12 +155,13 @@
     }
 
     let isItem: boolean = $popupData.action === "transition"
-    let isStyle: boolean = $popupData.action === "style_transition"
+    let isStyle: boolean = $popupData.action === "style_transition" || $popupData.id === "style"
     let popupDataId: string = $popupData.id
     let isSlide: boolean = $selected.id === "slide"
     let ref = isSlide || isItem ? getLayoutRef() : []
 
     onMount(() => {
+        if ($popupData.trigger) return
         popupData.set({})
     })
 
@@ -175,7 +186,7 @@
     // STYLE TRANSITION
 
     let styleTransition: any = { text: {}, media: {} }
-    $: styleTransition = $styles[popupDataId]?.transition || { text: clone(DEFAULT_TRANSITIONS.text), media: clone(DEFAULT_TRANSITIONS.media) }
+    $: styleTransition = currentValue || $styles[popupDataId]?.transition || { text: clone(DEFAULT_TRANSITIONS.text), media: clone(DEFAULT_TRANSITIONS.media) }
     $: styleTextTransition = styleTransition.text || {}
     $: styleMediaTransition = styleTransition.media || {}
 

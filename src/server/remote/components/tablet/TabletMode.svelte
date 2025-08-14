@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
@@ -170,12 +171,105 @@
         // _set("outSlide", index) // ??
         // send("API:get_cleared") // ??
     }
+
+    // RESIZERS
+    let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290", 10) || 290
+    let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
+    const minPanel = 200
+    const minCenter = 300
+
+    function clampPersistedWidths() {
+        const total = window.innerWidth
+        const resizers = 12
+        // Re-read in case values changed outside
+        const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
+        const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
+        if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
+        if (!Number.isNaN(storedRight)) rightWidth = storedRight
+        // Clamp to available space and minimums
+        leftWidth = Math.max(minPanel, Math.min(leftWidth, Math.max(minPanel, total - rightWidth - resizers - minCenter)))
+        rightWidth = Math.max(minPanel, Math.min(rightWidth, Math.max(minPanel, total - leftWidth - resizers - minCenter)))
+    }
+
+    function persistWidths() {
+        localStorage.setItem("tablet.leftWidth", String(leftWidth))
+        localStorage.setItem("tablet.rightWidth", String(rightWidth))
+    }
+
+    let initializedWidths = false
+    $: if (!initializedWidths) {
+        clampPersistedWidths()
+        initializedWidths = true
+    }
+
+    let dragging: "left" | "right" | null = null
+    let startX = 0
+    let startLeft = 0
+    let startRight = 0
+
+    function onPointerDownLeft(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "left"
+        startX = e.clientX
+        startLeft = leftWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+
+    function onPointerDownRight(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "right"
+        startX = e.clientX
+        startRight = rightWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+    function onPointerMove(e: PointerEvent) {
+        if (!dragging) return
+        e.preventDefault()
+        
+        const total = window.innerWidth
+        const resizers = 12 // two resizers of 6px each
+        const delta = e.clientX - startX
+        
+        if (dragging === "left") {
+            const proposed = startLeft + delta
+            const maxLeft = total - rightWidth - resizers - minCenter
+            leftWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxLeft)))
+        } else if (dragging === "right") {
+            const proposed = startRight - delta
+            const maxRight = total - leftWidth - resizers - minCenter
+            rightWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxRight)))
+        }
+    }
+    function onPointerUp() {
+        dragging = null
+        window.removeEventListener("pointermove", onPointerMove)
+        persistWidths()
+    }
+
+    function onWindowResize() {
+        // Recalculate panel widths when window resizes
+        if (initializedWidths) {
+            clampPersistedWidths()
+        }
+    }
+
+    onMount(() => {
+        window.addEventListener("resize", onWindowResize)
+        return () => {
+            window.removeEventListener("resize", onWindowResize)
+            window.removeEventListener("pointermove", onPointerMove)
+        }
+    })
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:resize={clampPersistedWidths} />
 
 {#if !isFullscreen}
-    <div class="left">
+    <div class="left" style={`width:${leftWidth}px`}>
         <div class="flex">
             {#if activeTab === "shows"}
                 <Shows tablet />
@@ -188,6 +282,10 @@
 
         <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
     </div>
+{/if}
+
+{#if !isFullscreen}
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft}></div>
 {/if}
 
 <div class="center">
@@ -224,7 +322,7 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" on:click={() => playSlide(i)}>
+                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={(e) => (e.key === 'Enter' ? playSlide(i) : null)}>
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -291,7 +389,11 @@
 </div>
 
 {#if !isFullscreen}
-    <div class="right" style="jutsify-content: space-between;">
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight}></div>
+{/if}
+
+{#if !isFullscreen}
+    <div class="right" style={`justify-content: space-between; width:${rightWidth}px`}>
         {#if !$isCleared.all}
             <div class="top flex">
                 {#if $outShow && layout}
@@ -354,14 +456,37 @@
     }
 
     .left {
-        border-inline-end: 4px solid var(--primary-lighter);
+        border-inline-end: 0;
     }
     .right {
-        border-inline-start: 4px solid var(--primary-lighter);
+        border-inline-start: 0;
     }
 
     .center {
         flex: 1;
+    }
+
+    /* Resizers */
+    .resizer {
+        position: relative;
+        width: 10px; /* generous hit-area */
+        cursor: col-resize;
+        background: transparent;
+        /* overlap adjacent panes so there's no visual gap */
+        margin-inline: -5px;
+    }
+    .resizer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px; /* single visual line */
+        transform: translateX(-50%);
+        background-color: var(--primary-lighter);
+    }
+    .resizer:hover::before {
+        background-color: var(--primary-darkest);
     }
 
     /* ///// */
@@ -375,6 +500,17 @@
 
         overflow-y: auto;
     }
+
+    /* Center panel scroll (slides list) */
+    .scroll {
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     /* ///// */
 
@@ -424,5 +560,28 @@
     .fullscreen button:hover,
     .fullscreen button:active {
         background-color: var(--primary-lighter);
+    }
+
+    .resizer {
+        position: relative;
+        z-index: 1;
+        width: 6px;
+        background: var(--primary-darker);
+        cursor: col-resize;
+        transition: background 0.2s ease;
+        user-select: none;
+        /* Expand touch area */
+        padding: 0 2px;
+        margin: 0 -2px;
+    }
+
+    .resizer:hover,
+    .resizer:focus {
+        background: var(--primary-darkest);
+        outline: none;
+    }
+
+    .resizer:focus {
+        box-shadow: 0 0 0 2px var(--primary);
     }
 </style>

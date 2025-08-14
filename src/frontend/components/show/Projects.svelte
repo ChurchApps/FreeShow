@@ -30,6 +30,7 @@
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
+    import BottomButton from "../inputs/BottomButton.svelte"
     import Button from "../inputs/Button.svelte"
     import ProjectButton from "../inputs/ProjectButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
@@ -246,7 +247,7 @@
             {/each}
         </div>
     {:else if !projectActive}
-        <div id="projectsArea" class="list projects {readOnly ? '' : 'context #projects'}">
+        <div id="projectsArea" class:float={!templates.length} class="list projects {readOnly ? '' : 'context #projects'}">
             <Autoscroll offset={listOffset} bind:scrollElem={listScrollElem} timeout={150} smoothTimeout={0}>
                 <DropArea id="projects">
                     <ProjectList {tree} {readOnly} />
@@ -255,22 +256,24 @@
         </div>
 
         {#if templates.length}
-            <div class="projectTemplates">
+            <div class="projectTemplates" style="margin-bottom: 40px;">
                 {#each templates as project}
                     <ProjectButton name={project.name} parent={project.parent} id={project.id} {interactedFolder} template />
                 {/each}
             </div>
         {/if}
 
-        <div id="projectsButtons" class="tabs">
-            <Button style="flex: 0;padding: 0.2em 1.3em;" on:click={() => createProject(true)} center title={$dictionary.new?.folder} disabled={readOnly}>
-                <Icon id="folder" white />
-            </Button>
-            <div class="seperator"></div>
-            <Button style="flex: 1;" on:click={() => createProject()} center title={$dictionary.new?.project} disabled={readOnly}>
-                <Icon id="add" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
-            </Button>
+        <div style="display: flex;">
+            <span class="buttons left" style="position: relative;flex: 1;">
+                <BottomButton style="height: 30px;" disabled={readOnly} title="new.folder" on:click={() => createProject(true)}>
+                    <Icon id="folder" white />
+                </BottomButton>
+            </span>
+            <span class="buttons right" style="position: relative;flex: 5;">
+                <BottomButton style="height: 30px;" disabled={readOnly} icon="add" scrollElem={templates.length ? null : listScrollElem?.querySelector(".droparea")} title="new.project" on:click={() => createProject()}>
+                    {#if !$labelsDisabled}<T id="new.project" />{/if}
+                </BottomButton>
+            </span>
         </div>
     {:else}
         <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
@@ -323,16 +326,13 @@
             </Autoscroll>
         </div>
     {/if}
-</div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <div class="tabs">
-        <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
-            <Icon id="section" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<p><T id="new.section" /></p>{/if}
-        </Button>
-    </div>
-{/if}
+    {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
+        <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
+            {#if !$labelsDisabled}<T id="new.section" />{/if}
+        </BottomButton>
+    {/if}
+</div>
 
 <style>
     .main {
@@ -380,6 +380,13 @@
         /* this is to be able to right click and add a folder/project at "root" level */
         padding-bottom: 10px;
     }
+    .list.projects.float :global(.droparea) {
+        padding-bottom: 40px;
+    }
+    .list#projectArea :global(.droparea) {
+        /* "new" button */
+        padding-bottom: 40px;
+    }
 
     .list :global(.section) {
         padding: 4px 40px;
@@ -407,9 +414,19 @@
         outline-color: var(--border-color);
     }
 
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
+    .buttons.left :global(.bottom) {
+        padding-right: 0;
+    }
+    .buttons.right :global(.bottom) {
+        padding-left: 0;
+    }
+    .buttons.left :global(button) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-right: none;
+    }
+    .buttons.right :global(button) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
     }
 </style>
