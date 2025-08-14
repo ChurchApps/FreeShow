@@ -1,10 +1,9 @@
 <script lang="ts">
     import type { Bible } from "../../../../types/Bible"
     import Loading from "../../../common/components/Loading.svelte"
-        import { onDestroy } from "svelte"
+    import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
     import { currentScriptureState, scriptureViewList } from "../../util/stores"
- 
 
     export let id: string
     export let scripture: Bible
@@ -145,9 +144,9 @@
 
     // NAVIGATION
 
-export let depth = 0
+    export let depth = 0
 
-export function goBack() {
+    export function goBack() {
         if (depth > 0) {
             // Preserve activeVerse so highlight remains when returning to verse depth
             if (depth === 1) {
@@ -177,15 +176,33 @@ export function goBack() {
         depth = 0
     }
 
+    // Common book name mappings for scripture reference parsing
+    const BOOK_NAME_MAPPINGS: { [key: string]: string[] } = {
+        'genesis': ['gen', 'ge'],
+        '1 john': ['1john', '1 jn', 'i john'],
+        '2 john': ['2john', '2 jn', 'ii john'],
+        '3 john': ['3john', '3 jn', 'iii john'],
+        'psalms': ['psalm', 'ps'],
+        'revelation': ['rev', 're'],
+        'matthew': ['matt', 'mt'],
+        'mark': ['mk'],
+        'luke': ['lk'],
+        'john': ['jn'],
+        // Add more mappings as needed
+    }
+
     // Parse scripture reference from slide content and extract highlighting info
     function parseScriptureReference(reference: string): { bookIndex: number, chapterIndex: number, verseNumber: number } | null {
         if (!reference || !books || books.length === 0) return null
         
-        // Match patterns like "Genesis 1:1", "1 John 2:3", "Psalm 23:1-6", etc.
-        const match = reference.match(/^(.+?)\s+(\d+):(\d+)(?:-\d+)?$/)
+        // Match patterns like "Genesis 1:1", "Genesis 1 1", "1 John 2:3", "Psalm 23:1-6", etc.
+        const match = reference.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-\d+)?$/)
         if (!match) return null
         
-        const [, bookName, chapterStr, verseStr] = match
+        const [, bookName, chapterStr, versePart1, versePart2] = match
+        const verseStr = versePart1 || versePart2
+        if (!verseStr) return null
+        
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
         
@@ -195,28 +212,13 @@ export function goBack() {
             if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
                 return true
             }
-            
+
             // Try matching common book name variations
             const normalizedBookName = bookName.toLowerCase().trim()
             const normalizedScriptureName = book.name.toLowerCase()
             
-            // Handle common abbreviations and variations
-            const commonMappings: { [key: string]: string[] } = {
-                'genesis': ['gen', 'ge'],
-                '1 john': ['1john', '1 jn', 'i john'],
-                '2 john': ['2john', '2 jn', 'ii john'],
-                '3 john': ['3john', '3 jn', 'iii john'],
-                'psalms': ['psalm', 'ps'],
-                'revelation': ['rev', 're'],
-                'matthew': ['matt', 'mt'],
-                'mark': ['mk'],
-                'luke': ['lk'],
-                'john': ['jn'],
-                // Add more mappings as needed
-            }
-            
             // Check if the scripture book name matches any variations of the reference book name
-            for (const [canonical, variations] of Object.entries(commonMappings)) {
+            for (const [canonical, variations] of Object.entries(BOOK_NAME_MAPPINGS)) {
                 if (canonical === normalizedScriptureName || variations.includes(normalizedScriptureName)) {
                     if (canonical === normalizedBookName || variations.includes(normalizedBookName)) {
                         return true
@@ -259,7 +261,7 @@ export function goBack() {
                 for (const textItem of line.text) {
                     if (textItem && textItem.value && typeof textItem.value === 'string') {
                         // Check if this looks like a scripture reference
-                        if (textItem.value.match(/^.+?\s+\d+:\d+/)) {
+                        if (textItem.value.match(/^.+?\s+\d+(?:[:.,]\s*\d+|\s+\d+)/)) {
                             const parsed = parseScriptureReference(textItem.value)
                             if (parsed) {
                                 return parsed
@@ -382,17 +384,17 @@ export function goBack() {
                         {@const color = getColorCode(books, i)}
                         {@const name = getShortName(book.name, i)}
 
-                    <span
+                        <span
                             id={bookUiId.toString()}
-                        role="button"
-                        tabindex="0"
-                        on:mousedown={() => {
+                            role="button"
+                            tabindex="0"
+                            on:mousedown={() => {
                                 activeVerse = 0
                                 activeChapter = -1
                                 activeBook = i
                                 depth++
                             }}
-                        on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
+                            on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
                             class:active={activeBook === i}
                             class:displayed={i === displayedBookIndex}
                             class:output={i === displayedBookIndex}
@@ -426,9 +428,9 @@ export function goBack() {
                             depth++
                         }}
                         on:keydown={(e) => e.key === 'Enter' && (() => { if (activeChapter !== i) activeVerse = 0; activeChapter = i; depth++; })()}
-                    class:active={activeChapter === i}
-                    class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
-                    class:output={i === displayedChapterIndex && activeBook === displayedBookIndex}
+                        class:active={activeChapter === i}
+                        class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
+                        class:output={i === displayedChapterIndex && activeBook === displayedBookIndex}
                     >
                         {chapterUiId}
                     </span>

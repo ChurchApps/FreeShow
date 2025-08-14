@@ -101,6 +101,107 @@
             .replace(/ç/g, "c")
     }
 
+    // Common biblical book abbreviations - moved outside function for performance
+    const BOOK_ABBREVIATIONS: Record<string, string> = {
+        'jh': 'john',
+        'jn': 'john', 
+        'jo': 'john',
+        'gen': 'genesis',
+        'ex': 'exodus',
+        'exo': 'exodus',
+        'lev': 'leviticus',
+        'num': 'numbers',
+        'deut': 'deuteronomy',
+        'dt': 'deuteronomy',
+        'josh': 'joshua',
+        'judg': 'judges',
+        'ru': 'ruth',
+        'sam': 'samuel',
+        '1sam': '1samuel',
+        '2sam': '2samuel',
+        'kg': 'kings',
+        'kgs': 'kings',
+        '1kg': '1kings',
+        '1kgs': '1kings',
+        '2kg': '2kings',
+        '2kgs': '2kings',
+        'chr': 'chronicles',
+        '1chr': '1chronicles',
+        '2chr': '2chronicles',
+        'ezr': 'ezra',
+        'neh': 'nehemiah',
+        'est': 'esther',
+        'ps': 'psalms',
+        'psa': 'psalms',
+        'prov': 'proverbs',
+        'pr': 'proverbs',
+        'ecc': 'ecclesiastes',
+        'eccl': 'ecclesiastes',
+        'song': 'songofsongs',
+        'ss': 'songofsongs',
+        'isa': 'isaiah',
+        'is': 'isaiah',
+        'jer': 'jeremiah',
+        'lam': 'lamentations',
+        'ezek': 'ezekiel',
+        'ez': 'ezekiel',
+        'dan': 'daniel',
+        'hos': 'hosea',
+        'joe': 'joel',
+        'am': 'amos',
+        'ob': 'obadiah',
+        'jon': 'jonah',
+        'mic': 'micah',
+        'nah': 'nahum',
+        'hab': 'habakkuk',
+        'zeph': 'zephaniah',
+        'zep': 'zephaniah',
+        'hag': 'haggai',
+        'zech': 'zechariah',
+        'zec': 'zechariah',
+        'mal': 'malachi',
+        'mt': 'matthew',
+        'matt': 'matthew',
+        'mk': 'mark',
+        'lk': 'luke',
+        'luk': 'luke',
+        'joh': 'john',
+        'act': 'acts',
+        'rom': 'romans',
+        'cor': 'corinthians',
+        '1cor': '1corinthians',
+        '2cor': '2corinthians',
+        'gal': 'galatians',
+        'eph': 'ephesians',
+        'phil': 'philippians',
+        'php': 'philippians',
+        'col': 'colossians',
+        'thess': 'thessalonians',
+        'thes': 'thessalonians',
+        '1thess': '1thessalonians',
+        '1thes': '1thessalonians',
+        '2thess': '2thessalonians',
+        '2thes': '2thessalonians',
+        'tim': 'timothy',
+        '1tim': '1timothy',
+        '2tim': '2timothy',
+        'tit': 'titus',
+        'philem': 'philemon',
+        'phlm': 'philemon',
+        'heb': 'hebrews',
+        'jas': 'james',
+        'jam': 'james',
+        'pet': 'peter',
+        'pt': 'peter',
+        '1pet': '1peter',
+        '1pt': '1peter',
+        '2pet': '2peter',
+        '2pt': '2peter',
+        'jude': 'jude',
+        'rev': 'revelation',
+        'rv': 'revelation'
+    }
+
     function findBook(books: any[], value: string): any {
         const search = formatBookSearch(value)
 
@@ -110,107 +211,7 @@
             if (bookName === search) return true
             
             // Handle common abbreviations
-            const abbreviations: Record<string, string> = {
-                'jh': 'john',
-                'jn': 'john', 
-                'jo': 'john',
-                'gen': 'genesis',
-                'ex': 'exodus',
-                'exo': 'exodus',
-                'lev': 'leviticus',
-                'num': 'numbers',
-                'deut': 'deuteronomy',
-                'dt': 'deuteronomy',
-                'josh': 'joshua',
-                'judg': 'judges',
-                'ru': 'ruth',
-                'sam': 'samuel',
-                '1sam': '1samuel',
-                '2sam': '2samuel',
-                'kg': 'kings',
-                'kgs': 'kings',
-                '1kg': '1kings',
-                '1kgs': '1kings',
-                '2kg': '2kings',
-                '2kgs': '2kings',
-                'chr': 'chronicles',
-                '1chr': '1chronicles',
-                '2chr': '2chronicles',
-                'ezr': 'ezra',
-                'neh': 'nehemiah',
-                'est': 'esther',
-                'ps': 'psalms',
-                'psa': 'psalms',
-                'prov': 'proverbs',
-                'pr': 'proverbs',
-                'ecc': 'ecclesiastes',
-                'eccl': 'ecclesiastes',
-                'song': 'songofsongs',
-                'ss': 'songofsongs',
-                'isa': 'isaiah',
-                'is': 'isaiah',
-                'jer': 'jeremiah',
-                'lam': 'lamentations',
-                'ezek': 'ezekiel',
-                'ez': 'ezekiel',
-                'dan': 'daniel',
-                'hos': 'hosea',
-                'joe': 'joel',
-                'am': 'amos',
-                'ob': 'obadiah',
-                'jon': 'jonah',
-                'mic': 'micah',
-                'nah': 'nahum',
-                'hab': 'habakkuk',
-                'zeph': 'zephaniah',
-                'zep': 'zephaniah',
-                'hag': 'haggai',
-                'zech': 'zechariah',
-                'zec': 'zechariah',
-                'mal': 'malachi',
-                'mt': 'matthew',
-                'matt': 'matthew',
-                'mk': 'mark',
-                'lk': 'luke',
-                'luk': 'luke',
-                'joh': 'john',
-                'act': 'acts',
-                'rom': 'romans',
-                'cor': 'corinthians',
-                '1cor': '1corinthians',
-                '2cor': '2corinthians',
-                'gal': 'galatians',
-                'eph': 'ephesians',
-                'phil': 'philippians',
-                'php': 'philippians',
-                'col': 'colossians',
-                'thess': 'thessalonians',
-                'thes': 'thessalonians',
-                '1thess': '1thessalonians',
-                '1thes': '1thessalonians',
-                '2thess': '2thessalonians',
-                '2thes': '2thessalonians',
-                'tim': 'timothy',
-                '1tim': '1timothy',
-                '2tim': '2timothy',
-                'tit': 'titus',
-                'philem': 'philemon',
-                'phlm': 'philemon',
-                'heb': 'hebrews',
-                'jas': 'james',
-                'jam': 'james',
-                'pet': 'peter',
-                'pt': 'peter',
-                '1pet': '1peter',
-                '1pt': '1peter',
-                '2pet': '2peter',
-                '2pt': '2peter',
-                'jude': 'jude',
-                'rev': 'revelation',
-                'rv': 'revelation'
-            }
-
-            const abbreviation = abbreviations[search]
+            const abbreviation = BOOK_ABBREVIATIONS[search]
             if (abbreviation && formatBookSearch(book.name).includes(abbreviation)) return true
 
             return false
@@ -272,10 +273,12 @@
         const books = scripture.books
 
         // Try to parse as scripture reference first
-        const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:\.,]\s*(\d+))?(?:-(\d+))?/)
+        // Matches: "John 3:16", "John 3 16", "John 3.16", "John 3,16", "Gen 1:1-3"
+        const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
         
         if (referenceMatch) {
-            const [, bookPart, chapterPart, versePart] = referenceMatch
+            const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
+            const versePart = versePart1 || versePart2 // Handle both patterns
             
             const book = findBook(books, bookPart)
             if (book) {
@@ -336,7 +339,7 @@
         if (!searchTerm.trim()) return text
         
         // Don't highlight if it looks like a scripture reference
-        const referenceMatch = searchTerm.match(/^(.+?)\s+(\d+)(?:[:\.,]\s*(\d+))?(?:-(\d+))?/)
+        const referenceMatch = searchTerm.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
         if (referenceMatch) return text
         
         const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
@@ -551,9 +554,7 @@
 	}
 
 	/* Slightly larger icon hit area and size */
-	.header-action { transform: scale(1.0); }
-
-    .bible {
+	.header-action { transform: scale(1.0); }    .bible {
         flex: 1;
         overflow-y: hidden;
     }

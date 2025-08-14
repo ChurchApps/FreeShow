@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
@@ -171,79 +172,98 @@
         // send("API:get_cleared") // ??
     }
 
-	// RESIZERS
-	let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290", 10) || 290
-	let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
-	const minPanel = 200
-	const minCenter = 300
+    // RESIZERS
+    let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290", 10) || 290
+    let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
+    const minPanel = 200
+    const minCenter = 300
 
-	function clampPersistedWidths() {
-		const total = window.innerWidth
-		const resizers = 12
-		// Re-read in case values changed outside
-		const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
-		const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
-		if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
-		if (!Number.isNaN(storedRight)) rightWidth = storedRight
-		// Clamp to available space and minimums
-		leftWidth = Math.max(minPanel, Math.min(leftWidth, Math.max(minPanel, total - rightWidth - resizers - minCenter)))
-		rightWidth = Math.max(minPanel, Math.min(rightWidth, Math.max(minPanel, total - leftWidth - resizers - minCenter)))
-	}
+    function clampPersistedWidths() {
+        const total = window.innerWidth
+        const resizers = 12
+        // Re-read in case values changed outside
+        const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
+        const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
+        if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
+        if (!Number.isNaN(storedRight)) rightWidth = storedRight
+        // Clamp to available space and minimums
+        leftWidth = Math.max(minPanel, Math.min(leftWidth, Math.max(minPanel, total - rightWidth - resizers - minCenter)))
+        rightWidth = Math.max(minPanel, Math.min(rightWidth, Math.max(minPanel, total - leftWidth - resizers - minCenter)))
+    }
 
-	function persistWidths() {
-		localStorage.setItem("tablet.leftWidth", String(leftWidth))
-		localStorage.setItem("tablet.rightWidth", String(rightWidth))
-	}
+    function persistWidths() {
+        localStorage.setItem("tablet.leftWidth", String(leftWidth))
+        localStorage.setItem("tablet.rightWidth", String(rightWidth))
+    }
 
-	let initializedWidths = false
-	$: if (!initializedWidths) {
-		clampPersistedWidths()
-		initializedWidths = true
-	}
+    let initializedWidths = false
+    $: if (!initializedWidths) {
+        clampPersistedWidths()
+        initializedWidths = true
+    }
 
-	let dragging: "left" | "right" | null = null
-	let startX = 0
-	let startLeft = 0
-	let startRight = 0
+    let dragging: "left" | "right" | null = null
+    let startX = 0
+    let startLeft = 0
+    let startRight = 0
 
-	function onPointerDownLeft(e: PointerEvent) {
-		dragging = "left"
-		startX = e.clientX
-		startLeft = leftWidth
-		window.addEventListener("pointermove", onPointerMove)
-		window.addEventListener("pointerup", onPointerUp, { once: true })
-		window.addEventListener("pointercancel", onPointerUp, { once: true })
-	}
-	function onPointerDownRight(e: PointerEvent) {
-		dragging = "right"
-		startX = e.clientX
-		startRight = rightWidth
-		window.addEventListener("pointermove", onPointerMove)
-		window.addEventListener("pointerup", onPointerUp, { once: true })
-		window.addEventListener("pointercancel", onPointerUp, { once: true })
-	}
-	function onPointerMove(e: PointerEvent) {
-		if (!dragging) return
-		const total = window.innerWidth
-		const resizers = 12 // two resizers of 6px each
-		const delta = e.clientX - startX
-		if (dragging === "left") {
-			let proposed = startLeft + delta
-			proposed = Math.max(minPanel, proposed)
-			const maxLeft = total - rightWidth - resizers - minCenter
-			leftWidth = Math.min(proposed, Math.max(minPanel, maxLeft))
-		} else if (dragging === "right") {
-			let proposed = startRight - delta
-			proposed = Math.max(minPanel, proposed)
-			const maxRight = total - leftWidth - resizers - minCenter
-			rightWidth = Math.min(proposed, Math.max(minPanel, maxRight))
-		}
-	}
-	function onPointerUp() {
-		dragging = null
-		window.removeEventListener("pointermove", onPointerMove)
-		persistWidths()
-	}
+    function onPointerDownLeft(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "left"
+        startX = e.clientX
+        startLeft = leftWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+
+    function onPointerDownRight(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "right"
+        startX = e.clientX
+        startRight = rightWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+    function onPointerMove(e: PointerEvent) {
+        if (!dragging) return
+        e.preventDefault()
+        
+        const total = window.innerWidth
+        const resizers = 12 // two resizers of 6px each
+        const delta = e.clientX - startX
+        
+        if (dragging === "left") {
+            const proposed = startLeft + delta
+            const maxLeft = total - rightWidth - resizers - minCenter
+            leftWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxLeft)))
+        } else if (dragging === "right") {
+            const proposed = startRight - delta
+            const maxRight = total - leftWidth - resizers - minCenter
+            rightWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxRight)))
+        }
+    }
+    function onPointerUp() {
+        dragging = null
+        window.removeEventListener("pointermove", onPointerMove)
+        persistWidths()
+    }
+
+    function onWindowResize() {
+        // Recalculate panel widths when window resizes
+        if (initializedWidths) {
+            clampPersistedWidths()
+        }
+    }
+
+    onMount(() => {
+        window.addEventListener("resize", onWindowResize)
+        return () => {
+            window.removeEventListener("resize", onWindowResize)
+            window.removeEventListener("pointermove", onPointerMove)
+        }
+    })
 </script>
 
 <svelte:window on:keydown={keydown} on:resize={clampPersistedWidths} />
@@ -540,5 +560,28 @@
     .fullscreen button:hover,
     .fullscreen button:active {
         background-color: var(--primary-lighter);
+    }
+
+    .resizer {
+        position: relative;
+        z-index: 1;
+        width: 6px;
+        background: var(--primary-darker);
+        cursor: col-resize;
+        transition: background 0.2s ease;
+        user-select: none;
+        /* Expand touch area */
+        padding: 0 2px;
+        margin: 0 -2px;
+    }
+
+    .resizer:hover,
+    .resizer:focus {
+        background: var(--primary-darkest);
+        outline: none;
+    }
+
+    .resizer:focus {
+        box-shadow: 0 0 0 2px var(--primary);
     }
 </style>
