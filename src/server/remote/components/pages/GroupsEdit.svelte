@@ -47,7 +47,15 @@
     .groups {
         flex: 1;
         overflow-y: auto;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .groups::-webkit-scrollbar { width: 8px; height: 8px; }
+    .groups::-webkit-scrollbar-track,
+    .groups::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .groups::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .groups::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     .groups :global(#sortable) {
         display: flex;
