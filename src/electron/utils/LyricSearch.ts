@@ -7,7 +7,12 @@ export class LyricSearch {
         const cacheKey = artist + title
         if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)!
 
-        const results = await Promise.all([LyricSearch.searchGenius(artist, title), LyricSearch.searchHymnary(title), LyricSearch.searchLetras(title)])
+        const results = await Promise.all([
+            LyricSearch.searchGenius(artist, title),
+            LyricSearch.searchUltimateGuitar(artist, title),
+            LyricSearch.searchLetras(title),
+            LyricSearch.searchHymnary(title),
+        ])
         const joinedResults: LyricSearchResult[] = results.flat()
 
         lyricsSearchCache.set(cacheKey, joinedResults)
@@ -18,6 +23,7 @@ export class LyricSearch {
         if (song.source === "Genius") return LyricSearch.getGenius(song)
         else if (song.source === "Hymnary") return LyricSearch.getHymnary(song)
         else if (song.source === "Letras") return LyricSearch.getLetras(song)
+        else if (song.source === "Ultimate Guitar") return LyricSearch.getUltimateGuitar(song)
         return Promise.resolve("")
     }
 
@@ -94,7 +100,7 @@ export class LyricSearch {
         const response = await axios.get(url)
         const html = await response.data
         if (typeof html !== "string") return ""
-        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
+        return this.getLyricFromHtml(html, /<div property=\"text\">([\s\S]*?)<\/div>/g)
     }
 
     private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
@@ -138,7 +144,7 @@ export class LyricSearch {
         const response = await axios.get(url)
         const html = await response.data
         if (typeof html !== "string") return ""
-        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
+        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">([\s\S]*?)<\/div>/g)
     }
 
     private static getLyricFromHtml = (songHtml: string, regex: RegExp) => {
@@ -163,6 +169,53 @@ export class LyricSearch {
             result = newLines.join("\n").trim()
         }
         return result
+    }
+
+    // ULTIMATE GUITAR
+    private static searchUltimateGuitar = async (artist: string, title: string) => {
+        try {
+            const { searchSong, CHORDS } = require("ultimate-guitar")
+            const query = artist ? `${title} ${artist}` : title
+
+            const response = await searchSong(title, artist, CHORDS)
+
+            if (!response || !response.responses || !Array.isArray(response.responses)) {
+                console.log("No valid response from Ultimate Guitar")
+                return []
+            }
+
+            const limitedResults = response.responses.slice(0, 3)
+
+            return limitedResults.map((song: any) => LyricSearch.convertUltimateGuitarToResult(song, query))
+        } catch (err) {
+            console.error("Ultimate Guitar search error:", err)
+            return []
+        }
+    }
+
+    private static getUltimateGuitar = async (song: LyricSearchResult) => {
+        try {
+            const { fetchChords } = require("ultimate-guitar")
+            const result = await fetchChords(song.key)
+
+            if (result && result.response) {
+                return result.response
+            }
+            return ""
+        } catch (err) {
+            console.error(err)
+            return ""
+        }
+    }
+
+    private static convertUltimateGuitarToResult = (ultimateGuitarResult: any, originalQuery: string) => {
+        return {
+            source: "Ultimate Guitar",
+            key: ultimateGuitarResult.tab_url || ultimateGuitarResult.url || "",
+            artist: ultimateGuitarResult.artist_name || ultimateGuitarResult.artist || "",
+            title: ultimateGuitarResult.song_name || ultimateGuitarResult.title || "",
+            originalQuery,
+        } as LyricSearchResult
     }
 
     // ref: http://stackoverflow.com/a/1293163/2343

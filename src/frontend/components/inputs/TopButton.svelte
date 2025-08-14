@@ -45,7 +45,7 @@
 <div>
     <!-- width: 140px; -->
     <Button style={label ? "padding: 0.3em 1.2em;" : ""} {title} {disabled} active={$activePage === id} {red} on:click={openPage}>
-        <Icon {id} size={1.6} right={label} />
+        <Icon {id} size={1.6} right={label} white={$activePage === id} />
         {#if label}
             <span><T id={"menu." + id} /></span>
         {/if}

@@ -1,18 +1,19 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, selected, showsCache } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
+    import { getAccess } from "../../../utils/profile"
     import { sortByName } from "../../helpers/array"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
-    import { getAccess } from "../../../utils/profile"
 
     $: showId = $activeShow?.id || ""
     $: showGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
@@ -43,7 +44,7 @@
     }
 </script>
 
-<div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
+<div class="groupsScroll">
     <div class="main" style="{showGroups.length ? '' : 'height: 100%;'}{displayGlobalGroups ? 'width: 50%;' : ''}">
         {#if displayGlobalGroups}
             <h4><T id="groups.current" /></h4>
@@ -152,16 +153,27 @@
             {/if}
         </div>
     {/if}
-</div>
 
-<div class="bottom">
-    <Button style="width: 100%;" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)} dark center>
-        <Icon id="groups" right={!$labelsDisabled} white={displayGlobalGroups} />
-        {#if !$labelsDisabled}<T id="groups.toggle_global_group" />{/if}
-    </Button>
+    <FloatingInputs round>
+        <MaterialButton title="groups.toggle_global_group" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)}>
+            <Icon id="groups" white={!displayGlobalGroups} />
+        </MaterialButton>
+    </FloatingInputs>
 </div>
 
 <style>
+    .groupsScroll {
+        position: relative;
+
+        display: flex;
+        align-items: flex-start;
+
+        height: 100%;
+        padding: 10px;
+
+        overflow-y: auto;
+    }
+
     .main {
         display: flex;
         flex-direction: column;

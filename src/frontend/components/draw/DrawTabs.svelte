@@ -29,7 +29,7 @@
 <div class="main">
     {#each tools as tool}
         <Button id="button" on:click={() => drawTool.set(tool)} active={$drawTool === tool} bold={false}>
-            <Icon id={tool} right />
+            <Icon id={tool} right white={$drawTool === tool} />
             <p style="margin: 5px;"><T id="draw.{tool}" /></p>
         </Button>
     {/each}

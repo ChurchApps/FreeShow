@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Overlay } from "../../../../types/Show"
-    import { activeEdit, activePage, activeShow, dictionary, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { activeEdit, activePage, activeShow, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Loader from "../../main/Loader.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
@@ -15,9 +16,8 @@
     import DropArea from "../../system/DropArea.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
-    import OverlayActions from "./OverlayActions.svelte"
     import Effects from "../effects/Effects.svelte"
-    import { getAccess } from "../../../utils/profile"
+    import OverlayActions from "./OverlayActions.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -126,35 +126,19 @@
     {/if}
 </div>
 
-<div class="tabs">
-    {#if active === "effects"}
-        <Button
-            style="flex: 1;"
-            on:click={() => {
-                history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })
-            }}
-            center
-            disabled={readOnly}
-            title={$dictionary.new?.effect}
-        >
-            <Icon id="add" right={!$labelsDisabled} />
+{#if active === "effects"}
+    <FloatingInputs onlyOne>
+        <MaterialButton disabled={readOnly} icon="add" title="new.effect" on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "effect" } })}>
             {#if !$labelsDisabled}<T id="new.effect" />{/if}
-        </Button>
-    {:else}
-        <Button
-            style="flex: 1;"
-            on:click={() => {
-                history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
-            }}
-            center
-            disabled={readOnly}
-            title={$dictionary.new?.overlay}
-        >
-            <Icon id="add" right={!$labelsDisabled} />
+        </MaterialButton>
+    </FloatingInputs>
+{:else}
+    <FloatingInputs onlyOne>
+        <MaterialButton disabled={readOnly} icon="add" title="new.overlay" on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })}>
             {#if !$labelsDisabled}<T id="new.overlay" />{/if}
-        </Button>
-    {/if}
-</div>
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <style>
     .grid {
@@ -168,10 +152,5 @@
     .grid :global(.selectElem) {
         width: var(--width);
         outline-offset: -3px;
-    }
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
     }
 </style>

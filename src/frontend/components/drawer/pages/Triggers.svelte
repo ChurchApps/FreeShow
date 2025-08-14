@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { activePopup, dictionary, labelsDisabled, triggers } from "../../../stores"
+    import { activePopup, labelsDisabled, triggers } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import { activateTrigger } from "../../helpers/showActions"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -75,12 +76,11 @@
     </Center>
 {/if}
 
-<div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("trigger")} disabled={readOnly} center title={$dictionary.new?.trigger}>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.trigger" on:click={() => activePopup.set("trigger")}>
         {#if !$labelsDisabled}<T id="new.trigger" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .triggers {

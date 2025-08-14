@@ -53,7 +53,7 @@
                 dark
                 center
             >
-                <Icon id={tab.icon} />
+                <Icon id={tab.icon} white={active === id} />
                 {#if labels}
                     {#key tab.name}
                         <span style="margin-inline-start: 0.5em;">

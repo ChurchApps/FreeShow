@@ -4,7 +4,7 @@
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
-    import { activePopup, activeProject, dataPath, dictionary, projects, showsCache, showsPath, special } from "../../../../stores"
+    import { activePopup, activeProject, dataPath, projects, showsCache, showsPath, special } from "../../../../stores"
     import { translate } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
@@ -146,17 +146,13 @@
 
     <MaterialMultiChoice options={exportTypesList} on:click={(e) => (exportType = e.detail)} />
 {:else if !exportFormat}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (exportType = "")} />
 
     <p style="margin-bottom: 10px;"><T id="export.option_format" /></p>
 
     <MaterialMultiChoice options={filterFormats(exportFormats)} on:click={(e) => (exportFormat = e.detail)} />
 {:else}
-    <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")} white>
-        <Icon id="back" size={1.3} />
-    </MaterialButton>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (exportFormat = "")} />
 
     <!-- margin-bottom: 10px; -->
     <div style="display: flex;">

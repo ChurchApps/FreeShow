@@ -582,7 +582,7 @@
     } */
 
     .slide :global(.isSelected) {
-        outline: 5px solid var(--secondary-text) !important;
+        outline: 5px solid var(--text) !important;
     }
 
     .main.focused {

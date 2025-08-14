@@ -13,7 +13,7 @@
     import Slider from "../../inputs/Slider.svelte"
 
     export let currentOutput: Output
-    export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[]
+    export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[] | undefined
     export let linesIndex: null | number
     export let maxLines: null | number
 
@@ -40,7 +40,7 @@
     $: totalLength = slide?.type === "ppt" ? $presentationData.stat?.slides : slide?.pages || length
 
     // {ref.showId}_{ref.slideId}
-    $: videoId = `${slide?.id}_${ref[slide?.index!]?.id}`
+    $: videoId = `${slide?.id}_${ref?.[slide?.index!]?.id}`
 
     function playPause(path: string, play: boolean) {
         send(OUTPUT, ["SLIDE_VIDEO_STATE"], { slideId: videoId, path, action: play ? "play" : "pause" })

@@ -201,3 +201,54 @@ export function splitGradientValue(gradientStr: string) {
 
     return result
 }
+
+// gradient icon helper
+
+export function hexToHSL(H: string) {
+    // Convert hex to HSL (returns {h, s, l})
+    let r = 0, g = 0, b = 0
+    if (H.length == 4) {
+        r = parseInt(H[1] + H[1], 16)
+        g = parseInt(H[2] + H[2], 16)
+        b = parseInt(H[3] + H[3], 16)
+    } else if (H.length == 7) {
+        r = parseInt(H.substring(1, 3), 16)
+        g = parseInt(H.substring(3, 5), 16)
+        b = parseInt(H.substring(5, 7), 16)
+    }
+    r /= 255; g /= 255; b /= 255
+    const cmin = Math.min(r, g, b), cmax = Math.max(r, g, b), delta = cmax - cmin
+    let h = 0, s = 0, l = (cmax + cmin) / 2
+    if (delta == 0) h = 0
+    else if (cmax == r) h = ((g - b) / delta) % 6
+    else if (cmax == g) h = (b - r) / delta + 2
+    else h = (r - g) / delta + 4
+    h = Math.round(h * 60)
+    if (h < 0) h += 360
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1))
+    s = +(s * 100).toFixed(1)
+    l = +(l * 100).toFixed(1)
+    return { h, s, l }
+}
+
+export function hslToHex(h: number, s: number, l: number) {
+    s /= 100; l /= 100
+    let c = (1 - Math.abs(2 * l - 1)) * s
+    let x = c * (1 - Math.abs((h / 60) % 2 - 1))
+    let m = l - c / 2
+    let r = 0, g = 0, b = 0
+
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0 }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0 }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c }
+    else { r = c; g = 0; b = x }
+
+    const toHex = (v: number) => {
+        const hex = Math.round((v + m) * 255).toString(16)
+        return hex.length == 1 ? "0" + hex : hex
+    }
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}

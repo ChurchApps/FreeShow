@@ -28,7 +28,7 @@
         // const base64 = this.result.replace(/.*base64,/, '');
         socket.emit("CAM", {
             channel: "STREAM",
-            data: canvas.toDataURL("image/webp"),
+            data: canvas.toDataURL("image/webp")
         })
         // const base64 = canvas.toString("base64")
         // socket.emit("stream", base64)
@@ -37,7 +37,7 @@
     const constraints: any = {
         width: { min: 1024, ideal: 1280, max: 1920 },
         height: { min: 576, ideal: 720, max: 1080 },
-        facingMode: "environment",
+        facingMode: "environment"
     }
 
     let errors: any[] = []
@@ -104,8 +104,8 @@
             video: {
                 facingMode: "user",
                 height: { ideal: 1920 },
-                width: { ideal: 1920 },
-            },
+                width: { ideal: 1920 }
+            }
         })
         video.srcObject = stream
 
@@ -172,8 +172,8 @@
     }
 
     :root {
-        --primary: #292c36;
-        --primary-lighter: #363945;
+        --primary: #242832;
+        --primary-lighter: #2f3542;
         --primary-darker: #191923;
         --primary-darkest: #12121c;
         --text: #f0f0ff;

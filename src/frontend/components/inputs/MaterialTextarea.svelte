@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import T from "../helpers/T.svelte"
+    import { translateText } from "../../utils/language"
 
     export let value: string = ""
     export let label: string
@@ -35,7 +35,7 @@
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
     <div class="background" />
     <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows} />
-    <label for={id}><T id={label} /></label>
+    <label for={id}>{translateText(label)}</label>
     <span class="underline" />
 </div>
 
@@ -44,6 +44,8 @@
         position: relative;
         width: 100%;
         color: var(--text);
+
+        border-bottom: 1.2px solid var(--primary-lighter);
 
         display: flex;
 

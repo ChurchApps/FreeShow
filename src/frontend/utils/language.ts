@@ -2,9 +2,10 @@ import { get } from "svelte/store"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
+import { sortByName } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
 import { currentWindow, dictionary, language, localeDirection } from "../stores"
-import { replace } from "./languageData"
+import { languageFlags, languages, replace } from "./languageData"
 import { send } from "./request"
 
 // https://medium.com/i18n-and-l10n-resources-for-developers/a-step-by-step-guide-to-svelte-localization-with-svelte-i18n-v3-2c3ff0d645b8
@@ -73,6 +74,26 @@ function setLanguage(locale = "", init = false) {
     }
 }
 
+// new translate function
+// can take a "main.yes" into "Yes", or "main.yes [y]" into "Yes [y]"
+export function translateText(text: string, _updater: any = null) {
+    if (typeof text !== "string" || !text) return ""
+
+    const dict = get(dictionary)
+
+    // WIP temporary fix until all values are changed
+    text = text.replace("$:", "").replace(":$", "")
+
+    return text.replace(/\$?([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/g, (match, key1, key2) => {
+        if (dict[key1] && dict[key1][key2]) {
+            return dict[key1][key2]
+        }
+
+        return match
+    })
+}
+
+// deprecated:
 const translate = (id: string, { parts = false } = {}) => {
     if (typeof id !== "string") return ""
 
@@ -104,3 +125,14 @@ export { setLanguage, translate }
 const fullWidth = ["zh", "ja", "ko"]
 export const getLeftParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "（" : "(")
 export const getRightParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "）" : ")")
+
+// dropdown selector
+export function getLanguageList() {
+    let options: { label: string; value: string; prefix?: string }[] = Object.keys(languages).map((id) => ({ label: languages[id], value: id }))
+    options = sortByName(options, "label")
+
+    // add flags after sorting
+    options = options.map((a) => ({ ...a, prefix: languageFlags[a.value] || "" }))
+
+    return options
+}

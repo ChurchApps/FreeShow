@@ -188,8 +188,8 @@
     }
 
     :root {
-        --primary: #292c36;
-        --primary-lighter: #363945;
+        --primary: #242832;
+        --primary-lighter: #2f3542;
         --primary-darker: #191923;
         --primary-darkest: #12121c;
         --text: #f0f0ff;

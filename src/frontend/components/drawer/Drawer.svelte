@@ -222,7 +222,7 @@
                         class="context #drawer_top"
                         title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]"
                     >
-                        <Icon id={tab.icon} size={1.3} />
+                        <Icon id={tab.icon} size={1.3} white={$activeDrawerTab === tab.id} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}
@@ -239,6 +239,7 @@
             </Button>
         {/if}
     </div>
+
     <div class="content">
         <Resizeable id="leftPanelDrawer">
             <Navigation id={$activeDrawerTab} />
@@ -271,6 +272,9 @@
         display: flex;
         justify-content: space-between;
         padding-top: 4px;
+
+        box-shadow: 0 -1.8px 8px rgb(0 0 0 / 0.2);
+        z-index: 1;
     }
     .top::after {
         content: "";

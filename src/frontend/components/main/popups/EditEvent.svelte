@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
     import { activeDays, activePopup, dictionary, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
+    import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
     import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,10 +15,9 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import CreateAction from "../../actions/CreateAction.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let stored = ""
 
@@ -358,9 +358,7 @@
         </CombinedInput>
     {:else if selectedType === "action"}
         {#if actionSelector !== null}
-            <MaterialButton class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)} white>
-                <Icon id="back" size={1.3} />
-            </MaterialButton>
+            <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionSelector = null)} />
 
             <CreateAction
                 actionId={actionData?.id || ""}

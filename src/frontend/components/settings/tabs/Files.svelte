@@ -1,22 +1,23 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, dataPath, dictionary, driveData, driveKeys, showsCache, showsPath, special } from "../../../stores"
-    import { syncDrive } from "../../../utils/drive"
-    import { save } from "../../../utils/save"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import Link from "../../inputs/Link.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
+    import { requestMain } from "../../../IPC/main"
+    import { activePopup, autosave, dataPath, driveData, driveKeys, showsPath, special } from "../../../stores"
     import { previousAutosave } from "../../../utils/common"
+    import { syncDrive, validateKeys } from "../../../utils/drive"
+    import { translateText } from "../../../utils/language"
+    import { save } from "../../../utils/save"
     import { convertAutosave } from "../../../values/autosave"
+    import T from "../../helpers/T.svelte"
+    import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
+    import Title from "../../input/Title.svelte"
+    import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialMediaPicker from "../../inputs/MaterialFilePicker.svelte"
+    import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -28,7 +29,7 @@
     }
 
     async function toggle(e: any, key: string) {
-        let checked = e.target.checked
+        let checked = typeof e === "boolean" ? e : e.target.checked
 
         if (key === "customUserDataLocation") {
             let existingData = false
@@ -46,32 +47,20 @@
     }
 
     const autosaveList = [
-        { id: "never", name: "$:settings.never:$" },
-        { id: "2min", name: "2 $:settings.minutes:$" },
-        { id: "5min", name: "5 $:settings.minutes:$" },
-        { id: "10min", name: "10 $:settings.minutes:$" },
-        { id: "15min", name: "15 $:settings.minutes:$" },
-        { id: "30min", name: "30 $:settings.minutes:$" }
+        { value: "never", label: translateText("settings.never") },
+        { value: "2min", label: translateText("2 settings.minutes") },
+        { value: "5min", label: translateText("5 settings.minutes") },
+        { value: "10min", label: translateText("10 settings.minutes") },
+        { value: "15min", label: translateText("15 settings.minutes") },
+        { value: "30min", label: translateText("30 settings.minutes") }
     ]
 
     const autobackupList = [
-        { id: "never", name: "$:settings.never:$" },
-        { id: "daily", name: "$:interval.daily:$" },
-        { id: "weekly", name: "$:interval.weekly:$" },
-        { id: "mothly", name: "$:interval.mothly:$" }
+        { value: "never", label: translateText("settings.never") },
+        { value: "daily", label: translateText("interval.daily") },
+        { value: "weekly", label: translateText("interval.weekly") },
+        { value: "mothly", label: translateText("interval.mothly") }
     ]
-
-    // backup
-    function backup() {
-        save(false, { backup: true })
-    }
-
-    function restore() {
-        if (!$showsPath) return
-
-        showsCache.set({})
-        sendMain(Main.RESTORE, { showsPath: $showsPath })
-    }
 
     // RESET
 
@@ -134,15 +123,22 @@
 
     // CLOUD
 
-    function getKeysFile() {
-        // activePopup.set("cloud_update")
-        sendMain(Main.OPEN_FILE, { channel: "GOOGLE_KEYS", id: "keys", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
+    async function receiveKeysFile(e: any) {
+        const path = e.detail
+        if (!path) {
+            driveKeys.set({})
+            driveData.set({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
+            return
+        }
+
+        const contents = (await requestMain(Main.READ_FILE, { path })).content
+        if (contents) validateKeys(contents)
     }
 
     $: validKeys = typeof $driveKeys === "object" && Object.keys($driveKeys).length
 
     function updateValue(e: any, key: string) {
-        let value = e.target.value
+        let value = e?.target?.value ?? e
         if (key === "mediaId" && !value) value = "default"
         if (!value) return
 
@@ -154,7 +150,7 @@
     }
 
     function toggleData(e: any, key, invert = false) {
-        let checked: boolean = e.target.checked || false
+        let checked: boolean = typeof e === "boolean" ? e : e.target.checked || false
 
         driveData.update((a) => {
             a[key] = invert ? !checked : checked
@@ -162,123 +158,38 @@
         })
     }
 
-    function resetCloud() {
-        driveKeys.set({})
-        driveData.set({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
-    }
+    const infoStyle = "color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;"
+    $: autosaveInfo = nextAutosave ? `<span style="${infoStyle}">${joinTimeBig(nextAutosave / 1000)}<span>` : ""
+    $: autoBackupInfo = nextAutobackup ? `<span style="${infoStyle}">${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)}<span>` : ""
+    $: autoBackup = $special.autoBackup || "weekly"
 </script>
 
-<CombinedInput>
-    <p><T id="settings.autosave" /><span style="opacity: 0.6;display: flex;align-items: center;padding-left: 10px;font-size: 0.8em;">{nextAutosave ? `(${joinTimeBig(nextAutosave / 1000)})` : ""}</span></p>
-    <Dropdown options={autosaveList} value={autosaveList.find((a) => a.id === ($autosave || "never"))?.name || ""} on:click={(e) => autosave.set(e.detail.id)} />
-</CombinedInput>
+<MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="never" options={autosaveList} on:change={(e) => autosave.set(e.detail)} />
+<MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
-<CombinedInput style="border-bottom: 3px solid var(--primary-lighter);">
-    <p><T id="settings.auto_backup" /><span style="opacity: 0.6;display: flex;align-items: center;padding-left: 10px;font-size: 0.8em;">{nextAutobackup ? `(${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)})` : ""}</span></p>
-    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "weekly"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} />
-</CombinedInput>
+<MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={(e) => dataPath.set(e.detail)} />
+<!-- shows path should be a "Shows" folder inside of "Data location" -->
+{#if !$showsPath?.includes($dataPath) || !$showsPath?.includes("Shows")}
+    <MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} />
+{/if}
 
-<CombinedInput textWidth={30}>
-    <p><T id="settings.data_location" /></p>
-    <FolderPicker title={$dataPath || ""} style="width: 100%;" id="DATA" center={false} path={$dataPath}>
-        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-        <p>
-            {#if $dataPath}
-                {$dataPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
-        </p>
-    </FolderPicker>
-    <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
-        <Icon id="launch" white />
-    </Button>
-</CombinedInput>
+<MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
 
-<CombinedInput textWidth={30}>
-    <p><T id="settings.show_location" /></p>
-    <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
-    <!-- title={$dictionary.inputs?.change_folder} -->
-    <FolderPicker title={$showsPath || ""} style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
-        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
-        <p>
-            {#if $showsPath}
-                {$showsPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
-        </p>
-    </FolderPicker>
-    <Button
-        title={$dictionary.main?.system_open}
-        on:click={() => {
-            if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
-        }}
-    >
-        <Icon id="launch" white />
-    </Button>
-</CombinedInput>
+<!-- cloud -->
+<Title label="settings.cloud" icon="cloud" title="cloud.info" />
 
-<CombinedInput>
-    <p><T id="settings.user_data_location" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
-    </div>
-</CombinedInput>
-
-<h3 data-title={$dictionary.cloud?.info}>
-    <Icon id="cloud" white />
-    <T id="settings.cloud" />
-</h3>
-
-<CombinedInput>
-    <p><T id="cloud.google_drive_api" /></p>
-    <Button on:click={getKeysFile}>
-        <Icon id="key" style="margin-inline-start: 0.5em;" right />
-        <p>
-            {#if validKeys}
-                <T id="cloud.update_key" />
-            {:else}
-                <T id="cloud.select_key" />
-            {/if}
-        </p>
-    </Button>
-    {#if validKeys}
-        <Button title={$dictionary.actions?.remove} on:click={resetCloud} redHover>
-            <Icon id="close" size={1.2} white />
-        </Button>
-    {/if}
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="cloud.disable_upload" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$driveData.disableUpload} on:change={(e) => toggleData(e, "disableUpload")} />
-    </div>
-</CombinedInput>
+<MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
+<MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
 
 {#if validKeys}
-    <CombinedInput>
-        <p><T id="cloud.enable" /></p>
-        <div class="alignRight">
-            <Checkbox checked={!$driveData.disabled} on:change={(e) => toggleData(e, "disabled", true)} />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
+    <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} />
+    <MaterialTextInput
+        label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}"
+        value={$driveData?.mainFolderId || ""}
+        on:change={(e) => updateValue(e.detail, "mainFolderId")}
+    />
 
-    <CombinedInput>
-        <p>
-            <T id="cloud.media_id" />
-        </p>
-        <TextInput style="z-index: 1;" value={$driveData?.mediaId || "default"} on:change={(e) => updateValue(e, "mediaId")} />
-    </CombinedInput>
-
-    <CombinedInput>
-        <p>
-            <T id="cloud.main_folder" />
-            <span style="font-size: 0.7em;opacity: 0.7;display: flex;align-items: center;justify-content: end;overflow: hidden;">drive.google.com/drive/folders/</span>
-        </p>
-        <TextInput style="z-index: 1;" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e, "mainFolderId")} />
-    </CombinedInput>
     <!-- TODO: media folder -->
     <!-- <div>
         <p><T id="cloud.media_folder" /></p>
@@ -288,21 +199,18 @@
         </span>
     </div> -->
 
-    <CombinedInput>
-        <Button
-            on:click={() => {
-                save()
-                setTimeout(() => syncDrive(true), 2000)
-            }}
-            title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
-            disabled={!validKeys}
-            style="width: 100%;"
-            center
-        >
-            <Icon id="cloud_sync" right />
-            <T id="cloud.sync" />
-        </Button>
-    </CombinedInput>
+    <MaterialButton
+        style="width: 100%;"
+        icon="cloud_sync"
+        title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
+        on:click={() => {
+            save()
+            setTimeout(() => syncDrive(true), 2000)
+        }}
+    >
+        <T id="cloud.sync" />
+    </MaterialButton>
+
     <!-- Probably never used: -->
     <!-- <CombinedInput>
         <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
@@ -318,63 +226,12 @@
     </span>
 {/if}
 
-<div class="filler" />
-<div class="bottom" style="font-size: 1.2em;">
-    <!-- <Button style="width: 100%;" on:click={reset} center>
-        <Icon id="reset" right />
-        <T id="actions.reset" />
-    </Button> -->
-    <CombinedInput style="background-color: initial;border-bottom: 0;">
-        <Button style="width: 50%;padding: 8px !important;" title={$dictionary.settings?.backup_info} on:click={backup} center>
-            <span style="display: flex;align-items: center;">
-                <Icon id="export" style="margin-inline-start: 0.5em;" size={1.3} right />
-                <p><T id="settings.backup_all" /></p>
-            </span>
-        </Button>
-        <Button style="padding: 8px !important;" on:click={restore} center>
-            <span style="display: flex;align-items: center;">
-                <Icon id="import" style="margin-inline-start: 0.5em;" size={1.3} right />
-                <p><T id="settings.restore" /></p>
-            </span>
-        </Button>
-    </CombinedInput>
-</div>
-
 <style>
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
     /* cloud */
-
     .guide p {
         white-space: normal;
         /* font-style: italic; */
-        opacity: 0.8;
-    }
-
-    /* bottom */
-
-    .filler {
-        height: 80px;
-    }
-    .bottom {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-        width: 100%;
-        background-color: var(--primary-darkest);
-
-        display: flex;
-        flex-direction: column;
+        opacity: 0.6;
+        font-size: 0.7em;
     }
 </style>

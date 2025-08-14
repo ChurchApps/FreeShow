@@ -119,7 +119,7 @@
         bottom: 0;
         inset-inline-end: 0;
 
-        color: var(--secondary-text);
+        color: var(--text);
         /* background-color: var(--primary);
     background-color: black; */
         text-align: end;

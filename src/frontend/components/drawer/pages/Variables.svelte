@@ -6,8 +6,10 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getSetChars, setRandomValue } from "../../helpers/randomValue"
     import T from "../../helpers/T.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
@@ -281,12 +283,11 @@
     {/if}
 </div>
 
-<div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("variable")} disabled={readOnly} center title={$dictionary.new?.variable}>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.variable" on:click={() => activePopup.set("variable")}>
         {#if !$labelsDisabled}<T id="new.variable" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .variables {
