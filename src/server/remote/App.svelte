@@ -73,6 +73,22 @@
 height: 100vh; */
         }
 
+        /* Match FreeShow main app scrollbar */
+        :global(::-webkit-scrollbar) {
+            width: 8px;
+            height: 8px;
+        }
+        :global(::-webkit-scrollbar-track),
+        :global(::-webkit-scrollbar-corner) {
+            background: rgb(255 255 255 / 0.05);
+        }
+        :global(::-webkit-scrollbar-thumb) {
+            background: rgb(255 255 255 / 0.3);
+        }
+        :global(::-webkit-scrollbar-thumb:hover) {
+            background: rgb(255 255 255 / 0.5);
+        }
+
         h1 {
             color: var(--secondary);
             text-align: center;

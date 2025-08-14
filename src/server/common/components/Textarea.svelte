@@ -21,7 +21,15 @@
         font-family: inherit;
 
         resize: none;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    textarea::-webkit-scrollbar { width: 8px; height: 8px; }
+    textarea::-webkit-scrollbar-track,
+    textarea::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    textarea::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    textarea::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     textarea::placeholder {
         color: var(--text);

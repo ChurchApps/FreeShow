@@ -68,7 +68,15 @@
         padding: 10px;
         /* gap: 10px; */
         scroll-behavior: smooth;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .lyrics::-webkit-scrollbar { width: 8px; height: 8px; }
+    .lyrics::-webkit-scrollbar-track,
+    .lyrics::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .lyrics::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .lyrics::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
     .lyric {
         font-size: 1.1em;
         text-align: center;
