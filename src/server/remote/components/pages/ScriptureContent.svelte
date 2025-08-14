@@ -37,7 +37,7 @@
     // Update local state when scripture state changes from main app (normalized shape)
     let applyTimer: any
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
-        if (!state || state.scriptureId !== id) return
+        if (!state) return
         // Debounce to coalesce quick consecutive updates (prevents transient wrong labels)
         if (applyTimer) clearTimeout(applyTimer)
         applyTimer = setTimeout(() => {
@@ -45,20 +45,42 @@
             const chapterIndex = state.chapterId
             const verseList = state.activeVerses
 
-            const targetBook = Number.isInteger(bookIndex) && bookIndex >= 0 && bookIndex < (books?.length || 0) ? books[bookIndex] : undefined
-            // Always capture what is currently displayed
-            if (Number.isInteger(bookIndex)) displayedBookIndex = bookIndex
-            if (Number.isInteger(chapterIndex)) displayedChapterIndex = chapterIndex
-            if (Array.isArray(verseList) && verseList.length > 0) {
-                const first = parseInt(String(verseList[0]), 10)
-                if (Number.isFinite(first) && first >= 0) displayedVerseNumber = first
+            // Capture the latest incoming state (coalesced within debounce)
+            const hasBook = Number.isInteger(bookIndex) && bookIndex >= 0
+            const hasChapter = Number.isInteger(chapterIndex) && chapterIndex >= 0
+            const latestVerse = Array.isArray(verseList) && verseList.length > 0
+                ? parseInt(String(verseList[verseList.length - 1]), 10)
+                : 0
+            const hasVerse = Number.isFinite(latestVerse) && latestVerse > 0
+
+            const sameBook = hasBook && bookIndex === displayedBookIndex
+            const sameChapter = hasChapter && chapterIndex === displayedChapterIndex
+            const safeToApplyAll = hasBook && hasChapter && hasVerse
+
+            // Case 1: within the same chapter, only verse changed → update verse immediately
+            if (hasVerse && sameBook && sameChapter) {
+                displayedVerseNumber = latestVerse
+                if (depth === 2) activeVerse = latestVerse
+                return
             }
 
-            // Keep browsing state independent; do not override active selection with displayed
-            // Only set activeBook when entering a valid target to keep context sensible
-            if (targetBook && activeBook < 0) activeBook = bookIndex
-            // Do not force activeChapter/activeVerse from displayed; label reflects browsing, highlight reflects displayed
-        }, 180)
+            // Case 2: full change (book + chapter + verse) arrived together → apply atomically
+            if (safeToApplyAll) {
+                // Update all displayed indices together
+                displayedBookIndex = bookIndex
+                displayedChapterIndex = chapterIndex
+                displayedVerseNumber = latestVerse
+
+                activeBook = bookIndex
+                activeChapter = chapterIndex
+                activeVerse = latestVerse
+                depth = 2
+                return
+            }
+
+            // Otherwise, ignore partial updates (book-only or chapter-only) to avoid transient wrong refs
+            // We will apply when the remaining parts arrive in the next tick
+        }, 260)
     })
     onDestroy(() => unsubscribeScripture())
 
@@ -113,22 +135,6 @@ export function goBack() {
         }
     }
 
-    // Allow parent to set selection immediately from a numeric reference string like "5.12.3"
-    export function setReferenceFromString(reference: string) {
-        const parts = String(reference || "").split(".")
-        if (parts.length < 2) return
-        const bookNum = Math.max(parseInt(parts[0] || ""), 1)
-        const chapterNum = Math.max(parseInt(parts[1] || ""), 1)
-        const verseNum = Math.max(parseInt(parts[2] || "0"), 0)
-
-        // Map numeric book to index
-        const bookIndex = (books || []).findIndex((b: any, i: number) => (Number.isFinite(b?.number) ? b.number : i + 1) === bookNum)
-        if (bookIndex >= 0) activeBook = bookIndex
-        activeChapter = chapterNum - 1
-        activeVerse = verseNum
-        depth = 2
-    }
-
     // NAV CONTROLS (for cleared state): chapter unless a verse is highlighted
     export function forward() {
         // If a verse is highlighted at verse-level, move to next verse
@@ -155,11 +161,6 @@ export function goBack() {
             const totalChapters = chapters.length
             if (totalChapters > 0) activeChapter = Math.max(Math.min(activeChapter, totalChapters - 1) - 1, 0)
         }
-    }
-
-    // Desktop scrollbar styling for list view container
-    $: if (typeof window !== 'undefined') {
-        // no-op binding for reactivity
     }
 
  
@@ -410,6 +411,7 @@ export function goBack() {
     }
     /* Distinguish displayed reference vs browsing selection at verse depth */
     .grid .verses .displayed {
+        background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);
         border-radius: 6px;
     }

@@ -133,8 +133,17 @@ export function storeSubscriber() {
     scriptures.subscribe((data) => {
         send(REMOTE, ["SCRIPTURE"], data)
     })
+    // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
+    let activeScriptureTimer: any
     activeScripture.subscribe((data) => {
-        send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
+        if (activeScriptureTimer) clearTimeout(activeScriptureTimer)
+        activeScriptureTimer = setTimeout(() => {
+            const source: any = (data && (data.api || data.bible)) || data || {}
+            const hasBook = source.bookId !== undefined && source.bookId !== null
+            const hasChapter = source.chapterId !== undefined && source.chapterId !== null
+            const hasVerses = Array.isArray(source.activeVerses) && source.activeVerses.length > 0
+            if (hasBook && hasChapter && hasVerses) send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
+        }, 120)
     })
 
     outputs.subscribe((data) => {

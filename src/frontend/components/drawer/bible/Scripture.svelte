@@ -90,7 +90,7 @@
 
     // select book & chapter when opening bible show reference
     // Reduce cascading open delays to minimize transient references on remote
-    $: if ($openScripture) setTimeout(openReference, 80)
+    $: if ($openScripture) setTimeout(openReference, 10)
     function openReference() {
         if ($openScripture?.book === undefined) {
             openScripture.set(null)
@@ -111,10 +111,10 @@
             activeVerses = $openScripture.verses
             if (bibles[0]) bibles[0].activeVerses = activeVerses
 
-            if ($openScripture.play) setTimeout(() => playScripture.set(true), 30)
+            if ($openScripture.play) setTimeout(() => playScripture.set(true), 10)
 
             openScripture.set(null)
-        }, 50)
+        }, 10)
     }
 
     function createBiblesList() {
