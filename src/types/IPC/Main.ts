@@ -120,6 +120,7 @@ export enum Main {
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
+    READ_FOLDERS = "READ_FOLDERS",
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
@@ -191,6 +192,7 @@ export interface MainSendPayloads {
     [Main.BUNDLE_MEDIA_FILES]: { showsPath: string; dataPath: string }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
+    [Main.READ_FOLDERS]: { path: string }[]
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
@@ -260,6 +262,7 @@ export interface MainReturnPayloads {
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
+    [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
     [Main.READ_FILE]: { content: string }
     [Main.PCO_DISCONNECT]: { success: boolean }
     [Main.CHUMS_DISCONNECT]: { success: boolean }

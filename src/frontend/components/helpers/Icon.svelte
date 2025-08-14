@@ -36,7 +36,7 @@
     $: width = size + "rem"
     $: height = size + "rem"
 
-    $: icon = custom ? customIcons[id] : icons[id]
+    $: icon = custom || !icons[id] ? customIcons[id] : icons[id]
 
     const iconsToBeFlipped = ["back"] // Add more icons that need to be flipped horizontally if needed
     const flip = $localeDirection === "rtl" && iconsToBeFlipped.includes(id)

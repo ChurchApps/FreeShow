@@ -9,8 +9,10 @@
     export let icon: string = ""
     export let iconSize: number = 1
     export let white: boolean = false
+    export let isActive = false
     export let disabled = false
     export let gradient = false
+    export let small = false
     let button
 
     // automatically do white icon if no content
@@ -19,17 +21,24 @@
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
     let dispatch = createEventDispatcher()
-    function click() {
-        dispatch("click")
+    function click(e) {
+        if (e.target?.closest(".edit")) return
+        if (e.target?.closest("button") !== button) return
+
+        const ctrl = e.ctrlKey || e.metaKey
+        const shift = e.shiftKey
+        dispatch("click", { ctrl, shift })
     }
 
-    function triggerRipple(event) {
+    function triggerRipple(e) {
         if (disabled) return
+        if (e.target?.closest(".edit")) return
+        if (e.target?.closest("button") !== button) return
 
         const rect = button.getBoundingClientRect()
         const size = Math.max(rect.width, rect.height)
-        const x = (event.clientX ?? rect.width / 2) - rect.left - size / 2
-        const y = (event.clientY ?? rect.height / 2) - rect.top - size / 2
+        const x = (e.clientX ?? rect.width / 2) - rect.left - size / 2
+        const y = (e.clientY ?? rect.height / 2) - rect.top - size / 2
 
         const ripple = {
             x,
@@ -41,10 +50,10 @@
         ripples = [...ripples, ripple]
     }
 
-    function handleKey(event) {
+    function handleKey(e) {
         if (disabled) return
-        if (event.key === "Enter" || event.key === " ") {
-            click()
+        if (e.key === "Enter" || e.key === " ") {
+            click(e)
         }
     }
 
@@ -60,12 +69,14 @@
     tabindex={disabled ? -1 : 0}
     aria-disabled={disabled}
     data-title={translateText(title)}
+    class:isActive
     class:white
+    class:small
     {disabled}
     style="
-    background: {variant === 'contained' ? (gradient ? 'linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 30%, #d100db 50%, #f0008c 100%)' : 'var(--secondary)') : 'transparent'};
-    color: {variant === 'contained' ? 'var(--secondary-text)' : white ? 'var(--text)' : variant === 'text' ? 'var(--text)' : 'var(--secondary)'};
-    border-color: {white ? 'rgb(255 255 255 / 0.08)' : variant === 'outlined' ? 'var(--secondary)' : 'transparent'};
+    background: {variant === 'contained' ? (gradient ? 'linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 30%, #d100db 50%, #f0008c 100%)' : 'var(--secondary)') : variant === 'outlined' ? 'var(--primary-darkest)' : 'transparent'};
+    color: {variant === 'contained' ? 'var(--secondary-text)' : white ? 'var(--text)' : 'var(--text)'};
+    border-color: {white ? 'rgb(255 255 255 / 0.08)' : variant === 'outlined' ? 'var(--primary-lighter)' : 'transparent'};
     {$$props.style || ''}
   "
     on:mousedown={triggerRipple}
@@ -73,7 +84,7 @@
     on:click={click}
 >
     {#if icon}
-        <Icon id={icon} size={iconSize} white={white || variant === "contained"} />
+        <Icon id={icon} size={iconSize} white={white || isActive || variant === "contained"} />
     {/if}
 
     <slot />
@@ -94,7 +105,8 @@
         outline: none;
         border: none;
         padding: 0.75rem 1.25rem;
-        font-size: 1.05rem;
+        /* font-size: 1.05rem; */
+        font-size: 0.9em;
         font-weight: 500;
         font-family: inherit;
         border-radius: 4px;
@@ -103,7 +115,7 @@
             opacity 0.4s ease,
             box-shadow 0.2s ease,
             background 0.2s ease,
-            border 0.2s ease;
+            border 0.1s ease;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -112,15 +124,29 @@
 
         gap: 8px;
         white-space: nowrap;
+
+        min-height: 25px;
+    }
+    button.small {
+        padding: 0.25rem 1.25rem;
+        font-size: 0.9em;
     }
 
-    button:not(.contained):hover {
+    button.isActive {
+        background-color: var(--primary-darkest) !important;
+        /* background-color: var(--primary-lighter) !important; */
+        /* border-bottom: 1px solid var(--secondary) !important; */
+        border-left: 4px solid var(--secondary) !important;
+        cursor: default;
+    }
+
+    button:not(.contained):not(.isActive):hover {
         background: rgba(255, 255, 255, 0.01) !important;
     }
-    button:not(.contained):active {
+    button:not(.contained):not(.isActive):active {
         background: rgba(255, 255, 255, 0.04) !important;
     }
-    button:not(.contained):active:hover {
+    button:not(.contained):not(.isActive):active:hover {
         background: rgba(255, 255, 255, 0.06) !important;
     }
     button.contained:hover {

@@ -69,6 +69,6 @@
 <br />
 
 <Button on:click={reset} center dark red>
-    <Icon id="close" right />
+    <Icon id="close" right white />
     <T id="popup.continue" />
 </Button>

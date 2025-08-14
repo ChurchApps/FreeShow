@@ -345,6 +345,28 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     return { path: folderPath, files, filesInFolders, folderFiles }
 }
 
+// READ_FOLDERS
+export async function getFoldersContent(paths: { path: string }[]) {
+    const list: { [key: string]: FileData[] } = {}
+
+    for (let i = 0; i < paths.length; i++) {
+        const folderPath = paths[i].path
+        const fileList = await readFolderAsync(folderPath)
+
+        const files: FileData[] = []
+        for (const name of fileList) {
+            const filePath = path.join(folderPath, name)
+            const stats = getFileStats(filePath)
+            const hasContent = !stats?.folder || !!(await readFolderAsync(filePath)).length
+            if (hasContent && stats) files.push({ ...stats, name })
+        }
+
+        list[folderPath] = files
+    }
+
+    return list
+}
+
 export function getSimularPaths(data: { paths: string[] }) {
     const parentFolderPathNames = data.paths.map(getParentFolderName)
     const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
@@ -473,7 +495,7 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
-            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
+            mp4boxfile.onReady = (info: { tracks: { codec: string }[];[key: string]: any }) => {
                 const codecs = info.tracks.map((track: { codec: string }) => track.codec)
                 const mimeType = getMimeType(data.path)
                 const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
