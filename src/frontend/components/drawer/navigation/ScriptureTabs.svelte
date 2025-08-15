@@ -21,16 +21,23 @@
 
     // Organize scriptures into filtered sections for display
     let sections: any[] = []
-    $: sections = collections.length
-        ? [
-            convertToButton(collections),
-            convertToButton(localBibles),
-            convertToButton(apiBibles)
-        ]
-        : [
-            convertToButton(localBibles),
-            convertToButton(apiBibles)
-        ]
+    // Combine local and api bibles into a single "Bibles" section with an internal separator
+    $: {
+        const localButtons = convertToButton(localBibles)
+        const apiButtons = convertToButton(apiBibles)
+
+        // Only include a separator when there are both local and api buttons
+        let biblesSection: any[] = []
+        if (localButtons.length && apiButtons.length) {
+            biblesSection = [...localButtons, "SEPERATOR", ...apiButtons]
+        } else {
+            biblesSection = [...localButtons, ...apiButtons]
+        }
+
+        sections = collections.length
+            ? [convertToButton(collections), biblesSection]
+            : [biblesSection]
+    }
 
     function convertToButton(categories: any[]) {
         return categories
@@ -142,36 +149,26 @@
     }
 </script>
 
-{#if collections.length}
+    {#if collections.length}
     <NavigationSections {sections} active={activeSubTab} on:rename={updateName} showSelectors={creatingCollection} selectHandler={toggleSelectForCollection} isSelected={(id) => selectedForCollection.includes(id)} canSelect={canSelectFor}>
         <svelte:fragment slot="header_0">
             <div class="sectionTitle"><T id="scripture.collections" /></div>
         </svelte:fragment>
 
         <svelte:fragment slot="header_1">
-            <div class="sectionTitle"><T id="scripture.local_bibles" /></div>
-        </svelte:fragment>
-
-        <svelte:fragment slot="header_2">
-            <div class="sectionTitle"><T id="scripture.api_bibles" /></div>
+            <div class="sectionTitle"><T id="scripture.bible" /></div>
         </svelte:fragment>
 
         <svelte:fragment slot="section_0"></svelte:fragment>
         <svelte:fragment slot="section_1"></svelte:fragment>
-        <svelte:fragment slot="section_2"></svelte:fragment>
     </NavigationSections>
 {:else}
     <NavigationSections {sections} active={activeSubTab} on:rename={updateName} showSelectors={creatingCollection} selectHandler={toggleSelectForCollection} isSelected={(id) => selectedForCollection.includes(id)} canSelect={canSelectFor}>
         <svelte:fragment slot="header_0">
-            <div class="sectionTitle"><T id="scripture.local_bibles" /></div>
-        </svelte:fragment>
-
-        <svelte:fragment slot="header_1">
-            <div class="sectionTitle"><T id="scripture.api_bibles" /></div>
+            <div class="sectionTitle"><T id="scripture.bible" /></div>
         </svelte:fragment>
 
         <svelte:fragment slot="section_0"></svelte:fragment>
-        <svelte:fragment slot="section_1"></svelte:fragment>
     </NavigationSections>
 {/if}
 
@@ -201,8 +198,9 @@
 <style>
     .sectionTitle {
         color: var(--text);
-        font-weight: 600;
-        padding: 6px 8px;
+        font-weight: 500;
+        padding: 2px 4px;
+        font-size: 0.9rem;
         border-bottom: 1px solid var(--primary-lighter);
         background: rgba(0,0,0,0.03);
     }
