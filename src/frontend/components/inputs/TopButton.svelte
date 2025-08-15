@@ -25,7 +25,8 @@
     function openActiveShow() {
         let showIsActive = $activeShow && ($activeShow.type || "show") === "show"
         let noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
-        if (showIsActive && noEditSlide) updateEditItem()
+        if (showIsActive && !$activeEdit.id) openEdit()
+        else if (showIsActive && noEditSlide) updateEditItem()
         else if (showIsActive && $activeEdit.showId && $activeEdit.showId !== $activeShow?.id) openEdit()
 
         function updateEditItem() {

@@ -66,6 +66,11 @@
     .row:has(.overflow) {
         overflow: visible;
     }
+    .row:has(.overflow-interact) {
+        bottom: 0 !important;
+        height: calc(var(--size) + var(--padding));
+        border-radius: calc(var(--size) * 0.5);
+    }
 
     .row.round {
         border-radius: 50%;

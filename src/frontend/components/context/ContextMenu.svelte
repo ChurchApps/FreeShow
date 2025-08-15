@@ -141,7 +141,8 @@
                 {:else if contextMenuItems[id]?.items}
                     <!-- conditional menus -->
                     {#if shouldShowMenuWithItems(id)}
-                        <ContextChild {id} {contextElem} {side} translate={activeMenu.length > 2 ? 0 : translate} />
+                        <!-- {activeMenu.length > 2 ? translate : 0} -->
+                        <ContextChild {id} {contextElem} {side} {translate} />
                     {/if}
                 {:else}
                     <ContextItem {id} {contextElem} />

@@ -181,9 +181,10 @@
 
     $: sortType = $sorted.shows?.type || "name"
 
-    function createShow(e: any) {
+    function createShow(e: any, border: boolean = false) {
+        if (border && e.target?.closest("button")) return
+
         const { ctrl } = e.detail
-        console.log(ctrl)
         if (ctrl) {
             history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         } else {
@@ -231,9 +232,11 @@
 </Autoscroll>
 
 <FloatingInputs onlyOne gradient>
-    <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
-        {#if !$labelsDisabled}<T id="new.show" />{/if}
-    </MaterialButton>
+    <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
+        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+            {#if !$labelsDisabled}<T id="new.show" />{/if}
+        </MaterialButton>
+    </div>
 </FloatingInputs>
 
 <style>

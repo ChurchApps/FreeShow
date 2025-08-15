@@ -55,7 +55,7 @@ import {
     videosData,
     videosTime
 } from "./../../stores"
-import { clone, keysToID } from "./array"
+import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
@@ -1102,12 +1102,12 @@ export function getDynamicIds(noVariables = false) {
     const mergedValues = [...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
-    const timersList = Object.values(get(timers)).map(({ name }) => `timer_${getVariableNameId(name)}`)
+    const timersList = sortByName(Object.values(get(timers))).map(({ name }) => `timer_${getVariableNameId(name)}`)
 
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_${getVariableNameId(name)}`) || []
+    const rssValues = sortByName(get(special).dynamicRSS)?.map(({ name }) => `rss_${getVariableNameId(name)}`) || []
 
     // WIP sort by type & name
-    const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
+    const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
     const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
     const variableTextSets: string[] = []

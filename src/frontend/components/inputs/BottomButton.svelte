@@ -49,27 +49,12 @@
         /* don't obstruct scroll bar */
         width: calc(100% - 8px);
     }
-    .bottom.large {
-        padding: 10px;
-        padding-top: 0;
-        padding-left: 0;
-
-        right: 0;
-        width: auto;
-    }
-    .bottom.large.scrollActive {
-        right: 8px;
-    }
 
     .buttonDiv {
         background-color: var(--primary-darkest);
         border-radius: 4px;
 
         box-shadow: 1px 1px 2px rgb(0 0 0 / 0.3);
-    }
-    .bottom.large .buttonDiv {
-        box-shadow: 1px 1px 3px rgb(0 0 0 / 0.6);
-        border-radius: 50px;
     }
 
     .bottom :global(button) {
