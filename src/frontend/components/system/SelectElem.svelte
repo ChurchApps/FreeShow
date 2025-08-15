@@ -148,7 +148,7 @@
         }
 
         // Special handling for scripture tabs: include active scripture in selection if not already selected
-        if (e.shiftKey && id.toString().includes("category_scripture") && $selected.data.length === 0) {
+        if ((e.ctrlKey || e.metaKey) && id.toString().includes("category_scripture") && $selected.data.length === 0) {
             const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
             if (activeScriptureId && activeScriptureId !== data) {
                 // Only auto-include if they're the same type (both API or both local)
@@ -209,6 +209,37 @@
             return
         }
 
+        // Special handling for scripture tabs: shift+click to select range from active to clicked
+        if (e.shiftKey && id.toString().includes("category_scripture")) {
+            const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
+            if (activeScriptureId && activeScriptureId !== data) {
+                // Get all scripture keys of the same type (API or local)
+                const activeScripture = $scriptures[activeScriptureId]
+                const currentScripture = $scriptures[data]
+                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                    // Get all scriptures of the same type
+                    const allScriptureIds = Object.keys($scriptures).filter(scriptureId => {
+                        const scripture = $scriptures[scriptureId]
+                        return scripture && (!!scripture.api) === (!!activeScripture.api)
+                    })
+                    
+                    // Find indices of active and clicked scriptures
+                    const activeIndex = allScriptureIds.indexOf(activeScriptureId)
+                    const clickedIndex = allScriptureIds.indexOf(data)
+                    
+                    if (activeIndex !== -1 && clickedIndex !== -1) {
+                        const startIndex = Math.min(activeIndex, clickedIndex)
+                        const endIndex = Math.max(activeIndex, clickedIndex)
+                        
+                        // Select all scriptures in the range
+                        const selectedRange = allScriptureIds.slice(startIndex, endIndex + 1)
+                        selected.set({ id, data: selectedRange })
+                        return
+                    }
+                }
+            }
+        }
+
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
         let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
 
@@ -229,24 +260,7 @@
                 if (!Array.isArray(selectedData)) selectedData = [$selected.data]
                 newData = [...selectedData, data]
             } else if (rightClick) {
-                // Special handling for scripture tabs: include active scripture when right-clicking
-                if (id.toString().includes("category_scripture")) {
-                    const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
-                    if (activeScriptureId && activeScriptureId !== data) {
-                        // Only auto-include if they're the same type (both API or both local)
-                        const activeScripture = $scriptures[activeScriptureId]
-                        const currentScripture = $scriptures[data]
-                        if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
-                            newData = [activeScriptureId, data]
-                        } else {
-                            newData = [data]
-                        }
-                    } else {
-                        newData = [data]
-                    }
-                } else {
-                    newData = [data]
-                }
+                newData = [data]
             }
         }
 
