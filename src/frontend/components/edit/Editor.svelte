@@ -21,7 +21,7 @@
         // close drawer
         if (!$drawerOpenedInEdit) {
             const minHeight = 40
-            if ($drawer.height > minHeight) drawer.set({ height: minHeight, stored: $drawer.height })
+            if ($drawer.height > minHeight) drawer.set({ height: minHeight, stored: $drawer.height, autoclosed: true })
         }
 
         // mainly for overlay preview

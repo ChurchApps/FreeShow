@@ -93,7 +93,7 @@
         let value = e.target.value
         if (allowEmpty || value.length) dispatch("edit", { value, id })
 
-        if (!initiallyEmpty) return
+        if (!initiallyEmpty || id.includes("category")) return
 
         let objectId = id.slice(id.indexOf("_") + 1)
         // open editor if no name (probably just created)

@@ -52,6 +52,9 @@
         }
     }
 
+    // open drawer if autoclosed
+    $: if ($activePage === "show" && $drawer.autoclosed) setTimeout(() => drawer.set({ height: $drawer.stored ?? DEFAULT_DRAWER_HEIGHT, stored: null }), 100)
+
     function mousemove(e: any) {
         if (!mouse) return
 
@@ -237,6 +240,19 @@
                 <Icon id="search" size={1.4} white right={!$labelsDisabled && !$focusMode} />
                 {#if !$labelsDisabled && !$focusMode}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
+        {:else}
+            <div class="clearSearch">
+                <Button
+                    style="height: 100%;"
+                    title={$dictionary.clear?.search}
+                    on:click={() => {
+                        searchValue = ""
+                        searchElem?.focus()
+                    }}
+                >
+                    <Icon id="clear" white />
+                </Button>
+            </div>
         {/if}
     </div>
 
@@ -304,6 +320,7 @@
         min-width: var(--navigation-width);
         /* width: 50%; */
         padding: 0 8px;
+        padding-right: 40px;
         border: none;
         border-inline-start: 4px solid var(--primary-darker);
     }
@@ -315,6 +332,13 @@
     .search::placeholder {
         color: inherit;
         opacity: 0.4;
+    }
+
+    .clearSearch {
+        position: absolute;
+        right: 0;
+        height: calc(100% - 4px);
+        z-index: 1;
     }
 
     .hidden {
