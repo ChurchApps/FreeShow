@@ -19,7 +19,6 @@
         overlays,
         projects,
         redoHistory,
-        scriptures,
         selected,
         shows,
         showsCache,
@@ -188,8 +187,8 @@
             disabled = true
         },
         createCollection: () => {
-            let selectedBibles = $selected.data.map((id) => $scriptures[id]).filter((a) => !a?.collection)
-            if (selectedBibles.length < 2) disabled = true
+            // Never disable createCollection - it should work even with no selections
+            disabled = false;
         },
         favourite: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id

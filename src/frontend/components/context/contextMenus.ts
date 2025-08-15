@@ -203,7 +203,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_templates: ["newCategory"],
     category_media: ["newFolder"],
     category_audio: ["newFolder"],
-    category_scripture: ["newScripture"],
+    category_scripture: ["newScripture", "createCollection"],
     category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "category_action", "use_as_archive"],
     category_shows_button_readonly: [],
     category_overlays_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],

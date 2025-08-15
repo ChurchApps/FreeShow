@@ -605,6 +605,7 @@
         "delete_group": "Delete group",
         "delete_all": "Delete all",
         "close": "Close",
+        "cancel": "Cancel",
         "save": "Save",
         "done": "Done",
         "disable": "Disable",
@@ -1384,7 +1385,13 @@
         "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
+        "collections": "Collections",
+        "local_bibles": "Local Bibles",
+        "api_bibles": "API Bibles",
+        "bible": "Bibles",
         "bibles": "Bibles from API.Bible",
+        "local_label": "Local",
+        "api_label": "API",
         "local": "Import local file",
         "supported_formats": "Supported formats:",
         "max_verses": "Max verses per slide",
