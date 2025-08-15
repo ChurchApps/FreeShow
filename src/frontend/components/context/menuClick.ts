@@ -704,13 +704,47 @@ const clickActions = {
 
     // scripture collection
     createCollection: (obj: ObjData) => {
-        if (obj.sel?.id !== "category_scripture") return
+        if (obj.sel?.id !== "category_scripture" && get(activeDrawerTab) !== "scripture") return
+        
+        // If no selection or insufficient selection, trigger a custom event to start collection mode
+        if (!obj.sel?.data?.length || obj.sel.data.length < 2) {
+            // Dispatch a custom event that will be caught by ScriptureTabs component
+            document.dispatchEvent(new CustomEvent("startScriptureCollection"))
+            return
+        }
+        
         let versions: string[] = obj.sel.data
 
-        // remove collections
+        // If we have less than 2 selected and we're in scripture drawer, include active scripture
+        if (versions.length < 2 && get(activeDrawerTab) === "scripture") {
+            const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab
+            if (activeScriptureId && !versions.includes(activeScriptureId)) {
+                versions = [...versions, activeScriptureId]
+            }
+        }
+
+        // remove collections and non-string items
         versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
         if (versions.length < 2) return
+
+        // Prevent mixing API and local bibles: determine first valid type and keep only matching types
+        const scripturesStore = get(scriptures)
+        const firstValid = versions.map((id) => scripturesStore[id] || Object.values(scripturesStore).find((a) => a.id === id)).find(Boolean)
+        if (firstValid) {
+            const firstIsApi = !!firstValid.api
+            const filtered = versions.filter((id) => {
+                const s = scripturesStore[id] || Object.values(scripturesStore).find((a) => a.id === id)
+                return s ? (!!s.api) === firstIsApi : false
+            })
+
+            if (filtered.length < versions.length) {
+                // show a toast to notify user that mixed types were removed
+                newToast("Cannot mix API and local Bibles in a single collection")
+            }
+
+            versions = filtered
+        }
 
         let name = ""
         versions.forEach((id, i) => {

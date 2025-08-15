@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { SelectIds } from "../../../types/Main"
     import type { Media, Slide } from "../../../types/Show"
-    import { activeDropId, activeRename, activeShow, disableDragging, os, selected } from "../../stores"
+    import { activeDropId, activeRename, activeShow, disableDragging, os, selected, drawerTabsData, scriptures } from "../../stores"
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
@@ -22,7 +22,8 @@
 
     function enter(e: any) {
         if (!selectable || $selected.hoverActive) return
-        if (!e.buttons || dragActive || onlyRightClickSelect) return
+        // Only allow left-click (button 1) for drag selection
+        if (!e.buttons || e.buttons !== 1 || dragActive || onlyRightClickSelect) return
 
         if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
             selected.set({ id, data: [data] })
@@ -39,7 +40,7 @@
     }
 
     const TRIGGER_TIMEOUT = 500
-    let triggerTimeout: NodeJS.Timeout | null = null
+    let triggerTimeout: ReturnType<typeof setTimeout> | null = null
     function triggerHoverAction() {
         if (!triggerOnHover || triggerTimeout) return
 
@@ -96,21 +97,18 @@
         return slideData.filter((a) => a.slide)
     }
 
-    // mac bug causes two finger trackpad to not register as a button 2 input,
-    // this could be a workaround, but contetxmenu is triggered last!
-    // let rightClickMenu = false
-    // function contextmenu() {
-    //     rightClickMenu = true
-    // }
-    // function mouseup() {
-    //     rightClickMenu = false
-    // }
-
-    // TOUCH SCREEN
-
+    // TOUCH SCREEN: synthesize a minimal mouse-like event and reuse mousedown logic
     function touchstart(e: TouchEvent) {
-        // Convert to a synthetic "mouse" event for reuse
-        const fakeMouseEvent = { ...e, button: 0, buttons: 1 }
+        const fakeMouseEvent: any = {
+            button: 0,
+            buttons: 1,
+            shiftKey: false,
+            ctrlKey: false,
+            metaKey: false,
+            // keep the original target so remainSelected/deselect logic still works
+            target: (e as any).target || undefined
+        }
+
         mousedown(fakeMouseEvent, false)
     }
 
@@ -147,6 +145,19 @@
         if (onlyRightClickSelect) {
             if (rightClick) selected.set({ id, data: [data] })
             return
+        }
+
+        // Special handling for scripture tabs: include active scripture in selection if not already selected
+        if ((e.ctrlKey || e.metaKey) && id.toString().includes("category_scripture") && $selected.data.length === 0) {
+            const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
+            if (activeScriptureId && activeScriptureId !== data) {
+                // Only auto-include if they're the same type (both API or both local)
+                const activeScripture = $scriptures[activeScriptureId]
+                const currentScripture = $scriptures[data]
+                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                    selected.set({ id, data: [activeScriptureId] })
+                }
+            }
         }
 
         // shift select range
@@ -198,6 +209,37 @@
             return
         }
 
+        // Special handling for scripture tabs: shift+click to select range from active to clicked
+        if (e.shiftKey && id.toString().includes("category_scripture")) {
+            const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
+            if (activeScriptureId && activeScriptureId !== data) {
+                // Get all scripture keys of the same type (API or local)
+                const activeScripture = $scriptures[activeScriptureId]
+                const currentScripture = $scriptures[data]
+                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                    // Get all scriptures of the same type
+                    const allScriptureIds = Object.keys($scriptures).filter(scriptureId => {
+                        const scripture = $scriptures[scriptureId]
+                        return scripture && (!!scripture.api) === (!!activeScripture.api)
+                    })
+                    
+                    // Find indices of active and clicked scriptures
+                    const activeIndex = allScriptureIds.indexOf(activeScriptureId)
+                    const clickedIndex = allScriptureIds.indexOf(data)
+                    
+                    if (activeIndex !== -1 && clickedIndex !== -1) {
+                        const startIndex = Math.min(activeIndex, clickedIndex)
+                        const endIndex = Math.max(activeIndex, clickedIndex)
+                        
+                        // Select all scriptures in the range
+                        const selectedRange = allScriptureIds.slice(startIndex, endIndex + 1)
+                        selected.set({ id, data: selectedRange })
+                        return
+                    }
+                }
+            }
+        }
+
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
         let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
 
@@ -217,7 +259,9 @@
                 let selectedData = $selected.data ?? []
                 if (!Array.isArray(selectedData)) selectedData = [$selected.data]
                 newData = [...selectedData, data]
-            } else if (rightClick) newData = [data]
+            } else if (rightClick) {
+                newData = [data]
+            }
         }
 
         if (!newData?.length) selected.set({ id: null, data: [] })
@@ -288,7 +332,7 @@
 
 <div
     {id}
-    data={JSON.stringify(data)}
+    data-item={JSON.stringify(data)}
     {draggable}
     style={$$props.style}
     class="selectElem {$$props.class || ''}"
