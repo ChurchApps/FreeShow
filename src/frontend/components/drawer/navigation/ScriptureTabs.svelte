@@ -156,7 +156,15 @@
         </svelte:fragment>
 
         <svelte:fragment slot="header_1">
-            <div class="sectionTitle"><T id="scripture.bible" /></div>
+            <div class="sectionHeader">
+                <div class="sectionTitle"><T id="scripture.bible" /></div>
+                {#if localBibles.length}
+                    <div class="separator">
+                        <hr />
+                        <div class="sepLabel"><T id="scripture.local_label" /></div>
+                    </div>
+                {/if}
+            </div>
         </svelte:fragment>
 
         <svelte:fragment slot="section_0"></svelte:fragment>
@@ -165,18 +173,26 @@
 {:else}
     <NavigationSections {sections} active={activeSubTab} on:rename={updateName} showSelectors={creatingCollection} selectHandler={toggleSelectForCollection} isSelected={(id) => selectedForCollection.includes(id)} canSelect={canSelectFor}>
         <svelte:fragment slot="header_0">
-            <div class="sectionTitle"><T id="scripture.bible" /></div>
+            <div class="sectionHeader">
+                <div class="sectionTitle"><T id="scripture.bible" /></div>
+                {#if localBibles.length}
+                    <div class="separator">
+                        <hr />
+                        <div class="sepLabel"><T id="scripture.local_label" /></div>
+                    </div>
+                {/if}
+            </div>
         </svelte:fragment>
 
         <svelte:fragment slot="section_0"></svelte:fragment>
     </NavigationSections>
 {/if}
 
-<div class="scriptureActions" style="padding: 8px; margin: 6px 5px;">
+<div class="scriptureActions" style="padding: 6px; margin: 4px 5px;">
     <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
         {#if !$labelsDisabled}<T id="new.scripture" />{/if}
     </MaterialButton>
-    <div style="height: 8px;"></div>
+    <div style="height: 6px;"></div>
     {#if !creatingCollection}
         <MaterialButton icon="add" style="width: 100%;" title="new.collection" variant="outlined" disabled={readOnly} on:click={startCreateCollection} small>
             {#if !$labelsDisabled}<T id="new.collection" />{/if}
@@ -199,9 +215,34 @@
     .sectionTitle {
         color: var(--text);
         font-weight: 500;
-        padding: 2px 4px;
+        padding: 3px 6px;
         font-size: 0.9rem;
-        border-bottom: 1px solid var(--primary-lighter);
+        border-bottom: none;
         background: rgba(0,0,0,0.03);
+        margin-bottom: 1px;
     }
+.sectionHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.separator { 
+    display: flex; 
+    align-items: center; 
+    gap: 4px;
+    margin: 2px 0;
+}
+.separator hr {
+    height: 1px;
+    background-color: var(--primary-lighter);
+    border: none;
+    flex: 1;
+}
+.sepLabel { 
+    font-size: 0.65rem; 
+    color: var(--secondary-text, rgba(255,255,255,0.65)); 
+    font-weight: 400; 
+    margin-left: 3px;
+    margin-right: 3px;
+}
 </style>

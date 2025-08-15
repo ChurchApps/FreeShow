@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData } from "../../../stores"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
+    import T from "../../helpers/T.svelte"
 
     // interface Button extends Category {
     //     label: string
@@ -81,7 +82,10 @@
                 {#if buttons.length}
                     {#each buttons as category}
                         {#if category === "SEPERATOR"}
-                            <hr />
+                            <div class="separator">
+                                <hr />
+                                <div class="sepLabel"><T id="scripture.api_label" /></div>
+                            </div>
                         {:else if !category.hidden}
                             <MaterialDrawerTab {active} {category} on:rename showSelector={showSelectors} selectHandler={selectHandler} isSelected={isSelected} canSelect={canSelect} />
                         {/if}
@@ -146,6 +150,10 @@
     hr {
         height: 1px;
         border: none;
-        background-color: var(--primary-lighter);
+    background-color: var(--primary-lighter);
+    flex: 1 1 auto;
     }
+
+.separator { display: flex; align-items: center; gap: 8px; }
+.sepLabel { font-size: 0.65rem; color: var(--secondary-text, rgba(255,255,255,0.65)); font-weight:400; margin-left:6px }
 </style>
