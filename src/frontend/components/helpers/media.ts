@@ -65,26 +65,29 @@ export function joinPath(path: string[]): string {
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
 
-    // already encoded or special URL
+    // Skip if already encoded or is a special URL
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
-    // can't load file paths with "#"
-    // Ensure proper file:// protocol for absolute paths on Linux
-    if (path.startsWith("/") && !path.startsWith("file://")) {
-        path = `file://${path}`
-    }
+    // Handle Linux absolute paths - we'll add this prefix at the end to avoid 
+    // interfering with path splitting
+    const needsFileProtocol = path.startsWith("/") && !path.startsWith("file://")
 
-    // Encode problematic characters
-    // TODO: Check if these can be removed (since encodeURIComponent does this).
-    path = path.replaceAll("#", "%23")
-    path = path.replaceAll(" ", "%20")
-
-    // Encode the filename portion
+    // Split the path to encode only the filename portion
     const splittedPath = splitPath(path)
     const fileName = splittedPath.pop() || ""
+
+    // Encode the filename (encodeURIComponent handles #, spaces and other special chars)
     const encodedName = encodeURIComponent(fileName)
 
-    return joinPath([...splittedPath, encodedName])
+    // Rejoin with the encoded filename
+    let result = joinPath([...splittedPath, encodedName])
+
+    // Add file:// protocol for Linux absolute paths
+    if (needsFileProtocol) {
+        result = `file://${result}`
+    }
+
+    return result
 }
 
 // decode only file name in path (not full path)
