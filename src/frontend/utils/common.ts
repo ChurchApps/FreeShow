@@ -20,12 +20,15 @@ import {
     quickSearchActive,
     resized,
     serverData,
+    theme,
+    themes,
     toastMessages,
     version
 } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
+import { getContrast } from "../components/helpers/color"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -215,4 +218,11 @@ export function triggerFunction(id: string) {
     setTimeout(() => {
         activeTriggerFunction.set("")
     }, 100)
+}
+
+// get theme contrast color
+// WIP similar to "secondary" in App.svelte
+export function isDarkTheme() {
+    const contrastColor = getContrast(get(themes)[get(theme)]?.colors?.primary || "")
+    return contrastColor === "#FFFFFF"
 }

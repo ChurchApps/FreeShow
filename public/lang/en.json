@@ -194,6 +194,7 @@
         "flip": "Flip",
         "flip_horizontally": "Flip horizontally",
         "flip_vertically": "Flip vertically",
+        "folders": "Folders",
         "all": "Folders, images & videos",
         "folder": "Only folders",
         "image": "Only images",
@@ -210,6 +211,7 @@
     },
     "audio": {
         "settings": "Audio settings",
+        "playlists": "Playlists",
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",

@@ -26,7 +26,7 @@
             { id: "all", label: "category.all", icon: "all", count: unarchivedOverlays.length },
             { id: "unlabeled", label: "category.unlabeled", icon: "noIcon", count: uncategorizedOverlaysLength, hidden: !uncategorizedOverlaysLength && activeSubTab !== "unlabeled" }
         ],
-        [...convertToButton(unarchivedCategoriesList), ...(archivedCategoriesList.length ? ["SEPERATOR", ...convertToButton(archivedCategoriesList)] : [])]
+        [{ id: "TITLE", label: "guide_title.categories" }, ...convertToButton(unarchivedCategoriesList), ...(archivedCategoriesList.length ? ["SEPERATOR", ...convertToButton(archivedCategoriesList)] : [])]
     ]
 
     function convertToButton(categories: any[]) {

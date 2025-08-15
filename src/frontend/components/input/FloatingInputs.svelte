@@ -1,17 +1,21 @@
 <script lang="ts">
+    import { isDarkTheme } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
     export let side: "right" | "left" = "right"
     export let onlyOne: boolean = false
+    export let gradient: boolean = false
     export let round: boolean = false
     export let arrow: boolean = false
     export let bottom: number = 10
 
     let open = false
+
+    const light = !isDarkTheme()
 </script>
 
-<div class="row {side}" class:onlyOne class:round style="bottom: {bottom}px;" on:mousedown>
+<div class="row {side}" class:light class:onlyOne class:gradient class:round style="bottom: {bottom}px;" on:mousedown>
     {#if arrow}
         <MaterialButton style={open ? "" : "opacity: 0.6;"} class="expand" title={open ? "actions.close" : "create_show.more_options"} isActive={open} on:click={() => (open = !open)}>
             <Icon class="submenu_{open ? 'close' : 'open'}" id="arrow_back_modern" size={0.9} white={!open} />
@@ -35,7 +39,7 @@
 <style>
     .row {
         --size: 40px;
-        --padding: 10px;
+        --padding: 12px;
 
         display: flex;
         background-color: var(--primary-darkest);
@@ -51,6 +55,13 @@
         /* padding: 0 18px; */
         overflow: hidden;
         z-index: 3;
+
+        --background: rgba(25, 25, 35, 0.85);
+        background-color: var(--background);
+        backdrop-filter: blur(3px);
+    }
+    .row.light {
+        --background: rgba(225, 225, 225, 0.85);
     }
     .row:has(.overflow) {
         overflow: visible;
@@ -90,6 +101,11 @@
         /* width: var(--size);
         height: var(--size); */
     }
+    .row.round :global(button.isActive) {
+        border: 2px solid var(--secondary) !important;
+        border-radius: 50%;
+        cursor: pointer;
+    }
 
     .row :global(button.expand.isActive) {
         border: none !important;
@@ -100,6 +116,31 @@
     }
     .row :global(button.expand.isActive svg) {
         transform: rotate(180deg);
+    }
+
+    .row.gradient :global(button) {
+        font-size: 1em;
+
+        border-radius: 50px;
+
+        /* gradient border */
+        background:
+            linear-gradient(var(--background), var(--background)) padding-box,
+            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
+        border: 2px solid transparent;
+
+        transition: 0.4s filter ease;
+    }
+    .row.gradient :global(button:hover),
+    .row.gradient :global(button:not(.isActive):active) {
+        background:
+            linear-gradient(var(--background), var(--background)) padding-box,
+            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
+
+        filter: hue-rotate(15deg);
+    }
+    .row.gradient :global(button:not(.isActive):active) {
+        filter: hue-rotate(30deg);
     }
 
     .menu {

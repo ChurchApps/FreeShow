@@ -7,6 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     $: scripturesList = keysToID($scriptures).filter((a) => !a.collection)
     $: localScripturesList = scripturesList.filter((a) => !a.api)
@@ -17,9 +18,7 @@
 
     let selectedScriptures: string[] = []
 
-    function toggle(e: any, id: string) {
-        const state = !!e.target?.checked
-
+    function toggle(state: boolean, id: string) {
         if (state) {
             if (selectedScriptures.includes(id)) return
             selectedScriptures.push(id)
@@ -75,8 +74,7 @@
 <div class="list">
     {#each selectedMode === "local" ? localScripturesList : apiScripturesList as scripture}
         <div class="item">
-            <input type="checkbox" on:change={(e) => toggle(e, scripture.id)} />
-            <p>{scripture.customName || scripture.name}</p>
+            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={(e) => toggle(e.detail, scripture.id)} />
         </div>
     {/each}
 </div>
@@ -126,6 +124,9 @@
     .item {
         display: flex;
         gap: 10px;
-        padding: 4px 12px;
+        /* padding: 4px 12px; */
+    }
+    .item :global(.checkboxfield .background) {
+        background-color: transparent !important;
     }
 </style>

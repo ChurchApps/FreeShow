@@ -155,7 +155,7 @@
     {/if}
 
     <FloatingInputs round>
-        <MaterialButton title="groups.toggle_global_group" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)}>
+        <MaterialButton isActive={displayGlobalGroups} title="groups.toggle_global_group" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)}>
             <Icon id="groups" white={!displayGlobalGroups} />
         </MaterialButton>
     </FloatingInputs>

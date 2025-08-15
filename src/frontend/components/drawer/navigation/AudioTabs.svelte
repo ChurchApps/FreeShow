@@ -68,8 +68,8 @@
             { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength }
         ],
         [{ id: "effects_library", label: "category.sound_effects", icon: "effect", count: effectsLength, hidden: !effectsLength && activeSubTab !== "effects_library" }],
-        getAudioPlaylists($audioPlaylists),
-        convertToButton(foldersList, folderLengths)
+        [{ id: "TITLE", label: "audio.playlists" }, ...getAudioPlaylists($audioPlaylists)],
+        [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
     function getAudioPlaylists(playlistUpdater) {
@@ -77,8 +77,8 @@
 
         let playlists = sortObject(keysToID(playlistUpdater), "name")
         playlists = playlists.map((a) => {
-            const length = a.songs?.length
-            return { id: a.id, label: a.name, icon: "playlist", length }
+            const count = a.songs?.length
+            return { id: a.id, label: a.name, icon: "playlist", count }
         })
         if (!playlists.length) return []
 

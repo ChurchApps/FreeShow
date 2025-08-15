@@ -8,7 +8,8 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
-    import BottomButton from "../../inputs/BottomButton.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
@@ -190,18 +191,19 @@
         }
     }
 
-    let listElem: HTMLElement | null = null
-    let scrollElem: HTMLElement | null = null
-    $: if (listElem && active) setTimeout(updateScrollElem)
-    function updateScrollElem() {
-        scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
-    }
+    // let listElem: HTMLElement | null = null
+    // let scrollElem: HTMLElement | null = null
+    // $: if (listElem && active) setTimeout(updateScrollElem)
+    // function updateScrollElem() {
+    //     scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
-    <div bind:this={listElem} class="column {readOnly ? '' : 'context #drawer_show'}">
+    <!-- bind:this={listElem} -->
+    <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
             {#if createFromSearch && searchValue.length}
                 <div class="warning">
@@ -228,9 +230,11 @@
     </div>
 </Autoscroll>
 
-<BottomButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} {scrollElem} on:click={createShow} large>
-    {#if !$labelsDisabled}<T id="new.show" />{/if}
-</BottomButton>
+<FloatingInputs onlyOne gradient>
+    <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+        {#if !$labelsDisabled}<T id="new.show" />{/if}
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .column {

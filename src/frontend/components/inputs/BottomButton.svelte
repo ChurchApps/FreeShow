@@ -6,7 +6,6 @@
     export let title: string = ""
     export let icon: string = ""
     export let disabled: boolean = false
-    export let large: boolean = false
     export let scrollElem: HTMLElement | null = null
 
     const dispatch = createEventDispatcher()
@@ -28,10 +27,10 @@
     }
 </script>
 
-<div class="bottom" class:scrollActive class:large on:click={(e) => click(e, true)}>
+<div class="bottom" class:scrollActive on:click={(e) => click(e, true)}>
     <div class="buttonDiv">
         <!-- variant="contained" -->
-        <MaterialButton variant="outlined" class={$$props.class} style={$$props.style} {title} {icon} {disabled} on:click={click} small={!large}>
+        <MaterialButton variant="outlined" class={$$props.class} style={$$props.style} {title} {icon} {disabled} on:click={click} small>
             <slot />
         </MaterialButton>
     </div>
@@ -75,15 +74,5 @@
 
     .bottom :global(button) {
         width: 100%;
-    }
-    .bottom.large :global(button) {
-        padding: 0.45rem 1.25rem;
-        font-size: 1em;
-
-        border-radius: 50px;
-
-        border-width: 2px;
-        border-color: var(--secondary) !important;
-        /* border-bottom-color: var(--secondary) !important; */
     }
 </style>
