@@ -210,7 +210,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_templates_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_media_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
     category_audio_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
-    category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
+    category_scripture_button: ["rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "SEPERATOR", "manage_show_tags", "tag_filter", "sort_shows_by"],

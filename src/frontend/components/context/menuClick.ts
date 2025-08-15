@@ -54,7 +54,6 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
-    scriptures,
     selected,
     settingsTab,
     showRecentlyUsedProjects,
@@ -71,13 +70,14 @@ import {
     variables
 } from "../../stores"
 import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
+import { translate } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
-import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -96,8 +96,6 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
-import { translate } from "../../utils/language"
-import { confirmCustom } from "../../utils/popup"
 
 interface ObjData {
     sel: Selected | null
@@ -702,65 +700,8 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
-    // scripture collection
-    createCollection: (obj: ObjData) => {
-        if (obj.sel?.id !== "category_scripture" && get(activeDrawerTab) !== "scripture") return
-        
-        // If no selection or insufficient selection, trigger a custom event to start collection mode
-        if (!obj.sel?.data?.length || obj.sel.data.length < 2) {
-            // Dispatch a custom event that will be caught by ScriptureTabs component
-            document.dispatchEvent(new CustomEvent("startScriptureCollection"))
-            return
-        }
-        
-        let versions: string[] = obj.sel.data
-
-        // If we have less than 2 selected and we're in scripture drawer, include active scripture
-        if (versions.length < 2 && get(activeDrawerTab) === "scripture") {
-            const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab
-            if (activeScriptureId && !versions.includes(activeScriptureId)) {
-                versions = [...versions, activeScriptureId]
-            }
-        }
-
-        // remove collections and non-string items
-        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
-        versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
-        if (versions.length < 2) return
-
-        // Prevent mixing API and local bibles: determine first valid type and keep only matching types
-        const scripturesStore = get(scriptures)
-        const firstValid = versions.map((id) => scripturesStore[id] || Object.values(scripturesStore).find((a) => a.id === id)).find(Boolean)
-        if (firstValid) {
-            const firstIsApi = !!firstValid.api
-            const filtered = versions.filter((id) => {
-                const s = scripturesStore[id] || Object.values(scripturesStore).find((a) => a.id === id)
-                return s ? (!!s.api) === firstIsApi : false
-            })
-
-            if (filtered.length < versions.length) {
-                // show a toast to notify user that mixed types were removed
-                newToast("Cannot mix API and local Bibles in a single collection")
-            }
-
-            versions = filtered
-        }
-
-        let name = ""
-        versions.forEach((id, i) => {
-            if (i > 0) name += " + "
-            if (id.length < 5) {
-                name += id.toUpperCase()
-            } else {
-                const bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
-                name += getShortBibleName(bibleName)
-            }
-        })
-
-        scriptures.update((a) => {
-            a[uid()] = { name, collection: { versions } }
-            return a
-        })
+    createCollection: () => {
+        activePopup.set("create_collection")
     },
     create_show: (obj: ObjData) => {
         if (obj.contextElem?.classList.contains("chapters")) {

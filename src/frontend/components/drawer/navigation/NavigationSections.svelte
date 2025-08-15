@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
-    import T from "../../helpers/T.svelte"
 
     // interface Button extends Category {
     //     label: string
@@ -13,11 +13,6 @@
 
     export let sections: any[]
     export let active: string
-    // Optional selection mode for callers that want checkboxes on each item
-    export let showSelectors: boolean = false
-    export let selectHandler: null | ((id: string) => void) = null
-    export let isSelected: null | ((id: string) => boolean) = null
-    export let canSelect: null | ((id: string) => boolean) = null
 
     $: if (sections.length && !active) {
         const flat = sections.flat().filter((a) => a && a !== "SEPERATOR")
@@ -65,7 +60,7 @@
 
 <div class="tabSection">
     {#each sections as buttons, index}
-        {#if buttons.length > 1 || !buttons[0]?.hidden || (index === 0 && buttons.length > 0)}
+        {#if buttons.length > 1 || !buttons[0]?.hidden}
             <div class="section">
                 {#if index === 0}
                     <slot name="header_0" />
@@ -81,15 +76,15 @@
 
                 {#if buttons.length}
                     {#each buttons as category}
-                        {#if category === "SEPERATOR"}
+                        {#if category?.id === "TITLE"}
+                            <div class="title">{translateText(category.label)}</div>
+                        {:else if category === "SEPERATOR" || category?.id === "SEPERATOR"}
                             <div class="separator">
-                                {#if $activeDrawerTab === 'scripture'}
-                                    <div class="sepLabel"><T id="scripture.api_label" /></div>
-                                {/if}
+                                {#if category?.label}<div class="sepLabel">{category.label}</div>{/if}
                                 <hr />
                             </div>
                         {:else if !category.hidden}
-                            <MaterialDrawerTab {active} {category} on:rename showSelector={showSelectors} selectHandler={selectHandler} isSelected={isSelected} canSelect={canSelect} />
+                            <MaterialDrawerTab {active} {category} on:rename />
                         {/if}
                     {/each}
                     <!-- {:else}
@@ -131,8 +126,7 @@
         display: flex;
         flex-direction: column;
 
-    overflow: hidden;
-    padding: 6px;
+        overflow: hidden;
 
         /* align to left */
         margin-left: 0;
@@ -149,14 +143,32 @@
         justify-content: space-between;
     }
 
+    .title {
+        font-weight: 500;
+        padding: 4px 14px;
+        font-size: 0.8rem;
+        opacity: 0.8;
+        background: var(--primary-darkest);
+        border-bottom: 1px solid var(--primary-lighter);
+    }
+
     hr {
         height: 1px;
         border: none;
-    background-color: var(--primary-lighter);
-    flex: 1 1 auto;
-    opacity: 0.9;
+        background-color: var(--primary-lighter);
+        flex: 1;
+        opacity: 0.8;
     }
 
-.separator { display: flex; align-items: center; gap: 8px; justify-content: flex-start }
-.sepLabel { font-size: 0.75rem; color: var(--secondary-text, rgba(255,255,255,0.85)); font-weight:400; margin-left:0; margin-right:6px; opacity:0.95; display:inline-flex; align-items:center; padding:6px 8px; line-height:1 }
+    .separator {
+        display: flex;
+        align-items: center;
+    }
+    .sepLabel {
+        font-size: 0.6rem;
+        color: var(--text);
+        opacity: 0.5;
+        padding: 6px 14px;
+        line-height: 1;
+    }
 </style>

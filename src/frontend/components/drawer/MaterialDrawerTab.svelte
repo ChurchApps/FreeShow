@@ -24,11 +24,6 @@
     $: submenu = category.submenu || {}
 
     export let active: string
-    export let showSelector: boolean = false
-    export let selectHandler: null | ((id: string) => void) = null
-    export let isSelected: null | ((id: string) => boolean) = null
-    // Optional predicate to determine if this item should show a selector
-    export let canSelect: null | ((id: string) => boolean) = null
 
     $: submenuActive = isSubmenu ? $activeActionTagFilter.includes(id) || $activeVariableTagFilter.includes(id) : false
     $: isActive = submenuActive || active === id
@@ -40,12 +35,6 @@
     function click(e: any) {
         const { ctrl, shift } = e.detail
         if (ctrl || shift) return
-
-        // If we're in selection mode (showSelector is true), only handle selection
-        if (showSelector && selectHandler) {
-            selectHandler(id)
-            return
-        }
 
         if (category.openTrigger) category.openTrigger(id)
 
@@ -92,9 +81,6 @@
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} on:click={click}>
         <div style="max-width: 85%;" data-title={translateText(label)}>
-            {#if showSelector && (!canSelect || canSelect(id))}
-                <input type="checkbox" style="margin-right:8px;" checked={isSelected ? isSelected(id) : false} on:change={() => selectHandler?.(id)} />
-            {/if}
             <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} white={isActive || isSubmenu} />
             {#if noEdit || isSubmenu}
                 <p style="margin: 5px;">

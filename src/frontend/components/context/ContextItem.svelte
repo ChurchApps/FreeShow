@@ -186,10 +186,6 @@
 
             disabled = true
         },
-        createCollection: () => {
-            // Never disable createCollection - it should work even with no selections
-            disabled = false;
-        },
         favourite: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
             if (path && $media[path]?.favourite === true) enabled = true
