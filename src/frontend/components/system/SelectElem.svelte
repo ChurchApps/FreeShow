@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { SelectIds } from "../../../types/Main"
     import type { Media, Slide } from "../../../types/Show"
-    import { activeDropId, activeRename, activeShow, disableDragging, os, selected } from "../../stores"
+    import { activeDropId, activeRename, activeShow, disableDragging, os, selected, drawerTabsData, scriptures } from "../../stores"
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
@@ -149,6 +149,19 @@
             return
         }
 
+        // Special handling for scripture tabs: include active scripture in selection if not already selected
+        if (e.shiftKey && id.toString().includes("category_scripture") && $selected.data.length === 0) {
+            const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
+            if (activeScriptureId && activeScriptureId !== data) {
+                // Only auto-include if they're the same type (both API or both local)
+                const activeScripture = $scriptures[activeScriptureId]
+                const currentScripture = $scriptures[data]
+                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                    selected.set({ id, data: [activeScriptureId] })
+                }
+            }
+        }
+
         // shift select range
         if (e.shiftKey && (shiftRange.length || $selected.data[0]?.index !== undefined)) {
             const searchKeys = ["id", "index", "path"]
@@ -217,7 +230,26 @@
                 let selectedData = $selected.data ?? []
                 if (!Array.isArray(selectedData)) selectedData = [$selected.data]
                 newData = [...selectedData, data]
-            } else if (rightClick) newData = [data]
+            } else if (rightClick) {
+                // Special handling for scripture tabs: include active scripture when right-clicking
+                if (id.toString().includes("category_scripture")) {
+                    const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
+                    if (activeScriptureId && activeScriptureId !== data) {
+                        // Only auto-include if they're the same type (both API or both local)
+                        const activeScripture = $scriptures[activeScriptureId]
+                        const currentScripture = $scriptures[data]
+                        if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                            newData = [activeScriptureId, data]
+                        } else {
+                            newData = [data]
+                        }
+                    } else {
+                        newData = [data]
+                    }
+                } else {
+                    newData = [data]
+                }
+            }
         }
 
         if (!newData?.length) selected.set({ id: null, data: [] })
@@ -288,7 +320,7 @@
 
 <div
     {id}
-    data={JSON.stringify(data)}
+    data-item={JSON.stringify(data)}
     {draggable}
     style={$$props.style}
     class="selectElem {$$props.class || ''}"
