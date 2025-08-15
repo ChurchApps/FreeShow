@@ -28,8 +28,8 @@
             .sort((a, b) => (b.customName || b.name).localeCompare(a.customName || a.name))
             .map((a: any) => {
                 const icon = a.api ? "scripture_alt" : a.collection ? "collection" : "scripture"
-                const length = a.collection?.versions?.length || 0
-                return { id: a.id, label: a.customName || a.name, icon, length }
+                const count = a.collection?.versions?.length || 0
+                return { id: a.id, label: a.customName || a.name, icon, count }
             })
     }
 

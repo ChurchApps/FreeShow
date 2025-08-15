@@ -1,6 +1,7 @@
 export interface ContextMenuItem {
     id?: string
     color?: string
+    style?: string
     label: string
     translate?: boolean
     items?: string[]
@@ -64,7 +65,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     changeIcon: { label: "context.changeIcon", icon: "star" },
     category_action: { label: "popup.category_action", icon: "actions" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
-    archive: { label: "actions.archive", icon: "archive" },
+    archive: { label: "actions.move_to_archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },

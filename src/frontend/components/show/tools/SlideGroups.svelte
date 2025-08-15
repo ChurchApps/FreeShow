@@ -16,7 +16,8 @@
     import { getSlideGroups } from "./groups"
 
     $: showId = $activeShow?.id || ""
-    $: showGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
+    $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
+    $: showGroups = allShowGroups.filter((a) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
 
@@ -40,7 +41,7 @@
     $: displayGlobalGroups = $globalGroupViewEnabled
     $: if (showId) updateGroupView()
     function updateGroupView() {
-        displayGlobalGroups = !showGroups.length ? true : $globalGroupViewEnabled
+        displayGlobalGroups = !allShowGroups.length ? true : $globalGroupViewEnabled
     }
 </script>
 
@@ -87,7 +88,7 @@
                         })}
                     >
                         <p data-title={slide.group}>
-                            {slide.group || "—"}
+                            {slide.group === "." ? "" : slide.group || "—"}
                             {#if groupCount > 1}<span class="shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
                         </p>
                     </div>
@@ -95,7 +96,7 @@
             {/each}
         {:else}
             <Center faded>
-                <T id="empty.slides" />
+                <T id="empty.groups" />
             </Center>
         {/if}
     </div>
@@ -140,7 +141,7 @@
                             })}
                         >
                             <p data-title={slide.group}>
-                                {slide.group || "—"}
+                                {slide.group === "." ? "" : slide.group || "—"}
                                 {#if $groups[slide.id]?.shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
                             </p>
                         </div>
@@ -148,7 +149,7 @@
                 {/each}
             {:else}
                 <Center faded>
-                    <T id="empty.slides" />
+                    <T id="empty.groups" />
                 </Center>
             {/if}
         </div>

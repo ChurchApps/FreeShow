@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { outputs, outputState } from "../../../stores"
+    import { dictionary, outputs, outputState } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -55,6 +55,7 @@
     <div>
         {#each outs as output}
             <Button
+                title={$dictionary.actions?.toggle_output_lock}
                 on:click={(e) => toggleOutput(e, output.id)}
                 id={output.id}
                 active={output.active}
@@ -65,8 +66,9 @@
                 dark
             >
                 {#if output.stageOutput}<Icon id="stage" right />{/if}
+                {#if !output.active}<Icon id="locked" right />{/if}
                 {#if !allSameState && $outputState.find((a) => a.id === output.id)?.active}<Icon id="check" right />{/if}
-                {output.name}
+                <p style={output.active ? "" : "text-decoration: line-through;"}>{output.name}</p>
             </Button>
         {/each}
     </div>

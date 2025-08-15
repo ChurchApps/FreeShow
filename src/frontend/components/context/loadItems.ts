@@ -113,6 +113,9 @@ const loadActions = {
         if (!currentSlide) return []
 
         const currentGroup: string = currentSlide.globalGroup || ""
+        const noGroup = currentSlide.group === "." || currentGroup === "none"
+        const isParent = slideRef.type === "parent"
+
         items = Object.entries(get(groups)).map(([id, a]) => {
             // strange bug, where name is { "isTrusted": true }, maybe an old issue
             // https://www.reddit.com/r/freeshowapp/comments/1j0w6mt/freeshow_keeps_on_freezing
@@ -120,8 +123,9 @@ const loadActions = {
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
 
-        if (!items.length) return [{ label: "empty.general", disabled: true }]
-        return sortItemsByLabel(items)
+        if (!isParent && !items.length) return [{ label: "empty.general", disabled: true }]
+        // , icon: "remove"
+        return [...(isParent ? [{ id: "none", label: "main.none", enabled: noGroup, style: "opacity: 0.8;" }] : []), ...sortItemsByLabel(items)]
     },
     actions: () => {
         const slideRef = getLayoutRef()?.[get(selected).data[0]?.index]

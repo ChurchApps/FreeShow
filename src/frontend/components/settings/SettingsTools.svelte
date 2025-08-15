@@ -30,14 +30,14 @@
 
 {#if openedTab === "general"}
     <div class="bottom">
-        <MaterialButton variant="outlined" icon="groups" on:click={() => open("manage_groups")} small>
-            <T id="popup.manage_groups" />
-        </MaterialButton>
         <MaterialButton variant="outlined" icon="info" on:click={() => open("manage_metadata")} small>
             <T id="popup.manage_metadata" />
         </MaterialButton>
         <MaterialButton variant="outlined" icon="dynamic" on:click={() => open("manage_dynamic_values")} small>
             <T id="popup.manage_dynamic_values" />
+        </MaterialButton>
+        <MaterialButton variant="outlined" icon="emitter" on:click={() => open("manage_emitters")} small>
+            <T id="popup.manage_emitters" />
         </MaterialButton>
         <MaterialButton variant="outlined" icon="star" on:click={() => open("manage_icons")} small>
             <T id="popup.manage_icons" />

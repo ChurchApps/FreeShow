@@ -80,7 +80,7 @@
                             <div class="title">{translateText(category.label)}</div>
                         {:else if category === "SEPERATOR" || category?.id === "SEPERATOR"}
                             <div class="separator">
-                                {#if category?.label}<div class="sepLabel">{category.label}</div>{/if}
+                                {#if category?.label}<div class="sepLabel">{translateText(category.label)}</div>{/if}
                                 <hr />
                             </div>
                         {:else if !category.hidden}

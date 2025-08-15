@@ -119,6 +119,8 @@
             background-color 0.2s ease,
             border-color 0.2s ease;
         flex-shrink: 0;
+
+        margin: 0 5px;
     }
 
     .checkboxfield:has(.hidden-input:checked) .custom-checkbox {
@@ -137,6 +139,8 @@
         transform: rotate(45deg);
         left: 6px;
         top: 3px;
+
+        margin: 0 5px;
     }
 
     .underline {

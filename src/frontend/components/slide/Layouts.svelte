@@ -229,7 +229,7 @@
 {/if}
 
 {#if $slidesOptions.mode === "grid" || $slidesOptions.mode === "groups"}
-    <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
+    <FloatingInputs style="max-width: 70%;" side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
         {#if reference}
             <Reference show={currentShow} />
         {:else if layouts}
