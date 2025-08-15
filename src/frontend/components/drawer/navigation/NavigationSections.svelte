@@ -83,8 +83,10 @@
                     {#each buttons as category}
                         {#if category === "SEPERATOR"}
                             <div class="separator">
+                                {#if $activeDrawerTab === 'scripture'}
+                                    <div class="sepLabel"><T id="scripture.api_label" /></div>
+                                {/if}
                                 <hr />
-                                <div class="sepLabel"><T id="scripture.api_label" /></div>
                             </div>
                         {:else if !category.hidden}
                             <MaterialDrawerTab {active} {category} on:rename showSelector={showSelectors} selectHandler={selectHandler} isSelected={isSelected} canSelect={canSelect} />
@@ -152,8 +154,9 @@
         border: none;
     background-color: var(--primary-lighter);
     flex: 1 1 auto;
+    opacity: 0.9;
     }
 
-.separator { display: flex; align-items: center; gap: 8px; }
-.sepLabel { font-size: 0.65rem; color: var(--secondary-text, rgba(255,255,255,0.65)); font-weight:400; margin-left:6px }
+.separator { display: flex; align-items: center; gap: 8px; justify-content: flex-start }
+.sepLabel { font-size: 0.75rem; color: var(--secondary-text, rgba(255,255,255,0.85)); font-weight:400; margin-left:0; margin-right:6px; opacity:0.95; display:inline-flex; align-items:center; padding:6px 8px; line-height:1 }
 </style>

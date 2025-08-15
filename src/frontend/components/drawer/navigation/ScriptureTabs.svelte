@@ -178,8 +178,8 @@
                 <div class="sectionTitle"><T id="scripture.bible" /></div>
                 {#if localBibles.length}
                     <div class="separator">
-                        <hr />
                         <div class="sepLabel"><T id="scripture.local_label" /></div>
+                        <hr />
                     </div>
                 {/if}
             </div>
@@ -195,8 +195,8 @@
                 <div class="sectionTitle"><T id="scripture.bible" /></div>
                 {#if localBibles.length}
                     <div class="separator">
-                        <hr />
                         <div class="sepLabel"><T id="scripture.local_label" /></div>
+                        <hr />
                     </div>
                 {/if}
             </div>
@@ -247,20 +247,27 @@
 .separator { 
     display: flex; 
     align-items: center; 
-    gap: 4px;
+    gap: 6px;
     margin: 2px 0;
+    justify-content: flex-start;
 }
-.separator hr {
+    .separator hr {
     height: 1px;
     background-color: var(--primary-lighter);
     border: none;
     flex: 1;
+    opacity: 0.9;
 }
 .sepLabel { 
-    font-size: 0.65rem; 
-    color: var(--secondary-text, rgba(255,255,255,0.65)); 
+    font-size: 0.75rem; 
+    color: var(--secondary-text, rgba(255,255,255,0.85));
     font-weight: 400; 
-    margin-left: 3px;
-    margin-right: 3px;
+    margin-left: 0;
+    margin-right: 6px;
+    opacity: 0.95;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 6px;
+    line-height: 1;
 }
 </style>
