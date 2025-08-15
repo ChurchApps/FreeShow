@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activePopup, drawerTabsData, labelsDisabled, scriptures } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
@@ -117,6 +118,23 @@
             }
         }
     }
+
+    // Listen for the custom event to start collection creation from context menu
+    function handleStartScriptureCollection() {
+        // Don't start if we're in read-only mode
+        if (readOnly) return
+        startCreateCollection()
+    }
+
+    // Set up the event listener when the component is mounted
+    onMount(() => {
+        document.addEventListener("startScriptureCollection", handleStartScriptureCollection)
+        
+        // Clean up when the component is destroyed
+        return () => {
+            document.removeEventListener("startScriptureCollection", handleStartScriptureCollection)
+        }
+    })
 
     function doneCreateCollection() {
         if (!selectedForCollection.length) return

@@ -704,7 +704,15 @@ const clickActions = {
 
     // scripture collection
     createCollection: (obj: ObjData) => {
-        if (obj.sel?.id !== "category_scripture") return
+        if (obj.sel?.id !== "category_scripture" && get(activeDrawerTab) !== "scripture") return
+        
+        // If no selection or insufficient selection, trigger a custom event to start collection mode
+        if (!obj.sel?.data?.length || obj.sel.data.length < 2) {
+            // Dispatch a custom event that will be caught by ScriptureTabs component
+            document.dispatchEvent(new CustomEvent("startScriptureCollection"))
+            return
+        }
+        
         let versions: string[] = obj.sel.data
 
         // If we have less than 2 selected and we're in scripture drawer, include active scripture

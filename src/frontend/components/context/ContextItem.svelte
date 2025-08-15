@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         actions,
-        activeDrawerTab,
         activeEdit,
         activeProject,
         activeRecording,
@@ -20,7 +19,6 @@
         overlays,
         projects,
         redoHistory,
-        scriptures,
         selected,
         shows,
         showsCache,
@@ -189,33 +187,8 @@
             disabled = true
         },
         createCollection: () => {
-            let selectedIds = $selected.data
-
-            // If we're in scripture drawer and have less than 2 selected, automatically include the active scripture
-            if ($activeDrawerTab === "scripture" && selectedIds.length < 2) {
-                const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
-                if (activeScriptureId && !selectedIds.includes(activeScriptureId)) {
-                    selectedIds = [...selectedIds, activeScriptureId]
-                }
-            }
-
-            // Resolve scripture objects (exclude collections)
-            const resolved = selectedIds
-                .filter((id) => typeof id === "string")
-                .map((id) => $scriptures[id] || Object.values($scriptures).find((a) => a.id === id))
-                .filter((a) => a && !a.collection)
-
-            if (resolved.length < 2) {
-                disabled = true
-                return
-            }
-
-            // If selection contains a mix of API and local bibles, disable the action
-            const hasApi = resolved.some((s) => !!s.api)
-            const hasLocal = resolved.some((s) => !s.api)
-            if (hasApi && hasLocal) {
-                disabled = true
-            }
+            // Never disable createCollection - it should work even with no selections
+            disabled = false;
         },
         favourite: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
