@@ -12,6 +12,11 @@
 
     export let sections: any[]
     export let active: string
+    // Optional selection mode for callers that want checkboxes on each item
+    export let showSelectors: boolean = false
+    export let selectHandler: null | ((id: string) => void) = null
+    export let isSelected: null | ((id: string) => boolean) = null
+    export let canSelect: null | ((id: string) => boolean) = null
 
     $: if (sections.length && !active) {
         const flat = sections.flat().filter((a) => a && a !== "SEPERATOR")
@@ -78,7 +83,7 @@
                         {#if category === "SEPERATOR"}
                             <hr />
                         {:else if !category.hidden}
-                            <MaterialDrawerTab {active} {category} on:rename />
+                            <MaterialDrawerTab {active} {category} on:rename showSelector={showSelectors} selectHandler={selectHandler} isSelected={isSelected} canSelect={canSelect} />
                         {/if}
                     {/each}
                     <!-- {:else}
