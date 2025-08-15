@@ -13,7 +13,10 @@
     export let sections: any[]
     export let active: string
 
-    $: if (sections.length && !active) setSubTab(sections[0][0].id)
+    $: if (sections.length && !active) {
+        const flat = sections.flat().filter((a) => a && a !== "SEPERATOR")
+        if (flat.length) setSubTab(flat[0].id)
+    }
 
     function setSubTab(tabId: string) {
         const drawerId = $activeDrawerTab
@@ -56,8 +59,20 @@
 
 <div class="tabSection">
     {#each sections as buttons, index}
-        {#if buttons.length > 1 || !buttons[0]?.hidden}
+        {#if buttons.length > 1 || !buttons[0]?.hidden || (index === 0 && buttons.length > 0)}
             <div class="section">
+                {#if index === 0}
+                    <slot name="header_0" />
+                {:else if index === 1}
+                    <slot name="header_1" />
+                {:else if index === 2}
+                    <slot name="header_2" />
+                {:else if index === 3}
+                    <slot name="header_3" />
+                {:else if index === 4}
+                    <slot name="header_4" />
+                {/if}
+
                 {#if buttons.length}
                     {#each buttons as category}
                         {#if category === "SEPERATOR"}
@@ -105,7 +120,8 @@
         display: flex;
         flex-direction: column;
 
-        overflow: hidden;
+    overflow: hidden;
+    padding: 6px;
 
         /* align to left */
         margin-left: 0;

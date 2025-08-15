@@ -17,13 +17,19 @@
     $: apiBibles = scripturesList.filter((a) => a.api)
     $: localBibles = scripturesList.filter((a) => !a.collection && !a.api)
 
-    let sections: any[] = []
-    $: sections = [
-        ...(collections.length ? [convertToButton(collections)] : []),
-        [...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? ["SEPERATOR"] : []), ...convertToButton(apiBibles)]
-        // ...(apiBibles.length ? [convertToButton(apiBibles)] : []),
-        // ...(localBibles.length ? [convertToButton(localBibles)] : [])
-    ]
+            // Ensure we render only the sections that exist. Do not render a Collections
+            // section unless there are collections to show — this keeps the UI clean
+            let sections: any[] = []
+            $: sections = collections.length
+                    ? [
+                            convertToButton(collections),
+                            convertToButton(localBibles),
+                            convertToButton(apiBibles)
+                        ]
+                    : [
+                            convertToButton(localBibles),
+                            convertToButton(apiBibles)
+                        ]
 
     function convertToButton(categories: any[]) {
         return categories
@@ -48,17 +54,51 @@
     }
 </script>
 
-<NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
-    <div slot="section_0" style={!collections.length ? `padding: 8px;${apiBibles.length || localBibles.length ? "padding-top: 12px;" : ""}` : ""}>
-        {#if !collections.length}
-            <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
-                {#if !$labelsDisabled}<T id="new.scripture" />{/if}
-            </MaterialButton>
-        {/if}
-    </div>
-    <div slot="section_1" style="padding: 8px;{apiBibles.length || localBibles.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
-            {#if !$labelsDisabled}<T id="new.scripture" />{/if}
-        </MaterialButton>
-    </div>
-</NavigationSections>
+{#if collections.length}
+    <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
+        <svelte:fragment slot="header_0">
+            <div class="sectionTitle"><T id="scripture.collections" /></div>
+        </svelte:fragment>
+
+        <svelte:fragment slot="header_1">
+            <div class="sectionTitle"><T id="scripture.local_bibles" /></div>
+        </svelte:fragment>
+
+        <svelte:fragment slot="header_2">
+            <div class="sectionTitle"><T id="scripture.api_bibles" /></div>
+        </svelte:fragment>
+
+        <svelte:fragment slot="section_0"></svelte:fragment>
+        <svelte:fragment slot="section_1"></svelte:fragment>
+        <svelte:fragment slot="section_2"></svelte:fragment>
+    </NavigationSections>
+{:else}
+    <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
+        <svelte:fragment slot="header_0">
+            <div class="sectionTitle"><T id="scripture.local_bibles" /></div>
+        </svelte:fragment>
+
+        <svelte:fragment slot="header_1">
+            <div class="sectionTitle"><T id="scripture.api_bibles" /></div>
+        </svelte:fragment>
+
+        <svelte:fragment slot="section_0"></svelte:fragment>
+        <svelte:fragment slot="section_1"></svelte:fragment>
+    </NavigationSections>
+{/if}
+
+<div class="scriptureActions" style="padding: 8px; margin: 6px 5px;">
+    <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
+        {#if !$labelsDisabled}<T id="new.scripture" />{/if}
+    </MaterialButton>
+</div>
+
+<style>
+    .sectionTitle {
+        color: var(--text);
+        font-weight: 600;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--primary-lighter);
+        background: rgba(0,0,0,0.03);
+    }
+</style>

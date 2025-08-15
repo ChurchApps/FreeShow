@@ -1384,6 +1384,9 @@
         "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
+        "collections": "Collections",
+        "local_bibles": "Local Bibles",
+    "api_bibles": "API Bibles",
         "bibles": "Bibles from API.Bible",
         "local": "Import local file",
         "supported_formats": "Supported formats:",
