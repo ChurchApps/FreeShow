@@ -1,15 +1,21 @@
 import Bonjour from "bonjour-service"
+import crypto from "crypto"
 import os from "os"
 
 const bonjour = new Bonjour()
 const ip = getLocalIP()
 
+const instanceID = crypto.randomBytes(3).toString("hex")
+const hostname = os.hostname()
+
 // broadcast port over LAN
 export function publishPort(name: string, port: number) {
+    // Format: computer-REMOTE-a4f2d9
+    const uniqueName = `${hostname}-${name}-${instanceID}`
     const customData = { ip }
 
     bonjour.publish({
-        name,
+        name: uniqueName,
         type: "freeshow",
         protocol: "udp",
         port,

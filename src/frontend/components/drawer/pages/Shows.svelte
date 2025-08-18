@@ -1,5 +1,6 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
@@ -14,6 +15,7 @@
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import VirtualList from "../VirtualList.svelte"
 
     export let id: string
     export let active: string | null

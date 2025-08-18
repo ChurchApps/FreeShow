@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
+import type { StageItem } from "../../../../types/Stage"
 import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
@@ -7,12 +8,11 @@ import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
-import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
+import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
-import type { StageItem } from "../../../../types/Stage"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
 
@@ -298,12 +298,12 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
 
         const data = cVal.data || "value"
         let dataValue: string | number = cVal.value ?? ""
-        if (data === "seconds") dataValue = (cVal.seconds || 0).toString()
+        if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
 
         let value = ""
         if (element === "text") value = itemsText
         else if (element === "timer") value = getTimerValue(elementId)
-        else if (element === "variable") value = getVariableValue(elementId)
+        else if (element === "variable") value = _getVariableValue(elementId)
         else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
 
         if (operator === "is") {
@@ -364,8 +364,12 @@ function isTimerRunning(timerId: string) {
     return !!get(activeTimers).find((a) => a.id === timerId)
 }
 
-export function getVariableValue(variableId: string) {
-    const variable = get(variables)[variableId]
+export function _getVariableValue(dynamicId: string) {
+    if (!get(variables)[dynamicId]) {
+        return getVariableValue(dynamicId)
+    }
+
+    const variable = get(variables)[dynamicId]
     if (!variable) return ""
 
     if (variable.type === "text") {

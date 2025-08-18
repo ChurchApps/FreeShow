@@ -1,5 +1,4 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
     import { onDestroy } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
@@ -33,6 +32,7 @@
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
+    import VirtualList from "../VirtualList.svelte"
     import BMDStreams from "../live/BMDStreams.svelte"
     import Cameras from "../live/Cameras.svelte"
     import NDIStreams from "../live/NDIStreams.svelte"

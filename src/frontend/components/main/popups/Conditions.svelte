@@ -2,10 +2,11 @@
     import { onMount } from "svelte"
     import type { Condition } from "../../../../types/Show"
     import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+    import { getItemText } from "../../edit/scripts/textStyle"
     import { clone, convertToOptions, keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
-    import { getDynamicIds, getVariableNameId } from "../../helpers/showActions"
+    import { getDynamicIds, getVariableNameId, getVariablesIds } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -13,7 +14,6 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import { getItemText } from "../../edit/scripts/textStyle"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -114,13 +114,18 @@
 
     const elementOptions = {
         timer: [{ id: "", name: "$:stage.first_active_timer:$" }, ...convertToOptions($timers)],
-        variable: [
-            ...convertToOptions($variables),
-            ...keysToID($variables)
-                .filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1)
-                .map(({ id, name }) => ({ id, name: `Set: ` + name }))
-        ],
+        variable: getVariables(),
         dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a }))
+    }
+
+    function getVariables() {
+        const variablesList = getVariablesIds()
+
+        return variablesList.map((id) => {
+            let name = id.replace("$", "").replace("variable_set_", "Set: ").replaceAll("__", ": ").replaceAll("_", " ")
+            name = name[0].toUpperCase() + name.slice(1)
+            return { id, name }
+        })
     }
 
     // UPDATE
