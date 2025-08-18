@@ -8,7 +8,7 @@
     import { setDrawerTabData } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
     export let show: Show
 
@@ -65,31 +65,31 @@
             {/if}
         </p>
 
-        <Button on:click={updateCalendar} style="white-space: nowrap;">
-            <Icon id="calendar" right={!$labelsDisabled} />
+        <MaterialButton on:click={updateCalendar} style="white-space: nowrap;">
+            <Icon id="calendar" />
             {#if !$labelsDisabled}<T id="show.update" />{/if}
-        </Button>
+        </MaterialButton>
     {:else if show?.reference?.type === "scripture"}
         <p data-title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
-        <Button on:click={openTab} style="white-space: nowrap;">
-            <Icon id="scripture" right={!$labelsDisabled} />
+        <MaterialButton on:click={openTab} style="white-space: nowrap;">
+            <Icon id="scripture" />
             {#if !$labelsDisabled}<T id="main.open" />{/if}
-        </Button>
+        </MaterialButton>
     {:else if show?.reference?.type === "lessons"}
         <p>
             {#if data.studyName}
                 {data.studyName}{#if data.about}:{/if}
             {/if}
             {#if data.about}
-                <span style="font-size: 0.8em;opacity: 0.8;">{removeMarkdownURL(data.about)}</span>
+                <span style="font-size: 0.8em;opacity: 0.8;" data-title={removeMarkdownURL(data.about)}>{removeMarkdownURL(data.about)}</span>
             {/if}
         </p>
 
-        <Button title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;">
-            <Icon id="book" right />
+        <MaterialButton title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;">
+            <Icon id="book" />
             Lessons.church
-        </Button>
+        </MaterialButton>
     {/if}
 </div>
 
@@ -105,7 +105,5 @@
     p {
         padding: 0 10px;
         opacity: 0.8;
-
-        max-width: 500px;
     }
 </style>

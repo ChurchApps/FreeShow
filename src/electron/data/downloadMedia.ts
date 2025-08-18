@@ -4,7 +4,7 @@ import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { LessonFile, LessonsData } from "../../types/Main"
 import { sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils/files"
+import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getValidFileName, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { filePathHashCode } from "./thumbnails"
 
@@ -22,7 +22,7 @@ function checkLesson(lesson: LessonsData) {
     sendToMain(ToMain.LESSONS_DONE, { showId: lesson.showId, status: { finished: 0, failed: 0 } })
 
     const lessonsFolder = getDataFolder(lesson.path, dataFolderNames[type])
-    const lessonFolder = path.join(lessonsFolder, lesson.name)
+    const lessonFolder = path.join(lessonsFolder, getValidFileName(lesson.name))
     makeDir(lessonFolder)
 
     return lesson.files
@@ -131,6 +131,7 @@ function startDownload(downloading: DownloadFile) {
 
     if (!url) return next()
 
+    makeDir(path.basename(downloading.path))
     const fileStream = fs.createWriteStream(downloading.path)
     console.info(`Downloading lessons media: ${file.name}`)
     console.info(url)

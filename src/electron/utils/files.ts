@@ -155,6 +155,10 @@ export function makeDir(folderPath: string) {
     }
 }
 
+export function getValidFileName(path: string) {
+    return path.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim()
+}
+
 // SELECT DIALOGS
 
 export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true): string[] {

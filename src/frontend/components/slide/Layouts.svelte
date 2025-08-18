@@ -160,6 +160,7 @@
     }
 
     $: notesVisible = $slidesOptions.mode === "grid" && notes
+    $: referenceType = currentShow?.reference?.type
 </script>
 
 {#if notesVisible && notes}
@@ -169,7 +170,7 @@
     </div>
 {/if}
 
-{#if layoutSlides.length}
+{#if layoutSlides.length && !referenceType}
     <FloatingInputs arrow={!isLocked} bottom={notesVisible ? bottomHeight : 10} let:open>
         <div slot="menu">
             {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}
@@ -229,7 +230,7 @@
 {/if}
 
 {#if $slidesOptions.mode === "grid" || $slidesOptions.mode === "groups"}
-    <FloatingInputs style="max-width: 70%;" side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
+    <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
         {#if reference}
             <Reference show={currentShow} />
         {:else if layouts}
