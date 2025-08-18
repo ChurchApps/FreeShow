@@ -261,6 +261,7 @@
                                     on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")}
                                     buttons={false}
                                 />
+                                <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length}</span>
                             </p>
 
                             <Button disabled={activeSet === 0} on:click={() => updateVariable(Math.max(activeSet - 1, 0), variable.id, "activeTextSet")}>

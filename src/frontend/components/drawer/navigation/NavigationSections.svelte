@@ -135,8 +135,11 @@
         border-left-width: 0;
     }
 
+    .section :global(button.isActive) {
+        border: none !important;
+        border-left: 4px solid var(--secondary) !important;
+    }
     .section :global(button:not(.outlined)) {
-        /* border-bottom: 1px solid var(--primary-darker); */
         border-left: 4px solid var(--primary-darker);
         border-radius: 0;
 

@@ -10,6 +10,7 @@
     export let defaultValue: number = 4
     export let min: number = 2
     export let max: number = 10
+    export let addValue: number = 1
     export let hidden: boolean = false
 
     let zoomOpened = false
@@ -30,10 +31,10 @@
     }
 
     function increase() {
-        update(columns + 1)
+        update(columns + addValue)
     }
     function decrease() {
-        update(columns - 1)
+        update(columns - addValue)
     }
     function reset() {
         update(defaultValue)
@@ -51,14 +52,16 @@
             !e.target
                 ?.closest(".scroll")
                 ?.closest(".main")
-                ?.querySelector("#" + currentId)
+                ?.querySelector("#" + currentId) &&
+            !e.target?.closest(".editArea")?.querySelector("#" + currentId) &&
+            !e.target?.closest(".stageArea")?.querySelector("#" + currentId)
         )
             return
 
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
 
-        const direction = e.deltaY < 0 ? -1 : 1
+        const direction = e.deltaY < 0 ? addValue * -1 : addValue
         update(columns + direction)
 
         // don't start timeout if scrolling with mouse
@@ -79,7 +82,7 @@
     {#if zoomOpened}
         <div class="overflow zoom_popup" transition:slide={{ duration: 150 }}>
             <MaterialButton style="padding: 0 !important;" on:click={reset} bold={false} center>
-                <p class="text" data-title={translateText("actions.resetZoom")}>{(100 / columns).toFixed()}%</p>
+                <p class="text" data-title={translateText("actions.resetZoom")}>{(addValue < 0 ? columns * 100 : 100 / columns).toFixed()}%</p>
             </MaterialButton>
 
             <div class="divider"></div>

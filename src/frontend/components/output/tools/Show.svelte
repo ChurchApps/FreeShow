@@ -45,6 +45,10 @@
     function playPause(path: string, play: boolean) {
         send(OUTPUT, ["SLIDE_VIDEO_STATE"], { slideId: videoId, path, action: play ? "play" : "pause" })
     }
+    function toggleLoop(path: string, looping: boolean) {
+        const action = looping ? "unloop" : "loop"
+        send(OUTPUT, ["SLIDE_VIDEO_STATE"], { slideId: videoId, path, action })
+    }
 </script>
 
 {#if slide}
@@ -99,16 +103,8 @@
 
                     <!-- WIP change loop/mute state -->
                     <!-- NOTE: mute state can be changed in the media item edit currently -->
-                    <Button
-                        center
-                        title={$dictionary.media?._loop}
-                        on:click={() => {
-                            console.log("set loop")
-                        }}
-                        disabled
-                    >
-                        <!-- <Icon id="loop" white={!data.loop} /> -->
-                        <Icon id="loop" />
+                    <Button center title={$dictionary.media?._loop} on:click={() => toggleLoop(path, !!data.loop)}>
+                        <Icon id="loop" white={!data.loop} />
                     </Button>
                     <!-- <Button
                         center

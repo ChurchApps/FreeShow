@@ -122,6 +122,7 @@ export interface Item {
     flipped?: boolean
     flippedY?: boolean // media item
     muted?: boolean // media item
+    loop?: boolean // media item
     speed?: number // media item
     variable?: any
     web?: any

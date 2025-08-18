@@ -3,7 +3,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
-    export let side: "right" | "left" = "right"
+    export let side: "right" | "left" | "center" = "right"
     export let onlyOne: boolean = false
     export let gradient: boolean = false
     export let round: boolean = false
@@ -83,6 +83,10 @@
     }
     .row.left {
         left: var(--padding);
+    }
+    .row.center {
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .row :global(.divider) {

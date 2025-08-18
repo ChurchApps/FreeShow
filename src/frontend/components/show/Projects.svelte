@@ -213,6 +213,8 @@
         previouslyOpened = clone($openedFolders)
     }
     $: if (!$folders[interactedFolder]) interactedFolder = ""
+
+    $: lessVisibleSection = $projects[$activeProject || ""]?.shows?.length > 10 || !!$projects[$activeProject || ""]?.shows?.find((a) => a.type === "section")
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -341,9 +343,9 @@
             {#if !$labelsDisabled}<T id="new.section" />{/if}
         </BottomButton> -->
 
-        <FloatingInputs onlyOne>
-            <MaterialButton icon="section" title="new.section" on:click={addSection}>
-                {#if !$labelsDisabled}<T id="new.section" />{/if}
+        <FloatingInputs onlyOne round={lessVisibleSection}>
+            <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
+                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
             </MaterialButton>
         </FloatingInputs>
     {/if}
@@ -427,21 +429,5 @@
     #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
-    }
-
-    .buttons.left :global(.bottom) {
-        padding-right: 0;
-    }
-    .buttons.right :global(.bottom) {
-        padding-left: 0;
-    }
-    .buttons.left :global(button) {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        border-right: none;
-    }
-    .buttons.right :global(button) {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
     }
 </style>

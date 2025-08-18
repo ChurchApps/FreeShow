@@ -1,6 +1,7 @@
 export const actionData = {
     // PROJECT
-    id_select_project: { SECTION: "guide_title.project", name: "actions.id_select_project", icon: "project", input: "id" },
+    id_select_project: { SECTION: "guide_title.project", name: "actions.id_select_project", icon: "project", input: "id", incompatible: ["index_select_project"] },
+    index_select_project: { name: "actions.index_select_project", icon: "project", input: "index", incompatible: ["id_select_project"] },
     next_project_item: { name: "actions.next_project_item", icon: "project", incompatible: ["previous_project_item", "index_select_project_item"] },
     previous_project_item: { name: "actions.previous_project_item", icon: "project", incompatible: ["next_project_item", "index_select_project_item"] },
     index_select_project_item: { name: "actions.index_select_project_item", icon: "project", input: "index", incompatible: ["next_project_item", "previous_project_item"] },
