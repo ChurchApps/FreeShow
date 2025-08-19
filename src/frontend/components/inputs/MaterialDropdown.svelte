@@ -7,6 +7,8 @@
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
+    import MaterialTextInput from "./MaterialTextInput.svelte"
+    import InputRow from "../input/InputRow.svelte"
 
     export let label: string
     export let value: string
@@ -18,6 +20,8 @@
     export let allowEmpty = false
     export let flags = false
 
+    export let addNew: string | null = null
+
     const dispatch = createEventDispatcher()
     let open = false
     let dropdownEl: HTMLDivElement
@@ -26,6 +30,7 @@
 
     function toggleDropdown(force?: boolean) {
         if (disabled) return
+        addNewTextbox = false
 
         open = typeof force === "boolean" && value ? force : !open
         if (open) calculateMaxHeight()
@@ -72,6 +77,7 @@
     function handleClickOutside(event: MouseEvent) {
         if (dropdownEl && !dropdownEl.contains(event.target as Node)) {
             open = false
+            addNewTextbox = false
         }
     }
 
@@ -189,6 +195,7 @@
     function handleFocusOut(event: FocusEvent) {
         if (!dropdownEl.contains(event.relatedTarget as Node)) {
             open = false
+            addNewTextbox = false
         }
     }
 
@@ -244,6 +251,20 @@
         dispatch("change", resetFromValue)
         resetFromValue = ""
     }
+
+    // CREATE NEW
+
+    let addNewTextbox = false
+    function createNew() {
+        open = false
+        addNewTextbox = true
+    }
+    let newValue = ""
+    function createNewEvent() {
+        dispatch("new", newValue)
+        addNewTextbox = false
+        newValue = ""
+    }
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
@@ -264,7 +285,7 @@
     >
         <span class="selected-text" style={selected?.style ?? null}>
             {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-            {selected?.label || ""}
+            {#if selected?.value}{selected?.label || "—"}{/if}
         </span>
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
@@ -309,11 +330,29 @@
                     {option.label || "—"}
                 </li>
             {/each}
+
+            {#if addNew}
+                <li style="font-style: italic;opacity: 0.9;" on:click={createNew}>
+                    <Icon id="add" />
+                    {translateText(addNew)}
+                </li>
+            {/if}
         </ul>
 
         {#if searchValue}
             <div class="search">{searchValue}</div>
         {/if}
+    {/if}
+
+    {#if addNew && addNewTextbox}
+        <div class="dropdown">
+            <InputRow>
+                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={(e) => (newValue = e.detail)} />
+                <MaterialButton disabled={!newValue.length} title={addNew} on:click={createNewEvent}>
+                    <Icon id="check" size={1.2} white />
+                </MaterialButton>
+            </InputRow>
+        </div>
     {/if}
 </div>
 

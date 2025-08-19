@@ -1,13 +1,15 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { ShowObj } from "../../../../classes/Show"
     import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
-    import { translate } from "../../../../utils/language"
+    import { translate, translateText } from "../../../../utils/language"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import { checkName } from "../../../helpers/show"
     import T from "../../../helpers/T.svelte"
+    import List from "../../../input/List.svelte"
     import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
@@ -15,7 +17,6 @@
     import MaterialTextarea from "../../../inputs/MaterialTextarea.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
-    import List from "../../../input/List.svelte"
     import WebSearch from "./WebSearch.svelte"
 
     const changeValue = (e: any, key = "text") => {
@@ -34,7 +35,7 @@
 
     // CATEGORY
 
-    const cats = [
+    let cats = [
         // { id: "", name: "—" }, // unlabeled
         ...sortObject(
             Object.keys($categories).map((key: string) => ({
@@ -174,6 +175,16 @@
         if (values.text.trim().length) return trimNameFromString(values.text)
         return $dictionary.main?.unnamed
     }
+
+    function addNewCategory(e: any) {
+        const name = e.detail
+        const id = uid()
+        history({ id: "UPDATE", newData: { data: { name } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
+
+        cats.push({ id, name })
+        cats = cats
+        selectedCategory = cats.find((a) => a.id === id)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -181,7 +192,14 @@
 {#if !selectedOption}
     <List bottom={20}>
         <MaterialTextInput id="name" label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
-        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translate(a.name, { parts: true }), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} />
+        <MaterialDropdown
+            label="show.category"
+            value={selectedCategory?.id}
+            options={cats.map((a) => ({ label: translateText(a.name || "main.unnamed"), value: a.id }))}
+            on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))}
+            addNew="new.category"
+            on:new={addNewCategory}
+        />
     </List>
 
     <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />

@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { autoOutput, fullColors, labelsDisabled, language, special, timeFormat } from "../../../stores"
-    import { getLanguageList, setLanguage } from "../../../utils/language"
+    import { autoOutput, fullColors, groups, labelsDisabled, language, special, timeFormat } from "../../../stores"
+    import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
+    import { sortByName } from "../../helpers/array"
     import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Title from "../../input/Title.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
@@ -32,6 +34,21 @@
     // WIP change date format (DD.MM.YYYY, YYYY-MM-DD)
 
     $: projectName = $special.default_project_name ?? DEFAULT_PROJECT_NAME
+
+    $: groupsString = updateGroups($groups)
+    function updateGroups(groups: any) {
+        const groupsList: { label: string; color: string }[] = []
+        Object.values(groups).forEach((a: any) => {
+            groupsList.push({ label: a.default ? translateText(`groups.${a.name}`) || a.name : a.name, color: a.color })
+        })
+
+        const strings: string[] = []
+        sortByName(groupsList, "label").forEach((a) => {
+            strings.push(`<span style="color: ${a.color};">${a.label}</span>`)
+        })
+
+        return strings.join(`<span style="opacity: 0.4;">|</span>`)
+    }
 </script>
 
 <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
@@ -60,6 +77,7 @@
 <!-- info.slides -->
 <Title label="tools.slide" icon="slide" />
 
+<MaterialPopupButton label="popup.manage_groups" name={groupsString} value={groupsString ? "." : ""} popupId="manage_groups" icon="groups" />
 <MaterialTextInput label="settings.capitalize_words" title="settings.comma_seperated" value={$special.capitalize_words || ""} defaultValue="Jesus, Lord" on:change={(e) => updateSpecial(e.detail, "capitalize_words", true)} />
 <MaterialToggleSwitch label="settings.transparent_slides" checked={$special.transparentSlides} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "transparentSlides")} />
 <MaterialToggleSwitch label="settings.full_colors" checked={$fullColors} defaultValue={false} on:change={(e) => fullColors.set(e.detail)} />

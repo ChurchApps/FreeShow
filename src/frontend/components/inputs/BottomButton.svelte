@@ -6,7 +6,6 @@
     export let title: string = ""
     export let icon: string = ""
     export let disabled: boolean = false
-    export let large: boolean = false
     export let scrollElem: HTMLElement | null = null
 
     const dispatch = createEventDispatcher()
@@ -28,10 +27,10 @@
     }
 </script>
 
-<div class="bottom" class:scrollActive class:large on:click={(e) => click(e, true)}>
+<div class="bottom" class:scrollActive on:click={(e) => click(e, true)}>
     <div class="buttonDiv">
         <!-- variant="contained" -->
-        <MaterialButton variant="outlined" class={$$props.class} style={$$props.style} {title} {icon} {disabled} on:click={click} small={!large}>
+        <MaterialButton variant="outlined" class={$$props.class} style={$$props.style} {title} {icon} {disabled} on:click={click} small>
             <slot />
         </MaterialButton>
     </div>
@@ -50,17 +49,6 @@
         /* don't obstruct scroll bar */
         width: calc(100% - 8px);
     }
-    .bottom.large {
-        padding: 10px;
-        padding-top: 0;
-        padding-left: 0;
-
-        right: 0;
-        width: auto;
-    }
-    .bottom.large.scrollActive {
-        right: 8px;
-    }
 
     .buttonDiv {
         background-color: var(--primary-darkest);
@@ -68,22 +56,8 @@
 
         box-shadow: 1px 1px 2px rgb(0 0 0 / 0.3);
     }
-    .bottom.large .buttonDiv {
-        box-shadow: 1px 1px 3px rgb(0 0 0 / 0.6);
-        border-radius: 50px;
-    }
 
     .bottom :global(button) {
         width: 100%;
-    }
-    .bottom.large :global(button) {
-        padding: 0.45rem 1.25rem;
-        font-size: 1em;
-
-        border-radius: 50px;
-
-        border-width: 2px;
-        border-color: var(--secondary) !important;
-        /* border-bottom-color: var(--secondary) !important; */
     }
 </style>

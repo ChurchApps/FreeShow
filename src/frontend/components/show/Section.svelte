@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { actions, activeProject, activeShow, dictionary, labelsDisabled, projects, special } from "../../stores"
+    import { actions, activeProject, activeShow, dictionary, projects, special } from "../../stores"
     import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
     import Button from "../inputs/Button.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Notes from "./tools/Notes.svelte"
 
@@ -113,12 +115,11 @@
     </div>
 {/if}
 
-<div class="settingsButton">
-    <Button title={$dictionary.menu?.settings} on:click={() => (settingsOpened = !settingsOpened)} style="padding: 8px 10px;" dark>
-        <Icon id="options" white={settingsOpened} size={1.1} right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="edit.options" />{/if}
-    </Button>
-</div>
+<FloatingInputs round>
+    <MaterialButton isActive={settingsOpened} title="menu.settings" on:click={() => (settingsOpened = !settingsOpened)}>
+        <Icon size={1.1} id="options" white={!settingsOpened} />
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     h4 {
@@ -151,14 +152,6 @@
         position: absolute;
         bottom: 0;
         inset-inline-start: 0;
-
-        background-color: var(--primary);
-    }
-
-    .settingsButton {
-        position: absolute;
-        bottom: 0;
-        inset-inline-end: 0;
 
         background-color: var(--primary);
     }

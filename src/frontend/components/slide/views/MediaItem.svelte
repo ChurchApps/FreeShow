@@ -77,7 +77,7 @@
         const interval = setInterval(() => {
             if (!videoElem) return
 
-            const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused }
+            const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused, loop: videoElem.loop }
             // send(Main.MAIN_SLIDE_VIDEO, videoData)
             send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: mediaItemPath, data: videoData })
         }, 200)
@@ -85,13 +85,20 @@
         const videoReceiver = {
             SLIDE_VIDEO_STATE: (data: any) => {
                 if (data.slideId !== id || data.path !== mediaItemPath) return
+                if (!videoElem) return
 
                 if (data.action === "play") {
-                    videoElem?.play()
+                    videoElem.play()
                     videoBlurElem?.play()
                 } else if (data.action === "pause") {
-                    videoElem?.pause()
+                    videoElem.pause()
                     videoBlurElem?.pause()
+                } else if (data.action === "loop") {
+                    videoElem.loop = true
+                    if (videoBlurElem) videoBlurElem.loop = true
+                } else if (data.action === "unloop") {
+                    videoElem.loop = false
+                    if (videoBlurElem) videoBlurElem.loop = false
                 }
             }
         }
@@ -106,14 +113,16 @@
     })
 
     $: playbackRate = item.speed ?? 1
+
+    let shouldLoop = !!item.loop
 </script>
 
 {#if mediaItemPath}
     {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
         {#if item.fit === "blur"}
-            <video bind:this={videoBlurElem} src={encodeFilePath(mediaItemPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop />
+            <video bind:this={videoBlurElem} src={encodeFilePath(mediaItemPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop} />
         {/if}
-        <video bind:this={videoElem} src={encodeFilePath(mediaItemPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop>
+        <video bind:this={videoElem} src={encodeFilePath(mediaItemPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop={shouldLoop}>
             <track kind="captions" />
         </video>
     {:else}

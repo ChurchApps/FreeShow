@@ -51,6 +51,7 @@
         "stop_timers",
         "start_slide_recording",
         "change_output_style",
+        "change_stage_output_layout",
         "start_trigger",
         "send_midi",
         "run_action"
@@ -261,8 +262,12 @@
             </Button>
         {/if}
 
-        <!-- isLast -->
         {#if actionId && existingActions.length > 1}
+            {#if actionNameIndex > 1}
+                <Button on:click={() => changeAction({ id: "move_up", index: actionNameIndex - 1 })}>
+                    <Icon id="up" white />
+                </Button>
+            {/if}
             <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })} redHover>
                 <Icon id="close" size={1.2} white />
             </Button>

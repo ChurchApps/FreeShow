@@ -105,7 +105,7 @@
     <Slides />
 {:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive}
     <div class="title">
-        <h3><T id="edit.recent" /></h3>
+        <h3 style="font-style: italic;opacity: 0.7;"><T id="edit.recent" /></h3>
     </div>
     {#if $editHistory.length}
         <div class="edited">
@@ -137,6 +137,10 @@
         </Center>
     {/if}
 {:else if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
+    <div class="title">
+        <h3 style="opacity: 0.8;">{$shows[currentShowId]?.name || ""}</h3>
+    </div>
+
     <Slides />
     <Button disabled={isLocked} on:click={addSlide} center dark>
         <Icon id="add" right={!$labelsDisabled} />
@@ -152,14 +156,12 @@
     .title {
         background-color: var(--primary-darker);
         text-align: center;
-        padding: 3px 0;
+        padding: 3px 8px;
         overflow: initial;
     }
     h3 {
         color: var(--text);
-        font-style: italic;
         font-size: 1em;
-        opacity: 0.7;
     }
 
     .edited {

@@ -7,7 +7,7 @@ import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
-import { getDynamicValue, getVariableValue } from "../components/edit/scripts/itemHelpers"
+import { getDynamicValue, _getVariableValue } from "../components/edit/scripts/itemHelpers"
 import { getSlidesText } from "../components/edit/scripts/textStyle"
 import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
@@ -243,7 +243,7 @@ export const mainResponses: MainResponses = {
 
         // get "actual" variables
         Object.entries(get(variables)).forEach(([id, a]) => {
-            variableData[`variable_${getLabelId(a.name, false)}`] = getVariableValue(id)
+            variableData[`variable_${getLabelId(a.name, false)}`] = _getVariableValue(id)
         })
 
         // get timers

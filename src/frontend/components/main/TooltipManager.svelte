@@ -34,7 +34,7 @@
         if (!title) return
 
         const MAX_WIDTH = 250
-        const TOOLTIP_HEIGHT = 40 // approximate height
+        const TOOLTIP_HEIGHT = 80 // 40 // approximate height
 
         let x = e.clientX
         let y = e.clientY

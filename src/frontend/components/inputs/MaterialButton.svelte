@@ -65,7 +65,7 @@
 <button
     data-testid={$$props["data-testid"]}
     bind:this={button}
-    class="{variant} {$$props.class}"
+    class="{variant} {$$props.class || ''}"
     tabindex={disabled ? -1 : 0}
     aria-disabled={disabled}
     data-title={translateText(title)}
@@ -135,10 +135,7 @@
     button.isActive {
         background-color: var(--primary-darkest) !important;
         /* background-color: var(--primary-lighter) !important; */
-        /* border-bottom: 1px solid var(--secondary) !important; */
-        /* border-top: 1px solid var(--primary-lighter) !important;
-        border-bottom: 1px solid var(--primary-lighter) !important; */
-        border-left: 4px solid var(--secondary) !important;
+        border-bottom: 2px solid var(--secondary) !important;
         cursor: default;
     }
 
@@ -185,7 +182,7 @@
     }
     button:not(.white).outlined:disabled {
         /* border-color: var(--primary-darkest) !important; */
-        border-color: var(--text) !important;
+        /* border-color: var(--text) !important; */
         color: var(--text) !important;
     }
     button:not(.white).outlined:disabled :global(svg) {

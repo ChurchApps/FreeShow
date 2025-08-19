@@ -1,5 +1,6 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
@@ -8,11 +9,13 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
-    import BottomButton from "../../inputs/BottomButton.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import VirtualList from "../VirtualList.svelte"
 
     export let id: string
     export let active: string | null
@@ -180,9 +183,10 @@
 
     $: sortType = $sorted.shows?.type || "name"
 
-    function createShow(e: any) {
+    function createShow(e: any, border: boolean = false) {
+        if (border && e.target?.closest("button")) return
+
         const { ctrl } = e.detail
-        console.log(ctrl)
         if (ctrl) {
             history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         } else {
@@ -190,18 +194,19 @@
         }
     }
 
-    let listElem: HTMLElement | null = null
-    let scrollElem: HTMLElement | null = null
-    $: if (listElem && active) setTimeout(updateScrollElem)
-    function updateScrollElem() {
-        scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
-    }
+    // let listElem: HTMLElement | null = null
+    // let scrollElem: HTMLElement | null = null
+    // $: if (listElem && active) setTimeout(updateScrollElem)
+    // function updateScrollElem() {
+    //     scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
-    <div bind:this={listElem} class="column {readOnly ? '' : 'context #drawer_show'}">
+    <!-- bind:this={listElem} -->
+    <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
             {#if createFromSearch && searchValue.length}
                 <div class="warning">
@@ -228,9 +233,13 @@
     </div>
 </Autoscroll>
 
-<BottomButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} {scrollElem} on:click={createShow} large>
-    {#if !$labelsDisabled}<T id="new.show" />{/if}
-</BottomButton>
+<FloatingInputs onlyOne gradient>
+    <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
+        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+            {#if !$labelsDisabled}<T id="new.show" />{/if}
+        </MaterialButton>
+    </div>
+</FloatingInputs>
 
 <style>
     .column {

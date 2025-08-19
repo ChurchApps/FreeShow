@@ -168,6 +168,7 @@
 
         const extension = getExtension(item.src || "")
         setBoxInputValue(box, "default", "muted", "hidden", getMediaType(extension) !== "video")
+        setBoxInputValue(box, "default", "loop", "hidden", getMediaType(extension) !== "video")
         setBoxInputValue(box, "default", "speed", "hidden", getMediaType(extension) !== "video")
     }
     $: if (id === "web" && item) {

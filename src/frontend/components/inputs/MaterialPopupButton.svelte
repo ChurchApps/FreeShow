@@ -73,7 +73,7 @@
                 <!-- {#if icon}<Icon id={icon} white />{/if} -->
 
                 {#if name}
-                    {translateText(name)}
+                    {@html translateText(name)}
                 {:else}
                     <span style="opacity: 0.7;font-style: italic;">{translateText("main.unnamed")}</span>
                 {/if}
@@ -196,6 +196,8 @@
         transition: transform 0.2s ease;
         color: var(--text);
         transform: translateY(-0.4rem);
+
+        display: flex;
     }
 
     /* .subicon {

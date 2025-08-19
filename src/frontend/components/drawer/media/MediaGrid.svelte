@@ -1,6 +1,6 @@
 <script lang="ts">
     import { debounce } from "@tanstack/pacer"
-    
+
     export let items: any[] = []
     export let columns = 1
 
@@ -18,23 +18,26 @@
     let scrollYPos = 0
     let lastUpdate = 0
     let scrollUpdateFrame: number | null = null
-    
-    const debouncedScroll = debounce((scrollTop: number) => {
-        scrollYPos = scrollTop
 
-        // update if scrolling more than 0.4 card up/down
-        let extraMargin = cardHeight * 0.4
-        if (scrollYPos > lastUpdate + extraMargin || scrollYPos < lastUpdate - extraMargin) {
-            lastUpdate = scrollYPos
-            
-            if (scrollUpdateFrame) cancelAnimationFrame(scrollUpdateFrame)
-            scrollUpdateFrame = requestAnimationFrame(() => {
-                updateVisibleItems()
-                scrollUpdateFrame = null
-            })
-        }
-    }, { wait: 32 }) // ~30fps debouncing for smooth scrolling
-    
+    const debouncedScroll = debounce(
+        (scrollTop: number) => {
+            scrollYPos = scrollTop
+
+            // update if scrolling more than 0.4 card up/down
+            let extraMargin = cardHeight * 0.4
+            if (scrollYPos > lastUpdate + extraMargin || scrollYPos < lastUpdate - extraMargin) {
+                lastUpdate = scrollYPos
+
+                if (scrollUpdateFrame) cancelAnimationFrame(scrollUpdateFrame)
+                scrollUpdateFrame = requestAnimationFrame(() => {
+                    updateVisibleItems()
+                    scrollUpdateFrame = null
+                })
+            }
+        },
+        { wait: 32 }
+    ) // ~30fps debouncing for smooth scrolling
+
     function scroll(e) {
         debouncedScroll(e.target.scrollTop)
     }
@@ -94,7 +97,7 @@
     let animationFrame: number | null = null
     function slowlyChange(type: "last" | "first", steps: number = columns - 1) {
         if (steps < 1) return
-        
+
         if (animationFrame) cancelAnimationFrame(animationFrame)
 
         animationFrame = requestAnimationFrame(() => {
@@ -117,7 +120,7 @@
             lazyLoader = 0
             if (lazyLoadFrame) cancelAnimationFrame(lazyLoadFrame)
         }
-        
+
         lazyLoader++
 
         if (lazyLoader > lastItemIndex) {
@@ -159,6 +162,8 @@
 
         overflow-y: auto;
         overflow-x: hidden;
+
+        /* padding-bottom: 60px; */
     }
 
     .card {

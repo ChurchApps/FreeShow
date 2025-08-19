@@ -311,10 +311,9 @@
         </MaterialButton>
     </FloatingInputs>
 
-    <FloatingInputs onlyOne>
-        <MaterialButton active={playlistSettings === true} title="audio.playlist_settings" on:click={() => (playlistSettings = !playlistSettings)}>
-            <Icon size={1.1} id="options" white={playlistSettings} />
-            {#if !$labelsDisabled}<p><T id="audio.playlist_settings" /></p>{/if}
+    <FloatingInputs round>
+        <MaterialButton isActive={playlistSettings} title="audio.playlist_settings" on:click={() => (playlistSettings = !playlistSettings)}>
+            <Icon size={1.1} id="options" white={!playlistSettings} />
         </MaterialButton>
     </FloatingInputs>
 {:else if active === "all" || active === "favourites"}

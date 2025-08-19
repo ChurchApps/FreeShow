@@ -54,7 +54,6 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
-    scriptures,
     selected,
     settingsTab,
     showRecentlyUsedProjects,
@@ -71,13 +70,14 @@ import {
     variables
 } from "../../stores"
 import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
+import { translate } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
-import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -96,8 +96,6 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
-import { translate } from "../../utils/language"
-import { confirmCustom } from "../../utils/popup"
 
 interface ObjData {
     sel: Selected | null
@@ -702,31 +700,8 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
-    // scripture collection
-    createCollection: (obj: ObjData) => {
-        if (obj.sel?.id !== "category_scripture") return
-        let versions: string[] = obj.sel.data
-
-        // remove collections
-        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
-        versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
-        if (versions.length < 2) return
-
-        let name = ""
-        versions.forEach((id, i) => {
-            if (i > 0) name += " + "
-            if (id.length < 5) {
-                name += id.toUpperCase()
-            } else {
-                const bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
-                name += getShortBibleName(bibleName)
-            }
-        })
-
-        scriptures.update((a) => {
-            a[uid()] = { name, collection: { versions } }
-            return a
-        })
+    createCollection: () => {
+        activePopup.set("create_collection")
     },
     create_show: (obj: ObjData) => {
         if (obj.contextElem?.classList.contains("chapters")) {
@@ -1217,9 +1192,9 @@ const clickActions = {
             return
         }
 
-        // THIS IS NOT IN USE:
+        if (get(outLocked)) return
 
-        // video
+        // video (play in project)
         const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
@@ -1227,7 +1202,10 @@ const clickActions = {
         const currentOutput = get(outputs)[outputId] || {}
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
-        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
+
+        // clear slide text
+        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
+        setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id

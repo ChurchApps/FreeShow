@@ -21,14 +21,6 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
     }, 10)
 
     function timerEnded(id: string) {
-        // get and reset active element
-        const activeElem = document.activeElement
-        if (activeElem) {
-            setTimeout(() => {
-                ;(activeElem as HTMLElement).focus()
-            }, 10)
-        }
-
         if (!get(slideTimers)[id]) return
 
         const data = get(slideTimers)[id].data || ""

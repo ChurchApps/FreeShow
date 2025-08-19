@@ -167,11 +167,12 @@
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="never" options={autosaveList} on:change={(e) => autosave.set(e.detail)} />
 <MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
+<!-- changing the "Data loction" should also change "Shows" location if it's the correct path ? -->
 <MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={(e) => dataPath.set(e.detail)} />
 <!-- shows path should be a "Shows" folder inside of "Data location" -->
-{#if !$showsPath?.includes($dataPath) || !$showsPath?.includes("Shows")}
-    <MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} />
-{/if}
+<!-- {#if !$showsPath?.includes($dataPath) || !$showsPath?.includes("Shows")} -->
+<MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} />
+<!-- {/if} -->
 
 <MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
 

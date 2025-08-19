@@ -159,7 +159,8 @@
         }
     }
 
-    $: notesVisible = $slidesOptions.mode === "grid" && notes
+    $: referenceType = currentShow?.reference?.type
+    $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && notes && referenceType !== "lessons" // $slidesOptions.mode === "grid" &&
 </script>
 
 {#if notesVisible && notes}
@@ -169,7 +170,9 @@
     </div>
 {/if}
 
-{#if layoutSlides.length}
+{#if referenceType}
+    <MaterialZoom hidden columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+{:else if layoutSlides.length}
     <FloatingInputs arrow={!isLocked} bottom={notesVisible ? bottomHeight : 10} let:open>
         <div slot="menu">
             {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}
@@ -186,7 +189,7 @@
         </div>
 
         {#if !open && customAction}
-            <MaterialButton style="aspect-ratio: unset;" class="context #edit_custom_action" title="actions.run_action: {$actions[customAction].name}" on:click={() => runCustomAction}>
+            <MaterialButton style="aspect-ratio: unset;" class="context #edit_custom_action" title="actions.run_action: {$actions[customAction].name}" on:click={() => runCustomAction()}>
                 <Icon size={1.1} id={getActionIcon(customAction)} />
                 <p>{$actions[customAction].name}</p>
             </MaterialButton>
@@ -229,7 +232,7 @@
 {/if}
 
 {#if $slidesOptions.mode === "grid" || $slidesOptions.mode === "groups"}
-    <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
+    <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
         {#if reference}
             <Reference show={currentShow} />
         {:else if layouts}
@@ -263,13 +266,6 @@
     .layouts {
         display: flex;
         overflow-x: auto;
-    }
-    .layouts :global(button) {
-        border: none !important;
-        border-bottom: 2px solid var(--primary-darkest) !important;
-    }
-    .layouts :global(button.isActive) {
-        border-bottom: 2px solid var(--secondary) !important;
     }
 
     .notes {

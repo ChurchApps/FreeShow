@@ -59,11 +59,15 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     const songId = show.quickAccess?.metadata?.CCLI || ""
     if (songId.toString() === searchValue) return 100
 
-    const showName = songNumber + formatSearch(show.name, true)
+    const showName = formatSearch(show.name, true)
+    const showNameWithNumber = songNumber + showName
 
     // Priority 1: Title Exact Match
     const formattedSearchValue = formatSearch(searchValue, true)
-    if (formattedSearchValue === showName) return 100
+    if (formattedSearchValue === showName || formattedSearchValue === showNameWithNumber) return 100
+
+    // Priority 1.5: Title Word Start Match
+    if (showName.startsWith(formattedSearchValue)) return 100
 
     const cache = get(textCache)[show.id] || ""
 
@@ -71,11 +75,11 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     const contentIncludesMatchScore = calculateContentIncludesScore(cache, searchValue) // + calculateContentIncludesScore(cache, searchValue, true)
 
     // Priority 3: Title Word-for-Word Match
-    const titleWordMatch = matchWords(showName, searchValue)
+    const titleWordMatch = matchWords(showNameWithNumber, searchValue)
     const titleIncludesMatchScore = titleWordMatch * 0.5 * 100 // max 50%
 
     // Priority 4: Title Letter-for-Letter Match
-    const titleSimilarity = similarity(showName, removeShortWords(formatSearch(searchValue, true)))
+    const titleSimilarity = similarity(showNameWithNumber, removeShortWords(formatSearch(searchValue, true)))
     const titleSimilarityMatchScore = titleSimilarity * 0.3 * 100 // max 30%
 
     // Priority 5: Content Word-for-Word Match

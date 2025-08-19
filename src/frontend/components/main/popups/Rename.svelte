@@ -21,6 +21,7 @@
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
+                if (name === ".") name = ""
                 list.push(name || "—")
                 if (i === 0) groupName = name
             })

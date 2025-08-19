@@ -71,6 +71,7 @@ import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelt
 import SelectStyle from "../components/main/popups/SelectStyle.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
 import Confirm from "../components/main/popups/Confirm.svelte"
+import CreateCollection from "../components/main/popups/CreateCollection.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -109,6 +110,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
+    create_collection: CreateCollection,
     scripture_show: ScriptureShow,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
