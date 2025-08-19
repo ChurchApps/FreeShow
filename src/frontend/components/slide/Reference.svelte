@@ -65,14 +65,14 @@
             {/if}
         </p>
 
-        <MaterialButton on:click={updateCalendar} style="white-space: nowrap;">
+        <MaterialButton on:click={updateCalendar} style="white-space: nowrap;min-width: 100px;">
             <Icon id="calendar" />
             {#if !$labelsDisabled}<T id="show.update" />{/if}
         </MaterialButton>
     {:else if show?.reference?.type === "scripture"}
         <p data-title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
-        <MaterialButton on:click={openTab} style="white-space: nowrap;">
+        <MaterialButton on:click={openTab} style="white-space: nowrap;min-width: 100px;">
             <Icon id="scripture" />
             {#if !$labelsDisabled}<T id="main.open" />{/if}
         </MaterialButton>
@@ -86,7 +86,7 @@
             {/if}
         </p>
 
-        <MaterialButton title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;">
+        <MaterialButton title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;min-width: 150px;">
             <Icon id="book" />
             Lessons.church
         </MaterialButton>

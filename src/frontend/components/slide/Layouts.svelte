@@ -159,8 +159,8 @@
         }
     }
 
-    $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && notes // $slidesOptions.mode === "grid" &&
     $: referenceType = currentShow?.reference?.type
+    $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && notes && referenceType !== "lessons" // $slidesOptions.mode === "grid" &&
 </script>
 
 {#if notesVisible && notes}
@@ -170,7 +170,9 @@
     </div>
 {/if}
 
-{#if layoutSlides.length && !referenceType}
+{#if referenceType}
+    <MaterialZoom hidden columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+{:else if layoutSlides.length}
     <FloatingInputs arrow={!isLocked} bottom={notesVisible ? bottomHeight : 10} let:open>
         <div slot="menu">
             {#if Object.keys($actions).length && !reference && (!isLocked || customAction)}

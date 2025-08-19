@@ -62,36 +62,46 @@
         // show metadata tab if media is disabled
         tabs.metadata.overflow = !disableMedia
     }
+
+    $: reference = show?.reference?.type
 </script>
 
 <svelte:window on:mousedown={updateNote} />
 
 <div class="main border" class:labels={!$labelsDisabled}>
-    <Tabs {tabs} bind:active />
+    {#if reference === "lessons"}
+        <Tabs tabs={{ notes: { name: "tools.notes", icon: "notes" } }} active="notes" />
 
-    {#if show}
-        {#if active === "groups"}
-            <SlideGroups />
-        {:else if active === "media"}
-            <div class="content">
-                <Media />
-            </div>
-            <!-- {:else if active === "audio"}
+        <div class="content" style="background-color: var(--primary-darker);">
+            <Notes on:edit={edit} value={note} />
+        </div>
+    {:else}
+        <Tabs {tabs} bind:active />
+
+        {#if show}
+            {#if active === "groups"}
+                <SlideGroups />
+            {:else if active === "media"}
+                <div class="content">
+                    <Media />
+                </div>
+                <!-- {:else if active === "audio"}
       <div class="content">
         <Audio />
       </div> -->
-        {:else if active === "metadata"}
-            <div class="content">
-                <Metadata />
-            </div>
-        {:else if active === "recording"}
-            {#key showId}
-                <Recording showId={showId || ""} />
-            {/key}
-        {:else if active === "notes"}
-            <div class="content" style="background-color: var(--primary-darker);">
-                <Notes on:edit={edit} value={note} />
-            </div>
+            {:else if active === "metadata"}
+                <div class="content">
+                    <Metadata />
+                </div>
+            {:else if active === "recording"}
+                {#key showId}
+                    <Recording showId={showId || ""} />
+                {/key}
+            {:else if active === "notes"}
+                <div class="content" style="background-color: var(--primary-darker);">
+                    <Notes on:edit={edit} value={note} />
+                </div>
+            {/if}
         {/if}
     {/if}
 </div>

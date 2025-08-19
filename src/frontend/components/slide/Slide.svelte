@@ -169,6 +169,13 @@
     async function loadBackground() {
         if (bgPath.includes("http")) return download()
 
+        if (show?.reference?.type === "lessons") {
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            // cache after it's downloaded
+            setTimeout(() => loadThumbnail(bgPath, mediaSize.slideSize), 1000)
+            return
+        }
+
         if (ghostBackground) {
             if (isFirstGhost) {
                 // create image (if not created) when it's first slide after actual background
