@@ -54,7 +54,7 @@
         border-radius: var(--size);
         /* padding: 0 18px; */
         overflow: hidden;
-        z-index: 3;
+        z-index: 99; /* over edit items */
 
         --background: rgba(25, 25, 35, 0.85);
         background-color: var(--background);

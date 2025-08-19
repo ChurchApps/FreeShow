@@ -25,6 +25,18 @@ export function sortByTimeNew<T>(array: T, key = "time") {
     return array.sort((a, b) => new Date(a[key]).getTime() - new Date(b[key]).getTime())
 }
 
+export function moveToPos<T>(array: T, oldPos: number, newPos: number) {
+    if (!Array.isArray(array) || newPos < 0) return array
+
+    if (newPos >= array.length) {
+        let k = newPos - array.length + 1
+        while (k--) array.push(undefined)
+    }
+
+    array.splice(newPos, 0, array.splice(oldPos, 1)[0])
+    return array
+}
+
 // OBJETS
 
 // sort objects in array by name
@@ -202,7 +214,7 @@ export function slowLoop(array, interval, returnFunc) {
 export function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        ;[array[i], array[j]] = [array[j], array[i]]
+            ;[array[i], array[j]] = [array[j], array[i]]
     }
 
     return array

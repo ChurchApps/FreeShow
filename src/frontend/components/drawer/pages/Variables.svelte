@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
+    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -261,7 +261,7 @@
                                     on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")}
                                     buttons={false}
                                 />
-                                <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length}</span>
+                                <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length || 1}</span>
                             </p>
 
                             <Button disabled={activeSet === 0} on:click={() => updateVariable(Math.max(activeSet - 1, 0), variable.id, "activeTextSet")}>
@@ -285,7 +285,15 @@
 </div>
 
 <FloatingInputs onlyOne>
-    <MaterialButton disabled={readOnly} icon="add" title="new.variable" on:click={() => activePopup.set("variable")}>
+    <MaterialButton
+        disabled={readOnly}
+        icon="add"
+        title="new.variable"
+        on:click={() => {
+            selected.set({ id: null, data: [] })
+            activePopup.set("variable")
+        }}
+    >
         {#if !$labelsDisabled}<T id="new.variable" />{/if}
     </MaterialButton>
 </FloatingInputs>

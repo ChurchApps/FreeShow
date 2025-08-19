@@ -43,7 +43,8 @@ import {
     transitionData,
     variables,
     volume,
-    effects
+    effects,
+    activeTimers
 } from "../stores"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
@@ -205,10 +206,6 @@ export function storeSubscriber() {
     transitionData.subscribe((data) => {
         send(OUTPUT, ["TRANSITION"], data)
     })
-    // timerTick.ts
-    // activeTimers.subscribe((data) => {
-    //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
-    // })
 
     // used by stage output
     media.subscribe((data) => {
@@ -232,6 +229,9 @@ export function storeSubscriber() {
 
         // STAGE
         send(STAGE, ["TIMERS"], data)
+    })
+    activeTimers.subscribe((data) => {
+        send(OUTPUT, ["ACTIVE_TIMERS"], data)
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)

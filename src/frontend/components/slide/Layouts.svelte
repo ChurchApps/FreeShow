@@ -159,7 +159,7 @@
         }
     }
 
-    $: notesVisible = notes // $slidesOptions.mode === "grid" &&
+    $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && notes // $slidesOptions.mode === "grid" &&
     $: referenceType = currentShow?.reference?.type
 </script>
 
@@ -187,7 +187,7 @@
         </div>
 
         {#if !open && customAction}
-            <MaterialButton style="aspect-ratio: unset;" class="context #edit_custom_action" title="actions.run_action: {$actions[customAction].name}" on:click={() => runCustomAction}>
+            <MaterialButton style="aspect-ratio: unset;" class="context #edit_custom_action" title="actions.run_action: {$actions[customAction].name}" on:click={() => runCustomAction()}>
                 <Icon size={1.1} id={getActionIcon(customAction)} />
                 <p>{$actions[customAction].name}</p>
             </MaterialButton>
@@ -264,13 +264,6 @@
     .layouts {
         display: flex;
         overflow-x: auto;
-    }
-    .layouts :global(button) {
-        border: none !important;
-        border-bottom: 2px solid var(--primary-darkest) !important;
-    }
-    .layouts :global(button.isActive) {
-        border-bottom: 2px solid var(--secondary) !important;
     }
 
     .notes {

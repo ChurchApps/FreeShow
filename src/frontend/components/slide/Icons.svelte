@@ -1,10 +1,8 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
     import type { Media, Slide, SlideData } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activePopup, activeShow, activeTimers, alertMessage, dictionary, outputs, shows } from "../../stores"
     import { getAccess } from "../../utils/profile"
-    import { send } from "../../utils/request"
     import { videoExtensions } from "../../values/extensions"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -81,7 +79,7 @@
             a = a.filter((_a, i) => !timer.includes(i))
             return a
         })
-        send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+        // send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
     }
 
     function removeSlideSetting(key: string) {
