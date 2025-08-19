@@ -41,6 +41,7 @@ export function moveToPos<T>(array: T, oldPos: number, newPos: number) {
 
 // sort objects in array by name
 export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T = "name", numberSort = true) {
+    if (!Array.isArray(arr)) return []
     return arr
         .filter((a) => typeof a[key] === "string")
         .sort((a, b) => {
