@@ -493,9 +493,9 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
     const MP4Box = require("mp4box")
 
     return new Promise((resolve) => {
-        let arrayBuffer: ArrayBuffer
         try {
-            arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+            const buffer = fs.readFileSync(data.path)
+            const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
@@ -506,7 +506,9 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
                 resolve({ ...data, codecs, mimeType, mimeCodec })
             }
 
-            mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+            const ab: any = arrayBuffer
+            ab.fileStart = 0
+            mp4boxfile.appendBuffer(ab)
             mp4boxfile.flush()
         } catch (err) {
             console.error("MP4Box error catch:", err)

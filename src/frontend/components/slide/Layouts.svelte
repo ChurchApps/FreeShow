@@ -159,7 +159,7 @@
         }
     }
 
-    $: notesVisible = $slidesOptions.mode === "grid" && notes
+    $: notesVisible = notes // $slidesOptions.mode === "grid" &&
     $: referenceType = currentShow?.reference?.type
 </script>
 

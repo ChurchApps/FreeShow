@@ -72,9 +72,6 @@
         }, time)
     }
 
-    // path starting at "/" auto completes to app root, but should be file://
-    $: if (typeof path === "string" && path[0] === "/") path = `file://${path}`
-
     $: useOriginal = hover || loadFullImage || retryCount > MAX_RETRIES || !thumbnailPath
 
     // get duration

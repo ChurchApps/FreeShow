@@ -6,7 +6,7 @@
     import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
+    import { enableSubtitle, encodeFilePath, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -313,11 +313,11 @@
             {:else}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 {#if mediaStyle.fit === "blur"}
-                    <video style={mediaStyleBlurString} src={showId} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
+                    <video style={mediaStyleBlurString} src={encodeFilePath(showId)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
                 <video
                     style={mediaStyleString}
-                    src={showId}
+                    src={encodeFilePath(showId)}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}
                     bind:this={video}
