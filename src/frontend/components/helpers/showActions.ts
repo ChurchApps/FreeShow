@@ -1104,7 +1104,7 @@ export function getDynamicIds(noVariables = false) {
 
     const timersList = sortByName(Object.values(get(timers))).map(({ name }) => `timer_${getVariableNameId(name)}`)
 
-    const rssValues = sortByName(get(special).dynamicRSS)?.map(({ name }) => `rss_${getVariableNameId(name)}`) || []
+    const rssValues = sortByName(get(special).dynamicRSS || []).map(({ name }) => `rss_${getVariableNameId(name)}`)
 
     if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)

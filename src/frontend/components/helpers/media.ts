@@ -51,6 +51,7 @@ export function getFileName(path: string): string {
 let pathJoiner = ""
 export function splitPath(path: string): string[] {
     if (typeof path !== "string") return []
+    path = path.replace("file://", "")
     if (path.indexOf("\\") > -1) pathJoiner = "\\"
     if (path.indexOf("/") > -1) pathJoiner = "/"
     return path.split(pathJoiner) || []
