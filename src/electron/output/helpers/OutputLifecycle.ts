@@ -137,7 +137,7 @@ export class OutputLifecycle {
             const mainWindow = getMainWindow()
             if (mainWindow) {
                 const windowNotCoveringMain = OutputVisibility.amountCovered(window.getBounds(), mainWindow.getBounds()) < 0.5
-                if (windowNotCoveringMain) mainWindow.focus()
+                if (windowNotCoveringMain || isMac) mainWindow.focus()
             }
 
             window.setMenu(null)

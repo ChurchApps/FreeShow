@@ -123,7 +123,7 @@ export const presentationData: Writable<any> = writable({})
 export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<string> = writable("")
 export const overlayTimers: Writable<{ [key: string]: { outputId: string; overlayId: string; timer: NodeJS.Timeout } }> = writable({})
-export const slideVideoData: Writable<{ [key: string]: { [key: string]: { currentTime: number; duration: number; isPaused: boolean } } }> = writable({})
+export const slideVideoData: Writable<{ [key: string]: { [key: string]: { currentTime: number; duration: number; isPaused: boolean; loop?: boolean } } }> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -261,7 +261,7 @@ export const scriptureSettings: Writable<any> = writable({ template: "scripture"
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
 export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
-export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
+export const drawer: Writable<{ height: number; stored: null | number; autoclosed?: boolean }> = writable({ height: 300, stored: null }) // {default}
 
 // TAGS
 export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}

@@ -11,7 +11,7 @@
     import { convertOldMidiToNewAction, defaultMidiActionChannels, midiInListen } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, convertToOptions } from "../../helpers/array"
+    import { clone, convertToOptions, moveToPos } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef, updateCachedShows } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -146,9 +146,17 @@
             return
         }
 
+        // move up action id
+        if (actionId === "move_up") {
+            if (index === undefined) return
+            action.triggers = moveToPos(action.triggers, index, index - 1)
+            action = action
+            return
+        }
+
         // remove action id
         if (actionId === "remove") {
-            if (index === undefined) index = action.triggers.length - 1
+            if (index === undefined) return
             action.triggers.splice(index, 1)
             action = action
             return

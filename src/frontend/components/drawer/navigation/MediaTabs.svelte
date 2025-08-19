@@ -56,13 +56,8 @@
             { id: "all", label: "category.all", icon: "all", count: allCount },
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
-        [
-            { id: "online", label: "media.online", icon: "web" },
-            "SEPERATOR",
-            { id: "screens", label: "live.screens", icon: "screen" },
-            { id: "cameras", label: "live.cameras", icon: "camera" }
-        ],
-        convertToButton(foldersList, folderLengths)
+        [{ id: "online", label: "media.online", icon: "web" }, "SEPERATOR", { id: "screens", label: "live.screens", icon: "screen" }, { id: "cameras", label: "live.cameras", icon: "camera" }],
+        [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {

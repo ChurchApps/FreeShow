@@ -5,7 +5,6 @@ import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "
 import { GetLayout } from "./get"
 import { history } from "./history"
 import { _show } from "./shows"
-import { getAccess } from "../../utils/profile"
 
 // check if name exists and add number
 export function checkName(name = "", showId = "") {
@@ -69,6 +68,8 @@ export function getGlobalGroup(group: string, returnInputIfNull = false): string
 
 // get group number (dynamic counter)
 export function getGroupName({ show, showId }: { show: Show; showId: string }, slideID: string, groupName: string | null, layoutIndex: number, addHTML = false, layoutNumber = true) {
+    if (groupName === ".") return "." // . as name will be hidden
+
     let name = groupName
     if (name === null) return name // child slide
 

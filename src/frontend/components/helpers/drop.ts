@@ -50,7 +50,7 @@ export function ondrop(e: any, id: string) {
     }
 
     const trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
-    const data: any = JSON.parse(elem?.getAttribute("data") || "{}")
+    const data: any = JSON.parse(elem?.getAttribute("data-item") || "{}")
     let index: undefined | number = data.index
     let center = false
     if (trigger?.includes("center")) center = true

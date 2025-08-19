@@ -25,10 +25,12 @@
     function openActiveShow() {
         let showIsActive = $activeShow && ($activeShow.type || "show") === "show"
         let noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
-        if (showIsActive && noEditSlide) updateEditItem()
+        if (showIsActive && !$activeEdit.id) openEdit()
+        else if (showIsActive && noEditSlide) updateEditItem()
         else if (showIsActive && $activeEdit.showId && $activeEdit.showId !== $activeShow?.id) openEdit()
 
         function updateEditItem() {
+            return // more annoying than helpful
             // set to show if: media has been opened AND show has not been opened AND it's not locked
             if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
             if ($shows[$activeShow?.id || ""]?.locked) return

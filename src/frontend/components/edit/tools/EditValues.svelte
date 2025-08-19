@@ -513,7 +513,13 @@
                     </CombinedInput>
                 {:else if input.input === "media"}
                     <CombinedInput>
-                        <MediaPicker id={"item_" + sessionId} title={typeof input.value === "string" ? input.value : ""} style="width: 100%;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
+                        <MediaPicker
+                            id={"item_" + sessionId}
+                            title={typeof input.value === "string" ? input.value : ""}
+                            style="width: 100%;min-width: 85%;"
+                            filter={{ name: "Media files", extensions: mediaExtensions }}
+                            on:picked={(e) => valueChange(e, input)}
+                        >
                             <span style="display: flex;align-items: center;max-width: 100%;">
                                 <Icon id="image" right />
                                 {#if input.value && typeof input.value === "string"}
@@ -523,6 +529,11 @@
                                 {/if}
                             </span>
                         </MediaPicker>
+                        {#if input.value}
+                            <Button title={$dictionary.actions?.remove} on:click={() => valueChange({ detail: "" }, input)} redHover>
+                                <Icon id="close" size={1.2} white />
+                            </Button>
+                        {/if}
                     </CombinedInput>
                     <!-- {:else if input.input === "multiselect"}
                     <div class="line">

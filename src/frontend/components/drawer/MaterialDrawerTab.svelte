@@ -40,6 +40,7 @@
 
         drawerTabsData.update((a) => {
             a[drawerId].activeSubTab = parentId || id
+            if (isSubmenu) a[drawerId].activeSubmenu = id
             return a
         })
     }
@@ -83,7 +84,7 @@
         <div style="max-width: 85%;" data-title={translateText(label)}>
             <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} white={isActive || isSubmenu} />
             {#if noEdit || isSubmenu}
-                <p style="margin: 5px;">
+                <p style="margin: {isSubmenu ? 3 : 5}px;">
                     {#if label}
                         {translateText(label)}
                     {:else}

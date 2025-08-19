@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
+    import { wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
@@ -301,7 +302,7 @@
         startLazyLoader()
     }
 
-    $: isLessons = currentShow?.category === "lessons"
+    $: isLessons = currentShow?.reference?.type === "lessons"
     // let showLessonsAlert: boolean = false
     let lessonsFailed = 0
     // let currentTries: number = 0
@@ -334,6 +335,9 @@
                     let exists = await checkImage(mediaPath)
 
                     if (exists) {
+                        // it exists before it's fully downloaded
+                        if (lazyLoader > 0) await wait(1000)
+
                         lazyLoader = layoutSlides.length
                         loaded = true
                         lazyLoading = false
@@ -389,16 +393,21 @@
         if (isVideo) media = document.createElement("video")
 
         return new Promise((resolve) => {
-            if (isVideo)
-                media.onloadeddata = () => {
-                    resolve(true)
-                }
-            else media.onload = () => resolve(true)
+            let hasLoaded = false
+            if (isVideo) media.onloadeddata = onLoaded
+            else media.onload = onLoaded
+
             media.onerror = () => {
+                if (hasLoaded) return
                 resolve(false)
             }
 
             media.src = encodeFilePath(src)
+
+            function onLoaded() {
+                hasLoaded = true
+                resolve(true)
+            }
         })
     }
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
     import { onDestroy } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
@@ -33,6 +32,7 @@
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
+    import VirtualList from "../VirtualList.svelte"
     import BMDStreams from "../live/BMDStreams.svelte"
     import Cameras from "../live/Cameras.svelte"
     import NDIStreams from "../live/NDIStreams.svelte"
@@ -487,8 +487,12 @@
             </MaterialButton>
         </FloatingInputs>
     {/if}
+
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 {:else if active === "screens" || active === "cameras"}
     <!-- nothing -->
+
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 {:else}
     {#if active !== "all" && active !== "favourites" && rootPath !== path}
         <FloatingInputs side="left">
@@ -527,6 +531,8 @@
             </MaterialButton>
         {/if}
 
+        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+
         <MaterialButton
             on:click={() =>
                 mediaOptions.update((a) => {
@@ -537,8 +543,6 @@
         >
             <Icon size={1.3} id={$mediaOptions.mode} white />
         </MaterialButton>
-
-        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
     </FloatingInputs>
 {/if}
 
@@ -590,5 +594,7 @@
 
         overflow-y: auto;
         overflow-x: hidden;
+
+        /* padding-bottom: 60px; */
     }
 </style>

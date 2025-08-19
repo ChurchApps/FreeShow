@@ -255,11 +255,11 @@ export function closeApp() {
 
 // GET SAVED STATE
 
-let initialized = false
 export function unsavedUpdater() {
     const cachedValues: { [key: string]: string } = {}
     const s = { ...saveList, folders, projects, showsCache, stageShows, deletedShows, renamedShows }
 
+    let initialized = false
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
 
@@ -272,7 +272,9 @@ export function unsavedUpdater() {
                 cachedValues[id] = stringObj
             }
 
-            if (initialized) saved.set(false)
+            if (!initialized) return
+
+            saved.set(false)
             if (id === "deletedShows" || id === "renamedShows") {
                 setTimeout(() => saved.set(false))
             }

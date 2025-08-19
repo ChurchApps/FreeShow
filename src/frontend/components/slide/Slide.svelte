@@ -75,8 +75,9 @@
     let ghostBackground: Media | null = null
     let bgIndex = -1
     let isFirstGhost = false
-    // don't show ghost backgrounds if over slide 40 (because of loading/performance!)
-    $: if (!background && index < 40) {
+    // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
+    // $: capped = ghostBackground && !background && index >= 60
+    $: if (!background && index < 60) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -168,6 +169,13 @@
     async function loadBackground() {
         if (bgPath.includes("http")) return download()
 
+        if (show?.reference?.type === "lessons") {
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            // cache after it's downloaded
+            setTimeout(() => loadThumbnail(bgPath, mediaSize.slideSize), 1000)
+            return
+        }
+
         if (ghostBackground) {
             if (isFirstGhost) {
                 // create image (if not created) when it's first slide after actual background
@@ -200,7 +208,7 @@
 
     $: group = slide.group
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
-        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] || "" : $groups[slide.globalGroup].name
+        group = slide.globalGroup === "none" ? "." : $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] || "" : $groups[slide.globalGroup].name
         color = $groups[slide.globalGroup].color
         // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -389,7 +397,7 @@
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style="color: {color};margin-bottom: 5px;">
                         <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
-                        <span class="text">{@html name === null ? "" : name || "—"}</span>
+                        <span class="text">{@html name === null ? "" : name === "." ? "" : name || "—"}</span>
                     </div>
                 {/if}
                 <Zoomed
@@ -485,6 +493,9 @@
                         {/each}
                     {/if}
                 </Zoomed>
+
+                <!-- {#if viewMode === "grid" && capped}Max limit reached{/if} -->
+
                 {#if viewMode === "simple"}
                     <!-- WIP get any enabled output with maxLines, not just first one... -->
                     <!-- Object.values($outputs).find((a) => $styles[a.style || ""]?.lines) -->
@@ -518,7 +529,7 @@
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
-                        <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name || "—"}</span>
+                        <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name === "." ? "" : name || "—"}</span>
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
                             <Icon id="open_in_new" />

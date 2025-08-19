@@ -312,6 +312,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "create_collection"
     | "scripture_show"
     | "edit_event"
     | "choose_chord"

@@ -11,8 +11,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     let value = "#FFFFFF"
-    let enableNoColor = $selected.id === "show"
-    console.log($selected, enableNoColor)
+    let enableNoColor = $selected.id === "show" // || $selected.id === "slide"
 
     onMount(() => {
         if ($selected.id === "slide") {

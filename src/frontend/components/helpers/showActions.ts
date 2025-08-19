@@ -55,7 +55,7 @@ import {
     videosData,
     videosTime
 } from "./../../stores"
-import { clone, keysToID } from "./array"
+import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
@@ -192,7 +192,8 @@ export function nextSlideIndividual(e: any, start = false, end = false) {
 
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
     if (get(outLocked) && !bypassLock) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+    // blur to remove tab highlight from slide after clicked, and using arrows
+    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -449,7 +450,7 @@ export function previousSlideIndividual(e: any) {
 
 export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -640,7 +641,6 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
 // go to random slide in current project
 export function randomSlide() {
     if (get(outLocked)) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -1102,14 +1102,22 @@ export function getDynamicIds(noVariables = false) {
     const mergedValues = [...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
-    const timersList = Object.values(get(timers)).map(({ name }) => `timer_${getVariableNameId(name)}`)
+    const timersList = sortByName(Object.values(get(timers))).map(({ name }) => `timer_${getVariableNameId(name)}`)
 
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_${getVariableNameId(name)}`) || []
+    const rssValues = sortByName(get(special).dynamicRSS || []).map(({ name }) => `rss_${getVariableNameId(name)}`)
 
-    // WIP sort by type & name
-    const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
+    if (timersList.length) mergedValues.push(...timersList)
+    if (rssValues.length) mergedValues.push(...rssValues)
+    mergedValues.push(...getVariablesIds())
+    return mergedValues
+}
+
+export function getVariablesIds() {
+    // WIP sort by type?
+    const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
     const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+
     const variableTextSets: string[] = []
     variablesList
         .filter((a) => a.type === "text_set")
@@ -1120,10 +1128,43 @@ export function getDynamicIds(noVariables = false) {
             })
         })
 
-    if (timersList.length) mergedValues.push(...timersList)
-    if (rssValues.length) mergedValues.push(...rssValues)
-    mergedValues.push(...variableValues, ...variableSetNameValues, ...variableTextSets)
-    return mergedValues
+    return [...variableValues, ...variableSetNameValues, ...variableTextSets]
+}
+
+export function getVariableValue(dynamicId: string, ref: any = null) {
+    if (dynamicId.includes("variable_set_")) {
+        const nameId = dynamicId.slice(13)
+        const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+        if (variable?.type !== "random_number") return ""
+
+        return variable.setName || ""
+    }
+
+    if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
+        const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
+        let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+
+        if (!variable && nameId.includes("__")) {
+            const textSetId = nameId.slice(0, nameId.indexOf("__"))
+            variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
+        }
+        if (!variable) return ""
+
+        if (variable.type === "number") return Number(variable.number || 0).toString()
+        if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+        if (variable.type === "text_set") {
+            const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+            const setId = nameId.slice(nameId.indexOf("__") + 2)
+            const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
+            return currentSet[setName] || ""
+        }
+
+        if (variable.enabled === false) return ""
+        if (variable.text?.includes(dynamicId) || !ref) return variable.text || ""
+        return replaceDynamicValues(variable.text || "", ref)
+    }
+
+    return ""
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
@@ -1158,36 +1199,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     function getDynamicValueText(dynamicId: string, show: Show | object): string {
         // VARIABLE
-        if (dynamicId.includes("variable_set_")) {
-            const nameId = dynamicId.slice(13)
-            const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
-            if (variable?.type !== "random_number") return ""
-
-            return variable.setName || ""
-        }
-
-        if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
-            const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
-            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
-
-            if (!variable && nameId.includes("__")) {
-                const textSetId = nameId.slice(0, nameId.indexOf("__"))
-                variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
-            }
-            if (!variable) return ""
-
-            if (variable.type === "number") return Number(variable.number || 0).toString()
-            if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
-            if (variable.type === "text_set") {
-                const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
-                const setId = nameId.slice(nameId.indexOf("__") + 2)
-                const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
-                return currentSet[setName] || ""
-            }
-
-            if (variable.enabled === false) return ""
-            if (variable.text?.includes(dynamicId)) return variable.text || ""
-            return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id: dynamicId })
+        if (dynamicId.includes("variable_set_") || dynamicId.includes("$") || dynamicId.includes("variable_")) {
+            return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })
         }
 
         if (dynamicId.includes("timer_")) {
@@ -1198,7 +1211,6 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const today = new Date()
             const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
             const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
-            console.log(timer, timeValue)
 
             return timeValue
         }

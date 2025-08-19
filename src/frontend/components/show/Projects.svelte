@@ -30,8 +30,9 @@
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
-    import BottomButton from "../inputs/BottomButton.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import ProjectButton from "../inputs/ProjectButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
     import { autoscroll } from "../system/autoscroll"
@@ -212,6 +213,8 @@
         previouslyOpened = clone($openedFolders)
     }
     $: if (!$folders[interactedFolder]) interactedFolder = ""
+
+    $: lessVisibleSection = $projects[$activeProject || ""]?.shows?.length > 10 || !!$projects[$activeProject || ""]?.shows?.find((a) => a.type === "section")
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -256,14 +259,14 @@
         </div>
 
         {#if templates.length}
-            <div class="projectTemplates" style="margin-bottom: 40px;">
+            <div class="projectTemplates" style="margin-bottom: 60px;">
                 {#each templates as project}
                     <ProjectButton name={project.name} parent={project.parent} id={project.id} {interactedFolder} template />
                 {/each}
             </div>
         {/if}
 
-        <div style="display: flex;">
+        <!-- <div style="display: flex;">
             <span class="buttons left" style="position: relative;flex: 1;">
                 <BottomButton style="height: 30px;" disabled={readOnly} title="new.folder" on:click={() => createProject(true)}>
                     <Icon id="folder" white />
@@ -274,7 +277,15 @@
                     {#if !$labelsDisabled}<T id="new.project" />{/if}
                 </BottomButton>
             </span>
-        </div>
+        </div> -->
+
+        <FloatingInputs>
+            <MaterialButton icon="folder" title="new.folder" on:click={() => createProject(true)} white />
+            <div class="divider"></div>
+            <MaterialButton icon="add" title="new.project" on:click={() => createProject()}>
+                {#if !$labelsDisabled}<T id="new.project" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
     {:else}
         <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
@@ -328,9 +339,15 @@
     {/if}
 
     {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-        <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
+        <!-- <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
             {#if !$labelsDisabled}<T id="new.section" />{/if}
-        </BottomButton>
+        </BottomButton> -->
+
+        <FloatingInputs onlyOne round={lessVisibleSection}>
+            <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
+                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
     {/if}
 </div>
 
@@ -381,11 +398,11 @@
         padding-bottom: 10px;
     }
     .list.projects.float :global(.droparea) {
-        padding-bottom: 40px;
+        padding-bottom: 60px;
     }
     .list#projectArea :global(.droparea) {
         /* "new" button */
-        padding-bottom: 40px;
+        padding-bottom: 60px;
     }
 
     .list :global(.section) {
@@ -412,21 +429,5 @@
     #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
-    }
-
-    .buttons.left :global(.bottom) {
-        padding-right: 0;
-    }
-    .buttons.right :global(.bottom) {
-        padding-left: 0;
-    }
-    .buttons.left :global(button) {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        border-right: none;
-    }
-    .buttons.right :global(button) {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
     }
 </style>

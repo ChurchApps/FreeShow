@@ -51,6 +51,7 @@ export function getFileName(path: string): string {
 let pathJoiner = ""
 export function splitPath(path: string): string[] {
     if (typeof path !== "string") return []
+    path = path.replace("file://", "")
     if (path.indexOf("\\") > -1) pathJoiner = "\\"
     if (path.indexOf("/") > -1) pathJoiner = "/"
     return path.split(pathJoiner) || []
@@ -64,27 +65,22 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
+    if (path.includes("http") || path.includes("data:")) return path
 
-    // already encoded or special URL
-    if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
-
-    // can't load file paths with "#"
-    // Ensure proper file:// protocol for absolute paths on Linux
-    if (path.startsWith("/") && !path.startsWith("file://")) {
-        path = `file://${path}`
+    // already encoded
+    if (path.match(/%\d+/g)) {
+        if (path.startsWith("/")) path = `file://${path}`
+        return path
     }
 
-    // Encode problematic characters
-    // TODO: Check if these can be removed (since encodeURIComponent does this).
-    path = path.replaceAll("#", "%23")
-    path = path.replaceAll(" ", "%20")
-
-    // Encode the filename portion
     const splittedPath = splitPath(path)
     const fileName = splittedPath.pop() || ""
     const encodedName = encodeURIComponent(fileName)
+    let joinedPath = joinPath([...splittedPath, encodedName])
 
-    return joinPath([...splittedPath, encodedName])
+    // path starting at "/" auto completes to app root, but should be file://
+    if (joinedPath.startsWith("/")) joinedPath = `file://${joinedPath}`
+    return joinedPath
 }
 
 // decode only file name in path (not full path)
@@ -515,7 +511,7 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
         const img = new Image()
 
         // needed if loading from local path
-        img.src = imagePath.startsWith("file://") ? imagePath : `file://${imagePath}`
+        img.src = encodeFilePath(imagePath)
         img.onload = () => {
             const cropWidth = img.width - (crop.left || 0) - (crop.right || 0)
             const cropHeight = img.height - (crop.top || 0) - (crop.bottom || 0)

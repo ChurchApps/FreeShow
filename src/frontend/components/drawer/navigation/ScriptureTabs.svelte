@@ -19,10 +19,8 @@
 
     let sections: any[] = []
     $: sections = [
-        ...(collections.length ? [convertToButton(collections)] : []),
-        [...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? ["SEPERATOR"] : []), ...convertToButton(apiBibles)]
-        // ...(apiBibles.length ? [convertToButton(apiBibles)] : []),
-        // ...(localBibles.length ? [convertToButton(localBibles)] : [])
+        [{ id: "TITLE", label: "scripture.collections" }, ...convertToButton(collections)],
+        [{ id: "TITLE", label: "scripture.bibles_section" }, ...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? [{ id: "SEPERATOR", label: "API" }] : []), ...convertToButton(apiBibles)]
     ]
 
     function convertToButton(categories: any[]) {
@@ -30,13 +28,17 @@
             .sort((a, b) => (b.customName || b.name).localeCompare(a.customName || a.name))
             .map((a: any) => {
                 const icon = a.api ? "scripture_alt" : a.collection ? "collection" : "scripture"
-                const length = a.collection?.versions?.length || 0
-                return { id: a.id, label: a.customName || a.name, icon, length }
+                const count = a.collection?.versions?.length || 0
+                return { id: a.id, label: a.customName || a.name, icon, count }
             })
     }
 
     function newScripture() {
         activePopup.set("import_scripture")
+    }
+
+    function createCollection() {
+        activePopup.set("create_collection")
     }
 
     function updateName(e: any) {
@@ -49,12 +51,10 @@
 </script>
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
-    <div slot="section_0" style={!collections.length ? `padding: 8px;${apiBibles.length || localBibles.length ? "padding-top: 12px;" : ""}` : ""}>
-        {#if !collections.length}
-            <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
-                {#if !$labelsDisabled}<T id="new.scripture" />{/if}
-            </MaterialButton>
-        {/if}
+    <div slot="section_0" style="padding: 8px;{collections.length ? 'padding-top: 12px;' : ''}">
+        <MaterialButton disabled={readOnly || (!apiBibles.length && !localBibles.length)} icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" on:click={createCollection} small>
+            {#if !$labelsDisabled}<T id="new.collection" />{/if}
+        </MaterialButton>
     </div>
     <div slot="section_1" style="padding: 8px;{apiBibles.length || localBibles.length ? 'padding-top: 12px;' : ''}">
         <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>

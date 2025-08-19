@@ -61,7 +61,7 @@
         </div>
     {/if}
 
-    <MaterialButton title={newLabel} class={tabs.length > 1 ? "small" : ""} style={tabs.length > 1 ? "" : "flex: 1;"} on:click={create}>
+    <MaterialButton title={newLabel} class={tabs.length > 1 ? "small_add" : ""} style={tabs.length > 1 ? "" : "flex: 1;"} on:click={create}>
         <Icon id="add" size={1.2} white={tabs.length > 1} />
         {#if tabs.length <= 1}{translateText(newLabel)}{/if}
     </MaterialButton>
@@ -76,14 +76,14 @@
         height: 50px;
     }
 
-    .row :global(button.small) {
+    .row :global(button.small_add) {
         transform: translateY(4px);
 
         border-radius: 15px;
         height: 40px;
         aspect-ratio: 1;
     }
-    .row:not(:has(.isScrollable)) :global(button.small) {
+    .row:not(:has(.isScrollable)) :global(button.small_add) {
         transform: translate(-10px, 4px);
     }
 

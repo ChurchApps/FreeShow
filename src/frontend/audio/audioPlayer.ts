@@ -346,7 +346,7 @@ export class AudioPlayer {
         const globalEnd = AudioPlayer.getGlobalOptions(path).toTime || 0
         // if (!duration) duration = this.storedDurations.get(path) || 0
         // if (!duration && globalEnd) return globalEnd
-        return Math.min(duration, globalEnd)
+        return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
     }
 
     // STATE

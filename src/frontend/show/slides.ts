@@ -109,6 +109,7 @@ function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]
         if (parentIndex === previousParentIndex) groups[groups.length - 1].slides.push(slideRef)
         else {
             const groupData: GroupData = { globalGroup }
+            if (newGroup === "none") groupData.group = "."
             groups.push({ slides: [slideRef], groupData })
         }
 
@@ -219,7 +220,7 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
                 const newValues: GroupData = {}
                 if (groupData.globalGroup) {
                     newValues.globalGroup = groupData.globalGroup
-                    newValues.group = ""
+                    newValues.group = groupData.group || ""
                     newValues.color = ""
                 }
                 changeValues(newData.slides[slideId], newValues)

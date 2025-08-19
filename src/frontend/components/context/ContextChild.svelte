@@ -1,5 +1,6 @@
 <script lang="ts">
     import { localeDirection } from "../../stores"
+    import { isDarkTheme } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import ContextItem from "./ContextItem.svelte"
@@ -61,25 +62,27 @@
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") open = !open
     }
+
+    const light = !isDarkTheme()
 </script>
 
 <svelte:window on:mouseover={onMouseOver} />
 
 <div bind:this={elem} class="item" class:open on:click={click} tabindex={0} on:keydown={keydown} role="menuitem">
     <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
-        <div class="left" style="display: flex;align-items: center;gap: 10px;">
-            {#if menu?.icon}<Icon id={menu.icon} />{/if}
+        <div class="left" style="display: flex;align-items: center;gap: 15px;">
+            {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}
             {#key menu}
                 <T id={menu?.label || id} />
             {/key}
         </div>
-        <div class="right" style="display: flex;align-self: center;opacity: 0.7;">
+        <div class="right" style="display: flex;align-self: center;opacity: 0.5;">
             <Icon id="arrow_right" size={1.2} white />
         </div>
     </span>
 
     {#if open}
-        <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
+        <div class="submenu" class:light style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-14px'});">
             {#if menu?.items?.length}
                 {#each menu.items as itemId}
                     {#if itemId === "SEPERATOR"}
@@ -103,7 +106,7 @@
 
 <style>
     .item {
-        padding: 5px 20px;
+        padding: 6px 16px;
         display: flex;
         justify-content: space-between;
     }
@@ -113,8 +116,8 @@
     }
 
     hr {
-        margin: 5px 10px;
-        height: 2px;
+        margin: 8px 0;
+        height: 1px;
         border: none;
         background-color: var(--primary-lighter);
     }
@@ -124,18 +127,27 @@
         max-height: 300px;
         overflow: auto;
         position: absolute;
-        transform: translate(100%, -10px);
-        box-shadow: 2px 2px 3px rgb(0 0 0 / 0.2);
-        padding: 5px 0;
+        transform: translate(100%, -14px);
+        box-shadow:
+            2px 2px 3px rgb(0 0 0 / 0.2),
+            inset 4px 0 2px -3px rgb(20 0 0 / 0.15);
+        padding: 8px 0;
         z-index: 5000;
 
-        /* border-radius: var(--border-radius); */
-        border-radius: 3px;
+        border-radius: 6px;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
 
-        background-color: var(--primary);
-        /* get rgb from theme primary color */
-        /* background: rgba(41, 44, 54, 0.98);
-        background: linear-gradient(150deg, rgba(41, 44, 54, 0.98) 0%, rgba(41, 49, 59, 0.95) 100%);
-        backdrop-filter: blur(3px); */
+        border: 1px solid var(--primary-lighter);
+        /* border-left: none; */
+
+        --background: rgba(35, 35, 45, 0.97);
+        background-color: var(--background);
+
+        /* this does not work here */
+        /* backdrop-filter: blur(8px); */
+    }
+    .submenu.light {
+        --background: rgba(220, 220, 225, 0.97);
     }
 </style>

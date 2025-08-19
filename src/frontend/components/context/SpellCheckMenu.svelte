@@ -56,7 +56,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        padding: 5px 20px;
+        padding: 6px 20px;
         cursor: pointer;
     }
     div:hover {
@@ -68,8 +68,8 @@
     }
 
     hr {
-        margin: 5px 10px;
-        height: 2px;
+        margin: 5px 0;
+        height: 1px;
         border: none;
         background-color: var(--primary-lighter);
     }

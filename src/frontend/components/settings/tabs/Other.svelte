@@ -165,12 +165,13 @@
 </script>
 
 <MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
-<InputRow arrow={$alertUpdates}>
-    <MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
-    <div slot="menu">
-        <MaterialToggleSwitch label="Alert when a new beta version is available" checked={$special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
-    </div>
-</InputRow>
+
+<!-- <InputRow arrow={$alertUpdates}> -->
+<MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
+<!-- <div slot="menu"> -->
+<MaterialToggleSwitch label="Alert when a new beta version is available" checked={$special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
+<!-- </div> -->
+<!-- </InputRow> -->
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 

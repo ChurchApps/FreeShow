@@ -245,8 +245,8 @@ export const _updaters = {
     category_shows: {
         store: categories,
         ...getDefaultCategoryUpdater("shows"),
-        select: (id: string, _data, initializing: boolean) => {
-            if (!initializing) return
+        select: (id: string, data, initializing: boolean) => {
+            if (!initializing || data.data?.name) return
 
             setDrawerTabData("shows", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)

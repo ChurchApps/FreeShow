@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { dictionary, drawerTabsData, selected, variables } from "../../../stores"
     import { translate } from "../../../utils/language"
-    import { clone } from "../../helpers/array"
+    import { clone, moveToPos } from "../../helpers/array"
     import { createStore, updateStore } from "../../helpers/historyStores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -125,7 +125,7 @@
     }
 
     function removeTextSet(index: number) {
-        if (!currentVariable.textSets?.[index]) return
+        if (currentVariable.textSets?.[index] === undefined) return
 
         currentVariable.textSets.splice(index, 1)
         currentVariable = currentVariable
@@ -147,8 +147,20 @@
         })
     }
 
+    function moveKeyUp(index: number) {
+        if (currentVariable.textSetKeys?.[index] === undefined) return
+
+        currentVariable.textSetKeys = moveToPos(currentVariable.textSetKeys, index, index - 1)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     function removeTextSetVariable(index: number) {
-        if (!currentVariable.textSetKeys?.[index]) return
+        if (currentVariable.textSetKeys?.[index] === undefined) return
 
         currentVariable.textSetKeys.splice(index, 1)
         currentVariable = currentVariable
@@ -316,8 +328,13 @@
                         <TextInput placeholder={$dictionary.variables?.value} disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
 
                         {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
+                            {#if keyIndex > 0}
+                                <Button on:click={() => moveKeyUp(keyIndex)}>
+                                    <Icon id="up" white />
+                                </Button>
+                            {/if}
                             <Button on:click={() => removeTextSetVariable(keyIndex)} title={$dictionary.actions?.delete} style="padding: 8px;">
-                                <Icon id="delete" />
+                                <Icon id="delete" white />
                             </Button>
                         {/if}
                     </CombinedInput>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
 
     // interface Button extends Category {
@@ -13,7 +14,10 @@
     export let sections: any[]
     export let active: string
 
-    $: if (sections.length && !active) setSubTab(sections[0][0].id)
+    $: if (sections.length && !active) {
+        const flat = sections.flat().filter((a) => a && a !== "SEPERATOR")
+        if (flat.length) setSubTab(flat[0].id)
+    }
 
     function setSubTab(tabId: string) {
         const drawerId = $activeDrawerTab
@@ -58,10 +62,27 @@
     {#each sections as buttons, index}
         {#if buttons.length > 1 || !buttons[0]?.hidden}
             <div class="section">
+                {#if index === 0}
+                    <slot name="header_0" />
+                {:else if index === 1}
+                    <slot name="header_1" />
+                {:else if index === 2}
+                    <slot name="header_2" />
+                {:else if index === 3}
+                    <slot name="header_3" />
+                {:else if index === 4}
+                    <slot name="header_4" />
+                {/if}
+
                 {#if buttons.length}
                     {#each buttons as category}
-                        {#if category === "SEPERATOR"}
-                            <hr />
+                        {#if category?.id === "TITLE"}
+                            <div class="title">{translateText(category.label)}</div>
+                        {:else if category === "SEPERATOR" || category?.id === "SEPERATOR"}
+                            <div class="separator">
+                                {#if category?.label}<div class="sepLabel">{translateText(category.label)}</div>{/if}
+                                <hr />
+                            </div>
                         {:else if !category.hidden}
                             <MaterialDrawerTab {active} {category} on:rename />
                         {/if}
@@ -114,17 +135,43 @@
         border-left-width: 0;
     }
 
+    .section :global(button.isActive) {
+        border: none !important;
+        border-left: 4px solid var(--secondary) !important;
+    }
     .section :global(button:not(.outlined)) {
-        /* border-bottom: 1px solid var(--primary-darker); */
         border-left: 4px solid var(--primary-darker);
         border-radius: 0;
 
         justify-content: space-between;
     }
 
+    .title {
+        font-weight: 500;
+        padding: 4px 14px;
+        font-size: 0.8rem;
+        opacity: 0.8;
+        background: var(--primary-darkest);
+        border-bottom: 1px solid var(--primary-lighter);
+    }
+
     hr {
         height: 1px;
         border: none;
         background-color: var(--primary-lighter);
+        flex: 1;
+        opacity: 0.8;
+    }
+
+    .separator {
+        display: flex;
+        align-items: center;
+    }
+    .sepLabel {
+        font-size: 0.6rem;
+        color: var(--text);
+        opacity: 0.5;
+        padding: 6px 14px;
+        line-height: 1;
     }
 </style>
