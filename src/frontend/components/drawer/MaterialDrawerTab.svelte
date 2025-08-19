@@ -82,7 +82,7 @@
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} on:click={click}>
         <div style="max-width: 85%;" data-title={translateText(label)}>
-            <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} white={isActive || isSubmenu} />
+            <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} size={isSubmenu ? 0.8 : 1} white={isActive || isSubmenu} />
             {#if noEdit || isSubmenu}
                 <p style="margin: {isSubmenu ? 3 : 5}px;">
                     {#if label}
