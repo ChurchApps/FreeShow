@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, os, spellcheck, localeDirection } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, os, spellcheck, localeDirection, theme } from "../../stores"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
@@ -8,6 +8,7 @@
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
     import { quickLoadItems } from "./loadItems"
     import SpellCheckMenu from "./SpellCheckMenu.svelte"
+    import { isDarkTheme } from "../../utils/common"
 
     let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
@@ -126,12 +127,15 @@
             top = document.querySelector(".contextMenu")!.getBoundingClientRect().top <= 0
         })
     }
+
+    let light = false
+    $: if ($theme) light = !isDarkTheme()
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
 {#if $contextActive}
-    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top transition:fade={{ duration: 60 }}>
+    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top class:light transition:fade={{ duration: 60 }}>
         {#key activeMenu}
             <SpellCheckMenu />
 
@@ -157,18 +161,19 @@
         position: fixed;
         min-width: 250px;
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
-        padding: 5px 0;
+        padding: 8px 0;
         z-index: 5001;
 
-        /* border-radius: var(--border-radius); */
-        border-radius: 3px;
+        border-radius: 6px;
 
-        background-color: var(--primary);
-        /* get rgb from theme primary color... */
-        /* background-color: rgb(41 44 54 / 0.8); */
-        /* background: rgba(41, 44, 54, 0.98);
-         background: linear-gradient(150deg, rgba(41, 44, 54, 0.98) 0%, rgba(41, 49, 59, 0.95) 100%); */
-        /* backdrop-filter: blur(3px); */
+        border: 1px solid var(--primary-lighter);
+
+        --background: rgba(35, 35, 45, 0.97);
+        background-color: var(--background);
+        backdrop-filter: blur(8px);
+    }
+    .contextMenu.light {
+        --background: rgba(220, 220, 225, 0.97);
     }
 
     .top {
@@ -177,8 +182,8 @@
     }
 
     hr {
-        margin: 5px 10px;
-        height: 2px;
+        margin: 8px 0;
+        height: 1px;
         border: none;
         background-color: var(--primary-lighter);
     }

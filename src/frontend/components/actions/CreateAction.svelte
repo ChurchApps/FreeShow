@@ -51,6 +51,7 @@
         "stop_timers",
         "start_slide_recording",
         "change_output_style",
+        "change_stage_output_layout",
         "start_trigger",
         "send_midi",
         "run_action"

@@ -184,7 +184,8 @@
 
         // TODO: playing in multiple outputs will create unclearable "ghost" video
 
-        if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === bg.path)) setOutput("slide", null)
+        // clear slide text
+        if ($activeProject && $projects[$activeProject]?.shows?.find((a) => a.id === bg.path)) setOutput("slide", null)
         setOutput("background", bg)
     }
 

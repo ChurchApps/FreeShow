@@ -33,6 +33,8 @@
         pointer-events: none;
         transform: translate(-50%, -100%);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+        max-width: 380px;
     }
 
     .shortcut {

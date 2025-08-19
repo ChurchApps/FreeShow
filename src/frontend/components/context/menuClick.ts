@@ -1192,9 +1192,9 @@ const clickActions = {
             return
         }
 
-        // THIS IS NOT IN USE:
+        if (get(outLocked)) return
 
-        // video
+        // video (play in project)
         const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
@@ -1202,7 +1202,10 @@ const clickActions = {
         const currentOutput = get(outputs)[outputId] || {}
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
-        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
+
+        // clear slide text
+        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
+        setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id

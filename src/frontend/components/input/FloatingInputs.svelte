@@ -70,6 +70,11 @@
         bottom: 0 !important;
         height: calc(var(--size) + var(--padding));
         border-radius: calc(var(--size) * 0.5);
+        border: none;
+        box-shadow: none;
+    }
+    .row:has(.overflow-interact) :global(button) {
+        box-shadow: 1px 1px 6px rgb(0 0 0 / 0.4);
     }
 
     .row.round {

@@ -131,7 +131,7 @@ function startDownload(downloading: DownloadFile) {
 
     if (!url) return next()
 
-    makeDir(path.basename(downloading.path))
+    makeDir(path.dirname(downloading.path))
     const fileStream = fs.createWriteStream(downloading.path)
     console.info(`Downloading lessons media: ${file.name}`)
     console.info(url)

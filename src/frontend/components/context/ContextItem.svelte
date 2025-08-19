@@ -311,8 +311,9 @@
 </script>
 
 <div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
-    <span style="display: flex;align-items: center;gap: 10px;">
-        {#if menu?.icon}<Icon id={menu.icon} />{/if}
+    <span style="display: flex;align-items: center;gap: 15px;">
+        <!-- white={menu.icon !== "edit"} -->
+        {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}
         <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
@@ -343,7 +344,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        padding: 5px 20px;
+        padding: 6px 16px;
         cursor: pointer;
     }
     div:hover:not(.disabled) {
