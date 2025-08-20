@@ -41,7 +41,8 @@
     }
 
     $: port = $ports[id] || defaultPorts[id]
-    $: url = `http://${useHostname ? `${$os.name.toLowerCase()}.local` : ip}:${port}`
+    $: hostname = `${$os.name.toLowerCase()}${$os.platform === 'win32' ? '.local' : ''}`
+    $: url = `http://${useHostname ? hostname : ip}:${port}`
     $: if (url) generateQR(url)
 
     function mousedown(e: any) {
