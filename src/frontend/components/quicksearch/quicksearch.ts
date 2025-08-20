@@ -581,6 +581,12 @@ const faq = [
     { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
+    { id: "https://youtu.be/G8ia0h6HiGA", name: "Advanced Level Game Show", icon: "youtube" },
+    { id: "https://youtu.be/nTsVXk8FcmU", name: "Activate Focus Mode in FreeShow for a Distraction-Free Service", icon: "youtube" },
+    { id: "https://youtu.be/NF3tN5ucW1Q", name: "Control FreeShow from Your iPad", icon: "youtube" },
+    { id: "https://youtu.be/qtfMrtV1pos", name: "Create a Game Show in FreeShow", icon: "youtube" },
+    { id: "https://youtu.be/douLurEcrkI", name: "Add Motion to Your Logo", icon: "youtube" },
+    { id: "https://youtu.be/Huafy4bScYA", name: "Understand FreeShow Settings", icon: "youtube" },
     { id: "https://youtu.be/v08hZMJuPfY", name: "Find Anything in FreeShow with Quick Search", icon: "youtube" },
     { id: "https://youtu.be/r_e9f502wD8", name: "Profiles", icon: "youtube" },
     { id: "https://youtu.be/1ioOmYJxXPM", name: "Actions & Project Templates", icon: "youtube" },

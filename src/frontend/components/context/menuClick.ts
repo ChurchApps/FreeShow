@@ -666,7 +666,7 @@ const clickActions = {
     newShow: () => history({ id: "UPDATE", newData: { remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newPrivateShow: () => history({ id: "UPDATE", newData: { replace: { private: true }, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newProject: (obj: ObjData) => {
-        let parent: string = obj.sel?.data[0]?.id || obj.contextElem?.id || "/" // obj.contextElem.getAttribute("data-parent")
+        let parent: string = obj.sel?.data[0]?.id || obj.contextElem?.id || "/"
         if (parent === "projectsArea") parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },

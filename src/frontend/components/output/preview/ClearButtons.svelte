@@ -100,7 +100,7 @@
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
             <Button class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
-                <Icon id="reset" size={1.2} right={!$labelsDisabled} />
+                <Icon id="reset" size={1.2} right={!$labelsDisabled} white />
                 {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
             </Button>
         {:else}
@@ -123,7 +123,7 @@
                     red
                     center
                 >
-                    <Icon id="background" size={1.2} white={!(($outLocked || backgroundCleared) && !styleBackground)} />
+                    <Icon id="background" size={1.2} white />
                 </Button>
                 {#if !allCleared}
                     <Button disabled={backgroundCleared} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
@@ -135,7 +135,7 @@
             <Button disabled={$outLocked || slideCleared} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
                 <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
                 <!-- display recording icon here if a slide recoring is playing -->
-                <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white={!($outLocked || slideCleared)} />
+                <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
             </Button>
             {#if !allCleared}
                 <Button disabled={slideCleared} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
@@ -152,7 +152,7 @@
                 red
                 center
             >
-                <Icon id="overlays" size={1.2} white={!($outLocked || (overlayCleared && effectsCleared))} />
+                <Icon id="overlays" size={1.2} white />
             </Button>
             {#if !allCleared}
                 <Button disabled={overlayCleared} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
@@ -161,7 +161,7 @@
 
         <div class="combinedButton">
             <Button disabled={$outLocked || audioCleared} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
-                <Icon id={audioIcon} size={1.2} white={!($outLocked || audioCleared)} />
+                <Icon id={audioIcon} size={1.2} white />
             </Button>
             {#if !allCleared}
                 <Button disabled={audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
@@ -178,7 +178,7 @@
                     red
                     center
                 >
-                    <Icon id="clock" size={1.2} white={!($outLocked || (slideTimerCleared && activeClear !== "nextTimer"))} />
+                    <Icon id="clock" size={1.2} white />
                 </Button>
                 {#if !allCleared}
                     <Button disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />

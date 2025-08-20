@@ -5,10 +5,11 @@
     import { dictionary, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Tabs from "../../main/Tabs.svelte"
     import AudioMix from "../audio/AudioMix.svelte"
@@ -111,9 +112,8 @@
     {/if}
 {/if}
 
-<Button style="width: 100%;" on:click={() => (settingsOpened = !settingsOpened)} center dark>
-    <Icon id="settings" white={settingsOpened} right />
-    <T id="audio.settings" />
-    <!-- <Icon id="options" white={settingsOpened} right />
-    <T id="edit.options" /> -->
-</Button>
+<FloatingInputs round>
+    <MaterialButton isActive={settingsOpened} title="audio.settings" on:click={() => (settingsOpened = !settingsOpened)}>
+        <Icon size={1.1} id="options" white={!settingsOpened} />
+    </MaterialButton>
+</FloatingInputs>

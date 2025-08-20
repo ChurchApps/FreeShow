@@ -2,6 +2,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { FileData } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
+    import { special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
@@ -16,7 +17,7 @@
     let fileCount = 0
 
     // WIP this creates one listener per individual folder...
-    $: if (folderPreview && mode === "grid" && path) {
+    $: if (folderPreview && mode === "grid" && path && !$special.optimizedMode) {
         requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, (data) => {
             if (data.path !== path) return
 

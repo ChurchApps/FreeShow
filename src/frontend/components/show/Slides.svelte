@@ -50,7 +50,7 @@
     $: {
         let output = $outputs[activeOutputs[0]] || {}
         if (loaded && scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
-            let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
+            let columns = mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = ((scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5
         }
@@ -141,7 +141,7 @@
     }
 
     // update show by its template
-    $: gridMode = $slidesOptions.mode === "grid" || $slidesOptions.mode === "simple" || $slidesOptions.mode === "groups"
+    $: gridMode = mode === "grid" || mode === "simple" || mode === "groups"
     $: if (showId && gridMode && !isLessons && loaded) setTimeout(updateTemplate, 100)
     function updateTemplate() {
         if (!loaded) return
@@ -420,6 +420,8 @@
             loading = false
         }, 8000)
     }
+
+    $: mode = isLessons ? "grid" : $slidesOptions.mode
 </script>
 
 <!-- TODO: tab enter not woring -->
@@ -441,7 +443,7 @@
                 <div class="grid">
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || $slidesOptions.mode === "groups" || !slide.disabled) && ($slidesOptions.mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}

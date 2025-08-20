@@ -141,3 +141,9 @@ p {
     /* background-color: var(--transparent); */
     background: repeating-conic-gradient(rgba(70, 70, 80, 0.1) 0% 25%, transparent 0% 50%) 50% / 26px 26px;
 }
+
+/* OPTIMIZED MODE */
+
+.isOptimized {
+    backdrop-filter: none !important;
+}

@@ -53,6 +53,7 @@ export interface Folder {
 }
 
 export interface Tree extends Project {
+    id: string
     shows: any[]
     index?: number
     path?: string

@@ -25,7 +25,7 @@
 
     export let active: string
 
-    $: submenuActive = isSubmenu ? $activeActionTagFilter.includes(id) || $activeVariableTagFilter.includes(id) : false
+    $: submenuActive = isSubmenu ? (active === "actions" ? $activeActionTagFilter.includes(id) : active === "variables" ? $activeVariableTagFilter.includes(id) : false) : false
     $: isActive = submenuActive || active === id
 
     $: drawerId = $activeDrawerTab
@@ -80,7 +80,7 @@
 </script>
 
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} borders="center" trigger="column" data={id}>
-    <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} on:click={click}>
+    <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} on:click={click} tab>
         <div style="max-width: 85%;" data-title={translateText(label)}>
             <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} size={isSubmenu ? 0.8 : 1} white={isActive || isSubmenu} />
             {#if noEdit || isSubmenu}

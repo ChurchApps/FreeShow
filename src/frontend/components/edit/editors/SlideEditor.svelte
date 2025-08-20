@@ -155,14 +155,31 @@
         }
     }
 
+    let altTimeout: NodeJS.Timeout | null = null
+    let altTemp = false
     let altKeyPressed = false
     function keydown(e: KeyboardEvent) {
+        if (!e.altKey && altTimeout) clearTimeout(altTimeout)
+
         if (e.altKey) {
-            e.preventDefault()
-            altKeyPressed = true
+            if (altTemp) return
+            altTemp = true
+            // e.preventDefault()
+
+            // only activate alt preview hide after a little time (still works instantly)
+            altTimeout = setTimeout(() => {
+                if (altTemp && document.hasFocus()) altKeyPressed = true
+            }, 300)
         }
     }
-    function keyup() {
+    function keyup(e) {
+        if (e.altKey) return
+
+        altTemp = false
+        altKeyPressed = false
+    }
+    function blurred() {
+        altTemp = false
         altKeyPressed = false
     }
 
@@ -277,7 +294,7 @@
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 </script>
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} />
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -349,7 +366,7 @@
 
     {#if !$focusMode && !isLocked}
         {#if !chordsMode}
-            <FloatingInputs side="center">
+            <FloatingInputs bottom={notesVisible ? bottomHeight : 10} side="center">
                 {#each shortcutItems as item}
                     <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
                         <Icon id={item.icon || item.id} size={1.3} white />

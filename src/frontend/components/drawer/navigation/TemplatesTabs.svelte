@@ -3,6 +3,7 @@
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
@@ -53,7 +54,8 @@
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
     <div slot="section_1" style="padding: 8px;{categoriesList.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton icon="add" style="width: 100%;" title="new.category" variant="outlined" disabled={readOnly} on:click={newCategory} small>
+        <MaterialButton style="width: 100%;" title="new.category" variant="outlined" disabled={readOnly} on:click={newCategory} small>
+            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
             {#if !$labelsDisabled}<T id="new.category" />{/if}
         </MaterialButton>
     </div>

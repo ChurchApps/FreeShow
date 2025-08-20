@@ -13,6 +13,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
     import { mediaExtensions } from "../../../values/extensions"
+    import Icon from "../../helpers/Icon.svelte"
 
     const profile = getAccess("media")
     $: readOnly = profile.global === "read"
@@ -88,7 +89,8 @@
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
     <div slot="section_2" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton icon="add" style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
+        <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
+            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
             {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
         </MaterialButton>
     </div>

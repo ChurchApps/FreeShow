@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { special } from "../../stores"
     import { isDarkTheme } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -13,9 +14,11 @@
     let open = false
 
     const light = !isDarkTheme()
+
+    $: isOptimized = $special.optimizedMode
 </script>
 
-<div class="row {side}" class:light class:onlyOne class:gradient class:round style="bottom: {bottom}px;{$$props.style || ''}" on:mousedown>
+<div class="row {side}" class:isOptimized class:light class:onlyOne class:gradient class:round style="bottom: {bottom}px;{$$props.style || ''}" on:mousedown>
     {#if arrow}
         <MaterialButton style={open ? "" : "opacity: 0.6;"} class="expand" title={open ? "actions.close" : "create_show.more_options"} isActive={open} on:click={() => (open = !open)}>
             <Icon class="submenu_{open ? 'close' : 'open'}" id="arrow_back_modern" size={0.9} white={!open} />
@@ -54,7 +57,7 @@
         border-radius: var(--size);
         /* padding: 0 18px; */
         overflow: hidden;
-        z-index: 99; /* over edit items */
+        z-index: 199; /* over edit items */
 
         --background: rgba(25, 25, 35, 0.85);
         background-color: var(--background);
@@ -72,6 +75,8 @@
         border-radius: calc(var(--size) * 0.5);
         border: none;
         box-shadow: none;
+        background: transparent;
+        backdrop-filter: unset;
     }
     .row:has(.overflow-interact) :global(button) {
         box-shadow: 1px 1px 6px rgb(0 0 0 / 0.4);

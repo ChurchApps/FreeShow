@@ -10,9 +10,11 @@
     export let iconSize: number = 1
     export let white: boolean = false
     export let isActive = false
+    export let showOutline = false
     export let disabled = false
     export let gradient = false
     export let small = false
+    export let tab = false
     let button
 
     // automatically do white icon if no content
@@ -21,13 +23,20 @@
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
     let dispatch = createEventDispatcher()
-    function click(e) {
+    function click(e, double: boolean = false) {
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
 
         const ctrl = e.ctrlKey || e.metaKey
         const shift = e.shiftKey
-        dispatch("click", { ctrl, shift })
+        const alt = e.altKey
+        const doubleClick = e.detail === 2
+        const target = e.target
+        dispatch(double ? "dblclick" : "click", { ctrl, shift, alt, doubleClick, target })
+    }
+
+    function dblclick(e: any) {
+        click(e, true)
     }
 
     function triggerRipple(e) {
@@ -63,6 +72,7 @@
 </script>
 
 <button
+    id={$$props.id}
     data-testid={$$props["data-testid"]}
     bind:this={button}
     class="{variant} {$$props.class || ''}"
@@ -70,8 +80,10 @@
     aria-disabled={disabled}
     data-title={translateText(title)}
     class:isActive
+    class:showOutline
     class:white
     class:small
+    class:tab
     {disabled}
     style="
     background: {variant === 'contained' ? (gradient ? 'linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 30%, #d100db 50%, #f0008c 100%)' : 'var(--secondary)') : variant === 'outlined' ? 'var(--primary-darkest)' : 'transparent'};
@@ -82,6 +94,7 @@
     on:mousedown={triggerRipple}
     on:keydown={handleKey}
     on:click={click}
+    on:dblclick={dblclick}
 >
     {#if icon}
         <Icon id={icon} size={iconSize} white={white || isActive || variant === "contained"} />
@@ -137,6 +150,23 @@
         /* background-color: var(--primary-lighter) !important; */
         border-bottom: 2px solid var(--secondary) !important;
         cursor: default;
+    }
+
+    button.tab.isActive {
+        border: none !important;
+        border-left: 4px solid var(--secondary) !important;
+    }
+    button.tab:not(.outlined) {
+        border-left: 4px solid var(--primary-darker);
+        border-radius: 0;
+
+        justify-content: space-between;
+    }
+
+    button.showOutline {
+        --outline-color: var(--secondary);
+        outline: 2px solid var(--outline-color);
+        outline-offset: -2px;
     }
 
     button:not(.contained):not(.isActive):hover {

@@ -98,19 +98,21 @@
     }
 
     // TOUCH SCREEN: synthesize a minimal mouse-like event and reuse mousedown logic
-    function touchstart(e: TouchEvent) {
-        const fakeMouseEvent: any = {
-            button: 0,
-            buttons: 1,
-            shiftKey: false,
-            ctrlKey: false,
-            metaKey: false,
-            // keep the original target so remainSelected/deselect logic still works
-            target: (e as any).target || undefined
-        }
+    // did not work at the moment
+    // on:touchstart={touchstart}
+    // function touchstart(e: TouchEvent) {
+    //     const fakeMouseEvent: any = {
+    //         button: 0,
+    //         buttons: 1,
+    //         shiftKey: false,
+    //         ctrlKey: false,
+    //         metaKey: false,
+    //         // keep the original target so remainSelected/deselect logic still works
+    //         target: (e as any).target || undefined
+    //     }
 
-        mousedown(fakeMouseEvent, false)
-    }
+    //     mousedown(fakeMouseEvent, false)
+    // }
 
     function touchend(e: TouchEvent) {
         endDrag()
@@ -145,19 +147,6 @@
         if (onlyRightClickSelect) {
             if (rightClick) selected.set({ id, data: [data] })
             return
-        }
-
-        // Special handling for scripture tabs: include active scripture in selection if not already selected
-        if ((e.ctrlKey || e.metaKey) && id.toString().includes("category_scripture") && $selected.data.length === 0) {
-            const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
-            if (activeScriptureId && activeScriptureId !== data) {
-                // Only auto-include if they're the same type (both API or both local)
-                const activeScripture = $scriptures[activeScriptureId]
-                const currentScripture = $scriptures[data]
-                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
-                    selected.set({ id, data: [activeScriptureId] })
-                }
-            }
         }
 
         // shift select range
@@ -211,26 +200,27 @@
 
         // Special handling for scripture tabs: shift+click to select range from active to clicked
         if (e.shiftKey && id.toString().includes("category_scripture")) {
+            // WIP this is bad, find the last selected elem of same type instead of the active one
             const activeScriptureId = $drawerTabsData.scripture?.activeSubTab
             if (activeScriptureId && activeScriptureId !== data) {
                 // Get all scripture keys of the same type (API or local)
                 const activeScripture = $scriptures[activeScriptureId]
                 const currentScripture = $scriptures[data]
-                if (activeScripture && currentScripture && (!!activeScripture.api) === (!!currentScripture.api)) {
+                if (activeScripture && currentScripture && !!activeScripture.api === !!currentScripture.api) {
                     // Get all scriptures of the same type
-                    const allScriptureIds = Object.keys($scriptures).filter(scriptureId => {
+                    const allScriptureIds = Object.keys($scriptures).filter((scriptureId) => {
                         const scripture = $scriptures[scriptureId]
-                        return scripture && (!!scripture.api) === (!!activeScripture.api)
+                        return scripture && !!scripture.api === !!activeScripture.api
                     })
-                    
+
                     // Find indices of active and clicked scriptures
                     const activeIndex = allScriptureIds.indexOf(activeScriptureId)
                     const clickedIndex = allScriptureIds.indexOf(data)
-                    
+
                     if (activeIndex !== -1 && clickedIndex !== -1) {
                         const startIndex = Math.min(activeIndex, clickedIndex)
                         const endIndex = Math.max(activeIndex, clickedIndex)
-                        
+
                         // Select all scriptures in the range
                         const selectedRange = allScriptureIds.slice(startIndex, endIndex + 1)
                         selected.set({ id, data: selectedRange })
@@ -342,7 +332,6 @@
     on:mouseenter={enter}
     on:mousedown={mousedown}
     on:dragstart={(e) => mousedown(e, true)}
-    on:touchstart={touchstart}
 >
     <!-- on:mouseup={mouseup}
     on:contextmenu={contextmenu} -->

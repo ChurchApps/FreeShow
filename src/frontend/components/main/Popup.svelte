@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, os } from "../../stores"
+    import { activePopup, os, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
@@ -34,11 +34,13 @@
     function scroll(e) {
         scrolled = e.target.scrollTop > 0
     }
+
+    $: isOptimized = $special.optimizedMode
 </script>
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" class:isOptimized transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: 200 }}>
                 {#if popupId !== "alert"}
@@ -86,6 +88,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+    .popup.isOptimized {
+        background-color: rgb(0 0 0 / 0.8);
     }
 
     @media screen and (max-width: 1000px) {

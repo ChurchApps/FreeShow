@@ -1,8 +1,9 @@
 <script lang="ts">
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
-    import type { MediaStyle } from "../../../types/Main"
+    import type { ClickEvent, MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
@@ -12,9 +13,8 @@
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { joinTime, secondsToTime } from "../helpers/time"
     import { clearBackground } from "../output/clear"
-    import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
-    import { getAccess } from "../../utils/profile"
+    import MaterialButton from "./MaterialButton.svelte"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -71,8 +71,9 @@
     $: active = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
     let editActive = false
-    function click(e: any) {
-        if (editActive || e.ctrlKey || e.metaKey || e.shiftKey || active || e.target.closest("input")) return
+    function click(e: ClickEvent) {
+        const { ctrl, shift, target } = e.detail
+        if (editActive || ctrl || shift || active || target.closest("input")) return
 
         // set active show
         let pos = index
@@ -114,8 +115,8 @@
         if ($activePage === "edit") refreshEditSlide.set(true)
     }
 
-    async function doubleClick(e: any) {
-        if (editActive || $outLocked || e.target.closest("input")) return
+    async function doubleClick(e: ClickEvent) {
+        if (editActive || $outLocked || e.detail.target.closest("input")) return
 
         let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
         let currentOutput = $outputs[outputId] || {}
@@ -123,7 +124,7 @@
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             let layoutRef = getLayoutRef()
             let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
-            updateOut("active", firstEnabledIndex, layoutRef, !e.altKey)
+            updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)
 
             let slide = currentOutput.out?.slide || null
             if (slide?.id === id && slide?.index === firstEnabledIndex && slide?.layout === $showsCache[id].settings.activeLayout) return
@@ -169,7 +170,15 @@
 </script>
 
 <div id="show_{id}" class="main">
-    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} {outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" {style} bold={false} border red={$notFound.show?.includes(id)}>
+    <MaterialButton
+        on:click={click}
+        on:dblclick={doubleClick}
+        isActive={active}
+        showOutline={outline}
+        class="context {$$props.class}{readOnly ? '_readonly' : ''}"
+        style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}"
+        tab
+    >
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon || show.locked}
                 <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
@@ -193,7 +202,7 @@
         {#if data}
             <span style="opacity: 0.5;padding-inline-start: 10px;font-size: 0.9em;">{data}</span>
         {/if}
-    </Button>
+    </MaterialButton>
 </div>
 
 <style>
