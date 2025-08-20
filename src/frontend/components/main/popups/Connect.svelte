@@ -41,7 +41,6 @@
     }
 
     $: port = $ports[id] || defaultPorts[id]
-    console.log('🚀 ~ os:', $os)
     $: hostname = `${$os.name.toLowerCase()}${$os.platform === 'win32' ? '.local' : ''}`
     $: url = `http://${useHostname ? hostname : ip}:${port}`
     $: if (url) generateQR(url)
