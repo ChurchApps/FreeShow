@@ -8,17 +8,17 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+<!-- A clear and concise description of what the bug is. -->
 
 **Reproducing**
-Please give some steps we can follow to recreate this issue.
+<!-- Please give some steps we can follow to recreate this issue. -->
 
 **Screenshots (Optional)**
-If applicable, add screenshots to help explain your problem.
+<!-- If applicable, add screenshots to help explain your problem. -->
 
 **Version (Optional)**
- - OS: [Windows/MacOS/Linux]
- - FreeShow Version: [e.g. 1.0.0]
+ - OS: <!-- [Windows/MacOS/Linux] -->
+ - FreeShow Version: <!-- [e.g. 1.0.0] -->
 
 **Additional context**
-Add any other context about the problem here.
+<!-- Add any other context about the problem here. -->
