@@ -47,7 +47,7 @@
     export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
-    export let clickRevealed: boolean = false
+    export let clickRevealed = false
     export let stageAutoSize = false
     export let fontSize = 0
     export let maxLines = 0 // stage next item preview
@@ -305,7 +305,7 @@
     // let foregroundFiltersDefault = `${filter ? "filter: " + defaultValues + ";" : ""}${backdropFilter ? "backdrop-filter: " + defaultValues + ";" : ""}`
     // let foregroundFilters = foregroundFiltersValues ? (noTransition ? foregroundFiltersValues : foregroundFiltersDefault) : ""
     // setTimeout(() => (foregroundFilters = foregroundFiltersValues))
-    let foregroundFilters = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
+    $: foregroundFilters = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->

@@ -142,7 +142,7 @@
         function formatSlide(currentSlide) {
             if (!currentSlide) return null
             let newSlide = clone(currentSlide)
-            newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items)
+            newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items, outputId)
             return newSlide
         }
     }
@@ -161,7 +161,7 @@
         if (currentSlide) setTemplateItems()
         getStyleTemplateData()
     }
-    const setTemplateItems = () => (currentSlide!.items = setTemplateStyle(slide!, currentStyle, currentSlide!.items))
+    const setTemplateItems = () => (currentSlide!.items = setTemplateStyle(slide!, currentStyle, currentSlide!.items, outputId))
     let styleTemplate: Template | null = null
     const getStyleTemplateData = () => (styleTemplate = getStyleTemplate(slide!, currentStyle))
     $: templateBackground = styleTemplate?.settings?.backgroundPath || ""
@@ -235,7 +235,7 @@
         async function animate(currentIndex: number) {
             if (currentAnimationId !== currentId) return
 
-            animationData = await updateAnimation(animationData, currentIndex, slide)
+            animationData = await updateAnimation(animationData, currentIndex, slide, background)
             if (currentAnimationId !== currentId) {
                 animationData = {}
                 return
@@ -379,7 +379,7 @@
         <!-- metadata -->
         {#if metadataValue || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
+            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
         {/if}
 
         <!-- effects -->

@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { activeShow, showsCache } from "../../../stores"
+    import { activeShow, drawerTabsData, showsCache } from "../../../stores"
     import { setExampleTemplates } from "../../../utils/createData"
+    import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
     import { removeTemplatesFromShow } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
@@ -12,6 +13,11 @@
     function removeTemplate() {
         removeTemplatesFromShow($activeShow?.id || "", true)
     }
+
+    $: categoryId = $drawerTabsData.templates?.activeSubTab || ""
+
+    const profile = getAccess("templates")
+    $: readOnly = profile.global === "read" || profile[categoryId] === "read"
 </script>
 
 <div class="scroll" />
@@ -23,10 +29,12 @@
     </Button>
 {/if}
 
-<Button style="width: 100%;" on:click={setExampleTemplates} center dark>
-    <Icon id="reset" right />
-    <T id="actions.reset_defaults" />
-</Button>
+{#if !readOnly}
+    <Button style="width: 100%;" on:click={setExampleTemplates} center dark>
+        <Icon id="reset" right />
+        <T id="actions.reset_defaults" />
+    </Button>
+{/if}
 
 <style>
     .scroll {

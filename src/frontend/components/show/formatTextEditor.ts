@@ -182,13 +182,15 @@ export function formatText(text: string, showId = "") {
         }
     })
 
+    const parentStyles: { [key: string]: string } = {}
     Object.keys(newSlides).forEach((slideId) => {
-        const slide = newSlides[slideId]
+        let slide = newSlides[slideId]
         const oldSlideId = replacedIds[slideId] || slideId
 
         // add back previous textbox styles
         const oldSlide = clone(show.slides[oldSlideId] || {})
         const oldTextboxes = getTextboxes(oldSlide.items || [])
+
         if (oldTextboxes.length && oldSlideId !== slideId) {
             slide.items.forEach((item, i) => {
                 const b = oldTextboxes[i]
@@ -199,8 +201,15 @@ export function formatText(text: string, showId = "") {
 
                     // remove customType
                     const filteredText = (c?.text || []).filter((a) => !a.customType)
-                    if (filteredText[0] && line.text?.[0]) {
-                        if (filteredText[0].style) line.text[0].style = filteredText[0]?.style
+                    if (filteredText[0]?.style && line.text?.[0]) {
+                        line.text[0].style = filteredText[0].style
+
+                        // store style for new children
+                        if (i === 0 && j === 0) {
+                            slide.children?.forEach((id) => {
+                                parentStyles[id] = filteredText[0].style
+                            })
+                        }
                     }
                 })
 
@@ -211,6 +220,21 @@ export function formatText(text: string, showId = "") {
                 })
             })
             // newSlides[slideId].items = slide.items
+        } else if (show.slides[slideId]) {
+            // add back full old slide including its style
+            // only if text content is the same ??
+            slide = clone(show.slides[slideId])
+            newSlides[slideId] = slide
+        } else if (parentStyles[slideId]) {
+            // newly split and created slide
+            // add same style as parent
+            slide.items.forEach((item) => {
+                item.lines?.forEach((line) => {
+                    line.text?.forEach((text) => {
+                        text.style = parentStyles[slideId]
+                    })
+                })
+            })
         }
 
         // remove "id" key
@@ -385,7 +409,7 @@ function groupSlides(slides: Slide[]) {
             })
         })
         const fullOldSlideText = textContent + Array.from(chords).sort().join("")
-        
+
         if (!fullOldSlideText) return
 
         // adding length so line breaks with no text changes works

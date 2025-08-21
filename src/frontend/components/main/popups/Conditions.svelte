@@ -2,17 +2,18 @@
     import { onMount } from "svelte"
     import type { Condition } from "../../../../types/Show"
     import { activeEdit, activeShow, activeStage, dictionary, overlays, popupData, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+    import { getItemText } from "../../edit/scripts/textStyle"
+    import { clone, convertToOptions, keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
+    import { getDynamicIds, getVariableNameId, getVariablesIds } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { clone, convertToOptions } from "../../helpers/array"
-    import { getLayoutRef } from "../../helpers/show"
-    import { getDynamicIds } from "../../helpers/showActions"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -34,6 +35,43 @@
     let item = slide?.items[itemIndex]
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
+
+    onMount(() => {
+        if (item?.conditions) return
+        // guess most likely condition
+
+        // timer
+        if (item?.type === "timer") {
+            setLikelyValue("timer", "element")
+            setLikelyValue(item?.timer?.id || "", "elementId")
+            setLikelyValue("isRunning", "operator")
+            return
+        }
+
+        const text = getItemText(item)
+
+        // dynamic value / variable
+        if (text.includes("{")) {
+            const isVariable = text.includes("{$") || text.includes("{variable_")
+            setLikelyValue(isVariable ? "variable" : "dynamicValue", "element")
+
+            let valueId = text.replace("{", "").replace("}", "")
+            if (isVariable) valueId = valueId.replace("$", "").replace("variable_", "")
+            const variableId = keysToID($variables).find((a) => getVariableNameId(a.name) === valueId)?.id || ""
+            setLikelyValue(isVariable ? variableId : valueId, "elementId")
+
+            setLikelyValue("isNot", "operator")
+
+            let emptyValue = ""
+            if (text.includes("{video_")) emptyValue = "00:00"
+            setLikelyValue(emptyValue, "value")
+            return
+        }
+    })
+
+    function setLikelyValue(value: string, input: string) {
+        setValue("showItem", value, input, 0)
+    }
 
     const scenarios = [
         { id: "all", name: "$:conditions.all_conditions:$" },
@@ -61,6 +99,7 @@
 
     const customOperators = {
         timer: [
+            { id: "isRunning", name: "$:conditions.is_running:$" },
             { id: "isAbove", name: "$:conditions.is_above:$" },
             { id: "isBelow", name: "$:conditions.is_below:$" },
             { id: "is", name: "$:conditions.is:$" },
@@ -71,12 +110,22 @@
     const customData = {
         timer: [{ id: "seconds", name: "$:conditions.seconds:$" }]
     }
-    const noData: string[] = [] // ["has_text"]
+    const noData: string[] = ["isRunning"] // ["has_text"]
 
     const elementOptions = {
-        timer: convertToOptions($timers),
-        variable: convertToOptions($variables),
+        timer: [{ id: "", name: "$:stage.first_active_timer:$" }, ...convertToOptions($timers)],
+        variable: getVariables(),
         dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a }))
+    }
+
+    function getVariables() {
+        const variablesList = getVariablesIds()
+
+        return variablesList.map((id) => {
+            let name = id.replace("$", "").replace("variable_set_", "Set: ").replaceAll("__", ": ").replaceAll("_", " ")
+            name = name[0].toUpperCase() + name.slice(1)
+            return { id, name }
+        })
     }
 
     // UPDATE
@@ -202,7 +251,7 @@
                         {#if value.id === "value"}
                             <TextInput placeholder={$dictionary.conditions?.empty} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("showItem", e, "value", i)} />
                         {:else if value.id === "seconds"}
-                            <NumberInput value={typeof input.seconds === "number" ? input.seconds : 0} on:change={(e) => setValue("showItem", Number(e.detail), "seconds", i)} />
+                            <NumberInput value={typeof input.seconds === "number" ? input.seconds : 0} max={800000} on:change={(e) => setValue("showItem", Number(e.detail), "seconds", i)} />
                         {/if}
                     {/if}
                 {/if}

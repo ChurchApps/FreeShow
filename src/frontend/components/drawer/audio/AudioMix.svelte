@@ -25,8 +25,8 @@
     }
 
     // 25% / 200 = 0.125
-    $: gainValue = ($gain - 1) * 0.125
-    $: volumeValue = $special.allowGaining ? $volume + gainValue : $volume
+    $: gainValue = (Number($gain || 0) - 1) * 0.125
+    $: volumeValue = $special.allowGaining ? Number($volume ?? 1) + gainValue : Number($volume ?? 1)
 
     $: drawerHeight = $drawer.height - 40 - 180
 </script>
@@ -41,7 +41,7 @@
         <div class="slider">
             <Slider value={volumeValue} step={0.01} max={$special.allowGaining ? 1.25 : 1} on:input={setVolume} />
         </div>
-        <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p>
+        <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || volumeValue === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p>
     </div>
 </main>
 

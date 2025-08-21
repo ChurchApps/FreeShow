@@ -15,7 +15,7 @@ export interface Show {
     category: null | ID
     quickAccess?: any
     reference?: {
-        type: "calendar" | "scripture"
+        type: "calendar" | "scripture" | "lessons"
         data: any
     }
     settings: {
@@ -122,6 +122,8 @@ export interface Item {
     flipped?: boolean
     flippedY?: boolean // media item
     muted?: boolean // media item
+    loop?: boolean // media item
+    speed?: number // media item
     variable?: any
     web?: any
     tracker?: any // slide progress tracker item data
@@ -247,7 +249,7 @@ export interface List {
     enabled?: boolean
     style?: string
     interval?: number
-    items: ListItem[]
+    items?: ListItem[]
 }
 export interface ListItem {
     text: string

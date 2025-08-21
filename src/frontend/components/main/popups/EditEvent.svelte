@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
     import { activeDays, activePopup, dictionary, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
+    import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
     import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,9 +15,9 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import CreateAction from "../../actions/CreateAction.svelte"
 
     let stored = ""
 
@@ -277,16 +278,16 @@
         <CombinedInput textWidth={30}>
             <p><T id="timer.from" /></p>
             <div style="display: flex;">
-                <input style="flex: 2;" type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-                <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
+                <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
+                <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
             </div>
         </CombinedInput>
         {#if selectedType === "event"}
             <CombinedInput textWidth={30}>
                 <p><T id="timer.to" /></p>
                 <div style="display: flex;">
-                    <input style="flex: 2;" type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-                    <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
+                    <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
+                    <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
                 </div>
             </CombinedInput>
         {/if}
@@ -357,9 +358,7 @@
         </CombinedInput>
     {:else if selectedType === "action"}
         {#if actionSelector !== null}
-            <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)}>
-                <Icon id="back" size={2} white />
-            </Button>
+            <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionSelector = null)} />
 
             <CreateAction
                 actionId={actionData?.id || ""}
@@ -388,8 +387,13 @@
 
         <CombinedInput>
             <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
-                <Icon id="save" right />
-                <T id="actions.save" />
+                {#if $eventEdit}
+                    <Icon id="save" right />
+                    <T id="actions.save" />
+                {:else}
+                    <Icon id="add" right />
+                    <T id="timer.create" />
+                {/if}
             </Button>
         </CombinedInput>
         {#if editEvent.group}

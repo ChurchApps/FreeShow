@@ -24,15 +24,15 @@
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
         if (((e.ctrlKey || e.metaKey) && e.key === "g") || e.key === "F8") {
-            // refocus on search bar?
-            quickSearchActive.set(true)
+            // toggle quick search
+            quickSearchActive.set(!$quickSearchActive)
             return
         }
 
         if (!$quickSearchActive || !values) return
 
         if (e.key === "Enter") {
-            selectQuicksearchValue(values[selectedIndex])
+            selectQuicksearchValue(values[selectedIndex], e.ctrlKey || e.metaKey)
             selectedIndex = 0
         } else if (e.key === "ArrowDown") selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
         else if (e.key === "ArrowUp") selectedIndex = Math.max(0, selectedIndex - 1)
@@ -51,13 +51,23 @@
                     <div class="values">
                         {#each values as value, i}
                             <Button
-                                style="gap: 10px;font-size: 1em;{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
+                                style="gap: 10px;font-size: 1em;color: {value.color || 'unset'};{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
                                 active={i === selectedIndex}
-                                on:click={() => selectQuicksearchValue(value)}
+                                on:click={(e) => selectQuicksearchValue(value, e.ctrlKey || e.metaKey)}
                                 bold={false}
                             >
                                 <Icon id={value.icon || value.type} />
-                                <p title={value.name}>{value.name}</p>
+                                <p data-title={value.name}>
+                                    {value.name}
+
+                                    {#if value.aliasMatch && !value.aliasMatch.startsWith("-")}
+                                        <span style="opacity: 0.5;font-style: italic;margin-left: 5px;font-size: 0.8em;">{value.aliasMatch}</span>
+                                    {/if}
+
+                                    {#if value.id.includes("http")}
+                                        <Icon id="launch" size={0.8} white />
+                                    {/if}
+                                </p>
                             </Button>
                         {/each}
                     </div>
@@ -89,11 +99,11 @@
 
         background-color: var(--primary);
         /* border-radius: var(--border-radius); */
-        border-radius: 4px;
+        border-radius: 10px;
         padding: 10px;
 
-        box-shadow: 0 0 3px rgb(0 0 0 / 0.4);
-        border: 2px solid var(--primary-darkest);
+        box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
+        border: 2px solid var(--primary-lighter);
     }
 
     .values {

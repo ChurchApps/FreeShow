@@ -85,6 +85,7 @@
         </div>
     </div>
 {:else}
+    <!-- on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Open audio mixer" -->
     <div class="main" on:click={openAudioMix}>
         <!-- <span class="left">
             <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />

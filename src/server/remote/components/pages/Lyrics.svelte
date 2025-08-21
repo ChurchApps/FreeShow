@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getGroupName } from "../../../common/util/show"
-    import { GetLayout, next, previous } from "../../util/output"
+    import { GetLayout } from "../../util/output"
+    import { send } from "../../util/socket"
     import { _set, activeShow, activeTab, outLayout, outShow, outSlide } from "../../util/stores"
 
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
@@ -9,8 +10,8 @@
     $: slides = $outShow?.slides || {}
 
     function click(e: any) {
-        if (e.clientX < window.innerWidth / 3) previous()
-        else next()
+        if (e.clientX < window.innerWidth / 3) send("API:previous_slide")
+        else send("API:next_slide")
     }
 
     let lyricsScroll: any
@@ -67,7 +68,15 @@
         padding: 10px;
         /* gap: 10px; */
         scroll-behavior: smooth;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    .lyrics::-webkit-scrollbar { width: 8px; height: 8px; }
+    .lyrics::-webkit-scrollbar-track,
+    .lyrics::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .lyrics::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .lyrics::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
     .lyric {
         font-size: 1.1em;
         text-align: center;

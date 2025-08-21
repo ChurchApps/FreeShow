@@ -12,9 +12,10 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
+import { playFolder } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
-import { playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
@@ -29,6 +30,7 @@ import {
     audioData,
     currentWindow,
     customMetadata,
+    dictionary,
     driveData,
     dynamicValueData,
     focusMode,
@@ -53,16 +55,15 @@ import {
     videosData,
     videosTime
 } from "./../../stores"
-import { clone } from "./array"
+import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { addZero, joinTime, secondsToTime } from "./time"
+import { addZero, getMonthName, getWeekday, joinTime, joinTimeBig, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
-import { playFolder } from "../../utils/shortcuts"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -86,7 +87,7 @@ export function checkInput(e: any) {
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
     e.preventDefault()
-    ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
 
     const selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)
@@ -191,7 +192,8 @@ export function nextSlideIndividual(e: any, start = false, end = false) {
 
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
     if (get(outLocked) && !bypassLock) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+    // blur to remove tab highlight from slide after clicked, and using arrows
+    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -448,7 +450,7 @@ export function previousSlideIndividual(e: any) {
 
 export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -554,7 +556,8 @@ export function previousSlide(e: any, customOutputId?: string) {
             return
         }
 
-        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index--
+        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index--
+        if (!layout[index]) return
 
         // get slide line
         const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
@@ -624,20 +627,20 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
     if (!layout?.[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
-    while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
+    while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
 
     if (end) {
         index = layout.length - 1
-        while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
+        while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
     }
 
+    if (!layout[index]) return null
     return index
 }
 
 // go to random slide in current project
 export function randomSlide() {
     if (get(outLocked)) return
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
@@ -844,30 +847,30 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             // outTransition.set({ duration })
             setOutput("transition", { duration }, false, outputId)
         } else {
-            clearTimers(outputId)
+            clearTimers(outputId, false)
         }
     }
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
-function playSlideActions(actions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
-    actions = clone(actions)
+function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
+    slideActions = clone(slideActions)
 
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
-            const existingIndex = actions.findIndex((a) => a.triggers?.[0] === id)
+            const existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
             outputIds.forEach((outputId) => {
                 if (id.includes("background")) setOutput("background", null, false, outputId)
                 else if (id.includes("overlays")) clearOverlays(outputId)
             })
-            actions.splice(existingIndex, 1)
+            slideActions.splice(existingIndex, 1)
         })
     }
 
-    actions.forEach((a) => {
+    slideActions.forEach((a) => {
         // no need to "re-run" actions triggered right before output
         if (shouldTriggerBefore(a)) return
 
@@ -967,7 +970,7 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 
     setTimeout(() => {
         // defocus search input
-        ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
     }, 10)
 
     return true
@@ -1094,21 +1097,74 @@ const customTriggers = {
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false) {
     const mainValues = Object.keys(dynamicValues)
-    const metaValues = Object.keys(getCustomMetadata()).map((id) => `meta_` + id.replaceAll(" ", "_").toLowerCase())
-
-    if (noVariables) return [...mainValues, ...metaValues]
-
-    // WIP sort by type & name
-    const variablesList = Object.values<Variable>(get(variables)).filter((a) => a?.name)
-    const variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
-    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
-
-    const rssValues = get(special).dynamicRSS?.map(({ name }) => `rss_` + getVariableNameId(name)) || []
+    const metaValues = Object.keys(getCustomMetadata()).map((id) => `meta_${id.replaceAll(" ", "_").toLowerCase()}`)
 
     const mergedValues = [...mainValues, ...metaValues]
+    if (noVariables) return mergedValues
+
+    const timersList = sortByName(Object.values(get(timers))).map(({ name }) => `timer_${getVariableNameId(name)}`)
+
+    const rssValues = sortByName(get(special).dynamicRSS || []).map(({ name }) => `rss_${getVariableNameId(name)}`)
+
+    if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)
-    mergedValues.push(...variableValues, ...variableSetNameValues)
+    mergedValues.push(...getVariablesIds())
     return mergedValues
+}
+
+export function getVariablesIds() {
+    // WIP sort by type?
+    const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
+    const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
+    const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+
+    const variableTextSets: string[] = []
+    variablesList
+        .filter((a) => a.type === "text_set")
+        .forEach((set) => {
+            const name = `$` + getVariableNameId(set.name)
+            set.textSetKeys?.filter(Boolean).forEach((key) => {
+                variableTextSets.push(`${name}__${getVariableNameId(key)}`)
+            })
+        })
+
+    return [...variableValues, ...variableSetNameValues, ...variableTextSets]
+}
+
+export function getVariableValue(dynamicId: string, ref: any = null) {
+    if (dynamicId.includes("variable_set_")) {
+        const nameId = dynamicId.slice(13)
+        const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+        if (variable?.type !== "random_number") return ""
+
+        return variable.setName || ""
+    }
+
+    if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
+        const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
+        let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+
+        if (!variable && nameId.includes("__")) {
+            const textSetId = nameId.slice(0, nameId.indexOf("__"))
+            variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
+        }
+        if (!variable) return ""
+
+        if (variable.type === "number") return Number(variable.number || 0).toString()
+        if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+        if (variable.type === "text_set") {
+            const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+            const setId = nameId.slice(nameId.indexOf("__") + 2)
+            const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
+            return currentSet[setName] || ""
+        }
+
+        if (variable.enabled === false) return ""
+        if (variable.text?.includes(dynamicId) || !ref) return variable.text || ""
+        return replaceDynamicValues(variable.text || "", ref)
+    }
+
+    return ""
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
@@ -1127,41 +1183,36 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles"]
-    ;[...getDynamicIds(), ...customIds].forEach((dynamicId) => {
-        let textHasValue = text.includes(dynamicValueText(dynamicId))
-        if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
-        if (!textHasValue) return
+        ;[...getDynamicIds(), ...customIds].forEach((dynamicId) => {
+            let textHasValue = text.includes(dynamicValueText(dynamicId))
+            if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
+            if (!textHasValue) return
 
-        const newValue = getDynamicValueText(dynamicId, currentShow)
-        text = text.replaceAll(dynamicValueText(dynamicId), newValue)
+            const newValue = getDynamicValueText(dynamicId, currentShow)
+            text = text.replaceAll(dynamicValueText(dynamicId), newValue)
 
-        // $ = variable_
-        if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
-    })
+            // $ = variable_
+            if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
+        })
 
     return text
 
     function getDynamicValueText(dynamicId: string, show: Show | object): string {
         // VARIABLE
-        if (dynamicId.includes("variable_set_")) {
-            const nameId = dynamicId.slice(13)
-            const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
-            if (variable?.type !== "random_number") return ""
-
-            return variable.setName || ""
+        if (dynamicId.includes("variable_set_") || dynamicId.includes("$") || dynamicId.includes("variable_")) {
+            return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })
         }
 
-        if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
-            const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
-            const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
-            if (!variable) return ""
+        if (dynamicId.includes("timer_")) {
+            const nameId = dynamicId.slice(6)
+            const timer = keysToID(get(timers)).find((a) => getVariableNameId(a.name) === nameId)
+            if (!timer) return "00:00"
 
-            if (variable.type === "number") return Number(variable.number || 0).toString()
-            if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+            const today = new Date()
+            const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
+            const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
-            if (variable.enabled === false) return ""
-            if (variable.text?.includes(dynamicId)) return variable.text || ""
-            return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id: dynamicId })
+            return timeValue
         }
 
         if (dynamicId.includes("rss_")) {
@@ -1236,6 +1287,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
         }
 
+        if (!dynamicValues[dynamicId]) return ""
+
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
 
         if (dynamicId === "show_name_next" && !value && isOutputWindow) {
@@ -1260,6 +1313,10 @@ const dynamicValues = {
     time_hours: () => addZero(new Date().getHours()),
     time_minutes: () => addZero(new Date().getMinutes()),
     time_seconds: () => addZero(new Date().getSeconds()),
+    // time_weeknum: () => "52",
+
+    time_str_day: () => getWeekday(new Date().getDay(), get(dictionary), true),
+    time_str_month: () => getMonthName(new Date().getMonth(), get(dictionary), true),
 
     // show
     show_name: ({ show }) => show.name || "",

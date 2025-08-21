@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeEdit, activePage, activeShow, editHistory, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -86,6 +87,9 @@
     let clonedHistory: any[] = []
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
+
+    let profile = getAccess("shows")
+    $: isLocked = $shows[currentShowId]?.locked || profile.global === "read" || profile[$shows[currentShowId]?.category || ""] === "read"
 </script>
 
 <!-- WIP history keyboard navigation up/down? -->
@@ -101,7 +105,7 @@
     <Slides />
 {:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive}
     <div class="title">
-        <h3><T id="edit.recent" /></h3>
+        <h3 style="font-style: italic;opacity: 0.7;"><T id="edit.recent" /></h3>
     </div>
     {#if $editHistory.length}
         <div class="edited">
@@ -133,8 +137,12 @@
         </Center>
     {/if}
 {:else if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
+    <div class="title">
+        <h3 style="opacity: 0.8;">{$shows[currentShowId]?.name || ""}</h3>
+    </div>
+
     <Slides />
-    <Button disabled={$shows[currentShowId]?.locked} on:click={addSlide} center dark>
+    <Button disabled={isLocked} on:click={addSlide} center dark>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.slide" />{/if}
     </Button>
@@ -148,14 +156,12 @@
     .title {
         background-color: var(--primary-darker);
         text-align: center;
-        padding: 3px 0;
+        padding: 3px 8px;
         overflow: initial;
     }
     h3 {
         color: var(--text);
-        font-style: italic;
         font-size: 1em;
-        opacity: 0.7;
     }
 
     .edited {

@@ -48,11 +48,14 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 // set application menu
 setGlobalMenu()
 
-// disable hardware acceleration by default
-if (config.get("disableHardwareAcceleration") !== false) {
-    // Video flickers, especially on ARM mac otherwise. Performance is actually better without (most of the time).
+// disable hardware acceleration by default (on mac)
+let disableHWA = config.get("disableHardwareAcceleration")
+if (disableHWA === null) disableHWA = isMac
+if (disableHWA !== false) {
+    // Video flickers, especially on ARM mac otherwise. Performance is actually better without on macOS (most of the time).
     // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
+    // on Windows it's often better with hardware acceleration
     app.disableHardwareAcceleration()
 } else {
     console.info("Starting with Hardware Acceleration")
@@ -65,7 +68,21 @@ app.on("ready", startApp)
 function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
     setTimeout(createLoading)
-    updateDataPath({ load: true })
+
+    // Start these heavy operations in parallel, not blocking main window creation
+    Promise.resolve()
+        .then(() => {
+            updateDataPath({ load: true })
+        })
+        .catch(console.error)
+
+    // Start servers initialization early (asynchronously)
+    Promise.resolve()
+        .then(() => {
+            require("./servers")
+        })
+        .catch(console.error)
+
     if (RECORD_STARTUP_TIME) console.timeEnd("Initial")
 
     createMain()
@@ -94,7 +111,7 @@ function createMain() {
         width: getWindowBounds("width"),
         height: getWindowBounds("height"),
         frame: !isProd || !isWindows,
-        autoHideMenuBar: isProd && isWindows,
+        autoHideMenuBar: isProd && isWindows
     }
 
     // should be centered to screen if x & y is not set (or bottom left on mac)

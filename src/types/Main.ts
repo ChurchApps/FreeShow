@@ -1,6 +1,5 @@
 import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
-import type { ShowRef } from "./Projects"
 import type { Cropping } from "./Settings"
 
 export interface OS {
@@ -12,6 +11,7 @@ export interface OS {
 export interface Option {
     name: string
     extra?: string
+    extraInfo?: string
     data?: any
     id?: string | null
     icon?: string
@@ -78,6 +78,7 @@ export type SelectIds =
     | "theme"
     | "style"
     | "output"
+    | "profile"
     | "tag"
     | "bible_book"
 
@@ -177,7 +178,7 @@ export interface MainFilePaths {
 }
 
 export type LyricSearchResult = {
-    source: "Genius" | "Hymnary" | "Letras"
+    source: "Genius" | "Hymnary" | "Letras" | "Ultimate Guitar"
     key: string
     artist: string
     title: string
@@ -212,7 +213,7 @@ export interface LessonFile {
 export interface Variable {
     id?: string
     name: string
-    type: "number" | "random_number" | "text"
+    type: "number" | "random_number" | "text" | "text_set"
     tags?: string[]
 
     // number
@@ -232,6 +233,11 @@ export interface Variable {
     // text
     text?: string
     enabled?: boolean
+
+    // text set
+    activeTextSet?: number
+    textSetKeys?: string[]
+    textSets?: { [key: string]: string }[]
 }
 
 export interface Trigger {
@@ -249,12 +255,21 @@ export interface FileData {
     thumbnailPath?: string
 }
 
+export interface Profiles {
+    [key: string]: Profile
+}
+export interface Profile {
+    name: string
+    color: string
+    image: string
+    access: { [key: string]: { [key: string]: AccessType } }
+}
+export type AccessType = "none" | "read" | "write"
+
 export interface ErrorLog {
     time: Date
     os: string
     version: string
-    active: { window: string; page: string; show: ShowRef | null; edit: ActiveEdit }
-    drawer: { active: string }
     type: string
     source: string
     message: string
@@ -264,6 +279,7 @@ export interface ErrorLog {
 
 export type Popups =
     | "initialize"
+    | "confirm"
     | "custom_text"
     | "import"
     | "songbeamer_import"
@@ -296,6 +312,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "create_collection"
     | "scripture_show"
     | "edit_event"
     | "choose_chord"

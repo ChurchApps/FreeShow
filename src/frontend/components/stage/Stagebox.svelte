@@ -6,8 +6,10 @@
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { clone, keysToID, sortByName } from "../helpers/array"
+    import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
+    import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import SlideItems from "../slide/SlideItems.svelte"
@@ -21,8 +23,6 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
-    import Button from "../inputs/Button.svelte"
-    import Icon from "../helpers/Icon.svelte"
 
     export let id: string
     export let item: StageItem
@@ -41,7 +41,7 @@
 
         console.log(e)
         activeStage.update((ae) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
@@ -86,7 +86,7 @@
     function deselect(e: any) {
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
-        if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+        if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
                 ae.items = []
                 return ae
@@ -187,7 +187,7 @@
         })
     }
 
-    $: contextId = item.type === "slide_text" ? "stage_slide_text_item" : item.type === "text" ? "stage_text_item" : item.type === "current_output" ? "stage_item_output" : "stage_item"
+    $: contextId = item.type === "text" ? "stage_text_item" : item.type === "current_output" ? "stage_item_output" : "stage_item"
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -213,7 +213,7 @@
         <div class="actions">
             <!-- button -->
             {#if item?.button?.press || item?.button?.release}
-                <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                     <span style="padding: 5px;z-index: 3;font-size: 0;">
                         <Icon id="button" white />
                     </span>
@@ -222,7 +222,7 @@
 
             <!-- conditions -->
             {#if Object.values(item?.conditions || {}).length}
-                <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
                     </Button>

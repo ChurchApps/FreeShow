@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
@@ -6,7 +7,7 @@
     import Tabs from "../../../common/components/Tabs.svelte"
     import { getGroupName } from "../../../common/util/show"
     import { translate } from "../../util/helpers"
-    import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
+    import { GetLayout, getNextSlide, nextSlide } from "../../util/output"
     import { send } from "../../util/socket"
     import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
     import AddGroups from "../pages/AddGroups.svelte"
@@ -148,12 +149,150 @@
     function toggleFullscreen() {
         isFullscreen = !isFullscreen
     }
+
+    function playSlide(index: number) {
+        if (!$activeShow) return
+
+        const showId = $activeShow.id
+        const layoutId = $activeShow.settings.activeLayout
+
+        if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === outNumber) {
+            // reveal lines if it exists
+            const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
+            if (revealExists) {
+                send("API:next_slide")
+            }
+            return
+        }
+
+        send("API:index_select_slide", { showId, layoutId, index })
+        _set("outShow", $activeShow)
+        // _set("outSlide", index) // ??
+        // send("API:get_cleared") // ??
+    }
+
+    // RESIZERS
+    let leftWidth: number = parseInt(localStorage.getItem("tablet.leftWidth") || "290", 10) || 290
+    let rightWidth: number = parseInt(localStorage.getItem("tablet.rightWidth") || "290", 10) || 290
+    const minPanel = 200
+    const minCenter = 300
+    const defaultWidth = 290
+    const snapThreshold = 20 // pixels to snap
+
+    function clampPersistedWidths() {
+        const total = window.innerWidth
+        const resizers = 12
+        // Re-read in case values changed outside
+        const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
+        const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
+        if (!Number.isNaN(storedLeft)) leftWidth = storedLeft
+        if (!Number.isNaN(storedRight)) rightWidth = storedRight
+        // Clamp to available space and minimums
+        leftWidth = Math.max(minPanel, Math.min(leftWidth, Math.max(minPanel, total - rightWidth - resizers - minCenter)))
+        rightWidth = Math.max(minPanel, Math.min(rightWidth, Math.max(minPanel, total - leftWidth - resizers - minCenter)))
+    }
+
+    function persistWidths() {
+        localStorage.setItem("tablet.leftWidth", String(leftWidth))
+        localStorage.setItem("tablet.rightWidth", String(rightWidth))
+    }
+
+    let initializedWidths = false
+    $: if (!initializedWidths) {
+        clampPersistedWidths()
+        initializedWidths = true
+    }
+
+    let dragging: "left" | "right" | null = null
+    let startX = 0
+    let startLeft = 0
+    let startRight = 0
+    let isSnapping = false
+
+    function onPointerDownLeft(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "left"
+        isSnapping = false
+        startX = e.clientX
+        startLeft = leftWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+
+    function onPointerDownRight(e: PointerEvent) {
+        e.preventDefault()
+        dragging = "right"
+        isSnapping = false
+        startX = e.clientX
+        startRight = rightWidth
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", onPointerUp, { once: true })
+        window.addEventListener("pointercancel", onPointerUp, { once: true })
+    }
+    function onPointerMove(e: PointerEvent) {
+        if (!dragging) return
+        e.preventDefault()
+        
+        const total = window.innerWidth
+        const resizers = 12 // two resizers of 6px each
+        const delta = e.clientX - startX
+        
+        if (dragging === "left") {
+            let proposed = startLeft + delta
+            const maxLeft = total - rightWidth - resizers - minCenter
+            
+            // Snap to default position
+            if (Math.abs(proposed - defaultWidth) < snapThreshold) {
+                proposed = defaultWidth
+                isSnapping = true
+            } else {
+                isSnapping = false
+            }
+            
+            leftWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxLeft)))
+        } else if (dragging === "right") {
+            let proposed = startRight - delta
+            const maxRight = total - leftWidth - resizers - minCenter
+            
+            // Snap to default position
+            if (Math.abs(proposed - defaultWidth) < snapThreshold) {
+                proposed = defaultWidth
+                isSnapping = true
+            } else {
+                isSnapping = false
+            }
+            
+            rightWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxRight)))
+        }
+    }
+    function onPointerUp() {
+        dragging = null
+        window.removeEventListener("pointermove", onPointerMove)
+        persistWidths()
+    }
+
+    function onWindowResize() {
+        // Recalculate panel widths when window resizes
+        if (initializedWidths) {
+            clampPersistedWidths()
+        }
+    }
+
+    onMount(() => {
+        window.addEventListener("resize", onWindowResize)
+        return () => {
+            window.removeEventListener("resize", onWindowResize)
+            window.removeEventListener("pointermove", onPointerMove)
+        }
+    })
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:resize={clampPersistedWidths} />
 
 {#if !isFullscreen}
-    <div class="left">
+    <div class="left" style={`width:${leftWidth}px`}>
         <div class="flex">
             {#if activeTab === "shows"}
                 <Shows tablet />
@@ -166,6 +305,10 @@
 
         <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
     </div>
+{/if}
+
+{#if !isFullscreen}
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft} class:snapping={dragging === "left" && isSnapping}></div>
 {/if}
 
 <div class="center">
@@ -202,13 +345,7 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span
-                                    style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
-                                    on:click={() => {
-                                        send("API:index_select_slide", { showId: $activeShow.id, index: i, layoutId: $activeShow.settings.activeLayout })
-                                        _set("outShow", $activeShow)
-                                    }}
-                                >
+                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={(e) => (e.key === 'Enter' ? playSlide(i) : null)}>
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -232,18 +369,7 @@
                             {/if}
                         {/each}
                     {:else}
-                        <Slides
-                            {dictionary}
-                            {scrollElem}
-                            on:click={(e) => {
-                                let index = e.detail
-                                send("API:index_select_slide", { showId: $activeShow.id, index, layoutId: $activeShow.settings.activeLayout })
-                                _set("outShow", $activeShow)
-                                _set("outSlide", index)
-                            }}
-                            outSlide={outNumber}
-                            columns={3}
-                        />
+                        <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={outNumber} columns={3} />
                     {/if}
                 </div>
 
@@ -286,7 +412,11 @@
 </div>
 
 {#if !isFullscreen}
-    <div class="right" style="jutsify-content: space-between;">
+	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight} class:snapping={dragging === "right" && isSnapping}></div>
+{/if}
+
+{#if !isFullscreen}
+    <div class="right" style={`justify-content: space-between; width:${rightWidth}px`}>
         {#if !$isCleared.all}
             <div class="top flex">
                 {#if $outShow && layout}
@@ -305,9 +435,9 @@
                 {#if $outShow && layout}
                     <div class="buttons" style="display: flex;width: 100%;">
                         <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                        <Button style="flex: 1;" on:click={previous} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
+                        <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
                         <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outNumber + 1}/{totalSlides}</span>
-                        <Button style="flex: 1;" on:click={next} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                        <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
                         <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
                     </div>
                 {/if}
@@ -349,14 +479,59 @@
     }
 
     .left {
-        border-inline-end: 4px solid var(--primary-lighter);
+        border-inline-end: 0;
     }
     .right {
-        border-inline-start: 4px solid var(--primary-lighter);
+        border-inline-start: 0;
     }
 
     .center {
         flex: 1;
+    }
+
+    /* Resizers */
+    .resizer {
+        position: relative;
+        z-index: 1;
+        width: 6px;
+        background: var(--primary-darker);
+        cursor: col-resize;
+        transition: background 0.2s ease;
+        user-select: none;
+        /* Expand touch area */
+        padding: 0 2px;
+        margin: 0 -2px;
+    }
+
+    .resizer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px; /* single visual line */
+        transform: translateX(-50%);
+        background-color: var(--primary-lighter);
+        transition: background-color 0.2s ease, width 0.2s ease;
+    }
+
+    .resizer:hover,
+    .resizer:focus {
+        background: var(--primary-darkest);
+        outline: none;
+    }
+
+    .resizer:hover::before {
+        background-color: var(--primary-darkest);
+    }
+
+    .resizer:focus {
+        box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .resizer.snapping::before {
+        background-color: var(--primary);
+        width: 4px;
     }
 
     /* ///// */
@@ -370,6 +545,17 @@
 
         overflow-y: auto;
     }
+
+    /* Center panel scroll (slides list) */
+    .scroll {
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
 
     /* ///// */
 

@@ -2,11 +2,13 @@ import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../types/Show"
-import { downloadMedia } from "../data/downloadMedia"
+import { downloadLessonsMedia } from "../data/downloadMedia"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
+import { Media } from "../../types/Main"
+import { Project } from "../../types/Projects"
 
 const PCO_API_version = 2
 
@@ -14,6 +16,34 @@ type PCORequestData = {
     scope: PCOScopes
     endpoint: string
     params?: Record<string, string> // Add params type
+}
+
+interface ServiceType {
+    id: string
+    attributes: {
+        name: string
+    }
+}
+
+interface Plan {
+    id: string
+    attributes: {
+        title: string
+        sort_date: string
+        created_at: string
+        items_count: number
+    }
+}
+
+interface ProjectItem {
+    id: string
+    attributes: {
+        item_type: string
+        title?: string
+        description?: string
+        length?: number
+    }
+    custom_arrangement_sequence?: any[]
 }
 
 export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any> {
@@ -82,127 +112,243 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 // LOAD SERVICES
 
 const ONE_WEEK_MS = 604800000
-export async function pcoLoadServices(dataPath: string) {
-    const typesEndpoint = "service_types"
-    const SERVICE_TYPES = await pcoRequest({
-        scope: "services",
-        endpoint: typesEndpoint
-    })
 
-    if (!SERVICE_TYPES || !SERVICE_TYPES[0]?.id) {
-        sendToMain(ToMain.ALERT, "No service types found in Planning Center! Please create some services first.")
+export async function pcoLoadServices(dataPath: string) {
+    const serviceTypes = await fetchServiceTypes()
+    if (!serviceTypes) {
+        console.info("No service types found in Planning Center")
         return
     }
 
     sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
-    const projects: any[] = []
+    const results = await processAllServiceTypes(serviceTypes, dataPath)
+
+    console.debug("PCO shows count:", results.shows.length)
+
+    if (results.downloadableMedia.length > 0) {
+        downloadLessonsMedia(results.downloadableMedia)
+    }
+
+    sendToMain(ToMain.PCO_PROJECTS, { shows: results.shows, projects: results.projects })
+}
+
+async function fetchServiceTypes() {
+    const typesEndpoint = "service_types"
+    const serviceTypes = await pcoRequest({
+        scope: "services",
+        endpoint: typesEndpoint
+    })
+
+    if (!serviceTypes || !serviceTypes[0]?.id) {
+        sendToMain(ToMain.ALERT, "No service types found in Planning Center! Please create some services first.")
+        return null
+    }
+
+    return serviceTypes
+}
+
+async function processAllServiceTypes(serviceTypes: ServiceType[], dataPath: string): Promise<any> {
+    const projects: Project[] = []
     const shows: Show[] = []
-    const downloadableMedia: any[] = []
+    const downloadableMedia: Media[] = []
 
     await Promise.all(
-        SERVICE_TYPES.map(async (serviceType: any) => {
-            const plansEndpoint = typesEndpoint + `/${serviceType.id}/plans`
-            const SERVICE_PLANS = await pcoRequest({
-                scope: "services",
-                endpoint: plansEndpoint,
-                params: {
-                    order: "sort_date",
-                    filter: "future"
-                }
-            })
+        serviceTypes.map(async (serviceType) => {
+            const servicePlans = await fetchServicePlans(serviceType)
+            if (!servicePlans || !servicePlans.length) return
 
-            if (!SERVICE_PLANS || !SERVICE_PLANS[0]?.id) {
-                console.warn(`No plans found for service type ${serviceType.attributes.name} (${serviceType.id})`)
-                return
-            }
+            const results = await processServicePlans(servicePlans, serviceType, dataPath)
 
-            // Now we only need to filter for the one week window since we're already getting future plans
-            const filteredPlans = SERVICE_PLANS.filter(({ attributes: a }: any) => {
-                if (a.items_count === 0) return false
-                const date = new Date(a.sort_date).getTime()
-                const today = Date.now()
-                return date < today + ONE_WEEK_MS
-            })
-
-            await Promise.all(
-                filteredPlans.map(async (plan: any) => {
-                    const itemsEndpoint = plansEndpoint + `/${plan.id}/items`
-                    const PLAN_ITEMS = await pcoRequest({ scope: "services", endpoint: itemsEndpoint })
-                    if (!PLAN_ITEMS[0]?.id) return
-
-                    // const orderedItems = PLAN_ITEMS.sort((a, b) => a.attributes.sequence - b.attributes.sequence)
-
-                    const projectItems: any[] = []
-                    for (const item of PLAN_ITEMS) {
-                        const type: "song" | "header" | "media" | "item" = item.attributes.item_type
-                        if (type === "song") {
-                            const songDataEndpoint = itemsEndpoint + `/${item.id}/song`
-                            const SONG_DATA: any = (await pcoRequest({ scope: "services", endpoint: songDataEndpoint }))[0]
-                            if (!SONG_DATA?.id) return
-                            const arrangementEndpoint = `/songs/${SONG_DATA.id}/arrangements`
-                            const songArrangement: any = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))[0]
-                            if (!songArrangement?.id) return
-
-                            const SONG = songArrangement.attributes
-
-                            // let lyrics = SONG.lyrics || ""
-                            const sequence: string[] = plan.custom_arrangement_sequence || SONG.sequence || []
-                            let SECTIONS: any[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections` }))[0]?.attributes.sections || []
-                            if (!SECTIONS.length) SECTIONS = sequence.map((id) => ({ label: id, lyrics: "" }))
-
-                            const show = getShow(SONG_DATA, SONG, SECTIONS)
-                            const showId = `pcosong_${SONG_DATA.id}`
-                            shows.push({ id: showId, ...show })
-
-                            projectItems.push({ type: "show", id: showId, scheduleLength: item.attributes.length })
-                        } else if (type === "item") {
-                            const showId = `pcosong_${item.id}`
-                            const show = getShow(item, {}, [])
-                            shows.push({ id: showId, ...show })
-                            projectItems.push({ type: "show", id: showId, scheduleLength: item.attributes.length })
-                        } else if (type === "media") {
-                            const mediaEndpoint = itemsEndpoint + `/${item.id}/media`
-                            const MEDIA = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))[0]
-                            if (!MEDIA?.id) return
-                            const ATTACHEMENT = (await pcoRequest({ scope: "services", endpoint: `media/${MEDIA.id}/attachments` }))[0]
-                            if (!ATTACHEMENT?.id) return
-                            const DOWNLOAD_URL = await getMediaStreamUrl(`attachments/${ATTACHEMENT.id}/open`)
-
-                            // ATTACHEMENT.attributes.url (this is not streamable, just web downloadable)
-                            const downloadURL = DOWNLOAD_URL
-
-                            downloadableMedia.push({ path: dataPath, name: serviceType.attributes.name, type: "planningcenter", files: [{ name: ATTACHEMENT.attributes.filename, url: downloadURL }] })
-
-                            const fileFolderPath = getDataFolder(dataPath, dataFolderNames.planningcenter)
-                            const filePath = path.join(fileFolderPath, serviceType.attributes.name, ATTACHEMENT.attributes.filename)
-
-                            projectItems.push({ name: MEDIA.attributes.title, scheduleLength: item.attributes.length, type: MEDIA.attributes.length ? "video" : "image", id: filePath })
-                        } else if (type === "header") {
-                            projectItems.push({ type: "section", id: uid(5), name: item.attributes.title || "", scheduleLength: item.attributes.length, notes: item.attributes.description || "" })
-                        }
-                    }
-
-                    if (!projectItems.length) return
-
-                    const projectData = {
-                        id: plan.id,
-                        name: plan.attributes.title || getDateTitle(plan.attributes.sort_date),
-                        scheduledTo: new Date(plan.attributes.sort_date).getTime(),
-                        created: new Date(plan.attributes.created_at).getTime(),
-                        folderId: serviceType.id || "",
-                        folderName: serviceType.attributes.name || "",
-                        items: projectItems
-                    }
-                    if (Object.keys(projectData).length) projects.push(projectData)
-                })
-            )
+            projects.push(...results.projects)
+            shows.push(...results.shows)
+            downloadableMedia.push(...results.downloadableMedia)
         })
     )
 
-    downloadMedia(downloadableMedia)
+    return { projects, shows, downloadableMedia }
+}
 
-    sendToMain(ToMain.PCO_PROJECTS, { shows, projects })
+async function fetchServicePlans(serviceType: ServiceType) {
+    const typesEndpoint = "service_types"
+    const plansEndpoint = `${typesEndpoint}/${serviceType.id}/plans`
+
+    const servicePlans = await pcoRequest({
+        scope: "services",
+        endpoint: plansEndpoint,
+        params: {
+            order: "sort_date",
+            filter: "future"
+        }
+    })
+
+    if (!servicePlans || !servicePlans[0]?.id) {
+        console.warn(`No plans found for service type ${serviceType.attributes.name} (${serviceType.id})`)
+        return null
+    }
+
+    // Filter for the one week window
+    const filteredPlans = servicePlans.filter(({ attributes: a }: any) => {
+        if (a.items_count === 0) return false
+        const date = new Date(a.sort_date).getTime()
+        const today = Date.now()
+        return date < today + ONE_WEEK_MS
+    })
+
+    console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
+    return filteredPlans
+}
+
+async function processServicePlans(plans: Plan[], serviceType: ServiceType, dataPath: string) {
+    const projects: Project[] = []
+    const shows: Show[] = []
+    const downloadableMedia: Media[] = []
+
+    await Promise.all(
+        plans.map(async (plan: Plan) => {
+            const results = await processPlan(plan, serviceType, dataPath)
+            if (results) {
+                if (results.project) projects.push(results.project)
+                if (results.shows.length) shows.push(...results.shows)
+                if (results.downloadableMedia.length) downloadableMedia.push(...results.downloadableMedia)
+            }
+        })
+    )
+
+    return { projects, shows, downloadableMedia }
+}
+
+async function processPlan(plan: Plan, serviceType: ServiceType, dataPath: string): Promise<any> {
+    const typesEndpoint = "service_types"
+    const plansEndpoint = `${typesEndpoint}/${serviceType.id}/plans`
+    const itemsEndpoint = `${plansEndpoint}/${plan.id}/items`
+
+    const planItems = await pcoRequest({ scope: "services", endpoint: itemsEndpoint })
+    if (!planItems[0]?.id) return null
+
+    const projectItems = []
+    const shows = []
+    const downloadableMedia = []
+
+    for (const item of planItems) {
+        const type = item.attributes.item_type
+        let result: any
+
+        if (type === "song") {
+            result = await processSongItem(item, itemsEndpoint)
+        } else if (type === "item") {
+            result = processRegularItem(item)
+        } else if (type === "media") {
+            result = await processMediaItem(item, itemsEndpoint, serviceType, dataPath)
+        } else if (type === "header") {
+            result = processHeaderItem(item)
+        }
+
+        if (result) {
+            if (result.projectItem) projectItems.push(result.projectItem)
+            if (result.show) shows.push(result.show)
+            if (result.downloadableMedia) downloadableMedia.push(result.downloadableMedia)
+        }
+    }
+
+    if (!projectItems.length) return null
+
+    const project = createProjectData(plan, serviceType, projectItems)
+
+    return { project, shows, downloadableMedia }
+}
+
+async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
+    const songDataEndpoint = `${itemsEndpoint}/${item.id}/song`
+    const songData = (await pcoRequest({ scope: "services", endpoint: songDataEndpoint }))[0]
+    if (!songData?.id) return null
+
+    const arrangementEndpoint = `/songs/${songData.id}/arrangements`
+    const songArrangement = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))[0]
+    if (!songArrangement?.id) return null
+
+    const song = songArrangement.attributes
+    const sequence = item.custom_arrangement_sequence || song.sequence || []
+
+    let sections = (await pcoRequest({
+        scope: "services",
+        endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections`
+    }))[0]?.attributes.sections || []
+
+    if (!sections.length) {
+        sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+    }
+
+    const show = getShow(songData, song, sections)
+    const showId = `pcosong_${songData.id}`
+
+    return {
+        show: { id: showId, ...show },
+        projectItem: { type: "show", id: showId, scheduleLength: item.attributes.length }
+    }
+}
+
+function processRegularItem(item: ProjectItem) {
+    const showId = `pcosong_${item.id}`
+    const show = getShow(item, {}, [])
+
+    return {
+        show: { id: showId, ...show },
+        projectItem: { type: "show", id: showId, scheduleLength: item.attributes.length }
+    }
+}
+
+async function processMediaItem(item: ProjectItem, itemsEndpoint: string, serviceType: ServiceType, dataPath: string) {
+    const mediaEndpoint = `${itemsEndpoint}/${item.id}/media`
+    const media = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))[0]
+    if (!media?.id) return null
+
+    const attachment = (await pcoRequest({ scope: "services", endpoint: `media/${media.id}/attachments` }))[0]
+    if (!attachment?.id) return null
+
+    const downloadUrl = await getMediaStreamUrl(`attachments/${attachment.id}/open`)
+
+    const fileFolderPath = getDataFolder(dataPath, dataFolderNames.planningcenter)
+    const filePath = path.join(fileFolderPath, serviceType.attributes.name, attachment.attributes.filename)
+
+    return {
+        projectItem: {
+            name: media.attributes.title,
+            scheduleLength: item.attributes.length,
+            type: media.attributes.length ? "video" : "image",
+            id: filePath
+        },
+        downloadableMedia: {
+            path: dataPath,
+            name: serviceType.attributes.name,
+            type: "planningcenter",
+            files: [{ name: attachment.attributes.filename, url: downloadUrl }]
+        }
+    }
+}
+
+function processHeaderItem(item: ProjectItem) {
+    return {
+        projectItem: {
+            type: "section",
+            id: uid(5),
+            name: item.attributes.title || "",
+            scheduleLength: item.attributes.length,
+            notes: item.attributes.description || ""
+        }
+    }
+}
+
+function createProjectData(plan: Plan, serviceType: ServiceType, projectItems: ProjectItem[]) {
+    return {
+        id: plan.id,
+        name: plan.attributes.title || getDateTitle(plan.attributes.sort_date),
+        scheduledTo: new Date(plan.attributes.sort_date).getTime(),
+        created: new Date(plan.attributes.created_at).getTime(),
+        folderId: serviceType.id || "",
+        folderName: serviceType.attributes.name || "",
+        items: projectItems
+    }
 }
 
 function getDateTitle(dateString: string) {

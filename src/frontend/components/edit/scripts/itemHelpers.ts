@@ -1,18 +1,18 @@
 import { get } from "svelte/store"
 import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
-import { activeEdit, activeShow, activeStage, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+import type { StageItem } from "../../../../types/Stage"
+import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
-import { dynamicValueText, replaceDynamicValues } from "../../helpers/showActions"
+import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
-import type { StageItem } from "../../../../types/Stage"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
 
@@ -51,7 +51,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
-        const timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
+        const timerId = options.timer?.id || sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
         newData.timer = { id: timerId, ...get(timers)[timerId] }
         if (get(timers)[timerId]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
     } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", showTime: true, seconds: false }
@@ -290,19 +290,20 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
 
     const conditionValues: boolean[] = condition.values.map((cVal) => {
         const element = cVal.element || "text"
-        const elementId = cVal.elementId || ""
+        let elementId = cVal.elementId || ""
+        if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
 
         let operator = cVal.operator || "is"
-        if (element === "timer") operator = cVal.operator || "isAbove"
+        if (element === "timer") operator = cVal.operator || "isRunning"
 
         const data = cVal.data || "value"
         let dataValue: string | number = cVal.value ?? ""
-        if (data === "seconds") dataValue = (cVal.seconds || 0).toString()
+        if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
 
         let value = ""
         if (element === "text") value = itemsText
         else if (element === "timer") value = getTimerValue(elementId)
-        else if (element === "variable") value = getVariableValue(elementId)
+        else if (element === "variable") value = _getVariableValue(elementId)
         else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
 
         if (operator === "is") {
@@ -313,6 +314,8 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
             return value.includes(dataValue)
         } else if (operator === "hasNot") {
             return !value.includes(dataValue)
+        } else if (operator === "isRunning") {
+            if (element === "timer") return isTimerRunning(elementId)
         } else if (operator === "isAbove") {
             return Number(value) > Number(dataValue)
         } else if (operator === "isBelow") {
@@ -336,14 +339,37 @@ function isConditionMet(condition: Condition | undefined, itemsText: string, typ
     return true
 }
 
+export function getFirstActiveTimer() {
+    let firstTimerId = get(activeTimers)[0]?.id
+    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find((timer) => timer.type !== "counter")?.id || ""
+
+    return firstTimerId
+}
+
 function getTimerValue(timerId: string) {
     const timer = get(timers)[timerId]
     if (!timer) return "0"
     return getCurrentTimerValue(timer, { id: timerId }, new Date()).toString()
 }
 
-export function getVariableValue(variableId: string) {
-    const variable = get(variables)[variableId]
+function isTimerRunning(timerId: string) {
+    const timer = get(timers)[timerId]
+    if (!timer) return false
+
+    if (timer.type === "clock" || timer.type === "event") {
+        const value = Number(getTimerValue(timerId))
+        return value > 0
+    }
+
+    return !!get(activeTimers).find((a) => a.id === timerId)
+}
+
+export function _getVariableValue(dynamicId: string) {
+    if (!get(variables)[dynamicId]) {
+        return getVariableValue(dynamicId)
+    }
+
+    const variable = get(variables)[dynamicId]
     if (!variable) return ""
 
     if (variable.type === "text") {

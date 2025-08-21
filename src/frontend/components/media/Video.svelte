@@ -54,9 +54,6 @@
     $: playbackRate = Number(mediaStyle.speed) || 1
     // $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 
-    // path starting at "/" auto completes to app root, but should be file://
-    $: if (typeof path === "string" && path[0] === "/") path = `file://${path}`
-
     $: isVideoSupported(path)
 
     $: subtitle = $media[path]?.subtitle

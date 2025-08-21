@@ -148,13 +148,15 @@ export function getFileStats(filePath: string, disableLog = false) {
 
 export function makeDir(folderPath: string) {
     try {
-        folderPath = fs.mkdirSync(folderPath, { recursive: true }) || folderPath
+        fs.mkdirSync(folderPath, { recursive: true })
     } catch (err) {
         console.error("Could not create a directory to path: " + folderPath + "! " + String(err))
         sendToMain(ToMain.ALERT, "Error: Could not create folder at: " + folderPath + "!")
     }
+}
 
-    return folderPath
+export function getValidFileName(path: string) {
+    return path.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim()
 }
 
 // SELECT DIALOGS
@@ -186,11 +188,11 @@ export function openSystemFolder(folderPath: string) {
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(folderPath: string | null = null, folderName = "Shows", shouldCreateFolder = true): string {
+export function getDocumentsFolder(folderPath: string | null = null, folderName = dataFolderNames.shows, shouldCreateFolder = true): string {
     const documentsFolderPath = [app.getPath("documents"), appFolderName]
     if (folderName) documentsFolderPath.push(folderName)
     if (!folderPath) folderPath = path.join(...documentsFolderPath)
-    if (!doesPathExist(folderPath) && shouldCreateFolder) folderPath = makeDir(folderPath)
+    if (!doesPathExist(folderPath) && shouldCreateFolder) makeDir(folderPath)
 
     return folderPath
 }
@@ -202,15 +204,14 @@ export function checkShowsFolder(folderPath: string): string {
         return folderPath
     }
 
-    if (doesPathExist(folderPath)) return folderPath
-
-    return makeDir(folderPath)
+    return createFolder(folderPath)
 }
 
 export const dataFolderNames = {
     shows: "Shows",
     backups: "Backups",
     scriptures: "Bibles",
+    onlineMedia: "Online",
     mediaBundle: "Media",
     exports: "Exports",
     imports: "Imports",
@@ -218,7 +219,7 @@ export const dataFolderNames = {
     planningcenter: "Planning Center",
     recordings: "Recordings",
     audio: "Audio",
-    userData: "Config",
+    userData: "Config"
 }
 
 // DATA PATH
@@ -235,7 +236,8 @@ export function getExtension(name: string) {
 
 export function createFolder(folderPath: string) {
     if (doesPathExist(folderPath)) return folderPath
-    return makeDir(folderPath)
+    makeDir(folderPath)
+    return folderPath
 }
 
 // 2025-01-21_15-59
@@ -277,7 +279,7 @@ export function getPaths() {
         // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
-        music: app.getPath("music"),
+        music: app.getPath("music")
     }
 
     // this will create "documents/Shows" folder if it doesen't exist
@@ -345,6 +347,28 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     }
 
     return { path: folderPath, files, filesInFolders, folderFiles }
+}
+
+// READ_FOLDERS
+export async function getFoldersContent(paths: { path: string }[]) {
+    const list: { [key: string]: FileData[] } = {}
+
+    for (let i = 0; i < paths.length; i++) {
+        const folderPath = paths[i].path
+        const fileList = await readFolderAsync(folderPath)
+
+        const files: FileData[] = []
+        for (const name of fileList) {
+            const filePath = path.join(folderPath, name)
+            const stats = getFileStats(filePath)
+            const hasContent = !stats?.folder || !!(await readFolderAsync(filePath)).length
+            if (hasContent && stats) files.push({ ...stats, name })
+        }
+
+        list[folderPath] = files
+    }
+
+    return list
 }
 
 export function getSimularPaths(data: { paths: string[] }) {
@@ -469,20 +493,22 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
     const MP4Box = require("mp4box")
 
     return new Promise((resolve) => {
-        let arrayBuffer: ArrayBuffer
         try {
-            arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+            const buffer = fs.readFileSync(data.path)
+            const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
-            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
+            mp4boxfile.onReady = (info: { tracks: { codec: string }[];[key: string]: any }) => {
                 const codecs = info.tracks.map((track: { codec: string }) => track.codec)
                 const mimeType = getMimeType(data.path)
                 const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
                 resolve({ ...data, codecs, mimeType, mimeCodec })
             }
 
-            mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+            const ab: any = arrayBuffer
+            ab.fileStart = 0
+            mp4boxfile.appendBuffer(ab)
             mp4boxfile.flush()
         } catch (err) {
             console.error("MP4Box error catch:", err)
@@ -843,7 +869,7 @@ const FIXES = {
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openSystemFolder(stores.SETTINGS.path)
-    },
+    }
 }
 function specialCaseFixer() {
     const defaultDataFolder = getDocumentsFolder(null, "", false)

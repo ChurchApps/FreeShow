@@ -4,7 +4,7 @@ import { clone } from "./array"
 import { nextSlide } from "./showActions"
 import { playFolder } from "../../utils/shortcuts"
 
-export function newSlideTimer(timerId: string, duration: number, folderPath: string = "") {
+export function newSlideTimer(timerId: string, duration: number, folderPath = "") {
     if (duration <= 0) return
 
     if (get(slideTimers)[timerId]) {
@@ -21,14 +21,6 @@ export function newSlideTimer(timerId: string, duration: number, folderPath: str
     }, 10)
 
     function timerEnded(id: string) {
-        // get and reset active element
-        const activeElem = document.activeElement
-        if (activeElem) {
-            setTimeout(() => {
-                ;(activeElem as HTMLElement).focus()
-            }, 10)
-        }
-
         if (!get(slideTimers)[id]) return
 
         const data = get(slideTimers)[id].data || ""

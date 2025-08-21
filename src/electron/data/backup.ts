@@ -30,7 +30,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     // if (bibles) await syncBibles()
 
     // SHOWS
-    if (!isAutoBackup) await syncAllShows()
+    if (!isAutoBackup || customTriggers?.backupShows) await syncAllShows()
 
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
@@ -118,7 +118,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
         }
 
         stores[storeId].clear()
-        ;(stores[storeId] as any).set(data)
+            ; (stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
         sendMain(storeId as Main, data)
     }

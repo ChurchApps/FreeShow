@@ -23,6 +23,7 @@ import {
     openedFolders,
     overlays,
     playerVideos,
+    profiles,
     projects,
     projectTemplates,
     projectView,
@@ -244,8 +245,8 @@ export const _updaters = {
     category_shows: {
         store: categories,
         ...getDefaultCategoryUpdater("shows"),
-        select: (id: string, _data, initializing: boolean) => {
-            if (!initializing) return
+        select: (id: string, data, initializing: boolean) => {
+            if (!initializing || data.data?.name) return
 
             setDrawerTabData("shows", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
@@ -450,6 +451,7 @@ export const _updaters = {
             if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
                 projects.update((a) => {
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
+                    a[get(activeProject)!].shows[get(activeShow)!.index!].layoutInfo = { name: _show(id).get("layouts")[subkey]?.name || "" }
                     return a
                 })
             }
@@ -558,6 +560,13 @@ export const _updaters = {
                 })
             }, 100)
         }
+    },
+    settings_profile: {
+        store: profiles,
+        select: (id: string, data, initializing: boolean) => {
+            if (!initializing || data.key) return
+            activeRename.set("profile_" + id)
+        }
     }
 }
 
@@ -594,10 +603,10 @@ function hexToRgb(hex: string) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
         ? {
-              r: parseInt(result[1], 16),
-              g: parseInt(result[2], 16),
-              b: parseInt(result[3], 16)
-          }
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        }
         : null
 }
 

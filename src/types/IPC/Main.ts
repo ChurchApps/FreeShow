@@ -1,4 +1,3 @@
-import type { Family } from "css-fonts"
 import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
@@ -58,7 +57,6 @@ export enum Main {
     ////
     SHOWS = "SHOWS",
     AUTO_UPDATE = "AUTO_UPDATE",
-    GET_SYSTEM_FONTS = "GET_SYSTEM_FONTS",
     URL = "URL",
     LANGUAGE = "LANGUAGE",
     GET_PATHS = "GET_PATHS",
@@ -86,7 +84,9 @@ export enum Main {
     READ_EXIF = "READ_EXIF",
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
-    DOWNLOAD_MEDIA = "DOWNLOAD_MEDIA",
+    DOWNLOAD_LESSONS_MEDIA = "DOWNLOAD_LESSONS_MEDIA",
+    MEDIA_DOWNLOAD = "MEDIA_DOWNLOAD",
+    MEDIA_IS_DOWNLOADED = "MEDIA_IS_DOWNLOADED",
     NOW_PLAYING = "NOW_PLAYING",
     NOW_PLAYING_UNSET = "NOW_PLAYING_UNSET",
     // MEDIA_BASE64 = "MEDIA_BASE64",
@@ -120,6 +120,7 @@ export enum Main {
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
+    READ_FOLDERS = "READ_FOLDERS",
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
@@ -160,7 +161,9 @@ export interface MainSendPayloads {
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
-    [Main.DOWNLOAD_MEDIA]: LessonsData[]
+    [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
+    [Main.MEDIA_DOWNLOAD]: { url: string; dataPath: string }
+    [Main.MEDIA_IS_DOWNLOADED]: { url: string; dataPath: string }
     [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string; unknownLang: string[] }
     [Main.NOW_PLAYING_UNSET]: { dataPath: string }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
@@ -189,6 +192,7 @@ export interface MainSendPayloads {
     [Main.BUNDLE_MEDIA_FILES]: { showsPath: string; dataPath: string }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
+    [Main.READ_FOLDERS]: { path: string }[]
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
@@ -230,7 +234,6 @@ export interface MainReturnPayloads {
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
     [Main.GET_DISPLAYS]: Display[]
-    [Main.GET_SYSTEM_FONTS]: Promise<{ fonts: Family[] }>
     [Main.GET_PATHS]: MainFilePaths
     [Main.SHOWS_PATH]: string
     [Main.DATA_PATH]: string
@@ -246,6 +249,7 @@ export interface MainReturnPayloads {
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
+    [Main.MEDIA_IS_DOWNLOADED]: Promise<string | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]
@@ -258,6 +262,7 @@ export interface MainReturnPayloads {
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
+    [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
     [Main.READ_FILE]: { content: string }
     [Main.PCO_DISCONNECT]: { success: boolean }
     [Main.CHUMS_DISCONNECT]: { success: boolean }

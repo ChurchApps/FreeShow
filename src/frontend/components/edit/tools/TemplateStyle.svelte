@@ -49,7 +49,7 @@
 <div class="section">
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
-        <Color bind:value={settings.backgroundColor} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
+        <Color value={settings.backgroundColor || ""} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
     </CombinedInput>
     <CombinedInput>
         <p><T id="edit.background_media" /></p>
@@ -69,12 +69,12 @@
     </CombinedInput>
 
     <CombinedInput>
-        <p title={$dictionary.edit?.overlay_content}><T id="edit.overlay_content" /></p>
+        <p data-title={$dictionary.edit?.overlay_content}><T id="edit.overlay_content" /></p>
         <Dropdown options={overlayList} value={$overlays[settings.overlayId || ""]?.name || "—"} on:click={(e) => setValue(e?.detail?.id, "overlayId")} />
     </CombinedInput>
 
     <CombinedInput>
-        <p title={$dictionary.edit?.different_first_template}><T id="edit.different_first_template" /></p>
+        <p data-title={$dictionary.edit?.different_first_template}><T id="edit.different_first_template" /></p>
         <Button
             on:click={() => {
                 popupData.set({
@@ -107,12 +107,12 @@
     </CombinedInput>
 
     <CombinedInput>
-        <p title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
+        <p data-title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
         <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
     </CombinedInput>
 
     <CombinedInput>
-        <p title={$dictionary.edit?.break_long_lines_tip}><T id="edit.break_long_lines" /></p>
+        <p data-title={$dictionary.edit?.break_long_lines_tip}><T id="edit.break_long_lines" /></p>
         <NumberInput value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
     </CombinedInput>
 </div>

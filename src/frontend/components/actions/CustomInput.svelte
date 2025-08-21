@@ -73,7 +73,7 @@
     const getOptions = {
         id_select_project: () => convertToOptions($projects),
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
-        clear_overlay: () => convertToOptions($overlays),
+        clear_overlay: () => [...convertToOptions($overlays), ...convertToOptions($effects)],
         id_start_effect: () => convertToOptions($effects),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
@@ -84,6 +84,7 @@
         id_start_timer: () => convertToOptions($timers),
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
+        // WIP remove all actions that reference this action and so on - to prevent infinite loop
         run_action: () => convertToOptions($actions).filter((a) => a.name && a.id !== mainId),
         set_template: () => convertToOptions($templates),
         toggle_output: () => convertToOptions($outputs)

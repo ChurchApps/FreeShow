@@ -5,6 +5,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
     import { dataPath, dictionary, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { newToast, wait } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -117,7 +118,7 @@
 <div class="grid" on:wheel={wheel}>
     {#each { length: pageCount } as _page, i}
         <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
-            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} on:click={(e) => outputPdf(e, i)}>
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
                 <canvas bind:this={canvases[i]} />
             </div>
         </div>
@@ -146,7 +147,7 @@
             {#if zoomOpened}
                 <div class="zoom_container" transition:slide={{ duration: 150 }}>
                     <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
-                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
+                        <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
                     </Button>
                     <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
                         <Icon size={1.3} id="add" white />

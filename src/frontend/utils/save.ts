@@ -56,6 +56,7 @@ import {
     overlays,
     playerVideos,
     ports,
+    profiles,
     projectTemplates,
     projects,
     redoHistory,
@@ -134,6 +135,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         outputs: get(outputs),
         sorted: get(sorted),
         styles: get(styles),
+        profiles: get(profiles),
         remotePassword: get(remotePassword),
         resized: get(resized),
         slidesOptions: get(slidesOptions),
@@ -240,6 +242,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
 }
 
 export function initializeClosing(skipPopup = false) {
+    // don't save automatically if an error has happened in case it breaks something
     if (!skipPopup && (get(special).showClosePopup || get(errorHasOccured))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })
@@ -252,11 +255,11 @@ export function closeApp() {
 
 // GET SAVED STATE
 
-let initialized = false
 export function unsavedUpdater() {
     const cachedValues: { [key: string]: string } = {}
     const s = { ...saveList, folders, projects, showsCache, stageShows, deletedShows, renamedShows }
 
+    let initialized = false
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
 
@@ -269,7 +272,9 @@ export function unsavedUpdater() {
                 cachedValues[id] = stringObj
             }
 
-            if (initialized) saved.set(false)
+            if (!initialized) return
+
+            saved.set(false)
             if (id === "deletedShows" || id === "renamedShows") {
                 setTimeout(() => saved.set(false))
             }
@@ -345,6 +350,7 @@ const saveList: { [key in SaveList]: any } = {
     outputs: null,
     sorted: null,
     styles,
+    profiles,
     overlayCategories,
     overlays,
     playerVideos,

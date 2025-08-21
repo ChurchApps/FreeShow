@@ -3,7 +3,8 @@
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import { translate } from "../../util/helpers"
-    import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
+    import { GetLayout, getNextSlide, nextSlide } from "../../util/output"
+    import { send } from "../../util/socket"
     import { _set, dictionary, outLayout, outputMode, outShow, outSlide } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slide from "../show/Slide.svelte"
@@ -20,9 +21,11 @@
 
     // click on content
     function click(e: any) {
-        if (e.clientX < window.innerWidth / 3) previous()
-        else next()
+        // if (e.clientX < window.innerWidth / 3) previous()
+        // else next()
         // if (!($outSlide + 1 >= totalSlides))
+        if (e.clientX < window.innerWidth / 3) send("API:previous_slide")
+        else send("API:next_slide")
     }
 </script>
 

@@ -261,6 +261,7 @@ export function changeVariable(data: API_variable) {
 
     let key = data.key
     if (variable.type === "random_number" && !key) key = "randomize"
+    if (variable.type === "text_set" && !key) key = "next"
     else if (!key) key = "enabled"
 
     if (key === "randomize") {
@@ -269,15 +270,33 @@ export function changeVariable(data: API_variable) {
     } else if (key === "reset") {
         resetVariable(id)
         return
+    } else if (key === "next" || key === "previous") {
+        const activeSet = variable.activeTextSet ?? 0
+        const newValue = key === "next" ? Math.min(activeSet + 1, (variable.textSets?.length ?? 1) - 1) : Math.max(activeSet - 1, 0)
+        updateVariable(newValue, id, "activeTextSet")
+        updateVariable(newValue, id, "activeTextSet")
+        return
     }
 
     let value
-    if (data.variableAction || variable.type === "number") {
+    if (key === "expression") {
+        const stringValue = (data.value || "").toString()
+        const replacedValues = stringValue.includes("{") ? getDynamicValue(stringValue) : stringValue
+        console.log(replacedValues)
+        const calculated = new Function(`return ${replacedValues}`)()
+        console.log(calculated)
+        value = Number(calculated)
+        key = "number"
+    } else if (data.variableAction || variable.type === "number") {
         value = Number(variable.number || variable.default || 0)
         if (data.variableAction === "increment" || key === "increment") value += Number(data.value || variable.step || 1)
         else if (data.variableAction === "decrement" || key === "decrement") value -= Number(data.value || variable.step || 1)
         else if (!data.variableAction) value = Number(data.value || variable.default || 0)
         key = "number"
+    } else if (variable.type === "text_set") {
+        // if (key === "value") {
+        key = "activeTextSet" as any
+        value = Number(data.value ?? 1)
     } else if (data.value !== undefined) {
         value = data.value
         if (key === "value" && typeof value !== "boolean") key = variable.type
@@ -287,7 +306,7 @@ export function changeVariable(data: API_variable) {
     }
     if (value === undefined) return
 
-    updateVariable(value, id, key)
+    updateVariable(value, id, key!)
 }
 function getVariables() {
     return keysToID(get(variables))
@@ -302,6 +321,71 @@ export function resetVariable(id: string) {
     updateVariable(0, id, "number")
     updateVariable("", id, "setName")
     updateVariable([], id, "setLog")
+}
+
+//TIMERS
+
+export function getTimersDetailed() {
+    const allTimers = get(timers)
+    const activeTimersList = get(activeTimers)
+
+    return keysToID(allTimers).map((timer) => ({
+        ...timer,
+        isActive: activeTimersList.some((activeTimer) => activeTimer.id === timer.id),
+        currentTime: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.currentTime,
+        paused: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.paused
+    }))
+}
+
+export function pauseTimerById(id: string) {
+    if (get(outLocked)) return
+
+    const timer = get(timers)[id]
+    if (!timer) return
+
+    // Set the specific timer to paused (similar to pauseAllTimers but for one timer)
+    activeTimers.update((active) => {
+        const timerIndex = active.findIndex((a) => a.id === id)
+        if (timerIndex >= 0) {
+            active[timerIndex].paused = true
+        }
+        return active
+    })
+}
+
+export function pauseTimerByName(name: string) {
+    if (get(outLocked)) return
+
+    if (name.includes("{")) name = getDynamicValue(name)
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
+    if (!timerId) return
+
+    pauseTimerById(timerId)
+}
+
+export function stopTimerById(id: string) {
+    if (get(outLocked)) return
+
+    const timer = get(timers)[id]
+    if (!timer) return
+
+    // Remove from active timers completely (this stops and resets the timer)
+    // This is the same as the existing resetTimer function
+    activeTimers.update((a) => {
+        return a.filter((activeTimer) => activeTimer.id !== id)
+    })
+}
+
+export function stopTimerByName(name: string) {
+    if (get(outLocked)) return
+
+    if (name.includes("{")) name = getDynamicValue(name)
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
+    if (!timerId) return
+
+    stopTimerById(timerId)
 }
 
 // SHOW
@@ -493,21 +577,96 @@ export function timerSeekTo(data: API_seek) {
 
 // SPECIAL
 
+function normalize(str: string) {
+    return str
+        .replace(/[ \-'’".!?]/g, "") // remove all spaces, and special characters
+        .toLowerCase()
+        .normalize("NFD") // Decompose accents
+        .replace(/[\u0300-\u036f]/g, "") // Remove accent marks
+}
+
 export function sortByClosestMatch(array: any[], value: string, key = "name") {
     if (!value) return array
 
-    // the object key must contain the input string
-    array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
+    const normalizedValue = normalize(value)
 
-    function similaritySort(a, b) {
-        const similarityA = 1 / (1 + levenshteinDistance(a[key].toLowerCase(), value.toLowerCase()))
-        const similarityB = 1 / (1 + levenshteinDistance(b[key].toLowerCase(), value.toLowerCase()))
+    // Filter: keep if name or any alias includes the value
+    array = array.filter((a) => {
+        const keyMatch = a[key] && normalize(a[key]).includes(normalizedValue)
+        const aliasMatch = Array.isArray(a.aliases) && a.aliases.some((alias) => normalize(alias).includes(normalizedValue))
+        return keyMatch || aliasMatch
+    })
 
-        return similarityB - similarityA
+    function getSimilarityScoreAndSource(item: any) {
+        const sources: { source: string; isAlias: boolean }[] = []
+
+        if (item[key]) {
+            sources.push({ source: item[key], isAlias: false })
+        }
+
+        if (Array.isArray(item.aliases)) {
+            for (const alias of item.aliases) {
+                sources.push({ source: alias, isAlias: true })
+            }
+        }
+
+        let bestScore = -Infinity
+        let bestSource: string | undefined
+        let isAlias = false
+
+        for (const { source, isAlias: aliasFlag } of sources) {
+            const score = normalizedSimilarity(normalize(source), normalizedValue)
+            if (score > bestScore) {
+                bestScore = score
+                bestSource = source
+                isAlias = aliasFlag
+            }
+        }
+
+        return { score: bestScore, alias: isAlias ? bestSource : undefined }
     }
 
-    return array.sort(similaritySort)
+    array = array.map((item) => {
+        const { score, alias } = getSimilarityScoreAndSource(item)
+        return {
+            ...item,
+            _similarityScore: score,
+            ...(alias ? { aliasMatch: alias } : {})
+        }
+    })
+
+    return array.sort((a, b) => b._similarityScore - a._similarityScore).map(({ _similarityScore, ...rest }) => rest)
 }
+
+// export function sortByClosestMatch(array: any[], value: string, key = "name") {
+//     if (!value) return array
+
+//     const normalizedValue = normalize(value)
+
+//     // Filter: check key or any alias includes the normalized value
+//     array = array.filter((a) => {
+//         const keyMatch = a[key] && normalize(a[key]).includes(normalizedValue)
+//         const aliasMatch = Array.isArray(a.aliases) && a.aliases.some((alias) => normalize(alias.toLowerCase().replaceAll(" ", "")).includes(normalizedValue))
+//         return keyMatch || aliasMatch
+//     })
+
+//     function similarityScore(item) {
+//         const targets = [...(item[key] ? [normalize(item[key])] : []), ...(Array.isArray(item.aliases) ? item.aliases.map(a => normalize(a).toLowerCase().replaceAll(" ", "")) : [])]
+
+//         const match = Math.max(...targets.map((t) => 1 / (1 + levenshteinDistance(t, normalizedValue))))
+//         // if (match !== normalize(item[key]))
+//         return match
+//     }
+
+//     return array.sort((a, b) => similarityScore(b) - similarityScore(a))
+// }
+
+function normalizedSimilarity(a: string, b: string): number {
+    const dist = levenshteinDistance(a, b)
+    const maxLength = Math.max(a.length, b.length)
+    return maxLength === 0 ? 1 : 1 - dist / maxLength
+}
+
 // WIP duplicate of files.ts
 function levenshteinDistance(a, b) {
     if (a.length === 0) return b.length

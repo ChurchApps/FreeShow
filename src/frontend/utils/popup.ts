@@ -70,9 +70,12 @@ import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelte"
 import SelectStyle from "../components/main/popups/SelectStyle.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
+import Confirm from "../components/main/popups/Confirm.svelte"
+import CreateCollection from "../components/main/popups/CreateCollection.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
+    confirm: Confirm,
     custom_text: CustomText,
     import: Import,
     songbeamer_import: SongbeamerImport,
@@ -107,6 +110,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
+    create_collection: CreateCollection,
     scripture_show: ScriptureShow,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
@@ -164,4 +168,10 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
             resolve(value)
         }
     })
+}
+
+export async function confirmCustom(prompt: string) {
+    popupData.set({ prompt })
+    const data = await waitForPopupData("confirm")
+    return !!data
 }

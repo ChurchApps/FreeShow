@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePopup, dictionary, popupData } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -20,7 +21,7 @@
         [3, 2],
         // cinematography
         [1.85, 1],
-        [2.39, 1],
+        [2.39, 1]
         // vertical
         // [9, 16],
     ]
@@ -30,15 +31,12 @@
     const alignOptions = [
         { id: "center", name: "$:edit.align_center:$" },
         { id: "start", name: "$:edit.align_start:$" },
-        { id: "end", name: "$:edit.align_end:$" },
+        { id: "end", name: "$:edit.align_end:$" }
     ]
 
     const isChecked = (e: any) => e.target.checked
 
     function setAspectRatio(value: any) {
-        if ($popupData.action !== "style_ratio") return
-        // if (!value.width || !value.height) return
-
         if ($popupData.trigger) {
             $popupData.trigger(value)
         }
@@ -112,7 +110,7 @@
 
 {#if !active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height)}
     <div class="preview">
-        <div class="box" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)}>
+        <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={triggerClickOnEnterSpace}>
             <p>{active.width}:{active.height}</p>
         </div>
     </div>

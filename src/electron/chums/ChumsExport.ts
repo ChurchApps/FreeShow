@@ -13,7 +13,7 @@ import type { ChumsSongData } from "./types"
 export class ChumsExport {
     public static async sendSongsToChums(data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]): Promise<void> {
         const missingIds = await this.getMissingSongIds(data)
-        console.log("Sending songs to Chums", missingIds.length)
+        // console.log("Sending songs to Chums", missingIds.length)
         if (missingIds.length === 0) return
 
         // Get song data only for missing songs

@@ -5,20 +5,21 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, popupData, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput, refreshOut } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
+    import { getActiveOutputs, refreshOut } from "../../helpers/output"
+    import InputRow from "../../input/InputRow.svelte"
+    import Title from "../../input/Title.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import HiddenInput from "../../inputs/HiddenInput.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
@@ -50,7 +51,8 @@
 
         // properly update output content
         if (key === "style") {
-            refreshOut()
+            // wait to update output, so slide is refreshed after style is changed in output window
+            setTimeout(refreshOut)
         }
 
         if (key === "ndi") {
@@ -81,17 +83,10 @@
                 if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
             } else {
                 a[outputId][key] = value
-
-                // update key output style
-                if (["style", "enabled", "alwaysOnTop", "kioskMode"].includes(key) && a[outputId].keyOutput) {
-                    a[a[outputId].keyOutput][key] = value
-                }
             }
 
             if (key === "ndi") {
-                if (value) {
-                    delete a[outputId].keyOutput
-                } else {
+                if (!value) {
                     ndiData.update((a) => {
                         delete a[outputId]
                         return a
@@ -107,9 +102,7 @@
             }
 
             if (key === "blackmagic") {
-                if (value) {
-                    delete a[outputId].keyOutput
-                } else {
+                if (!value) {
                     // ndiData.update((a) => {
                     //     delete a[outputId]
                     //     return a
@@ -140,11 +133,6 @@
 
             if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
-
-                // update key output
-                if (a[outputId].keyOutput) {
-                    send(OUTPUT, ["SET_VALUE"], { id: a[outputId].keyOutput, key, value })
-                }
             }
 
             return a
@@ -152,6 +140,31 @@
     }
 
     const isChecked = (e: any) => e.target.checked
+
+    function toggleOutput(state: boolean) {
+        toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+        setTimeout(() => {
+            updateOutput("enabled", state)
+            if ($outputDisplay) {
+                let enabled = getActiveOutputs($outputs, false)
+                Object.entries($outputs).forEach(([id, output]) => {
+                    send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
+                })
+            }
+        }, 100)
+    }
+
+    $: styleId = currentOutput?.style || ""
+    function editStyle() {
+        activeStyle.set(styleId)
+        settingsTab.set("styles")
+    }
+
+    $: stageId = currentOutput?.stageOutput || ""
+    function editStage() {
+        activeStage.set({ id: stageId, items: [] })
+        activePage.set("stage")
+    }
 
     // ndi
     function updateNdiData(e: any, key: string) {
@@ -162,6 +175,8 @@
         if (!newData) newData = {}
 
         let value = e?.detail?.id ?? e
+        console.log(key, value)
+
         newData[key] = value
 
         updateOutput("ndiData", newData)
@@ -175,14 +190,14 @@
     }
 
     const framerates = [
-        { id: "10", name: "10 fps" },
-        { id: "12", name: "12 fps" },
-        { id: "24", name: "24 fps" },
-        { id: "25", name: "25 fps" },
-        { id: "30", name: "30 fps" },
-        { id: "48", name: "48 fps" },
-        { id: "50", name: "50 fps" },
-        { id: "60", name: "60 fps" }
+        { value: "10", label: "10 fps" },
+        { value: "12", label: "12 fps" },
+        { value: "24", label: "24 fps" },
+        { value: "25", label: "25 fps" },
+        { value: "30", label: "30 fps" },
+        { value: "48", label: "48 fps" },
+        { value: "50", label: "50 fps" },
+        { value: "60", label: "60 fps" }
     ]
 
     // blackmagic
@@ -241,11 +256,7 @@
         })
     }
 
-    let edit: any
-
     $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
-
-    const ndiNotSupported = false // $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
 
     // RECEIVE BLACKMAGIC DEVICES
 
@@ -259,253 +270,59 @@
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
-    // CREATE
-
-    async function createOutput(e: any) {
-        const skipPopup = e.ctrlKey || e.metaKey
-        let stageLayouts = keysToID($stageShows)
-        let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
-        if (!type) return
-
-        if (type === "stage") {
-            let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
-            let stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
-
-            let stageLayout = $stageShows[stageId]
-
-            toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
-            setTimeout(() => {
-                let id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
-                currentOutputSettings.set(id)
-            }, 100)
-        } else if (type === "normal") {
-            let styleId = ""
-            if (Object.keys($styles).length && !skipPopup) {
-                popupData.set({ outputId: currentOutput?.id, skip: true })
-                styleId = await waitForPopupData("select_style")
-            }
-
-            addOutput(false, styleId)
-        }
-    }
+    $: outputLabel = `${currentOutput?.bounds.width || 1920}x${currentOutput?.bounds.height || 1080}`
 </script>
 
-<div class="info">
-    <p><T id="settings.outputs_hint" /></p>
-    <!-- <p><T id="settings.hide_output_hint" /></p> -->
-    <!-- <p><T id="settings.show_output_hint" /></p> -->
-    <!-- {#if $os.platform === "darwin"}<p><T id="settings.hide_menubar_hint" /></p>{/if} -->
-</div>
-
-<!-- main -->
-
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
-    <CombinedInput>
-        <p><T id="settings.enabled" /></p>
-        <div class="alignRight">
-            <Checkbox
-                checked={currentOutput?.enabled}
-                disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2}
-                on:change={(e) => {
-                    toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
-                    setTimeout(() => {
-                        updateOutput("enabled", isChecked(e))
-                        if ($outputDisplay) {
-                            let enabled = getActiveOutputs($outputs, false)
-                            Object.entries($outputs).forEach(([id, output]) => {
-                                send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
-                            })
-                        }
-                    }, 100)
-                }}
-            />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={(e) => toggleOutput(e.detail)} />
 {/if}
 
-<!-- WIP probably not needed! -->
-{#if currentOutput?.keyOutput}
-    <CombinedInput>
-        <p><T id="settings.enable_key_output" /></p>
-        <div class="alignRight">
-            <Checkbox
-                checked={!!currentOutput.keyOutput}
-                disabled={currentOutput.ndi || currentOutput.blackmagic}
-                on:change={(e) => {
-                    let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput?.keyOutput || ""
-                    let keyValue = isChecked(e) ? outputId : null
-                    updateOutput("keyOutput", keyValue)
-                    keyOutput(outputId, !isChecked(e))
-                }}
-            />
-        </div>
-    </CombinedInput>
-{/if}
-
-{#if currentOutput?.stageOutput}
-    <CombinedInput>
-        <p><T id="stage.stage_layout" /></p>
-        <Button
-            on:click={() => {
-                popupData.set({ active: currentOutput?.stageOutput, trigger: (id) => updateOutput("stageOutput", id) })
-                activePopup.set("select_stage_layout")
-            }}
-            bold={false}
-        >
-            <div style="display: flex;align-items: center;padding: 0;">
-                <Icon id="stage" style="margin-inline-start: 0.5em;" right />
-                <p>
-                    {#if currentOutput?.stageOutput}
-                        {$stageShows[currentOutput?.stageOutput]?.name || "—"}
-                    {:else}
-                        <T id="popup.select_stage_layout" />
-                    {/if}
-                </p>
-            </div>
-        </Button>
-        {#if currentOutput?.stageOutput && $stageShows[currentOutput?.stageOutput]}
-            <Button
-                title={$dictionary.titlebar?.edit}
-                on:click={() => {
-                    activeStage.set({ id: currentOutput?.stageOutput || "", items: [] })
-                    activePage.set("stage")
-                }}
-            >
-                <Icon id="edit" white />
-            </Button>
+{#if stageId}
+    <InputRow>
+        <MaterialPopupButton label="stage.stage_layout" value={stageId} name={$stageShows[stageId]?.name} icon="stage" popupId="select_stage_layout" on:change={(e) => updateOutput("stageOutput", e.detail)} />
+        {#if $stageShows[stageId]}
+            <MaterialButton title="titlebar.edit" icon="edit" on:click={editStage} />
         {/if}
-    </CombinedInput>
+    </InputRow>
 {:else}
-    <CombinedInput>
-        <p><T id="settings.active_style" /></p>
-        <Button
-            on:click={() => {
-                popupData.set({ active: currentOutput?.style, outputId: currentOutput?.id, trigger: (id) => updateOutput("style", id) })
-                activePopup.set("select_style")
-            }}
-            bold={!currentOutput?.style}
-        >
-            <div style="display: flex;align-items: center;padding: 0;">
-                <Icon id="styles" style="margin-inline-start: 0.5em;" right />
-                <p>
-                    {#if currentOutput?.style}
-                        {$styles[currentOutput?.style]?.name || "—"}
-                    {:else}
-                        <T id="popup.select_style" />
-                    {/if}
-                </p>
-            </div>
-        </Button>
-        {#if currentOutput?.style}
-            {#if $styles[currentOutput?.style]}
-                <Button
-                    title={$dictionary.titlebar?.edit}
-                    on:click={() => {
-                        activeStyle.set(currentOutput?.style || "")
-                        settingsTab.set("styles")
-                    }}
-                >
-                    <Icon id="edit" white />
-                </Button>
-            {/if}
-            <Button
-                title={$dictionary.actions?.remove}
-                on:click={() => {
-                    updateOutput("style", null)
-                }}
-                redHover
-            >
-                <Icon id="close" size={1.2} white />
-            </Button>
+    <InputRow>
+        <MaterialPopupButton label="settings.active_style" value={styleId} name={$styles[styleId]?.name} icon="styles" popupId="select_style" on:change={(e) => updateOutput("style", e.detail)} allowEmpty />
+        {#if $styles[styleId]}
+            <MaterialButton title="titlebar.edit" icon="edit" on:click={editStyle} />
         {/if}
-    </CombinedInput>
+    </InputRow>
 {/if}
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
 <!-- WIP toggle visibleOnAllWorkspaces (Mac) -->
 
 <!-- window -->
-<h3><T id="settings.window" /></h3>
-<!-- <div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;min-height: initial;">
-  <p><T id="settings.move_output_hint" /></p>
-</div> -->
-<CombinedInput>
-    <p><T id="settings.output_screen" /></p>
-    <Button on:click={() => activePopup.set(currentOutput?.invisible ? "change_output_values" : "choose_screen")}>
-        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-inline-start: 0.5em;" right />
-        <p>
-            {#if currentOutput?.invisible}
-                <T id="popup.change_output_values" />
-            {:else}
-                <T id="popup.choose_screen" />
-            {/if}
+<Title label="settings.window" icon="window" />
 
-            {#if currentOutput?.bounds?.width}
-                <span style="display: flex;align-items: center;padding: 0 8px;opacity: 0.5;font-size: 0.9em;">({currentOutput.bounds.width}x{currentOutput.bounds.height})</span>
-            {/if}
-        </p>
-    </Button>
-    <!-- centered? -->
-    <!-- <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")} center>
-        <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="screen" right />
-            <p style="padding: 0;"><T id="popup.choose_screen" /></p>
-        </div>
-    </Button> -->
-</CombinedInput>
-<!-- <CombinedInput>
-    <p><T id="settings.position" /></p>
-    <Button on:click={() => activePopup.set("change_output_values")}>
-        <Icon id="window" right />
-        <p><T id="popup.change_output_values" /></p>
-    </Button>
-</CombinedInput> -->
-
-<CombinedInput>
-    <p><T id="settings.always_on_top" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={currentOutput?.invisible} checked={currentOutput?.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
-    </div>
-</CombinedInput>
+<MaterialPopupButton
+    label="settings.output_screen"
+    value={outputLabel}
+    name={outputLabel}
+    icon={currentOutput?.invisible ? "stage" : currentOutput?.boundsLocked ? "locked" : "screen"}
+    popupId={currentOutput?.invisible ? "change_output_values" : "choose_screen"}
+/>
+<MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} disabled={currentOutput?.invisible} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
 
 <!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
 <!-- disable on windows -->
 <!-- only <= 1.4.5 -->
 {#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
-    <CombinedInput>
-        <p><T id="settings.kiosk_mode" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput?.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="settings.kiosk_mode" checked={currentOutput?.kioskMode === true} defaultValue={false} on:change={(e) => updateOutput("kioskMode", e.detail)} />
 {/if}
 
 <!-- NDI -->
-<h3>NDI®</h3>
+<Title label="NDI®" icon="companion" />
 
-<CombinedInput>
-    <p>
-        <T id="actions.enable" /> NDI®
-        {#if ndiNotSupported}(Device architecture not supported){/if}
-        <span class="connections">{$ndiData[currentOutput?.id || ""]?.connections || ""}</span>
-    </p>
-    <div class="alignRight">
-        <Checkbox disabled={ndiNotSupported} checked={currentOutput?.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
-    </div>
-</CombinedInput>
+<MaterialToggleSwitch label="actions.enable NDI®" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
 
 {#if currentOutput?.ndi}
-    <CombinedInput>
-        <p><T id="preview.audio" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput.ndiData?.audio} on:change={(e) => updateNdiData(isChecked(e), "audio")} />
-        </div>
-    </CombinedInput>
-
-    <CombinedInput>
-        <p><T id="settings.frame_rate" /></p>
-        <Dropdown value={framerates.find((a) => a.id === currentOutput?.ndiData?.framerate)?.name || "30 fps"} options={framerates.map((a) => ({ ...a, id: a.id.toString() }))} on:click={(e) => updateNdiData(e, "framerate")} />
-    </CombinedInput>
+    <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
+    <MaterialDropdown label="settings.frame_rate" value={currentOutput?.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
 {/if}
 
 <!-- Blackmagic -->
@@ -553,105 +370,9 @@
     {/if}
 {/if}
 
-<br />
-
 {#if currentOutput?.ndi || currentOutput?.blackmagic}
-    <CombinedInput>
-        <p><T id="settings.transparent" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput.transparent} on:change={(e) => updateOutput("transparent", isChecked(e))} />
-        </div>
-    </CombinedInput>
+    <br />
 
-    <CombinedInput>
-        <p><T id="settings.invisible_window" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput.invisible} on:change={(e) => updateOutput("invisible", isChecked(e))} />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
+    <MaterialToggleSwitch label="settings.invisible_window" checked={currentOutput.invisible} defaultValue={true} on:change={(e) => updateOutput("invisible", e.detail)} />
 {/if}
-
-<!-- OUTPUT SELECTOR -->
-
-<div class="filler" style={outputsList.length > 1 ? "height: 76px;" : ""} />
-<div class="bottom">
-    {#if outputsList.length > 1}
-        <div style="display: flex;overflow-x: auto;">
-            {#each outputsList as output}
-                {@const active = $currentOutputSettings === output.id}
-
-                <SelectElem id="output" data={{ id: output.id }} fill>
-                    <Button
-                        border={active}
-                        class="context #output_screen{output.stageOutput ? '_stage' : ''}"
-                        {active}
-                        style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {output.color};"
-                        on:click={() => currentOutputSettings.set(output.id || "")}
-                        bold={false}
-                        center
-                    >
-                        {#if output.stageOutput}<Icon id="stage" right />{/if}
-                        {#if output.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
-                        <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
-                    </Button>
-                </SelectElem>
-            {/each}
-        </div>
-    {/if}
-
-    <div style="display: flex;">
-        <Button style="width: 100%;" on:click={createOutput} center>
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
-    </div>
-</div>
-
-<style>
-    .info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 38px;
-        margin: 5px 0;
-        margin-bottom: 15px;
-        font-style: italic;
-        opacity: 0.8;
-    }
-
-    .info p {
-        white-space: initial;
-    }
-
-    .connections {
-        display: flex;
-        align-items: center;
-        padding-inline-start: 10px;
-        opacity: 0.5;
-        font-weight: normal;
-    }
-
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-
-    .filler {
-        height: 48px;
-    }
-    .bottom {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-        width: 100%;
-        background-color: var(--primary-darkest);
-
-        display: flex;
-        flex-direction: column;
-    }
-</style>

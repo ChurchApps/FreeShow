@@ -1,7 +1,5 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
     import { onDestroy } from "svelte"
-    import { slide } from "svelte/transition"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import {
@@ -10,7 +8,6 @@
         activeMediaTagFilter,
         activePopup,
         activeShow,
-        dictionary,
         drawerTabsData,
         focusMode,
         labelsDisabled,
@@ -30,9 +27,12 @@
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
+    import VirtualList from "../VirtualList.svelte"
     import BMDStreams from "../live/BMDStreams.svelte"
     import Cameras from "../live/Cameras.svelte"
     import NDIStreams from "../live/NDIStreams.svelte"
@@ -93,12 +93,14 @@
 
     // get list of files & folders
     let prevActive: null | string = null
+    let prevTab: string = ""
     $: {
-        if (prevActive === "online") activeView = "all"
+        if (prevActive === "online" && active !== "online") activeView = "all"
+        if (active !== "online") prevTab = ""
 
         if (active === "online") {
-            // WIP this resets on zoom
-            activeView = "image"
+            if (onlineTab !== prevTab) activeView = "image"
+            prevTab = onlineTab
 
             prevActive = active
         } else if (active === "favourites") {
@@ -232,20 +234,6 @@
         sortedFiles = files.sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
     }
 
-    let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-
-        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
-    }
-
     const shortcuts = {
         ArrowRight: () => {
             if ($activeEdit.items.length) return
@@ -304,15 +292,8 @@
     }
 
     const slidesViews: any = { grid: "list", list: "grid" }
-    const nextActiveView = { all: "folder", folder: "image", image: "video", video: "all" }
+    const nextActiveView = { all: "image", folder: "image", image: "video", video: "all" } // all: "folder"
     $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
-
-    let zoomOpened = false
-    function mousedown(e: any) {
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
-
-        zoomOpened = false
-    }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
@@ -323,8 +304,7 @@
             .filter((a) => a.extension)
             .map((file) => {
                 let type = getMediaType(file.extension)
-                let name = file.name.slice(0, file.name.lastIndexOf("."))
-                return { name, path: file.path, type }
+                return { name: file.name, path: file.path, type }
             })
 
         selected.set({ id: "media", data })
@@ -335,53 +315,55 @@
 <!-- TODO: download pixabay images!!! -->
 <!-- TODO: pexels images ? -->
 
-<svelte:window on:keydown={keydown} on:mousedown={mousedown} />
+<svelte:window on:keydown={keydown} />
+
+<!-- TABS -->
 
 {#if active === "screens"}
     <div class="tabs">
-        <Button style="flex: 1;" active={screenTab === "screens"} on:click={() => setSubSubTab("screens")} center>
-            <Icon size={1.2} id="screen" right />
+        <MaterialButton style="flex: 1;" isActive={screenTab === "screens"} on:click={() => setSubSubTab("screens")}>
+            <Icon size={1.2} id="screen" white />
             <p><T id="live.screens" /></p>
-        </Button>
-        <Button style="flex: 1;" active={screenTab === "windows"} on:click={() => setSubSubTab("windows")} center>
-            <Icon size={1.2} id="window" right />
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={screenTab === "windows"} on:click={() => setSubSubTab("windows")}>
+            <Icon size={1.2} id="window" white />
             <p><T id="live.windows" /></p>
-        </Button>
-        <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => setSubSubTab("ndi")} center>
-            <Icon size={1.2} id="ndi" right />
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={screenTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
+            <Icon size={1.1} id="ndi" white />
             <p>NDI</p>
-        </Button>
+        </MaterialButton>
         <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-        <!-- <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")} center>
-            <Icon size={1.2} id="blackmagic" right />
+        <!-- <MaterialButton style="flex: 1;" isActive={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
+            <Icon size={1.2} id="blackmagic" white />
             <p>Blackmagic</p>
-        </Button> -->
+        </MaterialButton> -->
     </div>
 {:else if active === "online"}
     <div class="tabs">
-        <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")} center>
-            <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")}>
+            <Icon style={onlineTab === "youtube" ? "fill: #ff0000" : ""} size={1.2} id="youtube" white />
             <p>YouTube</p>
-        </Button>
-        <Button style="flex: 1;" active={onlineTab === "vimeo"} on:click={() => setSubSubTab("vimeo")} center>
-            <Icon style="fill: {onlineTab !== 'vimeo' ? 'white' : '#17d5ff'};" size={1.2} id="vimeo" right />
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "vimeo"} on:click={() => setSubSubTab("vimeo")}>
+            <Icon style={onlineTab === "vimeo" ? "fill: #17d5ff" : ""} size={1.2} id="vimeo" white />
             <p>Vimeo</p>
-        </Button>
-        <Button style="flex: 1;" active={onlineTab === "pixabay"} on:click={() => setSubSubTab("pixabay")} center>
-            <Icon style="fill: {onlineTab !== 'pixabay' ? 'white' : '#00ab6b'};" size={1.2} id="pixabay" box={48} right />
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "pixabay"} on:click={() => setSubSubTab("pixabay")}>
+            <Icon style={onlineTab === "pixabay" ? "fill: #00ab6b" : ""} size={1.2} id="pixabay" box={48} white />
             <p>Pixabay</p>
-        </Button>
-        <Button style="flex: 1;" active={onlineTab === "unsplash"} on:click={() => setSubSubTab("unsplash")} center>
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "unsplash"} on:click={() => setSubSubTab("unsplash")}>
             <!-- #111111 -->
-            <Icon style="fill: {onlineTab !== 'unsplash' ? 'white' : '#bbbbbb'};" size={1.2} id="unsplash" right />
+            <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
-        </Button>
+        </MaterialButton>
     </div>
 {/if}
 
 <!-- MAIN -->
 
-<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
+<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
@@ -464,111 +446,104 @@
     </div>
 </div>
 
-{#if active !== "cameras"}
-    <div class="tabs">
-        {#if active === "screens" || active === "online"}
-            <span style="flex: 1;"></span>
+<!-- NAV -->
+
+{#if active === "online"}
+    {#if onlineTab === "youtube" || onlineTab === "vimeo"}
+        <FloatingInputs onlyOne>
+            <MaterialButton
+                title="groups.toggle_global_group"
+                on:click={() => {
+                    popupData.set({ active: onlineTab })
+                    activePopup.set("player")
+                }}
+            >
+                <Icon id="add" />
+                {#if !$labelsDisabled}<T id="settings.add" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
+    {:else}
+        <FloatingInputs>
+            {#if onlineTab === "pixabay"}
+                <MaterialButton title="media.image" on:click={() => (activeView = "image")}>
+                    <Icon size={1.2} id="image" white={activeView !== "image"} />
+                </MaterialButton>
+                <MaterialButton title="media.video" on:click={() => (activeView = "video")}>
+                    <Icon size={1.2} id="video" white={activeView !== "video"} />
+                </MaterialButton>
+
+                <div class="divider"></div>
+            {/if}
+
+            <MaterialButton
+                on:click={() =>
+                    mediaOptions.update((a) => {
+                        a.mode = slidesViews[$mediaOptions.mode]
+                        return a
+                    })}
+                title="show.{$mediaOptions.mode}"
+            >
+                <Icon size={1.3} id={$mediaOptions.mode} white />
+            </MaterialButton>
+        </FloatingInputs>
+    {/if}
+
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+{:else if active === "screens" || active === "cameras"}
+    <!-- nothing -->
+
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+{:else}
+    {#if active !== "all" && active !== "favourites" && rootPath !== path}
+        <FloatingInputs side="left">
+            <MaterialButton disabled={rootPath === path} title="actions.back" on:click={goBack}>
+                <Icon id="back" white />
+            </MaterialButton>
+
+            <div class="divider"></div>
+
+            <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
+                {folderName}
+
+                {#if content && rootPath !== path}
+                    <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{content}</span>
+                {/if}
+            </p>
+        </FloatingInputs>
+    {/if}
+
+    <FloatingInputs arrow let:open>
+        {#if open}
+            <MaterialButton title="media.all" on:click={() => (activeView = "all")}>
+                <Icon size={1.2} id="media" white={activeView !== "all"} />
+            </MaterialButton>
+            <MaterialButton title="media.image" on:click={() => (activeView = "image")}>
+                <Icon size={1.2} id="image" white={activeView !== "image"} />
+            </MaterialButton>
+            <MaterialButton title="media.video" on:click={() => (activeView = "video")}>
+                <Icon size={1.2} id="video" white={activeView !== "video"} />
+            </MaterialButton>
+
+            <div class="divider"></div>
         {:else}
-            {#if active !== "all" && active !== "favourites"}
-                <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
-                    <Icon size={1.3} id="back" />
-                </Button>
-            {/if}
-            <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
-            <Icon size={1.3} id="home" />
-        </Button> -->
-            <span style="flex: 1;display: flex;align-items: center;justify-content: center;">
-                {#key folderName}
-                    {#if folderName.includes(".")}
-                        <T id={folderName} />
-                    {:else}
-                        {folderName}
-                    {/if}
-                {/key}
-
-                {#if content}
-                    <span style="opacity: 0.6;font-size: 0.8em;margin-inline-start: 5px;">({content})</span>
-                {/if}
-            </span>
-
-            <!-- <div class="seperator" />
-
-            <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
-                <Icon size={1.3} id="previous" />
-            </Button>
-            <p style="opacity: 0.8;">{activeFile === null ? "" : activeFile + 1 + "/"}{content}</p>
-            <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
-                <Icon size={1.3} id="next" />
-            </Button> -->
+            <MaterialButton title="media.{activeView}" on:click={() => (activeView = nextActiveView[activeView])}>
+                <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
+            </MaterialButton>
         {/if}
 
-        {#if active !== "screens"}
-            {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
-                <Button
-                    style="width: 100%;"
-                    on:click={() => {
-                        popupData.set({ active: onlineTab })
-                        activePopup.set("player")
-                    }}
-                    center
-                >
-                    <Icon id="add" right={!$labelsDisabled} />
-                    {#if !$labelsDisabled}<T id="settings.add" />{/if}
-                </Button>
-            {:else}
-                <div class="seperator" />
+        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 
-                {#if active === "online" && onlineTab === "unsplash"}
-                    <!-- only images!! -->
-                {:else if active === "online" && onlineTab === "pixabay"}
-                    <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
-                        <Icon size={1.2} id="image" white={activeView !== "image"} />
-                    </Button>
-                    <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
-                        <Icon size={1.2} id="video" white={activeView !== "video"} />
-                    </Button>
-
-                    <div class="seperator" />
-                {:else}
-                    <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
-                        <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
-                    </Button>
-
-                    <div class="seperator" />
-                {/if}
-
-                <Button
-                    on:click={() =>
-                        mediaOptions.update((a) => {
-                            a.mode = slidesViews[$mediaOptions.mode]
-                            return a
-                        })}
-                    title={$dictionary.show?.[$mediaOptions.mode]}
-                >
-                    <Icon size={1.3} id={$mediaOptions.mode} white />
-                </Button>
-
-                {#if active !== "online"}
-                    <Button on:click={() => (zoomOpened = !zoomOpened)} disabled={$mediaOptions.mode === "list"} title={$dictionary.actions?.zoom}>
-                        <Icon size={1.3} id="zoomIn" white />
-                    </Button>
-                    {#if zoomOpened}
-                        <div class="zoom_container" transition:slide={{ duration: 150 }}>
-                            <Button style="padding: 0 !important;width: 100%;" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} bold={false} center>
-                                <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
-                            </Button>
-                            <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
-                                <Icon size={1.3} id="add" white />
-                            </Button>
-                            <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
-                                <Icon size={1.3} id="remove" white />
-                            </Button>
-                        </div>
-                    {/if}
-                {/if}
-            {/if}
-        {/if}
-    </div>
+        <MaterialButton
+            on:click={() =>
+                mediaOptions.update((a) => {
+                    a.mode = slidesViews[$mediaOptions.mode]
+                    return a
+                })}
+            title="show.{$mediaOptions.mode}"
+        >
+            <Icon size={1.3} id={$mediaOptions.mode} white />
+        </MaterialButton>
+    </FloatingInputs>
 {/if}
 
 <style>
@@ -577,6 +552,16 @@
         position: relative;
         background-color: var(--primary-darkest);
         align-items: center;
+    }
+
+    .tabs :global(button) {
+        border-radius: 0;
+        border: none !important;
+        border-bottom: 1px solid var(--primary-lighter) !important;
+        padding: 8px;
+    }
+    .tabs :global(button.isActive) {
+        border-bottom: 1px solid var(--secondary) !important;
     }
 
     .grid {
@@ -609,29 +594,7 @@
 
         overflow-y: auto;
         overflow-x: hidden;
-    }
 
-    .text {
-        opacity: 0.8;
-        text-align: center;
-        padding: 0.5em 0;
-    }
-
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
-    }
-
-    .zoom_container {
-        position: absolute;
-        inset-inline-end: 0;
-        top: 0;
-        transform: translateY(-100%);
-        overflow: hidden;
-
-        flex-direction: column;
-        width: auto;
-        background-color: inherit;
+        /* padding-bottom: 60px; */
     }
 </style>

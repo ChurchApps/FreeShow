@@ -74,7 +74,9 @@ export class AudioPlayer {
 
         const newVolume = AudioPlayer.getVolume() * (options.volume || 1)
         audio.volume = newVolume
-        if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
+
+        options.startAt = AudioPlayer.getStartTime(path, options.startAt)
+        if (options.startAt > 0) audio.currentTime = options.startAt
 
         playingAudio.update((a) => {
             a[path] = {
@@ -253,7 +255,8 @@ export class AudioPlayer {
         const audio = this.getAudio(id)
         if (!audio) return
 
-        if (audio.currentTime < audio.duration) return
+        const endingTime = AudioPlayer.getEndTime(id, audio.duration)
+        if (audio.currentTime < endingTime) return
 
         // loop single audio
         if (get(media)[id]?.loop) {
@@ -288,13 +291,13 @@ export class AudioPlayer {
         return get(playingAudio)[id] || null
     }
 
-    static getAllPlaying(removePaused: boolean = true) {
+    static getAllPlaying(removePaused = true) {
         return get(playingAudioPaths).length
             ? get(playingAudioPaths)
             : Object.keys(get(playingAudio)).filter((id) => {
-                  const audioData = get(playingAudio)[id]
-                  return audioData.audio && (!removePaused || !audioData.paused)
-              })
+                const audioData = get(playingAudio)[id]
+                return audioData.audio && (!removePaused || !audioData.paused)
+            })
     }
 
     static getAudio(id: string): HTMLAudioElement | null {
@@ -327,8 +330,23 @@ export class AudioPlayer {
         return get(special).allowGaining ? get(gain) || 1 : 1
     }
 
+    static getGlobalOptions(path: string) {
+        return get(media)[path] || {}
+    }
+
     static getAudioType(path: string, duration: number) {
-        return get(media)[path]?.audioType || (duration < 30 ? "effect" : "music")
+        return AudioPlayer.getGlobalOptions(path).audioType || (duration < 30 ? "effect" : "music")
+    }
+
+    static getStartTime(path: string, startAt?: number | undefined) {
+        const globalStart = AudioPlayer.getGlobalOptions(path).fromTime || 0
+        return Math.max(startAt || 0, globalStart)
+    }
+    static getEndTime(path: string, duration: number) {
+        const globalEnd = AudioPlayer.getGlobalOptions(path).toTime || 0
+        // if (!duration) duration = this.storedDurations.get(path) || 0
+        // if (!duration && globalEnd) return globalEnd
+        return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
     }
 
     // STATE

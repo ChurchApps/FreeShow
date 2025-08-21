@@ -1,18 +1,25 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
+    import type { ItemType } from "../../../../types/Show"
+    import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
+    import { transposeText } from "../../../utils/chordTranspose"
+    import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialZoom from "../../inputs/MaterialZoom.svelte"
+    import { formatText } from "../../show/formatTextEditor"
+    import { getPlainEditorText } from "../../show/getTextEditor"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -21,8 +28,8 @@
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
+    import { addItem } from "../scripts/itemHelpers"
     import { setCaretAtEnd } from "../scripts/textStyle"
-    import { getLayoutRef } from "../../helpers/show"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -68,8 +75,13 @@
     $: if (bgPath) loadBackground()
     let thumbnailPath = ""
     async function loadBackground() {
+        if (bgPath.includes("http")) return download()
+
         let newPath = await loadThumbnail(bgPath, mediaSize.big)
         if (newPath) thumbnailPath = newPath
+    }
+    async function download() {
+        thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -157,44 +169,25 @@
     // ZOOM
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
-
-    // shortcut
-    let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-        if (!e.target.closest(".editArea")) return
-
-        zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
-
-        // always center scroll when zooming
-        if (zoom < 1) {
-            // allow elem to update after zooming
-            setTimeout(() => {
-                const elem = scrollElem?.querySelector(".droparea")
-                if (!elem) return
-
-                const centerX = (elem.scrollWidth - elem.clientWidth) / 2
-                const centerY = (elem.scrollHeight - elem.clientHeight) / 2
-
-                elem.scrollTo({ left: centerX, top: centerY })
-            })
-        }
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
+    function updateZoom(e: any) {
+        zoom = e.detail
+        centerZoom()
     }
 
-    // menu
-    let zoomOpened = false
-    function mousedown(e: any) {
-        keyup()
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+    function centerZoom() {
+        // always center scroll when zooming
+        if (zoom >= 1) return
 
-        zoomOpened = false
+        // allow elem to update after zooming
+        setTimeout(() => {
+            const elem = scrollElem?.querySelector(".droparea")
+            if (!elem) return
+
+            const centerX = (elem.scrollWidth - elem.clientWidth) / 2
+            const centerY = (elem.scrollHeight - elem.clientHeight) / 2
+
+            elem.scrollTo({ left: centerX, top: centerY })
+        })
     }
 
     // CHORDS
@@ -221,6 +214,16 @@
         chordsMode = !chordsMode
     }
 
+    // transpose chords - same as TextEditor
+    function transposeUp() {
+        const text = getPlainEditorText("", false)
+        formatText(transposeText(text, 1), currentShowId)
+    }
+    function transposeDown() {
+        const text = getPlainEditorText("", false)
+        formatText(transposeText(text, -1), currentShowId)
+    }
+
     $: slideFilter = getSlideFilter(layoutSlide)
 
     onMount(() =>
@@ -237,6 +240,9 @@
             }
         })
     )
+
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     // remove overflow if scrollbars are flickering over 25 times per second
     let hideOverflow = false
@@ -260,18 +266,25 @@
     // || styleTemplate.settings?.backgroundColor
 
     $: checkered = (transparentOutput || $special.transparentSlides) && !background
+
+    // NOTES
+
+    let bottomHeight = 40
+
+    $: notes = Slide?.notes?.replaceAll("\n", "&nbsp;")
+    $: notesVisible = !!notes // && !chordsMode
+
+    const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 </script>
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} />
 
 <div class="editArea">
-    <!-- zoom: {1 / zoom}; -->
-    <!-- width: {100 / zoom}%;height: {100 / zoom}%; -->
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed
-                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : Slide?.settings?.color || currentStyle.background || "black"}
+                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
                     {checkered}
                     border={checkered}
                     {resolution}
@@ -307,7 +320,7 @@
                     </div>
 
                     <!-- edit -->
-                    {#if !$showsCache[currentShowId || ""]?.locked}
+                    {#if !isLocked}
                         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {/if}
 
@@ -327,72 +340,77 @@
         {/if}
     </div>
 
-    {#if !$focusMode}
-        <div class="actions" style="width: 100%;gap: 10px;">
-            <div class="leftActions">
-                {#if !chordsMode}
-                    <div class="notes" style="font-size: 0.8em;">{currentShow?.name || ""}</div>
-                {/if}
-                {#if chordsMode && Slide}
-                    <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
-                        <p><T id="popup.choose_chord" /></p>
-                    </Button>
-
-                    {#each usedChords as chord}
-                        <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
-                            {chord}
-                        </Button>
-                    {/each}
-                {:else if Slide?.notes}
-                    <div class="notes" style="opacity: 0.8;">
-                        <Icon id="notes" right white />
-                        <div style="list-style: inside;">
-                            {@html Slide.notes.replaceAll("\n", "&nbsp;")}
-                        </div>
-                    </div>
-                {/if}
-            </div>
-
-            <div class="actions" style="height: 100%;justify-content: end;">
-                <!-- no need to add chords on scripture/events -->
-                {#if !currentShow?.reference?.type && Slide}
-                    <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
-                        <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
-                        {#if !$labelsDisabled}<T id="edit.chords" />{/if}
-                    </Button>
-                {/if}
-
-                {#if !$focusMode}
-                    {#if Slide}
-                        <div class="seperator" />
-                    {/if}
-
-                    <Button on:click={() => textEditActive.set(true)}>
-                        <Icon id="text" right={!$labelsDisabled} />
-                        {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if}
-                    </Button>
-                {/if}
-
-                <div class="seperator" />
-
-                <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-                    <Icon size={1.3} id="zoomIn" white />
-                </Button>
-                {#if zoomOpened}
-                    <div class="zoom_container" transition:slide={{ duration: 150 }}>
-                        <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                            <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
-                        </Button>
-                        <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-                            <Icon size={1.3} id="add" white />
-                        </Button>
-                        <Button disabled={zoom >= 4} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-                            <Icon size={1.3} id="remove" white />
-                        </Button>
-                    </div>
-                {/if}
-            </div>
+    {#if notesVisible}
+        <div class="notes">
+            <Icon id="notes" right white />
+            <p>{@html notes}</p>
         </div>
+    {/if}
+
+    {#if !$focusMode && !isLocked}
+        {#if !chordsMode}
+            <FloatingInputs side="center">
+                {#each shortcutItems as item}
+                    <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
+                        <Icon id={item.icon || item.id} size={1.3} white />
+                    </MaterialButton>
+                {/each}
+            </FloatingInputs>
+        {/if}
+
+        <FloatingInputs bottom={notesVisible ? bottomHeight : 10} arrow let:open>
+            <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+
+            {#if open}
+                <div class="divider"></div>
+            {/if}
+
+            <!-- no need to add chords on scripture/events -->
+            {#if !currentShow?.reference?.type && Slide && !isLocked}
+                <!-- {#if open || slideChords.length} -->
+                <MaterialButton isActive={chordsMode} on:click={toggleChords} title="edit.chords">
+                    <Icon id="chords" white={!slideChords.length} />
+                    {#if open && !$labelsDisabled}<T id="edit.chords" />{/if}
+                </MaterialButton>
+                <!-- {/if} -->
+
+                {#if open}
+                    <div class="divider"></div>
+                {/if}
+            {/if}
+
+            <MaterialButton title="show.text" on:click={() => textEditActive.set(true)}>
+                <Icon id="text_edit" white />
+                {#if open && !$labelsDisabled}<p><T id="show.text" /></p>{/if}
+            </MaterialButton>
+        </FloatingInputs>
+
+        {#if chordsMode}
+            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} arrow let:open>
+                <div slot="menu">
+                    <MaterialButton on:click={transposeUp} title="edit.transpose_up">
+                        <Icon id="arrow_up" size={1.3} white />
+                    </MaterialButton>
+                    <MaterialButton on:click={transposeDown} title="edit.transpose_down">
+                        <Icon id="arrow_down" size={1.3} white />
+                    </MaterialButton>
+                </div>
+
+                {#if open}
+                    <div class="divider"></div>
+                {/if}
+
+                <MaterialButton isActive={!chordsAction} on:click={setDefaultChordsAction}>
+                    <p><T id="popup.choose_chord" /></p>
+                </MaterialButton>
+
+                {#each usedChords as chord}
+                    <MaterialButton isActive={chordsAction === chord} on:click={() => (chordsAction = chord)}>
+                        {chord}
+                    </MaterialButton>
+                {/each}
+            </FloatingInputs>
+        {/if}
     {/if}
 </div>
 
@@ -436,64 +454,20 @@
         z-index: 3;
     } */
 
-    .actions {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: var(--primary-darkest);
-        /* border-top: 3px solid var(--primary-lighter); */
-    }
-
-    .actions :global(button.chordsActive) {
-        background-color: var(--focus);
-    }
-
-    .leftActions {
-        display: flex;
-        overflow-x: auto;
-        width: 100%;
-    }
-
     .notes {
+        background-color: var(--primary);
+        border-radius: var(--border-radius);
+        /* position: absolute;bottom: 0;transform: translateY(-100%); */
         padding: 0 8px;
+        min-height: 30px;
+
         display: flex;
         align-items: center;
-
-        white-space: nowrap;
+        justify-content: start;
+        /* justify-content: center; */
     }
 
-    /* fixed height for consistent heights */
-    .actions :global(button) {
-        min-height: 28px;
-        padding: 0 0.8em !important;
-    }
-
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
-        /* margin: 0 10px; */
-    }
-
-    .text {
-        opacity: 0.8;
-        text-align: center;
-        padding: 0.5em 0;
-    }
-
-    .zoom_container {
-        position: absolute;
-        inset-inline-end: 0;
-        top: 0;
-        transform: translateY(-100%);
-        overflow: hidden;
-        z-index: 30;
-
-        flex-direction: column;
-        width: auto;
-        /* border-left: 3px solid var(--primary-lighter);
-        border-top: 3px solid var(--primary-lighter); */
-        background-color: inherit;
+    .notes p :global(*) {
+        display: inline;
     }
 </style>

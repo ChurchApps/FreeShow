@@ -1,7 +1,7 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
     import { activePopup, dictionary, popupData, shows, sortedShowsList } from "../../../stores"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
+    import VirtualList from "../../drawer/VirtualList.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"

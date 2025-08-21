@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Resolution } from "../../../types/Settings"
     import { mediaOptions, outputs, styles } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
     import Loader from "../main/Loader.svelte"
@@ -29,7 +30,7 @@
 
 <!-- display: table; -->
 <div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active>
-    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick>
+    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button">
         {#if preview}
             <div class="overlay" />
         {:else}

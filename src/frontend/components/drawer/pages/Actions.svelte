@@ -1,18 +1,24 @@
 <script lang="ts">
     import { actions, activeActionTagFilter, activePopup, dictionary, labelsDisabled, popupData, runningActions } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
 
-    function addMidi() {
+    const profile = getAccess("functions")
+    const readOnly = profile.actions === "read"
+
+    function newAction() {
         popupData.set({})
         activePopup.set("action")
     }
@@ -22,11 +28,11 @@
     $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
-<div class="context #actions" style="position: relative;height: 100%;overflow-y: auto;">
+<div class="context #actions{readOnly ? '_readonly' : ''}" style="position: relative;height: 100%;overflow-y: auto;">
     {#if filteredActionsSearch.length}
         <div class="actions">
             {#each filteredActionsSearch as action}
-                <div class="action context #action">
+                <div class="action context #action{readOnly ? '_readonly' : ''}">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button
@@ -43,7 +49,7 @@
                                 <p style="font-size: 1.03em;display: flex;align-items: center;" class:customActivation={action.customActivation || action.startupEnabled}>
                                     {#if action.shows?.length}
                                         <Icon id="slide" white right />
-                                    {:else if action.triggers.length !== 1}
+                                    {:else if action.triggers?.length !== 1}
                                         <Icon id="actions" right />
                                     {:else}
                                         <Icon id={getActionIcon(action.id)} right />
@@ -103,12 +109,11 @@
     {/if}
 </div>
 
-<div class="tabs">
-    <Button style="width: 100%;" on:click={addMidi} title={$dictionary.new?.action} center>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton disabled={readOnly} icon="add" title="new.action" on:click={newAction}>
         {#if !$labelsDisabled}<T id="new.action" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .actions {
@@ -136,11 +141,6 @@
         width: 100%;
         justify-content: space-between;
         text-align: start;
-    }
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
     }
 
     .key {

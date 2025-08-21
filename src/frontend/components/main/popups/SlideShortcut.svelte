@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { actions, activePopup, dictionary, popupData } from "../../../stores"
+    import { actions, activePopup, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let id = $popupData.id
     let index = $popupData.index
@@ -64,9 +63,7 @@
 <svelte:window on:keydown={keydown} />
 
 {#if revert}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
 
 <p style="text-align: center;opacity: 0.7;" class:existing>

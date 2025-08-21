@@ -21,6 +21,7 @@
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
+                if (name === ".") name = ""
                 list.push(name || "—")
                 if (i === 0) groupName = name
             })
@@ -117,7 +118,17 @@
                 history({ id: "UPDATE", newData: { key: "layouts", keys: layoutIds, subkey: "slides", data: newLayouts }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
             })
         },
-        group: () => renameAction.slide(),
+        group: () => {
+            $selected.data.forEach((a) => {
+                const slideId = a.id
+
+                // remove global group if active
+                if ($activeShow && $showsCache[$activeShow.id].slides[slideId].globalGroup)
+                    history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [slideId], subkey: "globalGroup" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+
+                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+            })
+        },
         chord: () => {
             let chord = $selected.data[0]
             let lines: Line[] = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]

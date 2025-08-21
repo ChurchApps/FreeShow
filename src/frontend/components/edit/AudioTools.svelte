@@ -15,10 +15,24 @@
 
     let edits = clone(audioEdits.media?.edit)!
 
+    $: if (audioId) getAudioDuration()
+    async function getAudioDuration() {
+        const duration = await AudioPlayer.getDuration(audioId)
+
+        edits.default[3].value = currentMedia?.toTime || duration
+        edits.default[2].values = { max: duration }
+        edits.default[3].values = { max: duration }
+    }
+
     // set values
     $: if (currentMedia && edits) {
-        edits.default[0].value = currentMedia?.audioType || ""
-        edits.default[1].value = (currentMedia?.volume || 1) * 100
+        edits.default[0].value = currentMedia.audioType || ""
+        edits.default[1].value = (currentMedia.volume || 1) * 100
+
+        edits.default[2].value = currentMedia.fromTime || 0
+        edits.default[3].value = currentMedia.toTime || edits.default[3].value
+
+        // WIP set min/max based on each other
     }
 
     function reset() {

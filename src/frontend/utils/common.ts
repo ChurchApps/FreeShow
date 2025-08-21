@@ -6,10 +6,6 @@ import { keysToID, removeDuplicates, sortByName } from "../components/helpers/ar
 import { getActiveOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
-    activeDrawerTab,
-    activeEdit,
-    activePage,
-    activeShow,
     activeTriggerFunction,
     allOutputs,
     autosave,
@@ -24,12 +20,15 @@ import {
     quickSearchActive,
     resized,
     serverData,
+    theme,
+    themes,
     toastMessages,
-    version,
+    version
 } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
+import { getContrast } from "../components/helpers/color"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -107,7 +106,7 @@ export function focusArea(e: any) {
 
 // auto save
 let autosaveTimeout: NodeJS.Timeout | null = null
-export let previousAutosave: number = 0
+export let previousAutosave = 0
 export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
@@ -155,9 +154,6 @@ export function logerror(err) {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),
-        active: { window: get(currentWindow) || "main", page: get(activePage), show: get(activeShow), edit: get(activeEdit) },
-        drawer: { active: get(drawer)?.height > 40 ? get(activeDrawerTab) : "CLOSED" },
-        // lastUndo: get(undoHistory)[get(undoHistory).length - 1],
         type: err.type,
         source: err.type === "unhandledrejection" ? "See stack" : `${err.filename} - ${err.lineno}:${err.colno}`,
         message: msg,
@@ -222,4 +218,11 @@ export function triggerFunction(id: string) {
     setTimeout(() => {
         activeTriggerFunction.set("")
     }, 100)
+}
+
+// get theme contrast color
+// WIP similar to "secondary" in App.svelte
+export function isDarkTheme() {
+    const contrastColor = getContrast(get(themes)[get(theme)]?.colors?.primary || "")
+    return contrastColor === "#FFFFFF"
 }

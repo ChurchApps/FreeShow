@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
     import { createEventDispatcher } from "svelte"
-    import { translate } from "../../utils/language"
-    import { language } from "../../stores"
+    import { slide } from "svelte/transition"
     import type { Option } from "../../../types/Main"
+    import { language } from "../../stores"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
 
     const dispatch = createEventDispatcher()
@@ -25,7 +26,8 @@
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
-        if (disabled || arrow || nextScrollTimeout) return
+        const ctrl = e.ctrlKey || e.metaKey
+        if (disabled || arrow || nextScrollTimeout || !ctrl) return
         e.preventDefault()
 
         let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
@@ -67,11 +69,11 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
-    <button style={arrow ? "justify-content: center;" : ""} {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
+    <button style={arrow ? "justify-content: center;" : ""} {id} data-title={title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />
         {:else}
-            {translate(normalizedValue, { parts: true }) || value}
+            {translateText(normalizedValue) || value}
         {/if}
     </button>
     {#if active}
@@ -80,6 +82,9 @@
                 <span
                     id={formatId(option.name)}
                     style={option.style || ""}
+                    role="option"
+                    aria-selected={activeId ? option.id === activeId : option.name === value}
+                    tabindex="0"
                     on:click={() => {
                         if (disabled) return
                         active = false
@@ -88,11 +93,18 @@
                             dispatch("click", option)
                         }, 50)
                     }}
+                    on:keydown={triggerClickOnEnterSpace}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
-                    {translate(option.name, { parts: true }) || option.name}
+                    {translateText(option.name) || option.name}
                     {#if option.extra}
                         ({option.extra})
+                    {/if}
+
+                    {#if option.extraInfo}
+                        <div class="extra">
+                            {option.extraInfo}
+                        </div>
                     {/if}
                 </span>
             {/each}
@@ -176,6 +188,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: var(--border-radius);
+
+        position: relative;
     }
 
     button {
@@ -196,5 +210,23 @@
     span.active {
         background-color: var(--focus);
         color: var(--secondary);
+    }
+
+    .dropdown .extra {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+
+        display: flex;
+        justify-content: end;
+        align-items: center;
+        padding: 0 10px;
+
+        font-size: 0.8em;
+        background-color: transparent;
+        opacity: 0.5;
+
+        pointer-events: none;
     }
 </style>

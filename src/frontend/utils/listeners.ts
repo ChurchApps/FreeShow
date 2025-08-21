@@ -7,6 +7,7 @@ import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } 
 import {
     $,
     activeProject,
+    activeScripture,
     activeShow,
     audioData,
     cachedShowsData,
@@ -42,7 +43,8 @@ import {
     transitionData,
     variables,
     volume,
-    effects
+    effects,
+    activeTimers
 } from "../stores"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
@@ -132,6 +134,18 @@ export function storeSubscriber() {
     scriptures.subscribe((data) => {
         send(REMOTE, ["SCRIPTURE"], data)
     })
+    // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
+    let activeScriptureTimer: any
+    activeScripture.subscribe((data) => {
+        if (activeScriptureTimer) clearTimeout(activeScriptureTimer)
+        activeScriptureTimer = setTimeout(() => {
+            const source: any = (data && (data.api || data.bible)) || data || {}
+            const hasBook = source.bookId !== undefined && source.bookId !== null
+            const hasChapter = source.chapterId !== undefined && source.chapterId !== null
+            const hasVerses = Array.isArray(source.activeVerses) && source.activeVerses.length > 0
+            if (hasBook && hasChapter && hasVerses) send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
+        }, 120)
+    })
 
     outputs.subscribe((data) => {
         send(OUTPUT, ["OUTPUTS"], data)
@@ -192,10 +206,6 @@ export function storeSubscriber() {
     transitionData.subscribe((data) => {
         send(OUTPUT, ["TRANSITION"], data)
     })
-    // timerTick.ts
-    // activeTimers.subscribe((data) => {
-    //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
-    // })
 
     // used by stage output
     media.subscribe((data) => {
@@ -219,6 +229,9 @@ export function storeSubscriber() {
 
         // STAGE
         send(STAGE, ["TIMERS"], data)
+    })
+    activeTimers.subscribe((data) => {
+        send(OUTPUT, ["ACTIVE_TIMERS"], data)
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)
@@ -305,6 +318,8 @@ export function storeSubscriber() {
 }
 
 const initalOutputData = {
+    LANGUAGE: "language",
+
     STYLES: "styles",
     TRANSITION: "transitionData",
     SHOWS: "showsCache",

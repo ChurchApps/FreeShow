@@ -4,6 +4,7 @@
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
     import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
@@ -83,7 +84,7 @@
 
 {#if background}
     {#if !big}
-        <span class="name" on:click={openPreview}>
+        <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={triggerClickOnEnterSpace}>
             {#if background?.type === "player"}
                 <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
             {:else}
@@ -100,15 +101,17 @@
 
             <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
 
-            <Button
-                center
-                title={$dictionary.media?.back10}
-                on:click={() => {
-                    changeValue = Math.max(videoTime - 10, 0.01)
-                }}
-            >
-                <Icon id="back_10" white size={big ? 1.4 : 1.2} />
-            </Button>
+            {#if big}
+                <Button
+                    center
+                    title={$dictionary.media?.back10}
+                    on:click={() => {
+                        changeValue = Math.max(videoTime - 10, 0.01)
+                    }}
+                >
+                    <Icon id="back_10" white size={big ? 1.4 : 1.2} />
+                </Button>
+            {/if}
             <Button
                 center
                 title={$dictionary.media?.forward10}
@@ -172,5 +175,9 @@
 
     .name:hover {
         background-color: var(--primary-darker);
+    }
+    .name:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

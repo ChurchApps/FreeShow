@@ -91,7 +91,7 @@ function createSlides({ verseOrder, lyrics }: Song) {
     const sequences: any = {}
 
     // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
-    let slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
+    const slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
     lyrics.forEach((lyricSlide) => {
         const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
         currentSlides.forEach((slideData, i) => {

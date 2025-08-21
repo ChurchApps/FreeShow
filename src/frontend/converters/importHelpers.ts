@@ -101,7 +101,10 @@ export function importFromClipboard() {
     navigator.clipboard
         .readText()
         .then((text) => {
-            convertText({ text, noFormatting: true })
+            let activeCategory = get(drawerTabsData).shows?.activeSubTab
+            if (activeCategory === "all" || activeCategory === "unlabeled") activeCategory = null
+
+            convertText({ text, noFormatting: true, category: activeCategory })
         })
         .catch((err) => {
             console.error("Failed to read clipboard contents: ", err)

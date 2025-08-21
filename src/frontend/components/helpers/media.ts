@@ -7,7 +7,7 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
+import { dataPath, loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
@@ -51,6 +51,7 @@ export function getFileName(path: string): string {
 let pathJoiner = ""
 export function splitPath(path: string): string[] {
     if (typeof path !== "string") return []
+    path = path.replace("file://", "")
     if (path.indexOf("\\") > -1) pathJoiner = "\\"
     if (path.indexOf("/") > -1) pathJoiner = "/"
     return path.split(pathJoiner) || []
@@ -64,18 +65,22 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
+    if (path.includes("http") || path.includes("data:")) return path
 
     // already encoded
-    if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
-
-    // can't load file paths with "#"
-    path = path.replaceAll("#", "%23")
+    if (path.match(/%\d+/g)) {
+        if (path.startsWith("/")) path = `file://${path}`
+        return path
+    }
 
     const splittedPath = splitPath(path)
     const fileName = splittedPath.pop() || ""
     const encodedName = encodeURIComponent(fileName)
+    let joinedPath = joinPath([...splittedPath, encodedName])
 
-    return joinPath([...splittedPath, encodedName])
+    // path starting at "/" auto completes to app root, but should be file://
+    if (joinedPath.startsWith("/")) joinedPath = `file://${joinedPath}`
+    return joinedPath
 }
 
 // decode only file name in path (not full path)
@@ -96,7 +101,7 @@ export async function getThumbnail(data: API_media) {
     return await toDataURL(path)
 }
 
-export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide: boolean = false) {
+export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
     const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
     const outSlide = get(outputs)[outputId]?.out?.slide
 
@@ -193,6 +198,9 @@ export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mi
     if (!info) return info
 
     delete info.path
+
+    if (JSON.stringify(get(media)[path]?.info) === JSON.stringify(info)) return info
+
     media.update((a) => {
         if (!a[path]) a[path] = {}
         a[path].info = info
@@ -366,7 +374,7 @@ export async function checkThatMediaExists(path: string, iteration = 1): Promise
     return exists
 }
 
-let cachedDurations: { [key: string]: number } = {}
+const cachedDurations: { [key: string]: number } = {}
 export function getVideoDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
         if (cachedDurations[path]) {
@@ -424,7 +432,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // seek video
         if (!isImage) {
-            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ; (mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             await wait(400)
         }
 
@@ -503,7 +511,7 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
         const img = new Image()
 
         // needed if loading from local path
-        img.src = imagePath.startsWith("file://") ? imagePath : `file://${imagePath}`
+        img.src = encodeFilePath(imagePath)
         img.onload = () => {
             const cropWidth = img.width - (crop.left || 0) - (crop.right || 0)
             const cropHeight = img.height - (crop.top || 0) - (crop.bottom || 0)
@@ -522,4 +530,12 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
         }
         img.onerror = () => resolve("")
     })
+}
+
+export async function downloadOnlineMedia(url: string) {
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, dataPath: get(dataPath) })
+    if (downloadedPath) return downloadedPath
+
+    sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
+    return url
 }

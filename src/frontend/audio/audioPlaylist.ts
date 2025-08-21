@@ -92,7 +92,8 @@ export class AudioPlaylist {
         if (!crossfade || !audioPath || !playing) return 0
 
         const customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
-        const reachedEnding = playing.currentTime + customCrossfade + this.extraMargin >= playing.duration
+        const endTime = AudioPlayer.getEndTime(audioPath, playing.duration)
+        const reachedEnding = playing.currentTime + customCrossfade + this.extraMargin >= endTime
         if (!reachedEnding) return 0
 
         AudioPlaylist.nextInternal("", { crossfade: customCrossfade, loop: playlist.loop !== false })

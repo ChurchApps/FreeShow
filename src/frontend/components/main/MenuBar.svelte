@@ -135,16 +135,16 @@
         position: fixed;
         min-width: 250px;
         background-color: var(--primary-darker);
-        /* border-radius: var(--border-radius); */
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
-        padding: 5px 0;
+        border-radius: 4px;
+        padding: 8px 0;
         z-index: 6000;
         -webkit-app-region: no-drag;
     }
 
     hr {
-        margin: 5px 10px;
-        height: 2px;
+        margin: 8px 0;
+        height: 1px;
         border: none;
         background-color: var(--primary);
     }

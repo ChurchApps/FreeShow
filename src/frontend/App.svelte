@@ -4,16 +4,19 @@
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
+    import { getContrast } from "./components/helpers/color"
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
+    import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
+    import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, timers } from "./stores"
+    import { activeProfile, activeTimers, autosave, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
     import { focusArea, logerror, mainClick, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -47,6 +50,10 @@
     // set language direction
     $: document.documentElement.setAttribute("dir", $localeDirection)
     $: document.documentElement.setAttribute("lang", $language)
+
+    $: contrastColor = getContrast($themes[$theme]?.colors?.secondary || "")
+    $: secondaryContrast = contrastColor === "#000000" ? `--secondary-text: ${contrastColor};` : ""
+    $: globalStyle = `${isWindows ? "height: calc(100% - 25px);" : ""}${secondaryContrast}${blending}`
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:click={mainClick} on:error={logerror} on:unhandledrejection={logerror} />
@@ -59,11 +66,15 @@
         <MenuBar />
     {/if}
 
-    <main style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending}" class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
+    <main style={globalStyle} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
         <ContextMenu />
+        <TooltipManager />
 
         {#if $currentWindow === "output"}
             <MainOutput />
+        {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
+            <Popup />
+            <ProfileSelector />
         {:else if $loaded}
             <Popup />
             <QuickSearch />

@@ -22,18 +22,25 @@
 
     const variableTextModes = [
         { id: "enabled", name: "$:variables.set_state:$" }, // set enabled state
-        { id: "value", name: "$:variables.value:$" },
+        { id: "value", name: "$:variables.value:$" }
     ]
 
     const variableNumberModes = [
         { id: "value", name: "$:variables.value:$" },
         { id: "increment", name: "$:actions.increment:$" },
         { id: "decrement", name: "$:actions.decrement:$" },
+        { id: "expression", name: "$:actions.expression:$" } // math & variables
     ]
 
     const variableRandomNumberModes = [
         { id: "randomize", name: "$:variables.randomize:$" },
-        { id: "reset", name: "$:actions.reset:$" },
+        { id: "reset", name: "$:actions.reset:$" }
+    ]
+
+    const variableTextSetModes = [
+        { id: "next", name: "$:media.next:$" },
+        { id: "previous", name: "$:media.previous:$" },
+        { id: "value", name: "$:variables.value:$" }
     ]
 
     let dispatch = createEventDispatcher()
@@ -62,15 +69,23 @@
             <Dropdown style="width: 100%;" value={variableNumberModes.find((a) => a.id === (value?.key || "value"))?.name || "—"} options={variableNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
         {:else if variable?.type === "random_number"}
             <Dropdown style="width: 100%;" value={variableRandomNumberModes.find((a) => a.id === (value?.key || "randomize"))?.name || "—"} options={variableRandomNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
+        {:else if variable?.type === "text_set"}
+            <Dropdown style="width: 100%;" value={variableTextSetModes.find((a) => a.id === (value?.key || "next"))?.name || "—"} options={variableTextSetModes} on:click={(e) => updateValue("key", e.detail?.id)} />
         {/if}
     </CombinedInput>
 
+    <!-- {#if variable?.type === "text_set"}
+        <CombinedInput>
+            <Dropdown style="width: 100%;" value={variable?.textSetKeys?.find((name) => name === value?.setId) || "—"} options={(variable?.textSetKeys || []).map((name) => ({ name }))} on:click={(e) => updateValue("setId", e.detail?.id)} />
+        </CombinedInput>
+    {/if} -->
+
     {#if value?.key === "value" || variable?.type === "number"}
         <CombinedInput>
-            {#if variable?.type === "number"}
+            {#if (variable?.type === "number" && value?.key !== "expression") || variable?.type === "text_set"}
                 <NumberInput value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} decimals={1} fixed={Number(value?.value).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue("value", e)} />
             {:else}
-                <TextInput value={isNaN(value?.value) ? value?.value || "" : ""} on:change={(e) => updateValue("value", e)} />
+                <TextInput value={isNaN(value?.value) ? value?.value || "" : ""} placeholder={value?.key === "expression" ? "Use math & dynamic variable values" : ""} on:change={(e) => updateValue("value", e)} />
             {/if}
         </CombinedInput>
     {:else if variable?.type === "text"}

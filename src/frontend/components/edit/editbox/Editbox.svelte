@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, variables } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { deleteAction } from "../../helpers/clipboard"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
     import { getNumberVariables } from "../../helpers/showActions"
@@ -40,7 +41,7 @@
                 return ae
             }
 
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) {
                 if (ae.items.includes(index)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
                 } else {
@@ -132,7 +133,8 @@
 
     $: isDisabledVariable = item.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
-    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked
+    let profile = getAccess("shows")
+    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)

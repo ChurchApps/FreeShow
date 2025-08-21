@@ -7,8 +7,9 @@ import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
-import { getDynamicValue, getVariableValue } from "../components/edit/scripts/itemHelpers"
-import { clone } from "../components/helpers/array"
+import { getDynamicValue, _getVariableValue } from "../components/edit/scripts/itemHelpers"
+import { getSlidesText } from "../components/edit/scripts/textStyle"
+import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
@@ -26,6 +27,7 @@ import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
 import { createCategory, importShow, importSpecific, importTemplate, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
+import { convertMediaShout } from "../converters/mediashout"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong } from "../converters/opensong"
 import { convertPowerpoint } from "../converters/powerpoint"
@@ -80,13 +82,11 @@ import {
     windowState
 } from "../stores"
 import { newToast } from "../utils/common"
-import { validateKeys } from "../utils/drive"
+import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { convertMediaShout } from "../converters/mediashout"
-import { getSlidesText } from "../components/edit/scripts/textStyle"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -243,7 +243,7 @@ export const mainResponses: MainResponses = {
 
         // get "actual" variables
         Object.entries(get(variables)).forEach(([id, a]) => {
-            variableData[`variable_${getLabelId(a.name, false)}`] = getVariableValue(id)
+            variableData[`variable_${getLabelId(a.name, false)}`] = _getVariableValue(id)
         })
 
         // get timers
@@ -253,6 +253,12 @@ export const mainResponses: MainResponses = {
             const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`
             variableData[`timer_${labelId}`] = timeValue
             variableData[`timer_${labelId}_seconds`] = currentTime.toString()
+            const activeTimer = get(activeTimers).find((activeTimer) => activeTimer.id === id)
+            let status = "Stopped"
+            if (activeTimer) {
+                status = activeTimer.paused ? "Paused" : "Playing"
+            }
+            variableData[`timer_${labelId}_status`] = status
         })
 
         // timer status
@@ -269,23 +275,54 @@ export const mainResponses: MainResponses = {
         pcoConnected.set(true)
         if (data.isFirstConnection) newToast("$main.finished")
     },
-    [ToMain.PCO_PROJECTS]: (data) => {
+    [ToMain.PCO_PROJECTS]: async (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
         createCategory("Planning Center")
 
+        const replaceIds: { [key: string]: string } = {}
+        const allShows = keysToID(get(shows))
+
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
-        data.shows.forEach((show) => {
+        for (const show of data.shows) {
             const id = show.id
 
+            // TODO: check if name contains scripture reference (and is empty), and load from active scripture
+
+            // first find any shows linked to the id
+            const linkedShow = allShows.find(({ quickAccess }) => quickAccess?.pcoLink === id)
+            if (linkedShow) {
+                replaceIds[id] = linkedShow.id
+                continue
+            }
+
+            // find existing show with same name and ask to replace.
+            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+            // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
+            if (existingShow) {
+                const useLocal = await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
+                if (useLocal) {
+                    replaceIds[id] = existingShow.id
+
+                    await loadShows([existingShow.id])
+                    showsCache.update((a) => {
+                        if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
+                        a[existingShow.id].quickAccess.pcoLink = id
+                        return a
+                    })
+
+                    continue
+                }
+            }
+
             // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) return
+            if (get(shows)[id]) continue
 
             delete show.id
-            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id) } })
-        })
+            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id), quickAccess: { pcoLink: id } } })
+        }
         setTempShows(tempShows)
 
         data.projects.forEach((pcoProject) => {
@@ -303,6 +340,9 @@ export const mainResponses: MainResponses = {
                 parent: folderId || "/",
                 shows: pcoProject.items || []
             }
+
+            // REPLACE IDS
+            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = pcoProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
@@ -325,22 +365,22 @@ export const mainResponses: MainResponses = {
         createCategory("Chums")
 
         // CREATE SHOWS
-        let replaceIds: { [key: string]: string } = {}
+        const replaceIds: { [key: string]: string } = {}
         const tempShows: { id: string; show: Show }[] = []
-        for (let show of data.shows) {
+        for (const show of data.shows) {
             const id = show.id
 
             // don't add/update if already existing (to not mess up any set styles)
             if (get(shows)[id]) continue
 
             // replace with existing Chums show, that has the same name (but different ID), if it's without content
-            for (let [id, currentShow] of Object.entries(get(shows))) {
+            for (const [showId, currentShow] of Object.entries(get(shows))) {
                 if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
-                await loadShows([id])
+                await loadShows([showId])
 
-                const loadedShow = get(showsCache)[id]
+                const loadedShow = get(showsCache)[showId]
                 if (!getSlidesText(loadedShow.slides)) {
-                    replaceIds[show.id] = id
+                    replaceIds[show.id] = showId
                     break
                 }
             }
@@ -392,18 +432,6 @@ export const mainResponses: MainResponses = {
 
         if (!receiveFOLDER[a.channel]) return
         receiveFOLDER[a.channel]()
-    },
-    [ToMain.OPEN_FILE2]: (a) => {
-        const receiveFILE = {
-            GOOGLE_KEYS: () => {
-                const path = a.files[0]
-                const file = a.content[path]
-                if (file) validateKeys(file)
-            }
-        }
-
-        if (!receiveFILE[a.channel]) return
-        receiveFILE[a.channel]()
     },
     [ToMain.IMPORT2]: (a) => {
         const mainData = a.data

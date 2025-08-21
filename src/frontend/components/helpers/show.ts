@@ -19,6 +19,7 @@ export function checkName(name = "", showId = "") {
 }
 
 export function formatToFileName(name = "") {
+    name = name.replaceAll(":", ",")
     // remove illegal file name characters
     name = name.trim().replace(/[/\\?%*:|"<>╠]/g, "")
     // max 255 length
@@ -67,6 +68,8 @@ export function getGlobalGroup(group: string, returnInputIfNull = false): string
 
 // get group number (dynamic counter)
 export function getGroupName({ show, showId }: { show: Show; showId: string }, slideID: string, groupName: string | null, layoutIndex: number, addHTML = false, layoutNumber = true) {
+    if (groupName === ".") return "." // . as name will be hidden
+
     let name = groupName
     if (name === null) return name // child slide
 
@@ -136,7 +139,7 @@ export const metadataDisplayValues = [
     { id: "first", name: "$:show_at.first:$" },
     { id: "last", name: "$:show_at.last:$" },
     { id: "first_last", name: "$:show_at.first_last:$" },
-    { id: "always", name: "$:show_at.always:$" },
+    { id: "always", name: "$:show_at.always:$" }
 ]
 
 // create new slides
@@ -147,7 +150,7 @@ export function newSlide(data: { items?: Item[]; group?: string; globalGroup?: s
         settings: {},
         notes: "",
         items: [],
-        ...data,
+        ...data
     }
 }
 
@@ -171,7 +174,10 @@ export function updateShowsList(allShows: TrimmedShows) {
         if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
-    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true)
+    // const profile = getAccess("shows")
+    // const hiddenCategories = Object.entries(profile).filter(([_, type]) => type === "none").map(([id]) => id)
+
+    const filteredShows: ShowList[] = removeValues(sortedShows, "private", true) // .filter((a) => !a.category || !hiddenCategories.includes(a.category))
     sortedShowsList.set(filteredShows)
 }
 
@@ -225,7 +231,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     const customId = getShowCacheId(showId, show)
     const template = {
         id: show.settings?.template,
-        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
+        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false
     }
 
     // sort by order when just one layout

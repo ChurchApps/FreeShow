@@ -1,18 +1,24 @@
 <script lang="ts">
-    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
+    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getSetChars, setRandomValue } from "../../helpers/randomValue"
     import T from "../../helpers/T.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
+
+    const profile = getAccess("functions")
+    const readOnly = profile.variables === "read"
 
     const typeOrder = { number: 1, text: 2 }
     $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
@@ -38,12 +44,14 @@
     const typeNames = {
         number: "variables.number",
         randomNumber: "variables.random_number",
-        text: "variables.text"
+        text: "variables.text",
+        text_set: "variables.text_set"
     }
 
     $: numberVariables = filteredVariablesSearch.filter((a) => a.type === "number")
     $: randomNumberVariables = filteredVariablesSearch.filter((a) => a.type === "random_number")
-    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number")
+    $: textSetVariables = filteredVariablesSearch.filter((a) => a.type === "text_set")
+    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
 
     const minDefault = 0
     const maxDefault = 1000
@@ -51,9 +59,9 @@
 
 <svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
 
-<div class="variables context #variables">
+<div class="variables context #variables{readOnly ? '_readonly' : ''}">
     {#if filteredVariablesSearch.length}
-        <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
+        <div class="row" style={randomNumberVariables.length + textSetVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
@@ -62,7 +70,7 @@
                 {@const max = Number(variable.maxValue ?? maxDefault)}
 
                 <SelectElem style="width: calc(25% - 5px);" id="variable" data={variable} draggable>
-                    <div class="variable numberBox context #variable">
+                    <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
                             <Button title={$dictionary.actions?.reset} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
                                 <Icon id="reset" white />
@@ -86,7 +94,7 @@
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id={variable.type} right />
-                            <p title={variable.name}>
+                            <p data-title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}
@@ -138,12 +146,12 @@
             <h5><T id={typeNames.randomNumber} /></h5>
         {/if}
 
-        <div class="row" style={numberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
+        <div class="row" style={numberVariables.length + textSetVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each randomNumberVariables as variable}
                 {@const number = Number(variable.number) || 0}
 
                 <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
-                    <div class="variable numberBox context #variable">
+                    <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
                             <Button disabled={$randomNumberVariable[variable.id]} title={$dictionary.actions?.reset} on:click={() => resetVariable(variable.id)}>
                                 <Icon id="reset" white />
@@ -162,7 +170,7 @@
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id="unknown" right />
-                            <p title={variable.name}>
+                            <p data-title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}
@@ -193,9 +201,9 @@
                 {/if}
 
                 <SelectElem id="variable" data={variable} draggable>
-                    <div class="variable context #variable">
+                    <div class="variable context #variable{readOnly ? '_readonly' : ''}">
                         <span style="padding-inline-start: 5px;">
-                            <Icon id={variable.type} right />
+                            <Icon id={variable.type === "text_set" ? "increase_text" : variable.type} right />
                             <p>
                                 {#if variable.name?.length}
                                     {variable.name}
@@ -215,6 +223,60 @@
                 </SelectElem>
             {/each}
         </div>
+
+        {#if numberVariables.length + randomNumberVariables.length + otherVariables.length && textSetVariables.length}
+            <h5><T id={typeNames.text_set} /></h5>
+        {/if}
+
+        <div class="list">
+            {#each textSetVariables as variable}
+                {@const activeSet = variable.activeTextSet ?? 0}
+
+                <SelectElem id="variable" data={variable} draggable>
+                    <div class="variable context #variable{readOnly ? '_readonly' : ''}">
+                        <span style="padding-inline-start: 5px;">
+                            <Icon id={"increase_text"} right />
+                            <p style="display: flex;gap: 8px;">
+                                {#if variable.name?.length}
+                                    {variable.name}
+                                {:else}
+                                    <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                                {/if}
+
+                                {#if variable.textSetKeys?.length ?? 1 > 1}
+                                    <span style="opacity: 0.5;font-size: 0.8em;">{variable.textSetKeys?.length ?? 1}</span>
+                                {/if}
+                            </p>
+                        </span>
+
+                        <span style="gap: 5px;width: 70%;">
+                            <p style="display: flex;flex: 1;">
+                                <span style="color: var(--secondary);">#</span>
+                                <NumberInput
+                                    title={$dictionary.variables?.set_number}
+                                    style="width: 40px;"
+                                    value={activeSet + 1}
+                                    min={1}
+                                    max={variable.textSets?.length ?? 1}
+                                    on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")}
+                                    buttons={false}
+                                />
+                                <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length || 1}</span>
+                            </p>
+
+                            <Button disabled={activeSet === 0} on:click={() => updateVariable(Math.max(activeSet - 1, 0), variable.id, "activeTextSet")}>
+                                <Icon id="back" right />
+                                <T id="media.previous" />
+                            </Button>
+                            <Button disabled={activeSet === (variable.textSets?.length ?? 1) - 1} on:click={() => updateVariable(Math.min(activeSet + 1, (variable.textSets?.length ?? 1) - 1), variable.id, "activeTextSet")}>
+                                <Icon id="arrow_forward" right />
+                                <T id="media.next" />
+                            </Button>
+                        </span>
+                    </div>
+                </SelectElem>
+            {/each}
+        </div>
     {:else}
         <Center faded>
             <T id="empty.general" />
@@ -222,12 +284,19 @@
     {/if}
 </div>
 
-<div style="display: flex;background-color: var(--primary-darkest);">
-    <Button style="flex: 1;" on:click={() => activePopup.set("variable")} center title={$dictionary.new?.variable}>
-        <Icon id="add" right={!$labelsDisabled} />
+<FloatingInputs onlyOne>
+    <MaterialButton
+        disabled={readOnly}
+        icon="add"
+        title="new.variable"
+        on:click={() => {
+            selected.set({ id: null, data: [] })
+            activePopup.set("variable")
+        }}
+    >
         {#if !$labelsDisabled}<T id="new.variable" />{/if}
-    </Button>
-</div>
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .variables {
@@ -301,6 +370,7 @@
         position: absolute;
         top: 5px;
         inset-inline-end: 5px;
+        z-index: 1;
     }
     .reset :global(button) {
         padding: 5px !important;

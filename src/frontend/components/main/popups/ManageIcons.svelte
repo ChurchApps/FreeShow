@@ -1,11 +1,12 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { Popups } from "../../../../types/Main"
     import { activePopup, customizedIcons, dictionary, popupData } from "../../../stores"
+    import { customIcons, customIconsColors } from "../../../values/customIcons"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { customIcons, customIconsColors } from "../../../values/customIcons"
-    import type { Popups } from "../../../../types/Main"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let colors = true
 
@@ -49,9 +50,7 @@
 </script>
 
 {#if back}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(back)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(back)} />
 {/if}
 
 <div class="info">

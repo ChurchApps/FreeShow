@@ -1,4 +1,3 @@
-import getFonts from "css-fonts"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
 import { machineIdSync } from "node-machine-id"
@@ -11,7 +10,7 @@ import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { chumsDisconnect, chumsLoadServices, chumsStartupLoad } from "../chums"
 import { restoreFiles } from "../data/backup"
-import { downloadMedia } from "../data/downloadMedia"
+import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
@@ -32,6 +31,7 @@ import {
     getDocumentsFolder,
     getFileInfo,
     getFolderContent,
+    getFoldersContent,
     getMediaCodec,
     getMediaTracks,
     getPaths,
@@ -60,7 +60,7 @@ export const mainResponses: MainResponses = {
     [Main.IS_DEV]: () => !isProd,
     [Main.GET_TEMP_PATHS]: () => getTempPaths(),
     // APP
-    [Main.VERSION]: () => app.getVersion(),
+    [Main.VERSION]: () => getVersion(),
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => machineIdSync(),
     [Main.IP]: () => os.networkInterfaces(),
@@ -99,7 +99,6 @@ export const mainResponses: MainResponses = {
         return loadShows(data)
     },
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
-    [Main.GET_SYSTEM_FONTS]: () => loadFonts(),
     [Main.URL]: (data) => openURL(data),
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
@@ -109,7 +108,7 @@ export const mainResponses: MainResponses = {
     [Main.OPEN_LOG]: () => openSystemFolder(error_log.path),
     [Main.OPEN_CACHE]: () => openSystemFolder(getThumbnailFolderPath()),
     [Main.OPEN_APPDATA]: () => openSystemFolder(path.dirname(config.path)),
-    [Main.OPEN_FOLDER_PATH]: (path) => openSystemFolder(path),
+    [Main.OPEN_FOLDER_PATH]: (folderPath) => openSystemFolder(folderPath),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS
@@ -130,7 +129,9 @@ export const mainResponses: MainResponses = {
     [Main.READ_EXIF]: (data) => readExifData(data),
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
-    [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
+    [Main.DOWNLOAD_LESSONS_MEDIA]: (data) => downloadLessonsMedia(data),
+    [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
+    [Main.MEDIA_IS_DOWNLOADED]: (data) => checkIfMediaDownloaded(data),
     [Main.NOW_PLAYING]: (data) => setPlayingState(data),
     [Main.NOW_PLAYING_UNSET]: (data) => unsetPlayingAudio(data),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
@@ -183,6 +184,7 @@ export const mainResponses: MainResponses = {
     [Main.BUNDLE_MEDIA_FILES]: (data) => bundleMediaFiles(data),
     [Main.FILE_INFO]: (data) => getFileInfo(data),
     [Main.READ_FOLDER]: (data) => getFolderContent(data),
+    [Main.READ_FOLDERS]: (data) => getFoldersContent(data),
     [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
     [Main.OPEN_FOLDER]: (data) => selectFolder(data),
     [Main.OPEN_FILE]: (data) => selectFiles(data),
@@ -232,6 +234,15 @@ export function loadShow(msg: { id: string; path: string | null; name: string })
     return show
 }
 
+function getVersion() {
+    try {
+        return app.getVersion()
+    } catch (err) {
+        console.error("Could not get version:", err)
+        return "0.0.0"
+    }
+}
+
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
 }
@@ -240,16 +251,6 @@ function getOS() {
 export const openURL = (url: string) => {
     shell.openExternal(url)
     return
-}
-
-async function loadFonts() {
-    try {
-        const fonts = await getFonts()
-        return { fonts }
-    } catch (err) {
-        console.error("Something went wrong when loading fonts.")
-        return { fonts: [] }
-    }
 }
 
 async function searchLyrics({ artist, title }: { artist: string; title: string }) {
@@ -292,13 +293,13 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
         OutputHelper.getAllOutputs().forEach((output) => {
             if (output.window) windows.push(output.window)
         })
-        ;[mainWindow!, ...windows].forEach((window) => {
-            const mediaId = window?.getMediaSourceId()
-            const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
-            if (windowsAlreadyExists) return
+            ;[mainWindow!, ...windows].forEach((window) => {
+                const mediaId = window?.getMediaSourceId()
+                const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
+                if (windowsAlreadyExists) return
 
-            screens.push({ name: window?.getTitle(), id: mediaId })
-        })
+                screens.push({ name: window?.getTitle(), id: mediaId })
+            })
 
         return screens
     }
@@ -351,7 +352,7 @@ export function createLog(err: Error) {
     return {
         time: new Date(),
         os: process.platform || "Unknown",
-        version: app.getVersion(),
+        version: getVersion(),
         type: "Uncaught Exception",
         source: "See stack",
         message: err.message,

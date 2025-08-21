@@ -41,7 +41,7 @@ const loadActions = {
         const tabs = keysToID(clone(drawerTabs)).slice(tabsToRemove)
         items = tabs.map((a) => {
             const enabled = get(drawerTabsData)[a.id]?.enabled !== false
-            return { id: a.id, label: a.name, icon: a.icon, enabled }
+            return { id: a.id, label: a.name, icon: a.icon, iconColor: "var(--secondary)", enabled }
         })
 
         return items
@@ -51,7 +51,7 @@ const loadActions = {
     tag_set: () => {
         const selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
         const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
@@ -64,7 +64,7 @@ const loadActions = {
     media_tag_set: () => {
         const selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
         const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
@@ -77,7 +77,7 @@ const loadActions = {
     action_tag_set: () => {
         const selectedTags = get(actions)[get(selected).data[0]?.id]?.tags || []
         const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
@@ -91,7 +91,7 @@ const loadActions = {
     variable_tag_set: () => {
         const selectedTags = get(variables)[get(selected).data[0]?.id]?.tags || []
         const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
@@ -113,6 +113,9 @@ const loadActions = {
         if (!currentSlide) return []
 
         const currentGroup: string = currentSlide.globalGroup || ""
+        const noGroup = currentSlide.group === "." || currentGroup === "none"
+        const isParent = slideRef.type === "parent"
+
         items = Object.entries(get(groups)).map(([id, a]) => {
             // strange bug, where name is { "isTrusted": true }, maybe an old issue
             // https://www.reddit.com/r/freeshowapp/comments/1j0w6mt/freeshow_keeps_on_freezing
@@ -120,24 +123,25 @@ const loadActions = {
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
 
-        if (!items.length) return [{ label: "empty.general", disabled: true }]
-        return sortItemsByLabel(items)
+        if (!isParent && !items.length) return [{ label: "empty.general", disabled: true }]
+        // , icon: "remove"
+        return [...(isParent ? [{ id: "none", label: "main.none", enabled: noGroup, style: "opacity: 0.8;" }] : []), ...sortItemsByLabel(items)]
     },
     actions: () => {
         const slideRef = getLayoutRef()?.[get(selected).data[0]?.index]
         const currentActions = slideRef?.data?.actions
 
         const slideActions = [
-            { id: "action", label: "midi.start_action", icon: "actions" },
+            { id: "action", label: "midi.start_action", icon: "actions", iconColor: "#d497ff" },
             "SEPERATOR",
-            { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", enabled: currentActions?.slide_shortcut || false },
-            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", enabled: currentActions?.receiveMidi || false },
+            { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", iconColor: "#7d81ff", enabled: currentActions?.slide_shortcut || false },
+            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", iconColor: "#7d81ff", enabled: currentActions?.receiveMidi || false },
             "SEPERATOR",
-            { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
-            { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
-            { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
+            { id: "nextTimer", label: "preview.nextTimer", icon: "clock", iconColor: "#fca4ff", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
+            { id: "loop", label: "preview.to_start", icon: "restart", iconColor: "#fca4ff", enabled: slideRef?.data?.end || false },
+            { id: "nextAfterMedia", label: "actions.next_after_media", iconColor: "#fca4ff", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
             "SEPERATOR",
-            { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false }
+            { id: "animate", label: "popup.animate", icon: "stars", iconColor: "#fff1ad", enabled: currentActions?.animate || false }
         ]
 
         return slideActions
@@ -283,7 +287,9 @@ const loadActions = {
         const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
-        if (isItem) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
+        let isOverlay = get(activeEdit).type === "overlay"
+        // overlay items does not show up in stage view anyway
+        if (isItem && !isOverlay) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
 
         let currentBindings: string[] = []
         if (isItem) {

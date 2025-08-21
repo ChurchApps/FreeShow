@@ -580,7 +580,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         const existingId = Object.keys(existingBackgrounds).find((mediaId) => existingBackgrounds[mediaId].path === background.path)
                         if (existingId) id = existingId
 
-                        const bgId = _show(showId).media().add(background, id)
+                        const bgId = existingId ? id : _show(showId).media().add(background, id)
                         layoutValue.background = bgId
                     }
 
@@ -873,7 +873,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
                     if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor
 
-                    const isFirst = templateMode === "global" && !!show.layouts[data.remember.layout].slides?.find((a) => a?.id === id)
+                    const isFirst = templateMode === "global" && !!show.layouts[data.remember.layout]?.slides?.find((a) => a?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
 
                     const slideRefs = ref.filter((a) => a.id === id)
@@ -966,7 +966,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : data.dataIsArray === false ? values[valueIndex] || values[i] : values[i]?.[valueIndex] || values[valueIndex] || values[i]
 
                     if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
-                    console.log(valueIndex, value, values, data, key, l)
+                    // console.log(valueIndex, value, values, data, key, l)
 
                     if (value === undefined) delete l[key]
                     else if (data.key && data.keys) {
@@ -986,17 +986,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
             const key: string | null = data.key || null
 
             if (initializing) {
-                data.remember = { showId: get(activeShow)?.id }
+                data.remember = { showId: data.showId || get(activeShow)?.id }
             }
 
             if (!deleting) {
                 data.previousData = clone(_show(data.remember.showId).slides(data.slides).items(data.items).get()[0])
 
-                _show().slides(data.slides).items(data.items).set({ key, values: data.data })
+                _show(data.remember.showId).slides(data.slides).items(data.items).set({ key, values: data.data })
             } else {
                 if (!data.previousData) return
 
-                _show().slides(data.slides).items(data.items).set({ values: data.previousData })
+                _show(data.remember.showId).slides(data.slides).items(data.items).set({ values: data.previousData })
             }
 
             if (!initializing) return

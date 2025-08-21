@@ -15,10 +15,10 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
+    slides: ["media", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
-    project: ["show_drawer", "media", "audio", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
+    project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
     overlays: ["slide"],
     templates: ["slide"],
     edit: ["media", "global_timer", "variable"]
@@ -26,10 +26,10 @@ const areas = {
 }
 const areaChildren = {
     projects: ["folder", "project"],
-    project: ["show", "media", "audio", "show_drawer", "player", "action"],
-    slides: ["slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "audio", "show"],
+    project: ["show", "media", "audio", "audio_effect", "show_drawer", "player", "action"],
+    slides: ["slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "audio", "audio_effect", "show"],
     all_slides: [],
-    navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
+    navigation: ["show", "show_drawer", "media", "audio", "audio_effect", "overlay", "template"],
     audio_playlist: ["audio"]
 }
 
@@ -50,7 +50,7 @@ export function ondrop(e: any, id: string) {
     }
 
     const trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
-    const data: any = JSON.parse(elem?.getAttribute("data") || "{}")
+    const data: any = JSON.parse(elem?.getAttribute("data-item") || "{}")
     let index: undefined | number = data.index
     let center = false
     if (trigger?.includes("center")) center = true
@@ -75,7 +75,7 @@ export function ondrop(e: any, id: string) {
     console.info("NOT ASSIGNED!", sel.id + " => " + id)
 }
 
-export async function projectDropFolders(filePaths: string[], index: number = -1) {
+export async function projectDropFolders(filePaths: string[], index = -1) {
     const stats = await Promise.all(filePaths.map(async (path) => await requestMain(Main.FILE_INFO, path)))
     const folders = stats.filter((a) => a?.folder)
     if (!folders.length) return

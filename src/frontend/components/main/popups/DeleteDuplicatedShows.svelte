@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Show } from "../../../../types/Show"
-    import { activePage, activePopup, dictionary, popupData, shows, showsCache } from "../../../stores"
+    import { activePage, activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -8,7 +8,8 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextArea from "../../inputs/TextArea.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import Center from "../../system/Center.svelte"
     import Date from "../../system/Date.svelte"
     import Loader from "../Loader.svelte"
@@ -37,7 +38,8 @@
                     if (compareShowText === showText) dIds.push(id)
                 })
 
-                if (dIds.length > 1) deleteIds.push(...dIds)
+                dIds.shift()
+                if (dIds.length) deleteIds.push(...dIds)
             })
         )
 
@@ -153,7 +155,7 @@
 
     /////
 
-    function getIds(index: number): string[] {
+    function getIds(index: number, _updater = null): string[] {
         return data[index]?.ids || []
     }
 
@@ -175,12 +177,10 @@
 </script>
 
 {#if manualDeletion}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (manualDeletion = false)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (manualDeletion = false)} />
 
     <div class="shows">
-        {#each getIds(manualIndex) as showId, i}
+        {#each getIds(manualIndex, data) as showId, i}
             {@const show = $shows[showId] || {}}
             <div class="show">
                 <p style="display: flex;align-items: center;justify-content: space-between;padding: 5px 0;">
@@ -190,7 +190,7 @@
                 </p>
 
                 {#if loadedTexts[i]}
-                    <TextArea value={loadedTexts[i]} style="min-height: 180px;" disabled />
+                    <MaterialTextarea label="edit.text" rows={5} value={loadedTexts[i]} disabled />
                 {/if}
 
                 <Button style="width: 100%;" on:click={() => deleteAtIndex(i)} center red>

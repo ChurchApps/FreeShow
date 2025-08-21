@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
     import type { Output } from "../../../../types/Output"
-    import { activePopup, currentOutputSettings, dictionary, outputs, special } from "../../../stores"
+    import { activePopup, currentOutputSettings, outputs, special } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     let currentOutput: (Output & { id: string }) | null = null
@@ -39,9 +40,7 @@
 </script>
 
 {#if !currentOutput?.invisible}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set("choose_screen")} />
 {/if}
 
 <div style="min-width: 650px;">

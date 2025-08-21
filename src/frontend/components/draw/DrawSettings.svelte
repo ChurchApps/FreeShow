@@ -30,7 +30,8 @@
             hold: false
         },
         zoom: {
-            size: 200
+            size: 200,
+            hold: false
         },
         particles: {
             color: "#1e1eb4",
@@ -138,7 +139,7 @@
     <div class="bottom">
         {#if tool === "paint"}
             <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
-                <Icon id="clear" size={2} right />
+                <Icon id="clear" size={2} right white={!!$paintCache?.length} />
                 <T id="clear.drawing" />
             </Button>
         {/if}

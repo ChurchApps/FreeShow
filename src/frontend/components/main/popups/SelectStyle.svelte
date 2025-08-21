@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { OutData } from "../../../../types/Output"
     import type { Styles } from "../../../../types/Settings"
-    import { activePopup, outputs, popupData, styles } from "../../../stores"
+    import { activePopup, currentOutputSettings, outputs, popupData, styles } from "../../../stores"
     import Card from "../../drawer/Card.svelte"
     import { DEFAULT_ITEM_STYLE } from "../../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -17,7 +17,7 @@
     let outputStyles = sortByName(keysToID($styles))
 
     let active: string = $popupData.active || ""
-    let outputId: string = $popupData.outputId || ""
+    let outputId: string = $currentOutputSettings || ""
     let skip = !!$popupData.skip
 
     function select(selectedId: string) {

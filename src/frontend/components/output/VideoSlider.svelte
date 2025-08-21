@@ -1,5 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Slider from "../inputs/Slider.svelte"
@@ -131,7 +132,7 @@
             on:input={sliderInput}
         />
     </div>
-    <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+    <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Toggle time display format">
         {#if fullLength}
             {joinTime(secondsToTime(videoData.duration || 0))}
         {:else}

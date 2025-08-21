@@ -2,6 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
     import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { derived } from "svelte/store"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -21,7 +22,14 @@
     export let thumbnailPath = ""
     export let thumbnail = true
 
-    $: name = name.slice(0, name.lastIndexOf("."))
+    // Memoized name computation
+    let displayName = ""
+    $: {
+        const newName = name.slice(0, name.lastIndexOf("."))
+        if (displayName !== newName) {
+            displayName = newName
+        }
+    }
 
     export let activeFile: null | number
     export let allFiles: string[]
@@ -47,7 +55,16 @@
         if (Number(time) === time) videoElem.currentTime = time
     }
 
-    $: index = allFiles.findIndex((a) => a === path)
+    // Memoized index calculation
+    let cachedIndex = -1
+    let cachedPath = ""
+    $: {
+        if (cachedPath !== path) {
+            cachedIndex = allFiles.findIndex((a) => a === path)
+            cachedPath = path
+        }
+    }
+    $: index = cachedIndex
 
     function mousedown(e: any) {
         if (e.ctrlKey || e.metaKey) return
@@ -97,7 +114,13 @@
         let loop = videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
-        setOutput("background", { path, type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
+
+        // get style per output
+        getActiveOutputs().forEach((outputId) => {
+            const currentOutputStyle = $styles[$outputs[outputId]?.style || ""]
+            const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
+            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, outputId)
+        })
 
         // unsplash requires the download to be triggered when using their images
         if (credits && credits.type === "unsplash" && credits.trigger_download) {
@@ -114,19 +137,31 @@
         activeFile = index
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
-    $: currentStyle = $styles[currentOutput?.style || ""] || {}
+    // Memoized output and style computation
+    const currentOutput = derived(outputs, ($outputs) => $outputs[getActiveOutputs()[0]])
+    const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => $styles[$currentOutput?.style || ""] || {})
 
+    // Memoized media style computation
     let mediaStyle: MediaStyle = {}
-    $: if (path) mediaStyle = getMediaStyle($media[path], currentStyle)
+    $: if (path && JSON.stringify($media[path]) !== JSON.stringify(mediaStyle)) {
+        mediaStyle = getMediaStyle($media[path], $currentStyle)
+    }
 
     // fixed resolution
     let resolution = { width: 16, height: 9 }
     // $: resolution = getResolution(null, { $outputs, $styles })
 
-    $: isFavourite = $media[path]?.favourite === true
-    $: icon = type === "video" ? "movie" : "image"
-    $: tags = $media[path]?.tags || []
+    // Memoized computed properties
+    let isFavourite = false
+    let icon = "image"
+    let tags: string[] = []
+
+    $: {
+        const mediaData = $media[path]
+        isFavourite = mediaData?.favourite === true
+        icon = type === "video" ? "movie" : "image"
+        tags = mediaData?.tags || []
+    }
 
     let iconClicked: NodeJS.Timeout | null = null
     function removeStyle(key: string) {
@@ -162,7 +197,7 @@
         preview={$activeShow?.id === path}
         outlineColor={findMatchingOut(path, $outputs)}
         active={findMatchingOut(path, $outputs) !== null}
-        label={name}
+        label={displayName}
         title={path}
         icon={thumbnail ? icon : null}
         white={type === "image"}

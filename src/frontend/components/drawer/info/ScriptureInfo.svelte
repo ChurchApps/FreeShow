@@ -105,18 +105,22 @@
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         // create first slide reference
+        // const itemIndex = $scriptureSettings?.invertItems ? 1 : 0
         if ($scriptureSettings.firstSlideReference && slides[0]?.[0]?.lines?.[0]?.text?.[0]) {
             const slideClone = clone(slides[0])
             // remove reference item
             // slides.forEach((a) => a.splice(a.length - 1, 1))
             // get verse text for correct styling
-            const metaStyle = slideClone.at(-2)
+            let metaStyle = $scriptureSettings?.invertItems ? slideClone.at(-1) : slideClone.at(-2)
+            if (!metaStyle) metaStyle = clone(slideClone[0])
+
             if (metaStyle) slides = [[metaStyle], ...slides]
             // only keep one line/text item (not verse number)
-            slides[0][0].lines = [slides[0][0].lines![0]]
-            slides[0][0].lines![0].text = [slides[0][0].lines![0].text[1] || slides[0][0].lines![0].text[0]]
+            slides[0][0].lines = [slides[0][0].lines[0]]
+            slides[0][0].lines![0].text = [slides[0][0].lines[0].text[1] || slides[0][0].lines[0].text[0]]
             // set verse text to reference
-            slides[0][0].lines![0].text[0].value = slideClone.at(-1)?.lines?.[0].text?.[0].value || ""
+            let refValue = ($scriptureSettings?.invertItems ? slideClone.at(-2) : slideClone.at(-1))?.lines?.at($scriptureSettings?.referenceAtBottom ? -1 : 0).text?.[0].value || ""
+            slides[0][0].lines![0].text[0].value = refValue
         }
 
         let slides2: any = {}
@@ -395,7 +399,7 @@
                     <p>{$templates[templateId]?.name || "popup.select_template"}</p>
                 </div>
             </Button>
-            {#if $templates[templateId]}
+            {#if $templates[templateId] && !$templates[templateId]?.isDefault}
                 <Button
                     title={$dictionary.titlebar?.edit}
                     on:click={() => {

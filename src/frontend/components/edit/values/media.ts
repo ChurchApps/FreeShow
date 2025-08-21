@@ -145,6 +145,21 @@ export const audioEdits: Box = {
                     slider: true,
                     value: 100,
                     values: { min: 1, max: 100 }
+                },
+
+                {
+                    name: "inputs.start",
+                    id: "fromTime",
+                    input: "number",
+                    value: 0,
+                    values: { max: 100000 }
+                },
+                {
+                    name: "inputs.end",
+                    id: "toTime",
+                    input: "number",
+                    value: 0,
+                    values: { max: 100000 }
                 }
             ]
         }

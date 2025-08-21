@@ -21,17 +21,21 @@
 
         if (!tabs[tabId]) return
         active = tabId
+
+        checkOverflow()
     }
 
     $: firstOverflowIndex = Object.values(tabs).findIndex((a) => a.overflow)
     export let overflowHidden = true
 
-    onMount(() => {
+    onMount(checkOverflow)
+
+    function checkOverflow() {
         // show overflow if active is in overflow
         if (active && Object.keys(tabs).find((id) => id === active && tabs[id].overflow)) {
             overflowHidden = false
         }
-    })
+    }
 </script>
 
 <div class="tabs">
@@ -49,7 +53,7 @@
                 dark
                 center
             >
-                <Icon id={tab.icon} />
+                <Icon id={tab.icon} white={active === id} />
                 {#if labels}
                     {#key tab.name}
                         <span style="margin-inline-start: 0.5em;">

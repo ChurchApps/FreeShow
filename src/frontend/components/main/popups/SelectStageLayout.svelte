@@ -4,8 +4,12 @@
     import T from "../../helpers/T.svelte"
     import StageSlide from "../../stage/StageSlide.svelte"
     import Center from "../../system/Center.svelte"
+    import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import { getAccess } from "../../../utils/profile"
 
-    let stageLayouts = sortByName(keysToID($stageShows))
+    const profile = getAccess("stage")
+
+    let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
 
     let active = $popupData.active || ""
 
@@ -29,7 +33,7 @@
     {#if stageLayouts.length}
         <div class="grid">
             {#each stageLayouts as layout}
-                <div class="stageLayout" on:click={() => select(layout.id)}>
+                <div class="stageLayout" role="button" tabindex="0" on:click={() => select(layout.id)} on:keydown={triggerClickOnEnterSpace}>
                     <StageSlide id={layout.id} {layout} active={active === layout.id} selectable={false} />
                 </div>
             {/each}
@@ -52,5 +56,10 @@
 
     .stageLayout {
         width: 25%;
+        cursor: pointer;
+    }
+    .stageLayout:focus {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 </style>

@@ -128,6 +128,15 @@
         }
 
         setTimeout(() => (loadingStarted = true), 10)
+        // initialize custom scrollbar metrics
+        setTimeout(updateScrollbarMetrics, 0)
+        window.addEventListener("resize", handleResize)
+        return () => {
+            window.removeEventListener("resize", handleResize)
+            window.removeEventListener("pointermove", onThumbPointerMove)
+            if (scrollRaf !== null) cancelAnimationFrame(scrollRaf)
+            if (resizeRaf !== null) cancelAnimationFrame(resizeRaf)
+        }
     })
 
     // SEARCH
@@ -155,6 +164,90 @@
 
     // open tab instantly before loading content
     let loadingStarted: boolean = false
+
+    // CUSTOM MOBILE SCROLLBAR (visible and draggable)
+    let enableCustomScrollbar = false
+    let isCoarsePointer = false
+    let thumbHeight = 0
+    let thumbTop = 0
+    let isDragging = false
+    let dragOffsetY = 0
+
+    // Cache computed style values to avoid repeated calculations
+    let cachedPaddingBottom = 0
+
+    function updateScrollbarMetrics() {
+        if (!scrollElem) return
+        // Determine if device uses a coarse pointer (touch). Only then use custom scrollbar
+        isCoarsePointer = typeof window !== "undefined" ? window.matchMedia("(pointer: coarse)").matches : false
+        const scrollHeight = scrollElem.scrollHeight
+        const clientHeight = scrollElem.clientHeight
+        const scrollable = scrollHeight - clientHeight
+        // account for bottom padding reserved for action buttons so track aligns visually
+        if (cachedPaddingBottom === 0) {
+            const paddingBottomStr = getComputedStyle(scrollElem).paddingBottom || "0px"
+            cachedPaddingBottom = Number(paddingBottomStr.replace("px", "")) || 0
+        }
+        const effectiveClientHeight = Math.max(0, clientHeight - cachedPaddingBottom)
+        enableCustomScrollbar = isCoarsePointer
+        if (!enableCustomScrollbar) return
+
+        const minThumb = 36
+        thumbHeight = Math.max((effectiveClientHeight / scrollHeight) * effectiveClientHeight, minThumb)
+        const maxThumbTop = Math.max(0, effectiveClientHeight - thumbHeight)
+        const ratio = scrollable === 0 ? 0 : scrollElem.scrollTop / scrollable
+        thumbTop = Math.min(maxThumbTop, Math.max(0, ratio * maxThumbTop))
+    }
+    let scrollRaf: number | null = null
+    function handleScroll() {
+        if (scrollRaf !== null) return
+        scrollRaf = requestAnimationFrame(() => {
+            updateScrollbarMetrics()
+            scrollRaf = null
+        })
+    }
+    let resizeRaf: number | null = null
+    function handleResize() {
+        if (resizeRaf !== null) return
+        resizeRaf = requestAnimationFrame(() => {
+            updateScrollbarMetrics()
+            resizeRaf = null
+        })
+    }
+
+    function onThumbPointerDown(e: PointerEvent) {
+        if (!scrollElem) return
+        isDragging = true
+        try {
+            ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+        } catch (err) {
+            // Ignore pointer capture errors on some browsers
+        }
+        const rect = scrollElem.getBoundingClientRect()
+        dragOffsetY = e.clientY - (rect.top + thumbTop)
+        window.addEventListener("pointermove", onThumbPointerMove)
+        window.addEventListener("pointerup", onThumbPointerUp, { once: true })
+        window.addEventListener("pointercancel", onThumbPointerUp, { once: true })
+    }
+
+    function onThumbPointerMove(e: PointerEvent) {
+        if (!isDragging || !scrollElem) return
+        const rect = scrollElem.getBoundingClientRect()
+        const clientHeight = scrollElem.clientHeight
+        const scrollable = scrollElem.scrollHeight - clientHeight
+        const effectiveClientHeight = Math.max(0, clientHeight - cachedPaddingBottom)
+        const maxThumbTop = Math.max(0, effectiveClientHeight - thumbHeight)
+        let y = e.clientY - rect.top - dragOffsetY
+        y = Math.min(maxThumbTop, Math.max(0, y))
+        thumbTop = y
+        const ratio = maxThumbTop === 0 ? 0 : y / maxThumbTop
+        scrollElem.scrollTop = ratio * scrollable
+    }
+
+    function onThumbPointerUp() {
+        isDragging = false
+        window.removeEventListener("pointermove", onThumbPointerMove)
+    }
 </script>
 
 {#if $shows.length}
@@ -163,12 +256,23 @@
         <!-- {#each shows as showObj}
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->
-        <div class="scroll" bind:this={scrollElem}>
-            {#each filteredShows as show}
-                {#if searchValue.length <= 1 || show.match}
-                    <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={$shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+        <div class="scroll-wrap">
+            <div class="scroll" class:hide-native={enableCustomScrollbar} bind:this={scrollElem} on:scroll={handleScroll}>
+                {#each filteredShows as show}
+                    {#if searchValue.length <= 1 || show.match}
+                        <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+                    {/if}
+                {/each}
+                {#if enableCustomScrollbar}
+                    <div class="scrollbar" style={`top:${scrollElem?.getBoundingClientRect ? scrollElem.getBoundingClientRect().top + window.scrollY : 0}px; bottom:var(--bottom-actions-height, 96px);`}>
+                        <div
+                            class="scrollbar-thumb"
+                            style={`height:${thumbHeight}px; transform: translateY(${thumbTop}px);`}
+                            on:pointerdown={onThumbPointerDown}
+                        />
+                    </div>
                 {/if}
-            {/each}
+            </div>
         </div>
         {#if searchValue.length > 1 && totalMatch === 0}
             <Center faded>{translate("empty.search", $dictionary)}</Center>
@@ -197,13 +301,68 @@
 {/if}
 
 <style>
+    :global(:root) {
+        --bottom-actions-height: 96px;
+    }
+    .scroll-wrap { position: relative; display: contents; }
     .scroll {
         display: flex;
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
+        /* ensure content and scrollbar don't sit under the bottom action bar */
+        padding-bottom: var(--bottom-actions-height, 96px);
+        /* keep room for scrollbar so content isn't underneath */
+        scrollbar-gutter: stable both-edges;
+        /* mobile/touch improvements */
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        overscroll-behavior: contain;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
+    /* Hide native scrollbar when custom one is enabled */
+    .hide-native {
+        scrollbar-width: none; /* Firefox */
+    }
+    .hide-native::-webkit-scrollbar { width: 0; height: 0; }
+    /* WebKit FreeShow UI */
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
+    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+
+    /* Larger, easier scrollbar on touch devices */
+    @media (pointer: coarse) {
+        .scroll {
+            padding-inline-end: 12px;
+            scrollbar-width: thick; /* Firefox */
+        }
+        .scroll::-webkit-scrollbar { width: 18px; height: 18px; }
+    }
+
+    /* Custom visible scrollbar track/thumb */
+    .scrollbar {
+        position: fixed;
+        right: 2px;
+        width: 10px;
+        display: block;
+        pointer-events: none; /* let content receive events; thumb will enable on pointerdown */
+    }
+    .scrollbar-thumb {
+        position: absolute;
+        right: 0;
+        width: 10px;
+        border-radius: 8px;
+        background: rgb(255 255 255 / 0.35);
+        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2);
+        pointer-events: auto; /* thumb is interactive */
+        touch-action: none; /* we'll handle dragging */
+    }
+    .scrollbar-thumb:active { background: rgb(255 255 255 / 0.55); }
 
     /* quick play */
     .check {
@@ -233,5 +392,14 @@
     .input::placeholder {
         color: inherit;
         opacity: 0.4;
+    }
+
+    /* keep bottom actions visually above and separated from the scroll area */
+    .buttons {
+        position: sticky;
+        bottom: 0;
+        background-color: var(--primary-darker);
+        border-top: 2px solid var(--primary-lighter);
+        z-index: 1;
     }
 </style>

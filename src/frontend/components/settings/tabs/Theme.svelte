@@ -1,21 +1,14 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import type { Themes } from "../../../../types/Settings"
-    import { dictionary, outputs, selected, theme, themes } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { onDestroy, onMount } from "svelte"
+    import { outputs, selected, theme, themes } from "../../../stores"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
+    import { getSystemFontsList } from "../../helpers/fonts"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import FontDropdown from "../../inputs/FontDropdown.svelte"
-    import HiddenInput from "../../inputs/HiddenInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
-    import { defaultThemes } from "./defaultThemes"
+    import Title from "../../input/Title.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     const colors: string[] = [
         "primary",
@@ -24,7 +17,7 @@
         "primary-darkest",
         "secondary",
         "text",
-        "secondary-text",
+        "secondary-text"
         // "textInvert",
         // "secondary-opacity",
         // "hover",
@@ -36,20 +29,6 @@
         updateThemeValues($themes[a])
     })
     onDestroy(unsubscribe)
-
-    $: themeNames = getThemesArray($themes)
-
-    function getThemesArray(themes: { [key: string]: Themes }) {
-        let names: any[] = []
-        Object.entries(themes).forEach(([id, obj]) => {
-            names.push({ name: obj.default ? `$:themes.${obj.name}:$` : obj.name, id, default: obj.default })
-        })
-        return names.sort((a, b) =>
-            a.id === "default" || b.id === "default"
-                ? 1
-                : (a.default ? $dictionary.themes?.[a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)] || "" : a.name).localeCompare(b.default ? $dictionary.themes?.[b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)] || "" : b.name)
-        )
-    }
 
     function updateTheme(e: any, id: null | string, key = "colors") {
         let value: string = e.target?.value ?? e
@@ -64,7 +43,7 @@
             let data = {
                 ...thisTheme,
                 default: false,
-                name: (key === "name" ? value : thisTheme.name) + " 2",
+                name: (key === "name" ? value : thisTheme.name) + " 2"
             }
             if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
 
@@ -90,115 +69,29 @@
         })
     }
 
-    let themeValue: any
-    $: themeValue = $themes[$theme]?.default ? $dictionary.themes?.[$themes[$theme].name] || "" : $themes[$theme]?.name || ""
-
-    function resetThemes() {
-        theme.set("default")
-        themes.set(clone(defaultThemes))
-        updateThemeValues(defaultThemes.default)
-    }
-
-    let edit = false
+    let fontsList: { label: string; value: string; style: string }[] = []
+    onMount(async () => {
+        fontsList = await getSystemFontsList()
+    })
 </script>
 
-<!-- <h3><T id="settings.font" /></h3> -->
-<CombinedInput>
-    <p><T id="settings.font_family" /></p>
-    <!-- <Dropdown options={fonts} value={$themes[$theme]?.font?.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
-    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:click={(e) => updateTheme(e.detail || "", "family", "font")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.font_size" /></p>
-    <NumberInput value={$themes[$theme]?.font?.size.replace("em", "") ?? 1} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.border_radius" /></p>
-    <NumberInput value={$themes[$theme]?.border?.radius?.replace("px", "") || 0} max={30} step={5} on:change={(e) => updateTheme(e.detail + "px", "radius", "border")} />
-</CombinedInput>
+<MaterialDropdown options={fontsList} value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} label="settings.font_family" on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
+<MaterialNumberInput label="settings.font_size" value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
 
-<h3><T id="settings.colors" /></h3>
-{#each colors as color}
-    <CombinedInput>
-        <p><T id={"theme." + color} /></p>
-        <Color value={$themes[$theme]?.colors?.[color]} on:input={(e) => updateTheme(e.detail, color)} />
-    </CombinedInput>
-{/each}
+<!-- WIP deprecated -->
+<MaterialNumberInput label="settings.border_radius" value={Number($themes[$theme]?.border?.radius?.replace("px", "") || 0)} max={30} step={5} on:change={(e) => updateTheme(e.detail + "px", "radius", "border")} />
 
-<div class="filler" />
-<div class="bottom">
-    <div class="themes" style="display: flex;overflow-x: auto;">
-        {#each themeNames as currentTheme}
-            {@const active = $theme === currentTheme.id}
-            {@const currentColors = $themes[currentTheme.id].colors}
-            {@const name = translate(currentTheme.name, { parts: true })}
+<Title label="settings.colors" icon="color" />
 
-            <SelectElem id="theme" data={{ id: currentTheme.id }} fill>
-                <Button
-                    outline={active}
-                    class={currentTheme.id === "default" ? "" : "context #theme"}
-                    {active}
-                    style="width: 100%;{active ? '' : `background-color: ${currentColors.primary};`}"
-                    on:click={() => theme.set(currentTheme.id)}
-                    bold={false}
-                    center
-                >
-                    {#if active}<Icon id="theme" right white />{/if}
-                    <HiddenInput style="color: {currentColors.secondary};" value={name} id={"theme_" + currentTheme.id} on:edit={(e) => updateTheme(e.detail.value, null, "name")} bind:edit />
-                </Button>
-            </SelectElem>
-        {/each}
-    </div>
-
-    <div style="display: flex;">
-        <Button
-            style="width: 100%;"
-            on:click={() => {
-                history({ id: "UPDATE", newData: { data: clone($themes[$theme]), replace: { default: false, name: themeValue + " 2" } }, location: { page: "settings", id: "settings_theme" } })
-            }}
-            center
-        >
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
-        {#if Object.values($themes).length < 10}
-            <Button on:click={resetThemes} center>
-                <Icon id="reset" right />
-                <p><T id="settings.reset_themes" /></p>
-            </Button>
-        {/if}
-    </div>
+<div class="colors">
+    {#each colors as color}
+        <MaterialColorInput label={"theme." + color} value={$themes[$theme]?.colors?.[color] || ""} on:change={(e) => updateTheme(e.detail, color)} />
+    {/each}
 </div>
 
 <style>
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-
-    .filler {
-        height: 76px;
-    }
-    .bottom {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-        width: 100%;
-        background-color: var(--primary-darkest);
-
+    .colors {
         display: flex;
         flex-direction: column;
-    }
-
-    .bottom .themes :global(button) {
-        padding: 0 0.8em !important;
-        font-size: 14px;
-        font-family: sans-serif;
-    }
-    .bottom .themes :global(button.outline) {
-        outline: 2px solid white !important;
     }
 </style>

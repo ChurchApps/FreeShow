@@ -4,7 +4,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, dictionary, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePopup, dictionary, maxConnections, os, outputs, popupData, ports, remotePassword, serverData, special } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -13,11 +13,14 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
+
+    $: useHostname = $special.connectionHostname
 
     onMount(() => {
         id = $popupData.id
@@ -31,14 +34,14 @@
         controller: 5512,
         output_stream: 5513,
 
-        companion: 5505,
+        companion: 5505
         // rest: 5506
 
         // PCO: 5501
     }
 
     $: port = $ports[id] || defaultPorts[id]
-    $: url = "http://" + ip + ":" + port
+    $: url = `http://${useHostname ? `${$os.name.toLowerCase()}.local` : ip}:${port}`
     $: if (url) generateQR(url)
 
     function mousedown(e: any) {
@@ -49,7 +52,7 @@
 
     let qrImg = ""
     function generateQR(text) {
-        if (ip === "localhost" || id === "companion") return
+        if ((!useHostname && ip === "localhost") || id === "companion") return
 
         var qr = qrcode(0, "L")
         qr.addData(text)
@@ -95,9 +98,7 @@
 </script>
 
 {#if options}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (options = false)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (options = false)} />
 
     <CombinedInput>
         <p><T id="settings.port" /></p>
@@ -140,6 +141,19 @@
             <p><T id="settings.max_connections" /></p>
             <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
         </CombinedInput>
+        <CombinedInput>
+            <p><T id="settings.use_hostname" /></p>
+            <div class="alignRight">
+                <Checkbox
+                    checked={$special.connectionHostname}
+                    on:change={(e) =>
+                        special.update((a) => {
+                            a.connectionHostname = isChecked(e)
+                            return a
+                        })}
+                />
+            </div>
+        </CombinedInput>
     {/if}
 {:else}
     <div on:mousedown={mousedown}>
@@ -169,7 +183,7 @@
                     <T id="error.ip" />
                     <!-- <br />Should look similar to this: 192.168.1.100 -->
                 </p>
-            {:else}
+            {:else if qrImg}
                 <p style="margin-bottom: 5px;"><T id="settings.connect_qr" />:</p>
                 {@html qrImg}
             {/if}

@@ -43,6 +43,7 @@ import { addToPos, getIndexes, mover } from "./mover"
 import { checkName, getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
+import { getAccess } from "../../utils/profile"
 
 function getId(drag: Selected): string {
     const id = ""
@@ -71,6 +72,21 @@ export const dropActions = {
 
         const id: string = getId(drag)
         if (slideDrop[id]) {
+            const show = _show().get()
+            if (show?.locked) {
+                alertMessage.set("show.locked_info")
+                activePopup.set("alert")
+                return
+            }
+
+            const profile = getAccess("shows")
+            const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+            if (readOnly) {
+                alertMessage.set("profile.locked")
+                activePopup.set("alert")
+                return
+            }
+
             history = slideDrop[id]({ drag, drop }, history, keys)
             return history
         }
@@ -80,7 +96,7 @@ export const dropActions = {
     },
     projects: ({ drag, drop }: Data, h: History) => {
         if (drag.id !== "folder" && drag.id !== "project") return
-        if (drop.data.type && drop.data.type !== "folder") return
+        if (drop.data.type && drop.data.type !== "folder" && drop.data.type !== "project") return
 
         h.location!.page = "show"
 
@@ -109,7 +125,8 @@ export const dropActions = {
             h.location!.id = "project_key"
         }
 
-        h.newData = { key: "parent", data: drop.data.id || "/" }
+        const newParent = drop.data.type === "project" ? get(projects)[drop.data.id]?.parent : drop.data.id
+        h.newData = { key: "parent", data: newParent || "/" }
 
         // move multiple
         ids.forEach((id) => {
@@ -141,7 +158,7 @@ export const dropActions = {
 
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
-            let extraFiles: string[] = []
+            const extraFiles: string[] = []
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)
@@ -160,7 +177,7 @@ export const dropActions = {
 
             // add folders
             if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
-        } else if (drag.id === "audio") {
+        } else if (drag.id === "audio" || drag.id === "audio_effect") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {
             data = data.map((a) => ({ id: a, type: "overlay" }))
@@ -188,8 +205,17 @@ export const dropActions = {
             const indexes: number[] = []
             // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
-                if (_show().get()?.locked) {
+                const show = _show().get()
+                if (show?.locked) {
                     alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
+                const profile = getAccess("shows")
+                const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+                if (readOnly) {
+                    alertMessage.set("profile.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -224,8 +250,17 @@ export const dropActions = {
 
             // create slide from template if dropping on a slide
             if (drop.trigger) {
-                if (_show().get()?.locked) {
+                const show = _show().get()
+                if (show?.locked) {
                     alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                    return
+                }
+
+                const profile = getAccess("shows")
+                const readOnly = profile.global === "read" || profile[show?.category || ""] === "read"
+                if (readOnly) {
+                    alertMessage.set("profile.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -298,7 +333,7 @@ export const dropActions = {
         }
 
         // audio playlist
-        if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
+        if (get(audioPlaylists)[drop.data] && (drag.id === "audio" || drag.id === "audio_effect")) {
             h.id = "UPDATE"
             h.location = { page: "drawer", id: "audio_playlist_key" }
 
@@ -371,7 +406,7 @@ export const dropActions = {
             drag.data.forEach((a) => {
                 const name = getVariableNameId(a.name || "")
                 if (!name) return
-                addItem("text", null, {}, `{variable_${name}}`)
+                addItem("text", null, {}, `{$${name}}`)
             })
         }
     },
@@ -538,6 +573,7 @@ const slideDrop = {
             history(h)
         })
     },
+    audio_effect: ({ drag, drop }: Data, h: History) => slideDrop.audio({ drag, drop }, h),
     microphone: ({ drag, drop }: Data, h: History) => {
         if (drop.index === undefined) return
         h.id = "SHOW_LAYOUT"
@@ -809,7 +845,7 @@ const slideDrop = {
 
         const slides = variables.map((a) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getItem(a) }))
         function getItem(a): Item[] {
-            const variableId = `{variable_${getVariableNameId(a.name || "")}}`
+            const variableId = `{$${getVariableNameId(a.name || "")}}`
             const lines = [{ align: "", text: [{ value: variableId, style: "font-size: 150px;" }] }]
             return [{ type: "text", style: DEFAULT_ITEM_STYLE, lines }]
         }
@@ -868,6 +904,8 @@ const slideDrop = {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
                 return
             }
+
+            if (keys?.shiftKey) action.customData = { [action.triggers[0]]: { overrideCategoryAction: true } }
 
             newActions.push({ id: uid(), ...action })
         })

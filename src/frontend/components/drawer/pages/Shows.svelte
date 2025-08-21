@@ -1,18 +1,21 @@
 <script lang="ts">
-    import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "@sveltejs/svelte-virtual-list"
+    // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
     import Autoscroll from "../../system/Autoscroll.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import VirtualList from "../VirtualList.svelte"
 
     export let id: string
     export let active: string | null
@@ -28,18 +31,49 @@
     //     if (JSON.stringify(updateSorted) !== JSON.stringify(updatedSorted)) updatedSorted = clone(showsSorted)
     // }
 
+    const profile = getAccess("shows")
+    const readOnly = profile.global === "read"
+
     let filteredShows: ShowList[] = []
     let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
-        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
+        active === "all"
+            ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
+            : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
     let previousFilteredShows: any[] = clone(filteredStored)
 
+    $: drawerIsClosed = $drawer.height <= 40
+    let shouldUpdate = false
+    // update when drawer is opened if it has changes
+    $: if (shouldUpdate && !drawerIsClosed) search()
+
+    // reduce lag by only refreshing full list when not typing for 100 ms
+    let isTyping: NodeJS.Timeout | null = null
+    $: largeList = filteredStored.length > 300
+    $: if (searchValue && largeList) typing()
+    function typing() {
+        if (isTyping) clearTimeout(isTyping)
+        isTyping = setTimeout(() => {
+            isTyping = null
+            search()
+        }, 100)
+    }
+
     let createFromSearch = false
     $: if (formattedSearch !== undefined || filteredStored || $activeTagFilter) search()
     function search() {
+        if (isTyping) return
+        // don't update if drawer is closed
+        // updates to this lags the editor when moving/resizing items, if many shows in list
+        if (drawerIsClosed) {
+            shouldUpdate = true
+            return
+        }
+        shouldUpdate = false
+
         if (searchValue.length > 1) {
             const currentTokens = tokenize(formattedSearch)
             const isNarrowing = isRefinement(currentTokens, previousSearchTokens)
@@ -148,14 +182,33 @@
     }
 
     $: sortType = $sorted.shows?.type || "name"
+
+    function createShow(e: any, border: boolean = false) {
+        if (border && e.target?.closest("button")) return
+
+        const { ctrl } = e.detail
+        if (ctrl) {
+            history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
+        } else {
+            activePopup.set("show")
+        }
+    }
+
+    // let listElem: HTMLElement | null = null
+    // let scrollElem: HTMLElement | null = null
+    // $: if (listElem && active) setTimeout(updateScrollElem)
+    // function updateScrollElem() {
+    //     scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
-    <div class="column context #drawer_show">
+    <!-- bind:this={listElem} -->
+    <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
-            {#if createFromSearch}
+            {#if createFromSearch && searchValue.length}
                 <div class="warning">
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0].toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
@@ -179,23 +232,14 @@
         {/if}
     </div>
 </Autoscroll>
-<div class="tabs">
-    <Button
-        id="newShowBtn"
-        style="flex: 1;"
-        on:click={(e) => {
-            if (e.ctrlKey || e.metaKey) {
-                history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
-            } else activePopup.set("show")
-        }}
-        class="context #drawer_new_show"
-        center
-        title="{$dictionary.tooltip?.show} [Ctrl+N]"
-    >
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.show" />{/if}
-    </Button>
-</div>
+
+<FloatingInputs onlyOne gradient>
+    <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
+        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+            {#if !$labelsDisabled}<T id="new.show" />{/if}
+        </MaterialButton>
+    </div>
+</FloatingInputs>
 
 <style>
     .column {
@@ -212,17 +256,12 @@
         background-color: var(--primary-darkest);
     }
 
+    .column :global(svelte-virtual-list-viewport) {
+        padding-bottom: 60px;
+    }
+
     /* THIS don't work with virtual list */
     /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
         background-color: var(--primary-darkest);
     } */
-
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
-    }
-
-    /* .column.hidden :global(button) {
-    display: none;
-  } */
 </style>

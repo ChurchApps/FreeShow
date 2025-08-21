@@ -175,7 +175,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             } else {
                 outData = data
 
-                if (type === "overlays") {
+                if (type === "overlays" || type === "effects") {
                     clearOverlayTimers(id)
                 }
             }
@@ -194,7 +194,7 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
     // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
     const projectItems = get(projects)[get(activeProject) || ""]?.shows
     // this does not work with multiple of the same folder
-    let projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
     const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
     if (!timer || file.type !== "image") return
 
@@ -817,6 +817,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
+        if (templateItem.list) item.list = templateItem.list
 
         // use original line reveal if style template does not have the value set
         const hasLineReveal = item.lineReveal
@@ -825,7 +826,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // if (hasClickReveal) templateItem.clickReveal = true
 
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem[style]) item[style] = templateItem[style]
@@ -1105,9 +1106,9 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[]) {
+export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1116,6 +1117,10 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
+
+    function checkSpecificOutput(item: Item) {
+        return !item.bindings?.length || item.bindings.includes(outputId)
+    }
 }
 
 // , currentSlide: Slide | null = null
@@ -1128,7 +1133,11 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
             .slides([ref?.[outSlide.index ?? -1]?.id])
             .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
-    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
+
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealed = clickRevealItems.length ? !!outSlide.itemClickReveal : true
+
+    if (!maxLines) return { start: null, end: null, clickRevealed } // , index: 0, max: 0
 
     let progress = ((outSlide.line || 0) + 1) / maxLines
 
@@ -1149,7 +1158,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     const overflow = maxStyleLines ? maxLines % maxStyleLines : 0
     if (isEnding && overflow > 0) start = maxLines - overflow
 
-    let end = start + maxStyleLines
+    const end = start + maxStyleLines
 
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
@@ -1163,14 +1172,12 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
         linesEnd = currentReveal
     }
 
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
-
     return {
         start: !!maxStyleLines ? start : null,
         end: !!maxStyleLines ? end : null,
         linesStart: !!linesRevealItems.length ? linesStart : null,
         linesEnd: !!linesRevealItems.length ? linesEnd : null,
-        clickRevealed: clickRevealItems.length ? !!outSlide.itemClickReveal : true
+        clickRevealed
     } // , index: linesIndex, max: maxStyleLines
 }
 
@@ -1201,6 +1208,7 @@ export interface OutputMetadata {
     transition?: any
     value?: string
     media?: boolean
+    condition?: any
 
     messageStyle?: string
     messageTransition?: any
@@ -1221,6 +1229,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
     metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
+    metadata.condition = templatesUpdater[templateId]?.items?.[0]?.conditions || {}
 
     const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId]?.items?.[0])
     // if (metadataTemplateValue || metadata.message || currentStyle)

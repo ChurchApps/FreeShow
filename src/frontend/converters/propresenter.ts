@@ -225,7 +225,7 @@ function convertToSlides(song: any, extension: string) {
         let slideIndex = -1
         groupSlides.forEach((slide) => {
             const items = getSlideItems(slide)
-            console.log(slide, items)
+            // console.log(slide, items)
             if (!items?.length) return
             slideIndex++
 
@@ -336,6 +336,7 @@ function getSlideItems(slide: any) {
 function makeParentSlide(slide, { label, color = "" }) {
     slide.group = label
     if (color) slide.color = rgbStringToHex(color)
+    if (color === "#000000") slide.color = "#ffffff"
 
     // set global group
     if (label.toLowerCase() === "group") label = "verse"
@@ -364,8 +365,8 @@ function arrangeLayouts(arrangements, sequences) {
 
 function splitTextToLines(text: string) {
     let lines: Line[] = []
-    const data = text.split("\n\n")
-    lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText }] }))
+    const data = text.replaceAll("\n\n", "<br>").split("<br>")
+    lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText.trim() }] }))
 
     return lines
 }
@@ -395,6 +396,7 @@ const latin1 = {
     e9: "é",
     fa: "ú",
     ed: "í",
+    f3: "ó",
     f4: "ô",
     "9e": "ž",
     c1: "Á",
@@ -736,9 +738,9 @@ function getColorValue(color: { red: number; green: number; blue: number; alpha:
     if (!color) return ""
 
     color = {
-        red: color.red || 0,
-        green: color.green || 0,
-        blue: color.blue || 0,
+        red: color.red || 255,
+        green: color.green || 255,
+        blue: color.blue || 255,
         alpha: color.alpha || 1
     }
 

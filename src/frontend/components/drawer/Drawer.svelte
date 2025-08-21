@@ -21,6 +21,7 @@
         selected
     } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { getAccess } from "../../utils/profile"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -50,6 +51,9 @@
             offsetY: window.innerHeight - height - e.clientY
         }
     }
+
+    // open drawer if autoclosed
+    $: if ($activePage === "show" && $drawer.autoclosed) setTimeout(() => drawer.set({ height: $drawer.stored ?? DEFAULT_DRAWER_HEIGHT, stored: null }), 100)
 
     function mousemove(e: any) {
         if (!mouse) return
@@ -196,10 +200,23 @@
 
 <!-- <Resizeable id="drawer" side="bottom" minWidth={50}> -->
 <section class="drawer" style="height: {height}px">
-    <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
+    <div
+        class="top context #drawer_top"
+        on:mousedown={mousedown}
+        on:click={click}
+        on:keydown={() => {
+            // does not work and prevents search input keys
+            // if (e.key === "Enter" || e.key === " ") {
+            //     e.preventDefault()
+            //     click(e)
+            // }
+        }}
+    >
+        <!-- role="button"
+        tabindex="0" -->
         <span class="tabs">
             {#each tabs as tab, i}
-                {#if $drawerTabsData[tab.id]?.enabled !== false && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
+                {#if $drawerTabsData[tab.id]?.enabled !== false && getAccess(tab.id).global !== "none" && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
                     <Button
                         id={tab.id}
                         on:click={() => openDrawerTab(tab)}
@@ -208,7 +225,7 @@
                         class="context #drawer_top"
                         title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]"
                     >
-                        <Icon id={tab.icon} size={1.3} />
+                        <Icon id={tab.icon} size={1.3} white={$activeDrawerTab === tab.id} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}
@@ -223,8 +240,22 @@
                 <Icon id="search" size={1.4} white right={!$labelsDisabled && !$focusMode} />
                 {#if !$labelsDisabled && !$focusMode}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
+        {:else}
+            <div class="clearSearch">
+                <Button
+                    style="height: 100%;"
+                    title={$dictionary.clear?.search}
+                    on:click={() => {
+                        searchValue = ""
+                        searchElem?.focus()
+                    }}
+                >
+                    <Icon id="clear" white />
+                </Button>
+            </div>
         {/if}
     </div>
+
     <div class="content">
         <Resizeable id="leftPanelDrawer">
             <Navigation id={$activeDrawerTab} />
@@ -257,6 +288,9 @@
         display: flex;
         justify-content: space-between;
         padding-top: 4px;
+
+        box-shadow: 0 -1.8px 8px rgb(0 0 0 / 0.2);
+        z-index: 1;
     }
     .top::after {
         content: "";
@@ -286,6 +320,7 @@
         min-width: var(--navigation-width);
         /* width: 50%; */
         padding: 0 8px;
+        padding-right: 40px;
         border: none;
         border-inline-start: 4px solid var(--primary-darker);
     }
@@ -297,6 +332,13 @@
     .search::placeholder {
         color: inherit;
         opacity: 0.4;
+    }
+
+    .clearSearch {
+        position: absolute;
+        right: 0;
+        height: calc(100% - 4px);
+        z-index: 1;
     }
 
     .hidden {

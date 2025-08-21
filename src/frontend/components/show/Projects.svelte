@@ -1,7 +1,27 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import {
+        actions,
+        activeFocus,
+        activeProject,
+        activeShow,
+        dictionary,
+        drawer,
+        focusMode,
+        folders,
+        fullColors,
+        labelsDisabled,
+        openedFolders,
+        projects,
+        projectTemplates,
+        projectView,
+        showRecentlyUsedProjects,
+        shows,
+        sorted,
+        special
+    } from "../../stores"
+    import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { getContrast } from "../helpers/color"
@@ -10,7 +30,9 @@
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import ProjectButton from "../inputs/ProjectButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
     import { autoscroll } from "../system/autoscroll"
@@ -27,8 +49,11 @@
         projects.set(removeDuplicateValues($projects))
     }
 
+    let profile = getAccess("projects")
+    let readOnly = profile.global === "read"
+
     $: f = Object.entries($folders)
-        .filter(([_, a]) => !a.deleted)
+        .filter(([id, a]) => !a.deleted && profile[id] !== "none")
         .map(([id, folder]) => ({ ...folder, id, type: "folder" as const }))
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
@@ -50,7 +75,10 @@
             sortedProjects = sortedProjects.reverse()
         }
 
-        tree = [...sortedFolders, ...sortedProjects]
+        // sort by archived state
+        sortedProjects = sortedProjects.sort((a, b) => (!!a.archived === !!b.archived ? 0 : a.archived ? 1 : -1))
+
+        tree = [...(sortedFolders as any), ...sortedProjects]
 
         // update parents (if folders are missing)
         tree = tree.map((a) => ({ ...a, parent: !$folders[a.parent] || $folders[a.parent].deleted ? "/" : a.parent }))
@@ -64,6 +92,12 @@
     function sortFolders(parent = "/", index = 0, path = "") {
         let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
+            const rootParentId = path.split("/")[0] || folder.id!
+            if (profile[rootParentId] === "none") return
+
+            const isReadOnly = profile[rootParentId] === "read"
+            folder.readOnly = isReadOnly
+
             folderSorted.push(folder)
             if (folder.type !== "folder") return
 
@@ -122,6 +156,14 @@
     }
 
     $: projectActive = !$projectView && $activeProject !== null
+    $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
+    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
+
+    function createProject(folder: boolean = false) {
+        let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
+        if (profile[parent] === "none" || tree.find((a) => a.id === parent)?.readOnly) parent = "/"
+        history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
+    }
 
     let listScrollElem: HTMLElement | undefined
     let listOffset = -1
@@ -171,6 +213,8 @@
         previouslyOpened = clone($openedFolders)
     }
     $: if (!$folders[interactedFolder]) interactedFolder = ""
+
+    $: lessVisibleSection = $projects[$activeProject || ""]?.shows?.length > 10 || !!$projects[$activeProject || ""]?.shows?.find((a) => a.type === "section")
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -206,64 +250,56 @@
             {/each}
         </div>
     {:else if !projectActive}
-        <div id="projectsArea" class="list projects context #projects">
+        <div id="projectsArea" class:float={!templates.length} class="list projects {readOnly ? '' : 'context #projects'}">
             <Autoscroll offset={listOffset} bind:scrollElem={listScrollElem} timeout={150} smoothTimeout={0}>
                 <DropArea id="projects">
-                    <ProjectList {tree} />
+                    <ProjectList {tree} {readOnly} />
                 </DropArea>
             </Autoscroll>
         </div>
 
         {#if templates.length}
-            <div class="projectTemplates">
+            <div class="projectTemplates" style="margin-bottom: 60px;">
                 {#each templates as project}
-                    <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
+                    <ProjectButton name={project.name} parent={project.parent} id={project.id} {interactedFolder} template />
                 {/each}
             </div>
         {/if}
 
-        <div id="projectsButtons" class="tabs">
-            <Button
-                style="flex: 0;padding: 0.2em 1.3em;"
-                on:click={() =>
-                    history({
-                        id: "UPDATE",
-                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
-                        location: { page: "show", id: "project_folder" }
-                    })}
-                center
-                title={$dictionary.new?.folder}
-            >
-                <Icon id="folder" white />
-            </Button>
-            <div class="seperator"></div>
-            <Button
-                style="flex: 1;"
-                on:click={() =>
-                    history({
-                        id: "UPDATE",
-                        newData: { replace: { parent: interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/") } },
-                        location: { page: "show", id: "project" }
-                    })}
-                center
-                title={$dictionary.new?.project}
-            >
-                <Icon id="add" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
-            </Button>
-        </div>
+        <!-- <div style="display: flex;">
+            <span class="buttons left" style="position: relative;flex: 1;">
+                <BottomButton style="height: 30px;" disabled={readOnly} title="new.folder" on:click={() => createProject(true)}>
+                    <Icon id="folder" white />
+                </BottomButton>
+            </span>
+            <span class="buttons right" style="position: relative;flex: 5;">
+                <BottomButton style="height: 30px;" disabled={readOnly} icon="add" scrollElem={templates.length ? null : listScrollElem?.querySelector(".droparea")} title="new.project" on:click={() => createProject()}>
+                    {#if !$labelsDisabled}<T id="new.project" />{/if}
+                </BottomButton>
+            </span>
+        </div> -->
+
+        <FloatingInputs>
+            <MaterialButton icon="folder" title="new.folder" on:click={() => createProject(true)} white />
+            <div class="divider"></div>
+            <MaterialButton icon="add" title="new.project" on:click={() => createProject()}>
+                {#if !$labelsDisabled}<T id="new.project" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
     {:else}
-        <div id="projectArea" class="list context #project">
+        <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
                     {#if $projects[$activeProject || ""]?.shows?.length}
                         {#each $projects[$activeProject || ""]?.shows as show, index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
+                            {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
+
                             <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section context #project_section__project {show.color ? 'color-border' : ''}"
+                                        class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
                                         style="font-weight: bold;{$fullColors ? `background-color: ${show.color};color: ${getContrast(show.color || '')};` : `--border-color: ${show.color};color: ${show.color};`}"
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
@@ -282,13 +318,13 @@
                                         </p>
 
                                         {#if triggerAction && $actions[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" title={$actions[triggerAction].name}>
+                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class="context #project_{getContextMenuId(show.type)}__project" icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} icon />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -301,16 +337,19 @@
             </Autoscroll>
         </div>
     {/if}
-</div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length}
-    <div class="tabs">
-        <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
-            <Icon id="section" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<p><T id="new.section" /></p>{/if}
-        </Button>
-    </div>
-{/if}
+    {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
+        <!-- <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
+            {#if !$labelsDisabled}<T id="new.section" />{/if}
+        </BottomButton> -->
+
+        <FloatingInputs onlyOne round={lessVisibleSection}>
+            <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
+                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
+    {/if}
+</div>
 
 <style>
     .main {
@@ -358,6 +397,13 @@
         /* this is to be able to right click and add a folder/project at "root" level */
         padding-bottom: 10px;
     }
+    .list.projects.float :global(.droparea) {
+        padding-bottom: 60px;
+    }
+    .list#projectArea :global(.droparea) {
+        /* "new" button */
+        padding-bottom: 60px;
+    }
 
     .list :global(.section) {
         padding: 4px 40px;
@@ -383,11 +429,5 @@
     #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
-    }
-
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
     }
 </style>

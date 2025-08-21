@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Card from "../../drawer/Card.svelte"
@@ -10,11 +10,10 @@
     import T from "../../helpers/T.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Icon from "../../helpers/Icon.svelte"
 
     let revert = $popupData.revert
 
@@ -27,9 +26,24 @@
     $: active = $popupData.active || ""
 
     // multiple types (scripture)
-    let types: any[] = []
-    $: types = $popupData.types || []
-    $: values = $popupData.values || []
+    const id = $popupData.id
+    let types: { id: string; name: string }[] = []
+    let values: { id: string; name: string }[] = []
+    if (id === "scripture") {
+        const scriptureTemplateTypes = Object.values($scriptures).find((a) => a.collection)
+            ? [
+                  { id: "", name: "$:example.default:$ (1)" },
+                  { id: "_2", name: "2" },
+                  { id: "_3", name: "3" },
+                  { id: "_4", name: "4" }
+              ]
+            : []
+
+        const currentStyle = $styles[$activeStyle]
+
+        types = scriptureTemplateTypes
+        values = scriptureTemplateTypes.map((a) => currentStyle["templateScripture" + a.id] || "")
+    }
 
     let selectedType = types[0]?.id || ""
 
@@ -60,7 +74,7 @@
     }
 
     function selectTemplate(template: any, keyboard = false) {
-        if ($popupData.action !== "select_template") return
+        // if ($popupData.action !== "select_template") return
 
         let previousValue = value
         // update before closing
@@ -68,7 +82,8 @@
 
         setTimeout(() => {
             if ($popupData.trigger) {
-                $popupData.trigger(value, selectedType)
+                if (selectedType) $popupData.trigger({ value, type: selectedType })
+                else $popupData.trigger(value)
                 // } else {
                 //     popupData.set({ ...$popupData, templateId: value })
             }
@@ -95,9 +110,7 @@
 <svelte:window on:keydown={chooseTemplate} />
 
 {#if revert}
-    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
-        <Icon id="back" size={2} white />
-    </Button>
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
 
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">

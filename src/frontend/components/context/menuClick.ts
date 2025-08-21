@@ -4,7 +4,7 @@ import { EXPORT, OUTPUT } from "../../../types/Channels"
 import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
-import type { Item, Slide, SlideData } from "../../../types/Show"
+import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
@@ -48,12 +48,12 @@ import {
     overlays,
     popupData,
     previousShow,
+    profiles,
     projects,
     projectTemplates,
     projectView,
     quickSearchActive,
     refreshEditSlide,
-    scriptures,
     selected,
     settingsTab,
     showRecentlyUsedProjects,
@@ -69,21 +69,22 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
+import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
+import { translate } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
-import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
 import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
-import { clone, removeDuplicates } from "../helpers/array"
+import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
@@ -95,7 +96,6 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
-import { translate } from "../../utils/language"
 
 interface ObjData {
     sel: Selected | null
@@ -130,7 +130,10 @@ const clickActions = {
     // view
     focus_mode: () => {
         const project = get(projects)[get(activeProject) || ""]
-        if (!project?.shows?.length) return
+        if (!project?.shows?.length) {
+            newToast("$empty.project_select")
+            return
+        }
 
         previousShow.set(null)
         activeShow.set(null)
@@ -170,7 +173,7 @@ const clickActions = {
         if (!id) return
         const data = obj.sel?.data?.[0] || {}
 
-        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
+        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile"]
         const renameByIdDirect = ["overlay", "template", "player", "layout", "effect"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
@@ -256,6 +259,12 @@ const clickActions = {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
+        if (obj.contextElem?.classList.value.includes("#event")) {
+            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        // THIS MUST BE LAST (otherwise deleteing e.g. an event while the editbox is selected will delete that instead)
         // delete slide item using context menu, or menubar action
         if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
@@ -265,13 +274,10 @@ const clickActions = {
             deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#event")) {
-            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
-            return
-        }
 
         console.error("COULD NOT DELETE", obj)
     },
+    delete_remove: (obj: ObjData) => clickActions.delete(obj),
     delete_all: (obj: ObjData) => {
         if (obj.contextElem?.classList.value.includes("#event")) {
             const group = get(events)[obj.contextElem.id].group
@@ -604,6 +610,14 @@ const clickActions = {
             return a
         }
     },
+    archive: (obj: ObjData) => {
+        obj.sel?.data?.forEach(({ id }) => {
+            let project = get(projects)[id]
+            if (!project) return
+
+            history({ id: "UPDATE", newData: { key: "archived", data: !project.archived }, oldData: { id }, location: { page: "show", id: "project_key" } })
+        })
+    },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
     },
@@ -686,31 +700,8 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
-    // scripture collection
-    createCollection: (obj: ObjData) => {
-        if (obj.sel?.id !== "category_scripture") return
-        let versions: string[] = obj.sel.data
-
-        // remove collections
-        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
-        versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
-        if (versions.length < 2) return
-
-        let name = ""
-        versions.forEach((id, i) => {
-            if (i > 0) name += " + "
-            if (id.length < 5) {
-                name += id.toUpperCase()
-            } else {
-                const bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
-                name += getShortBibleName(bibleName)
-            }
-        })
-
-        scriptures.update((a) => {
-            a[uid()] = { name, collection: { versions } }
-            return a
-        })
+    createCollection: () => {
+        activePopup.set("create_collection")
     },
     create_show: (obj: ObjData) => {
         if (obj.contextElem?.classList.contains("chapters")) {
@@ -728,7 +719,7 @@ const clickActions = {
             const template = get(templates)[id]
             if (!template) return
 
-            let files: string[] = []
+            const files: string[] = []
             template.items.forEach((item) => {
                 if (item.type === "media") getFile(item.src)
             })
@@ -814,6 +805,23 @@ const clickActions = {
             return a
         })
     },
+    unlink_pco: (obj: ObjData) => {
+        if (!obj.sel) return
+
+        showsCache.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                if (!a[b.id]) return
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+        shows.update((a) => {
+            obj.sel!.data.forEach((b) => {
+                delete a[b.id].quickAccess.pcoLink
+            })
+            return a
+        })
+    },
     section: (obj) => {
         const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
@@ -829,6 +837,7 @@ const clickActions = {
         // find existing with the same name
         const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
         if (existing) id = existing[0]
+        else activeRename.set("project_" + id)
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },
@@ -940,13 +949,16 @@ const clickActions = {
         } else if (obj.sel.id === "show_drawer") {
             const showId = obj.sel.data[0].id
             activeShow.set({ type: "show", id: showId })
-            activeEdit.set({ type: "show", slide: 0, items: [], showId: showId })
+            activeEdit.set({ type: "show", slide: 0, items: [], showId })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
         } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
-            activeEdit.set({ type: obj.sel.id as any, id: obj.sel.data[0], items: [] })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
+
+            // properly set content when edit set to same type as preview, but different id
+            // e.g. overlay opened in preview, then edited, then trying to edit another overlay will reset to preview without timeout
+            setTimeout(() => activeEdit.set({ type: obj.sel!.id as any, id: obj.sel!.data[0], items: [] }))
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
@@ -1047,13 +1059,13 @@ const clickActions = {
             const items = get(activeEdit).items
 
             if (get(activeEdit).id) {
-                const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-                const newState = !currentItems[items[0]][id]
+                const slideItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+                const toggleState = !slideItems[items[0]][id]
 
                 history({
                     id: "UPDATE",
                     oldData: { id: get(activeEdit).id },
-                    newData: { key: "items", subkey: id, data: newState, indexes: items },
+                    newData: { key: "items", subkey: id, data: toggleState, indexes: items },
                     location: { page: "edit", id: get(activeEdit).type + "_items", override: true }
                 })
 
@@ -1180,9 +1192,9 @@ const clickActions = {
             return
         }
 
-        // THIS IS NOT IN USE:
+        if (get(outLocked)) return
 
-        // video
+        // video (play in project)
         const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
@@ -1190,7 +1202,10 @@ const clickActions = {
         const currentOutput = get(outputs)[outputId] || {}
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
-        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
+
+        // clear slide text
+        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
+        setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
@@ -1288,10 +1303,10 @@ const clickActions = {
     },
     place_under_slide: (obj: ObjData) => {
         if (obj.sel?.id === "effect") {
-            const setUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
+            const placeUnder = !get(effects)[obj.sel.data[0]]?.placeUnderSlide
             effects.update((a) => {
                 obj.sel!.data.forEach((id: string) => {
-                    a[id].placeUnderSlide = setUnder
+                    a[id].placeUnderSlide = placeUnder
                 })
                 return a
             })
@@ -1519,6 +1534,17 @@ const clickActions = {
 
             return
         }
+
+        if (obj.sel?.id === "profile") {
+            obj.sel.data.forEach(({ id }) => {
+                const currentProfile = clone(get(profiles)[id])
+                currentProfile.access = {}
+
+                history({ id: "UPDATE", newData: { data: currentProfile }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })
+            })
+
+            return
+        }
     }
 }
 
@@ -1694,10 +1720,19 @@ export function removeGroup(data: any[]) {
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
-export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
+export async function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     const ref = getLayoutRef()
     const parents: any[] = []
     const childs: any[] = []
+
+    if (type === "delete") {
+        const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
+        const prompt = `${get(dictionary).confirm?.statement_slide_exists_layout} ${get(dictionary).confirm?.question_delete}`
+        if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
+    }
+
+    // sort so the correct slide indexes are removed
+    data = sortObjectNumbers(data, "index")
 
     // remove parents and delete childs
     data.forEach(({ index }: any) => {
@@ -1725,7 +1760,7 @@ export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
     history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
-export function format(id: string, obj: ObjData, data: any = null) {
+export async function format(id: string, obj: ObjData, data: any = null) {
     let slideIds: string[] = []
 
     const editing = get(activeEdit)
@@ -1771,7 +1806,8 @@ export function format(id: string, obj: ObjData, data: any = null) {
         ]
     }
 
-    slideIds.forEach((slide) => {
+    // async update
+    for (const slide of slideIds) {
         const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
         const newData: any = { style: { values: [] } }
 
@@ -1787,9 +1823,26 @@ export function format(id: string, obj: ObjData, data: any = null) {
         newData.style.values = newItems
 
         history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items, slide } })
-    })
+
+        await wait(10)
+    }
 
     refreshEditSlide.set(true)
+}
+
+function checkIfAddedToDifferentLayout(ref: LayoutRef[], data: any[]) {
+    let showLayouts = _show().layouts().get(null, true)
+    if (showLayouts.length < 2) return false
+
+    // don't check current
+    const currentLayoutId = _show().get("settings.activeLayout")
+    showLayouts = showLayouts.filter((a) => a.layoutId !== currentLayoutId)
+
+    // check if slide is added to any other layout
+    return data.find(({ index }) => {
+        const parentSlideId = ref[index]?.parent?.id ?? ref[index]?.id
+        return showLayouts.find((a) => a.slides.find((a) => a.id === parentSlideId))
+    })
 }
 
 const formatting = {

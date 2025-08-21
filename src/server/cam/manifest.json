@@ -4,8 +4,8 @@
     "short_name": "CamShow",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#292c36",
-    "theme_color": "#292c36",
+    "background_color": "#242832",
+    "theme_color": "#242832",
     "description": "A camera app for FreeShow.",
     "icons": [
         {

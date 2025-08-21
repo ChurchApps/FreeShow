@@ -9,8 +9,8 @@ export function mainWindowInitialize() {
     // midi
     // createVirtualMidi()
 
-    // express
-    require("../servers")
+    // servers are now started earlier in parallel in startApp() - no need to require here
+    //require("../servers")
 
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
@@ -27,23 +27,35 @@ export function openDevTools(window: BrowserWindow) {
     // https://github.com/electron/electron/issues/41614
 }
 
-// wait until the main Rollup bundle exists before loading
+// wait until the main bundle exists or dev server is ready
 export function waitForBundle() {
     const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "..", "public/build/bundle.js")
     const CHECK_INTERVAL = 2 // every 2 seconds
-    const MAX_SECONDS = 120
     let tries = 0
 
     return new Promise((resolve) => {
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
+            // Check if bundle file exists - old Rollup code, only production build for Vite
             if (doesPathExist(BUNDLE_PATH)) {
-                console.info("Main bundle created! Loading interface...")
+                console.info("Main bundle found! Loading interface...")
                 clearInterval(interval)
                 resolve(true)
+                return
             }
 
-            tries += CHECK_INTERVAL / MAX_SECONDS
-            if (tries >= 1) {
+            // For development, just wait a short time and assume Vite is ready
+            // console.log(`Development mode: waiting for Vite to be ready... (attempt ${tries + 1})`)
+            // if resolved before ready app will never load!
+            if (tries >= 3) {
+                // console.info("Assuming Vite dev server is ready! Loading interface...")
+                clearInterval(interval)
+                resolve(true)
+                return
+            }
+
+            tries += 1
+            if (tries >= 60) {
+                // 60 * 2 seconds = 120 seconds total timeout
                 clearInterval(interval)
                 app.quit()
                 throw new Error("Could not load app content. Please check console for any errors!")

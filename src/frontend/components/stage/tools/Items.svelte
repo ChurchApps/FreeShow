@@ -16,6 +16,8 @@
     import Panel from "../../system/Panel.svelte"
     import { getCustomStageLabel, updateStageShow } from "../stage"
     import { clone } from "../../helpers/array"
+    import Dropdown from "../../inputs/Dropdown.svelte"
+    import { getDynamicIds, replaceDynamicValues } from "../../helpers/showActions"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
@@ -25,13 +27,13 @@
     ]
 
     const normalItems: ItemRef[] = [
-        { id: "text" }, // video time/countdown ... (preset with dynamic values)
+        // { id: "text" }, // video time/countdown ... (preset with dynamic values)
         // { id: "variable" }, // added as dynamic value in textbox
-        { id: "slide_tracker", icon: "percentage" },
         { id: "media", icon: "image" },
         { id: "camera" },
         { id: "timer" },
-        { id: "clock" }
+        { id: "clock" },
+        { id: "slide_tracker", icon: "percentage" }
     ]
 
     $: stageId = $activeStage.id || ""
@@ -42,17 +44,29 @@
     $: slideTextItems = Object.values(stageShow.items || {}).filter((a) => a.type === "slide_text")
 
     const resolution = { width: 1920, height: 1080 }
-    const DEFAULT_STYLE = `width: ${resolution.width / 2}px;height: ${resolution.height / 2}px;inset-inline-start: ${resolution.width / 4}px;top: ${resolution.height / 4}px;`
+    const halfWidth = resolution.width * 0.5
+    const halfHeight = resolution.height * 0.5
+    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;inset-inline-start: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
+    const smallItems = ["timer", "clock", "slide_tracker"]
 
     let timeout: NodeJS.Timeout | null = null
-    function addItem(itemType: string) {
+    function addItem(itemType: string, textValue: string = "") {
         if (!stageId) return
 
         let itemId = uid(5)
         stageShows.update((a) => {
-            let item: StageItem = { type: itemType, style: DEFAULT_STYLE, align: "" }
+            let style = DEFAULT_STYLE
+            if (smallItems.includes(itemType) || textValue) {
+                const width = resolution.width * 0.45
+                const left = halfWidth - width * 0.5
+                const height = 150
+                const top = halfHeight - height * 0.5
+                style = `width: ${width}px;height: ${height}px;inset-inline-start: ${left}px;top: ${top}px;`
+            }
 
-            if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: "" }] }]
+            let item: StageItem = { type: itemType, style, align: "" }
+
+            if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
             else if (itemType === "slide_text") {
                 item.slideOffset = slideTextItems.length
             }
@@ -104,6 +118,12 @@
 
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
+
+    const excludeValues = ["time_", "audio_", "meta_"]
+    const ref = { type: "stage" }
+    const dynamicValues = getDynamicIds()
+        .filter((id) => !excludeValues.find((v) => id.includes(v)))
+        .map((id) => ({ name: `{${id}}`, id, extraInfo: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 
 <div class="main">
@@ -129,8 +149,16 @@
         <h6><T id="tools.items" /></h6>
 
         <div class="grid normal">
+            <div class="flex">
+                <IconButton name title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
+
+                <Dropdown options={dynamicValues} value="" on:click={(e) => addItem("text", e.detail.name)} title={$dictionary.actions?.dynamic_values} arrow />
+            </div>
+
+            <hr class="divider" />
+
             {#each normalItems as item}
-                <!-- i === 0 ? "min-width: 100%;" :  -->
+                <!-- i === 4 ? "min-width: 100%;" : - center align last item -->
                 <IconButton
                     style={$labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
                     name
@@ -179,7 +207,7 @@
                             }
                         }}
                     >
-                        <span style="display: flex;flex: 1;">
+                        <span style="display: flex;flex: 1;overflow: hidden;">
                             <p style="margin-inline-end: 10px;">{i + 1}</p>
                             <Icon id={type === "icon" ? id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
                             <p style="margin-inline-start: 10px;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || $dictionary.items?.[type]}</p>
@@ -222,6 +250,19 @@
     /* .normal */
     .grid :global(#icon) {
         min-width: 49%;
+    }
+
+    .flex {
+        display: flex;
+        flex: 1;
+        /* min-width: 45%; */
+    }
+    .flex :global(.dropdownElem button) {
+        border: none;
+        border-left: 2px solid var(--primary);
+    }
+    .flex :global(.dropdownElem .dropdown) {
+        width: 260px;
     }
 
     .divider {

@@ -8,6 +8,7 @@
 
     // FPS
     let secondsTimeout: NodeJS.Timeout | null = null
+    let frames = 0
     let count = 0
     let fps = 0
     let start = 0
@@ -33,6 +34,7 @@
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
+                frames++
                 // FPS
                 count++
                 if (!secondsTimeout) startFPS()
@@ -47,6 +49,8 @@
                 // }
 
                 capture = msg.data
+
+                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, success: true } })
                 break
             case "AUDIO_BUFFER":
                 if (audioSignal && audioMuted) return
@@ -80,7 +84,17 @@
         // TODO: request frame on load
     })
 
-    $: if (capture) updateCanvas()
+    // $: if (capture) updateCanvas()
+    let updating = false
+    $: if (capture?.size && !updating) {
+        updating = true
+        requestAnimationFrame(() => {
+            updateCanvas().then(() => {
+                updating = false
+            })
+        })
+    }
+
     async function updateCanvas() {
         if (!canvas) return
 
@@ -164,7 +178,7 @@
 
 {#if !isFullscreen && clicked}
     <div class="count" style="position: absolute;bottom: 4px;inset-inline-start: 4px;font-size: 0.5em;opacity: 0.3;">
-        FPS: {fps} | {capture?.size?.width || 1920}x{capture?.size?.height || 1080}
+        FPS: {fps} | Frame: {frames} | {capture?.size?.width || 1920}x{capture?.size?.height || 1080}
     </div>
 {/if}
 
@@ -206,8 +220,8 @@
     }
 
     :root {
-        --primary: #292c36;
-        --primary-lighter: #363945;
+        --primary: #242832;
+        --primary-lighter: #2f3542;
         --primary-darker: #191923;
         --primary-darkest: #12121c;
         --text: #f0f0ff;

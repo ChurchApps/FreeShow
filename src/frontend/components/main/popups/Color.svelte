@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, activeShow, effects, globalTags, outputs, overlays, projects, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, effects, globalTags, outputs, overlays, profiles, projects, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -11,7 +11,8 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     let value = "#FFFFFF"
-    $: console.log(value)
+    let enableNoColor = $selected.id === "show" // || $selected.id === "slide"
+
     onMount(() => {
         if ($selected.id === "slide") {
             let firstSelected = $selected.data[0]
@@ -23,8 +24,9 @@
         } else if ($selected.id === "overlay") value = $overlays[$selected.data[0]].color || ""
         else if ($selected.id === "template") value = $templates[$selected.data[0]].color || ""
         else if ($selected.id === "effect") value = $effects[$selected.data[0]].color || ""
-        else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color
-        else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color
+        else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color || ""
+        else if ($selected.id === "profile") value = $profiles[$selected.data[0].id].color || ""
+        else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color || ""
         else if ($selected.id === "show") value = $projects[$activeProject || ""]?.shows[$selected.data[0].index].color || ""
     })
 
@@ -67,6 +69,15 @@
                 return a
             })
         },
+        profile: () => {
+            profiles.update((a) => {
+                $selected.data.forEach(({ id }) => {
+                    a[id].color = value
+                })
+
+                return a
+            })
+        },
         tag: () => {
             globalTags.update((a) => {
                 let id = $selected.data[0]?.id || ""
@@ -91,7 +102,7 @@
     }
 </script>
 
-<Color {value} on:input={(e) => (value = e.detail)} visible />
+<Color {value} on:input={(e) => (value = e.detail)} {enableNoColor} visible />
 
 <CombinedInput style="margin-top: 10px;">
     <Button on:click={updateColor} style="width: 100%;" dark center>

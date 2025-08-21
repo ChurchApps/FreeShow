@@ -54,7 +54,7 @@
 {#if audioOutputs.length}
     <div class="input" style="margin-top: 5px;">
         <CombinedInput>
-            <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
+            <p data-title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
             <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === values.audioOutput)?.name || "—"} on:click={(e) => updateValue("audioOutput", e.detail?.id)} />
         </CombinedInput>
     </div>

@@ -47,7 +47,8 @@ import {
     triggers,
     variables,
     videoMarkers,
-    effects
+    effects,
+    profiles
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
@@ -73,6 +74,9 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
     if (get(selected).id) copyData = get(selected)
     else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
+    else if (get(activePage) === "stage" && get(activeStage).items?.length) {
+        copyData = { id: "stage_item", data: get(activeStage) }
+    }
 
     if (!copyData?.id || !copyActions[copyData.id]) {
         if (copyData?.id) console.info("No copy action:", copyData)
@@ -115,7 +119,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
-        mediaPaste(clip.data)
+        mediaPaste(clip.data[0])
         return
     }
 
@@ -129,17 +133,17 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
-    //Handle text directly
+    // Handle text directly
     if (window.getSelection()?.toString()) {
         const selection = window.getSelection()!
         navigator.clipboard.writeText(selection.toString())
-        selection.deleteFromDocument();
+        selection.deleteFromDocument()
         console.info("CUTTED TEXT", selection.toString())
         return
     }
-    //Handle other types
+    // Handle other types
     const copyData = copy(clip)
-    if (!copyData) return 
+    if (!copyData) return
     deleteAction(copyData)
 
     console.info("CUTTED:", copyData)
@@ -181,7 +185,7 @@ export function duplicate(clip: Clipboard | null = null) {
 export function selectAll(data: any = {}) {
     const activeElem = document.activeElement
     if (activeElem?.nodeName === "INPUT" || activeElem?.nodeName === "TEXTAREA") {
-        ;(activeElem as HTMLInputElement).select()
+        ; (activeElem as HTMLInputElement).select()
         return
     }
 
@@ -478,7 +482,7 @@ const copyActions = {
             if (!mediaCopyKeys.includes(key)) return
             mediaData[key] = value
         })
-        return { origin: path, data: mediaData, type: data[0]?.type }
+        return [{ origin: path, data: mediaData, type: data[0]?.type }]
     },
     // project items
     show: (data: any) => {
@@ -488,6 +492,20 @@ const copyActions = {
             projectItems.push(item)
         })
         return projectItems
+    },
+    stage_item: (data: any) => {
+        const stageId: string = data.id || ""
+        const selectedItemIds: string[] = data.items || []
+        const stage = get(stageShows)[stageId]
+
+        if (!stage || !selectedItemIds.length) return []
+
+        const copiedItems = selectedItemIds.map((itemId) => {
+            const item = clone(stage.items[itemId])
+            return item
+        })
+
+        return copiedItems
     }
 }
 
@@ -640,6 +658,33 @@ const pasteActions = {
         projects.update((a) => {
             if (!a[get(activeProject) || ""]?.shows) return a
             a[get(activeProject) || ""].shows.push(...data)
+            return a
+        })
+    },
+    stage_item: (data: any) => {
+        const stageId = get(activeStage).id
+        if (!stageId || !data?.length) return
+
+        const stage = clone(get(stageShows)[stageId])
+        const newItemIds: string[] = []
+
+        data.forEach((item) => {
+            const newItemId = uid(5)
+            stage.items[newItemId] = clone(item)
+            newItemIds.push(newItemId)
+        })
+
+        history({
+            id: "UPDATE",
+            newData: { data: stage.items, key: "items" },
+            oldData: { id: stageId },
+            location: { page: "stage", id: "stage_item_content" }
+        })
+        updateSortedStageItems()
+
+        // Select the newly pasted items
+        activeStage.update((a) => {
+            a.items = newItemIds
             return a
         })
     }
@@ -801,11 +846,11 @@ const deleteActions = {
         // remove from all layouts
         const ref = getLayoutRef()
         ref.forEach((slideRef, i) => {
-            const actions = clone(slideRef.data.actions) || {}
-            if (actions[key] !== id) return
-            delete actions[key]
+            const slideActions = clone(slideRef.data.actions) || {}
+            if (slideActions[key] !== id) return
+            delete slideActions[key]
 
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [i] } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideActions, indexes: [i] } })
         })
 
         if (data.type === "in") {
@@ -859,6 +904,22 @@ const deleteActions = {
             data.forEach((id: string) => {
                 history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
             })
+
+            // remove from active project if any
+            projects.update(a => {
+                if (!a[get(activeProject) || ""]?.shows) return a
+
+                data.forEach((layoutId: string) => {
+                    a[get(activeProject) || ""].shows.forEach(show => {
+                        if (show.layout !== layoutId) return
+
+                        delete show.layout
+                        delete show.layoutInfo
+                    })
+                })
+
+                return a
+            })
         } else {
             newToast("$error.keep_one_layout")
         }
@@ -908,6 +969,11 @@ const deleteActions = {
         })
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])
+    },
+    profile: (data: any) => {
+        data.forEach(({ id }) => {
+            history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_profile" } })
+        })
     },
     tag: (data: any) => {
         const tagId = data[0]?.id || ""
@@ -1074,10 +1140,17 @@ const duplicateActions = {
             history({ id: "UPDATE", newData: { data: output, replace: { name: output.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
         })
     },
+    profile: (data: any) => {
+        data.forEach(({ id }) => {
+            const profile = clone(get(profiles)[id])
+            id = uid()
+            history({ id: "UPDATE", newData: { data: profile, replace: { name: profile.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })
+        })
+    },
     action: (data: any) => {
         actions.update((a) => {
             data.forEach(({ id }) => {
-                const newAction = clone(get(actions)[id])
+                const newAction = clone(a[id])
                 newAction.name += " 2"
 
                 const newId = uid()
@@ -1090,7 +1163,7 @@ const duplicateActions = {
     global_timer: (data: any) => {
         timers.update((a) => {
             data.forEach(({ id }) => {
-                const newTimer = clone(get(timers)[id])
+                const newTimer = clone(a[id])
                 newTimer.name += " 2"
 
                 const newId = uid()
@@ -1099,20 +1172,44 @@ const duplicateActions = {
 
             return a
         })
+    },
+    variable: (data: any) => {
+        variables.update((a) => {
+            data.forEach(({ id }, i) => {
+                const newVariable = clone(a[id])
+                newVariable.name = ""
+
+                const newId = uid()
+                a[newId] = newVariable
+
+                if (i === 0) {
+                    selected.set({ id: "variable", data: [{ id: newId }] })
+                    activePopup.set("variable")
+                }
+            })
+
+            return a
+        })
     }
 }
 
-const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume"]
+const videoKeys = ["speed", "volume"]
+const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume", "videoType"]
 function mediaPaste(data: any) {
     if (!data || get(selected).id !== "media") return
 
+    const selectedMedia = get(selected).data || []
+    const multipleTypes = (new Set(selectedMedia.map(a => a.type))).size > 1
+
     media.update((a) => {
-        ;(get(selected).data || []).forEach(({ path, type }) => {
-            // only paste on media with same type & don't paste back on itself
-            if (type !== data.type || path === data.path) return
+        selectedMedia.forEach(({ path, type }) => {
+            // only paste on media with same type (if mixed selection) & don't paste back on itself
+            if ((multipleTypes && type !== data.type) || path === data.path) return
 
             if (!a[path]) a[path] = {}
             mediaCopyKeys.forEach((key) => {
+                if (videoKeys.includes(key) && type !== "video") return
+
                 if (data.data[key] === undefined) delete a[path][key]
                 else a[path][key] = data.data[key]
             })

@@ -54,10 +54,10 @@ export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] 
 }
 
 export const mediaFitOptions: any[] = [
-    { id: "contain", name: "$:media.contain:$" },
-    { id: "cover", name: "$:media.cover:$" },
-    { id: "fill", name: "$:media.fill:$" },
-    { id: "blur", name: "$:media.blur_fill:$" }
+    { id: "contain", name: "media.contain" },
+    { id: "cover", name: "media.cover" },
+    { id: "fill", name: "media.fill" },
+    { id: "blur", name: "media.blur_fill" }
     // { id: "scale-down", name: "Scale down" },
 ]
 
@@ -135,7 +135,7 @@ export const boxes: Box = {
                 { name: "no_wrap", id: "nowrap", input: "checkbox", value: false }
             ],
             lines: [
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 2, inputMultiplier: 10 }, extension: "em" },
                 { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
                 { name: "line_radius", id: "specialStyle.lineRadius", input: "number", value: 0, values: { max: 100 } },
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },
@@ -265,6 +265,8 @@ export const boxes: Box = {
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
                 // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false }, // , hidden: true
+                { name: "media._loop", id: "loop", input: "checkbox", value: false },
+                { name: "media.speed", id: "speed", input: "number", slider: true, value: 1, values: { min: 0.1, max: 15, step: 0.1, decimals: 1, fixed: 1 } },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
                 // WIP crop image
