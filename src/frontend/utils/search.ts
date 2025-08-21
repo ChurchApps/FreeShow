@@ -23,7 +23,7 @@ export function tokenize(str: string): string[] {
 
 // check if all old tokens are still in new tokens
 export function isRefinement(newTokens: string[], oldTokens: string[]): boolean {
-    return oldTokens.every((token) => newTokens.includes(token))
+    return oldTokens.length ? oldTokens.every((token) => newTokens.includes(token)) : false
 }
 
 export function showSearch(searchValue: string, shows: ShowList[]) {

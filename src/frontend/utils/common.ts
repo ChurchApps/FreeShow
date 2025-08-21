@@ -20,6 +20,7 @@ import {
     quickSearchActive,
     resized,
     serverData,
+    special,
     theme,
     themes,
     toastMessages,
@@ -166,7 +167,7 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
-    if (get(currentWindow)) return
+    if (get(currentWindow) || get(special).optimizedMode) return
 
     const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId

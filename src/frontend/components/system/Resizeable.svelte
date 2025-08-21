@@ -62,9 +62,10 @@
         bottom: (e: any) => window.innerHeight - e.clientY - mouse!.offset
     }
 
+    const MIN_WIDTH = 0.69
     function getWidth(width: number) {
-        if (width < (DEFAULT_WIDTH * 0.6) / 2) return minWidth
-        if (width < DEFAULT_WIDTH * 0.6) return DEFAULT_WIDTH * 0.6
+        if (width < (DEFAULT_WIDTH * MIN_WIDTH) / 2) return minWidth
+        if (width < DEFAULT_WIDTH * MIN_WIDTH) return DEFAULT_WIDTH * MIN_WIDTH
         if (width > DEFAULT_WIDTH - 20 && width < DEFAULT_WIDTH + 20) return DEFAULT_WIDTH
         if (width > maxWidth) return maxWidth
         move = true

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { localeDirection } from "../../stores"
-    import { isDarkTheme } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import ContextItem from "./ContextItem.svelte"
@@ -62,8 +61,6 @@
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") open = !open
     }
-
-    const light = !isDarkTheme()
 </script>
 
 <svelte:window on:mouseover={onMouseOver} />
@@ -82,7 +79,7 @@
     </span>
 
     {#if open}
-        <div class="submenu" class:light style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-14px'});">
+        <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-14px'});">
             {#if menu?.items?.length}
                 {#each menu.items as itemId}
                     {#if itemId === "SEPERATOR"}
@@ -141,13 +138,9 @@
         border: 1px solid var(--primary-lighter);
         /* border-left: none; */
 
-        --background: rgba(35, 35, 45, 0.97);
         background-color: var(--background);
 
         /* this does not work here */
         /* backdrop-filter: blur(8px); */
-    }
-    .submenu.light {
-        --background: rgba(220, 220, 225, 0.97);
     }
 </style>

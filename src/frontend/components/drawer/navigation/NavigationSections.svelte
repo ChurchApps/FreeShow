@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData } from "../../../stores"
+    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData, labelsDisabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
 
@@ -62,22 +62,26 @@
     {#each sections as buttons, index}
         {#if buttons.length > 1 || !buttons[0]?.hidden}
             <div class="section">
-                {#if index === 0}
-                    <slot name="header_0" />
-                {:else if index === 1}
-                    <slot name="header_1" />
-                {:else if index === 2}
-                    <slot name="header_2" />
-                {:else if index === 3}
-                    <slot name="header_3" />
-                {:else if index === 4}
-                    <slot name="header_4" />
-                {/if}
-
                 {#if buttons.length}
                     {#each buttons as category}
                         {#if category?.id === "TITLE"}
                             <div class="title">{translateText(category.label)}</div>
+
+                            {#if $labelsDisabled}
+                                <div class="add_button">
+                                    {#if index === 0}
+                                        <slot name="section_0" />
+                                    {:else if index === 1}
+                                        <slot name="section_1" />
+                                    {:else if index === 2}
+                                        <slot name="section_2" />
+                                    {:else if index === 3}
+                                        <slot name="section_3" />
+                                    {:else if index === 4}
+                                        <slot name="section_4" />
+                                    {/if}
+                                </div>
+                            {/if}
                         {:else if category === "SEPERATOR" || category?.id === "SEPERATOR"}
                             <div class="separator">
                                 {#if category?.label}<div class="sepLabel">{translateText(category.label)}</div>{/if}
@@ -93,16 +97,18 @@
             </Center> -->
                 {/if}
 
-                {#if index === 0}
-                    <slot name="section_0" />
-                {:else if index === 1}
-                    <slot name="section_1" />
-                {:else if index === 2}
-                    <slot name="section_2" />
-                {:else if index === 3}
-                    <slot name="section_3" />
-                {:else if index === 4}
-                    <slot name="section_4" />
+                {#if !$labelsDisabled}
+                    {#if index === 0}
+                        <slot name="section_0" />
+                    {:else if index === 1}
+                        <slot name="section_1" />
+                    {:else if index === 2}
+                        <slot name="section_2" />
+                    {:else if index === 3}
+                        <slot name="section_3" />
+                    {:else if index === 4}
+                        <slot name="section_4" />
+                    {/if}
                 {/if}
             </div>
         {/if}
@@ -118,6 +124,8 @@
     }
 
     .section {
+        position: relative;
+
         background-color: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         margin: 0 5px;
@@ -133,17 +141,6 @@
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         border-left-width: 0;
-    }
-
-    .section :global(button.isActive) {
-        border: none !important;
-        border-left: 4px solid var(--secondary) !important;
-    }
-    .section :global(button:not(.outlined)) {
-        border-left: 4px solid var(--primary-darker);
-        border-radius: 0;
-
-        justify-content: space-between;
     }
 
     .title {
@@ -173,5 +170,18 @@
         opacity: 0.5;
         padding: 6px 14px;
         line-height: 1;
+    }
+
+    .add_button {
+        position: absolute;
+        top: 0;
+        right: 2px;
+    }
+    .add_button :global(div) {
+        padding: 0 !important;
+    }
+    .add_button :global(button) {
+        padding: 4px;
+        border: none;
     }
 </style>

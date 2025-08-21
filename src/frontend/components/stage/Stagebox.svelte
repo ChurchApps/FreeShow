@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout } from "../../../types/Stage"
-    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, special, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
@@ -234,10 +234,12 @@
     <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
-                {#if id.includes("_alpha") && currentOutput.keyOutput}
-                    <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
-                {:else}
-                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                {#if !$special.optimizedMode}
+                    {#if id.includes("_alpha") && currentOutput.keyOutput}
+                        <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
+                    {:else}
+                        <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                    {/if}
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}

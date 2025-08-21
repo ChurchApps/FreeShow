@@ -32,7 +32,7 @@
         display: flex;
     }
 
-    .row :global(button) {
+    .row > :global(button) {
         border-bottom: 1.2px solid var(--primary-lighter) !important;
         background-color: var(--primary-darkest) !important;
 

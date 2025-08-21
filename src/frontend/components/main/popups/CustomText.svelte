@@ -31,7 +31,7 @@
     }
 
     let text = ""
-    const changeValue = (e: any) => (text = e.target.value)
+    const changeValue = (e: CustomEvent<string>) => (text = e.detail)
 
     // function keydown(e: KeyboardEvent) {
     //     if (e.key === "Enter") save()
@@ -40,7 +40,7 @@
 
 <!-- <svelte:window on:keydown={keydown} /> -->
 
-<MaterialTextarea label="edit.text" rows={5} placeholder="{$dictionary.empty?.text}..." value={text} on:input={(e) => changeValue(e)} autofocus />
+<MaterialTextarea label="edit.text" rows={5} placeholder="{$dictionary.empty?.text}..." value={text} on:input={changeValue} autofocus />
 
 <CombinedInput style="margin-top: 10px;">
     <Button on:click={save} style="width: 100%;" center dark>

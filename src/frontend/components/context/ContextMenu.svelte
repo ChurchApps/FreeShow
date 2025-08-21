@@ -1,14 +1,14 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, os, spellcheck, localeDirection, theme } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
+    import { hexToRgb } from "../helpers/color"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
     import { quickLoadItems } from "./loadItems"
     import SpellCheckMenu from "./SpellCheckMenu.svelte"
-    import { isDarkTheme } from "../../utils/common"
 
     let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
@@ -128,14 +128,25 @@
         })
     }
 
-    let light = false
-    $: if ($theme) light = !isDarkTheme()
+    // let light = false
+    // $: if ($theme) light = !isDarkTheme()
+    let rgb = { r: 35, g: 35, b: 45 }
+    $: if ($theme) updateColor()
+    function updateColor() {
+        const color = $themes[$theme]?.colors["primary"]
+        if (!color) return
+
+        const newRgb = hexToRgb(color)
+        rgb = { r: Math.max(0, newRgb.r - 1), g: Math.max(0, newRgb.g - 5), b: Math.max(0, newRgb.b - 5) }
+    }
+
+    $: isOptimized = $special.optimizedMode
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
 {#if $contextActive}
-    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top class:light transition:fade={{ duration: 60 }}>
+    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);--background: rgb({rgb.r} {rgb.g} {rgb.b} / 0.97);" class:top class:isOptimized transition:fade={{ duration: 60 }}>
         {#key activeMenu}
             <SpellCheckMenu />
 
@@ -171,9 +182,6 @@
         --background: rgba(35, 35, 45, 0.97);
         background-color: var(--background);
         backdrop-filter: blur(8px);
-    }
-    .contextMenu.light {
-        --background: rgba(220, 220, 225, 0.97);
     }
 
     .top {

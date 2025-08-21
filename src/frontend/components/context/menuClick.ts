@@ -65,6 +65,7 @@ import {
     styles,
     templateCategories,
     templates,
+    textEditActive,
     themes,
     toggleOutputEnabled,
     variables
@@ -666,7 +667,7 @@ const clickActions = {
     newShow: () => history({ id: "UPDATE", newData: { remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newPrivateShow: () => history({ id: "UPDATE", newData: { replace: { private: true }, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newProject: (obj: ObjData) => {
-        let parent: string = obj.sel?.data[0]?.id || obj.contextElem?.id || "/" // obj.contextElem.getAttribute("data-parent")
+        let parent: string = obj.sel?.data[0]?.id || obj.contextElem?.id || "/"
         if (parent === "projectsArea") parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
@@ -1796,7 +1797,10 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (obj.sel?.id?.includes("slide")) {
+    if (get(textEditActive)) {
+        // select all slides
+        slideIds = _show().slides().get().map(({ id }) => id)
+    } else if (obj.sel?.id?.includes("slide")) {
         slideIds = obj.sel.data.map((a) => ref[a.index].id)
     } else {
         slideIds = [

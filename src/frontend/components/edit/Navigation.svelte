@@ -8,7 +8,9 @@
     import { getExtension, getFileName, getMediaType } from "../helpers/media"
     import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Center from "../system/Center.svelte"
     import Slides from "./Slides.svelte"
 
@@ -142,10 +144,12 @@
     </div>
 
     <Slides />
-    <Button disabled={isLocked} on:click={addSlide} center dark>
-        <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.slide" />{/if}
-    </Button>
+
+    <FloatingInputs onlyOne>
+        <MaterialButton disabled={isLocked} icon="add" title="new.slide" on:click={addSlide}>
+            {#if !$labelsDisabled}<T id="new.slide" />{/if}
+        </MaterialButton>
+    </FloatingInputs>
 {:else}
     <Center faded>
         <T id="empty.show" />

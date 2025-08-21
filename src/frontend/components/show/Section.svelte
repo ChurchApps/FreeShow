@@ -4,7 +4,6 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
-    import Button from "../inputs/Button.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -107,12 +106,12 @@
 {/if}
 
 {#if currentAction && !settingsOpened}
-    <div class="actionButton">
-        <Button on:click={() => runAction(currentAction)} style="padding: 8px 10px;" dark>
-            <Icon id={getActionIcon(currentActionId)} right />
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton title="actions.run_action" on:click={() => runAction(currentAction)}>
+            <Icon id={getActionIcon(currentActionId)} />
             {currentAction.name}
-        </Button>
-    </div>
+        </MaterialButton>
+    </FloatingInputs>
 {/if}
 
 <FloatingInputs round>
@@ -146,13 +145,5 @@
     .settings {
         flex: 1;
         /* background-color: var(--primary); */
-    }
-
-    .actionButton {
-        position: absolute;
-        bottom: 0;
-        inset-inline-start: 0;
-
-        background-color: var(--primary);
     }
 </style>

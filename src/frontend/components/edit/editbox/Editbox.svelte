@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, variables } from "../../../stores"
+    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, variables } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { deleteAction } from "../../helpers/clipboard"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
@@ -138,6 +138,8 @@
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
+
+    $: isOptimized = $special.optimizedMode
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -153,6 +155,7 @@ bind:offsetWidth={width} -->
     class:selected={$activeEdit.items.includes(index)}
     class:isDisabledVariable
     class:chords={chordsMode}
+    class:isOptimized
     style="{plain
         ? 'width: 100%;'
         : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${

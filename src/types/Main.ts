@@ -33,6 +33,16 @@ export interface Time {
     d: number
 }
 
+export interface ClickEvent {
+    detail: {
+        ctrl: boolean
+        shift: boolean
+        alt: boolean
+        doubleClick: boolean
+        target: EventTarget
+    }
+}
+
 export type SelectIds =
     | "slide"
     | "slide_icon"

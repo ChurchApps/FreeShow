@@ -1,18 +1,10 @@
 <script lang="ts">
-    import { activeShow, drawerTabsData, showsCache } from "../../../stores"
+    import { drawerTabsData } from "../../../stores"
     import { setExampleTemplates } from "../../../utils/createData"
     import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
-    import { removeTemplatesFromShow } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-
-    $: currentShow = $showsCache[$activeShow?.id || ""]
-    $: showTemplate = currentShow?.settings?.template
-
-    function removeTemplate() {
-        removeTemplatesFromShow($activeShow?.id || "", true)
-    }
 
     $: categoryId = $drawerTabsData.templates?.activeSubTab || ""
 
@@ -22,15 +14,8 @@
 
 <div class="scroll" />
 
-{#if showTemplate}
-    <Button style="width: 100%;" on:click={removeTemplate} center dark>
-        <Icon id="clear" right />
-        <T id="actions.remove_template_from_show" />
-    </Button>
-{/if}
-
 {#if !readOnly}
-    <Button style="width: 100%;" on:click={setExampleTemplates} center dark>
+    <Button style="width: 100%;" title="This will reset the defaults (shield icon). And pull in any new ones." on:click={setExampleTemplates} center dark>
         <Icon id="reset" right />
         <T id="actions.reset_defaults" />
     </Button>

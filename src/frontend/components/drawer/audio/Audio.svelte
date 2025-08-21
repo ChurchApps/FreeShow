@@ -204,6 +204,8 @@
         selected.set({ id: "audio", data })
         selectAllAudio.set(false)
     }
+
+    $: pathString = path.replace(rootPath, "").replace(name, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -329,6 +331,7 @@
             <div class="divider"></div>
 
             <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
+                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{pathString ? "/" : ""}{pathString}</span>
                 {name}
 
                 <!-- files count -->
@@ -339,13 +342,15 @@
         </FloatingInputs>
     {/if}
 
-    <!-- only show if audio content... -->
-    <FloatingInputs onlyOne>
-        <MaterialButton title="new.playlist" on:click={createPlaylist}>
-            <Icon size={1.2} id="playlist_create" />
-            {#if !$labelsDisabled}<p><T id="new.playlist" /></p>{/if}
-        </MaterialButton>
-    </FloatingInputs>
+    <!-- only show if audio content -->
+    {#if fullFilteredFiles.filter((a) => !a.folder)?.length}
+        <FloatingInputs onlyOne>
+            <MaterialButton title="new.playlist" on:click={createPlaylist}>
+                <Icon size={1.2} id="playlist_create" />
+                {#if !$labelsDisabled}<p><T id="new.playlist" /></p>{/if}
+            </MaterialButton>
+        </FloatingInputs>
+    {/if}
 {/if}
 
 <style>

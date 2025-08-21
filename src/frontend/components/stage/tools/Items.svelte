@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
-    import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
+    import { activeStage, dictionary, labelsDisabled, selected, special, stageShows, timers } from "../../../stores"
     import { getSortedStageItems, rearrangeStageItems, updateSortedStageItems } from "../../edit/scripts/itemHelpers"
     import { getItemText } from "../../edit/scripts/textStyle"
     import { boxes } from "../../edit/values/boxes"
@@ -23,7 +23,7 @@
     const dynamicItems: ItemRef[] = [
         { id: "slide_text", icon: "text" },
         // { id: "slide_notes", icon: "notes" }, // added as dynamic value in textbox
-        { id: "current_output", icon: "screen", maxAmount: 1 }
+        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen", maxAmount: 1 }])
     ]
 
     const normalItems: ItemRef[] = [

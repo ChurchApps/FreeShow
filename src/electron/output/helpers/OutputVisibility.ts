@@ -48,12 +48,16 @@ export class OutputVisibility {
         }
 
         // get toggled state
-        const state = OutputHelper.getAllOutputs()
-            .filter((a) => !a.invisible)
-            .map(({ id, window: outputWindow }) => ({ id, active: outputWindow.isVisible() }))
-        toApp(OUTPUT, { channel: "OUTPUT_STATE", data: state })
-        const getVisibleState = [...new Set(state.map((a) => a.active))]
-        if (getVisibleState.length === 1) toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: getVisibleState[0] } })
+        setTimeout(() => {
+            const state = OutputHelper.getAllOutputs()
+                .filter((a) => !a.invisible)
+                .map(({ id, window: outputWindow }) => ({ id, active: outputWindow.isVisible() }))
+
+            toApp(OUTPUT, { channel: "OUTPUT_STATE", data: state })
+
+            const getVisibleState = [...new Set(state.map((a) => a.active))]
+            if (getVisibleState.length === 1) toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: getVisibleState[0] } })
+        })
         // if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: data.enabled } })
     }
 

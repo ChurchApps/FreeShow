@@ -176,6 +176,8 @@
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 
 <MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} on:change={toggleHardwareAcceleration} />
+<!-- "optimized_mode": "Optimized mode", -->
+<!-- <MaterialToggleSwitch label="settings.optimized_mode" checked={$special.optimizedMode} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "optimizedMode")} /> -->
 
 <br />
 

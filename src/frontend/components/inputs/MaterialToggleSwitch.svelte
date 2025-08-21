@@ -50,9 +50,11 @@
 
     {#if label}
         <label for={id} class="toggle-label">
-            {translateText(label, $dictionary)}
+            <span style="display: flex;align-items: center;gap: 10px;">
+                {translateText(label, $dictionary)}
 
-            {#if data}<span class="data">{data}</span>{/if}
+                {#if data}<span class="data">{data}</span>{/if}
+            </span>
 
             <!-- data-title={translateText("info.changed")} -->
             {#if defaultValue !== null}<span class="changed" class:hidden={defaultValue === checkedValue}></span>{/if}

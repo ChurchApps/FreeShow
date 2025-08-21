@@ -310,6 +310,8 @@
         selected.set({ id: "media", data })
         selectAllMedia.set(false)
     }
+
+    $: pathString = path.replace(rootPath, "").replace(folderName, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
 </script>
 
 <!-- TODO: download pixabay images!!! -->
@@ -503,6 +505,7 @@
             <div class="divider"></div>
 
             <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
+                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{pathString ? "/" : ""}{pathString}</span>
                 {folderName}
 
                 {#if content && rootPath !== path}
