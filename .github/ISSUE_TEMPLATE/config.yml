@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/ChurchApps/FreeShowWeb/issues/new?template=Documentation.md
+    about: Help us improve the FreeShow documentation
