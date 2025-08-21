@@ -11,6 +11,7 @@ import {
     activeStage,
     activeStyle,
     alertMessage,
+    categories,
     companion,
     currentOutputSettings,
     dictionary,
@@ -134,7 +135,7 @@ export function quicksearch(searchValue: string) {
     if (shouldReturn()) return trimValues()
 
     // shows
-    const shows = showSearch(searchValue, get(sortedShowsList))
+    const shows = showSearch(searchValue, get(sortedShowsList).filter(a => !get(categories)[a.category || ""]?.isArchive))
     addValues(shows, "show", "slide")
 
     return trimValues()
@@ -581,6 +582,7 @@ const faq = [
     { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
+    { id: "https://youtu.be/7E5nlsslC0k", name: "Deep Dive Into Templates", icon: "youtube" },
     { id: "https://youtu.be/G8ia0h6HiGA", name: "Advanced Level Game Show", icon: "youtube" },
     { id: "https://youtu.be/nTsVXk8FcmU", name: "Activate Focus Mode in FreeShow for a Distraction-Free Service", icon: "youtube" },
     { id: "https://youtu.be/NF3tN5ucW1Q", name: "Control FreeShow from Your iPad", icon: "youtube" },

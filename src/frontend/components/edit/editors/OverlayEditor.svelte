@@ -1,21 +1,24 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
+    import { onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeEdit, dictionary, outputs, overlays, styles } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
+    import type { ItemType } from "../../../../types/Show"
+    import { activeEdit, outputs, overlays, styles } from "../../../stores"
+    import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getResolution } from "../../helpers/output"
     import { getStyles } from "../../helpers/style"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
-    import { clone } from "../../helpers/array"
-    import { onDestroy } from "svelte"
-    import { send } from "../../../utils/request"
+    import Icon from "../../helpers/Icon.svelte"
+    import { addItem } from "../scripts/itemHelpers"
 
     const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
@@ -65,46 +68,27 @@
     // ZOOM
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
-
-    // shortcut
-    let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-        if (!e.target.closest(".editArea")) return
-
-        zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
-
-        // always center scroll when zooming
-        if (zoom < 1) {
-            // allow elem to update after zooming
-            setTimeout(() => {
-                if (!scrollElem) return
-
-                const centerX = (scrollElem.scrollWidth - scrollElem.clientWidth) / 2
-                const centerY = (scrollElem.scrollHeight - scrollElem.clientHeight) / 2
-
-                scrollElem.scrollTo({ left: centerX, top: centerY })
-            })
-        }
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
+    function updateZoom(e: any) {
+        zoom = e.detail
+        centerZoom()
     }
 
-    // menu
-    let zoomOpened = false
-    function mousedown(e: any) {
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+    function centerZoom() {
+        if (zoom >= 1) return
+        // allow elem to update after zooming
 
-        zoomOpened = false
+        setTimeout(() => {
+            if (!scrollElem) return
+
+            const centerX = (scrollElem.scrollWidth - scrollElem.clientWidth) / 2
+            const centerY = (scrollElem.scrollHeight - scrollElem.clientHeight) / 2
+
+            scrollElem.scrollTo({ left: centerX, top: centerY })
+        })
     }
+
+    const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 </script>
-
-<svelte:window on:mousedown={mousedown} on:wheel={wheel} />
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -122,26 +106,17 @@
         {/if}
     </div>
 
-    <div class="actions">
-        <div class="actions" style="height: 100%;justify-content: end;">
-            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-                <Icon size={1.3} id="zoomIn" white />
-            </Button>
-            {#if zoomOpened}
-                <div class="zoom_container" transition:slide={{ duration: 150 }}>
-                    <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                        <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
-                    </Button>
-                    <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-                        <Icon size={1.3} id="add" white />
-                    </Button>
-                    <Button disabled={zoom >= 4} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-                        <Icon size={1.3} id="remove" white />
-                    </Button>
-                </div>
-            {/if}
-        </div>
-    </div>
+    <FloatingInputs side="center">
+        {#each shortcutItems as item}
+            <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
+                <Icon id={item.icon || item.id} size={1.3} white />
+            </MaterialButton>
+        {/each}
+    </FloatingInputs>
+
+    <FloatingInputs>
+        <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+    </FloatingInputs>
 </div>
 
 <style>
@@ -162,42 +137,5 @@
     /* disable "glitchy" scroll bars */
     .parent.noOverflow {
         overflow: hidden;
-    }
-
-    .actions {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        background-color: var(--primary-darkest);
-        /* border-top: 3px solid var(--primary-lighter); */
-    }
-
-    /* fixed height for consistent heights */
-    .actions :global(button) {
-        min-height: 28px;
-        padding: 0 0.8em !important;
-    }
-
-    .text {
-        opacity: 0.8;
-        text-align: center;
-        padding: 0.5em 0;
-    }
-
-    .zoom_container {
-        position: absolute;
-        inset-inline-end: 0;
-        top: 0;
-        transform: translateY(-100%);
-        overflow: hidden;
-        z-index: 30;
-
-        flex-direction: column;
-        width: auto;
-        /* border-left: 3px solid var(--primary-lighter);
-        border-top: 3px solid var(--primary-lighter); */
-        background-color: inherit;
     }
 </style>

@@ -189,7 +189,8 @@
     }
 
     button.contained {
-        color: var(--text);
+        color: var(--secondary-text);
+        filter: saturate(0.8);
     }
 
     button.outlined {

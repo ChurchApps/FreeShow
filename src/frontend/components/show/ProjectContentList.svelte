@@ -99,7 +99,7 @@
             {#if projectItemsList.length}
                 {#each splittedProjectsList as projectItemsList}
                     <div class="listSection" style="--border-color: {projectItemsList.color};">
-                        {#each projectItemsList.items as show}
+                        {#each projectItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
                             {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
@@ -118,7 +118,7 @@
                                         }}
                                         tab
                                     >
-                                        <p>
+                                        <p style="min-height: 10px;">
                                             {#if show.name?.length}
                                                 {show.name}
                                             {:else}
@@ -133,7 +133,15 @@
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} icon />
+                                    <ShowButton
+                                        id={show.id}
+                                        {show}
+                                        {index}
+                                        class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`}
+                                        isFirst={i === 0}
+                                        isLast={i === projectItemsList.items.length - 1}
+                                        icon
+                                    />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -181,7 +189,8 @@
 
         background-color: var(--primary-darker);
 
-        border: 2px solid var(--border-color);
+        --border-color: var(--primary-lighter);
+        border: 1px solid var(--border-color);
         border-left: 0;
 
         border-radius: 10px;
@@ -196,6 +205,10 @@
         padding-bottom: 50px;
     }
 
+    .listSection :global(button) {
+        outline-offset: -2px;
+    }
+
     .list :global(.section) {
         padding: 4px 40px;
         font-size: 0.8em;
@@ -207,8 +220,8 @@
         outline: 2px solid var(--primary-lighter);
     }
 
-    #projectArea :global(button.color-border) {
+    /* #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
-    }
+    } */
 </style>

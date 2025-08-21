@@ -25,6 +25,9 @@
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
 
+    export let isFirst: boolean = false
+    export let isLast: boolean = false
+
     let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
 
@@ -167,6 +170,8 @@
     $: if ($outputs) activeOutput = findMatchingOut(id)
 
     $: outline = activeOutput !== null || !!$playingAudio[id]
+
+    $: borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`
 </script>
 
 <div id="show_{id}" class="main">
@@ -176,7 +181,7 @@
         isActive={active}
         showOutline={outline}
         class="context {$$props.class}{readOnly ? '_readonly' : ''}"
-        style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}"
+        style="{borderRadiusStyle}font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}"
         tab
     >
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
