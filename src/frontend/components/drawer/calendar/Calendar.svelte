@@ -4,7 +4,9 @@
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
 
     export let active: string | null
@@ -248,38 +250,36 @@
             </div>
         {/each}
     </div>
-
-    <div class="bottom">
-        <span style="opacity: 0.8;min-width: 150px;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
-            {$dictionary.month?.[current.getMonth() + 1]}
-            {current.getFullYear()}
-        </span>
-
-        <div class="seperator" />
-
-        <Button
-            style="flex: 1;"
-            on:click={() => {
-                eventEdit.set(null)
-                popupData.set({})
-                activePopup.set("edit_event")
-            }}
-            center
-        >
-            <Icon id="add" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.{active === 'action' ? 'event_action' : 'event'}" />{/if}
-        </Button>
-
-        <div class="seperator" />
-
-        <Button style="width: 75px;" on:click={() => previousMonth()} center>
-            <Icon id="previous" size={1.1} />
-        </Button>
-        <Button style="width: 75px;" on:click={() => nextMonth()} center>
-            <Icon id="next" size={1.1} />
-        </Button>
-    </div>
 </div>
+
+<FloatingInputs style="margin-left: 25px;" side="left">
+    <MaterialButton title="media.previous" on:click={() => previousMonth()}>
+        <Icon id="previous" size={1.1} />
+    </MaterialButton>
+    <MaterialButton title="media.next" on:click={() => nextMonth()}>
+        <Icon id="next" size={1.1} />
+    </MaterialButton>
+
+    <div class="divider"></div>
+
+    <span style="opacity: 0.8;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
+        {$dictionary.month?.[current.getMonth() + 1]}
+        {current.getFullYear()}
+    </span>
+</FloatingInputs>
+
+<FloatingInputs onlyOne>
+    <MaterialButton
+        on:click={() => {
+            eventEdit.set(null)
+            popupData.set({})
+            activePopup.set("edit_event")
+        }}
+    >
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.{active === 'action' ? 'event_action' : 'event'}" />{/if}
+    </MaterialButton>
+</FloatingInputs>
 
 <style>
     .calendar {
@@ -370,17 +370,5 @@
         width: 10px;
         border-radius: 50%;
         margin: 2px;
-    }
-
-    .bottom {
-        display: flex;
-        justify-content: space-between;
-        background-color: var(--primary-darkest);
-    }
-
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
     }
 </style>

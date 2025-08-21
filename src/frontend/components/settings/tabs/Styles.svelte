@@ -200,7 +200,7 @@
         on:change={(e) => updateStyle(e.detail, "template")}
         allowEmpty
     />
-    {#if templateOverride && $templates[templateOverride] && !$templates[templateOverride]?.isDefault}
+    {#if templateOverride && $templates[templateOverride]}
         <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverride)} />
     {/if}
 </InputRow>
@@ -217,7 +217,7 @@
         on:change={updateScriptureTemplate}
         allowEmpty
     />
-    {#if templateOverrideScripture && $templates[templateOverrideScripture] && !$templates[templateOverrideScripture]?.isDefault}
+    {#if templateOverrideScripture && $templates[templateOverrideScripture]}
         <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverrideScripture)} />
     {/if}
 </InputRow>

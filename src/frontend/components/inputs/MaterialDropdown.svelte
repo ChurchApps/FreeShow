@@ -265,6 +265,13 @@
         addNewTextbox = false
         newValue = ""
     }
+
+    function keydown(e: any) {
+        if (e.key === "Enter") {
+            newValue = e.target?.value || ""
+            createNewEvent()
+        }
+    }
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
@@ -347,7 +354,7 @@
     {#if addNew && addNewTextbox}
         <div class="dropdown">
             <InputRow>
-                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={(e) => (newValue = e.detail)} />
+                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={(e) => (newValue = e.detail)} on:keydown={keydown} />
                 <MaterialButton disabled={!newValue.length} title={addNew} on:click={createNewEvent}>
                     <Icon id="check" size={1.2} white />
                 </MaterialButton>

@@ -31,6 +31,7 @@
     let existing: boolean = $selected.id === "variable" && $selected.data[0]?.id
     let variableId = existing ? $selected.data[0].id : uid()
     let currentVariable = clone($variables[variableId] || DEFAULT_VARIABLE)
+    let created = !existing
 
     function updateValue(e: any, key: string, checkbox = false) {
         let value = e?.target?.value ?? e
@@ -124,6 +125,18 @@
         })
     }
 
+    function moveTextSetUp(index: number) {
+        if (currentVariable.textSets?.[index] === undefined) return
+
+        currentVariable.textSets = moveToPos(currentVariable.textSets, index, index - 1)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     function removeTextSet(index: number) {
         if (currentVariable.textSets?.[index] === undefined) return
 
@@ -183,6 +196,11 @@
             return a
         })
     }
+    function textSetKeydown(e: any) {
+        if (e.key === "Tab" && e.target?.value) {
+            addTextSetVariable()
+        }
+    }
 
     function updateTextSetValue(index: number, name: string, e: any) {
         if (!currentVariable.textSets) currentVariable.textSets = [{}]
@@ -213,7 +231,7 @@
 
     <CombinedInput textWidth={30}>
         <p><T id="inputs.name" /></p>
-        <TextInput disabled={!!(existing && currentVariable.name)} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
+        <TextInput disabled={!created && !!currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
     </CombinedInput>
 
     {#if currentVariable.type === "number"}
@@ -321,7 +339,7 @@
                 {#each currentVariable.textSetKeys ?? [""] as key, keyIndex}
                     <CombinedInput>
                         {#if i === 0}
-                            <TextInput style="flex: 1;" placeholder={$dictionary.inputs?.name} disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:change={(e) => updateTextSetVariableName(keyIndex, e)} />
+                            <TextInput style="flex: 1;" placeholder={$dictionary.inputs?.name} disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:input={(e) => updateTextSetVariableName(keyIndex, e)} on:keydown={textSetKeydown} />
                         {:else}
                             <p>{key}</p>
                         {/if}
@@ -352,6 +370,10 @@
                 <!-- || (currentVariable.textSets?.length || 1) > 1 -->
                 {#if i > 0}
                     <div class="delete">
+                        <Button on:click={() => moveTextSetUp(i)} style="padding: 8px;">
+                            <Icon id="up" />
+                        </Button>
+
                         <Button on:click={() => removeTextSet(i)} title={$dictionary.actions?.delete} style="padding: 8px;">
                             <Icon id="delete" />
                         </Button>
@@ -396,5 +418,7 @@
         position: absolute;
         top: 0;
         right: 0;
+
+        display: flex;
     }
 </style>

@@ -18,7 +18,7 @@
 {:else if !readOnly}
     <div class="scroll" />
 
-    <Button style="width: 100%;" on:click={setExampleOverlays} center dark>
+    <Button style="width: 100%;" title="This will reset the defaults (shield icon). And pull in any new ones." on:click={setExampleOverlays} center dark>
         <Icon id="reset" right />
         <T id="actions.reset_defaults" />
     </Button>

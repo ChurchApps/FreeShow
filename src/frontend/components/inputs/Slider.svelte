@@ -13,7 +13,7 @@
         -webkit-appearance: none;
         width: 100%;
         height: 10px;
-        background: var(--primary-darker);
+        background: var(--primary-darkest);
         outline: none;
         -webkit-transition: 0.2s;
         transition: opacity 0.2s;

@@ -69,7 +69,9 @@
     export let disableThumbnails = false
     export let centerPreview = false
 
-    $: viewMode = $slidesOptions.mode || "grid"
+    $: isLessons = show?.reference?.type === "lessons"
+
+    $: viewMode = isLessons ? "grid" : $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
@@ -77,7 +79,7 @@
     let isFirstGhost = false
     // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
     // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < 60) {
+    $: if (!background && index < 60 && !$special.optimizedMode) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -169,7 +171,7 @@
     async function loadBackground() {
         if (bgPath.includes("http")) return download()
 
-        if (show?.reference?.type === "lessons") {
+        if (isLessons) {
             thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
             // cache after it's downloaded
             setTimeout(() => loadThumbnail(bgPath, mediaSize.slideSize), 1000)
@@ -727,6 +729,7 @@
         width: 100%;
         padding: 4px 8px;
         background-color: rgb(0 0 0 / 0.5);
+        border: none;
         color: white;
         font-weight: normal;
 

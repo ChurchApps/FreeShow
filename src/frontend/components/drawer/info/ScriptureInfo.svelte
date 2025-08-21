@@ -399,7 +399,7 @@
                     <p>{$templates[templateId]?.name || "popup.select_template"}</p>
                 </div>
             </Button>
-            {#if $templates[templateId] && !$templates[templateId]?.isDefault}
+            {#if $templates[templateId]}
                 <Button
                     title={$dictionary.titlebar?.edit}
                     on:click={() => {

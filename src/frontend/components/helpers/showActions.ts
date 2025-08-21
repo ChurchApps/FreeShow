@@ -792,15 +792,21 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
         // effects
         if (data.effects?.length) {
-            setOutput("effects", data.effects, false, outputId, true)
+            // let clear action trigger first
+            setTimeout(() => {
+                setOutput("effects", data.effects, false, outputId, true)
+            }, 200)
         }
 
         // overlays
         if (data.overlays?.length) {
-            // send overlays again, because it sometimes don't have it for some reason
-            send(OUTPUT, ["OVERLAYS"], get(overlays))
+            // let clear action trigger first
+            setTimeout(() => {
+                // send overlays again, because it sometimes don't have it for some reason
+                send(OUTPUT, ["OVERLAYS"], get(overlays))
 
-            setOutput("overlays", data.overlays, false, outputId, true)
+                setOutput("overlays", data.overlays, false, outputId, true)
+            }, 200)
         }
 
         // nextTimer

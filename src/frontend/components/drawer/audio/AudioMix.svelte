@@ -66,7 +66,7 @@
         position: absolute;
         inset-inline-start: 50%;
         top: 50%;
-        transform: translate(-50%, -48%);
+        transform: translate(-50%, -45%);
         pointer-events: none;
     }
 

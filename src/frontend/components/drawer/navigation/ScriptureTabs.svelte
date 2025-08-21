@@ -2,6 +2,7 @@
     import { activePopup, drawerTabsData, labelsDisabled, scriptures } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
@@ -52,12 +53,14 @@
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
     <div slot="section_0" style="padding: 8px;{collections.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton disabled={readOnly || (!apiBibles.length && !localBibles.length)} icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" on:click={createCollection} small>
+        <MaterialButton disabled={readOnly || (!apiBibles.length && !localBibles.length)} style="width: 100%;" title="popup.import_scripture" variant="outlined" on:click={createCollection} small>
+            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
             {#if !$labelsDisabled}<T id="new.collection" />{/if}
         </MaterialButton>
     </div>
     <div slot="section_1" style="padding: 8px;{apiBibles.length || localBibles.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton icon="add" style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
+        <MaterialButton style="width: 100%;" title="popup.import_scripture" variant="outlined" disabled={readOnly} on:click={newScripture} small>
+            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
             {#if !$labelsDisabled}<T id="new.scripture" />{/if}
         </MaterialButton>
     </div>

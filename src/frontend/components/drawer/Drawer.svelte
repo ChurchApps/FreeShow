@@ -22,6 +22,7 @@
     } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
+    import { shouldOpenReplace } from "../../utils/shortcuts"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -147,7 +148,7 @@
     let searchElem: HTMLInputElement | undefined
     function keydown(e: KeyboardEvent) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
-            if ($activePopup === "show") return
+            if ($activePopup === "show" || shouldOpenReplace()) return
             searchActive = false
             searchActive = true
 

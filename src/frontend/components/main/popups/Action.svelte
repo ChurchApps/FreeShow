@@ -335,6 +335,8 @@
     }
 
     $: showMore = action.keypressActivate || customActivation
+
+    $: hasNoName = !action.name
 </script>
 
 <!-- min-height: 50vh; -->
@@ -393,7 +395,9 @@
                 full
             />
         {:else if mode !== "slide_midi"}
-            <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={!action.name} />
+            {#key hasNoName}
+                <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={hasNoName} />
+            {/key}
         {/if}
 
         {#if !mode && !actionSelector && !actionActivationSelector}

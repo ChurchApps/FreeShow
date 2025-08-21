@@ -74,6 +74,8 @@ export function splitRgb(rgb: string) {
     }
 }
 
+// CONTRAST
+
 export function getContrast(hex: string) {
     let color = "#FFFFFF"
     if (typeof hex !== "string") return color

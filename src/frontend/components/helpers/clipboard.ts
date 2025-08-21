@@ -48,7 +48,9 @@ import {
     variables,
     videoMarkers,
     effects,
-    profiles
+    profiles,
+    activeRename,
+    popupData
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
@@ -63,6 +65,7 @@ import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
+import { select } from "./select"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -634,7 +637,9 @@ const pasteActions = {
             const newSlide = clone(slide)
             delete newSlide.isDefault
             newSlide.name += " (2)"
-            history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "overlay" } })
+            const newId = uid()
+            history({ id: "UPDATE", newData: { data: newSlide }, oldData: { id: newId }, location: { page: "drawer", id: "overlay" } })
+            if (data.length === 1) activeRename.set("overlay_" + newId)
         })
     },
     template: (data: any) => {
@@ -642,7 +647,9 @@ const pasteActions = {
             const newSlide = clone(slide)
             delete newSlide.isDefault
             newSlide.name += " (2)"
-            history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
+            const newId = uid()
+            history({ id: "UPDATE", newData: { data: newSlide }, oldData: { id: newId }, location: { page: "drawer", id: "template" } })
+            if (data.length === 1) activeRename.set("template_" + newId)
         })
     },
     effect: (data: any) => {
@@ -1150,24 +1157,38 @@ const duplicateActions = {
     action: (data: any) => {
         actions.update((a) => {
             data.forEach(({ id }) => {
+                if (!a[id] || a[id].shows?.length) return
+
                 const newAction = clone(a[id])
-                newAction.name += " 2"
+                newAction.name = data.length === 1 ? "" : newAction.name + " 2"
 
                 const newId = uid()
                 a[newId] = newAction
+
+                if (data.length === 1) {
+                    popupData.set({ id: newId })
+                    activePopup.set("action")
+                }
             })
 
             return a
         })
+
+        selected.set({ id: null, data: [] })
     },
     global_timer: (data: any) => {
         timers.update((a) => {
             data.forEach(({ id }) => {
                 const newTimer = clone(a[id])
-                newTimer.name += " 2"
+                newTimer.name = data.length === 1 ? "" : newTimer.name + " 2"
 
                 const newId = uid()
                 a[newId] = newTimer
+
+                if (data.length === 1) {
+                    select("timer", { id: newId })
+                    activePopup.set("timer")
+                }
             })
 
             return a
@@ -1175,14 +1196,14 @@ const duplicateActions = {
     },
     variable: (data: any) => {
         variables.update((a) => {
-            data.forEach(({ id }, i) => {
+            data.forEach(({ id }) => {
                 const newVariable = clone(a[id])
-                newVariable.name = ""
+                newVariable.name = data.length === 1 ? "" : newVariable.name + " 2"
 
                 const newId = uid()
                 a[newId] = newVariable
 
-                if (i === 0) {
+                if (data.length === 1) {
                     selected.set({ id: "variable", data: [{ id: newId }] })
                     activePopup.set("variable")
                 }
@@ -1234,6 +1255,12 @@ async function duplicateShows(selectedData: any) {
 
         show.name = checkName(show.name + " 2")
         show.timestamps.modified = new Date().getTime()
-        history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })
+
+        const newId = uid()
+        history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, oldData: { id: newId }, location: { page: "show", id: "show" } })
+
+        if (selectedData.length === 1) {
+            activeRename.set("show_drawer_" + newId)
+        }
     })
 }

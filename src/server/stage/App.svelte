@@ -113,6 +113,9 @@
         padding: 0;
         box-sizing: border-box;
         user-select: none;
+        -webkit-user-select: none; /* Safari/iOS specific */
+        -webkit-touch-callout: none; /* Prevents iOS callout menu */
+        -webkit-tap-highlight-color: transparent; /* Removes tap highlight on iOS */
 
         outline-offset: -4px;
         outline-color: var(--secondary);
@@ -131,6 +134,10 @@
         font-size: 1.5em;
 
         height: 100%;
+        
+        /* iOS Safari touch optimizations */
+        touch-action: manipulation;
+        -webkit-text-size-adjust: 100%; /* Prevents iOS Safari from auto-zooming */
 
         /* width: 100vw;
   height: 100vh; */

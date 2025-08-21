@@ -365,12 +365,10 @@ function isTimerRunning(timerId: string) {
 }
 
 export function _getVariableValue(dynamicId: string) {
-    if (!get(variables)[dynamicId]) {
+    const variable = get(variables)[dynamicId]
+    if (!variable) {
         return getVariableValue(dynamicId)
     }
-
-    const variable = get(variables)[dynamicId]
-    if (!variable) return ""
 
     if (variable.type === "text") {
         if (variable.enabled === false) return ""
