@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
+import type { Variable } from "../../../types/Main"
 import type { Condition, Item, LayoutRef } from "../../../types/Show"
 import { StageItem, StageLayout } from "../../../types/Stage"
 import { keysToID, sortByName } from "../../common/util/helpers"
 import { getCurrentTimerValue } from "../../common/util/time"
+import { getLayoutRef } from "../helpers/show"
 import { getItemText } from "../helpers/textStyle"
 import { activeTimers, output, outputSlideCache, showsCache, timers, variables } from "./stores"
-import { getLayoutRef } from "../helpers/show"
 
 export function getSlideTextItems(stageLayout: StageLayout, item: StageItem, _updater: any = null) {
     console.log(stageLayout)
@@ -108,7 +109,7 @@ function isConditionMet(condition: Condition | undefined, itemsText: string) {
         let value = ""
         if (element === "text") value = itemsText
         else if (element === "timer") value = getTimerValue(elementId)
-        else if (element === "variable") value = getVariableValue(elementId)
+        else if (element === "variable") value = _getVariableValue(elementId)
         else if (element === "dynamicValue") value = getDynamicValue(elementId)
 
         if (operator === "is") {
@@ -169,9 +170,11 @@ function isTimerRunning(timerId: string) {
     return !!get(activeTimers).find((a) => a.id === timerId)
 }
 
-export function getVariableValue(variableId: string) {
-    const variable = get(variables)[variableId]
-    if (!variable) return ""
+export function _getVariableValue(dynamicId: string) {
+    const variable = get(variables)[dynamicId]
+    if (!variable) {
+        return getVariableValue(dynamicId)
+    }
 
     if (variable.type === "text") {
         if (variable.enabled === false) return ""
@@ -184,5 +187,61 @@ export function getVariableValue(variableId: string) {
 export function getDynamicValue(id: string) {
     // WIP get dynamic value
     console.log(id)
+    return ""
+}
+
+/////
+
+function getVariableNameId(name: string) {
+    return name.toLowerCase().trim().replaceAll(" ", "_")
+}
+
+function getSetChars(sets: { name: string; minValue?: number; maxValue?: number }[] | undefined) {
+    let chars = 1
+    if (!sets) return 4
+
+    sets.forEach((a) => {
+        const minChars = (a.minValue ?? 1).toString().length
+        const maxChars = (a.maxValue ?? 1000).toString().length
+        if (minChars > chars) chars = minChars
+        if (maxChars > chars) chars = maxChars
+    })
+
+    return chars
+}
+
+function getVariableValue(dynamicId: string, ref: any = null) {
+    if (dynamicId.includes("variable_set_")) {
+        const nameId = dynamicId.slice(13)
+        const variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+        if (variable?.type !== "random_number") return ""
+
+        return variable.setName || ""
+    }
+
+    if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
+        const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
+        let variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+
+        if (!variable && nameId.includes("__")) {
+            const textSetId = nameId.slice(0, nameId.indexOf("__"))
+            variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
+        }
+        if (!variable) return ""
+
+        if (variable.type === "number") return Number(variable.number || 0).toString()
+        if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
+        if (variable.type === "text_set") {
+            const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+            const setId = nameId.slice(nameId.indexOf("__") + 2)
+            const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
+            return currentSet[setName] || ""
+        }
+
+        if (variable.enabled === false) return ""
+        if (variable.text?.includes(dynamicId) || !ref) return variable.text || ""
+        return variable.text || ""
+    }
+
     return ""
 }

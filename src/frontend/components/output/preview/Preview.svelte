@@ -264,14 +264,13 @@
     {/if}
 
     {#if enablePreview}
-        <div class="section" class:float={!isSplitted && $activePage !== "show" && $activePage !== "settings"} class:light class:isOptimized>
+        <div class="section" style="margin-bottom: 2px;" class:float={!isSplitted && $activePage !== "show" && $activePage !== "settings"} class:light class:isOptimized>
             <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
         </div>
     {/if}
 
     {#if $activePage === "show"}
-        <!-- style="margin-top: 0px;" -->
-        <div class="section">
+        <div class="section" style="margin-top: 2px;">
             <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
             {#if updatedActiveClear === "background"}
@@ -342,7 +341,7 @@
     .section.float {
         position: absolute;
         width: calc(100% - 10px);
-        transform: translateY(calc(-100% - 12px));
+        transform: translateY(calc(-100% - 9px));
 
         --background: rgba(25, 25, 35, 0.6);
         background-color: var(--background);

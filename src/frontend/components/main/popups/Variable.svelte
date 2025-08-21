@@ -125,6 +125,18 @@
         })
     }
 
+    function moveTextSetUp(index: number) {
+        if (currentVariable.textSets?.[index] === undefined) return
+
+        currentVariable.textSets = moveToPos(currentVariable.textSets, index, index - 1)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     function removeTextSet(index: number) {
         if (currentVariable.textSets?.[index] === undefined) return
 
@@ -358,6 +370,10 @@
                 <!-- || (currentVariable.textSets?.length || 1) > 1 -->
                 {#if i > 0}
                     <div class="delete">
+                        <Button on:click={() => moveTextSetUp(i)} style="padding: 8px;">
+                            <Icon id="up" />
+                        </Button>
+
                         <Button on:click={() => removeTextSet(i)} title={$dictionary.actions?.delete} style="padding: 8px;">
                             <Icon id="delete" />
                         </Button>
@@ -402,5 +418,7 @@
         position: absolute;
         top: 0;
         right: 0;
+
+        display: flex;
     }
 </style>

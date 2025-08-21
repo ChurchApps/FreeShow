@@ -19,6 +19,7 @@
     import Editbox from "../editbox/Editbox.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import { addItem } from "../scripts/itemHelpers"
+    import { translateText } from "../../../utils/language"
 
     const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
@@ -90,9 +91,16 @@
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 </script>
 
+{#if Slide?.isDefault}
+    <div class="default" data-title={translateText("example.default")}>
+        <Icon id="protected" white />
+    </div>
+{/if}
+
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if Slide && !Slide.isDefault}
+        <!--  && !Slide.isDefault -->
+        {#if Slide}
             <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {#each Slide.items as item, index}
@@ -120,6 +128,27 @@
 </div>
 
 <style>
+    .default {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+
+        padding: 10px;
+        border-radius: 50%;
+
+        z-index: 999;
+    }
+
     .editArea {
         width: 100%;
         height: 100%;

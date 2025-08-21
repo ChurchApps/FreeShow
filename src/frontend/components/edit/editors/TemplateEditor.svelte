@@ -80,12 +80,19 @@
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 
-    const ignoreDefault = ["metadata", "message", "double"]
+    // const ignoreDefault = ["metadata", "message", "double"]
 </script>
+
+{#if Slide?.isDefault}
+    <div class="default" data-title={translateText("example.default")}>
+        <Icon id="protected" white />
+    </div>
+{/if}
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if Slide && (!Slide.isDefault || ignoreDefault.includes(currentId))}
+        <!--  && (!Slide.isDefault || ignoreDefault.includes(currentId)) -->
+        {#if Slide}
             <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
         {:else}
             <Center size={2} faded>
@@ -108,6 +115,27 @@
 </div>
 
 <style>
+    .default {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+
+        padding: 10px;
+        border-radius: 50%;
+
+        z-index: 999;
+    }
+
     .editArea {
         width: 100%;
         height: 100%;

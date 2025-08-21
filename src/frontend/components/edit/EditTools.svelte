@@ -293,12 +293,12 @@
         }
     }
 
-    const ignoreDefault = ["metadata", "message", "double"]
+    // const ignoreDefault = ["metadata", "message", "double"]
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     let profile = getAccess("shows")
     $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
-    $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault && !ignoreDefault.includes($activeEdit.id || "") : false
+    // $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault && !ignoreDefault.includes($activeEdit.id || "") : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
@@ -343,7 +343,7 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="main border editTools">
-    {#if slideActive && !isLocked && !isDefault}
+    {#if slideActive && !isLocked}
         <Tabs {tabs} bind:active {overflowHidden} />
 
         {#if active === "text"}
