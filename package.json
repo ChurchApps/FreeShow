@@ -116,7 +116,7 @@
     "express": "^4.21.2",
     "follow-redirects": "^1.15.11",
     "genius-lyrics": "^4.4.7",
-    "grandiose": "github:ChurchApps/grandiose#7a2bcc6",
+    "grandiose": "github:ChurchApps/grandiose#58b533f",
     "jzz": "^1.9.3",
     "mdb-reader": "^1.2.1",
     "mp4box": "^0.6.5",
