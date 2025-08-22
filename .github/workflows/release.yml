@@ -42,7 +42,7 @@ jobs:
       - name: Install Node.js and NPM
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install libraries
         run: sudo apt-get install libfontconfig1-dev --fix-missing
@@ -68,7 +68,7 @@ jobs:
       - name: Install Node.js and NPM
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install libraries
         run:
@@ -107,7 +107,7 @@ jobs:
       - name: Install Node.js and NPM
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # Change Python version: https://github.com/nodejs/node-gyp/issues/2869
       - name: Install Python 3.11
