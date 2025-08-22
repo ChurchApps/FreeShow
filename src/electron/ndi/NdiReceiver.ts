@@ -2,6 +2,8 @@
 import { toApp } from ".."
 import { NDI } from "../../types/Channels"
 import { OutputHelper } from "../output/OutputHelper"
+// Dynamic import for grandiose ES module using eval to prevent TypeScript compilation issues
+const loadGrandiose = () => eval('import("grandiose")')
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -21,7 +23,7 @@ export class NdiReceiver {
     static allActiveReceivers: { [key: string]: any } = {}
     static sendToOutputs: string[] = []
 
-    private static async createReceiverSerialized(source: { name: string; urlAddress: string }, lowbandwidth: boolean = false): Promise<any> {
+    private static async createReceiverSerialized(source: { name: string; urlAddress: string }, lowbandwidth = false): Promise<any> {
         const timeoutMs = 10000
 
         // Wait for any existing receiver creation to complete
@@ -29,7 +31,7 @@ export class NdiReceiver {
         this.isCreatingReceiver = true
 
         try {
-            const grandiose = require("grandiose")
+            const grandiose = await loadGrandiose()
             const config: any = {
                 source: {
                     name: source.name,
@@ -54,11 +56,11 @@ export class NdiReceiver {
 
     static async findStreamsNDI(): Promise<{ name: string; urlAddress: string }[]> {
         if (this.ndiDisabled) return []
-        const grandiose = require("grandiose")
 
         if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
 
         // grandiose.find() crashes the app without "{}"
+        const grandiose = await loadGrandiose()
         const finder = await grandiose.find({ showLocalSources: true })
 
         return new Promise((resolve) => {
