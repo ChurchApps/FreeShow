@@ -49,7 +49,7 @@ import { addToPos } from "./mover"
 import { REMOTE } from "../../../types/Channels"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
-    empty: EMPTY_CATEGORY,
+    empty: { ...EMPTY_CATEGORY, icon: tabId === "shows" ? "song" : null },
     select: (id: string) => {
         setDrawerTabData(tabId, id)
     },

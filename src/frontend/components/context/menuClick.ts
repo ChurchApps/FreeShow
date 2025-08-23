@@ -65,6 +65,7 @@ import {
     styles,
     templateCategories,
     templates,
+    textEditActive,
     themes,
     toggleOutputEnabled,
     variables
@@ -1796,7 +1797,10 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (obj.sel?.id?.includes("slide")) {
+    if (get(textEditActive)) {
+        // select all slides
+        slideIds = _show().slides().get().map(({ id }) => id)
+    } else if (obj.sel?.id?.includes("slide")) {
         slideIds = obj.sel.data.map((a) => ref[a.index].id)
     } else {
         slideIds = [

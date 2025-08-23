@@ -441,7 +441,11 @@ function dropFileInDrawerNavigation(drag) {
     // drop folders
     if (drawerTab === "media" || drawerTab === "audio") {
         drag.data.forEach((file) => {
-            if (file.type) return
+            if (file.type) {
+                newToast("Drag media files into a project or a show!")
+                return
+            }
+
             addDrawerFolder(file, drawerTab)
         })
     }

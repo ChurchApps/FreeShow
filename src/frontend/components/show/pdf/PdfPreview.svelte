@@ -1,17 +1,18 @@
 <script lang="ts">
     import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask } from "pdfjs-dist"
     import { onDestroy, onMount } from "svelte"
-    import { slide } from "svelte/transition"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { dataPath, dictionary, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { newToast, wait } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import Loader from "../../main/Loader.svelte"
     import { clearBackground } from "../../output/clear"
 
@@ -42,21 +43,6 @@
         clearBackground()
     }
 
-    // WIP duplicate of Slides.svelte
-    let nextScrollTimeout: NodeJS.Timeout | null = null
-    function wheel(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
-
-        slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -1 : 1))) })
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
-    }
-
     /////
 
     // GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -64,13 +50,6 @@
 
     let pageCount = 0
     let canvases: (HTMLCanvasElement | undefined)[] = []
-
-    let zoomOpened = false
-    function mousedown(e: any) {
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
-
-        zoomOpened = false
-    }
 
     let loading = true
     let loadingTask: PDFDocumentLoadingTask | null = null
@@ -113,9 +92,7 @@
     }
 </script>
 
-<svelte:window on:mousedown={mousedown} />
-
-<div class="grid" on:wheel={wheel}>
+<div class="grid">
     {#each { length: pageCount } as _page, i}
         <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
             <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
@@ -131,35 +108,19 @@
     {/if}
 </div>
 
-<div class="actionbar">
-    <div>
-        <p>PDF</p>
+<!-- <FloatingInputs side="left">
+    <span style="min-width: 60px;display: flex;align-items: center;justify-content: center;opacity: 0.8;">PDF</span>
+</FloatingInputs> -->
 
-        <div class="buttons">
-            <Button on:click={convertToImages} style="white-space: nowrap;">
-                <Icon id="image" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
-            </Button>
+<FloatingInputs>
+    <MaterialButton icon="image" on:click={convertToImages} style="white-space: nowrap;">
+        {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
+    </MaterialButton>
 
-            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-                <Icon size={1.3} id="zoomIn" white />
-            </Button>
-            {#if zoomOpened}
-                <div class="zoom_container" transition:slide={{ duration: 150 }}>
-                    <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
-                        <p class="text" data-title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
-                    </Button>
-                    <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
-                        <Icon size={1.3} id="add" white />
-                    </Button>
-                    <Button disabled={$slidesOptions.columns >= 10} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
-                        <Icon size={1.3} id="remove" white />
-                    </Button>
-                </div>
-            {/if}
-        </div>
-    </div>
-</div>
+    <div class="divider"></div>
+
+    <MaterialZoom columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+</FloatingInputs>
 
 <style>
     canvas {
@@ -235,62 +196,5 @@
     .main.active {
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
-    }
-
-    /* action bar */
-
-    .actionbar {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        background-color: var(--primary-darkest);
-    }
-
-    /* fixed height for consistent heights */
-    .actionbar :global(button) {
-        min-height: 28px;
-        padding: 0 0.8em !important;
-    }
-    .actionbar :global(button.active) {
-        /* color: var(--secondary) !important; */
-        /* color: rgb(255 255 255 /0.5) !important; */
-        background-color: var(--primary) !important;
-    }
-
-    .actionbar div {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-    }
-
-    .actionbar p {
-        padding: 0 10px;
-        opacity: 0.8;
-    }
-
-    .actionbar div.buttons {
-        position: relative;
-        width: initial;
-
-        display: flex;
-        align-items: center;
-    }
-
-    /* zoom */
-    .zoom_container {
-        position: absolute;
-        inset-inline-end: 0;
-        top: 0;
-        transform: translateY(-100%);
-        overflow: hidden;
-
-        flex-direction: column;
-        width: auto;
-        /* border-left: 3px solid var(--primary-lighter); */
-
-        z-index: 2;
-
-        background-color: var(--primary-darkest);
     }
 </style>

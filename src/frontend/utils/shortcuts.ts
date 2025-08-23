@@ -7,6 +7,7 @@ import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
+import { sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getMediaStyle, getMediaType } from "../components/helpers/media"
@@ -17,6 +18,7 @@ import { clearAll, clearBackground, clearSlide } from "../components/output/clea
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
+import { changeSlidesView } from "../show/slides"
 import {
     activeDrawerTab,
     activeEdit,
@@ -47,20 +49,19 @@ import {
     videosData,
     volume
 } from "../stores"
+import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { changeSlidesView } from "../show/slides"
-import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
-import { sortByName } from "../components/helpers/array"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
 const ctrlKeys = {
     a: () => selectAll(),
     c: () => copy(),
+    f: () => shouldOpenReplace() ? activePopup.set("find_replace") : null,
     v: () => paste(),
     // give time for drawer to not toggle
     d: () => setTimeout(() => duplicate(get(selected))),
@@ -107,7 +108,7 @@ const keys = {
 
         // blur focused elements
         if (document.activeElement !== document.body) {
-            ;(document.activeElement as HTMLElement).blur()
+            ; (document.activeElement as HTMLElement).blur()
 
             if (!popupId && get(selected).id) setTimeout(() => selected.set({ id: null, data: [] }))
             return
@@ -127,6 +128,10 @@ const keys = {
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
     F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null)
+}
+
+export function shouldOpenReplace() {
+    return get(activePage) === "edit" && get(activeEdit) && ((get(activeEdit).type || "show") === "show" || get(activeEdit).type === "overlay" || get(activeEdit).type === "template")
 }
 
 export function keydown(e: KeyboardEvent) {

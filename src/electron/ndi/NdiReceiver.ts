@@ -2,6 +2,8 @@
 import { toApp } from ".."
 import { NDI } from "../../types/Channels"
 import { OutputHelper } from "../output/OutputHelper"
+// Dynamic import for grandiose ES module using eval to prevent TypeScript compilation issues
+const loadGrandiose = () => eval('import("grandiose")')
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -21,7 +23,7 @@ export class NdiReceiver {
     static allActiveReceivers: { [key: string]: any } = {}
     static sendToOutputs: string[] = []
 
-    private static async createReceiverSerialized(source: { name: string; urlAddress: string }, lowbandwidth: boolean = false): Promise<any> {
+    private static async createReceiverSerialized(source: { name: string; urlAddress: string }, lowbandwidth = false): Promise<any> {
         const timeoutMs = 10000
 
         // Wait for any existing receiver creation to complete
@@ -29,13 +31,13 @@ export class NdiReceiver {
         this.isCreatingReceiver = true
 
         try {
-            const grandiose = require("grandiose")
+            const grandiose = await loadGrandiose()
             const config: any = {
                 source: {
                     name: source.name,
                     urlAddress: source.urlAddress
                 },
-                colorFormat: grandiose.COLOR_FORMAT_BGRX_BGRA,
+                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
                 allowVideoFields: false
             }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
@@ -54,11 +56,11 @@ export class NdiReceiver {
 
     static async findStreamsNDI(): Promise<{ name: string; urlAddress: string }[]> {
         if (this.ndiDisabled) return []
-        const grandiose = require("grandiose")
 
         if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
 
         // grandiose.find() crashes the app without "{}"
+        const grandiose = await loadGrandiose()
         const finder = await grandiose.find({ showLocalSources: true })
 
         return new Promise((resolve) => {
@@ -136,13 +138,6 @@ export class NdiReceiver {
             const expectedSize = rawFrame.xres * rawFrame.yres * 4
             if (videoFrame.length !== expectedSize) return
 
-            for (let i = 0; i < videoFrame.length; i += 4) {
-                const b = videoFrame[i]
-                videoFrame[i] = videoFrame[i + 2] // B -> R
-                videoFrame[i + 2] = b // R -> B
-            }
-
-            rawFrame.data = videoFrame
             this.sendBuffer(source.id, rawFrame)
         } catch (err) {
             console.error(err)
@@ -188,16 +183,6 @@ export class NdiReceiver {
             try {
                 // WIP app crashes if the ndi source stops sending data! (problem in grandiose package)
                 const rawFrame = await receiver.video(this.receiverTimeout)
-                const videoFrame = rawFrame.data
-
-                // Issue with NDI 6.2: COLOR_FORMAT_RGBX_RGBA is incorrect (green tinted), using BGRA and converting back to RGBA (this worked fine without using NDI 6.1.1)
-                for (let i = 0; i < videoFrame.length; i += 4) {
-                    const b = videoFrame[i]
-                    videoFrame[i] = videoFrame[i + 2] // B -> R
-                    videoFrame[i + 2] = b // R -> B
-                }
-
-                rawFrame.data = videoFrame
                 this.sendBuffer(source.id, rawFrame)
                 consecutiveErrors = 0
             } catch (err: any) {

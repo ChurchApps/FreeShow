@@ -440,7 +440,7 @@
                     {/if}
                 </Center>
             {:else}
-                <div class="grid">
+                <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
                             {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
@@ -486,7 +486,5 @@
         display: flex;
         flex-wrap: wrap;
         padding: 5px;
-
-        padding-bottom: 60px;
     }
 </style>

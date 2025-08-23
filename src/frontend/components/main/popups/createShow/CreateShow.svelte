@@ -212,13 +212,13 @@
         {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
     </MaterialButton>
 
-    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
+    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} rows={showMore ? 6 : Math.max(6, Math.min(12, values.text.split("\n").length))} on:input={(e) => changeValue(e)} />
     <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
 
     {#if showMore}
         <List top={5}>
-            <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} on:change={(e) => special.set({ ...$special, autoGroups: e.detail })} />
-            <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} on:change={(e) => formatNewShow.set(e.detail)} />
+            <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} defaultValue={true} on:change={(e) => special.set({ ...$special, autoGroups: e.detail })} />
+            <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} defaultValue={false} on:change={(e) => formatNewShow.set(e.detail)} />
             <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={(e) => splitLines.set(e.detail)} />
         </List>
     {/if}

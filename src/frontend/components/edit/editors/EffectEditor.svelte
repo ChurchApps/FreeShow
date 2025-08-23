@@ -1,5 +1,7 @@
 <script lang="ts">
     import { activeEdit, effects, outputs, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Effect from "../../output/effects/Effect.svelte"
@@ -18,6 +20,12 @@
     let zoom = 1
 </script>
 
+{#if effect?.isDefault}
+    <div class="default" data-title={translateText("example.default")}>
+        <Icon id="protected" white />
+    </div>
+{/if}
+
 <div class="editArea">
     <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if effect?.items}
@@ -33,6 +41,27 @@
 </div>
 
 <style>
+    .default {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+
+        padding: 10px;
+        border-radius: 50%;
+
+        z-index: 999;
+    }
+
     .editArea {
         width: 100%;
         height: 100%;

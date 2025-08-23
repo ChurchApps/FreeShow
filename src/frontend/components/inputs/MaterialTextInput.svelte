@@ -54,7 +54,7 @@
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)}>
     <div class="background" />
 
-    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} />
+    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} on:keydown />
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 

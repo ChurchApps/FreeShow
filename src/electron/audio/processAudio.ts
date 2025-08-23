@@ -15,7 +15,7 @@ try {
 }
 
 // , { audioDelay }
-export function processAudio(buffer: Buffer) {
+export async function processAudio(buffer: Buffer) {
     if (!opusEncoder) return
 
     // const offset = audioDelay
@@ -30,7 +30,7 @@ export function processAudio(buffer: Buffer) {
         return
     }
 
-    NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+    await NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
     sendAudioToOutputServer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
 }
 

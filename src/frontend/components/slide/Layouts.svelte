@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { changeSlidesView } from "../../show/slides"
-    import { actions, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
+    import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions, templates } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -19,6 +19,7 @@
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
+    import { removeTemplatesFromShow } from "../helpers/show"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
@@ -170,7 +171,7 @@
     </div>
 {/if}
 
-{#if referenceType}
+{#if referenceType === "lessons"}
     <MaterialZoom hidden columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
 {:else if layoutSlides.length}
     <FloatingInputs arrow={!isLocked} bottom={notesVisible ? bottomHeight : 10} let:open>
@@ -208,15 +209,38 @@
                 <Icon size={1.1} id="locked" />
             </MaterialButton>
         {:else}
-            {#if !open && isTranslated}
+            {#if !open && (isTranslated || referenceType === "scripture")}
                 <MaterialButton on:click={() => activePopup.set("translate")} title="popup.translate">
-                    <Icon size={1.1} id="translate" />
+                    <Icon size={1.1} id="translate" white={!isTranslated} />
                 </MaterialButton>
             {/if}
 
-            <MaterialButton title="popup.next_timer{totalTime !== '0s' ? ': ' + totalTime : ''}" on:click={() => activePopup.set("next_timer")}>
-                <Icon size={1.1} id="clock" white={totalTime === "0s"} />
-            </MaterialButton>
+            {#if open || totalTime !== "0s" || referenceType !== "scripture"}
+                <MaterialButton title="popup.next_timer{totalTime !== '0s' ? ': ' + totalTime : ''}" on:click={() => activePopup.set("next_timer")}>
+                    <Icon size={1.1} id="clock" white={totalTime === "0s"} />
+                </MaterialButton>
+            {/if}
+
+            {#if !referenceType && currentShow?.settings?.template && $templates[currentShow.settings.template]}
+                {#if open}
+                    <div class="divider"></div>
+                {/if}
+
+                <MaterialButton
+                    title="menu.edit: {$templates[currentShow.settings.template].name || 'info.template'}"
+                    on:click={() => {
+                        activeEdit.set({ type: "template", id: currentShow.settings.template || "", items: [] })
+                        activePage.set("edit")
+                    }}
+                >
+                    <Icon size={1.1} id="templates" />
+                </MaterialButton>
+                {#if open}
+                    <MaterialButton title="actions.remove_template_from_show" on:click={() => removeTemplatesFromShow($activeShow?.id || "", true)}>
+                        <Icon size={1.1} id="remove_circle" />
+                    </MaterialButton>
+                {/if}
+            {/if}
         {/if}
 
         {#if open}

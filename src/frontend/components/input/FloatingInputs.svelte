@@ -14,7 +14,6 @@
     let open = false
 
     const light = !isDarkTheme()
-
     $: isOptimized = $special.optimizedMode
 </script>
 

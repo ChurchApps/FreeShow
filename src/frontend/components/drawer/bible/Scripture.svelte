@@ -3,6 +3,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { destroyMain, receiveMain } from "../../../IPC/main"
+    import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import {
         activeEdit,
         activeScripture,
@@ -23,19 +24,19 @@
         scriptureSettings,
         selected
     } from "../../../stores"
+    import { createKeydownHandler } from "../../../utils/clickable"
     import { newToast } from "../../../utils/common"
+    import { formatSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
-    import { formatSearch } from "../../../utils/search"
-    import { createKeydownHandler } from "../../../utils/clickable"
-    import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 
     export let active: string | null
     export let bibles: Bible[]
@@ -1253,74 +1254,71 @@
     </div>
 </div>
 
-<div class="tabs" style="display: flex;align-items: center;">
-    <!-- text-align: center; -->
-    <span style="flex: 1;padding: 0 10px;display: flex;gap: 5px;align-items: center;{bibles.length > 1 ? 'padding-left: 0;' : ''}">
-        {#if displayedBible?.version}
-            <!-- Translation swap button if there are multiple bibles -->
-            {#if bibles.length > 1}
-                <Button on:click={swapDisplayedBible} title={bibles[(biblePreviewIndex + 1) % bibles.length]?.version || ""} style="padding-right: 0.2em;" bold={false}>
-                    {displayedBible.version}:
-                </Button>
-            {:else}
-                <span style="opacity: 0.8;">{displayedBible.version}:</span>
+{#if $scriptureMode !== "grid"}
+    <FloatingInputs side="left">
+        <span style="flex: 1;padding: 0 10px;display: flex;gap: 5px;align-items: center;{bibles.length > 1 ? 'padding-left: 0;' : ''}">
+            {#if displayedBible?.version}
+                <!-- Translation swap button if there are multiple bibles -->
+                {#if bibles.length > 1}
+                    <MaterialButton icon="refresh" on:click={swapDisplayedBible} title={bibles[(biblePreviewIndex + 1) % bibles.length]?.version || ""} style="padding-right: 0.2em;font-weight: normal;">
+                        {displayedBible.version}:
+                    </MaterialButton>
+                {:else}
+                    <span style="opacity: 0.8;">{displayedBible.version}:</span>
+                {/if}
+                {displayedBible?.book || ""}
+                {displayedBible?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
             {/if}
-            {displayedBible?.book || ""}
-            {displayedBible?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
+        </span>
+    </FloatingInputs>
+{/if}
+
+{#if searchBibleActive}
+    <FloatingInputs>
+        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
+    </FloatingInputs>
+{:else}
+    <FloatingInputs arrow let:open>
+        {#if open || outputIsScripture}
+            <MaterialButton disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
+                <Icon size={1.3} id="previous" white={!outputIsScripture} />
+            </MaterialButton>
+            <MaterialButton
+                disabled={Object.keys(verses[displayedBibleId] || {}).length > 0 &&
+                    activeVerses.includes(Object.keys(verses[displayedBibleId] || {}).length.toString()) &&
+                    (chapterId >= chapters[displayedBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[displayedBibleId].length + 1}`)}
+                title={$dictionary.preview?._next_slide}
+                on:click={() => moveSelection(false)}
+            >
+                <Icon size={1.3} id="next" white={!outputIsScripture} />
+            </MaterialButton>
         {/if}
-    </span>
 
-    <!-- <div class="seperator" /> -->
-    <!-- TODO: change view (grid easy select) ? -->
-
-    <div class="seperator" />
-
-    {#if searchBibleActive}
-        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;" autofocus />
-    {:else}
-        <Button disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
-            <Icon size={1.3} id="previous" />
-        </Button>
-        <Button disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
+        <MaterialButton disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
             <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
-        </Button>
-        <Button
-            disabled={Object.keys(verses[displayedBibleId] || {}).length &&
-                activeVerses.includes(Object.keys(verses[displayedBibleId] || {}).length.toString()) &&
-                (chapterId >= chapters[displayedBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[displayedBibleId].length + 1}`)}
-            title={$dictionary.preview?._next_slide}
-            on:click={() => moveSelection(false)}
-        >
-            <Icon size={1.3} id="next" />
-        </Button>
+        </MaterialButton>
 
-        <div class="seperator" />
-        <Button disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title={$dictionary.show?.[$scriptureMode === "grid" ? "grid" : "list"]}>
+        <div class="divider" />
+
+        <MaterialButton disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title={$dictionary.show?.[$scriptureMode === "grid" ? "grid" : "list"]}>
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
-        </Button>
+        </MaterialButton>
 
-        <div class="seperator" />
-        <Button disabled={!currentHistory.length && !history} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
-            <Icon size={1.2} id="history" white={!currentHistory.length} />
-        </Button>
+        {#if open}
+            <div class="divider" />
 
-        <Button title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
+            <MaterialButton disabled={!currentHistory.length && !history} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
+                <Icon size={1.2} id="history" white={!currentHistory.length} />
+            </MaterialButton>
+        {/if}
+
+        <MaterialButton title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
             <Icon size={1.1} id="search" white />
-        </Button>
-    {/if}
-</div>
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <style>
-    .tabs {
-        display: flex;
-        background-color: var(--primary-darkest);
-    }
-    .seperator {
-        width: 1px;
-        height: 100%;
-        background-color: var(--primary);
-    }
-
     .main {
         display: flex;
         height: 100%;
@@ -1338,6 +1336,9 @@
     }
     .main div:not(.verses):not(.grid):not(.grid div) {
         border-inline-end: 2px solid var(--primary-lighter);
+    }
+    .main div:not(.grid):not(.grid div) {
+        padding-bottom: 60px;
     }
     .main .verses {
         flex: 1;

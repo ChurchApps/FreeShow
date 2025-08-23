@@ -52,7 +52,7 @@
     $: document.documentElement.setAttribute("lang", $language)
 
     $: contrastColor = getContrast($themes[$theme]?.colors?.secondary || "")
-    $: secondaryContrast = contrastColor === "#000000" ? `--secondary-text: ${contrastColor};` : ""
+    $: secondaryContrast = `--secondary-text: ${contrastColor === "#000000" ? "#131313" : "#f0f0ff"};`
     $: globalStyle = `${isWindows ? "height: calc(100% - 25px);" : ""}${secondaryContrast}${blending}`
 </script>
 

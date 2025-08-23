@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, slideTimers, special, styles } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special, styles } from "../../../stores"
+    import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -235,6 +236,10 @@
     // hide preview in draw page
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
     // $: if ($activePage === "draw") enablePreview = false
+
+    const light = !isDarkTheme()
+    $: isOptimized = $special.optimizedMode
+    $: isSplitted = $resized.rightPanel > DEFAULT_WIDTH * 1.8
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -259,24 +264,28 @@
     {/if}
 
     {#if enablePreview}
-        <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
+        <div class="section" style="margin-bottom: 2px;" class:float={!isSplitted && $activePage !== "show" && $activePage !== "settings"} class:light class:isOptimized>
+            <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
+        </div>
     {/if}
 
     {#if $activePage === "show"}
-        <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
+        <div class="section" style="margin-top: 2px;">
+            <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
-        {#if updatedActiveClear === "background"}
-            <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />
-        {:else if updatedActiveClear === "slide"}
-            <Show {currentOutput} {ref} {linesIndex} {maxLines} />
-        {:else if updatedActiveClear === "overlays"}
-            <Overlay {currentOutput} />
-        {:else if updatedActiveClear === "audio"}
-            <Audio />
-        {:else if updatedActiveClear === "nextTimer"}
-            <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />
-            <!-- WIP display overlay timer time -->
-        {/if}
+            {#if updatedActiveClear === "background"}
+                <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />
+            {:else if updatedActiveClear === "slide"}
+                <Show {currentOutput} {ref} {linesIndex} {maxLines} />
+            {:else if updatedActiveClear === "overlays"}
+                <Overlay {currentOutput} />
+            {:else if updatedActiveClear === "audio"}
+                <Audio />
+            {:else if updatedActiveClear === "nextTimer"}
+                <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />
+                <!-- WIP display overlay timer time -->
+            {/if}
+        </div>
     {/if}
 </div>
 
@@ -311,5 +320,34 @@
     }
     .top:hover > :global(.hide) {
         opacity: 1;
+    }
+
+    .section {
+        display: flex;
+        flex-direction: column;
+
+        position: relative;
+
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+        margin: 5px;
+        border-radius: 10px;
+
+        overflow: hidden;
+
+        transition: transform 0.2s ease;
+    }
+
+    .section.float {
+        position: absolute;
+        width: calc(100% - 10px);
+        transform: translateY(calc(-100% - 9px));
+
+        --background: rgba(25, 25, 35, 0.6);
+        background-color: var(--background);
+        backdrop-filter: blur(3px);
+    }
+    .section.float.light {
+        --background: rgba(225, 225, 225, 0.6);
     }
 </style>

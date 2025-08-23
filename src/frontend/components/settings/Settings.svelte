@@ -126,7 +126,7 @@
         white-space: initial;
 
         text-align: right;
-        max-width: 280px;
+        max-width: 300px;
         /* align-self: flex-end; */
     }
 

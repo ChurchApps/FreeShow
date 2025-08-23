@@ -43,6 +43,7 @@
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
+    $: if (active) previousSearchTokens = []
     let previousFilteredShows: any[] = clone(filteredStored)
 
     $: drawerIsClosed = $drawer.height <= 40

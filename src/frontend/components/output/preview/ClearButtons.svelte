@@ -8,6 +8,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     export let autoChange: any
     export let activeClear: any
@@ -96,15 +97,15 @@
     }
 </script>
 
-<div class="clear" style="border-top: 2px solid var(--primary-lighter);">
+<div class="clear">
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
-            <Button class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
+            <Button style="padding: 0.45em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
                 <Icon id="reset" size={1.2} right={!$labelsDisabled} white />
                 {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
             </Button>
         {:else}
-            <Button class="clearAll" disabled={$outLocked || allCleared} on:click={() => clearAll(true)} title="{$dictionary.clear?.all} [esc]" red dark center>
+            <Button style="padding: 0.45em 0.8em;" class="clearAll" disabled={$outLocked || allCleared} on:click={() => clearAll(true)} title="{$dictionary.clear?.all} [esc]" red dark center>
                 <Icon id="clear" size={1.2} right={!$labelsDisabled} white />
                 {#if !$labelsDisabled}<T id={"clear.all"} />{/if}
             </Button>
@@ -126,7 +127,11 @@
                     <Icon id="background" size={1.2} white />
                 </Button>
                 {#if !allCleared}
-                    <Button disabled={backgroundCleared} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
+                    <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
+                        {#if activeClear === "background"}
+                            <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                        {/if}
+                    </MaterialButton>
                 {/if}
             </div>
         {/if}
@@ -138,7 +143,11 @@
                 <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
             </Button>
             {#if !allCleared}
-                <Button disabled={slideCleared} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
+                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
+                    {#if activeClear === "slide"}
+                        <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                    {/if}
+                </MaterialButton>
             {/if}
         </div>
 
@@ -155,7 +164,11 @@
                 <Icon id="overlays" size={1.2} white />
             </Button>
             {#if !allCleared}
-                <Button disabled={overlayCleared} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
+                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "overlays"} disabled={overlayCleared} on:click={() => openPreview("overlays")} title="preview.overlays">
+                    {#if activeClear === "overlays"}
+                        <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                    {/if}
+                </MaterialButton>
             {/if}
         </div>
 
@@ -164,7 +177,11 @@
                 <Icon id={audioIcon} size={1.2} white />
             </Button>
             {#if !allCleared}
-                <Button disabled={audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
+                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "audio"} disabled={audioCleared} on:click={() => openPreview("audio")} title="preview.audio">
+                    {#if activeClear === "audio"}
+                        <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                    {/if}
+                </MaterialButton>
             {/if}
         </div>
 
@@ -181,7 +198,17 @@
                     <Icon id="clock" size={1.2} white />
                 </Button>
                 {#if !allCleared}
-                    <Button disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                    <MaterialButton
+                        style="padding: 2px !important;min-height: 15px;"
+                        isActive={activeClear === "nextTimer"}
+                        disabled={slideTimerCleared && activeClear !== "nextTimer"}
+                        on:click={() => openPreview("nextTimer")}
+                        title="preview.nextTimer"
+                    >
+                        {#if activeClear === "nextTimer"}
+                            <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                        {/if}
+                    </MaterialButton>
                 {/if}
             </div>
         {/if}
@@ -206,6 +233,16 @@
     .group :global(button) {
         flex-grow: 1;
         /* height: 40px; */
+
+        border-radius: 0;
+    }
+    .clear :global(button:disabled) {
+        background-color: var(--primary) !important;
+    }
+    .group :global(button.isActive) {
+        border: none !important;
+        border-right: 1px solid var(--primary-lighter) !important;
+        border-left: 1px solid var(--primary-lighter) !important;
     }
 
     .combinedButton {

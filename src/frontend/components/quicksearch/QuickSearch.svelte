@@ -2,8 +2,9 @@
 
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { dictionary, quickSearchActive } from "../../stores"
+    import { dictionary, quickSearchActive, special, theme, themes } from "../../stores"
     import { formatSearch } from "../../utils/search"
+    import { hexToRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -37,13 +38,28 @@
         } else if (e.key === "ArrowDown") selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
         else if (e.key === "ArrowUp") selectedIndex = Math.max(0, selectedIndex - 1)
     }
+
+    // let light = false
+    // $: if ($theme) light = !isDarkTheme()
+
+    let rgb = { r: 35, g: 35, b: 45 }
+    $: if ($theme) updateColor()
+    function updateColor() {
+        const color = $themes[$theme]?.colors["primary"]
+        if (!color) return
+
+        const newRgb = hexToRgb(color)
+        rgb = { r: Math.max(0, newRgb.r - 1), g: Math.max(0, newRgb.g - 5), b: Math.max(0, newRgb.b - 5) }
+    }
+
+    $: isOptimized = $special.optimizedMode
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 {#if $quickSearchActive}
     <div class="quicksearch" transition:fade={{ duration: 50 }}>
-        <div class="box">
+        <div class="box" style="--background: rgb({rgb.r} {rgb.g} {rgb.b} / 0.9);" class:isOptimized>
             <TextInput value={searchValue} placeholder="{$dictionary.main?.quick_search}..." style="padding: 8px 15px;font-size: 1.2em;min-width: 400px;" autofocus autoselect on:input={search} />
 
             {#if searchValue}
@@ -102,8 +118,16 @@
         border-radius: 10px;
         padding: 10px;
 
-        box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
-        border: 2px solid var(--primary-lighter);
+        box-shadow: 0 0 4px 2px rgb(0 0 0 / 0.2);
+        border: 1px solid var(--primary-lighter);
+
+        --background: rgba(35, 35, 45, 0.9);
+        background-color: var(--background);
+        backdrop-filter: blur(8px);
+    }
+
+    .box :global(input) {
+        border-radius: 4px;
     }
 
     .values {
