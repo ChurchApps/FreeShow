@@ -109,16 +109,6 @@
             }
         }
 
-        // Ctrl+H to toggle replace
-        if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
-            e.preventDefault()
-            showFindPanel = true
-            showReplace = true
-            setTimeout(() => {
-                const replaceInput = document.getElementById('replace-input') as HTMLInputElement
-                if (replaceInput) replaceInput.focus()
-            }, 100)
-        }
 
         // Ctrl+Z to undo
         if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
