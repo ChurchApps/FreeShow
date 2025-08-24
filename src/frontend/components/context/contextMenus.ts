@@ -136,7 +136,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
-    find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc" },
+    find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc", shortcuts: ["Ctrl+F"] },
     cut_in_half: { label: "actions.cut_in_half", icon: "cut_in_half", iconColor: "#90f1b5" },
     merge: { label: "actions.merge", icon: "merge", iconColor: "#90f1b5" },
     uppercase: { label: "actions.uppercase", icon: "increase_text", iconColor: "#93f190" },
@@ -178,7 +178,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 export const contextMenuLayouts: { [key: string]: string[] } = {
     // MENU
     file: ["save", "import_more", "export_more", "SEPERATOR", "quit"],
-    edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
+    edit: ["undo", "redo", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["quick_search", "shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
@@ -343,5 +343,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     profile_tab: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete"], // , "SEPERATOR", "reset"
-    output_screen_stage: ["rename", "recolor", "duplicate", "delete"] // , "SEPERATOR", "reset"
+    output_screen_stage: ["rename", "recolor", "duplicate", "delete"], // , "SEPERATOR", "reset"
+
+    // TEXT EDITOR
+    texteditor: ["undo", "redo", "SEPERATOR", "cut", "copy", "paste", "SEPERATOR", "find_replace"]
 }
