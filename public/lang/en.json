@@ -675,6 +675,7 @@
         "merge": "Merge",
         "find": "Find",
         "replace": "Replace",
+        "replace_all": "Replace All",
         "case_sensitive": "Case sensitive",
         "uppercase": "Make uppercase",
         "lowercase": "Make lowercase",

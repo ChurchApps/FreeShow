@@ -5,6 +5,7 @@
     import { includeEmptySlides, textEditActive, textEditZoom, activePopup } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
@@ -20,7 +21,7 @@
     let text = ""
     $: if (currentShow) text = getPlainEditorText("", allowEmpty)
 
-    // Handle find/replace popup activation (following the same pattern as slide editor)
+    // Intercept find/replace popup when text editor is active
     $: if ($textEditActive && $activePopup === "find_replace") {
         showFindPanel = true
         setTimeout(() => {
@@ -30,7 +31,7 @@
                 findInput.select()
             }
         }, 100)
-        // Close the popup since we're handling it with our own panel
+        // Close the global popup since text editor handles it locally
         activePopup.set(null)
     }
 
@@ -338,7 +339,7 @@
                         <MaterialButton
                             variant="text"
                             on:click={() => showReplace = !showReplace}
-                            title={showReplace ? "Hide replace" : "Show replace"}
+                            title="actions.replace"
                         >
                             <Icon id="arrow_right" size={1.2} />
                         </MaterialButton>
@@ -346,8 +347,7 @@
                     <div class="input-container">
                         <MaterialTextInput
                             bind:value={findText}
-                            label="Find"
-                            placeholder="Search text..."
+                            label="actions.find"
                             id="find-input"
                             on:input={() => {
                                 isUserTyping = true
@@ -373,7 +373,7 @@
                             variant="text"
                             on:click={findPrevious}
                             disabled={matches.length === 0}
-                            title="Previous match (Shift+Enter)"
+                            title="actions.backward"
                         >
                             <Icon id="arrow_up" size={1.2} />
                         </MaterialButton>
@@ -381,14 +381,14 @@
                             variant="text"
                             on:click={findNext}
                             disabled={matches.length === 0}
-                            title="Next match (Enter)"
+                            title="actions.forward"
                         >
                             <Icon id="arrow_down" size={1.2} />
                         </MaterialButton>
                         <MaterialButton
                             variant="text"
                             on:click={() => showFindPanel = false}
-                            title="Close (Escape)"
+                            title="actions.close"
                         >
                             <Icon id="close" size={1.2} />
                         </MaterialButton>
@@ -405,8 +405,7 @@
                         <div class="input-container">
                             <MaterialTextInput
                                 bind:value={replaceText}
-                                label="Replace"
-                                placeholder="Replacement text..."
+                                label="actions.replace"
                                 id="replace-input"
                                 on:input={() => {
                                     isUserTyping = true
@@ -422,17 +421,17 @@
                                 variant="outlined"
                                 on:click={replaceCurrent}
                                 disabled={matches.length === 0}
-                                title="Replace current match"
+                                title="actions.replace"
                             >
-                                Replace
+                                <T id="actions.replace" />
                             </MaterialButton>
                             <MaterialButton
                                 variant="contained"
                                 on:click={replaceAll}
                                 disabled={matches.length === 0}
-                                title="Replace all matches"
+                                title="actions.replace_all"
                             >
-                                Replace All
+                                <T id="actions.replace_all" />
                             </MaterialButton>
                         </div>
                     </div>
