@@ -17,7 +17,7 @@ export const languages = {
     tr: "Türkçe", // Turkish
     fr_FR: "Français", // French
     ru: "Русский", // Russian
-    ko: "한국인", // Korean
+    ko: "한국어", // Korean
     nl: "Nederlands", // Dutch
     zh_CN: "简体中文", // Chinese (Simplified)
     ro: "Română", // Romanian

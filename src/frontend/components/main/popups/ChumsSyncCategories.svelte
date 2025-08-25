@@ -1,11 +1,9 @@
 <script lang="ts">
     import { keysToID, sortByName } from "../../../components/helpers/array"
     import T from "../../../components/helpers/T.svelte"
-    import Checkbox from "../../../components/inputs/Checkbox.svelte"
     import { categories, chumsSyncCategories, shows } from "../../../stores"
     import { translate } from "../../../utils/language"
-    import Icon from "../../helpers/Icon.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     const mappedCategories = keysToID($categories)
         .filter((a) => !a.isArchive && a.name)
@@ -26,25 +24,10 @@
 <p class="tip"><T id="chums.sync_categories_description" /></p>
 
 <div class="categories">
-    {#each categoryOptions as { id, name, icon, count }}
-        <CombinedInput>
-            <p style="flex: 1;">
-                <Icon style="border-right: none;" id={icon || "noIcon"} custom right />
-                {name} <span style="border: none;" class="count">({count})</span>
-            </p>
-            <div style="flex: 0;padding: 0 10px;" class="alignRight">
-                <Checkbox checked={$chumsSyncCategories.includes(id)} on:change={() => toggleCategory(id)} />
-            </div>
-        </CombinedInput>
+    {#each categoryOptions as { id, name, count }}
+        <MaterialCheckbox label="{name} <span style='opacity: 0.7;font-size: 0.7em;'>({count})</span>" checked={$chumsSyncCategories.includes(id)} on:change={() => toggleCategory(id)} />
     {/each}
 </div>
-
-<!-- <CombinedInput style="margin-top: 10px;">
-    <Button style="width: 100%;" on:click={() => activePopup.set(null)} center>
-        <Icon id="check" size={1.2} right />
-        <T id="actions.done" />
-    </Button>
-</CombinedInput> -->
 
 <style>
     .tip {
@@ -59,14 +42,10 @@
         flex-direction: column;
         max-height: 300px;
         overflow-y: auto;
+
+        border-radius: 4px;
     }
-
-    .count {
-        display: flex;
-        align-items: center;
-        margin-inline-start: 8px;
-
-        opacity: 0.7;
-        font-size: 0.7em;
+    .categories :global(.checkboxfield:nth-child(odd) .hover) {
+        background-color: rgb(0 0 20 / 0.15);
     }
 </style>

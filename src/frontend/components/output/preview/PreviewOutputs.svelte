@@ -80,7 +80,7 @@
                     class:locked={!output.active}
                     class:invisible={output.invisible}
                     class:ndi={$ndiData[output?.id || ""]?.connections > 0}
-                    class:active={$outputState.find((a) => a.id === output.id)?.active}
+                    class:active={$outputState.find((a) => a.id === output.id)?.active === true}
                     data-title={translateText(getOutputStateTitle(output, { $outputState, $ndiData }))}
                 ></div>
                 {#if output.stageOutput}<Icon id="stage" size={0.8} right white />{/if}

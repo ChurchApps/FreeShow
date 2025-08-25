@@ -99,8 +99,25 @@ const receiveOUTPUTasMAIN: any = {
     },
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
-    DISPLAY: (a: any) => outputDisplay.set(a.enabled),
-    OUTPUT_STATE: (a: any) => outputState.set(a),
+    // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+    OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {
+
+        outputState.update(a => {
+            newStates.forEach(state => {
+                const stateIndex = a.findIndex(a => a.id === state.id)
+                if (stateIndex < 0) a.push(state)
+                else a[stateIndex] = state
+            })
+
+            // only enabled ones & not invisible
+            a = a.filter(a => get(outputs)[a.id]?.enabled && !get(outputs)[a.id]?.invisible)
+
+            const getVisibleState = [...new Set((a.filter(a => typeof a.active === "boolean").map((a) => a.active) as boolean[]))]
+            if (getVisibleState.length === 1) outputDisplay.set(getVisibleState[0])
+
+            return a
+        })
+    },
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
     AUDIO_MAIN: (data: any) => {
         if (!data.id) return

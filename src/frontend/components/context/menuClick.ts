@@ -89,7 +89,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -624,14 +624,7 @@ const clickActions = {
     },
 
     // output
-    force_output: () => {
-        const enabledOutputs = getActiveOutputs(get(outputs), false)
-        enabledOutputs.forEach((id) => {
-            const output = { id, ...get(outputs)[id] }
-            // , force: e.ctrlKey || e.metaKey
-            send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
-        })
-    },
+    force_output: () => toggleOutputs(null, { force: true }),
     align_with_screen: () => send(OUTPUT, ["ALIGN_WITH_SCREEN"]),
     choose_screen: () => {
         popupData.set({ activateOutput: true })

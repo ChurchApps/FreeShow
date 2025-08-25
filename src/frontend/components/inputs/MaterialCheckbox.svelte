@@ -48,7 +48,7 @@
 
     <label for={id} class="checkbox-label">
         <div class="custom-checkbox" aria-hidden="true"></div>
-        {translateText(label, $dictionary)}
+        {@html translateText(label, $dictionary)}
 
         {#if data}
             <span class="data">{data}</span>

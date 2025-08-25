@@ -3,11 +3,12 @@
     import { OUTPUT } from "../../../types/Channels"
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
-    import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs, styles } from "../../stores"
+    import { activePopup, alertMessage, currentOutputSettings, dictionary, outputs, styles } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
+    import { toggleOutput } from "../helpers/output"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
@@ -130,15 +131,14 @@
         })
 
         setTimeout(() => {
-            let enabled = activateOutput || $outputDisplay
-            send(OUTPUT, ["DISPLAY"], { enabled, output: { id: screenId, ...currentScreen }, reset: true })
+            toggleOutput(screenId)
             // send(OUTPUT, ["TOGGLE_KIOSK"], { id: screenId, enabled: true })
             // setTimeout(() => {
             send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...currentScreen })
             // }, 100)
 
             if (keyOutput) {
-                send(OUTPUT, ["DISPLAY"], { enabled, output: { id: keyOutput, ...currentScreen }, reset: true })
+                toggleOutput(keyOutput)
                 send(OUTPUT, ["UPDATE_BOUNDS"], { id: keyOutput, ...currentScreen })
             }
         }, 100)

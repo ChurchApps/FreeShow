@@ -13,7 +13,7 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, displayOutputs, startCamera, startScreen, toggleOutput } from "../helpers/output"
+import { changeStageOutputLayout, startCamera, startScreen, toggleOutput, toggleOutputs } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
@@ -38,8 +38,8 @@ import {
     getShowLayout,
     getShows,
     getSlide,
-    getVariables,
-    getVariable
+    getVariable,
+    getVariables
 } from "./apiGet"
 import {
     addGroup,
@@ -50,14 +50,16 @@ import {
     createProject,
     deleteProject,
     editTimer,
-    getTimersDetailed,
     getClearedState,
     getPDFThumbnails,
     getPlainText,
     getShowGroups,
+    getTimersDetailed,
     gotoGroup,
     moveStageConnection,
     pauseAudio,
+    pauseTimerById,
+    pauseTimerByName,
     playAudio,
     playMedia,
     rearrangeGroups,
@@ -78,14 +80,12 @@ import {
     startPlaylistByName,
     startScripture,
     stopAudio,
+    stopTimerById,
+    stopTimerByName,
     timerSeekTo,
     toggleLock,
     updateVolumeValues,
-    videoSeekTo,
-    pauseTimerById,
-    pauseTimerByName,
-    stopTimerById,
-    stopTimerByName
+    videoSeekTo
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -257,7 +257,7 @@ export const API_ACTIONS = {
 
     // OUTPUT
     lock_output: (data: API_boolval) => toggleLock(data.value), // BC
-    toggle_output_windows: () => displayOutputs(), // BC
+    toggle_output_windows: () => toggleOutputs(), // BC
     toggle_output: (data: API_id) => toggleOutput(data.id),
     // WIP disable stage ?
     // WIP disable NDI ?

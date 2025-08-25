@@ -3,11 +3,11 @@ import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog } from "../../types/Main"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
-import { getActiveOutputs } from "../components/helpers/output"
+import { getContrast } from "../components/helpers/color"
+import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
     activeTriggerFunction,
-    allOutputs,
     autosave,
     currentWindow,
     disabledServers,
@@ -15,7 +15,6 @@ import {
     errorHasOccured,
     focusedArea,
     os,
-    outputDisplay,
     outputs,
     quickSearchActive,
     resized,
@@ -29,7 +28,6 @@ import {
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
-import { getContrast } from "../components/helpers/color"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -77,15 +75,8 @@ export async function waitUntilValueIsDefined(value: () => any, intervalTime = 5
 }
 
 // hide output window
-export function hideDisplay(ctrlKey = true) {
-    if (!ctrlKey) return
-    outputDisplay.set(false)
-
-    const outputsList = getActiveOutputs(get(allOutputs), false)
-    outputsList.forEach((id) => {
-        const output = { id, ...get(allOutputs)[id] }
-        send(OUTPUT, ["DISPLAY"], { enabled: false, output })
-    })
+export function hideDisplay() {
+    toggleOutputs(null, { state: false })
 }
 
 export function mainClick(e: any) {

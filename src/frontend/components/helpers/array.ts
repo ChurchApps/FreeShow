@@ -95,31 +95,29 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
 // sort any object.name by numbers in the front of the string
 export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
     return array.sort((a, b) => {
-        const aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
-        const bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
+        const aNumberStr = a.quickAccess?.number || ""
+        const bNumberStr = b.quickAccess?.number || ""
 
-        // get only number part if available
-        const extractNumber = (str) => {
-            const match = str.toString().match(/\d+/)
-            return match ? parseInt(match[0], 10) : Infinity
+        // Split into prefix letters + numeric part
+        const extractParts = (str: string) => {
+            const match = str.match(/^([A-Za-z]*)(\d+)?$/)
+            return { prefix: match?.[1] || "", number: match?.[2] ? parseInt(match[2], 10) : Infinity }
         }
-        const quickAccessNumberA = extractNumber(a.quickAccess?.number || "")
-        const quickAccessNumberB = extractNumber(b.quickAccess?.number || "")
 
-        // compare only number values when available
-        if (quickAccessNumberA !== quickAccessNumberB) return quickAccessNumberA - quickAccessNumberB
+        const aParts = extractParts(aNumberStr)
+        const bParts = extractParts(bNumberStr)
 
-        // get numbers in front of name
-        const matchA = aName.match(/^\d+/)
-        const matchB = bName.match(/^\d+/)
-        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
-        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
+        // Compare by prefix first
+        if (aParts.prefix !== bParts.prefix) return aParts.prefix.localeCompare(bParts.prefix)
 
-        if (numA !== numB) return numA - numB
+        // Then by numeric part
+        if (aParts.number !== bParts.number) return aParts.number - bParts.number
 
-        return aName.localeCompare(bName)
+        // Fall back to name
+        return (a.name || "").localeCompare(b.name || "")
     })
 }
+
 
 // sort object by name and numbers any location (file names)
 export function sortFilenames<T extends Record<string, any>>(filenames: T[]) {

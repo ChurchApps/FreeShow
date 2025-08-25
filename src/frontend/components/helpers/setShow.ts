@@ -109,6 +109,8 @@ export async function loadShows(s: string[], deleting = false) {
 
         // RECEIVE
         const listenerId = receiveMain(Main.SHOW, (data) => {
+            console.log(data)
+
             if (!s.includes(data.id)) return
             count++
 
@@ -127,6 +129,17 @@ export async function loadShows(s: string[], deleting = false) {
                         a.show.splice(a.show.indexOf(data.id), 1)
                         return a
                     })
+                }
+
+                // might have been save wrongly
+                if (typeof data.content[1] === "string") {
+                    try {
+                        data.content[1] = JSON.parse(data.content[1])
+                        if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
+                    } catch (err) {
+                        if (count >= s.length) finished()
+                        return
+                    }
                 }
 
                 const show = fixShowIssues(data.content[1])

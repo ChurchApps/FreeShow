@@ -6,7 +6,7 @@
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByNameAndNumber } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -39,7 +39,11 @@
     $: filteredStored = filteredShows =
         active === "all"
             ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
-            : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
+            : active === "number"
+              ? sortByNameAndNumber(showsSorted.filter((a) => a.quickAccess?.number))
+              : active === "locked"
+                ? showsSorted.filter((a) => a.locked)
+                : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
@@ -219,7 +223,14 @@
                 <VirtualList items={filteredShows} let:item={show}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType] || show.timestamps?.modified || show.timestamps?.created || "", true, $dictionary)} class="#drawer_show_button" match={show.match || null} />
+                            <ShowButton
+                                {active}
+                                id={show.id}
+                                {show}
+                                data={dateToString(show.timestamps?.[sortType] || show.timestamps?.modified || show.timestamps?.created || "", true, $dictionary)}
+                                class="#drawer_show_button"
+                                match={show.match || null}
+                            />
                         {/if}
                     </SelectElem>
                 </VirtualList>

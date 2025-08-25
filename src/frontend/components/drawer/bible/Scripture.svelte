@@ -1277,7 +1277,7 @@
     <FloatingInputs>
         <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
     </FloatingInputs>
-{:else}
+{:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
     <FloatingInputs arrow let:open>
         {#if open || outputIsScripture}
             <MaterialButton disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>

@@ -5,7 +5,7 @@
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { displayOutputs } from "../../helpers/output"
+    import { toggleOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -146,7 +146,7 @@
 
 {#if !currentOutput?.invisible}
     <!-- disabled={currentOutput?.allowMainScreen} -->
-    <Button on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
+    <Button on:click={() => toggleOutputs(null, { force: true })} style="width: 100%;margin-top: 10px;" dark center>
         <Icon id="outputs" right />
         <p><T id="context.force_outputs" /></p>
     </Button>
