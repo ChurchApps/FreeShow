@@ -16,7 +16,7 @@ const loadGrandiose = () => eval('import("grandiose")')
 export class NdiReceiver {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static receiverTimeout = -1 // 5000 // looks like this timeout exits the app even if the request is successful (if video() is called rapidly)
-    static NDI_RECEIVERS: { [key: string]: { frameRate: number; interval?: NodeJS.Timeout } } = {}
+    static NDI_RECEIVERS: { [key: string]: { frameRate: number; isReceiving?: boolean; shouldStop?: boolean; interval?: NodeJS.Timeout } } = {}
 
     private static isCreatingReceiver = false
     private static findSourcesInterval: NodeJS.Timeout | null = null
@@ -42,7 +42,8 @@ export class NdiReceiver {
             }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
 
-            await new Promise(resolveTimeout => setTimeout(resolveTimeout, 100))
+            // REMOVED: 100ms artificial delay that was adding latency
+            // await new Promise(resolveTimeout => setTimeout(resolveTimeout, 100))
 
             const receiverPromise = grandiose.receive(config)
             const timeoutPromise = new Promise((_, reject) => { setTimeout(() => reject(new Error("NDI receiver creation timeout")), timeoutMs) })
@@ -101,13 +102,16 @@ export class NdiReceiver {
                 return
             }
 
-            await new Promise(resolveTimeout => setTimeout(resolveTimeout, 200))
+            // REMOVED: 200ms artificial delay that was adding latency
+            // await new Promise(resolveTimeout => setTimeout(resolveTimeout, 200))
+            
             let rawFrame: any = null
 
             const maxRetries = 3
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                    rawFrame = await receiver.video(500)
+                    // Reduced timeout from 500ms to 50ms for lower latency
+                    rawFrame = await receiver.video(50)
                     break
                 } catch (videoError: any) {
                     const errorMessage = videoError.message || ''
@@ -116,7 +120,8 @@ export class NdiReceiver {
                     // Failure to do so make NDI feed sluggish
                     if (errorMessage.includes('Non-video data received')) {
                         if (attempt < maxRetries - 1) {
-                            await new Promise(resolve => setTimeout(resolve, 100))
+                            // REMOVED: 100ms delay between retries - just continue immediately
+                            // await new Promise(resolve => setTimeout(resolve, 100))
                             continue
                         }
                         // Don't delete receiver for non-video data
@@ -160,41 +165,96 @@ export class NdiReceiver {
 
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
         if (this.NDI_RECEIVERS[source.id]) return
-        this.NDI_RECEIVERS[source.id] = { frameRate: 0.1 }
+        
+        // Initialize receiver data with continuous reception control
+        this.NDI_RECEIVERS[source.id] = { 
+            frameRate: 0.1, // Keep for compatibility, but won't be used for timing
+            isReceiving: false,
+            shouldStop: false
+        }
 
-        // this.NDI_RECEIVERS[source.id] = { frameRate: frameRate || 0.1 }
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
             this.allActiveReceivers[source.id] = receiver = await this.createReceiverSerialized({ name: source.name, urlAddress: source.urlAddress || source.id }, false)
         }
 
-        const frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)
-        this.NDI_RECEIVERS[source.id].frameRate = Math.round(1000 / frameRate)
+        // Start continuous frame reception
+        this.startContinuousReception(source.id, receiver)
+    }
 
-        let gettingFrame = false
+    private static startContinuousReception(sourceId: string, receiver: any) {
+        const receiverData = this.NDI_RECEIVERS[sourceId]
+        if (!receiverData || receiverData.isReceiving) return
+
+        receiverData.isReceiving = true
         let consecutiveErrors = 0
         const maxConsecutiveErrors = 10
+        const baseErrorDelay = 5 // Much shorter base delay
+        const maxErrorDelay = 100 // Cap the maximum error delay
 
-        if (this.NDI_RECEIVERS[source.id].interval) clearInterval(this.NDI_RECEIVERS[source.id].interval)
-        this.NDI_RECEIVERS[source.id].interval = setInterval(async () => {
-            if (gettingFrame) return
-            gettingFrame = true
+        // console.log(`Starting continuous NDI reception for source: ${sourceId}`)
 
-            try {
-                // WIP app crashes if the ndi source stops sending data! (problem in grandiose package)
-                const rawFrame = await receiver.video(this.receiverTimeout)
-                this.sendBuffer(source.id, rawFrame)
-                consecutiveErrors = 0
-            } catch (err: any) {
-                consecutiveErrors++
-                if (consecutiveErrors >= maxConsecutiveErrors) {
-                    console.error(`NDI source ${source.id}: Too many consecutive errors, stopping receiver`)
-                    this.stopReceiversNDI({ id: source.id })
+        // Continuous reception loop - optimized for NDI-HX
+        const receiveFrames = async (): Promise<void> => {
+            while (receiverData && !receiverData.shouldStop) {
+                try {
+                    // Use much shorter timeout for lower latency
+                    const rawFrame = await receiver.video(50) // Reduced from 500ms to 50ms
+                    
+                    if (rawFrame) {
+                        this.sendBuffer(sourceId, rawFrame)
+                        consecutiveErrors = 0
+                        
+                        // IMPORTANT FIX FOR NDI-HX: Don't return, continue the loop
+                        // NDI-HX sources need continuous polling, not callback-based
+                        // Regular NDI sources will also work fine with this approach
+                        
+                        // For ultra-low latency, use setImmediate but don't exit loop
+                        await new Promise(resolve => setImmediate(resolve))
+                        continue // Continue the while loop instead of returning
+                    }
+                } catch (err: any) {
+                    const errorMessage = err.message || ''
+
+                    // Handle non-video data gracefully (common in NDI streams)
+                    if (errorMessage.includes('Non-video data received')) {
+                        // Don't count as error, just continue immediately
+                        consecutiveErrors = Math.max(0, consecutiveErrors - 1)
+                        await new Promise(resolve => setImmediate(resolve))
+                        continue
+                    }
+
+                    // Handle timeout errors differently for NDI-HX
+                    if (errorMessage.includes('No video data received')) {
+                        // For NDI-HX, this is normal between frames, don't count as severe error
+                        // Just add a tiny delay and continue
+                        await new Promise(resolve => setTimeout(resolve, 1))
+                        continue
+                    }
+
+                    // For other errors, implement exponential backoff
+                    consecutiveErrors++
+                    if (consecutiveErrors >= maxConsecutiveErrors) {
+                        console.error(`NDI source ${sourceId}: Too many consecutive errors (${consecutiveErrors}), stopping receiver`)
+                        this.stopReceiversNDI({ id: sourceId })
+                        return
+                    }
+
+                    // Exponential backoff for real errors, but keep it minimal
+                    const errorDelay = Math.min(baseErrorDelay * Math.pow(1.5, consecutiveErrors), maxErrorDelay)
+                    // console.warn(`NDI source ${sourceId}: Error ${consecutiveErrors}/${maxConsecutiveErrors}, retrying in ${errorDelay}ms`)
+                    
+                    await new Promise(resolve => setTimeout(resolve, errorDelay))
+                    continue
                 }
             }
+        }
 
-            gettingFrame = false
-        }, this.NDI_RECEIVERS[source.id].frameRate)
+        // Start the continuous reception
+        receiveFrames().catch(err => {
+            console.error(`Fatal error in continuous NDI reception for ${sourceId}:`, err)
+            this.stopReceiversNDI({ id: sourceId })
+        })
     }
 
     static stopReceiversNDI(data: { id: string; outputId?: string } | null = null) {
@@ -203,16 +263,33 @@ export class NdiReceiver {
             else this.sendToOutputs = [] // error
 
             if (!this.sendToOutputs.length) {
-                clearInterval(this.NDI_RECEIVERS[data.id].interval)
-                // delete this.allActiveReceivers[data.id]
-                delete this.NDI_RECEIVERS[data.id]
+                // Signal continuous reception to stop gracefully
+                if (this.NDI_RECEIVERS[data.id]) {
+                    this.NDI_RECEIVERS[data.id].shouldStop = true
+                    console.log(`Stopping continuous NDI reception for source: ${data.id}`)
+                }
+                
+                // Clean up receiver data after a brief delay to allow graceful shutdown
+                setTimeout(() => {
+                    delete this.NDI_RECEIVERS[data.id]
+                    // Optionally clean up the actual receiver
+                    // delete this.allActiveReceivers[data.id]
+                }, 100)
             }
             return
         }
 
-        Object.values(this.NDI_RECEIVERS).forEach(({ interval }) => {
-            clearInterval(interval)
+        // Stop all receivers
+        console.log(`Stopping all NDI receivers`)
+        Object.keys(this.NDI_RECEIVERS).forEach(sourceId => {
+            if (this.NDI_RECEIVERS[sourceId]) {
+                this.NDI_RECEIVERS[sourceId].shouldStop = true
+            }
         })
-        this.NDI_RECEIVERS = {}
+        
+        // Clean up all receiver data after brief delay
+        setTimeout(() => {
+            this.NDI_RECEIVERS = {}
+        }, 100)
     }
 }
