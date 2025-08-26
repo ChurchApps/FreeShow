@@ -39,6 +39,7 @@ parts:
         plugin: dump
         stage-packages:
             - libasound2t64
+            - libnode109
 apps:
     freeshow:
         command: command.sh
