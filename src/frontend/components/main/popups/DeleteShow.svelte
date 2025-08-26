@@ -1,9 +1,8 @@
 <script lang="ts">
     import { activePopup, selected, shows } from "../../../stores"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     function deleteSelected() {
         let shows = $selected.data
@@ -20,16 +19,14 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p style="font-weight: bold;"><T id="popup.delete_show_confirmation" /> ({$selected.data.length}):</p>
-<ul style="list-style-position: inside;">
+<p style="font-weight: bold;"><T id="popup.delete_show_confirmation" />:</p>
+
+<ul style="list-style-position: inside;margin-bottom: 20px;">
     {#each $selected.data as show}
         <li>{$shows[show.id]?.name}</li>
     {/each}
 </ul>
 
-<br />
-
-<Button style="height: auto;margin-top: 10px;" on:click={deleteSelected} red center>
-    <Icon id="delete" right />
+<MaterialButton variant="contained" icon="delete" info={$selected.data.length.toString()} on:click={deleteSelected} white>
     <T id="actions.delete" />
-</Button>
+</MaterialButton>

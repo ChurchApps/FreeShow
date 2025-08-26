@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { activePopup, dictionary, popupData } from "../../../stores"
-    import T from "../../helpers/T.svelte"
+    import { activePopup, popupData } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import { translateText } from "../../../utils/language"
+    import HRule from "../../input/HRule.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     // https://blog.depositphotos.com/common-aspect-ratios.html
     const ratios = [
@@ -29,12 +30,10 @@
     let active = $popupData.active || { width: 16, height: 9 }
 
     const alignOptions = [
-        { id: "center", name: "$:edit.align_center:$" },
-        { id: "start", name: "$:edit.align_start:$" },
-        { id: "end", name: "$:edit.align_end:$" }
+        { value: "center", label: translateText("edit.align_center") },
+        { value: "start", label: translateText("edit.align_start") },
+        { value: "end", label: translateText("edit.align_end") }
     ]
-
-    const isChecked = (e: any) => e.target.checked
 
     function setAspectRatio(value: any) {
         if ($popupData.trigger) {
@@ -52,76 +51,58 @@
 
     // get any output that uses this style and preview ratio based on its resolution ??
     // $: outputResolution =
+
+    let showMore = false
 </script>
+
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
 <div class="grid">
     {#each ratios as [width, height]}
         {@const isActive = !active.outputResolutionAsRatio && active.width === width && active.height === height}
-        <Button disabled={active.outputResolutionAsRatio} outline={isActive} active={isActive} on:click={() => setAspectRatio({ ...active, width, height })} bold={false}>
-            <!-- tallest ratio for all to get center align -->
-            <!-- <div style="aspect-ratio: 1/1;padding: 0;display: flex;align-items: center;"> -->
+        <MaterialButton disabled={active.outputResolutionAsRatio} showOutline={isActive} {isActive} on:click={() => setAspectRatio({ ...active, width, height })}>
             <div class="box" style="padding: 0;aspect-ratio: {width}/{height};">
                 <p>{width}:{height}</p>
             </div>
-            <!-- </div> -->
-        </Button>
+        </MaterialButton>
     {/each}
 </div>
 
-<CombinedInput>
-    <p><T id="settings.output_resolution_ratio" /></p>
-    <div class="alignRight">
-        <Checkbox checked={active.outputResolutionAsRatio === true} on:change={(e) => setAspectRatio({ ...active, outputResolutionAsRatio: isChecked(e) })} />
-    </div>
-</CombinedInput>
-<CombinedInput>
-    <p><T id="edit.position" /></p>
-    <Dropdown disabled={active.outputResolutionAsRatio} options={alignOptions} value={alignOptions.find((a) => a.id === (active.alignPosition || "center"))?.name || ""} on:click={(e) => setAspectRatio({ ...active, alignPosition: e.detail.id })} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="actions.custom_key" /></p>
-    <div class="inputs">
-        <NumberInput
-            style="flex: 1;"
-            disabled={active.outputResolutionAsRatio}
-            title={$dictionary.screen?.width}
-            value={active.width || 1920}
-            min={1}
-            max={100}
-            decimals={2}
-            fixed={2}
-            buttons={false}
-            on:change={(e) => setAspectRatio({ width: Number(e.detail), height: active.height || 9 })}
-        />
-        <NumberInput
-            style="flex: 1;"
-            disabled={active.outputResolutionAsRatio}
-            title={$dictionary.screen?.height}
-            value={active.height || 1080}
-            min={1}
-            max={100}
-            decimals={2}
-            fixed={2}
-            buttons={false}
-            on:change={(e) => setAspectRatio({ height: Number(e.detail), width: active.width || 16 })}
-        />
-    </div>
-</CombinedInput>
-
-{#if !active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height)}
-    <div class="preview">
-        <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={triggerClickOnEnterSpace}>
-            <p>{active.width}:{active.height}</p>
+{#if showMore || (!active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height))}
+    <div style="display: flex;justify-content: space-between;margin-bottom: 10px;">
+        <div style="width: 200px;" data-title={translateText("actions.custom_key")}>
+            <InputRow>
+                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.width" value={active.width || 16} min={1} max={100} on:change={(e) => setAspectRatio({ width: e.detail, height: active.height || 9 })} />
+                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.height" value={active.height || 9} min={1} max={100} on:change={(e) => setAspectRatio({ height: e.detail, width: active.width || 16 })} />
+            </InputRow>
         </div>
+
+        {#if !active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height)}
+            <div class="preview">
+                <div class="box" role="button" tabindex="0" style="padding: 0;aspect-ratio: {active.width}/{active.height};" on:click={() => activePopup.set(null)} on:keydown={triggerClickOnEnterSpace}>
+                    <p>{active.width}:{active.height}</p>
+                </div>
+            </div>
+        {/if}
+
+        <MaterialDropdown
+            style="width: 200px;"
+            label="edit.position"
+            disabled={active.outputResolutionAsRatio}
+            options={alignOptions}
+            value={active.alignPosition || "center"}
+            on:change={(e) => setAspectRatio({ ...active, alignPosition: e.detail })}
+        />
     </div>
 {/if}
 
-<CombinedInput>
-    <p><T id="settings.font_size_ratio" /></p>
-    <div class="inputs">
-        <NumberInput style="flex: 1;" value={active.fontSizeRatio ?? 100} min={10} max={500} step={10} buttons={false} on:change={(e) => setAspectRatio({ ...active, fontSizeRatio: Number(e.detail) })} />
-    </div>
-</CombinedInput>
+<MaterialToggleSwitch label="settings.output_resolution_ratio" checked={active.outputResolutionAsRatio} defaultValue={false} on:change={(e) => setAspectRatio({ ...active, outputResolutionAsRatio: e.detail })} />
+
+{#if showMore}
+    <HRule />
+
+    <MaterialNumberInput label="settings.font_size_ratio" value={active.fontSizeRatio ?? 100} min={10} max={500} step={10} on:change={(e) => setAspectRatio({ ...active, fontSizeRatio: e.detail })} />
+{/if}
 
 <style>
     .grid {
@@ -138,12 +119,15 @@
         gap: 5px;
         justify-content: center;
     }
+    .grid :global(button.isActive) {
+        background-color: var(--primary-darker) !important;
+    }
 
     .box {
         width: 100px;
         /* max-height: 500px; */
         background-color: black;
-        border-radius: 2px;
+        border-radius: 3px;
     }
 
     .box p,
@@ -162,8 +146,7 @@
 
     .preview {
         position: relative;
-        width: 100%;
-        margin-top: 10px;
+        flex: 1;
 
         display: flex;
         justify-content: center;

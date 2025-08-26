@@ -23,7 +23,7 @@
     export let addNew: string | null = null
 
     const dispatch = createEventDispatcher()
-    let open = false
+    export let open = false
     let dropdownEl: HTMLDivElement
     // let triggerEl: HTMLDivElement;
     let highlightedIndex = -1
@@ -33,7 +33,7 @@
         addNewTextbox = false
 
         open = typeof force === "boolean" && value ? force : !open
-        if (open) calculateMaxHeight()
+        if (open) setTimeout(calculateMaxHeight)
 
         if (open && value) highlightedIndex = options.findIndex((o) => o.value === value)
         else highlightedIndex = -1
@@ -274,7 +274,7 @@
     }
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags bind:this={dropdownEl}>
     <div class="background" />
 
     <div

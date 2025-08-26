@@ -251,7 +251,8 @@
     }
 
     .info {
-        opacity: 0.8;
+        opacity: 0.7;
+        font-size: 0.9em;
         margin-inline-start: 2px;
         font-weight: normal;
     }

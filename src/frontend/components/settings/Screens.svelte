@@ -3,18 +3,18 @@
     import { OUTPUT } from "../../../types/Channels"
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
-    import { activePopup, alertMessage, currentOutputSettings, dictionary, outputs, styles } from "../../stores"
+    import { activePopup, alertMessage, currentOutputSettings, outputs, styles } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
-    import { toggleOutput } from "../helpers/output"
+    import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
-    import Checkbox from "../inputs/Checkbox.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
+    import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import NumberInput from "../inputs/NumberInput.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
+    import MaterialRadialPicker from "../inputs/MaterialRadialPicker.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
 
     export let activateOutput = false
 
@@ -131,14 +131,14 @@
         })
 
         setTimeout(() => {
-            toggleOutput(screenId)
+            toggleOutputs([screenId], { state: true })
             // send(OUTPUT, ["TOGGLE_KIOSK"], { id: screenId, enabled: true })
             // setTimeout(() => {
             send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...currentScreen })
             // }, 100)
 
             if (keyOutput) {
-                toggleOutput(keyOutput)
+                toggleOutputs([keyOutput], { state: true })
                 send(OUTPUT, ["UPDATE_BOUNDS"], { id: keyOutput, ...currentScreen })
             }
         }, 100)
@@ -163,8 +163,6 @@
     function identifyScreens() {
         send(OUTPUT, ["IDENTIFY_SCREENS"], screens)
     }
-
-    const isChecked = (e: any) => e.target.checked
 
     let editCropping = false
     const previewSize = 0.08
@@ -210,6 +208,8 @@
         if (blending.centered) return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgb(0, 0, 0) ${center - blending.left}%, rgba(0, 0, 0, ${opacity}) ${center}%, rgb(0, 0, 0) ${center + Number(blending.right)}%);`
         return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgba(0, 0, 0, ${opacity}) 0%, rgb(0, 0, 0) ${blending.left}%, rgb(0, 0, 0) ${100 - blending.right}%, rgba(0, 0, 0, ${opacity}) 100%);`
     }
+
+    let showMore = false
 </script>
 
 {#if editCropping}
@@ -217,22 +217,10 @@
 
     <p class="tip"><T id="screen.cropping_tip" /></p>
 
-    <CombinedInput>
-        <p><T id="screen.top" /></p>
-        <NumberInput value={cropping.top || 0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="screen.right" /></p>
-        <NumberInput value={cropping.right || 0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="screen.bottom" /></p>
-        <NumberInput value={cropping.bottom || 0} max={currentScreen.bounds?.height * 0.9 - (cropping.top || 0)} on:change={(e) => updateCropping(e.detail, "bottom")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="screen.left" /></p>
-        <NumberInput value={cropping.left || 0} max={currentScreen.bounds?.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
-    </CombinedInput>
+    <MaterialNumberInput label="screen.top" value={cropping.top || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
+    <MaterialNumberInput label="screen.right" value={cropping.right || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
+    <MaterialNumberInput label="screen.bottom" value={cropping.bottom || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.top || 0)} on:change={(e) => updateCropping(e.detail, "bottom")} />
+    <MaterialNumberInput label="screen.left" value={cropping.left || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
 
     <!-- preview -->
     <div class="preview" style="margin-top: 20px;">
@@ -254,33 +242,14 @@
 
     <p class="tip"><T id="screen.edge_blending_tip" /></p>
 
-    <CombinedInput>
-        <p><T id="screen.left" /></p>
-        <NumberInput value={blending.left || 0} max={500} on:change={(e) => updateBlending(e.detail, "left")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="screen.right" /></p>
-        <NumberInput value={blending.right || 0} max={100} on:change={(e) => updateBlending(e.detail, "right")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.rotation" /></p>
-        <NumberInput value={blending.rotate ?? 90} max={360} on:change={(e) => updateBlending(e.detail, "rotate")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.opacity" /></p>
-        <NumberInput value={blending.opacity ?? 50} max={100} step={5} on:change={(e) => updateBlending(e.detail, "opacity")} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="screen.centered" /></p>
-        <div class="alignRight">
-            <Checkbox checked={blending.centered} on:change={(e) => updateBlending(isChecked(e), "centered")} />
-        </div>
-    </CombinedInput>
-    {#if blending.centered}
-        <CombinedInput>
-            <p><T id="edit.offset" /></p>
-            <NumberInput value={blending.offset} min={-50} max={50} on:change={(e) => updateBlending(e.detail, "offset")} />
-        </CombinedInput>
+    <MaterialNumberInput label="screen.left" value={blending.left || 0} defaultValue={0} max={500} on:change={(e) => updateBlending(e.detail, "left")} />
+    <MaterialNumberInput label="screen.right" value={blending.right || 0} defaultValue={0} max={100} on:change={(e) => updateBlending(e.detail, "right")} />
+    <MaterialRadialPicker label="edit.rotation" disabled={!blending.left && !blending.right} value={blending.rotate ?? 90} on:change={(e) => updateBlending(e.detail, "rotate")} />
+    <MaterialNumberInput label="edit.opacity" disabled={!blending.left && !blending.right} value={blending.opacity ?? 50} defaultValue={50} max={100} step={5} on:change={(e) => updateBlending(e.detail, "opacity")} />
+
+    <MaterialToggleSwitch label="screen.centered" disabled={!blending.left && !blending.right} checked={blending.centered} defaultValue={false} on:change={(e) => updateBlending(e.detail, "centered")} />
+    {#if (blending.left || blending.right) && blending.centered}
+        <MaterialNumberInput label="edit.offset" value={blending.offset || 0} defaultValue={0} min={-50} max={50} on:change={(e) => updateBlending(e.detail, "offset")} />
     {/if}
 
     <!-- preview -->
@@ -292,34 +261,38 @@
         </div>
     </div>
 {:else}
-    <p class="tip"><T id="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" /></p>
-    <Button disabled={currentScreen.boundsLocked} on:click={() => activePopup.set("change_output_values")} title={activateOutput ? $dictionary.popup?.change_output_values : $dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
-        <Icon id="options" right />
-        {#if activateOutput}
-            <p><T id="settings.manual_input_hint" /></p>
-        {:else}
-            <p><T id="popup.change_output_values" /></p>
-        {/if}
-    </Button>
-
     {#if !activateOutput}
-        <div style="display: flex;">
-            <Button on:click={() => (editCropping = true)} style="flex: 1;" dark center>
-                <Icon id="resize" right />
-                <p><T id="settings.cropping" /></p>
-            </Button>
+        <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+    {/if}
 
-            <Button on:click={() => (editEdgeBlending = true)} style="flex: 1;" dark center>
-                <Icon id="gradient" right />
+    <p class="tip"><T id="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" /></p>
+    <MaterialButton
+        variant="outlined"
+        style="width: 100%;"
+        icon="edit"
+        disabled={currentScreen.boundsLocked}
+        on:click={() => activePopup.set("change_output_values")}
+        title={activateOutput ? "popup.change_output_values" : "settings.manual_input_hint"}
+    >
+        <p><T id={activateOutput ? "settings.manual_input_hint" : "popup.change_output_values"} /></p>
+    </MaterialButton>
+
+    {#if !activateOutput && showMore}
+        <InputRow>
+            <MaterialButton variant="outlined" style="flex: 1;" icon="resize" on:click={() => (editCropping = true)}>
+                <p><T id="settings.cropping" /></p>
+            </MaterialButton>
+            <MaterialButton variant="outlined" style="flex: 1;" icon="gradient" on:click={() => (editEdgeBlending = true)}>
                 <p><T id="settings.edge_blending" /></p>
-            </Button>
-        </div>
+            </MaterialButton>
+        </InputRow>
     {/if}
 
     <br />
 
     <div class="content">
         {#if screens.length}
+            <!-- + (!activateOutput && showMore ? -50 : 80) -->
             <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
                 <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
                 <div
@@ -332,11 +305,9 @@
                     <!-- Current screen position -->
                     <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
                     {#if !activateOutput}
-                        <Button class="lock" on:click={lockScreen} red={currentScreen.boundsLocked} center>
-                            <div style="display: contents;" title={currentScreen.boundsLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock}>
-                                <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} white={currentScreen.boundsLocked} />
-                            </div>
-                        </Button>
+                        <MaterialButton class="lock" style={currentScreen.boundsLocked ? "background-color: rgb(255 0 0 / 0.25) !important;" : ""} on:click={lockScreen} title="preview.{currentScreen.boundsLocked ? '_unlock' : '_lock'}">
+                            <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} white={currentScreen.boundsLocked} />
+                        </MaterialButton>
                     {/if}
                 </div>
                 <!-- {/if} -->
@@ -368,10 +339,9 @@
 
     {#if !currentScreen.boundsLocked}
         <div class="bottom">
-            <Button on:click={identifyScreens} title={$dictionary.settings?.identify_screens} style="padding: 12px;" dark center>
+            <MaterialButton variant="outlined" on:click={identifyScreens} title="settings.identify_screens" style="padding: 12px;">
                 <Icon id="search" size={1.4} white />
-                <!-- <p><T id="settings.identify_screens" /></p> -->
-            </Button>
+            </MaterialButton>
         </div>
     {/if}
 {/if}
@@ -412,8 +382,8 @@
     .screens :global(.lock) {
         zoom: calc(1 / var(--zoom));
         position: absolute;
-        top: 0;
-        inset-inline-end: 0;
+        top: 2px;
+        inset-inline-end: 2px;
 
         /* pointer-events: initial; */
         padding: 5px !important;

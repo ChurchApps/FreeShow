@@ -2,15 +2,13 @@
     import { onMount } from "svelte"
     import type { LayoutRef } from "../../../../types/Show"
     import { activePopup, activeProject, activeShow, popupData, projects, showsCache } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { joinTime, secondsToTime } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import { getLayoutRef } from "../../helpers/show"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     let type = $popupData.type || "show"
 
@@ -29,7 +27,7 @@
 
     function updateValue(e: any) {
         value = e?.detail ?? e
-        if (value) value = Number(value)
+        if (value) value = value
 
         if (type === "folder") {
             projects.update((a) => {
@@ -86,38 +84,24 @@
 </script>
 
 {#if allSlides}
+    <MaterialNumberInput label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
+
+    <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
+    {#if type === "folder" ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
+        <MaterialButton variant="outlined" icon="reset" on:click={() => updateValue(undefined)}>
+            <T id="actions.reset" />
+        </MaterialButton>
+    {:else}
+        <MaterialButton variant="outlined" icon="clock" disabled={allTime === 0} info={getTime(newTime)} on:click={() => updateValue(allTime)}>
+            <T id="actions.to_all" />
+        </MaterialButton>
+    {/if}
+
     {#if totalTime}
-        <p style="text-align: center;opacity: 0.7;font-size: 0.9em;margin-bottom: 10px;">
+        <p style="text-align: center;opacity: 0.7;font-size: 0.9em;margin-top: 20px;">
             <T id="transition.duration" />: {getTime(totalTime)}
         </p>
     {/if}
-
-    <CombinedInput>
-        <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} max={3600} fixed={value?.toString()?.includes(".") ? 1 : 0} decimals={1} />
-    </CombinedInput>
-
-    <CombinedInput>
-        <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
-        {#if type === "folder" ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
-            <Button style="flex: 1;" on:click={() => updateValue(undefined)} center dark>
-                <Icon id="reset" right />
-                <T id="actions.reset" />
-            </Button>
-        {:else}
-            <Button style="flex: 1;" disabled={allTime === 0} on:click={() => updateValue(allTime)} dark center>
-                <Icon id="clock" right />
-                <p style="flex: initial;min-width: auto;width: auto;padding: 0;">
-                    <T id="actions.to_all" />
-
-                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-inline-start: 6px;">
-                        {#if newTime}({getTime(newTime)}){/if}
-                    </span>
-                </p>
-            </Button>
-        {/if}
-    </CombinedInput>
 {:else}
-    <CombinedInput>
-        <NumberInput {value} on:change={updateValue} max={3600} fixed={value.toString().includes(".") ? 1 : 0} decimals={1} />
-    </CombinedInput>
+    <MaterialNumberInput label="timer.seconds" {value} max={3600} on:change={updateValue} />
 {/if}

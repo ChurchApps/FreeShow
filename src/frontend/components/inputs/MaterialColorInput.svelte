@@ -91,7 +91,7 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<div id={pickerId} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};" on:keydown={handleKey}>
+<div id={pickerId} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};{$$props.style || ''}" on:keydown={handleKey}>
     <div class="background" on:click={togglePicker} />
 
     <div class="color-display" style="background:{value || 'transparent'};" on:click={togglePicker}></div>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePopup, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
 
@@ -14,23 +14,19 @@
 </script>
 
 {#if changes && changes.length}
-    <div class="changes">
+    <div class="changes" style="margin-bottom: 20px;">
         {#each changes as change}
             <p>
-                <Icon id={change.action} size={1.5} white={change.action.includes("failed")} right />
+                <Icon id={change.action} size={1.3} white={change.action.includes("failed")} />
                 <span>{change.name}</span>
                 {#if change.count}
-                    <span class="count">({change.count})</span>
+                    <span class="count">{change.count}</span>
                 {/if}
             </p>
         {/each}
     </div>
 
-    <br />
-
-    <Button on:click={() => activePopup.set(null)} center>
-        <Icon id="check" />
-    </Button>
+    <MaterialButton variant="outlined" icon="check" on:click={() => activePopup.set(null)} />
 {:else}
     <div class="loading">
         <Center>
@@ -61,16 +57,26 @@
     .changes {
         display: flex;
         flex-direction: column;
+
+        background-color: var(--primary-darker);
+
+        border-radius: 4px;
+        overflow: hidden;
     }
 
     .changes p {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        padding: 6px 10px;
+    }
+    .changes p:nth-child(odd) {
+        background-color: var(--primary-darkest);
     }
 
     .count {
-        opacity: 0.7;
-        font-size: 0.9em;
+        opacity: 0.5;
+        font-size: 0.7em;
+        padding-left: 5px;
     }
 </style>

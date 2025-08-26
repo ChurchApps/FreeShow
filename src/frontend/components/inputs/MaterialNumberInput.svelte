@@ -1,18 +1,21 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import { translateText } from "../../utils/language"
+    import MaterialButton from "./MaterialButton.svelte"
+    import Icon from "../helpers/Icon.svelte"
 
     export let value: number = 0
+    export let defaultValue: number | null = null
     export let label: string
     export let id = ""
     export let placeholder = ""
     export let center = false
     export let disabled = false
     export let autofocus = false
+    export let currentProgress: number | null = null
     export let step = 1
     export let min: number | null = 0
     export let max: number | null = null // 1000
-    // export let defaultValue: number | null = null // reset to e.g. 0 when clicked "x" (if this value is set)
 
     // a string might be passed in
     $: numberValue = Number(value)
@@ -22,6 +25,8 @@
     let inputElem: HTMLInputElement
 
     function updateValue(newVal: number) {
+        if (disabled) return
+
         if (min !== null) newVal = Math.max(min, newVal)
         if (max !== null) newVal = Math.min(max, newVal)
         numberValue = newVal
@@ -77,6 +82,22 @@
             inputElem.addEventListener("wheel", handleWheel, { passive: false })
         }
     })
+
+    // RESET
+
+    let resetFromValue: number | null = null
+    function reset() {
+        resetFromValue = value
+        dispatch("change", defaultValue)
+        setTimeout(() => {
+            resetFromValue = null
+        }, 3000)
+    }
+
+    function undoReset() {
+        dispatch("change", resetFromValue)
+        resetFromValue = null
+    }
 </script>
 
 <div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
@@ -86,12 +107,12 @@
         <input bind:this={inputElem} bind:value={numberValue} type="number" {id} {placeholder} {disabled} {autofocus} {step} {min} {max} class="input edit" class:noValue={!numberValue} on:keydown={handleKeyDown} on:input={handleInput} />
 
         <div class="buttons">
-            <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={max !== null && numberValue >= max}>
+            <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (max !== null && numberValue >= max)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 14l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </button>
-            <button type="button" class="dec" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={min !== null && numberValue <= min}>
+            <button type="button" class="dec" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (min !== null && numberValue <= min)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -101,7 +122,21 @@
 
     <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}>{translateText(label)}</label>
 
-    <span class="underline" />
+    <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
+
+    {#if defaultValue !== null}
+        <div class="remove">
+            {#if value !== defaultValue}
+                <MaterialButton on:click={reset} title="actions.reset" white>
+                    <Icon id="reset" white />
+                </MaterialButton>
+            {:else if resetFromValue !== null}
+                <MaterialButton on:click={undoReset} title="actions.undo" white>
+                    <Icon id="undo" white />
+                </MaterialButton>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -267,7 +302,19 @@
         opacity: 0.3;
     }
 
-    .textfield:not(:has(.input:focus)) .input:not(:disabled):hover {
+    .textfield:not(:has(.input:focus)):not(:has(.remove:hover)) .input:not(:disabled):hover {
         background-color: var(--hover);
+    }
+
+    .remove {
+        position: absolute;
+        top: 50%;
+        right: 28px;
+        transform: translateY(-50%);
+
+        z-index: 2;
+    }
+    .remove :global(button) {
+        padding: 0.75rem;
     }
 </style>

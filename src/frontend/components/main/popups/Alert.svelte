@@ -2,10 +2,10 @@
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let msg = ""
     $: msg = $alertMessage.toString()
@@ -40,12 +40,12 @@
 <p on:click={click}>
     {#key msg}
         {#if msg.includes("captions#")}
-            <T id="captions.info" />
+            {translateText("captions.info")}
             <br />
             <br />
             <Link url={msg.slice(msg.indexOf("#") + 1)}>{msg.slice(msg.indexOf("#") + 1)}</Link>
         {:else if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
-            <T id={msg} />
+            {translateText(msg)}
         {:else}
             {@html msg}
         {/if}
@@ -54,9 +54,9 @@
 
 <br />
 
-<Button on:click={close} center dark>
-    <Icon id="check" size={1.2} />
-</Button>
+<MaterialButton variant="outlined" on:click={close}>
+    <Icon id="check" size={1.2} white />
+</MaterialButton>
 
 <style>
     p {

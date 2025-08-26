@@ -112,7 +112,8 @@
                                         style="justify-content: center;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em;{$fullColors
                                             ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};`
                                             : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
-                                        on:click={() => {
+                                        on:click={(e) => {
+                                            if (e.detail.ctrl) return
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })
                                         }}

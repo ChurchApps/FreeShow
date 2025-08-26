@@ -16,7 +16,7 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let active: string | null
+    export let active: string | null = null
 
     export let id: string
     export let show: any // ShowList | ShowRef

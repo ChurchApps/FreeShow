@@ -7,7 +7,7 @@
     let open = false
 </script>
 
-<div class="row">
+<div class="row" style={$$props.style || null}>
     <slot />
 
     {#if arrow}

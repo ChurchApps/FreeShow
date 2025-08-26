@@ -6,7 +6,7 @@
     import { dictionary } from "../../stores"
 
     export let value: string
-    export let defaultValue: string = ""
+    export let defaultValue: string | null = null
     export let label: string
 
     export let id = ""
@@ -36,18 +36,20 @@
 
     // RESET
 
-    let resetFromValue = ""
+    let resetFromValue: string | null = null
     function reset() {
         resetFromValue = value
         dispatch("change", defaultValue)
+        dispatch("input", defaultValue)
         setTimeout(() => {
-            resetFromValue = ""
+            resetFromValue = null
         }, 3000)
     }
 
     function undoReset() {
         dispatch("change", resetFromValue)
-        resetFromValue = ""
+        dispatch("input", resetFromValue)
+        resetFromValue = null
     }
 </script>
 
@@ -60,13 +62,13 @@
 
     <span class="underline" />
 
-    {#if defaultValue}
+    {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>
                     <Icon id="reset" white />
                 </MaterialButton>
-            {:else if resetFromValue}
+            {:else if resetFromValue !== null}
                 <MaterialButton on:click={undoReset} title="actions.undo" white>
                     <Icon id="undo" white />
                 </MaterialButton>

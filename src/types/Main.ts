@@ -340,7 +340,6 @@ export type Popups =
     | "next_timer"
     | "display_duration"
     | "manage_tags"
-    | "advanced_settings"
     | "about"
     | "shortcuts"
     | "unsaved"
