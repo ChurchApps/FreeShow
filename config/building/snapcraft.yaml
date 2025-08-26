@@ -1,5 +1,5 @@
 name: freeshow
-version: 1.4.0
+version: 1.4.9
 title: FreeShow
 summary: FreeShow
 description: Show song lyrics and more for free!
@@ -7,6 +7,9 @@ platforms:
     amd64:
         build-on: amd64
         build-for: amd64
+    arm64:
+        build-on: arm64
+        build-for: arm64
 base: core24
 grade: stable
 confinement: strict
@@ -21,7 +24,7 @@ plugs:
         default-provider: gtk-common-themes
     icon-themes:
         interface: content
-        target: $SNAP/data-dir/icons
+        target: $SNAP/data-dir/iconss
         default-provider: gtk-common-themes
     sound-themes:
         interface: content
