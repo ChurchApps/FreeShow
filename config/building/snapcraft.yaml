@@ -24,7 +24,7 @@ plugs:
         default-provider: gtk-common-themes
     icon-themes:
         interface: content
-        target: $SNAP/data-dir/iconss
+        target: $SNAP/data-dir/icons
         default-provider: gtk-common-themes
     sound-themes:
         interface: content
