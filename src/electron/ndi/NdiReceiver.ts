@@ -61,6 +61,18 @@ export class NdiReceiver {
             const receiver = this.allActiveReceivers[source.id]
             if (!receiver?.video) { delete this.allActiveReceivers[source.id]; return }
 
+            // For NDI-HX sources, start continuous reception for thumbnail generation
+            if (!this.NDI_RECEIVERS[source.id]) {
+                this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: false, shouldStop: false }
+                
+                const receiverData = this.NDI_RECEIVERS[source.id]
+                if (!receiverData.isReceiving) {
+                    receiverData.isReceiving = true
+                    // Start lightweight frame loop for thumbnails only
+                    this.thumbnailLoop(source.id, receiver, receiverData)
+                }
+            }
+
             let rawFrame: any = null
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
@@ -151,6 +163,33 @@ export class NdiReceiver {
         }
     }
 
+    private static async thumbnailLoop(sourceId: string, receiver: any, receiverData: any) {
+        let consecutiveErrors = 0
+        
+        while (receiverData && !receiverData.shouldStop) {
+            try {
+                const rawFrame = await receiver.video(50)
+                if (rawFrame) {
+                    this.sendBuffer(sourceId, rawFrame)
+                    consecutiveErrors = 0
+                    // Slower rate for thumbnails - every 500ms
+                    await new Promise(resolve => setTimeout(resolve, 500))
+                    continue
+                }
+            } catch (err: any) {
+                const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
+                consecutiveErrors = newErrorCount
+                
+                if (!shouldContinue) {
+                    delete this.NDI_RECEIVERS[sourceId]
+                    return
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, delay))
+            }
+        }
+    }
+
     static sendBuffer(id: string, frame: any) {
         if (!frame) return
         const msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
@@ -161,18 +200,22 @@ export class NdiReceiver {
     static async captureStreamNDI({ source, outputId }: { source: { name: string; urlAddress: string; id: string }; outputId: string }) {
         if (this.ndiDisabled) return
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
-        if (this.NDI_RECEIVERS[source.id]) return
-        
-        this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: false, shouldStop: false }
         
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
             receiver = this.allActiveReceivers[source.id] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id })
         }
 
+        // If thumbnail loop is running, stop it and upgrade to full capture
+        if (this.NDI_RECEIVERS[source.id]) {
+            this.NDI_RECEIVERS[source.id].shouldStop = true
+            // Brief delay to let thumbnail loop exit cleanly
+            await new Promise(resolve => setTimeout(resolve, 100))
+        }
+
+        // Start full capture loop
+        this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false }
         const receiverData = this.NDI_RECEIVERS[source.id]
-        if (receiverData.isReceiving) return
-        receiverData.isReceiving = true
 
         this.frameLoop(source.id, receiver, receiverData).catch(err => {
             console.error(`NDI reception error for ${source.id}:`, err)
