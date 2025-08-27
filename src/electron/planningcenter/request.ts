@@ -291,8 +291,6 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
         sections = getOrderedSections(sections, sequence)
     }
 
-    console.debug("Song sequence:", sequence)
-
     const show = getShow(songData, song, sections)
     const showId = `pcosong_${songData.id}`
 
