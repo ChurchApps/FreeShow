@@ -100,7 +100,7 @@
     }
 </script>
 
-<div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
+<div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" style={$$props.style || null}>
     <div class="background" />
 
     <div class="input-wrapper">
@@ -120,7 +120,7 @@
         </div>
     </div>
 
-    <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}>{translateText(label)}</label>
+    <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}>{@html translateText(label)}</label>
 
     <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
 

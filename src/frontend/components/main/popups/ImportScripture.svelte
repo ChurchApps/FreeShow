@@ -3,19 +3,17 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { BibleCategories } from "../../../../types/Tabs"
     import { sendMain } from "../../../IPC/main"
-    import { dictionary, labelsDisabled, language, scriptures } from "../../../stores"
+    import { labelsDisabled, language, scriptures } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
     import { customBibleData } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
 
@@ -111,7 +109,7 @@
     $: searchedBibles = sortedBibles
     $: searchedRecommendedBibles = recommended
     function search(e: any) {
-        let value = e.target.value.toLowerCase()
+        let value = e.detail.toLowerCase()
 
         if (value.length < 2) {
             searchedBibles = sortedBibles
@@ -152,41 +150,41 @@
     {#if error}
         <T id="error.bible_api" />
     {:else}
-        <div style="display: flex;justify-content: space-between;">
+        <div style="display: flex;align-items: center;justify-content: space-between;">
             <h2>
                 <T id="scripture.bibles" />
             </h2>
 
             {#if searchActive}
-                <TextInput id="scriptureApiSearchInput" style="width: 50%;border-bottom: 2px solid var(--secondary);" placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
+                <MaterialTextInput label="main.search" id="scriptureApiSearchInput" style="width: 50%;" value="" on:input={search} autofocus />
             {:else}
-                <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} bold={false}>
-                    <Icon id="search" size={1.4} white right={!$labelsDisabled} />
+                <MaterialButton class="search" style="border-bottom: 2px solid var(--secondary);font-weight: normal;padding: 11px 15px;" on:click={() => (searchActive = true)}>
+                    <Icon id="search" size={1.4} white />
                     {#if !$labelsDisabled}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
-                </Button>
+                </MaterialButton>
             {/if}
         </div>
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <Button bold={false} on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                        <Icon id="scripture_alt" right />{bible.nameLocal || bible.name}
+                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
+                        {bible.nameLocal || bible.name}
                         {#if bible.description && bible.description.toLowerCase() !== "common" && !(bible.nameLocal || bible.name).includes(bible.description)}
-                            <span class="description" data-title={bible.description}>({bible.description})</span>
+                            <span class="description" data-title={bible.description}>{bible.description}</span>
                         {/if}
-                    </Button>
+                    </MaterialButton>
                 {/each}
                 <hr />
             {/if}
             {#if sortedBibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                            <Icon id="scripture_alt" right />{bible.name}
+                        <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
+                            {bible.name}
                             {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
-                                <span class="description" data-title={bible.description}>({bible.description})</span>
+                                <span class="description" data-title={bible.description}>{bible.description}</span>
                             {/if}
-                        </Button>
+                        </MaterialButton>
                     {/each}
                 {:else}
                     <Center faded>
@@ -203,31 +201,21 @@
 {:else if importType === "local"}
     <p style="font-size: 1.1em;"><T id="scripture.supported_formats" /></p>
     <ul style="list-style: inside;">
-        <li style="font-size: 0.8em;font-weight: bold;">XML</li>
-        <ul style="margin-inline-start: 22px;">
-            <li>Zefania</li>
-            <li>OSIS</li>
-            <li>Beblia</li>
-            <li>OpenSong</li>
-        </ul>
-        <li style="font-size: 0.8em;font-weight: bold;">JSON</li>
-        <ul style="margin-inline-start: 22px;">
-            <li>FreeShow</li>
-        </ul>
+        <li>
+            <span style="font-size: 0.9em;font-weight: bold;">XML</span>
+            <span style="font-size: 0.8em;opacity: 0.8;margin-left: 10px;">Zefania/OSIS/Beblia/OpenSong</span>
+        </li>
+        <li>
+            <span style="font-size: 0.9em;font-weight: bold;">JSON</span>
+            <span style="font-size: 0.8em;opacity: 0.8;margin-left: 10px;">FreeShow</span>
+        </li>
     </ul>
 
-    <br />
+    <p style="margin: 20px 0;opacity: 0.9;">Find some available <Link url="https://freeshow.app/resources#scriptures">Bible versions</Link>.</p>
 
-    <p style="opacity: 0.9;">Find some available <Link url="https://freeshow.app/resources#scriptures">Bible versions</Link>.</p>
-
-    <br />
-
-    <CombinedInput>
-        <Button on:click={() => sendMain(Main.IMPORT, { channel: "BIBLE", format: { name: "Bible", extensions: ["xml", "xmm", "json", "fsb"] } })} style="width: 100%;" center dark>
-            <Icon id="import" right />
-            <T id="scripture.local" />
-        </Button>
-    </CombinedInput>
+    <MaterialButton variant="outlined" icon="import" on:click={() => sendMain(Main.IMPORT, { channel: "BIBLE", format: { name: "Bible", extensions: ["xml", "xmm", "json", "fsb"] } })}>
+        <T id="scripture.local" />
+    </MaterialButton>
 {:else}
     <MaterialMultiChoice options={importTypes} on:click={(e) => (importType = e.detail)} />
 {/if}
@@ -239,21 +227,34 @@
         max-height: 55vh;
         margin: 15px 0;
         overflow: auto;
+
+        background-color: var(--primary-darker);
+        border-radius: 8px;
+        padding: 10px 0;
     }
+    /* .list :global(button:nth-child(odd)) {
+        background-color: var(--primary-darkest) !important;
+    } */
 
     .list :global(button) {
+        justify-content: start;
+        font-weight: normal;
+
         line-height: 1.5em;
+
+        border-radius: 0;
         cursor: pointer;
-        text-align: start;
+        padding: 16px 20px;
     }
 
     hr {
         border: 1px solid var(--primary-lighter);
-        margin: 10px 0;
+        margin: 20px 0;
     }
 
     h2 {
         color: var(--text);
+        font-size: 1.1em;
     }
 
     .description {
@@ -261,7 +262,6 @@
         font-style: italic;
         margin-inline-start: 10px;
 
-        max-width: 40%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

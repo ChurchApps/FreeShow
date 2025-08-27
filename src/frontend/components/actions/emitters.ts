@@ -16,16 +16,16 @@ const OSC_SIGNAL_INPUTS: Input[] = [
 const INPUT_REST: Input = { name: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
 
 const MIDI_SIGNAL_INPUTS: Input[] = [
-    { name: "midi.output", id: "output", type: "dropdown", value: "", options: [{ id: "", name: "—" }] },
+    { name: "midi.output", id: "output", type: "dropdown", value: "", options: [{ value: "", label: "—" }] },
     {
         name: "midi.type",
         id: "type",
         type: "dropdown",
         value: "noteon",
         options: [
-            { id: "noteon", name: "noteon" },
-            { id: "noteoff", name: "noteoff" },
-            { id: "control", name: "control" }
+            { value: "noteon", label: "noteon" },
+            { value: "noteoff", label: "noteoff" },
+            { value: "control", label: "control" }
         ]
     }
 ]

@@ -69,7 +69,7 @@
 </div>
 
 {#if showMore || (!active.outputResolutionAsRatio && !ratios.find(([width, height]) => active.width === width && active.height === height))}
-    <div style="display: flex;justify-content: space-between;margin-bottom: 10px;">
+    <div style="display: flex;justify-content: space-between;margin-top: 20px;">
         <div style="width: 200px;" data-title={translateText("actions.custom_key")}>
             <InputRow>
                 <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.width" value={active.width || 16} min={1} max={100} on:change={(e) => setAspectRatio({ width: e.detail, height: active.height || 9 })} />
@@ -96,7 +96,13 @@
     </div>
 {/if}
 
-<MaterialToggleSwitch label="settings.output_resolution_ratio" checked={active.outputResolutionAsRatio} defaultValue={false} on:change={(e) => setAspectRatio({ ...active, outputResolutionAsRatio: e.detail })} />
+<MaterialToggleSwitch
+    style="margin-top: {showMore ? 10 : 20}px;"
+    label="settings.output_resolution_ratio"
+    checked={active.outputResolutionAsRatio}
+    defaultValue={false}
+    on:change={(e) => setAspectRatio({ ...active, outputResolutionAsRatio: e.detail })}
+/>
 
 {#if showMore}
     <HRule />
@@ -109,11 +115,12 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 10px;
-        padding: 15px 0;
+        gap: 5px;
     }
 
     .grid :global(button) {
+        border: 2px solid var(--primary-lighter) !important;
+
         padding: 0.4em;
         flex-direction: column;
         gap: 5px;

@@ -157,7 +157,7 @@
                     <!-- conditional menus -->
                     {#if shouldShowMenuWithItems(id)}
                         <!-- {activeMenu.length > 2 ? translate : 0} -->
-                        <ContextChild {id} {contextElem} {side} {translate} />
+                        <ContextChild {id} {contextElem} {side} translate={y > 400 ? translate : 0} />
                     {/if}
                 {:else}
                     <ContextItem {id} {contextElem} />

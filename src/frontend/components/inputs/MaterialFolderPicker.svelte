@@ -4,16 +4,18 @@
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
     import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
-    import { activePopup, alertMessage, os } from "../../stores"
+    import { activePopup, alertMessage, os, showsPath } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
     export let label: string
     export let value: string | undefined
+    export let PICK_ID = uid()
 
     export let disabled = false
     export let allowEmpty = false
+    export let openButton = true
 
     function pickFolder() {
         if (disabled) return
@@ -27,10 +29,14 @@
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID, title: translateText(label), path: value })
     }
 
-    const PICK_ID = uid()
     const dispatch = createEventDispatcher()
     let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
+
+        // custom
+        if (data.showsPath) {
+            showsPath.set(data.showsPath)
+        }
 
         dispatch("change", data.path)
     })
@@ -74,11 +80,13 @@
     <label class:selected={value}>{@html translateText(label)}</label>
     <span class="underline" />
 
-    <div class="button">
-        <MaterialButton on:click={() => sendMain(Main.SYSTEM_OPEN, value)} title="main.system_open" white>
-            <Icon id="launch" white />
-        </MaterialButton>
-    </div>
+    {#if openButton}
+        <div class="button">
+            <MaterialButton on:click={() => sendMain(Main.SYSTEM_OPEN, value)} title="main.system_open" white>
+                <Icon id="launch" white />
+            </MaterialButton>
+        </div>
+    {/if}
     {#if allowEmpty && value}
         <div class="button remove">
             <MaterialButton on:click={() => dispatch("change", "")} title="clear.general" white>

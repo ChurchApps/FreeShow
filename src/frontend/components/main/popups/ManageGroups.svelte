@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { activePopup, dictionary, groupNumbers, groups, popupData, templates } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
+    import { activePopup, dictionary, groupNumbers, groups, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Button from "../../inputs/Button.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
 
     $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
 
@@ -73,99 +72,54 @@
     {/if}
 
     {#if g.length}
-        {#each g as group, i}
-            {#if i === 0}
-                <div class="titles">
-                    <p style="width: 32%;"><T id="inputs.name" /></p>
-                    <p style="width: calc(20% + 10px);"><T id="edit.color" /></p>
-                    <p style="width: {showMore ? 20 : 45}%;"><T id="groups.group_shortcut" /></p>
-                    {#if showMore}
-                        <p style="width: 25%;"><T id="groups.group_template" /></p>
-                    {/if}
-                    <p style="width: 40px;"></p>
-                </div>
-            {/if}
-
-            <CombinedInput>
-                <!-- name -->
-                <TextInput style="width: 32%;" value={group.name} on:change={(e) => changeGroup(e, group.id)} />
-                <!-- color -->
-                <Color style="flex: 0;min-width: 20%;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
-                <!-- shortcut -->
-                <span style="width: {showMore ? 20 : 45}%;overflow: hidden;display: flex;">
-                    <Button
-                        on:click={() => {
-                            popupData.set({
-                                id: group.id,
-                                value: group.shortcut,
-                                revert: $activePopup,
-                                existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut),
-                                mode: "global_group",
-                                trigger: (id) => changeGroup(id, group.id, "shortcut")
-                            })
-                            activePopup.set("assign_shortcut")
-                        }}
-                        style="width: 100%;overflow: hidden;"
-                        bold={!group.shortcut}
-                    >
-                        <div style="display: flex;align-items: center;padding: 0;">
-                            <Icon id="shortcut" style="margin-inline-start: 0.5em;" right />
-                            <p>
-                                {#if group.shortcut}
-                                    <span style="text-transform: uppercase;display: flex;align-items: center;">{group.shortcut}</span>
-                                {:else}
-                                    <T id="popup.assign_shortcut" />
-                                {/if}
-                            </p>
-                        </div>
-                    </Button>
-                    {#if group.shortcut}
-                        <Button title={$dictionary.actions?.remove} on:click={() => changeGroup("", group.id, "shortcut")} redHover>
-                            <Icon id="close" size={1.2} white />
-                        </Button>
-                    {/if}
-                </span>
+        {#each g as group}
+            <InputRow>
+                <MaterialTextInput label="inputs.name" style="flex: 1;" value={group.name} on:change={(e) => changeGroup(e.detail, group.id)} />
+                <MaterialColorInput label="edit.color" noLabel style="flex: 0;min-width: 200px;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
+                <MaterialPopupButton
+                    label="groups.group_shortcut"
+                    style="width: 28%;"
+                    id={group.id}
+                    value={group.shortcut}
+                    name={(group.shortcut || "").toUpperCase()}
+                    icon="shortcut"
+                    popupId="assign_shortcut"
+                    data={{
+                        revert: $activePopup,
+                        existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut),
+                        mode: "global_group"
+                    }}
+                    on:change={(e) => changeGroup(e.detail, group.id, "shortcut")}
+                    allowEmpty
+                />
                 <!-- template -->
                 {#if showMore}
-                    <span style="width: 25%;overflow: hidden;display: flex;">
-                        <Button
-                            on:click={() => {
-                                popupData.set({ action: "select_template", active: group.template || "", revert: $activePopup, trigger: (id) => changeGroup(id, group.id, "template") })
-                                activePopup.set("select_template")
-                            }}
-                            style="width: 100%;overflow: hidden;"
-                            bold={!group.template}
-                        >
-                            <div style="display: flex;align-items: center;padding: 0;">
-                                <Icon id="templates" style="margin-inline-start: 0.5em;" right />
-                                <p>
-                                    {#if group.template}
-                                        {$templates[group.template || ""]?.name || "—"}
-                                    {:else}
-                                        <T id="popup.select_template" />
-                                    {/if}
-                                </p>
-                            </div>
-                        </Button>
-                        {#if group.template}
-                            <Button title={$dictionary.actions?.remove} on:click={() => changeGroup("", group.id, "template")} redHover>
-                                <Icon id="close" size={1.2} white />
-                            </Button>
-                        {/if}
-                    </span>
+                    <MaterialPopupButton
+                        label="groups.group_template"
+                        style="width: 22%;"
+                        value={group.template}
+                        name={$templates[group.template || ""]?.name}
+                        icon="templates"
+                        popupId="select_template"
+                        data={{
+                            action: "select_template",
+                            revert: $activePopup
+                        }}
+                        on:change={(e) => changeGroup(e.detail, group.id, "template")}
+                        allowEmpty
+                    />
                 {/if}
-                <Button
-                    style="width: 40px;"
+
+                <MaterialButton
+                    style="flex: 0;"
+                    icon="delete"
+                    title="actions.delete"
                     on:click={() => {
                         history({ id: "UPDATE", newData: { id: group.id }, location: { page: "none", id: "global_group" } })
                     }}
-                    title={$dictionary.actions?.delete}
-                    center
-                >
-                    <Icon id="delete" />
-                    <!-- <T id="actions.delete" /> -->
-                </Button>
-            </CombinedInput>
+                    white
+                />
+            </InputRow>
         {/each}
     {:else}
         <div style="width: 100%;text-align: center;padding: 15px;opacity: 0.4;">
@@ -173,24 +127,7 @@
         </div>
     {/if}
 
-    <CombinedInput>
-        <Button style="width: 100%;" on:click={addGroup} center dark>
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
-    </CombinedInput>
+    <MaterialButton variant="outlined" style="width: 100%;" icon="add" on:click={addGroup}>
+        <T id="settings.add" />
+    </MaterialButton>
 </div>
-
-<style>
-    .titles {
-        background: var(--hover);
-        display: flex;
-        padding: 8px 0;
-        font-weight: 600;
-        font-size: 0.9em;
-    }
-
-    .titles p {
-        text-align: center;
-    }
-</style>

@@ -24,6 +24,21 @@
         if (autoselect) elem.select()
     }
 
+    function blurOnEnter(elem: HTMLInputElement) {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Enter") elem.blur()
+        }
+
+        elem.addEventListener("keydown", handler)
+
+        return {
+            destroy() {
+                console.log(1)
+                elem.removeEventListener("keydown", handler)
+            }
+        }
+    }
+
     function input(e: Event) {
         value = (e.target as HTMLInputElement).value
         dispatch("input", value)
@@ -53,10 +68,10 @@
     }
 </script>
 
-<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)}>
+<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} style={$$props.style || null}>
     <div class="background" />
 
-    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} on:keydown />
+    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 

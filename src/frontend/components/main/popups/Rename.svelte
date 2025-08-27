@@ -3,13 +3,11 @@
     import { activePopup, activeShow, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     let list: string[] = []
     $: {
@@ -182,38 +180,27 @@
     }
 
     let groupName = ""
-    const changeValue = (e: any) => (groupName = e.target.value)
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            element?.querySelector("input")?.blur()
             rename()
         }
     }
-
-    let element: HTMLElement | undefined
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 {#if list.length > 1}
     <p><T id="popup.change_name" />:</p>
-    <ul style="list-style-position: inside;margin-bottom: 10px;">
+    <ul style="list-style-position: inside;margin-bottom: 20px;">
         {#each list as text}
             <li style="font-weight: bold;">{text}</li>
         {/each}
     </ul>
 {/if}
 
-<CombinedInput>
-    <div bind:this={element} style="width: 100%;">
-        <TextInput value={groupName} on:change={(e) => changeValue(e)} autoselect />
-    </div>
-</CombinedInput>
+<MaterialTextInput label="inputs.name" value={groupName} on:change={(e) => (groupName = e.detail)} autoselect />
 
-<CombinedInput style="margin-top: 10px;">
-    <Button on:click={rename} style="width: 100%;" center dark>
-        <Icon id="edit" right />
-        <T id="actions.rename" />
-    </Button>
-</CombinedInput>
+<MaterialButton variant="contained" style="margin-top: 20px;" icon="edit" on:click={rename}>
+    <T id="actions.rename" />
+</MaterialButton>

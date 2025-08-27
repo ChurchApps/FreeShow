@@ -127,7 +127,8 @@
 
     .shortcut {
         background-color: var(--primary-darker);
-        border: 3px solid var(--primary-lighter);
+        border: 2px solid var(--primary-lighter);
+        border-radius: 3px;
 
         font-size: 0.9em;
         text-align: center;

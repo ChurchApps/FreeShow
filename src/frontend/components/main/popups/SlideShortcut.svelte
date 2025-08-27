@@ -10,7 +10,7 @@
     let index = $popupData.index
     let mode = $popupData.mode
     let revert = $popupData.revert
-    let value = $popupData.value || ""
+    let value = $popupData.active || $popupData.value || ""
     let trigger = $popupData.trigger
     let existingShortcuts = $popupData.existingShortcuts || []
 

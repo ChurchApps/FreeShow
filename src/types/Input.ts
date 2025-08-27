@@ -1,4 +1,3 @@
-import type { Option } from "./Main"
 import type { MidiValues } from "./Show"
 
 interface BaseInput {
@@ -22,7 +21,7 @@ type InputCheckbox = {
 type InputDropdown = {
     type: "dropdown"
     value: string
-    options: Option[]
+    options: { label: string; value: string; prefix?: string; style?: string }[]
 }
 
 type InputMidi = {
