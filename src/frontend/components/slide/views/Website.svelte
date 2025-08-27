@@ -41,7 +41,8 @@
         if (src.includes("embed")) return
 
         // if preview is fullscreen, don't set ratio
-        let isFullscreen = (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
+        // temporary set to always fullscreen as the scaling does not always work in the preview, if there's video streams, etc.
+        let isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
         const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
 
         if (loaded) setStyle()
@@ -57,6 +58,8 @@
         function setStyle() {
             if (!webview) return
             loaded = true
+
+            if ($currentWindow !== "output") webview.setAudioMuted(true)
 
             webview.executeJavaScript(`
             document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
