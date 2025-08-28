@@ -44,11 +44,11 @@
     }
 
     function increment(customStep: number = step) {
-        if (max === null || numberValue < max) updateValue(numberValue + customStep)
+        if (max === null || numberValue < max) updateValue(Number((numberValue + customStep).toFixed(3)))
     }
 
     function decrement(customStep: number = step) {
-        if (min === null || numberValue > min) updateValue(numberValue - customStep)
+        if (min === null || numberValue > min) updateValue(Number((numberValue - customStep).toFixed(3)))
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null

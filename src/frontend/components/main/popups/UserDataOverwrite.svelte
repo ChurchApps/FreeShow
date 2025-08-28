@@ -2,10 +2,15 @@
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, dataPath, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+
+    const options = [
+        { id: "overwrite", name: translateText("settings.user_data_yes"), icon: "check" }, // folder
+        { id: "existing", name: translateText("settings.user_data_no"), icon: "import" }
+    ]
 
     function setMethod(method: "existing" | "overwrite") {
         if (method === "existing") {
@@ -22,41 +27,15 @@
     }
 </script>
 
-<p style="max-width: 600px;white-space: normal;"><T id="settings.user_data_exists" /></p>
+<p><T id="settings.user_data_exists" /></p>
 
-<br />
-
-<div>
-    <Button on:click={() => setMethod("overwrite")} style="border: 2px solid var(--focus);">
-        <!-- <Icon id="folder" size={6} /> -->
-        <Icon id="check" size={6} />
-        <p style="white-space: normal;"><T id="settings.user_data_yes" /></p>
-    </Button>
-    <Button on:click={() => setMethod("existing")}>
-        <Icon id="import" size={6} />
-        <p style="white-space: normal;"><T id="settings.user_data_no" /></p>
-    </Button>
-</div>
+<MaterialMultiChoice {options} on:click={(e) => setMethod(e.detail)} />
 
 <style>
     p {
-        display: flex;
-        align-items: center;
-    }
-
-    div {
-        display: flex;
-        gap: 10px;
-        align-self: center;
-    }
-
-    div :global(button) {
-        width: 200px;
-        height: 200px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
+        max-width: 600px;
+        white-space: normal;
+        margin-bottom: 20px;
+        opacity: 0.8;
     }
 </style>

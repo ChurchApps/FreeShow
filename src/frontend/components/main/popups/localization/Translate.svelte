@@ -1,19 +1,19 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, dictionary, showsCache, special } from "../../../../stores"
+    import { activePopup, activeShow, showsCache, special } from "../../../../stores"
     import Icon from "../../../helpers/Icon.svelte"
     import { _show } from "../../../helpers/shows"
     import T from "../../../helpers/T.svelte"
-    import Button from "../../../inputs/Button.svelte"
-    import CombinedInput from "../../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../../inputs/Dropdown.svelte"
-    import { getIsoLanguages, removeTranslationFromShow, translateShow } from "./translation"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialButton from "../../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import { isoLanguages } from "./isoLanguages"
+    import { getIsoLanguages, removeTranslationFromShow, translateShow } from "./translation"
 
     let languageList = getIsoLanguages()
 
     function updateLanguage(e: any) {
-        let value = e.detail.id
+        let value = e.detail
         special.update((a) => {
             a.translationLanguage = value
             return a
@@ -61,53 +61,45 @@
         translatedLangs = [...new Set(translatedLangs)]
         console.log(translatedLangs)
     })
+
+    let open = false
 </script>
 
-<div class="main">
-    <CombinedInput textWidth={25}>
-        <p><T id="settings.language" /></p>
-        <Dropdown flags options={languageList} value={languageList.find((a) => a.id === $special.translationLanguage)?.name || "—"} on:click={updateLanguage} />
-    </CombinedInput>
+<div class="main" style={open ? "min-height: 330px;" : ""}>
+    <MaterialDropdown bind:open label="settings.language" options={languageList} value={$special.translationLanguage} on:change={updateLanguage} flags />
 
-    <CombinedInput>
-        <Button style="width: 100%;" disabled={!$special.translationLanguage} on:click={convert} center>
-            <Icon size={1.1} id="translate" right />
-            {#if translatedLangs.includes($special.translationLanguage)}
-                <T id="localization.update" />
-            {:else if translatedLangs.length}
-                <T id="localization.add" />
-            {:else}
-                <T id="localization.translate" />
-            {/if}
-        </Button>
-    </CombinedInput>
+    <MaterialButton variant="contained" style="margin-top: 20px;width: 100%;" disabled={!$special.translationLanguage} on:click={convert}>
+        <Icon size={1.1} id="translate" white />
+
+        {#if translatedLangs.includes($special.translationLanguage)}
+            <T id="localization.update" />
+        {:else if translatedLangs.length}
+            <T id="localization.add" />
+        {:else}
+            <T id="localization.translate" />
+        {/if}
+    </MaterialButton>
 
     {#if translatedLangs.length}
         <div class="list">
             {#each translatedLangs as lang}
-                <CombinedInput textWidth={85}>
-                    <p>{isoLanguages.find((a) => a.code === lang)?.name || lang}</p>
-                    <Button on:click={() => remove(lang)} title={$dictionary.settings?.remove} center>
+                <InputRow>
+                    <p style="flex: 1;">{isoLanguages.find((a) => a.code === lang)?.name || lang}</p>
+                    <MaterialButton title="settings.remove" on:click={() => remove(lang)}>
                         <Icon id="close" size={1.3} white />
-                    </Button>
-                </CombinedInput>
+                    </MaterialButton>
+                </InputRow>
             {/each}
         </div>
 
-        <CombinedInput>
-            <Button style="width: 100%;" on:click={() => remove()} center>
-                <Icon size={1.1} id="close" right />
-                <T id="localization.remove" />
-            </Button>
-        </CombinedInput>
+        <MaterialButton variant="outlined" style="width: 100%;" on:click={() => remove()}>
+            <Icon size={1.1} id="close" />
+            <T id="localization.remove" />
+        </MaterialButton>
     {/if}
 </div>
 
 <style>
-    .main {
-        min-height: 330px;
-    }
-
     .main :global(.dropdown span) {
         line-height: 0;
         display: flex;
@@ -118,6 +110,19 @@
         display: flex;
         flex-direction: column;
 
-        padding-top: 20px;
+        border-radius: 4px;
+        overflow: hidden;
+
+        margin-top: 20px;
+    }
+
+    .list p {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+
+        flex: 1;
+
+        background-color: var(--primary-darker);
     }
 </style>

@@ -28,7 +28,7 @@ export async function translate(text: string, language: string, source = "auto")
 }
 
 export function getIsoLanguages() {
-    return sortByName(isoLanguages).map((a) => ({ id: a.code, name: `${a.flag ? a.flag + " " : ""}${a.name}${a.nativeName !== a.name ? " - " + a.nativeName : ""}` }))
+    return sortByName(isoLanguages).map((a) => ({ value: a.code, label: `${a.name}${a.nativeName !== a.name ? " - " + a.nativeName : ""}`, prefix: a.flag }))
 }
 
 export async function translateShow(showId: string, languageCode: string) {

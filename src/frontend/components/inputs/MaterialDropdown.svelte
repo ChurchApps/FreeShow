@@ -201,11 +201,11 @@
 
     onMount(() => {
         document.addEventListener("click", handleClickOutside)
-        document.addEventListener("focusout", handleFocusOut, true)
+        // document.addEventListener("focusout", handleFocusOut, true)
 
         return () => {
             document.removeEventListener("click", handleClickOutside)
-            document.removeEventListener("focusout", handleFocusOut, true)
+            // document.removeEventListener("focusout", handleFocusOut, true)
         }
     })
 
@@ -332,7 +332,14 @@
             {/if}
 
             {#each options as option, i}
-                <li style={option.style || null} role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
+                <li
+                    style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}"
+                    role="option"
+                    aria-selected={option.value === value}
+                    class:selected={option.value === value}
+                    class:highlighted={i === highlightedIndex}
+                    on:click={() => selectOption(option.value)}
+                >
                     {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
 
@@ -524,7 +531,6 @@
         transition: background 0.2s;
 
         display: flex;
-        justify-content: space-between;
     }
     .dropdown li:hover,
     .dropdown li.highlighted {
