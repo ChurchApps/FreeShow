@@ -10,6 +10,7 @@
     import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import ChooseEmitter from "./ChooseEmitter.svelte"
@@ -140,41 +141,46 @@
 {:else if inputId === "emitter"}
     <ChooseEmitter value={value || {}} on:change={(e) => updateValue("", e)} />
 {:else}
-    <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
-        {#if inputId === "index"}
-            <NumberInput value={value?.index || 0} on:change={(e) => updateValue("index", e)} />
-        {:else if inputId === "number"}
-            <NumberInput value={value?.number || 0} decimals={1} fixed={1} step={0.5} on:change={(e) => updateValue("number", e)} />
-        {:else if inputId === "strval"}
-            <TextInput value={value?.value || ""} placeholder={$dictionary.inputs?.name} on:change={(e) => updateValue("value", e)} />
-        {:else if inputId === "bolval"}
-            {#if actionId === "lock_output" && value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
-            <div class="alignRight" style="width: 100%;">
-                <Checkbox checked={value?.value} on:change={checkboxChanged} />
-            </div>
-        {:else if inputId === "id"}
-            <!-- <TextInput value={value?.value || ""} on:change={(e) => updateValue("value", e)} /> -->
-            {#if actionId === "start_show"}
-                <Button on:click={openSelectShow} style="width: 100%;" dark center>
-                    {#if value?.id}
-                        {$shows[value.id]?.name || "—"}
-                    {:else}
-                        <T id="popup.select_show" />
-                    {/if}
-                </Button>
-            {:else if options.length || getOptions[actionId]}
-                <!-- <p><T id={actionData[actionId]?.name || actionId} /></p> -->
-                <Dropdown style="width: 100%;" activeId={value?.id} value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
+    <!--  -->
+    {#if inputId === "number"}
+        <MaterialNumberInput label="timer.seconds" value={value?.number || 0} step={0.5} on:change={(e) => updateValue("number", e)} />
+    {:else}
+        <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
+            {#if inputId === "index"}
+                <NumberInput value={value?.index || 0} on:change={(e) => updateValue("index", e)} />
+            {:else if inputId === "number"}
+                <!-- <NumberInput value={value?.number || 0} decimals={1} fixed={1} step={0.5} on:change={(e) => updateValue("number", e)} /> -->
+            {:else if inputId === "strval"}
+                <TextInput value={value?.value || ""} placeholder={$dictionary.inputs?.name} on:change={(e) => updateValue("value", e)} />
+            {:else if inputId === "bolval"}
+                {#if actionId === "lock_output" && value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
+                <div class="alignRight" style="width: 100%;">
+                    <Checkbox checked={value?.value} on:change={checkboxChanged} />
+                </div>
+            {:else if inputId === "id"}
+                <!-- <TextInput value={value?.value || ""} on:change={(e) => updateValue("value", e)} /> -->
+                {#if actionId === "start_show"}
+                    <Button on:click={openSelectShow} style="width: 100%;" dark center>
+                        {#if value?.id}
+                            {$shows[value.id]?.name || "—"}
+                        {:else}
+                            <T id="popup.select_show" />
+                        {/if}
+                    </Button>
+                {:else if options.length || getOptions[actionId]}
+                    <!-- <p><T id={actionData[actionId]?.name || actionId} /></p> -->
+                    <Dropdown style="width: 100%;" activeId={value?.id} value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
+                {/if}
+            {:else if inputId === "volume"}
+                <!-- gain can also be set -->
+                <NumberInput value={value?.volume || 1} max={1} decimals={2} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
+            {:else if inputId === "transition"}
+                <!-- transition -->
+            {:else if inputId === "variable"}
+                <!-- variable -->
             {/if}
-        {:else if inputId === "volume"}
-            <!-- gain can also be set -->
-            <NumberInput value={value?.volume || 1} max={1} decimals={2} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
-        {:else if inputId === "transition"}
-            <!-- transition -->
-        {:else if inputId === "variable"}
-            <!-- variable -->
-        {/if}
-    </CombinedInput>
+        </CombinedInput>
+    {/if}
 {/if}
 
 <style>

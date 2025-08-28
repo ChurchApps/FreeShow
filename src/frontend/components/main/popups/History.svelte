@@ -1,11 +1,9 @@
 <script lang="ts">
     import { redoHistory, undoHistory } from "../../../stores"
     import { redo, undo } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getDateAndTimeString, timeAgo } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
 
     const INITIAL: any = { id: "initial", time: 0 }
@@ -113,37 +111,34 @@
 
 <main class="history">
     {#if rHistory.length || uHistory.length}
-        {#each rHistory as item, i}
-            {@const itemId = getItemId(item)}
-            <Button on:click={() => callRedo(i)} style="opacity: 0.5;">
-                <p>
-                    <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                        {historyIdToString[itemId] || itemId}
-                    </span>
-                    <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
-                </p>
-            </Button>
-        {/each}
-        {#each uHistory as item, i}
-            {@const itemId = getItemId(item)}
-            <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
-                <p>
-                    <span style={item.version || historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                        {historyIdToString[itemId] || itemId}
-                    </span>
-                    <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
-                </p>
-            </Button>
-        {/each}
+        <div class="list">
+            {#each rHistory as item, i}
+                {@const itemId = getItemId(item)}
+                <MaterialButton style="opacity: 0.5;padding: 10px 20px;" on:click={() => callRedo(i)}>
+                    <p>
+                        <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                            {historyIdToString[itemId] || itemId}
+                        </span>
+                        <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                    </p>
+                </MaterialButton>
+            {/each}
+            {#each uHistory as item, i}
+                {@const itemId = getItemId(item)}
+                <MaterialButton style="padding: 10px 20px;" on:click={() => callUndo(i - 1)} showOutline={i === 0}>
+                    <p>
+                        <span style={item.version || historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                            {historyIdToString[itemId] || itemId}
+                        </span>
+                        <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                    </p>
+                </MaterialButton>
+            {/each}
+        </div>
 
-        <br />
-
-        <CombinedInput>
-            <Button on:click={clearHistory} style="width: 100%;" center dark>
-                <Icon id="delete" right />
-                <T id="actions.clear_history" />
-            </Button>
-        </CombinedInput>
+        <MaterialButton variant="outlined" style="margin-top: 20px;" icon="delete" on:click={clearHistory}>
+            <T id="actions.clear_history" />
+        </MaterialButton>
         <!-- <div>
         <p>Delete oldest automaticly when more than</p>
         <NumberInput value={$historyCacheCount} on:change={(e) => historyCacheCount.set(e.detail)} buttons={false} />
@@ -161,8 +156,19 @@
         flex-direction: column;
         /* gap: 5px; */
     }
-    main :global(button:nth-child(odd)) {
-        background-color: rgb(0 0 20 / 0.08);
+
+    .list {
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+
+        border-radius: 8px;
+        padding: 10px 0;
+
+        display: flex;
+        flex-direction: column;
+    }
+    .list :global(button:nth-child(odd)) {
+        background-color: rgb(0 0 20 / 0.08) !important;
     }
 
     p {

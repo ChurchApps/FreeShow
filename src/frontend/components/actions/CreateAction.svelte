@@ -8,11 +8,13 @@
     import { clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import HRule from "../input/HRule.svelte"
+    import InputRow from "../input/InputRow.svelte"
     import Button from "../inputs/Button.svelte"
-    import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
-    import TextInput from "../inputs/TextInput.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
     import Center from "../system/Center.svelte"
     import CustomInput from "./CustomInput.svelte"
     import { actionData } from "./actionData"
@@ -153,8 +155,8 @@
     $: if (ACTIONS || commonOnly !== undefined) search()
     let searchValue = ""
     // let previousSearchValue = ""
-    function search(e: any = null) {
-        searchValue = formatSearch(e?.target?.value || "")
+    function search(value: string | null = null) {
+        searchValue = formatSearch(value || "")
 
         let actionsList = clone(ACTIONS) //.filter((a) => (commonOnly ? a.common : true))
 
@@ -177,8 +179,6 @@
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
 
-    const isChecked = (e: any) => e.target.checked
-
     let commonOnly = full && mode !== "slide"
 </script>
 
@@ -193,21 +193,14 @@
             </Button>
         </CombinedInput>
     {:else}
-        <CombinedInput style="border-bottom: 2px solid var(--secondary);">
-            <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
-        </CombinedInput>
+        <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 
         {#if mode !== "slide"}
-            <CombinedInput>
-                <p>Common only</p>
-                <span class="alignRight">
-                    <Checkbox checked={commonOnly} on:change={(e) => (commonOnly = isChecked(e))} />
-                </span>
-            </CombinedInput>
+            <MaterialButton class="popup-options {!commonOnly ? 'active' : ''}" icon={!commonOnly ? "eye" : "hide"} iconSize={1.3} title={!commonOnly ? "actions.close" : "create_show.more_options"} on:click={() => (commonOnly = !commonOnly)} white />
         {/if}
 
         {#if searchedActions.length}
-            <div class="buttons" style={searchValue.length ? "padding-top: 20px;" : ""}>
+            <div class="buttons" style="margin-top: 10px;">
                 {#each searchedActions as action, i}
                     {#if action.section && !searchValue.length}
                         <!-- might not properly update always on common toggle, without the key refresh -->
@@ -218,16 +211,15 @@
 
                     <!-- disabled={$popupData.existing.includes(action.id)} -->
                     <!-- bold={action.common} -->
-                    <Button
+                    <MaterialButton
+                        style="width: 100%;font-weight: normal;justify-content: start;padding: 5px 20px;gap: 12px;{searchValue.length && i === 0 ? 'background-color: var(--primary-lighter);' : ''}"
+                        showOutline={getActionTriggerId(actionId) === action.id}
+                        isActive={(existingActionsFiltered || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
                         on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
-                        outline={getActionTriggerId(actionId) === action.id}
-                        active={(existingActionsFiltered || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
-                        style="width: 100%;{searchValue.length && i === 0 ? 'background-color: var(--primary-lighter);' : ''}"
-                        bold={false}
                     >
-                        <Icon id={action.icon} right />
+                        <Icon id={action.icon} />
                         <p>{action.name}</p>
-                    </Button>
+                    </MaterialButton>
                 {/each}
             </div>
         {:else}
@@ -237,20 +229,34 @@
         {/if}
     {/if}
 {:else}
-    <CombinedInput textWidth={38} style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>
-        <p style="font-weight: 600;">
-            <T id="midi.start_action" />
-            <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
-                {#if actionNameIndex}#{actionNameIndex}{/if}
-            </span>
-        </p>
+    <div class="box" style={actionNameIndex > 1 ? "margin-top: 5px;" : ""}>
+        <div class="part">
+            <p style="font-weight: 600;padding: 0 10px;display: flex;align-items: center;">
+                <T id="midi.start_action" />
+                <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
+                    {#if actionNameIndex}#{actionNameIndex}{/if}
+                </span>
+            </p>
 
-        {#if !choosePopup}
-            <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
-        {:else}
-            <Button on:click={() => dispatch("choose")} title={$dictionary.actions?.choose_action} bold={!actionId}>
-                <div style="display: flex;align-items: center;padding: 0;">
-                    <Icon id={findIcon(actionId)} style="margin-inline-start: 0.5em;" right />
+            <div style="display: flex;align-items: center;gap: 3px;">
+                {#if actionId && existingActions.length > 1}
+                    {#if actionNameIndex > 1}
+                        <MaterialButton style="padding: 8px;" icon="up" on:click={() => changeAction({ id: "move_up", index: actionNameIndex - 1 })} />
+                    {/if}
+                    <MaterialButton style="padding: 6.5px;" title="actions.remove" on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })}>
+                        <Icon id="close" size={1.2} white />
+                    </MaterialButton>
+                {/if}
+            </div>
+        </div>
+
+        <InputRow style="background-color: var(--primary-darker);" arrow={dataInputs && !dataOpened} bind:open={dataMenuOpened}>
+            {#if !choosePopup}
+                <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
+                <!-- <MaterialDropdown value={actionId} options={[...(actionNameIndex ? [{ value: "remove", label: "—" }] : []), ...ACTIONS]} on:change={(e) => changeAction(e.detail)} /> -->
+            {:else}
+                <MaterialButton style="flex: 1;justify-content: start;{actionId ? 'font-weight: normal;' : ''}" title="actions.choose_action" on:click={() => dispatch("choose")}>
+                    <Icon id={findIcon(actionId)} style="margin-inline-start: 0.5em;" />
                     <p>
                         {#if actionId}
                             {findName(actionId) || "—"}
@@ -258,31 +264,10 @@
                             <T id="actions.choose_action" />
                         {/if}
                     </p>
-                </div>
-            </Button>
-        {/if}
-
-        {#if actionId && existingActions.length > 1}
-            {#if actionNameIndex > 1}
-                <Button on:click={() => changeAction({ id: "move_up", index: actionNameIndex - 1 })}>
-                    <Icon id="up" white />
-                </Button>
+                </MaterialButton>
             {/if}
-            <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })} redHover>
-                <Icon id="close" size={1.2} white />
-            </Button>
-        {/if}
-
-        {#if dataInputs && !dataOpened}
-            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (dataMenuOpened = !dataMenuOpened)}>
-                {#if dataMenuOpened}
-                    <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                {:else}
-                    <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                {/if}
-            </Button>
-        {/if}
-    </CombinedInput>
+        </InputRow>
+    </div>
 {/if}
 
 {#if dataInputs && (dataOpened || dataMenuOpened)}
@@ -290,20 +275,49 @@
 {/if}
 
 {#if mode === "slide" && getActionTriggerId(actionId) === "run_action" && $categories[_show().get().category]?.action}
-    <CombinedInput>
-        <p style="flex: 1;"><T id="actions.override_category_action" /></p>
-        <span class="alignRight" style="flex: 0;padding: 0 10px;">
-            <Checkbox checked={customData.overrideCategoryAction} on:change={(e) => changeAction({ id: actionId, customDataKey: "overrideCategoryAction", customDataValue: isChecked(e) })} />
-        </span>
-    </CombinedInput>
+    <MaterialToggleSwitch
+        label="actions.override_category_action"
+        checked={customData.overrideCategoryAction}
+        defaultValue={false}
+        on:change={(e) => changeAction({ id: actionId, customDataKey: "overrideCategoryAction", customDataValue: e.detail })}
+    />
 {/if}
 
 <style>
+    .box {
+        display: flex;
+        flex-direction: column;
+
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .part {
+        padding: 3px;
+        font-size: 0.8em;
+
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+    }
+
+    /* list */
+
     .buttons {
         display: flex;
         flex-direction: column;
+
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+        border-radius: 8px;
+        overflow: hidden;
+
+        padding: 10px 0;
     }
-    .buttons :global(button:not(.active):nth-child(even)) {
-        background-color: rgb(0 0 20 / 0.08);
+    .buttons :global(button:not(.active):nth-child(odd)) {
+        background-color: rgb(0 0 20 / 0.08) !important;
     }
 </style>

@@ -5,32 +5,23 @@
     import MaterialButton from "./MaterialButton.svelte"
     import { dictionary } from "../../stores"
 
-    export let value: string
-    export let defaultValue: string | null = null
     export let label: string
+    export let value: string // expected format: "YYYY-MM-DD" for <input type="date">
+    export let defaultValue: string | null = null
 
     export let id = ""
     export let title = ""
-    export let placeholder = ""
 
-    export let center = false
     export let disabled = false
     export let autofocus = false
-    export let autoselect = false
 
     const dispatch = createEventDispatcher()
-
-    function select(elem: HTMLInputElement) {
-        if (autoselect) elem.select()
-    }
 
     function blurOnEnter(elem: HTMLInputElement) {
         const handler = (e: KeyboardEvent) => {
             if (e.key === "Enter") elem.blur()
         }
-
         elem.addEventListener("keydown", handler)
-
         return {
             destroy() {
                 elem.removeEventListener("keydown", handler)
@@ -38,18 +29,17 @@
         }
     }
 
-    function input(e: Event) {
+    function onInput(e: Event) {
         value = (e.target as HTMLInputElement).value
         dispatch("input", value)
     }
 
-    function change(e: Event) {
-        const value = (e.target as HTMLInputElement).value
-        dispatch("change", value)
+    function onChange(e: Event) {
+        const v = (e.target as HTMLInputElement).value
+        dispatch("change", v)
     }
 
     // RESET
-
     let resetFromValue: string | null = null
     function reset() {
         resetFromValue = value
@@ -59,7 +49,6 @@
             resetFromValue = null
         }, 3000)
     }
-
     function undoReset() {
         dispatch("change", resetFromValue)
         dispatch("input", resetFromValue)
@@ -67,10 +56,11 @@
     }
 </script>
 
-<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} style={$$props.style || null}>
+<!-- class:filled={!!value} -->
+<div class="textfield filled" class:disabled data-title={translateText(title)} style={$$props.style || null}>
     <div class="background" />
 
-    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
+    <input bind:value type="date" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 
@@ -96,14 +86,8 @@
         position: relative;
         width: 100%;
         color: var(--text);
-
         border-bottom: 1.2px solid var(--primary-lighter);
-
         height: 50px;
-    }
-
-    .textfield.centered {
-        text-align: center;
     }
 
     .background {
@@ -126,11 +110,31 @@
         color: var(--text);
         font-family: inherit;
     }
+    /* .textfield:not(.filled) .input {
+        opacity: 0;
+    } */
+
+    input::-webkit-calendar-picker-indicator {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 10px;
+
+        border-radius: 4px;
+        padding: 8px;
+        cursor: pointer;
+        opacity: 0.8;
+        filter: invert(1);
+
+        transition: 0.1s background-color ease;
+    }
+    input::-webkit-calendar-picker-indicator:hover {
+        background-color: rgb(0 0 0 / 0.1);
+    }
 
     .input::placeholder {
         color: var(--text);
         opacity: 0.3;
-
         transition: 0.1s opacity ease;
     }
     .input:not(:focus)::placeholder {
@@ -156,9 +160,9 @@
         z-index: 1;
     }
 
-    /* Float label if focused or has content */
+    /* Float label if focused OR when wrapper has 'filled' */
     .input:focus + label,
-    .input:not(:placeholder-shown) + label {
+    .textfield.filled label {
         top: 0.25rem;
         font-size: 0.75rem;
         color: var(--secondary);
@@ -179,7 +183,6 @@
         transform-origin: left;
         z-index: 2;
     }
-
     .input:focus ~ .underline {
         transform: scaleX(1);
     }
@@ -200,12 +203,16 @@
     .remove {
         position: absolute;
         top: 50%;
-        right: 4px;
+        right: 48px;
         transform: translateY(-50%);
-
         z-index: 2;
     }
     .remove :global(button) {
         padding: 0.75rem;
+    }
+
+    /* Safari/iOS date input fixes (keeps text visible and avoids cramped UI) */
+    .input::-webkit-date-and-time-value {
+        text-align: left;
     }
 </style>

@@ -4,7 +4,7 @@
 
     export let arrow: boolean = false
 
-    let open = false
+    export let open = false
 </script>
 
 <div class="row" style={$$props.style || null}>

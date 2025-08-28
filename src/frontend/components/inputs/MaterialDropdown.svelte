@@ -272,6 +272,8 @@
             createNewEvent()
         }
     }
+
+    $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags bind:this={dropdownEl}>
@@ -292,17 +294,17 @@
     >
         <span class="selected-text" style={selected?.style ?? null}>
             {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-            {#if selected?.value}{selected?.label || "—"}{/if}
+            {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
         </span>
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
         </svg>
     </div>
 
-    <label for={id} class:selected={value}>{@html translateText(label, $dictionary)}</label>
+    <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
     <span class="underline" />
 
-    {#if allowEmpty && value}
+    {#if allowEmpty && hasValue}
         <div class="remove">
             <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
                 <Icon id="close" white />

@@ -1,12 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { actions, activePopup, popupData } from "../../../stores"
+    import { activePopup, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let id = $popupData.id
     let index = $popupData.index
     let mode = $popupData.mode
     let revert = $popupData.revert
@@ -47,11 +46,6 @@
         if (mode === "slide_shortcut") {
             slideDataActions.slide_shortcut = { key }
             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideDataActions, indexes: [index] } })
-        } else if (mode === "action") {
-            actions.update((a) => {
-                if (a[id]) a[id].keypressActivate = key
-                return a
-            })
         } else if (trigger) {
             trigger(key)
         }
