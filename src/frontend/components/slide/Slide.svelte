@@ -30,7 +30,7 @@
         textEditActive
     } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
-    import { wait } from "../../utils/common"
+    import { newToast, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
@@ -40,7 +40,7 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { checkMedia, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
+    import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
@@ -136,10 +136,13 @@
         if ($checkedFiles.includes(id)) return
 
         checkedFiles.set([...$checkedFiles, id])
-        let exists = await checkMedia(path)
+        let exists = await doesMediaExist(path)
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
+            newToast("$error.media")
+            if ($special.autoLocateMedia === false) return
+
             let fileName = getFileName(path)
             sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return

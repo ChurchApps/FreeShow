@@ -13,7 +13,7 @@
     export let label: string
     export let value: string
     export let defaultValue: string = ""
-    export let options: { label: string; value: string; prefix?: string; style?: string }[]
+    export let options: { label: string; value: string; prefix?: string; style?: string; data?: string }[]
 
     export let id = ""
     export let disabled = false
@@ -335,6 +335,10 @@
                 <li style={option.style || null} role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
                     {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
+
+                    {#if option.data}
+                        <div class="data">{option.data}</div>
+                    {/if}
                 </li>
             {/each}
 
@@ -518,6 +522,9 @@
         cursor: pointer;
         color: var(--text);
         transition: background 0.2s;
+
+        display: flex;
+        justify-content: space-between;
     }
     .dropdown li:hover,
     .dropdown li.highlighted {
@@ -525,6 +532,12 @@
     }
     .dropdown li.selected {
         color: var(--secondary);
+    }
+
+    .dropdown .data {
+        color: var(--text);
+        opacity: 0.5;
+        font-size: 0.8em;
     }
 
     .disabled {

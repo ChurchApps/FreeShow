@@ -146,6 +146,15 @@ export function getFileStats(filePath: string, disableLog = false) {
     }
 }
 
+export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
+    return new Promise((resolve) => {
+        fs.stat(filePath, (err, stats) => {
+            if (err) return resolve(null)
+            resolve(stats)
+        })
+    })
+}
+
 export function makeDir(folderPath: string) {
     try {
         fs.mkdirSync(folderPath, { recursive: true })

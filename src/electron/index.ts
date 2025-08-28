@@ -100,7 +100,7 @@ function createLoading() {
 // ----- MAIN WINDOW -----
 
 export let mainWindow: BrowserWindow | null = null
-const MIN_WINDOW_SIZE = 200
+const MIN_WINDOW_SIZE = 400
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")

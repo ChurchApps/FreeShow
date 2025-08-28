@@ -14,7 +14,7 @@ import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../
 import { importShow } from "../data/import"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
-import { captureSlide, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
+import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { pcoDisconnect, pcoStartupLoad } from "../planningcenter/connect"
@@ -123,6 +123,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_DISPLAYS]: () => screen.getAllDisplays(),
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
+    [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
     [Main.GET_THUMBNAIL]: (data) => getThumbnail(data),
     [Main.SAVE_IMAGE]: (data) => saveImage(data),
     [Main.PDF_TO_IMAGE]: (data) => pdfToImage(data),

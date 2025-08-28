@@ -16,6 +16,7 @@
     export let step = 1
     export let min: number | null = 0
     export let max: number | null = null // 1000
+    export let padLength: number = 0
 
     // a string might be passed in
     $: numberValue = Number(value)
@@ -104,7 +105,22 @@
     <div class="background" />
 
     <div class="input-wrapper">
-        <input bind:this={inputElem} bind:value={numberValue} type="number" {id} {placeholder} {disabled} {autofocus} {step} {min} {max} class="input edit" class:noValue={!numberValue} on:keydown={handleKeyDown} on:input={handleInput} />
+        <input
+            bind:this={inputElem}
+            value={padLength ? String(numberValue).padStart(padLength, "0") : numberValue}
+            type="number"
+            {id}
+            {placeholder}
+            {disabled}
+            {autofocus}
+            {step}
+            {min}
+            {max}
+            class="input edit"
+            class:noValue={!padLength && !numberValue}
+            on:keydown={handleKeyDown}
+            on:input={handleInput}
+        />
 
         <div class="buttons">
             <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (max !== null && numberValue >= max)}>
@@ -120,18 +136,18 @@
         </div>
     </div>
 
-    <label for={id} class:value-filled={numberValue !== null && numberValue !== undefined && numberValue !== 0}>{@html translateText(label)}</label>
+    <label for={id} class:value-filled={padLength || (numberValue !== null && numberValue !== undefined && numberValue !== 0)}>{@html translateText(label)}</label>
 
     <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
 
     {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}
-                <MaterialButton on:click={reset} title="actions.reset" white>
+                <MaterialButton {disabled} on:click={reset} title="actions.reset" white>
                     <Icon id="reset" white />
                 </MaterialButton>
             {:else if resetFromValue !== null}
-                <MaterialButton on:click={undoReset} title="actions.undo" white>
+                <MaterialButton {disabled} on:click={undoReset} title="actions.undo" white>
                     <Icon id="undo" white />
                 </MaterialButton>
             {/if}

@@ -147,6 +147,7 @@ export interface Media {
     [key: string]: MediaStyle
 }
 export interface MediaStyle {
+    creationTime?: number // used for checking valid media thumbnail cache
     filter?: string
     flipped?: boolean
     flippedY?: boolean

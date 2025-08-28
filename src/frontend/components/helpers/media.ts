@@ -148,37 +148,63 @@ async function toDataURL(url: string): Promise<string> {
     })
 }
 
+// DEPRECATED
 // check if media file exists in plain js
-export function checkMedia(src: string): Promise<boolean> {
-    const extension = getExtension(src)
-    const isVideo = videoExtensions.includes(extension)
-    const isAudio = !isVideo && audioExtensions.includes(extension)
+// function checkMedia(src: string): Promise<boolean> {
+//     const extension = getExtension(src)
+//     const isVideo = videoExtensions.includes(extension)
+//     const isAudio = !isVideo && audioExtensions.includes(extension)
 
-    return new Promise((resolve) => {
-        let elem
-        if (isVideo) {
-            elem = document.createElement("video")
-            elem.onloadeddata = () => finish()
-        } else if (isAudio) {
-            elem = document.createElement("audio")
-            elem.onloadeddata = () => finish()
-        } else {
-            elem = new Image()
-            elem.onload = () => finish()
-        }
+//     return new Promise((resolve) => {
+//         let elem
+//         if (isVideo) {
+//             elem = document.createElement("video")
+//             elem.onloadeddata = () => finish()
+//         } else if (isAudio) {
+//             elem = document.createElement("audio")
+//             elem.onloadeddata = () => finish()
+//         } else {
+//             elem = new Image()
+//             elem.onload = () => finish()
+//         }
 
-        elem.onerror = () => finish(false)
-        elem.src = encodeFilePath(src)
+//         elem.onerror = () => finish(false)
+//         elem.src = encodeFilePath(src)
 
-        const timedout = setTimeout(() => {
-            finish(false)
-        }, 3000)
+//         const timedout = setTimeout(() => {
+//             finish(false)
+//         }, 3000)
 
-        function finish(response = true) {
-            clearTimeout(timedout)
-            resolve(response)
-        }
-    })
+//         function finish(response = true) {
+//             clearTimeout(timedout)
+//             resolve(response)
+//         }
+//     })
+// }
+
+export async function doesMediaExist(path: string, noCache: boolean = false) {
+    if (noCache) {
+        const existsData = await requestMain(Main.DOES_MEDIA_EXIST, { path, noCache })
+        return existsData.exists
+    }
+
+    const creationTime = get(media)[path]?.creationTime || 0
+    const existsData = await requestMain(Main.DOES_MEDIA_EXIST, { path, creationTime })
+
+    // update "media"
+    if (!existsData.exists || !creationTime) {
+        media.update(a => {
+            if (existsData.exists && a[path]) {
+                a[path].creationTime = existsData.creationTime
+            } else {
+                a[path] = { creationTime: existsData.creationTime }
+            }
+
+            return a
+        })
+    }
+
+    return existsData.exists
 }
 
 export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mimeType: string; mimeCodec: string } | null> {
@@ -362,10 +388,11 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     return base64Path || thumbnailPath
 }
 
+// check multiple times as thumbnail should be created if it does not exist
 export async function checkThatMediaExists(path: string, iteration = 1): Promise<boolean> {
     if (iteration > 8) return false
 
-    const exists = await checkMedia(path)
+    const exists = await doesMediaExist(path, true)
     if (!exists) {
         await wait(500 * iteration)
         return checkThatMediaExists(path, iteration + 1)

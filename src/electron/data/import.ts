@@ -117,7 +117,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
     }
 
     if (id === "songbeamer") {
-        const encoding = importSettings.encoding.id
+        const encoding = importSettings.encoding
         const fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
         const custom = {
             files: fileContents,
