@@ -11,7 +11,7 @@
 </script>
 
 <div class="cameras">
-    <Cameras on:click={selectCamera} />
+    <Cameras on:click={selectCamera} showPlayOnHover={false} />
 </div>
 
 <style>
@@ -23,9 +23,13 @@
         gap: 5px;
 
         background-color: var(--primary-darker);
+        border-radius: 8px;
     }
 
     .cameras :global(.main) {
         background-color: var(--primary-darkest);
+        border-radius: 4px;
+
+        overflow: hidden;
     }
 </style>

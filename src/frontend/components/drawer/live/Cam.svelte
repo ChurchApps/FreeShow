@@ -19,6 +19,7 @@
     export let cam: Cam
     export let item = false
     export let style = ""
+    export let showPlayOnHover = true
 
     let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
@@ -115,7 +116,7 @@
         </video>
     {/if}
 {:else}
-    <Card class="context #camera_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click={click} label={cam.name} icon="camera" white={!cam.id.includes("cam")} showPlayOnHover>
+    <Card class="context #camera_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click={click} label={cam.name} icon="camera" white={!cam.id.includes("cam")} {showPlayOnHover}>
         <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
             <!-- icons -->
             <div class="icons">

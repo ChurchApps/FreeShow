@@ -112,14 +112,20 @@
         popupData.set({ ...$popupData, id })
     }
 
-    function updateValue(key: string, e: any, checkbox = false) {
-        let value = e.detail ?? e.target?.value ?? e
-        if (checkbox) value = e.target?.checked
+    function updateValue(key: string, e: any) {
+        let value = e.detail ?? e
 
         action[key] = value
-        console.log(action)
     }
-    $: console.log(action.keypressActivate)
+    function updateAction(key: string, value: string) {
+        if (!value) return updateValue(key, "")
+
+        actions.update((a) => {
+            if (!a[id]) return a
+            a[id][key] = value
+            return a
+        })
+    }
 
     let autoActionName = ""
     function changeAction(e, index = -1) {
@@ -417,6 +423,7 @@
         {#if showMore && !mode && !actionSelector && !actionActivationSelector}
             <MaterialPopupButton
                 label="midi.activate_keypress"
+                disabled={!action.name}
                 style="margin-top: 10px;"
                 {id}
                 name={(action.keypressActivate || "").toUpperCase()}
@@ -429,7 +436,7 @@
                     revert: $activePopup,
                     existingShortcuts
                 }}
-                on:change={(e) => updateValue("keypressActivate", e?.detail || "")}
+                on:change={(e) => updateAction("keypressActivate", e?.detail || "")}
                 allowEmpty
             />
 
@@ -441,12 +448,16 @@
             <InputRow arrow={customActionActivations.find((a) => a.id === customActivation)?.inputs}>
                 <MaterialPopupButton
                     label="actions.custom_activation"
+                    disabled={!action.name}
                     name={customActionActivations.find((a) => a.id === customActivation)?.name || ""}
                     value={customActivation}
                     icon="trigger"
                     popupId="about"
                     openEvent={() => (actionActivationSelector = true)}
-                    on:change={() => updateValue("customActivation", "")}
+                    on:change={() => {
+                        updateValue("customActivation", "")
+                        updateValue("enabled", true)
+                    }}
                     allowEmpty
                 />
 

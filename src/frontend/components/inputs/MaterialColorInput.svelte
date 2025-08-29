@@ -151,6 +151,7 @@
         cursor: pointer;
 
         --margin: 6px;
+        min-height: 50px;
         height: 50px;
     }
     .textfield.disabled {

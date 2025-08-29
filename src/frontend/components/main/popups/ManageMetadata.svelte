@@ -60,15 +60,13 @@
 
 <HRule title="sort.custom" />
 
-<div style="margin-top: 10px;">
-    {#each customMetadataValues as name}
-        <InputRow>
-            <MaterialTextInput label="inputs.name" value={name} on:change={(e) => updateCustom(name, e)} autofocus={!name} />
-            <MaterialButton icon="delete" on:click={() => removeCustom(name)} white />
-        </InputRow>
-    {/each}
+{#each customMetadataValues as name}
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={name} on:change={(e) => updateCustom(name, e)} autofocus={!name} />
+        <MaterialButton icon="delete" on:click={() => removeCustom(name)} white />
+    </InputRow>
+{/each}
 
-    <MaterialButton icon="add" variant="outlined" style="width: 100%;" disabled={emptyEntry} on:click={addCustom}>
-        <T id="settings.add" />
-    </MaterialButton>
-</div>
+<MaterialButton icon="add" variant="outlined" style="width: 100%;" disabled={emptyEntry} on:click={addCustom}>
+    <T id="settings.add" />
+</MaterialButton>

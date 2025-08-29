@@ -7,6 +7,8 @@
     import Center from "../../system/Center.svelte"
     import Cam from "./Cam.svelte"
 
+    export let showPlayOnHover = true
+
     let cams: { name: string; id: string; group: string }[] = []
     navigator.mediaDevices?.enumerateDevices()?.then((devices) => {
         if (!devices) return
@@ -30,7 +32,7 @@
 
 {#if cams.length}
     {#each cams as cam}
-        <Cam {cam} on:click={(e) => click(e.detail, cam)} style={getStyle(cam.id, $media)} />
+        <Cam {cam} on:click={(e) => click(e.detail, cam)} style={getStyle(cam.id, $media)} {showPlayOnHover} />
     {/each}
 {:else}
     <Center faded>

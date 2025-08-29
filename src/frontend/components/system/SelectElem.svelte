@@ -18,6 +18,7 @@
     export let fileOver = false
     export let borders: "all" | "center" | "edges" = "all"
     export let triggerOnHover = false
+    export let dropAbove = false
     let elem: HTMLElement | undefined
 
     function enter(e: any) {
@@ -338,6 +339,10 @@
     <!-- TODO: validateDrop(id, $selected.id, true) -->
     {#if trigger && (dragActive || fileOver)}
         <div id={thisId} class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
+            {#if dropAbove}
+                <span id="start" class="TriggerBlock over" />
+            {/if}
+
             {#if borders === "all" || borders === "edges"}
                 <span id="start" class="TriggerBlock" on:dragover={() => dragOver("start")} />
             {/if}
@@ -429,5 +434,14 @@
         inset-inline-end: calc(var(--border-width) / 2 * -1);
         height: 100%;
         width: var(--border-width);
+    }
+
+    .trigger span.over {
+        position: absolute;
+        top: 0;
+        transform: translateY(-100%);
+
+        height: 10px;
+        display: flex;
     }
 </style>

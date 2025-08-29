@@ -6,7 +6,7 @@
     import { dictionary } from "../../stores"
 
     export let label: string
-    export let value: string // expected format: "YYYY-MM-DD" for <input type="date">
+    export let value: string // expected format: "12:00"
     export let defaultValue: string | null = null
 
     export let id = ""
@@ -14,6 +14,7 @@
 
     export let disabled = false
     export let autofocus = false
+    export let isDate = false
 
     const dispatch = createEventDispatcher()
 
@@ -60,7 +61,11 @@
 <div class="textfield filled" class:disabled data-title={translateText(title)} style={$$props.style || null}>
     <div class="background" />
 
-    <input bind:value type="time" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
+    {#if isDate}
+        <input bind:value type="date" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
+    {:else}
+        <input bind:value type="time" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
+    {/if}
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 

@@ -212,6 +212,8 @@
             return a
         })
     }
+
+    let showMoreRN = false
 </script>
 
 {#if !existing && !chosenType}
@@ -231,15 +233,21 @@
 
     {#if currentVariable.type === "number"}
         <MaterialNumberInput label="variables.default_value" value={currentVariable.default || 0} step={1} {min} {max} on:change={(e) => updateValue(e.detail, "default")} />
-        <MaterialNumberInput label="variables.minimum" value={currentVariable.minValue ?? minDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "minValue")} />
-        <MaterialNumberInput label="variables.maximum" value={currentVariable.maxValue ?? maxDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "maxValue")} />
+        <InputRow>
+            <MaterialNumberInput label="variables.minimum" value={currentVariable.minValue ?? minDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "minValue")} />
+            <MaterialNumberInput label="variables.maximum" value={currentVariable.maxValue ?? maxDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "maxValue")} />
+        </InputRow>
 
         <!-- WIP custom step sizes "1,8:2,10:2" ?? -->
     {:else if currentVariable.type === "random_number"}
-        <MaterialToggleSwitch label="popup.animate" checked={currentVariable.animate} defaultValue={false} on:change={(e) => updateValue(e.detail, "animate")} />
-        <MaterialToggleSwitch label="edit.each_number_once" checked={currentVariable.eachNumberOnce} defaultValue={false} on:change={(e) => updateValue(e.detail, "eachNumberOnce")} />
+        <MaterialButton class="popup-options {showMoreRN ? 'active' : ''}" icon="options" iconSize={1.3} title={showMoreRN ? "actions.close" : "create_show.more_options"} on:click={() => (showMoreRN = !showMoreRN)} white />
 
-        <HRule />
+        {#if showMoreRN}
+            <MaterialToggleSwitch label="popup.animate" checked={currentVariable.animate} defaultValue={false} on:change={(e) => updateValue(e.detail, "animate")} />
+            <MaterialToggleSwitch label="edit.each_number_once" checked={currentVariable.eachNumberOnce} defaultValue={false} on:change={(e) => updateValue(e.detail, "eachNumberOnce")} />
+
+            <HRule />
+        {/if}
 
         {#each currentVariable.sets || [DEFAULT_SET] as set, i}
             <InputRow style="border-radius: 4px;overflow: hidden;">

@@ -4,12 +4,11 @@
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
-    import Checkbox from "../inputs/Checkbox.svelte"
-    import Color from "../inputs/Color.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
-    import NumberInput from "../inputs/NumberInput.svelte"
+    import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import Tabs from "../main/Tabs.svelte"
     import { clearDrawing } from "../output/clear"
-    import Panel from "../system/Panel.svelte"
 
     const defaults = {
         focus: {
@@ -61,10 +60,7 @@
 
     $: tool = $drawTool
 
-    const change = (e: any, key: string) => update(key, e.detail)
-    const check = (e: any, key: string) => update(key, e.target.checked)
-
-    const update = (key: string, value: any) => {
+    const update = (value: any, key: string) => {
         drawSettings.update((a) => {
             a[tool][key] = value
             return a
@@ -93,108 +89,54 @@
     }
 </script>
 
-<div class="main border">
-    <div class="padding">
-        <Panel>
-            {#key tool}
-                <h6>
-                    <Icon id={tool} white right />
-                    <T id="draw.{tool}" />
-                </h6>
+<Tabs tabs={{ tool: { name: "draw." + tool, icon: tool } }} active="tool" />
 
-                <div class="options">
-                    {#key $drawSettings}
-                        {#if $drawSettings[tool]}
-                            {#each Object.entries($drawSettings[tool]) as [key, value]}
-                                {#if key !== "clear" && (key !== "hold" || tool !== "paint")}
-                                    <CombinedInput>
-                                        {#if key !== "clear" && (key !== "hold" || tool !== "paint")}
-                                            <p><T id="draw.{key}" /></p>
-                                        {/if}
-                                        {#if key === "color"}
-                                            <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                                        {:else if ["glow", "hold", "rainbow", "hollow", "straight", "dots", "threed", "link_to_slide"].includes(key)}
-                                            <div class="alignRight">
-                                                <Checkbox checked={value} on:change={(e) => check(e, key)} />
-                                            </div>
-                                        {:else if key === "opacity"}
-                                            <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
-                                        {:else if key === "radius"}
-                                            <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
-                                        {:else if key !== "clear" && key !== "hold"}
-                                            <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
-                                        {:else}
-                                            <div class="empty" id={key}></div>
-                                        {/if}
-                                    </CombinedInput>
-                                {/if}
-                            {/each}
-                        {/if}
-                    {/key}
-                </div>
-            {/key}
-        </Panel>
-    </div>
+<div class="main">
+    {#each Object.entries($drawSettings[tool] || {}) as [key, value]}
+        {@const hidden = key === "hold" && tool === "paint"}
 
-    <div class="bottom">
-        {#if tool === "paint"}
-            <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
-                <Icon id="clear" size={2} right white={!!$paintCache?.length} />
-                <T id="clear.drawing" />
-            </Button>
+        {#if !hidden}
+            {#if key === "color"}
+                <MaterialColorInput label="draw.{key}" {value} on:change={(e) => update(e.detail, key)} />
+            {:else if key === "opacity"}
+                <MaterialNumberInput label="draw.{key}" value={value * 10} min={1} max={10} on:change={(e) => update(e.detail / 10, key)} />
+            {:else if key === "radius"}
+                <MaterialNumberInput label="draw.{key}" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
+            {:else if key === "size"}
+                <MaterialNumberInput label="draw.{key}" {value} min={1} max={2000} step={10} on:change={(e) => update(e.detail, key)} />
+            {:else}
+                <MaterialToggleSwitch label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
+            {/if}
         {/if}
+    {/each}
+</div>
 
-        <Button style="flex: 1;" on:click={reset} dark center>
-            <Icon id="reset" right />
-            <T id="actions.reset" />
+<div class="bottom">
+    {#if tool === "paint"}
+        <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
+            <Icon id="clear" size={2} right white={!!$paintCache?.length} />
+            <T id="clear.drawing" />
         </Button>
-    </div>
+    {/if}
+
+    <Button style="flex: 1;" on:click={reset} dark center>
+        <Icon id="reset" right />
+        <T id="actions.reset" />
+    </Button>
 </div>
 
 <style>
     .main {
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        overflow: auto;
         height: 100%;
-    }
 
-    h6 {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-weight: 600;
-        letter-spacing: 0.5px;
-
-        padding: 0.3em 0.5em;
-        background-color: var(--primary-darkest);
-        border-radius: var(--border-radius);
-
-        /* font-size: 0.9em; */
-        text-transform: none !important;
-        margin: 0 !important;
-    }
-
-    .padding {
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        overflow-x: hidden;
-        height: 100%;
-    }
-
-    .options {
         padding: 10px;
     }
 
     .bottom {
         display: flex;
         flex-direction: column;
-    }
-
-    .empty {
-        background-color: var(--primary);
-        width: 100%;
     }
 </style>
