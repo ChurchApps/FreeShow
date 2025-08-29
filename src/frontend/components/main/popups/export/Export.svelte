@@ -5,18 +5,16 @@
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, dataPath, projects, showsCache, showsPath, special } from "../../../../stores"
-    import { translate } from "../../../../utils/language"
+    import { translateText } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
     import { clone } from "../../../helpers/array"
-    import Icon from "../../../helpers/Icon.svelte"
     import { loadShows } from "../../../helpers/setShow"
     import T from "../../../helpers/T.svelte"
-    import Button from "../../../inputs/Button.svelte"
-    import Checkbox from "../../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../../inputs/CombinedInput.svelte"
+    import HRule from "../../../input/HRule.svelte"
     import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../../inputs/MaterialMultiChoice.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
     import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
@@ -37,7 +35,7 @@
         return clone(exportFormats)
             .filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
             .map((a) => {
-                a.name = translate(a.name, { parts: true })
+                a.name = translateText(a.name)
                 a.icon = `./import-logos/${formatIcons[a.id]}.webp`
                 return a
             })
@@ -120,22 +118,15 @@
     let pdfOptions: any = {}
 
     function setSpecial(e: any, key: string) {
-        let value = e?.target?.checked
+        let value = e.detail
         special.update((a) => {
             a[key] = value
             return a
         })
     }
 
-    // Helper function to check if a show has chords
-    function showHasChords(show: Show | null): boolean {
-        if (!show) return false
-
-        return Object.values(show.slides || {}).some((slide) => slide.items?.some((item) => item.lines?.some((line) => line.chords && line.chords.length > 0)))
-    }
-
     $: exportTypesList = clone(exportTypes).map((a: any) => {
-        a.name = translate(a.name, { parts: true })
+        a.name = translateText(a.name)
         if (!getShowIdsFromType[a.id || ""]?.(false)?.length) a.disabled = true
         return a
     })
@@ -157,28 +148,16 @@
     <!-- margin-bottom: 10px; -->
     <div style="display: flex;">
         <p style="white-space: break-spaces;opacity: 0.6;"><T id="export.export_as" /></p>
-        <p><T id={typeName} /></p>
+        <p>{translateText(typeName)}</p>
         <p style="white-space: break-spaces;opacity: 0.6;"><T id="export.export_as" index={1} />&nbsp;</p>
-        <p>
-            {#if formatName.includes("$:")}<T id={formatName} />{:else}{formatName}{/if}
-        </p>
+        <p>{translateText(formatName)}</p>
     </div>
 
-    <hr />
-
     {#if exportFormat === "pdf"}
-        <PdfExport bind:pdfOptions {previewShow} {showHasChords} />
-
-        <hr />
+        <HRule />
+        <PdfExport bind:pdfOptions {previewShow} />
     {:else if exportFormat === "project"}
-        <CombinedInput>
-            <p><T id="export.include_media" /></p>
-            <div class="alignRight">
-                <Checkbox checked={$special.projectIncludeMedia ?? true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
-            </div>
-        </CombinedInput>
-
-        <hr />
+        <MaterialToggleSwitch label="export.include_media" style="margin-top: 20px;" checked={$special.projectIncludeMedia ?? true} defaultValue={true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
     {/if}
 
     {#if loading}
@@ -187,24 +166,14 @@
         </Center>
     {/if}
 
-    <CombinedInput>
-        <Button style="width: 100%;" disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick} center dark>
-            <div style="display: flex;align-items: center;">
-                <Icon id="export" size={1.2} right />
-                <T id="export.export" />
-                {#if showIds.length > 1 && exportFormat !== "project"}
-                    <span style="opacity: 0.5;padding-inline-start: 10px;align-content: center;">({showIds.length})</span>
-                {/if}
-            </div>
-        </Button>
-    </CombinedInput>
+    <MaterialButton
+        variant="contained"
+        style="margin-top: 20px;"
+        icon="export"
+        info={showIds.length > 1 && exportFormat !== "project" ? showIds.length.toString() : ""}
+        disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"}
+        on:click={exportClick}
+    >
+        <T id="export.export" />
+    </MaterialButton>
 {/if}
-
-<style>
-    hr {
-        border: none;
-        height: 2px;
-        margin: 20px 0;
-        background-color: var(--primary-lighter);
-    }
-</style>

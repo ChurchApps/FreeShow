@@ -72,7 +72,7 @@
         )
     }
 
-    $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0
+    $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.type === "default" ? 1 : options.type !== "text" ? options.grid[0] : 1.5)) : 0
 
     // dynamic counter
     function getGroupName(show: Show, group: string, slideID: string) {
@@ -242,9 +242,9 @@
     }
 </script>
 
-<main class:flow={!options.text} class:chord-sheet={options.chordSheet}>
+<main class:flow={options.type === "slides"} class:chord-sheet={options.type === "chordSheet"}>
     {#if shows.length}
-        {#if options.chordSheet}
+        {#if options.type === "chordSheet"}
             <!-- Chord Sheet Export - Professional layout -->
             <div
                 class="page chord-sheet-page"
@@ -317,20 +317,24 @@
                 </div>
             {/if}
             {#each layoutSlides[shows[index].id || ""] as slide, i}
-                <div class="slide" class:padding={options.text ? i === 0 : i < options.grid[0]} style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
+                <div
+                    class="slide"
+                    class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]}
+                    style={options.type !== "text" ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}
+                >
                     <!-- TODO: different slide heights! -->
                     <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
                     {#if options.groups}
-                        <p class="group" style={options.slides ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                        <p class="group" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
                             {slide.group ? getGroupName(shows[index], slide.group, slide.id) : ""}
                         </p>
                     {/if}
                     {#if options.numbers}
-                        <p class="number" style={options.slides ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                        <p class="number" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
                             {i + 1}
                         </p>
                     {/if}
-                    {#if options.slides}
+                    {#if options.type !== "text"}
                         <div class="slides" class:invert={options.invert}>
                             <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
                                 {#if shows[index].media?.[slide.data?.background]?.path}
@@ -348,8 +352,8 @@
                             </Zoomed>
                         </div>
                     {/if}
-                    {#if options.text}
-                        <div class="text" class:margin={!options.slides}>
+                    {#if options.type !== "slides"}
+                        <div class="text" class:margin={options.type === "text"}>
                             {#if slide.items}
                                 {#each slide.items as item}
                                     {#if item.type === undefined || item.type === "text" || item.type === "timer"}
@@ -366,7 +370,7 @@
                     </div>
                 {/if}
             {/each}
-            {#if options.pageNumbers && (layoutSlides[shows[index].id || ""].length - 1) / (options.text ? 1 : options.grid[0]) / pages < pages}
+            {#if options.pageNumbers && (layoutSlides[shows[index].id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / pages < pages}
                 <div class="page" style="top: calc(842pt * {pages - 0.012} - 30px);">
                     {pages}/{pages}
                 </div>

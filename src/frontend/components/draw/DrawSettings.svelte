@@ -4,9 +4,9 @@
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
+    import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../main/Tabs.svelte"
     import { clearDrawing } from "../output/clear"
 
@@ -105,7 +105,7 @@
             {:else if key === "size"}
                 <MaterialNumberInput label="draw.{key}" {value} min={1} max={2000} step={10} on:change={(e) => update(e.detail, key)} />
             {:else}
-                <MaterialToggleSwitch label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
+                <MaterialCheckbox label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
             {/if}
         {/if}
     {/each}
