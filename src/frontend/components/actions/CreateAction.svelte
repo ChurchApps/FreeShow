@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activePopup, categories, dictionary, popupData } from "../../stores"
-    import { translate } from "../../utils/language"
+    import { actions, activePopup, audioPlaylists, audioStreams, categories, dictionary, effects, emitters, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import { translate, translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -15,6 +15,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import { getGlobalGroupName } from "../show/tools/groups"
     import Center from "../system/Center.svelte"
     import CustomInput from "./CustomInput.svelte"
     import { actionData } from "./actionData"
@@ -179,6 +180,38 @@
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
 
+    const getName = (object) => object[actionValue.id]?.name || ""
+    function getActionInfo(actionId: string): string {
+        const id = actionId.split(":")[0]
+        // console.log(id, actionValue)
+
+        if (id === "change_variable") return getName($variables)
+        if (id === "id_start_timer") return getName($timers)
+        if (id === "start_playlist") return getName($audioPlaylists)
+        if (id === "id_select_overlay" || id === "clear_overlay") return getName($overlays)
+        if (id === "emit_action") return $emitters[actionValue.emitter]?.name || ""
+        if (id === "start_trigger") return getName($triggers)
+        if (id === "run_action" || id === "toggle_action") return getName($actions)
+        if (id === "id_start_effect") return getName($effects)
+        if (id === "start_show") return getName($shows)
+        if (id === "id_select_project") return getName($projects)
+        if (id === "set_template") return getName($templates)
+        if (id === "toggle_output") return getName($outputs)
+        if (id === "id_select_stage_layout") return getName($stageShows)
+        if (id === "start_audio_stream") return getName($audioStreams)
+        if (id === "wait") return Number(actionValue.number) + "s"
+        if (id === "id_select_group") return getGlobalGroupName(actionValue.id)
+        if (id === "start_camera") return actionValue.label || ""
+        if (id === "start_screen") return actionValue.name || ""
+        if (id === "change_volume") return ((actionValue.volume || 1) * 100).toString()
+        if (id.includes("index")) return actionValue.index || "0"
+        if (id.includes("name")) return actionValue.value || ""
+        if (id === "change_stage_output_layout") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${$stageShows[actionValue.stageLayoutId]?.name || ""}`
+        if (id === "change_output_style") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${actionValue.styleId ? $styles[actionValue.styleId]?.name || "" : translateText("main.none")}`
+
+        return ""
+    }
+
     let commonOnly = full && mode !== "slide"
 </script>
 
@@ -264,6 +297,12 @@
                             <T id="actions.choose_action" />
                         {/if}
                     </p>
+
+                    {#if dataInputs && !dataOpened && !dataMenuOpened}
+                        <span style="opacity: 0.5;font-size: 0.8em;">
+                            {getActionInfo(actionId)}
+                        </span>
+                    {/if}
                 </MaterialButton>
             {/if}
         </InputRow>

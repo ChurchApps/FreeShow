@@ -201,11 +201,11 @@
 
     onMount(() => {
         document.addEventListener("click", handleClickOutside)
-        // document.addEventListener("focusout", handleFocusOut, true)
+        document.addEventListener("focusout", handleFocusOut, true)
 
         return () => {
             document.removeEventListener("click", handleClickOutside)
-            // document.removeEventListener("focusout", handleFocusOut, true)
+            document.removeEventListener("focusout", handleFocusOut, true)
         }
     })
 

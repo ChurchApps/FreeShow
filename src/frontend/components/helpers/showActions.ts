@@ -832,7 +832,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         if (data.actions.audioStream) AudioPlayer.start(data.actions.audioStream, { name: "" })
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
-        if (data.actions.outputStyle) changeOutputStyle(data.actions)
+        if (data.actions.outputStyle) changeOutputStyle(data.actions as any)
         if (data.actions.startTimer) playSlideTimers({ showId, slideId: layout[index].id, overlayIds: data.overlays || [] })
     }
 
@@ -924,23 +924,38 @@ export async function startShow(showId: string) {
     updateOut(showId, 0, slideRef, true, "", 1200)
 }
 
-export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {
-    const type = styleOutputs?.type || "active"
-    const outputsList = styleOutputs?.outputs || []
+export function changeOutputStyle(data: API_output_style) {
+    // pre 1.5.0 (deprecated)
+    let outputStyle: string | undefined = (data as any).outputStyle
+    const styleOutputs: any = (data as any).styleOutputs
+    if (outputStyle || styleOutputs) {
+        const type = styleOutputs?.type || "active"
+        const outputsList = styleOutputs?.outputs || []
 
-    const chosenOutputs = getActiveOutputs(get(outputs), type === "active", true, true)
-    chosenOutputs.forEach(changeStyle)
+        const chosenOutputs = getActiveOutputs(get(outputs), type === "active", true, true)
+        chosenOutputs.forEach(changeStyle)
 
-    function changeStyle(outputId: string) {
-        if (type === "specific") outputStyle = outputsList[outputId]
-        if (!outputStyle) return
+        function changeStyle(outputId: string) {
+            if (type === "specific") outputStyle = outputsList[outputId]
+            if (!outputStyle) return
 
-        outputs.update((a) => {
-            a[outputId].style = outputStyle
+            outputs.update((a) => {
+                a[outputId].style = outputStyle
 
-            return a
-        })
+                return a
+            })
+        }
     }
+    ///
+
+    const outputIds = data.outputId ? [data.outputId] : getActiveOutputs(get(outputs), false, true, true)
+    outputs.update((a) => {
+        outputIds.forEach((outputId) => {
+            a[outputId].style = data.styleId || ""
+        })
+        return a
+    })
+
 
     refreshOut()
 }

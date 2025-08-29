@@ -32,7 +32,7 @@
     }
 </script>
 
-<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}">
+<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''} {$$props.class || ''}">
     <div class="background" />
     <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows} />
     <label for={id}>{translateText(label)}</label>

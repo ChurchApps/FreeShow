@@ -263,7 +263,7 @@
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
-    $: outputLabel = `${currentOutput?.bounds.width || 1920}x${currentOutput?.bounds.height || 1080}`
+    $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}

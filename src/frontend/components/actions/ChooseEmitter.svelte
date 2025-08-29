@@ -66,7 +66,7 @@
     }
 
     $: activeTemplate = value.template || "custom"
-    $: templatesList = [{ value: "custom", label: "actions.custom_key" }, ...initDropdownOptions(emitter?.templates || {})]
+    $: templatesList = [{ value: "custom", label: translateText("actions.custom_key") }, ...initDropdownOptions(emitter?.templates || {})]
     $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => emitter?.type === "midi" || a.name)
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))
@@ -75,7 +75,7 @@
 </script>
 
 <MaterialDropdown
-    label="emitters.emitter <span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>[{emitter.type}]</span>"
+    label="emitters.emitter {emitter?.type ? `<span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>${emitter.type.toUpperCase()}</span>` : ''}"
     options={emittersList}
     value={value.emitter}
     on:change={(e) => updateValue("emitter", e.detail)}
@@ -89,7 +89,7 @@
         </InputRow>
     {/if}
 
-    <MaterialDropdown label="emitters.message_template" options={templatesList} value={activeTemplate} on:click={(e) => updateValue("template", e.detail)} />
+    <MaterialDropdown label="emitters.message_template" options={templatesList} value={activeTemplate || "custom"} on:change={(e) => updateValue("template", e.detail)} />
 
     {#if templateInputs.length}
         {#if emitter?.templates?.[activeTemplate]?.description}
@@ -101,13 +101,9 @@
 
         {#if emitter?.type !== "midi"}
             {#each templateInputs as input, i}
-                <MaterialTextInput
-                    label={input.name}
-                    disabled={!!input.value}
-                    placeholder={translateText("variables.value")}
-                    value={typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
-                    on:change={(e) => setTemplateValue(i, e)}
-                />
+                {@const stringValue = typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
+
+                <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={(e) => setTemplateValue(i, e)} />
             {/each}
         {/if}
     {:else if emitter?.type === "midi"}
@@ -134,7 +130,7 @@
         <MaterialTextInput label="emitters.data" value={value.data || ""} on:change={(e) => updateValue("data", e)} />
     {/if}
 
-    <InputRow>
+    <InputRow style="background-color: var(--primary-darker);display: flex;align-items: center;justify-content: space-between;padding: 10px;">
         <p><T id="timer.preview" /></p>
         <p style="opacity: 0.5;overflow: hidden;" data-title={dataPreview}>{dataPreview}</p>
     </InputRow>

@@ -8,7 +8,7 @@ export const actionData = {
 
     // SHOWS
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
-    start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "id" }, // any play actions are incompatible with clear actions...
+    start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "start_show" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
     transpose_show_up: { name: "edit.transpose_up", icon: "up" },
     transpose_show_down: { name: "edit.transpose_down", icon: "down" },
@@ -47,12 +47,12 @@ export const actionData = {
     toggle_output_windows: { name: "actions.toggle_output_windows", icon: "outputs", incompatible: ["toggle_output"] },
     toggle_output: { canAddMultiple: true, name: "actions.toggle_output_window", icon: "outputs", input: "id", incompatible: ["toggle_output_windows"] },
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
-    change_output_style: { slideId: "outputStyle", common: true, name: "actions.change_output_style", icon: "styles", input: "output_style" },
+    change_output_style: { slideId: "outputStyle", common: true, canAddMultiple: true, name: "actions.change_output_style", icon: "styles", input: "change_output_style" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
 
     // STAGE
     // SECTION: "menu.stage",
-    change_stage_output_layout: { common: true, name: "actions.change_stage_output_layout", icon: "stage", input: "stage_output_layout" },
+    change_stage_output_layout: { common: true, canAddMultiple: true, name: "actions.change_stage_output_layout", icon: "stage", input: "stage_output_layout" },
     id_select_stage_layout: { name: "actions.id_change_stage_layout", icon: "stage", input: "id" },
 
     // AUDIO

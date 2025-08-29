@@ -2,15 +2,13 @@
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { dictionary, playingMetronome, special } from "../../../stores"
+    import { playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
     import AudioMix from "../audio/AudioMix.svelte"
     import Metronome from "../audio/Metronome.svelte"
@@ -23,8 +21,6 @@
     let active = Object.keys(tabs)[0]
 
     let settingsOpened = false
-
-    const isChecked = (e: any) => e.target.checked
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -52,14 +48,14 @@
     $: if (metronomeActive) active = "metronome"
 
     // audio outputs
-    let audioOutputs: { id: string; name: string }[] = []
+    let audioOutputs: { value: string; label: string }[] = []
     onMount(() => {
         navigator.mediaDevices
             .enumerateDevices()
             .then((devices) => {
                 // only get audio outputs & not "default" becuase that does not work
                 const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
-                audioOutputs = [{ id: "", name: "—" }, ...outputDevices.map((a) => ({ id: a.deviceId, name: a.label }))]
+                audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
             })
             .catch((err) => {
                 console.log(`${err.name}: ${err.message}`)
@@ -71,24 +67,11 @@
 
 {#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
-        <CombinedInput>
-            <p data-title={$dictionary.settings?.audio_fade_duration}><T id="settings.audio_fade_duration" /></p>
-            <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
-        </CombinedInput>
+        <MaterialNumberInput label="settings.audio_fade_duration" value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
 
-        <CombinedInput textWidth={70}>
-            <p data-title={$dictionary.audio?.mute_when_video_plays}><T id="audio.mute_when_video_plays" /></p>
-            <div class="alignRight">
-                <Checkbox checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(isChecked(e), "muteAudioWhenVideoPlays")} />
-            </div>
-        </CombinedInput>
-
-        <CombinedInput textWidth={70}>
-            <p data-title={$dictionary.audio?.allow_gaining_tip}><T id="audio.allow_gaining" /></p>
-            <div class="alignRight">
-                <Checkbox checked={$special.allowGaining || false} on:change={(e) => updateSpecial(isChecked(e), "allowGaining")} />
-            </div>
-        </CombinedInput>
+        <!-- defaultValue={false}  -->
+        <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
+        <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} />
 
         <!-- <CombinedInput textWidth={70}>
             <p data-title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
@@ -97,10 +80,7 @@
             </div>
         </CombinedInput> -->
 
-        <CombinedInput>
-            <p data-title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
-            <Dropdown style="width: 100%;" options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail?.id, "audioOutput")} />
-        </CombinedInput>
+        <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
     </main>
 {:else}
     <Tabs {tabs} bind:active style="flex: 1;" />

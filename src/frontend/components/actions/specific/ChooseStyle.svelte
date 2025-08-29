@@ -1,12 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { outputs, styles } from "../../../stores"
-    import T from "../../helpers/T.svelte"
-    import { keysToID, sortByName } from "../../helpers/array"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import type { API_output_style } from "../api"
     import { newToast } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
+    import { keysToID, sortByName } from "../../helpers/array"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import type { API_output_style } from "../api"
 
     export let value: API_output_style
 
@@ -14,15 +13,14 @@
     $: if (!Object.keys($styles).length) newToast("$toast.empty_styles")
 
     let styleOutputs = value.styleOutputs || { type: "active" }
-    $: currentStyle = $styles[styleId] || {}
 
     let outputsOptions = [
-        { id: "active", name: "$:actions.active_outputs:$" },
-        { id: "all", name: "$:actions.all_outputs:$" },
-        { id: "specific", name: "$:actions.specific_outputs:$" }
+        { value: "active", label: translateText("actions.active_outputs") },
+        { value: "all", label: translateText("actions.all_outputs") },
+        { value: "specific", label: translateText("actions.specific_outputs") }
     ]
     let outputsList = getList($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput)
-    let stylesList = getList($styles)
+    let stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
 
     function getList(list) {
         return sortByName(keysToID(list))
@@ -48,21 +46,12 @@
     }
 </script>
 
-<CombinedInput>
-    <p><T id="settings.display_settings" /></p>
-    <Dropdown value={outputsOptions.find((a) => a.id === styleOutputs.type)?.name || ""} options={outputsOptions} on:click={(e) => updateStyle("styleOutputs", { type: e.detail.id, outputs: styleOutputs.outputs || {} })} />
-</CombinedInput>
+<MaterialDropdown label="settings.display_settings" options={outputsOptions} value={styleOutputs.type} on:change={(e) => updateStyle("styleOutputs", { type: e.detail, outputs: styleOutputs.outputs || {} })} />
 
 {#if styleOutputs.type === "specific"}
     {#each outputsList as output}
-        <CombinedInput>
-            <p>{output.name}</p>
-            <Dropdown value={stylesList.find((a) => a.id === styleOutputs.outputs[output.id])?.name || "—"} options={[{ id: "", name: "—" }, ...stylesList]} on:click={(e) => setOutputStyle(output.id, e.detail.id)} />
-        </CombinedInput>
+        <MaterialDropdown label={output.name} options={stylesList} value={styleOutputs.outputs[output.id]} on:change={(e) => setOutputStyle(output.id, e.detail)} allowEmpty />
     {/each}
 {:else}
-    <CombinedInput>
-        <p><T id="edit.style" /></p>
-        <Dropdown value={currentStyle?.name || "—"} options={stylesList} on:click={(e) => updateStyle("outputStyle", e.detail.id)} />
-    </CombinedInput>
+    <MaterialDropdown label="edit.style" options={stylesList} value={styleId} on:change={(e) => updateStyle("outputStyle", e.detail)} allowEmpty />
 {/if}

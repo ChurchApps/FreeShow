@@ -7,6 +7,7 @@
 
     export let value: string
     export let defaultValue: string | null = null
+    export let autofill: string = ""
     export let label: string
 
     export let id = ""
@@ -48,21 +49,24 @@
         dispatch("change", value)
     }
 
+    function updateValue(value: string | null) {
+        dispatch("change", value)
+        dispatch("input", value)
+    }
+
     // RESET
 
     let resetFromValue: string | null = null
     function reset() {
         resetFromValue = value
-        dispatch("change", defaultValue)
-        dispatch("input", defaultValue)
+        updateValue(defaultValue)
         setTimeout(() => {
             resetFromValue = null
         }, 3000)
     }
 
     function undoReset() {
-        dispatch("change", resetFromValue)
-        dispatch("input", resetFromValue)
+        updateValue(resetFromValue)
         resetFromValue = null
     }
 </script>
@@ -76,6 +80,13 @@
 
     <span class="underline" />
 
+    {#if autofill}
+        <div class="remove">
+            <MaterialButton on:click={() => updateValue(autofill)} title="meta.autofill" white>
+                <Icon id="autofill" white />
+            </MaterialButton>
+        </div>
+    {/if}
     {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}

@@ -1,17 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, customMetadata, dictionary, outputs, popupData, shows, showsCache, styles, templates } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
+    import { activeShow, customMetadata, dictionary, outputs, shows, showsCache, styles, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
     import { getCustomMetadata, initializeMetadata, metadataDisplayValues } from "../../helpers/show"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import HRule from "../../input/HRule.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Panel from "../../system/Panel.svelte"
-    import Notes from "./Notes.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -43,8 +42,8 @@
         setTimeout(() => (loaded = true), 100)
     }
 
-    const changeValue = (e: any, key: string) => {
-        values[key] = e.target?.value || e.value || ""
+    const changeValue = (value: string, key: string) => {
+        values[key] = value
         updateData(values, "meta")
 
         const quickAccessKeys = ["number", "CCLI"]
@@ -68,17 +67,15 @@
         }
     }
 
-    function toggleAutoMedia(e: any) {
-        let value = e.target.checked
-        metadata.autoMedia = value
+    function updateMetadata(e: any, key: string) {
+        metadata[key] = e.detail
         updateData(metadata, "metadata")
     }
 
-    function toggleOverride(e: any) {
-        let value = e.target.checked
-        metadata.override = value
-        updateData(metadata, "metadata")
-        hide()
+    function updateMessageTemplate(e: any) {
+        if (currentShow.message) message = currentShow.message
+        message.template = e.detail
+        updateData(message, "message")
     }
 
     function updateData(data, key) {
@@ -107,14 +104,6 @@
         // remove numbers
         title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim()
     }
-    function autofill(key: string) {
-        if (!autofillValues[key]) return
-
-        const value = autofillValues[key]()
-        if (!value) return
-
-        changeValue({ value }, key)
-    }
 
     $: slideBackgrounds = Object.values(currentShow?.layouts)
         .map((a) => a.slides.map((a) => a.background).filter(Boolean))
@@ -126,172 +115,67 @@
 
 <Panel flex column={!tempHide}>
     {#if metadata.autoMedia !== true}
-        <div class="gap context #metadata_tools" style={slideBackgrounds.length ? "" : "margin-bottom: 10px;"}>
+        <div class="context #metadata_tools" style="padding: 10px;">
             {#each Object.entries(values) as [key, value]}
-                <CombinedInput textWidth={40}>
-                    {#if $dictionary.meta?.[key]}
-                        <p style="overflow: hidden;display: block;align-content: center;" data-title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
-                    {:else}
-                        <p style="overflow: hidden;display: block;align-content: center;text-transform: capitalize;">{key}</p>
-                    {/if}
-                    <TextInput {value} style={key === "number" && currentShow?.quickAccess?.number ? "border-bottom: 1px solid var(--secondary);" : ""} on:change={(e) => changeValue(e, key)} />
+                {@const isDefault = !!$dictionary.meta?.[key]}
+                {@const label = isDefault ? translateText(`meta.${key}`) : `<span style="text-transform: capitalize;">${key}</span>`}
+                {@const shouldAutofill = (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
+                {@const autofillValue = shouldAutofill ? autofillValues[key]?.() || "" : ""}
 
-                    {#if (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
-                        <Button title={$dictionary.meta?.autofill} on:click={() => autofill(key)}>
-                            <Icon id="autofill" white />
-                        </Button>
-                    {/if}
-                </CombinedInput>
+                <MaterialTextInput {label} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
             {/each}
         </div>
     {/if}
 
     {#if slideBackgrounds.length}
-        <div class="styling">
-            <div>
-                <p data-title="{$dictionary.meta?.auto_media} (EXIF from .JPEG)"><T id="meta.auto_media" /></p>
-                <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
-            </div>
+        <div style="padding: 10px;">
+            <MaterialToggleSwitch label="meta.auto_media" data="EXIF from .JPEG" checked={metadata.autoMedia || false} defaultValue={false} on:change={(e) => updateMetadata(e, "autoMedia")} />
         </div>
     {/if}
 
     <!-- message -->
-    <h5><T id="meta.message" /></h5>
-    <div class="message">
-        <p style="padding-bottom: 10px;"><T id="meta.message_tip" /></p>
-        <Notes value={message.text || ""} class="context #meta_message" on:change={(e) => updateData({ ...message, text: e.detail }, "message")} lines={2} />
+    <HRule title="meta.message" />
+    <div style="padding: 10px;">
+        <MaterialTextarea label="meta.message_tip" class="context #meta_message" value={message.text || ""} rows={2} on:change={(e) => updateData({ ...message, text: e.detail }, "message")} />
     </div>
 
     <!-- styling -->
-    <h5><T id="edit.style" /></h5>
-    <div class="styling">
-        <div>
-            <p><T id="meta.override_output" /></p>
-            <Checkbox checked={metadata.override || false} on:change={toggleOverride} />
-        </div>
+    <HRule title="edit.style" />
+    <div style="padding: 10px;">
+        <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} on:change={(e) => updateMetadata(e, "override")} />
+
         {#if metadata.override}
-            <!-- meta display -->
-            <CombinedInput style="margin-top: 10px;">
-                <p data-title={$dictionary.meta?.display_metadata}><T id="meta.display_metadata" /></p>
-                <Button
-                    on:click={() => {
-                        popupData.set({
-                            action: "show_metadata",
-                            active: metadataDisplay,
-                            trigger: (id) => {
-                                metadata.display = id
-                                updateData(metadata, "metadata")
-                            }
-                        })
-                        activePopup.set("metadata_display")
-                    }}
-                    style="overflow: hidden;"
-                    bold={false}
-                >
-                    <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="info" />
-                        <p style="opacity: 1;font-size: 1em;">
-                            {#key metadataDisplay}
-                                <T id={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} />
-                            {/key}
-                        </p>
-                    </div>
-                </Button>
-                <!-- WIP This does not work with the "Override output style" option -->
-                <!-- {#if metadata.display}
-                    <Button
-                        title={$dictionary.actions?.remove}
-                        on:click={() => {
-                            metadata.display = ""
-                            updateData(metadata, "metadata")
-                        }}
-                        redHover
-                    >
-                        <Icon id="close" size={1.2} white />
-                    </Button>
-                {/if} -->
-            </CombinedInput>
-            {#if (metadata.display || "never") !== "never"}
-                <!-- meta template -->
-                <CombinedInput>
-                    <p data-title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
-                    <Button
-                        on:click={() => {
-                            popupData.set({
-                                action: "select_template",
-                                active: (metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata",
-                                trigger: (id) => {
-                                    metadata.template = id
-                                    updateData(metadata, "metadata")
-                                }
-                            })
-                            activePopup.set("select_template")
-                        }}
-                        style="overflow: hidden;"
-                        bold={false}
-                    >
-                        <div style="display: flex;align-items: center;padding: 0;">
-                            <Icon id="templates" />
-                            <p style="opacity: 1;font-size: 1em;">{$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name || "—"}</p>
-                        </div>
-                    </Button>
-                    {#if metadata.template}
-                        <Button
-                            title={$dictionary.actions?.remove}
-                            on:click={() => {
-                                metadata.template = ""
-                                updateData(metadata, "metadata")
-                            }}
-                            redHover
-                        >
-                            <Icon id="close" size={1.2} white />
-                        </Button>
-                    {/if}
-                </CombinedInput>
+            <MaterialPopupButton
+                label="meta.display_metadata"
+                value={metadataDisplay}
+                defaultValue="never"
+                name={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""}
+                popupId="metadata_display"
+                icon="info"
+                on:change={(e) => updateMetadata(e, "display")}
+            />
+
+            {#if metadataDisplay !== "never"}
+                <MaterialPopupButton
+                    label="meta.meta_template"
+                    value={(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"}
+                    defaultValue="metadata"
+                    name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name}
+                    popupId="select_template"
+                    icon="templates"
+                    on:change={(e) => updateMetadata(e, "template")}
+                />
             {/if}
-            <!-- message display -->
-            <!-- <CombinedInput>
-                <p data-title={$dictionary.meta?.display_message}><T id="meta.display_message" /></p>
-                <Dropdown options={metaDisplay} value={metaDisplay.find((a) => a.id === (message.display || outputShowSettings.displayMessage || "never"))?.name || "—"} on:click={(e) => updateData()} />
-            </CombinedInput> -->
-            <!-- message template -->
-            <CombinedInput>
-                <p data-title={$dictionary.meta?.message_template}><T id="meta.message_template" /></p>
-                <Button
-                    on:click={() => {
-                        popupData.set({
-                            action: "select_template",
-                            active: (message.template ? message.template : outputShowSettings.messageTemplate) || "message",
-                            trigger: (id) => {
-                                if (currentShow.message) message = currentShow.message
-                                message.template = id
-                                updateData(message, "message")
-                            }
-                        })
-                        activePopup.set("select_template")
-                    }}
-                    style="overflow: hidden;"
-                    bold={false}
-                >
-                    <div style="display: flex;align-items: center;padding: 0;">
-                        <Icon id="templates" />
-                        <p style="opacity: 1;font-size: 1em;">{$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name || "—"}</p>
-                    </div>
-                </Button>
-                {#if message.template}
-                    <Button
-                        title={$dictionary.actions?.remove}
-                        on:click={() => {
-                            if (currentShow.message) message = currentShow.message
-                            message.template = ""
-                            updateData(message, "message")
-                        }}
-                        redHover
-                    >
-                        <Icon id="close" size={1.2} white />
-                    </Button>
-                {/if}
-            </CombinedInput>
+
+            <MaterialPopupButton
+                label="meta.message_template"
+                value={(message.template ? message.template : outputShowSettings.messageTemplate) || "message"}
+                defaultValue="message"
+                name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={updateMessageTemplate}
+            />
         {/if}
     </div>
 
@@ -300,43 +184,3 @@
         <Tags />
     </div> -->
 </Panel>
-
-<style>
-    h5 {
-        overflow: visible;
-        text-align: center;
-        padding: 5px;
-        background-color: var(--primary-darkest);
-        color: var(--text);
-        font-size: 0.8em;
-        text-transform: uppercase;
-    }
-
-    .gap {
-        padding: 10px;
-        padding-bottom: 0;
-        flex-direction: column;
-        gap: 0;
-    }
-
-    /* .tags */
-    .message,
-    .styling {
-        padding: 10px;
-    }
-
-    .message :global(div) {
-        display: block !important;
-    }
-
-    .message :global(div.paper) {
-        position: relative;
-        display: block;
-        background: var(--primary-darker);
-        height: initial;
-    }
-
-    .styling div {
-        display: flex;
-    }
-</style>

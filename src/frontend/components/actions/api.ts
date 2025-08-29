@@ -133,7 +133,7 @@ export type API_media = { path: string; index?: number; data?: any }
 export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
-export type API_output_style = { outputStyle?: string; styleOutputs?: any }
+export type API_output_style = { outputId?: string; styleId?: string }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
@@ -261,7 +261,7 @@ export const API_ACTIONS = {
     toggle_output: (data: API_id) => toggleOutput(data.id),
     // WIP disable stage ?
     // WIP disable NDI ?
-    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
+    id_select_output_style: (data: API_id) => changeOutputStyle({ styleId: data.id }), // BC
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC

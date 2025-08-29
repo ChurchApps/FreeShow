@@ -317,7 +317,7 @@ export interface SlideData {
         stopTimers?: boolean
         trigger?: string
         audioStream?: string
-        outputStyle?: string
+        outputStyle?: string // deprecated
         startTimer?: boolean
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++

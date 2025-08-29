@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import { uid } from "uid"
     import { translateText } from "../../utils/language"
     import { defaultColors, getContrast } from "../helpers/color"
@@ -88,11 +88,18 @@
             togglePicker()
         }
     }
+
+    let colorElem: HTMLDivElement | undefined
+    let isOverflowing = false
+    onMount(() => {
+        if (!colorElem) return
+        isOverflowing = colorElem.getBoundingClientRect().left + colorElem.clientWidth / 2 + 200 > window.innerWidth
+    })
 </script>
 
 <svelte:window on:mousedown={mousedown} />
 
-<div id={pickerId} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};{$$props.style || ''}" on:keydown={handleKey}>
+<div id={pickerId} bind:this={colorElem} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};{$$props.style || ''}" on:keydown={handleKey}>
     <div class="background" on:click={togglePicker} />
 
     <div class="color-display" data-title={noLabel ? translateText(label) : ""} style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
@@ -103,7 +110,7 @@
     <span class="underline" />
 
     {#if pickerOpen}
-        <div class="picker" style={noLabel ? "left: 0;transform: initial;" : ""}>
+        <div class="picker" class:isOverflowing style={noLabel ? "left: 0;transform: initial;" : ""}>
             {#if enableNoColor}
                 <div data-value={""} class="pickColor noColor" data-title={translateText("settings.remove")} tabindex="0" on:click={() => selectColor("")}>
                     <Icon id="close" white />
@@ -235,6 +242,11 @@
 
         box-shadow: 0 0 5px 5px rgb(0 0 0 / 0.2);
     }
+    .picker.isOverflowing {
+        left: unset;
+        right: 0;
+    }
+
     .pickColor {
         --count: 5;
         --size: calc(((var(--width) - var(--padding) * 2) / var(--count)) - (var(--gap) / var(--count) * (var(--count) - 1)) - 0.4px);

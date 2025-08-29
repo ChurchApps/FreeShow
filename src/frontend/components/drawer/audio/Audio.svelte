@@ -12,9 +12,8 @@
     import { splitPath } from "../../helpers/get"
     import { getFileName, getMediaType } from "../../helpers/media"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import AudioStreams from "../live/AudioStreams.svelte"
@@ -217,15 +216,10 @@
         {:else if active === "audio_streams"}
             <AudioStreams />
         {:else if playlist && playlistSettings}
-            <CombinedInput>
-                <p><T id="settings.audio_crossfade" /></p>
-                <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
-            </CombinedInput>
-
-            <CombinedInput>
-                <p><T id="settings.playlist_volume" /></p>
-                <NumberInput value={playlist?.volume || 1} min={0.01} max={1} decimals={2} step={0.01} inputMultiplier={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail)} />
-            </CombinedInput>
+            <div class="settings">
+                <MaterialNumberInput label="settings.audio_crossfade" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
+                <MaterialNumberInput label="settings.playlist_volume" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
+            </div>
 
             <!-- <CombinedInput>
                 <p><T id="settings.custom_audio_output" /></p>
@@ -373,6 +367,16 @@
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
+    }
+
+    .settings {
+        margin: 15px;
+        padding: 10px;
+
+        border: 1px solid var(--primary-lighter);
+
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     .effects {

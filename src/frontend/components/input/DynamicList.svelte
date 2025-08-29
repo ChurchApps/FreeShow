@@ -51,6 +51,6 @@
     <br />
 {/if}
 
-<MaterialButton variant="outlined" icon="add" disabled={addDisabled} on:click={addItem}>
+<MaterialButton variant="outlined" style="width: 100%;" icon="add" disabled={addDisabled} on:click={addItem}>
     <T id="settings.add" />
 </MaterialButton>
