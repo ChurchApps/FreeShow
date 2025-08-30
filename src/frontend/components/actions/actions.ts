@@ -175,8 +175,12 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
 
     const action = { id, triggers: [actionId], actionValues }
 
+    // Check if this action type can have multiple instances
+    const data = actionData[actionId]
+    const canAddMultiple = data?.canAddMultiple || allowMultiple
+
     const existingIndex = slideActions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
-    if (allowMultiple || existingIndex < 0) slideActions.slideActions.push(action)
+    if (canAddMultiple || existingIndex < 0) slideActions.slideActions.push(action)
     else slideActions.slideActions[existingIndex] = action
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideActions, indexes: [slideIndex] } })
