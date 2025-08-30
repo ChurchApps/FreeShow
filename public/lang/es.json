@@ -1325,6 +1325,9 @@
         "reduced": "Reducido",
         "full": "Lleno",
         "section_trigger_action": "Activar acción al navegar la presentación hacia una sección",
+        "section_trigger_behavior": "Comportamiento de activación de la acción",
+        "section_trigger_on_navigation": "Al navegar a la sección",
+        "section_trigger_on_first_slide": "Al presentar la primera diapositiva",
         "rss": "RSS"
     },
     "sort": {

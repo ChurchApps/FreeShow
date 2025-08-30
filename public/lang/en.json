@@ -1337,6 +1337,9 @@
         "reduced": "Reduced",
         "full": "Full",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
+        "section_trigger_behavior": "Action trigger behavior",
+        "section_trigger_on_navigation": "When navigating to section",
+        "section_trigger_on_first_slide": "When presenting first slide",
         "rss": "RSS"
     },
     "output": {

@@ -297,6 +297,9 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         setTimeout(() => {
             setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
             updateOut(id, index!, layout, !e?.altKey, customOutputId)
+
+            // Check for section first slide actions
+            checkSectionFirstSlideAction(id, index!)
         })
         return
     }
@@ -329,6 +332,9 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         setTimeout(() => {
             setOutput("slide", newSlideOut, false, customOutputId)
             updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
+
+            // Check for section first slide actions
+            checkSectionFirstSlideAction(newSlideOut.id, index!)
         })
     }
 }
@@ -343,10 +349,54 @@ const triggerActionsBeforeOutput = {
 function shouldTriggerBefore(action: any) {
     return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
+
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     layoutData?.actions?.slideActions?.forEach((a) => {
         if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
     })
+}
+
+// Check if we're presenting the first slide of a section and should trigger section action
+export function checkSectionFirstSlideAction(showId: string, slideIndex: number) {
+    // Only check for first slide
+    if (slideIndex !== 0) return
+
+    const currentProject = get(projects)[get(activeProject) || ""]
+    if (!currentProject) return
+
+    // Find the current show in the project
+    const currentShowIndex = currentProject.shows.findIndex(show => show.id === showId)
+    if (currentShowIndex < 0) return
+
+    const currentShow = currentProject.shows[currentShowIndex]
+
+    // Only proceed if the current show is not a section itself
+    if (currentShow.type === "section") return
+
+    // Find the previous section in the project
+    let previousSectionIndex = -1
+    for (let i = currentShowIndex - 1; i >= 0; i--) {
+        if (currentProject.shows[i].type === "section") {
+            previousSectionIndex = i
+            break
+        }
+    }
+
+    // If no previous section found, we're not in a section context
+    if (previousSectionIndex < 0) return
+
+    const previousSection = currentProject.shows[previousSectionIndex]
+
+    // Check if the section has a trigger action configured and the behavior is set to "first_slide"
+    const sectionTriggerAction = previousSection.data?.settings?.triggerAction || get(special).sectionTriggerAction
+    const triggerBehavior = previousSection.data?.settings?.triggerBehavior || "navigation"
+
+    if (sectionTriggerAction && triggerBehavior === "first_slide") {
+        const action = get(actions)[sectionTriggerAction]
+        if (action) {
+            runAction(action)
+        }
+    }
 }
 
 async function goToNextShowInProject(slide, customOutputId) {

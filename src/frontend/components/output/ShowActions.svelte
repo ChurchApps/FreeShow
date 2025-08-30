@@ -6,7 +6,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
     import { getLayoutRef } from "../helpers/show"
-    import { updateOut } from "../helpers/showActions"
+    import { updateOut, checkSectionFirstSlideAction } from "../helpers/showActions"
     import Button from "../inputs/Button.svelte"
 
     export let currentOutput: Output
@@ -74,9 +74,12 @@
         if (!currentShow) return
 
         const layout = $showsCache[currentShow.id].settings.activeLayout
-        if (isEdit) setOutput("slide", { id: currentShow.id, layout, index: $activeEdit.slide })
-        else {
+        if (isEdit) {
+            setOutput("slide", { id: currentShow.id, layout, index: $activeEdit.slide })
+            checkSectionFirstSlideAction(currentShow.id, $activeEdit.slide)
+        } else {
             setOutput("slide", { id: currentShow.id, layout, index: 0 })
+            checkSectionFirstSlideAction(currentShow.id, 0)
         }
 
         // ref || getLayoutRef()

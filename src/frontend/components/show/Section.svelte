@@ -61,7 +61,28 @@
         let actionId = e.detail.id
 
         projects.update((a) => {
-            a[$activeProject!].shows[section.index].data = { settings: { triggerAction: actionId } }
+            if (!a[$activeProject!].shows[section.index].data) {
+                a[$activeProject!].shows[section.index].data = { settings: {} }
+            }
+            if (!a[$activeProject!].shows[section.index].data.settings) {
+                a[$activeProject!].shows[section.index].data.settings = {}
+            }
+            a[$activeProject!].shows[section.index].data.settings.triggerAction = actionId
+            return a
+        })
+    }
+
+    function updateTriggerBehavior(e: any) {
+        let behavior = e.detail.id
+
+        projects.update((a) => {
+            if (!a[$activeProject!].shows[section.index].data) {
+                a[$activeProject!].shows[section.index].data = { settings: {} }
+            }
+            if (!a[$activeProject!].shows[section.index].data.settings) {
+                a[$activeProject!].shows[section.index].data.settings = {}
+            }
+            a[$activeProject!].shows[section.index].data.settings.triggerBehavior = behavior
             return a
         })
     }
@@ -70,9 +91,15 @@
 
     $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
     $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
+    $: localTriggerBehavior = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerBehavior || "navigation"
 
     $: currentActionId = localAction || $special.sectionTriggerAction
     $: currentAction = currentActionId ? { ...$actions[currentActionId], id: currentActionId } : null
+
+    $: triggerBehaviorOptions = [
+        { id: "navigation", name: $dictionary.settings?.section_trigger_on_navigation || "When navigating to section" },
+        { id: "first_slide", name: $dictionary.settings?.section_trigger_on_first_slide || "When presenting first slide" }
+    ]
 </script>
 
 {#if settingsOpened}
@@ -93,6 +120,13 @@
             <p><T id="settings.section_trigger_action" /></p>
             <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === localAction)?.name || "—"} on:click={updateTriggerLocal} />
         </CombinedInput>
+
+        {#if localAction || $special.sectionTriggerAction}
+            <CombinedInput>
+                <p><T id="settings.section_trigger_behavior" /></p>
+                <Dropdown options={triggerBehaviorOptions} value={triggerBehaviorOptions.find((a) => a.id === localTriggerBehavior)?.name || triggerBehaviorOptions[0].name} on:click={updateTriggerBehavior} />
+            </CombinedInput>
+        {/if}
     </div>
 {:else}
     {#key section}

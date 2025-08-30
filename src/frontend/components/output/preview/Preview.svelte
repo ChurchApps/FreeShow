@@ -9,7 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
-    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
+    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut, checkSectionFirstSlideAction } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import Button from "../../inputs/Button.svelte"
@@ -156,6 +156,7 @@
 
         updateOut("active", index, slideRef)
         setOutput("slide", { id: $activeShow?.id, layout: _show().get("settings.activeLayout"), index, line: 0 })
+        checkSectionFirstSlideAction($activeShow?.id || "", index)
     }
 
     // active menu

@@ -3,7 +3,7 @@ import { get } from "svelte/store"
 import type { Recording } from "../../../types/Show"
 import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio, videosData, videosTime } from "../../stores"
 import { getActiveOutputs, setOutput } from "./output"
-import { updateOut } from "./showActions"
+import { updateOut, checkSectionFirstSlideAction } from "./showActions"
 import { _show } from "./shows"
 import { updateVideoData, updateVideoTime } from "./video"
 
@@ -67,6 +67,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
             const slideIndex = sequence.slideRef.index
             // WIP check that slide is the correct ID ??
             setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })
+            checkSectionFirstSlideAction(showId, slideIndex)
         }
 
         // next

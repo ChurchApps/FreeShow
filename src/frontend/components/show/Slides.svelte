@@ -9,7 +9,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut, checkSectionFirstSlideAction } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -106,6 +106,7 @@
             } else revealCount = 0
 
             setOutput("slide", { id: showId, layout: activeLayout, index, line, revealCount, itemClickReveal })
+            checkSectionFirstSlideAction(showId, index)
             updateOut(showId, index, slideRef, !e.altKey)
 
             getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
