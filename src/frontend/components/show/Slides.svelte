@@ -9,7 +9,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, checkSectionActionOnFirstSlide, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -68,6 +68,8 @@
 
         let data = slideRef[index]?.data
         checkActionTrigger(data, index)
+        // Check if we need to trigger section action on first slide
+        checkSectionActionOnFirstSlide(showId, index)
         // allow custom actions to trigger first
         setTimeout(() => {
             // get line

@@ -293,6 +293,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
         const data = layout[index]?.data
         checkActionTrigger(data, index)
+        // Check if we need to trigger section action on first slide
+        checkSectionActionOnFirstSlide(id, index)
         // allow custom actions to trigger first
         setTimeout(() => {
             setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
@@ -325,6 +327,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (index !== null) {
         const data = layout[index]?.data
         checkActionTrigger(data, index)
+        // Check if we need to trigger section action on first slide
+        if (newSlideOut.id) checkSectionActionOnFirstSlide(newSlideOut.id, index)
         // allow custom actions to trigger first
         setTimeout(() => {
             setOutput("slide", newSlideOut, false, customOutputId)
@@ -343,6 +347,35 @@ const triggerActionsBeforeOutput = {
 function shouldTriggerBefore(action: any) {
     return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
+
+function shouldTriggerSectionAction(showData: any, behavior: "navigation" | "first_slide"): boolean {
+    const triggerBehavior = showData?.data?.settings?.triggerBehavior || "navigation"
+    return triggerBehavior === behavior
+}
+
+export function checkSectionActionOnFirstSlide(showId: string, slideIndex: number) {
+    if (!get(activeProject) || slideIndex !== 0) return
+
+    // Get the current project and find the previous item
+    const currentProject = get(projects)[get(activeProject)!]
+    if (!currentProject) return
+
+    const currentShowIndex = currentProject.shows.findIndex((show) => show.id === showId)
+    if (currentShowIndex <= 0) return
+
+    const previousItem = currentProject.shows[currentShowIndex - 1]
+    if (previousItem.type !== "section") return
+
+    // Check if the section has an action set to trigger on first slide
+    if (previousItem.data?.settings?.triggerAction || get(special).sectionTriggerAction) {
+        if (shouldTriggerSectionAction(previousItem, "first_slide")) {
+            let actionId = previousItem.data?.settings?.triggerAction
+            if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
+            if (actionId) runAction(get(actions)[actionId])
+        }
+    }
+}
+
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     layoutData?.actions?.slideActions?.forEach((a) => {
         if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
@@ -401,9 +434,12 @@ export function goToNextProjectItem(key = "") {
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(actions)[actionId])
+                // Only trigger on navigation if behavior is set to "navigation" (default)
+                if (shouldTriggerSectionAction(newShow, "navigation")) {
+                    let actionId = newShow.data?.settings?.triggerAction
+                    if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
+                    if (actionId) runAction(get(actions)[actionId])
+                }
                 return
             }
 
@@ -431,9 +467,12 @@ export function goToPreviousProjectItem(key = "") {
             if (newShow.type === "section" && get(activePage) === "edit") activeEdit.set({ items: [] })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(actions)[actionId])
+                // Only trigger on navigation if behavior is set to "navigation" (default)
+                if (shouldTriggerSectionAction(newShow, "navigation")) {
+                    let actionId = newShow.data?.settings?.triggerAction
+                    if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
+                    if (actionId) runAction(get(actions)[actionId])
+                }
                 return
             }
 

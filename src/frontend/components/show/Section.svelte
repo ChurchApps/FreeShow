@@ -59,7 +59,20 @@
         let actionId = e.detail
 
         projects.update((a) => {
-            a[$activeProject!].shows[section.index].data = { settings: { triggerAction: actionId } }
+            if (!a[$activeProject!].shows[section.index].data) a[$activeProject!].shows[section.index].data = {}
+            if (!a[$activeProject!].shows[section.index].data.settings) a[$activeProject!].shows[section.index].data.settings = {}
+            a[$activeProject!].shows[section.index].data.settings.triggerAction = actionId
+            return a
+        })
+    }
+
+    function updateTriggerBehavior(e: any) {
+        let behavior = e.detail
+
+        projects.update((a) => {
+            if (!a[$activeProject!].shows[section.index].data) a[$activeProject!].shows[section.index].data = {}
+            if (!a[$activeProject!].shows[section.index].data.settings) a[$activeProject!].shows[section.index].data.settings = {}
+            a[$activeProject!].shows[section.index].data.settings.triggerBehavior = behavior
             return a
         })
     }
@@ -68,9 +81,15 @@
 
     $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
     $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
+    $: triggerBehavior = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerBehavior || "navigation"
 
     $: currentActionId = localAction || $special.sectionTriggerAction
     $: currentAction = currentActionId ? { ...$actions[currentActionId], id: currentActionId } : null
+
+    $: triggerBehaviorOptions = [
+        { value: "navigation", label: $dictionary.actions?.trigger_on_navigation || "Al navegar hacia la sección" },
+        { value: "first_slide", label: $dictionary.actions?.trigger_on_first_slide || "Al mostrar la primera diapositiva" }
+    ]
 </script>
 
 {#if settingsOpened}
@@ -82,6 +101,12 @@
             <MaterialDropdown label="groups.global" disabled={localAction && $actions[localAction]} options={actionOptions} value={$special.sectionTriggerAction} on:change={updateTrigger} allowEmpty />
             <MaterialDropdown label="groups.current" options={actionOptions} value={localAction} on:change={updateTriggerLocal} allowEmpty />
         </InputRow>
+
+        {#if currentActionId}
+            <InputRow>
+                <MaterialDropdown label="actions.trigger_behavior" options={triggerBehaviorOptions} value={triggerBehavior} on:change={updateTriggerBehavior} />
+            </InputRow>
+        {/if}
     </div>
 {:else}
     {#key section}
