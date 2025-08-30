@@ -89,6 +89,8 @@
     }
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
+
+    $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 </script>
 
 {#if Slide?.isDefault}
@@ -101,7 +103,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         <!--  && !Slide.isDefault -->
         {#if Slide}
-            <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
+            <Zoomed background="transparent" checkered border style={widthOrHeight} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {#each Slide.items as item, index}
                     <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
@@ -114,13 +116,15 @@
         {/if}
     </div>
 
-    <FloatingInputs side="center">
-        {#each shortcutItems as item}
-            <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
-                <Icon id={item.icon || item.id} size={1.3} white />
-            </MaterialButton>
-        {/each}
-    </FloatingInputs>
+    {#if !widthOrHeight.includes("height")}
+        <FloatingInputs side="center">
+            {#each shortcutItems as item}
+                <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
+                    <Icon id={item.icon || item.id} size={1.3} white />
+                </MaterialButton>
+            {/each}
+        </FloatingInputs>
+    {/if}
 
     <FloatingInputs>
         <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />

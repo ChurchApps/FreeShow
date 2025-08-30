@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
+import type { Condition, ConditionValue, Item, ItemType, Slide } from "../../../../types/Show"
 import type { StageItem } from "../../../../types/Stage"
 import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
@@ -285,55 +285,63 @@ function getTempItems(item: Item, allItems: Item[]) {
     }
 }
 
-function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage") {
+export function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage", _updater: any = null) {
     if (!condition) return true
 
-    const conditionValues: boolean[] = condition.values.map((cVal) => {
-        const element = cVal.element || "text"
-        let elementId = cVal.elementId || ""
-        if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
+    if (!Array.isArray(condition)) {
+        condition = (condition as any)?.values?.length ? [[[(condition as any).values]]] : []
+    }
 
-        let operator = cVal.operator || "is"
-        if (element === "timer") operator = cVal.operator || "isRunning"
-
-        const data = cVal.data || "value"
-        let dataValue: string | number = cVal.value ?? ""
-        if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
-
-        let value = ""
-        if (element === "text") value = itemsText
-        else if (element === "timer") value = getTimerValue(elementId)
-        else if (element === "variable") value = _getVariableValue(elementId)
-        else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
-
-        if (operator === "is") {
-            return value === dataValue
-        } else if (operator === "isNot") {
-            return value !== dataValue
-        } else if (operator === "has") {
-            return value.includes(dataValue)
-        } else if (operator === "hasNot") {
-            return !value.includes(dataValue)
-        } else if (operator === "isRunning") {
-            if (element === "timer") return isTimerRunning(elementId)
-        } else if (operator === "isAbove") {
-            return Number(value) > Number(dataValue)
-        } else if (operator === "isBelow") {
-            return Number(value) < Number(dataValue)
-        }
-
-        return true
+    // outerOr
+    const conditionMet = !!condition.find(outerAnd => {
+        return outerAnd.every(innerOr => {
+            return !!innerOr.find(innerAnd => {
+                return innerAnd.every(content => {
+                    return checkConditionValue(content, itemsText, type)
+                })
+            })
+        })
     })
 
-    const scenario = condition.scenario || "all"
-    const filteredValues = [...new Set(conditionValues)]
+    return conditionMet
+}
 
-    if (scenario === "all") {
-        return filteredValues.length === 1 && filteredValues[0] === true
-    } else if (scenario === "some") {
-        return filteredValues.includes(true)
-    } else if (scenario === "none") {
-        return filteredValues.length === 1 && filteredValues[0] === false
+export function checkConditionValue(cVal: ConditionValue, itemsText: string, type: "default" | "stage", _updater: any = null) {
+    console.log(cVal, itemsText)
+
+    const element = cVal.element || "text"
+    let elementId = cVal.elementId || ""
+    if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
+
+    let operator = cVal.operator || "is"
+    if (element === "timer") operator = cVal.operator || "isRunning"
+
+    const data = cVal.data || "value"
+    let dataValue: string | number = cVal.value ?? ""
+    if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
+
+    let value = ""
+    if (element === "text") value = itemsText
+    else if (element === "timer") value = getTimerValue(elementId)
+    else if (element === "variable") value = _getVariableValue(elementId)
+    else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
+
+    console.log(element, data, operator, value)
+
+    if (operator === "is") {
+        return value === dataValue
+    } else if (operator === "isNot") {
+        return value !== dataValue
+    } else if (operator === "has") {
+        return value.includes(dataValue)
+    } else if (operator === "hasNot") {
+        return !value.includes(dataValue)
+    } else if (operator === "isRunning") {
+        if (element === "timer") return isTimerRunning(elementId)
+    } else if (operator === "isAbove") {
+        return Number(value) > Number(dataValue)
+    } else if (operator === "isBelow") {
+        return Number(value) < Number(dataValue)
     }
 
     return true

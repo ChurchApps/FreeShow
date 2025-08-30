@@ -17,6 +17,7 @@
     $: isOptimized = $special.optimizedMode
 </script>
 
+<!-- in:fade={{ duration: 80 }} -->
 <div class="row {side}" class:isOptimized class:light class:onlyOne class:gradient class:round style="bottom: {bottom}px;{$$props.style || ''}" on:mousedown>
     {#if arrow}
         <MaterialButton style={open ? "" : "opacity: 0.6;"} class="expand" title={open ? "actions.close" : "create_show.more_options"} isActive={open} on:click={() => (open = !open)}>

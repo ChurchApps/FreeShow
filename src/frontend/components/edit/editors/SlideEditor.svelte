@@ -292,6 +292,8 @@
     $: notesVisible = !!notes // && !chordsMode
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
+
+    $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} />
@@ -305,7 +307,7 @@
                     {checkered}
                     border={checkered}
                     {resolution}
-                    style={getStyleResolution(resolution, width, height, "fit", { zoom })}
+                    style={widthOrHeight}
                     bind:ratio
                     {hideOverflow}
                     center={zoom >= 1}
@@ -365,7 +367,8 @@
     {/if}
 
     {#if !$focusMode && !isLocked}
-        {#if !chordsMode}
+        <!-- && Slide?.items?.length -->
+        {#if !chordsMode && !widthOrHeight.includes("height")}
             <FloatingInputs bottom={notesVisible ? bottomHeight : 10} side="center">
                 {#each shortcutItems as item}
                     <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>

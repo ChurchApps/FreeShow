@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
@@ -49,6 +49,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
     export let showId: string
     export let slide: Slide
@@ -356,6 +357,12 @@
         console.log(`Requesting to open URL: ${url}`) // For debugging
         sendMain(Main.URL, url)
     }
+
+    $: outputId = getActiveOutputs($outputs, false, true)
+
+    let updater = 0
+    const updaterInterval = setInterval(() => updater++, 3000)
+    onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 <div
@@ -452,7 +459,8 @@
                     <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
-                            {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                                <!-- && (!item.clickReveal || output?.clickRevealed) -->
                                 <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox
