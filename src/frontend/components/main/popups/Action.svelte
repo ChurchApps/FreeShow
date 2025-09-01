@@ -99,17 +99,29 @@
         let ref = getLayoutRef()
         let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
-        // find any action with the same value, but different id
-        let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0] && (!id || a.id !== id))
+        
+        // find any action with the same trigger type
+        const triggerId = action.triggers?.[0]
+        if (!triggerId) return
+        
+        // Check if this action type can have multiple instances
+        const data = actionData[triggerId.split(':')[0]] // remove unique suffix if present
+        const canAddMultiple = data?.canAddMultiple
+        
+        // For actions that can't have multiple instances, find and replace existing
+        if (!canAddMultiple) {
+            let existingAction = slideActions.find((a) => a.triggers?.[0] === triggerId && (!id || a.id !== id))
+            
+            if (!existingAction) return
 
-        if (!existingAction) return
+            // remove new action if already existing
+            if (id !== existingAction.id && mode === "slide") removeEmptyAction(id)
 
-        // remove new action if already existing
-        if (id !== existingAction.id && mode === "slide") removeEmptyAction(id)
-
-        id = existingAction.id
-        action = existingAction
-        popupData.set({ ...$popupData, id })
+            id = existingAction.id
+            action = existingAction
+            popupData.set({ ...$popupData, id })
+        }
+        // For actions that can have multiple instances, don't auto-replace
     }
 
     function updateValue(key: string, e: any) {
