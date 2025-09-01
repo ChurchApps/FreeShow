@@ -216,7 +216,7 @@
             {/if}
 
             {#if open || totalTime !== "0s" || referenceType !== "scripture"}
-                <MaterialButton title="popup.next_timer{totalTime !== '0s' ? ': ' + totalTime : ''}" on:click={() => activePopup.set("next_timer")}>
+                <MaterialButton title="popup.next_timer{totalTime !== '0s' ? ': ' + totalTime : ''} [Ctrl+Shift+D]" on:click={() => activePopup.set("next_timer")}>
                     <Icon size={1.1} id="clock" white={totalTime === "0s"} />
                 </MaterialButton>
             {/if}

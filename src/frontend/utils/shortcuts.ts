@@ -81,9 +81,11 @@ const ctrlKeys = {
 }
 
 const shiftCtrlKeys = {
+    d: () => get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : "",
+    // t: () => activePopup.set("translate"),
     f: () => menuClick("focus_mode"),
-    v: () => changeSlidesView(),
     n: () => activePopup.set("show"),
+    v: () => changeSlidesView(),
 }
 
 const altKeys = {

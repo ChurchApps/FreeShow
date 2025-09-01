@@ -12,6 +12,7 @@
     /** @type number | null */
     export let activeIndex = null
 
+    // custom scroll to index
     $: if (mounted && activeIndex !== null) setTimeout(() => scrollToIndex(activeIndex))
     function scrollToIndex(index) {
         if (!viewport || !items || index < 0 || index >= items.length) return
@@ -67,6 +68,9 @@
 
 		let content_height = top - scrollTop;
 		let i = start;
+
+        // loop fix
+        if (content_height < -500) return
 
 		while (content_height < viewport_height && i < items.length) {
 			let row = rows[i - start];

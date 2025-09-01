@@ -147,10 +147,6 @@
         font-weight: bold;
     }
 
-    .inputs {
-        display: flex;
-    }
-
     .preview {
         position: relative;
         flex: 1;

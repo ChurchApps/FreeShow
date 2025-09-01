@@ -153,10 +153,6 @@
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <!-- <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
-    {#if !$labelsDisabled}<T id="new.section" />{/if}
-</BottomButton> -->
-
     <FloatingInputs onlyOne round={lessVisibleSection}>
         <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
             {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
