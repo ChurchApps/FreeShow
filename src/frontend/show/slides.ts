@@ -574,11 +574,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             if (sel[i]?.start !== undefined) start = sel[i].start!
 
             if (start < 0 || currentIndex < start) {
-                firstLines[firstLines.length - 1].text.push({
-                    style: text.style,
-                    value: text.value
-                })
-
+                firstLines[firstLines.length - 1].text.push(text)
                 textPos += text.value.length
                 return
             }
@@ -604,7 +600,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     const defaultLine = [
         {
             align: lines[0].align || "",
-            text: [{ style: lines[0].text[0]?.style || "", value: "" }]
+            text: [{ style: (lines[0].text[1] || lines[0].text[0])?.style || "", value: "" }]
         }
     ]
     if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine

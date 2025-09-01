@@ -14,6 +14,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Stagebox from "../../stage/Stagebox.svelte"
     import ConditionsBox from "./ConditionsBox.svelte"
+    import { getSlideTextItems } from "../../stage/stage"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -175,14 +176,21 @@
     }
 
     $: OUTER_OR = showItemValues?.length ? showItemValues : [[]]
-    $: addMoreLarge = showItemValues?.length > 1 || showItemValues?.[0]?.length > 1 || (showItemValues?.[0]?.[0]?.[0]?.[0] && (showItemValues?.[0]?.[0]?.[0]?.[1] || showItemValues?.[0]?.[0]?.[1]?.[0]))
+    // only show if multiple "outer and" (& it has content)
+    // $: addMoreOuter = showItemValues?.length > 1 || showItemValues?.[0]?.length > 1 || (showItemValues?.[0]?.[0]?.[0]?.[0] && (showItemValues?.[0]?.[0]?.[0]?.[1] || showItemValues?.[0]?.[0]?.[1]?.[0]))
+    $: addMoreOuter = showItemValues?.[0]?.length > 1 || showItemValues?.length > 1
 
     let updater = 0
     const updaterInterval = setInterval(() => updater++, 2000)
     onDestroy(() => clearInterval(updaterInterval))
 
-    // isStage ? item.type === "slide_text" ? getSlideTextItems(layout, item) : [] : itemText
-    $: showItemState = isConditionMet(OUTER_OR, itemText, isStage ? "stage" : "default", updater)
+    $: currentItemText =
+        isStage && item.type === "slide_text"
+            ? getSlideTextItems(slide as any, item)
+                  .map(getItemText)
+                  .join("")
+            : itemText
+    $: showItemState = isConditionMet(OUTER_OR, currentItemText, isStage ? "stage" : "default", updater)
 
     let zoom = 1
 </script>
@@ -209,9 +217,11 @@
 
         {#each OUTER_OR as outerAnd, a}
             {@const OUTER_AND = outerAnd?.length ? outerAnd : [[]]}
-            <!-- {@const addMore = outerAnd?.[0]?.[0]?.[0] && (outerAnd?.[0]?.[0]?.[1] || outerAnd?.[0]?.[1]?.[0])} -->
+            <!-- only show if multiple "inner or" (& it has content) -->
+            <!-- && outerAnd?.[0]?.[0]?.[0] && (outerAnd?.[0]?.[0]?.[1] || outerAnd?.[0]?.[1]?.[0]) -->
+            {@const addMoreOuter = outerAnd?.[0]?.length > 1 || outerAnd?.length > 1}
 
-            <div class="node or outer trail" class:first={a === 0} style={OUTER_AND[0]?.length < 2 && !addMoreLarge ? "padding: 0;" : ""}>
+            <div class="node or outer trail" class:first={a === 0} style={OUTER_AND[0]?.length < 2 && !addMoreOuter ? "padding: 0;" : ""}>
                 {#each OUTER_AND || [[]] as innerOr, b}
                     {@const INNER_OR = innerOr?.length ? innerOr : [[]]}
                     {@const addMore = innerOr?.[0]?.[0]}
@@ -225,7 +235,7 @@
                                 {#each INNER_AND as content, d}
                                     {@const CONTENT = content || {}}
 
-                                    <div class="node and" class:trail={d > 0} class:isActive={checkConditionValue(content, itemText, isStage ? "stage" : "default", updater)}>
+                                    <div class="node and" class:trail={d > 0} class:isActive={checkConditionValue(content, currentItemText, isStage ? "stage" : "default", updater)}>
                                         {#if innerAnd?.length || a !== 0 || b !== 0 || c !== 0 || d !== 0}
                                             <div class="delete">
                                                 <MaterialButton variant="outlined" icon="delete" title="actions.delete" style="padding: 8px;border-radius: 50%;" on:click={() => deleteContent(a, b, c, d)} />
@@ -268,7 +278,7 @@
                     </div>
                 {/each}
 
-                {#if addMoreLarge}
+                {#if addMoreOuter}
                     <div class="buttons node and trail">
                         <MaterialButton variant="outlined" icon="add" title="settings.add" on:click={() => addContent(false, a)} />
                         {#if clipboard}
@@ -279,7 +289,7 @@
             </div>
         {/each}
 
-        {#if addMoreLarge}
+        {#if addMoreOuter}
             <div class="buttons node or trail">
                 <MaterialButton variant="outlined" icon="add" title="settings.add" on:click={() => addContent(false)} />
                 {#if clipboard}
@@ -289,8 +299,8 @@
         {/if}
     </div>
 
-    <FloatingInputs style={addMoreLarge ? "" : "border: none;"} round>
-        <MaterialZoom hidden={!addMoreLarge} columns={zoom} min={0.5} max={1.5} defaultValue={1} addValue={-0.1} on:change={(e) => (zoom = e.detail)} />
+    <FloatingInputs style={addMoreOuter ? "" : "border: none;"} round>
+        <MaterialZoom hidden={!addMoreOuter} columns={zoom} min={0.5} max={1.5} defaultValue={1} addValue={-0.1} on:change={(e) => (zoom = e.detail)} />
     </FloatingInputs>
 </div>
 

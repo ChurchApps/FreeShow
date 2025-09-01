@@ -220,7 +220,7 @@
             {/if}
             <!-- reload list when changing category -->
             {#key active}
-                <VirtualList items={filteredShows} let:item={show}>
+                <VirtualList items={filteredShows} let:item={show} activeIndex={filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
                             <ShowButton

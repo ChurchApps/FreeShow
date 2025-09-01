@@ -58,22 +58,22 @@ export const transitions: { [key in TransitionType]: any } = {
 }
 
 export const easings: any[] = [
-    { id: "linear", name: "$:easings.linear:$", data: linear },
-    { id: "back", name: "$:easings.back:$", data: backInOut },
-    { id: "sine", name: "$:easings.sine:$", data: sineInOut },
-    { id: "circ", name: "$:easings.circ:$", data: circInOut },
-    { id: "cubic", name: "$:easings.cubic:$", data: cubicInOut },
-    { id: "elastic", name: "$:easings.elastic:$", data: elasticInOut },
-    { id: "bounce", name: "$:easings.bounce:$", data: bounceInOut },
-    // { id: "expo", name: "$:easings.expo:$", data: expoInOut },
-    // { id: "quad", name: "$:easings.quad:$", data: quadInOut },
-    // { id: "quart", name: "$:easings.quart:$", data: quartInOut },
-    // { id: "quint", name: "$:easings.quint:$", data: quintInOut },
+    { value: "linear", label: "easings.linear", function: linear },
+    { value: "back", label: "easings.back", function: backInOut },
+    { value: "sine", label: "easings.sine", function: sineInOut },
+    { value: "circ", label: "easings.circ", function: circInOut },
+    { value: "cubic", label: "easings.cubic", function: cubicInOut },
+    { value: "elastic", label: "easings.elastic", function: elasticInOut },
+    { value: "bounce", label: "easings.bounce", function: bounceInOut },
+    // { value: "expo", label: "easings.expo", function: expoInOut },
+    // { value: "quad", label: "easings.quad", function: quadInOut },
+    // { value: "quart", label: "easings.quart", function: quartInOut },
+    // { value: "quint", label: "easings.quint", function: quintInOut },
 ]
 
 // : Transition
 export function custom(node: any, { type = "fade", duration = 500, easing = "sine", delay = 0, custom: customData = {} }: any) {
-    const customTransition = { ...transitions[type as TransitionType](node, customData), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing)?.data || linear, delay }
+    const customTransition = { ...transitions[type as TransitionType](node, customData), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.value === easing)?.function || linear, delay }
     // if (type === "crossfade") customTransition.key = "a"
     return customTransition
 }

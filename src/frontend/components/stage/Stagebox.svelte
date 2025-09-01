@@ -22,7 +22,7 @@
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
-    import { getCustomStageLabel, stageItemToItem } from "./stage"
+    import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
 
@@ -195,7 +195,8 @@
     const updaterInterval = setInterval(() => updater++, 3000)
     onDestroy(() => clearInterval(updaterInterval))
 
-    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(stageItemToItem(item)), "stage", updater)
+    $: currentItemText = item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))
+    $: showItemState = isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />

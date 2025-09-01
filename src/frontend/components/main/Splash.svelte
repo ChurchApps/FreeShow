@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, shows, special, version } from "../../stores"
+    import { activePopup, activeProject, projects, projectView, showRecentlyUsedProjects, shows, special, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
     import Link from "../inputs/Link.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Center from "../system/Center.svelte"
 
     function createProject() {
@@ -64,22 +64,20 @@
     {/if}
 
     <span style="padding-top: 30px" class="buttons">
-        <Button on:click={createProject} title={$dictionary.tooltip?.project} dark>
-            <Icon id="project" right />
-            <p><T id="new.project" /></p>
-        </Button>
-        <Button
+        <MaterialButton icon="project" title="tooltip.project" on:click={createProject}>
+            <T id="new.project" />
+        </MaterialButton>
+        <MaterialButton
+            icon="add"
+            title="tooltip.show"
             on:click={(e) => {
-                if (e.ctrlKey || e.metaKey) {
+                if (e.detail.ctrl) {
                     history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
                 } else activePopup.set("show")
             }}
-            title={$dictionary.tooltip?.show}
-            dark
         >
-            <Icon id="add" right />
-            <p><T id="new.show" /></p>
-        </Button>
+            <T id="new.show" />
+        </MaterialButton>
     </span>
 </Center>
 
@@ -96,7 +94,12 @@
     .buttons {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 5px;
+    }
+
+    .buttons :global(button) {
+        justify-content: start;
+        padding: 8px 12px;
     }
 
     @media screen and (max-height: 500px) {

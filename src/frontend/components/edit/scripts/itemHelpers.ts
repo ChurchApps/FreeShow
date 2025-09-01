@@ -307,8 +307,6 @@ export function isConditionMet(condition: Condition | undefined, itemsText: stri
 }
 
 export function checkConditionValue(cVal: ConditionValue, itemsText: string, type: "default" | "stage", _updater: any = null) {
-    console.log(cVal, itemsText)
-
     const element = cVal.element || "text"
     let elementId = cVal.elementId || ""
     if (element === "timer" && !elementId) elementId = getFirstActiveTimer()
@@ -325,8 +323,6 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
     else if (element === "timer") value = getTimerValue(elementId)
     else if (element === "variable") value = _getVariableValue(elementId)
     else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
-
-    console.log(element, data, operator, value)
 
     if (operator === "is") {
         return value === dataValue

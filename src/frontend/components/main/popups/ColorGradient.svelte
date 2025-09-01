@@ -5,8 +5,6 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
@@ -72,7 +70,7 @@
     {/if}
 </InputRow>
 
-<div class="colors">
+<div class="colors" style="margin-top: 10px;">
     {#each parsedValue.colors as colorPart, i}
         {@const pos = colorPart.pos || 0}
         {@const prevPos = parsedValue.colors[i - 1]?.pos || 0}
@@ -81,13 +79,13 @@
         <InputRow>
             <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={(e) => (colorPart.color = e.detail)} />
             <!-- WIP also change background opacity -->
-            <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => (colorPart.pos = e.detail)} currentProgress={pos} />
+            <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => (colorPart.pos = e.detail)} currentProgress={pos} showSlider />
             {#if i > 0}
                 <MaterialButton icon="up" on:click={() => moveUp(i)} />
             {/if}
             {#if parsedValue.colors.length > 2}
                 <MaterialButton title={$dictionary.actions?.delete} on:click={() => deleteColor(i)}>
-                    <Icon id="delete" />
+                    <Icon id="delete" white />
                 </MaterialButton>
             {/if}
         </InputRow>
@@ -107,13 +105,9 @@
     </MaterialButton>
 </div>
 
-<CombinedInput style="margin-top: 20px;">
-    <Button on:click={change} style="width: 100%;" dark center>
-        <!-- WIP select -->
-        <Icon id="save" size={1.2} right />
-        <T id="actions.save" />
-    </Button>
-</CombinedInput>
+<MaterialButton variant="contained" icon="save" on:click={change} style="width: 100%;margin-top: 20px;">
+    <T id="actions.save" />
+</MaterialButton>
 
 <style>
     .preview {

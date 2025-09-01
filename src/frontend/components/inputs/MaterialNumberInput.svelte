@@ -1,8 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import { translateText } from "../../utils/language"
-    import MaterialButton from "./MaterialButton.svelte"
     import Icon from "../helpers/Icon.svelte"
+    import MaterialButton from "./MaterialButton.svelte"
 
     export let value: number = 0
     export let defaultValue: number | null = null
@@ -12,6 +12,9 @@
     export let center = false
     export let disabled = false
     export let autofocus = false
+    export let hideWhenZero: boolean = false
+    export let showSlider: boolean = false
+    export let sliderValues: { min?: number; max?: number; step?: number } = {}
     export let currentProgress: number | null = null
     export let step = 1
     export let min: number | null = 0
@@ -20,6 +23,12 @@
 
     // a string might be passed in
     $: numberValue = Number(value)
+
+    // Slider values and percent for filled track
+    $: sliderMin = sliderValues.min ?? min ?? 0
+    $: sliderMax = sliderValues.max ?? max ?? 100
+    $: sliderStep = sliderValues.step ?? step
+    $: sliderPercent = sliderMax > sliderMin ? ((Number(numberValue) - Number(sliderMin)) / (Number(sliderMax) - Number(sliderMin))) * 100 : 0
 
     const dispatch = createEventDispatcher()
 
@@ -117,7 +126,7 @@
             {min}
             {max}
             class="input edit"
-            class:noValue={!padLength && !numberValue}
+            class:noValue={hideWhenZero && !padLength && !numberValue}
             on:keydown={handleKeyDown}
             on:input={handleInput}
         />
@@ -136,9 +145,15 @@
         </div>
     </div>
 
-    <label for={id} class:value-filled={padLength || (numberValue !== null && numberValue !== undefined && numberValue !== 0)}>{@html translateText(label)}</label>
+    <label for={id} class:value-filled={!hideWhenZero || padLength || (numberValue !== null && numberValue !== undefined && numberValue !== 0)}>{@html translateText(label)}</label>
 
     <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
+
+    {#if showSlider}
+        <div class="slider-wrapper">
+            <input tabindex="-1" class="slider" type="range" {disabled} min={sliderMin} max={sliderMax} step={sliderStep} bind:value={numberValue} on:input={() => updateValue(numberValue)} style="--slider-fill: {sliderPercent}%;" />
+        </div>
+    {/if}
 
     {#if defaultValue !== null}
         <div class="remove">
@@ -297,7 +312,7 @@
         bottom: 0;
         left: 0;
         height: 1.2px;
-        width: 100%;
+        width: 0%;
         background-color: var(--secondary);
         transform: scaleX(0);
         transition: transform 0.2s ease;
@@ -332,5 +347,89 @@
     }
     .remove :global(button) {
         padding: 0.75rem;
+    }
+
+    /* Slider */
+
+    .textfield:hover .slider-wrapper {
+        opacity: 1;
+    }
+    .slider-wrapper {
+        opacity: 0;
+        transition: 0.2s opacity ease;
+
+        /* padding-right: 30px; */
+        padding-right: 40px;
+        padding-left: 5px;
+        /* padding: 0 80px; */
+        padding-left: 70px;
+
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        z-index: 2;
+        pointer-events: none;
+    }
+    .slider {
+        position: relative;
+        display: block;
+        width: 100%;
+
+        /* margin: 0;
+        height: 3px; */
+
+        background: transparent;
+        cursor: pointer;
+
+        pointer-events: auto;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    .slider::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--secondary) 0%, var(--secondary) var(--slider-fill, 0%), var(--primary-lighter) var(--slider-fill, 0%), var(--primary-lighter) 100%);
+    }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--secondary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+        border: 2px solid var(--secondary);
+
+        transition:
+            box-shadow 0.2s,
+            background 0.2s;
+
+        z-index: 1;
+    }
+    .slider:focus::-webkit-slider-thumb,
+    .slider:hover::-webkit-slider-thumb {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+    }
+    .slider:focus {
+        outline: none;
+    }
+    .slider::-webkit-slider-tick-container {
+        display: none;
+    }
+    .slider:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 </style>

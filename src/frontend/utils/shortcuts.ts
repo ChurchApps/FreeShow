@@ -82,7 +82,12 @@ const ctrlKeys = {
 
 const shiftCtrlKeys = {
     f: () => menuClick("focus_mode"),
-    v: () => changeSlidesView()
+    v: () => changeSlidesView(),
+    n: () => activePopup.set("show"),
+}
+
+const altKeys = {
+    Enter: () => menuClick("cut_in_half", true, null, null, null, get(selected)),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -192,7 +197,14 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (e.altKey) return
+    if (e.altKey) {
+        if (altKeys[e.key]) {
+            e.preventDefault()
+            altKeys[e.key](e)
+        }
+        return
+    }
+
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
 
     // change tab with number keys

@@ -8,8 +8,6 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    // import type { Condition } from "../../../../types/Show"
-
     export let input: { [key: string]: string }
 
     $: elementId = input.element ?? conditionValues.element[0]?.value

@@ -227,6 +227,7 @@
         z-index: 0;
     }
     .input-wrapper {
+        height: 100%;
         display: flex;
         align-items: center;
         position: relative;

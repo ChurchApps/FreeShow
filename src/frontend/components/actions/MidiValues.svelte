@@ -71,7 +71,6 @@
 
     function setInitialData() {
         // set initial data
-        console.log(midi)
         if (midi.values?.note) return
 
         setTimeout(() => setValues("note", 0), 50)
@@ -108,9 +107,9 @@
 
 {#if type !== "emitter"}
     {#if type === "input"}
-        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs} on:click={(e) => setMidi("input", e.detail)} />
+        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("input", e.detail)} />
     {:else}
-        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs} on:click={(e) => setMidi("output", e.detail)} />
+        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("output", e.detail)} />
     {/if}
 
     {#if type !== "output" && !simple}
