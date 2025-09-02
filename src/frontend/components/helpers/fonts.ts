@@ -123,6 +123,31 @@ export async function getSystemFontsList() {
 
     return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
 }
+export function getFontStyleList(font: string) {
+    if (!cachedFonts.length) return { fontStyles: [], defaultValue: "" }
+
+    const family = cachedFonts.find((a) => a.family === font)
+    const fontStyles = (family?.fonts || []).map((a) => ({
+        value: a.css
+            ?.replace(/^font:\s*(.*);$/, "$1")
+            .replace("1em", "100px")
+            .trim(),
+        label: a.style,
+        style: a.css
+    }))
+
+    const defaultValue = fontStyles[family?.default || 0]?.value || ""
+
+    let existingValues: string[] = [defaultValue]
+    const filteredFontStyles = fontStyles.filter((a) => {
+        if (a.value === defaultValue) return true
+        if (existingValues.includes(a.value)) return false
+        existingValues.push(a.value)
+        return true
+    })
+
+    return { fontStyles: filteredFontStyles, defaultValue }
+}
 
 function addFonts(fonts: Family[], newFonts: Family[]) {
     // join and remove duplicates

@@ -3,24 +3,21 @@ import type { Option } from "../../../types/Main"
 import MidiValues from "../actions/MidiValues.svelte"
 import RestValues from "../actions/RestValues.svelte"
 import { clone, sortByName } from "../helpers/array"
+import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
 import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
 import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
 import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
-import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-
-// multiple preset inputs
-export const customInputs = {
-    midi: MidiValues,
-    rest: RestValues,
-}
 
 // [DEFAULT] IN: value= OUT=on:change
 export const commonInputs = {
     // eslint-disable-next-line
     string: MaterialTextInput,
     number: MaterialNumberInput,
-    dropdown: MaterialDropdown, // OUT=click
-    checkbox: MaterialToggleSwitch, // IN=checked
+    dropdown: MaterialDropdown,
+    color: MaterialColorInput,
+
+    midi: MidiValues,
+    rest: RestValues,
 }
 
 // init values

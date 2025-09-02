@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { OUTPUT } from "../../types/Channels"
+import type { DropdownOptions } from "../../types/Input"
 import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
 import { sortByName } from "../components/helpers/array"
@@ -128,7 +129,7 @@ export const getRightParenthesis = () => (fullWidth.find((id) => get(language).i
 
 // dropdown selector
 export function getLanguageList() {
-    let options: { label: string; value: string; prefix?: string }[] = Object.keys(languages).map((id) => ({ label: languages[id], value: id }))
+    let options: DropdownOptions = Object.keys(languages).map((id) => ({ label: languages[id], value: id }))
     options = sortByName(options, "label")
 
     // add flags after sorting

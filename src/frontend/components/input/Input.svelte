@@ -1,11 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { Input } from "../../../types/Input"
+    import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
-    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-    import { commonInputs, customInputs } from "./inputs"
+    import { commonInputs } from "./inputs"
+    import { translateText } from "../../utils/language"
 
     export let input: Input
+
+    $: label = input.label ?? input.name ?? ""
 
     let dispatch = createEventDispatcher()
     function changed(e: any) {
@@ -15,11 +18,9 @@
 </script>
 
 {#if input.type === "dropdown"}
-    <MaterialDropdown label={input.name} value={input.value} options={input.options} on:change={changed} />
+    <MaterialDropdown {label} value={input.value} options={input.options?.map((a) => ({ ...a, label: translateText(a.label) }))} style={input.style || ""} on:change={changed} />
 {:else if input.type === "checkbox"}
-    <MaterialToggleSwitch label={input.name} checked={input.value} on:change={changed} />
-{:else if customInputs[input.type]}
-    <svelte:component this={customInputs[input.type]} label={input.name} value={input.value} {...input.settings || {}} on:change={changed} />
+    <MaterialCheckbox {label} checked={input.value} style="flex: 1;{input.style || ''}" on:change={changed} />
 {:else}
-    <svelte:component this={commonInputs[input.type]} label={input.name} value={input.value} {...input.settings || {}} on:change={changed} />
+    <svelte:component this={commonInputs[input.type]} {label} value={input.value} style={input.style || ""} {...input.settings || {}} on:change={changed} />
 {/if}

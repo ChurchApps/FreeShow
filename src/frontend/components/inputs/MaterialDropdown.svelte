@@ -2,23 +2,25 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { cubicOut } from "svelte/easing"
     import { fade, fly } from "svelte/transition"
+    import type { DropdownOptions } from "../../../types/Input"
     import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
+    import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
-    import InputRow from "../input/InputRow.svelte"
 
     export let label: string
     export let value: string
     export let defaultValue: string = ""
-    export let options: { label: string; value: string; prefix?: string; style?: string; data?: string }[]
+    export let options: DropdownOptions
 
     export let id = ""
     export let disabled = false
     export let allowEmpty = false
     export let flags = false
+    export let onlyArrow = false
 
     export let addNew: string | null = null
 
@@ -276,7 +278,7 @@
     $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title={onlyArrow ? `${translateText(label)}: ${selected?.label || "—"}` : ""} bind:this={dropdownEl}>
     <div class="background" />
 
     <div
@@ -292,16 +294,20 @@
         aria-haspopup="listbox"
         aria-expanded={open}
     >
-        <span class="selected-text" style={selected?.style ?? null}>
-            {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-            {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
-        </span>
+        {#if !onlyArrow}
+            <span class="selected-text" style={selected?.style ?? null}>
+                {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
+                {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
+            </span>
+        {/if}
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
         </svg>
     </div>
 
-    <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
+    {#if !onlyArrow}
+        <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
+    {/if}
     <span class="underline" />
 
     {#if allowEmpty && hasValue}
@@ -400,6 +406,10 @@
             Cantarell,
             "Helvetica Neue",
             sans-serif !important;
+    }
+
+    .textfield.onlyArrow {
+        width: 50px;
     }
 
     .background {
@@ -524,6 +534,12 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 
         border-bottom: 1px solid var(--primary-lighter);
+    }
+
+    .onlyArrow .dropdown {
+        --left: 160px;
+        left: calc(0 - var(--left));
+        width: calc(var(--left) + 48px);
     }
 
     .dropdown li {

@@ -9,16 +9,16 @@ import { midiToNote } from "./midi"
 import { sendMidi } from "../helpers/showActions"
 
 const OSC_SIGNAL_INPUTS: Input[] = [
-    { name: "inputs.url", id: "host", type: "string", value: "0.0.0.0" }, // ws://127.0.0.1
-    { name: "settings.port", id: "port", type: "number", value: 8080, settings: { max: 65535, buttons: false } }
+    { label: "inputs.url", id: "host", type: "string", value: "0.0.0.0" }, // ws://127.0.0.1
+    { label: "settings.port", id: "port", type: "number", value: 8080, settings: { max: 65535, buttons: false } }
 ]
 
-const INPUT_REST: Input = { name: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
+const INPUT_REST: Input = { label: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
 
 const MIDI_SIGNAL_INPUTS: Input[] = [
-    { name: "midi.output", id: "output", type: "dropdown", value: "", options: [{ value: "", label: "—" }] },
+    { label: "midi.output", id: "output", type: "dropdown", value: "", options: [{ value: "", label: "—" }] },
     {
-        name: "midi.type",
+        label: "midi.type",
         id: "type",
         type: "dropdown",
         value: "noteon",

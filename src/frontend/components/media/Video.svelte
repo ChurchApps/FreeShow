@@ -23,24 +23,24 @@
     }
 
     // Pingback after 30 playing seconds on videos where tracking is required
-    let pingbackSent: string | null = null
     let pingbackTime: number = 0
     let pingbackInterval: NodeJS.Timeout | null = null
     $: if (path && !mirror) setupPingback()
     function setupPingback() {
-        pingbackSent = null
         pingbackTime = 0
         if (pingbackInterval) clearInterval(pingbackInterval)
 
         pingbackInterval = setInterval(() => {
-            if (pingbackSent === path || videoData.paused) return
+            if (videoData.paused) return
 
             pingbackTime++
-            if (pingbackTime >= 30) sendPingback()
+            if (pingbackTime < 30) return
+
+            if (pingbackInterval) clearInterval(pingbackInterval)
+            sendPingback()
         }, 1000)
     }
     function sendPingback() {
-        pingbackSent = path
         const pingbackUrl = $media[path]?.pingbackUrl
         if (!pingbackUrl) return
 

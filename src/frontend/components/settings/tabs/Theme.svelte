@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import type { DropdownOptions } from "../../../../types/Input"
     import { outputs, selected, theme, themes } from "../../../stores"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
@@ -69,7 +70,7 @@
         })
     }
 
-    let fontsList: { label: string; value: string; style: string }[] = []
+    let fontsList: DropdownOptions = []
     onMount(async () => {
         fontsList = await getSystemFontsList()
     })
