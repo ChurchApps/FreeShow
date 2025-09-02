@@ -27,7 +27,6 @@ export class AudioAnalyserMerger {
         clearTimeout(this.timeout)
         this.timeout = null
         this.channels = {}
-        this.smoothedVolumes = {} // Clean up smoothed volumes cache
         audioChannels.set([])
     }
 

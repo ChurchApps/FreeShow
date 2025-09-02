@@ -37,10 +37,6 @@ export class AudioPlayer {
     static channelCount = 2
     static sampleRate = 48000 // Hz
 
-    // Cache management
-    private static readonly MAX_CACHE_SIZE = 100
-    private static readonly CACHE_CLEANUP_THRESHOLD = 120
-
     // static playing: { [key: string]: AudioData } = {}
 
     // INIT
@@ -203,23 +199,13 @@ export class AudioPlayer {
 
         this.pause(id)
         playingAudio.update((a) => {
-            const audioElement = a[id]?.audio
-            
-            // Properly cleanup audio element
-            if (audioElement) {
-                audioElement.pause()
-                audioElement.src = ""
-                audioElement.load() // Reset the element completely
-                audioElement.removeAttribute('src')
-            }
-            
-            this.stopStream(a[id]?.stream)
+            // reset
+            a[id].audio.src = ""
+            this.stopStream(a[id].stream)
 
             delete a[id]
             return a
-        })
-
-        AudioAnalyser.detach(id)
+        })        AudioAnalyser.detach(id)
         if (!AudioPlayer.getAllPlaying().length) sendMain(Main.NOW_PLAYING_UNSET, { dataPath: get(dataPath) })
     }
 
@@ -330,27 +316,7 @@ export class AudioPlayer {
         if (duration === Infinity) duration = 0
 
         this.storedDurations.set(id, duration)
-        
-        // Cleanup cache if it gets too large
-        this.cleanupDurationCache()
-        
         return duration
-    }
-
-    private static cleanupDurationCache() {
-        if (this.storedDurations.size > this.CACHE_CLEANUP_THRESHOLD) {
-            // Keep only the most recently accessed items
-            const entries = Array.from(this.storedDurations.entries())
-            // Remove oldest entries, keep last MAX_CACHE_SIZE
-            entries.slice(0, entries.length - this.MAX_CACHE_SIZE).forEach(([key]) => {
-                this.storedDurations.delete(key)
-            })
-        }
-    }
-
-    // Public method to trigger cache cleanup
-    static performCacheCleanup() {
-        this.cleanupDurationCache()
     }
 
     static getVolume(id: string | null = null, _updater = get(volume)) {

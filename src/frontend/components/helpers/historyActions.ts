@@ -12,7 +12,7 @@ import { history } from "./history"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
-import { loadShows, saveTextCache, cleanupShowsCache } from "./setShow"
+import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
 import { _show } from "./shows"
 
@@ -406,9 +406,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (!deleting && Object.keys(get(showsCache)).length >= 100) {
                 // store all to files
                 if (initializing) save()
-                // delete showsCache (to reduce lag) - use optimized cleanup instead
+                // delete showsCache (to reduce lag)
                 setTimeout(() => {
-                    cleanupShowsCache()
+                    showsCache.set({})
+                    activeShow.set(null)
                 }, 2000)
             }
 
