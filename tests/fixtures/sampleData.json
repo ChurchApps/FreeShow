@@ -1,0 +1,106 @@
+{
+    "sampleShow": {
+        "id": "test-show-1",
+        "name": "Test Show",
+        "category": null,
+        "private": false,
+        "settings": {
+            "activeLayout": "layout-1",
+            "template": ""
+        },
+        "timestamps": {
+            "created": 1693574400000,
+            "modified": null,
+            "used": null
+        },
+        "quickAccess": {},
+        "meta": {},
+        "slides": {
+            "slide-1": {
+                "group": null,
+                "color": null,
+                "settings": {},
+                "notes": "",
+                "items": [
+                    {
+                        "style": "left:50px;top:50px;",
+                        "lines": [
+                            {
+                                "align": "",
+                                "text": [
+                                    {
+                                        "style": "",
+                                        "value": "Sample slide text"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "layouts": {
+            "layout-1": {
+                "name": "Default Layout",
+                "notes": "",
+                "slides": {
+                    "slide-1": {}
+                }
+            }
+        }
+    },
+    "sampleProject": {
+        "id": "test-project-1",
+        "name": "Test Project",
+        "parent": "/",
+        "created": 1693574400000,
+        "shows": [
+            {
+                "id": "test-show-1",
+                "type": "show"
+            }
+        ]
+    },
+    "sampleSlide": {
+        "group": null,
+        "color": null,
+        "settings": {},
+        "notes": "Test slide notes",
+        "items": [
+            {
+                "style": "left:100px;top:100px;width:300px;height:200px;",
+                "lines": [
+                    {
+                        "align": "center",
+                        "text": [
+                            {
+                                "style": "font-size:24px;color:#ffffff;",
+                                "value": "Test slide content"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "sampleMediaShow": {
+        "id": "media-show-1",
+        "name": "Media Test Show",
+        "type": "video",
+        "data": {
+            "path": "/path/to/video.mp4",
+            "duration": 120
+        }
+    },
+    "sampleOutputSettings": {
+        "id": "output-1",
+        "name": "Main Output",
+        "enabled": true,
+        "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1920,
+            "height": 1080
+        }
+    }
+}
