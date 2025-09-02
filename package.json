@@ -71,7 +71,7 @@
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "cross-env": "^7.0.3",
-    "electron": "^32.3.3",
+    "electron": "github:castlabs/electron-releases#v37.0.0+wvcus",
     "electron-builder": "^26.0.19",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^8.10.2",
