@@ -78,7 +78,7 @@ jobs:
 
       - name: Use stock Electron on ARM64
         run: |
-          npm uninstall github:castlabs/electron-releases#v37.0.0+wvcus
+          npm uninstall github:castlabs/electron-releases#v37.0.0+wvcus --ignore-scripts
           npm install --save-dev electron@37.0.0
 
       - name: Install dependencies
