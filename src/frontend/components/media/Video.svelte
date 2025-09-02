@@ -22,6 +22,23 @@
         dispatch("loaded", true)
     }
 
+    // Pingback after 30 seconds on videos where tracking is required
+    let pingbackSent = false
+    function setupPingback() {
+        if (pingbackSent || mirror || videoData.paused || videoTime <= 0) return
+        const pingbackUrl = $media[path]?.pingbackUrl
+        if (!pingbackUrl) return
+        
+        setTimeout(() => {
+            if (video && !pingbackSent) {
+                pingbackSent = true
+                fetch(pingbackUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {})
+            }
+        }, 30000)
+    }
+
+    $: setupPingback()
+
     onDestroy(() => {
         if (endInterval) clearInterval(endInterval)
     })

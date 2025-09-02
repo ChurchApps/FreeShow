@@ -166,6 +166,7 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+    pingbackUrl?: string // URL to ping after 30+ seconds of playback
     cropping?: Partial<Cropping>
 
     ignoreLayer?: boolean // foreground background type
