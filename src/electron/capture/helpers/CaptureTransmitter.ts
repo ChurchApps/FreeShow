@@ -1,12 +1,12 @@
 import type { NativeImage, Size } from "electron"
 import os from "os"
+import { toApp } from "../.."
 import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
-import { toApp } from "../.."
 
 export type Channel = {
     key: string
@@ -129,7 +129,7 @@ export class CaptureTransmitter {
 
     // NDI
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
-        const buffer = image.getBitmap()
+        const buffer = image.toBitmap()
         const ratio = image.getAspectRatio()
         // this.ndiFrameCount++
         // WIP refresh on enable?
@@ -150,16 +150,16 @@ export class CaptureTransmitter {
     static sendToRequested(msg: any) {
         const newList: string[] = []
 
-        ;[...new Set(this.requestList)].forEach((dataString: string) => {
-            const data: { id: string; previewId: string } = JSON.parse(dataString)
+            ;[...new Set(this.requestList)].forEach((dataString: string) => {
+                const data: { id: string; previewId: string } = JSON.parse(dataString)
 
-            if (data.previewId !== msg.data?.id) {
-                newList.push(JSON.stringify(data))
-                return
-            }
+                if (data.previewId !== msg.data?.id) {
+                    newList.push(JSON.stringify(data))
+                    return
+                }
 
-            OutputHelper.Send.sendToWindow(data.id, msg)
-        })
+                OutputHelper.Send.sendToWindow(data.id, msg)
+            })
 
         this.requestList = newList
     }
@@ -169,7 +169,7 @@ export class CaptureTransmitter {
         if (!image) return
         // image = this.resizeImage(image, options.size, previewSize)
 
-        const buffer = image.getBitmap()
+        const buffer = image.toBitmap()
         const size = image.getSize()
 
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
@@ -193,7 +193,7 @@ export class CaptureTransmitter {
         // image = image.resize({ width: size.width / 3, height: size.height / 3, quality: "good" })
         // image = this.resizeImage(image, size, { width: size.width / 3, height: size.height / 3 })
 
-        const buffer = image.getBitmap() // {scaleFactor: 0.5}
+        const buffer = image.toBitmap() // {scaleFactor: 0.5}
         const size = image.getSize()
 
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
