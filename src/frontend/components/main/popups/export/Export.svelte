@@ -155,7 +155,7 @@
 
     {#if exportFormat === "pdf"}
         <HRule />
-        <PdfExport bind:pdfOptions {previewShow} />
+        <PdfExport bind:pdfOptions {previewShow} {loading} />
     {:else if exportFormat === "project"}
         <MaterialToggleSwitch label="export.include_media" style="margin-top: 20px;" checked={$special.projectIncludeMedia ?? true} defaultValue={true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
     {/if}

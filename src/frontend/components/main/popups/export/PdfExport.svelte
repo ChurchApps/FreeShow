@@ -10,8 +10,15 @@
 
     export let pdfOptions: any
     export let previewShow: Show | null
+    export let loading = false
+
+    // Reset type to default if current type is not available in options
+    $: if (pdfOptions.type && pdfTypeOptions.length && !pdfTypeOptions.find(opt => opt.value === pdfOptions.type)) {
+        pdfOptions.type = "default"
+    }
 
     let paper: any = null
+    let pdfTypeOptions: any[] = []
 
     if (!Object.keys(pdfOptions).length) {
         pdfOptions = {
@@ -43,12 +50,24 @@
         }
     }
 
-    const pdfTypeOptions = [
-        { value: "default", label: translateText("example.default") },
-        { value: "text", label: translateText("export.text") },
-        { value: "slides", label: translateText("export.slides") },
-        ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])
-    ]
+    // Initialize pdfTypeOptions
+    function updatePdfTypeOptions() {
+        const baseOptions = [
+            { value: "default", label: translateText("example.default") },
+            { value: "text", label: translateText("export.text") },
+            { value: "slides", label: translateText("export.slides") }
+        ]
+
+        // Add chord sheet option if show has chords
+        if (previewShow && showHasChords(previewShow)) {
+            baseOptions.push({ value: "chordSheet", label: "Chord Sheet" })
+        }
+
+        pdfTypeOptions = baseOptions
+    }
+
+    // Update pdfTypeOptions when previewShow changes
+    $: if (previewShow !== undefined) updatePdfTypeOptions()
 
     function showHasChords(show: Show | null): boolean {
         if (!show) return false
@@ -64,7 +83,7 @@
 <!-- min-width: 42vw; -->
 <div style="display: flex;gap: 15px;">
     <div class="options" style="flex: 0 0 300px;">
-        <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} on:change={(e) => (pdfOptions.type = e.detail)} />
+        <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} disabled={loading} on:change={(e) => (pdfOptions.type = e.detail)} />
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->
 
