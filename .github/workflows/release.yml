@@ -76,13 +76,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev uuid-dev --fix-missing
 
-      - name: Use stock Electron on ARM64
-        run: |
-          npm uninstall @castlabs/electron
-          npm install --save-dev electron@37.0.0
+      # - name: Use stock Electron on ARM64
+      #   run: |
+      #     npm uninstall @castlabs/electron
+      #     npm install --save-dev electron@37.0.0
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --verbose
 
       - name: Install FPM
         run:
