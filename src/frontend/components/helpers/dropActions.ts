@@ -907,14 +907,14 @@ const slideDrop = {
             const existingIndex = slideActions.findIndex((a) => {
                 const actionTriggerId = getActionTriggerId(a.triggers[0])
                 if (actionTriggerId !== triggerId) return false
-                
+
                 // If action cannot have multiple instances, replace any existing
                 if (!data.canAddMultiple) return true
-                
+
                 // If action can have multiple instances, only replace if values are exactly the same
                 return JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)
             })
-            
+
             if (existingIndex > -1) {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
                 return

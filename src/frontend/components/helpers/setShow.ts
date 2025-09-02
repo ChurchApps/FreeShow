@@ -7,6 +7,11 @@ import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsP
 import { Main } from "./../../../types/IPC/Main"
 import { getShowCacheId, updateCachedShow } from "./show"
 
+// Cache management constants
+const MAX_SHOWS_CACHE_SIZE = 100
+const MAX_TEXT_CACHE_SIZE = 500
+const CACHE_CLEANUP_THRESHOLD = 120
+
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
 
@@ -189,9 +194,61 @@ export function saveTextCache(id: string, show: Show) {
     // prevent rapid updates
     if (updateTimeout) clearTimeout(updateTimeout)
     updateTimeout = setTimeout(() => {
-        textCache.set({ ...get(textCache), ...tempCache })
+        const currentCache = get(textCache)
+        const newCache = { ...currentCache, ...tempCache }
+        
+        // Cleanup text cache if it gets too large
+        cleanupTextCache(newCache)
+        
+        textCache.set(newCache)
         tempCache = {}
     }, 1000)
+}
+
+// Cache cleanup functions
+function cleanupTextCache(cache: { [key: string]: string }) {
+    const entries = Object.entries(cache)
+    if (entries.length > CACHE_CLEANUP_THRESHOLD) {
+        // Keep only the most recent entries
+        const sortedEntries = entries.slice(-MAX_TEXT_CACHE_SIZE)
+        textCache.set(Object.fromEntries(sortedEntries))
+    }
+}
+
+export function cleanupShowsCache() {
+    const currentCache = get(showsCache)
+    const cacheSize = Object.keys(currentCache).length
+    
+    if (cacheSize > CACHE_CLEANUP_THRESHOLD) {
+        // Get active shows to preserve
+        const activeShowIds = Object.keys(get(shows))
+        const preservedShows: { [key: string]: Show } = {}
+        
+        // Keep active shows and recent shows up to MAX_SHOWS_CACHE_SIZE
+        let count = 0
+        for (const id of activeShowIds) {
+            if (currentCache[id] && count < MAX_SHOWS_CACHE_SIZE) {
+                preservedShows[id] = currentCache[id]
+                count++
+            }
+        }
+        
+        showsCache.set(preservedShows)
+        
+        // Also cleanup cached shows data
+        const currentCachedData = get(cachedShowsData)
+        const newCachedData: { [key: string]: any } = {}
+        
+        Object.keys(preservedShows).forEach(id => {
+            Object.keys(currentCachedData).forEach(cacheKey => {
+                if (cacheKey.startsWith(id + "_")) {
+                    newCachedData[cacheKey] = currentCachedData[cacheKey]
+                }
+            })
+        })
+        
+        cachedShowsData.set(newCachedData)
+    }
 }
 
 export function setQuickAccessMetadata(show: ShowObj, key: string, value: string) {

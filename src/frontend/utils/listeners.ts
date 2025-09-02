@@ -52,6 +52,22 @@ import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 import { AudioPlayer } from "../audio/audioPlayer"
 
+// Debounce utility for frequent updates
+const debounceTimers: { [key: string]: NodeJS.Timeout } = {}
+function debounce(key: string, callback: () => void, delay: number = 100) {
+    if (debounceTimers[key]) clearTimeout(debounceTimers[key])
+    debounceTimers[key] = setTimeout(() => {
+        callback()
+        delete debounceTimers[key]
+    }, delay)
+}
+
+// Cleanup function for debounce timers
+export function cleanupDebounceTimers() {
+    Object.values(debounceTimers).forEach(timer => clearTimeout(timer))
+    Object.keys(debounceTimers).forEach(key => delete debounceTimers[key])
+}
+
 export function storeSubscriber() {
     // load new show on show change
     activeShow.subscribe((a) => {
@@ -276,10 +292,14 @@ export function storeSubscriber() {
 
     // dynamic values
     playingAudio.subscribe(() => {
-        send(OUTPUT, ["PLAYING_AUDIO"], AudioPlayer.getAllPlaying())
+        debounce("playing_audio", () => {
+            send(OUTPUT, ["PLAYING_AUDIO"], AudioPlayer.getAllPlaying())
+        }, 50)
     })
     audioData.subscribe((a) => {
-        send(OUTPUT, ["AUDIO_DATA"], a)
+        debounce("audio_data", () => {
+            send(OUTPUT, ["AUDIO_DATA"], a)
+        }, 100)
     })
 
     colorbars.subscribe((a) => {
