@@ -76,13 +76,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev uuid-dev --fix-missing
 
-      # - name: Use stock Electron on ARM64
-      #   run: |
-      #     npm uninstall @castlabs/electron
-      #     npm install --save-dev electron@37.0.0
+      - name: Use stock Electron on ARM64
+        run: |
+          # Extract version number from castLabs devDependency
+          CASTLABS_VERSION=$(jq -r '.devDependencies["@castlabs/electron"]' package.json | sed -E 's/.*#v([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+          if [ "$CASTLABS_VERSION" != "null" ]; then
+            echo "Switching from @castlabs/electron to electron@$CASTLABS_VERSION"
+
+            # Remove castLabs devDependency and add stock electron
+            jq "del(.devDependencies[\"@castlabs/electron\"]) | .devDependencies.electron = \"$CASTLABS_VERSION\"" package.json > package.tmp.json
+            mv package.tmp.json package.json
+
+            # Remove package-lock.json so npm resolves fresh
+            rm -f package-lock.json
+          fi
 
       - name: Install dependencies
-        run: npm install --verbose
+        run: npm install
 
       - name: Install FPM
         run:
