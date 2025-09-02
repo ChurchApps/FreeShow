@@ -22,25 +22,34 @@
         dispatch("loaded", true)
     }
 
-    // Pingback after 30 seconds on videos where tracking is required
-    let pingbackSent = false
+    // Pingback after 30 playing seconds on videos where tracking is required
+    let pingbackSent: string | null = null
+    let pingbackTime: number = 0
+    let pingbackInterval: NodeJS.Timeout | null = null
+    $: if (path && !mirror) setupPingback()
     function setupPingback() {
-        if (pingbackSent || mirror || videoData.paused || videoTime <= 0) return
+        pingbackSent = null
+        pingbackTime = 0
+        if (pingbackInterval) clearInterval(pingbackInterval)
+
+        pingbackInterval = setInterval(() => {
+            if (pingbackSent === path || videoData.paused) return
+
+            pingbackTime++
+            if (pingbackTime >= 30) sendPingback()
+        }, 1000)
+    }
+    function sendPingback() {
+        pingbackSent = path
         const pingbackUrl = $media[path]?.pingbackUrl
         if (!pingbackUrl) return
-        
-        setTimeout(() => {
-            if (video && !pingbackSent) {
-                pingbackSent = true
-                fetch(pingbackUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {})
-            }
-        }, 30000)
-    }
 
-    $: setupPingback()
+        fetch(pingbackUrl, { method: "GET", mode: "no-cors" }).catch(() => {})
+    }
 
     onDestroy(() => {
         if (endInterval) clearInterval(endInterval)
+        if (pingbackInterval) clearInterval(pingbackInterval)
     })
 
     // custom end time
