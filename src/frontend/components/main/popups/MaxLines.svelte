@@ -1,9 +1,8 @@
 <script lang="ts">
     import { activePopup, popupData } from "../../../stores"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     const lines = [0, 1, 2, 3, 4]
 
@@ -21,12 +20,16 @@
         popupData.set({})
         activePopup.set(null)
     }
+
+    let showMore = false
 </script>
+
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
 <div class="grid">
     {#each lines as line}
         {@const isActive = line === Number(active)}
-        <Button outline={isActive} active={isActive} on:click={() => setValue(line)} bold={false}>
+        <MaterialButton showOutline={isActive} {isActive} on:click={() => setValue(line)}>
             <div class="lines">
                 {#each { length: line ? line : 5 } as _}
                     <span class="line" style={line ? "" : "opacity: 0.6;"}></span>
@@ -40,25 +43,26 @@
                     {line}
                 {/if}
             </p>
-        </Button>
+        </MaterialButton>
     {/each}
 </div>
 
-<CombinedInput>
-    <p><T id="actions.custom_key" /></p>
-    <NumberInput value={active} min={0} max={99} on:change={(e) => setValue(e.detail)} />
-</CombinedInput>
+{#if showMore}
+    <MaterialNumberInput style="margin-top: 20px;" label="actions.custom_key" value={active} min={0} max={99} on:change={(e) => setValue(e.detail)} />
+{/if}
 
 <style>
     .grid {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 10px;
-        padding: 15px 0;
+        gap: 8px;
     }
 
     .grid :global(button) {
+        font-weight: normal;
+        border: 2px solid var(--primary-lighter) !important;
+
         padding: 0.4em;
         flex-direction: column;
         gap: 5px;
@@ -85,6 +89,9 @@
     .lines .line {
         height: 5px;
         width: 100%;
+
+        border-radius: 1px;
+        /* border-radius: 10px; */
 
         background-color: white;
         /* border-radius: 1px; */

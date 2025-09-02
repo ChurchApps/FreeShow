@@ -1,10 +1,8 @@
 <script lang="ts">
     import { actionHistory } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getDateAndTimeString, timeAgo } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
 
     function clearHistory() {
@@ -14,24 +12,21 @@
 
 <main class="history">
     {#if $actionHistory.length}
-        {#each $actionHistory as item}
-            <p>
-                <span>
-                    {item.action[0].toUpperCase() + item.action.slice(1).replaceAll("_", " ")}
-                    {#if item.count > 1}<span style="opacity: 0.5;">({item.count})</span>{/if}
-                </span>
-                <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
-            </p>
-        {/each}
+        <div class="list">
+            {#each $actionHistory as item}
+                <p style="padding: 5px 20px;">
+                    <span>
+                        {item.action[0].toUpperCase() + item.action.slice(1).replaceAll("_", " ")}
+                        {#if item.count > 1}<span style="opacity: 0.5;">({item.count})</span>{/if}
+                    </span>
+                    <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                </p>
+            {/each}
+        </div>
 
-        <br />
-
-        <CombinedInput>
-            <Button on:click={clearHistory} style="width: 100%;" center dark>
-                <Icon id="delete" right />
-                <T id="actions.clear_history" />
-            </Button>
-        </CombinedInput>
+        <MaterialButton variant="outlined" style="margin-top: 20px;" icon="delete" on:click={clearHistory}>
+            <T id="actions.clear_history" />
+        </MaterialButton>
     {:else}
         <Center faded>
             <T id="empty.general" />
@@ -45,8 +40,19 @@
         flex-direction: column;
         /* gap: 5px; */
     }
-    main :global(p:nth-child(odd)) {
-        background-color: rgb(0 0 20 / 0.08);
+
+    .list {
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+
+        border-radius: 8px;
+        padding: 10px 0;
+
+        display: flex;
+        flex-direction: column;
+    }
+    .list p:nth-child(odd) {
+        background-color: rgb(0 0 20 / 0.12) !important;
     }
 
     p {

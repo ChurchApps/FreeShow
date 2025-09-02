@@ -23,6 +23,7 @@ import {
     outputDisplay,
     outputs,
     outputSlideCache,
+    outputState,
     overlays,
     overlayTimers,
     playingVideos,
@@ -56,21 +57,26 @@ import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from
 import { _show } from "./shows"
 import { getStyles } from "./style"
 
-export function displayOutputs(e: any = {}, auto = false) {
-    const forceKey = e.ctrlKey || e.metaKey
+export function toggleOutputs(outputIds: string[] | null = null, options: { force?: boolean, autoStartup?: boolean, state?: boolean } = {}) {
+    if (outputIds === null) outputIds = getActiveOutputs(get(outputs), false)
+    // if (outputIds === null) outputIds = Object.keys(get(outputs))
+
+    const outputsList = outputIds.map((id) => ({ ...get(outputs)[id], id })).filter(a => a.enabled)
+    if (!outputsList.length) return
 
     // sort so display order can be changed! (needs app restart)
-    const enabledOutputs = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
+    const sortedOutputs = sortObject(sortByName(outputsList), "stageOutput")
 
-    enabledOutputs.forEach((output) => {
-        const autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || output.boundsLocked || forceKey, auto, autoPosition })
-    })
+    const currentOutputState = !!get(outputState).find(a => a.id === outputIds[0])?.active
+    const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
+
+    const autoPosition = sortedOutputs.length === 1 && !sortedOutputs[0].forcedResolution?.width
+
+    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputs, state, force: options.force, autoStartup: options.autoStartup, autoPosition })
 }
 
 export function toggleOutput(id: string) {
-    if (!get(outputs)[id]?.enabled) return
-    send(OUTPUT, ["DISPLAY"], { enabled: "toggle", one: true, output: { id, ...get(outputs)[id] } })
+    toggleOutputs([id])
 }
 
 // background: null,
@@ -628,7 +634,7 @@ export function keyOutput(keyId: string, delOutput = false) {
         // show
         // , rate: get(special).previewRate || "auto"
         send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
-        if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
+        if (get(outputDisplay)) toggleOutput(keyId)
 
         return a
     })
@@ -653,7 +659,7 @@ export function addOutput(onlyFirst = false, styleId = "") {
         // show
         // , rate: get(special).previewRate || "auto"
         if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
-        if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
+        if (!onlyFirst && get(outputDisplay)) toggleOutput(id)
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         activeRename.set("output_" + id)

@@ -2,7 +2,7 @@
     import { activePopup, popupData } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let currentValue = $popupData.active || "contain"
 
@@ -36,12 +36,12 @@
 <div class="types">
     {#each mediaFitOptions as fit}
         {@const isActive = fit.id === currentValue}
-        <Button outline={isActive} active={isActive} on:click={() => changeFit(fit.id)} bold={false}>
+        <MaterialButton showOutline={isActive} {isActive} on:click={() => changeFit(fit.id)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
                 {@html icons[fit.id]}
             </svg>
             <T id={fit.name} />
-        </Button>
+        </MaterialButton>
     {/each}
 </div>
 
@@ -52,12 +52,14 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 20px;
-        padding: 15px 0;
+        gap: 5px;
     }
 
     .types :global(button) {
-        padding: 0.5em 0.8em;
+        font-weight: normal;
+        border: 2px solid var(--primary-lighter) !important;
+
+        padding: 0.6em;
         flex-direction: column;
         gap: 5px;
     }

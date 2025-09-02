@@ -12,6 +12,9 @@
     import { isoLanguages } from "../../main/popups/localization/isoLanguages"
     import { getStyles } from "../../helpers/style"
     import { getLayoutRef } from "../../helpers/show"
+    import { onDestroy } from "svelte"
+    import { isConditionMet } from "../scripts/itemHelpers"
+    import { getItemText } from "../scripts/textStyle"
 
     export let item: Item
     export let index: number
@@ -105,6 +108,12 @@
 
     $: styles = getStyles(item?.lines?.[0]?.text?.[0]?.style)
     $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
+
+    let updater = 0
+    const updaterInterval = setInterval(() => updater++, 3000)
+    onDestroy(() => clearInterval(updaterInterval))
+
+    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", updater)
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
@@ -178,7 +187,7 @@
 
     <!-- conditions -->
     {#if Object.values(item?.conditions || {}).length}
-        <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+        <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
             <Button on:click={() => removeItemValue("conditions")} redHover>
                 <Icon id="light" white />
             </Button>

@@ -11,7 +11,6 @@
         activePopup,
         activeProject,
         activeTriggerFunction,
-        dictionary,
         drawerTabsData,
         media,
         outLocked,
@@ -33,13 +32,15 @@
     import { getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
+    import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Media from "../../output/layers/Media.svelte"
-    import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, getSplittedVerses, getVersePartLetter, joinRange, textKeys } from "../bible/scripture"
@@ -63,8 +64,9 @@
     $: templateBackground = template.settings?.backgroundPath
 
     $: if ($drawerTabsData || templateId) setTimeout(checkTemplate, 100)
+    $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
     function checkTemplate() {
-        if (!templateId.includes("scripture")) return
+        if (!isDefault) return
 
         let newTemplateId = "scripture_" + bibles.length
         scriptureSettings.update((a) => {
@@ -182,19 +184,6 @@
         return { show }
     }
 
-    // const getTextValue = (e: any) => e.target?.value || ""
-
-    const checked = (e: any) => {
-        let val = e.target.checked
-        let id = e.target.id
-        update(id, val)
-
-        if (id === "splitLongVerses") longVersesMenuOpened = val
-        if (id === "verseNumbers") verseMenuOpened = val
-        if (id === "redJesus") redMenuOpened = val
-        if (id === "showVerse" || id === "showVersion") referenceMenuOpened = showVersion || $scriptureSettings.showVerse ? (val ? true : referenceMenuOpened) : false
-    }
-
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
             a[id] = value
@@ -202,6 +191,11 @@
         })
 
         if (Object.keys(textKeys).includes(id)) updateCustomText(id, value)
+
+        if (id === "splitLongVerses") longVersesMenuOpened = value
+        else if (id === "verseNumbers") verseMenuOpened = value
+        else if (id === "redJesus") redMenuOpened = value
+        else if (id === "showVerse" || id === "showVersion") referenceMenuOpened = showVersion || $scriptureSettings.showVerse ? (value ? true : referenceMenuOpened) : false
     }
 
     function showVerse() {
@@ -339,6 +333,17 @@
         update("customText", customText)
     }
 
+    function editTemplate() {
+        activeDrawerTab.set("templates")
+        // closeDrawer()
+        // drawerTabsData.update(a => {
+        //     a.template.activeSubTab = "all"
+        //     return a
+        // })
+        activeEdit.set({ type: "template", id: templateId, items: [] })
+        activePage.set("edit")
+    }
+
     $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("!{"))
 
     $: previousSlides = "{}"
@@ -384,166 +389,55 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        <CombinedInput textWidth={40} style="border-bottom: 4px solid var(--primary-lighter);">
-            <p><T id="info.template" /></p>
-            <Button
-                on:click={() => {
-                    popupData.set({ action: "select_template", active: templateId, trigger: (id) => update("template", id) })
-                    activePopup.set("select_template")
-                }}
-                style="overflow: hidden;"
-                bold={false}
-            >
-                <div style="display: flex;align-items: center;padding: 0;">
-                    <Icon id="templates" />
-                    <p>{$templates[templateId]?.name || "popup.select_template"}</p>
-                </div>
-            </Button>
-            {#if $templates[templateId]}
-                <Button
-                    title={$dictionary.titlebar?.edit}
-                    on:click={() => {
-                        activeDrawerTab.set("templates")
-                        // closeDrawer()
-                        // drawerTabsData.update(a => {
-                        //     a.template.activeSubTab = "all"
-                        //     return a
-                        // })
-                        activeEdit.set({ type: "template", id: templateId, items: [] })
-                        activePage.set("edit")
-                    }}
-                >
-                    <Icon id="edit" white />
-                </Button>
+        <InputRow style="margin-bottom: 10px;">
+            <MaterialPopupButton label="info.template" value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
+            {#if templateId && $templates[templateId]}
+                <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
-            {#if !templateId.includes("scripture")}
-                <Button title={$dictionary.actions?.remove} on:click={() => update("template", "")} redHover>
-                    <Icon id="close" size={1.2} white />
-                </Button>
-            {/if}
-        </CombinedInput>
+        </InputRow>
 
         <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
-        <CombinedInput>
-            <p style="flex: 1;"><T id="scripture.verses_on_individual_lines" /></p>
-            <div class="alignRight">
-                <Checkbox id="versesOnIndividualLines" checked={$scriptureSettings.versesOnIndividualLines} on:change={checked} />
-            </div>
-        </CombinedInput>
+        <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={(e) => update("versesOnIndividualLines", e.detail)} />
         <!-- {/if} -->
 
         <!-- Long verses -->
-        <CombinedInput>
-            <p style="flex: 1;"><T id="scripture.divide_long_verses" /></p>
-            <div class="alignRight">
-                <Checkbox id="splitLongVerses" checked={$scriptureSettings.splitLongVerses} on:change={checked} />
-            </div>
-            {#if $scriptureSettings.splitLongVerses}
-                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (longVersesMenuOpened = !longVersesMenuOpened)}>
-                    {#if longVersesMenuOpened}
-                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                    {:else}
-                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                    {/if}
-                </Button>
-            {/if}
-        </CombinedInput>
+        <InputRow arrow={$scriptureSettings.splitLongVerses} bind:open={longVersesMenuOpened}>
+            <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={(e) => update("splitLongVerses", e.detail)} />
+        </InputRow>
         {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
-            <CombinedInput style="border-bottom: 4px solid var(--primary-lighter);">
-                <p><T id="edit.size" /></p>
-                <NumberInput value={$scriptureSettings.longVersesChars || 100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
-            </CombinedInput>
+            <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
         {/if}
 
         <!-- Verse numbers -->
-        <CombinedInput>
-            <p style="flex: 1;"><T id="scripture.verse_numbers" /></p>
-            <div class="alignRight">
-                <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
-            </div>
-            {#if $scriptureSettings.verseNumbers}
-                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (verseMenuOpened = !verseMenuOpened)}>
-                    {#if verseMenuOpened}
-                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                    {:else}
-                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                    {/if}
-                </Button>
-            {/if}
-        </CombinedInput>
+        <InputRow arrow={$scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
+            <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={(e) => update("verseNumbers", e.detail)} />
+        </InputRow>
         {#if $scriptureSettings.verseNumbers && verseMenuOpened}
-            <CombinedInput>
-                <p><T id="edit.color" /></p>
-                <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={(e) => update("numberColor", e.detail)} />
-            </CombinedInput>
-            <CombinedInput>
-                <p><T id="edit.size" /></p>
-                <NumberInput value={$scriptureSettings.numberSize || 50} on:change={(e) => update("numberSize", e.detail)} />
-            </CombinedInput>
+            <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={(e) => update("numberColor", e.detail)} />
+            <MaterialNumberInput label="edit.size" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={(e) => update("numberSize", e.detail)} />
         {/if}
 
         <!-- Red Jesus -->
         {#if $scriptureSettings.redJesus || containsJesusWords}
-            <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
-                <p style="flex: 1;"><T id="scripture.red_jesus" /></p>
-                <div class="alignRight">
-                    <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
-                </div>
-                {#if $scriptureSettings.redJesus}
-                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (redMenuOpened = !redMenuOpened)}>
-                        {#if redMenuOpened}
-                            <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                        {:else}
-                            <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                        {/if}
-                    </Button>
-                {/if}
-            </CombinedInput>
+            <InputRow arrow={$scriptureSettings.redJesus} bind:open={redMenuOpened}>
+                <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={(e) => update("redJesus", e.detail)} />
+            </InputRow>
         {/if}
         {#if $scriptureSettings.redJesus && redMenuOpened}
-            <CombinedInput>
-                <p><T id="edit.color" /></p>
-                <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
-            </CombinedInput>
+            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={(e) => update("jesusColor", e.detail)} />
         {/if}
 
         <!-- Reference options -->
-        <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
-            <p style="flex: 1;"><T id="scripture.reference" /></p>
-            <div class="alignRight">
-                <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
-            </div>
-            {#if $scriptureSettings.showVerse}
-                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (referenceMenuOpened = !referenceMenuOpened)}>
-                    {#if referenceMenuOpened}
-                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                    {:else}
-                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                    {/if}
-                </Button>
-            {/if}
-        </CombinedInput>
-        <CombinedInput style={referenceMenuOpened ? "border-bottom: 4px solid var(--primary-lighter);" : ""}>
-            <p style="flex: 1;"><T id="scripture.version" /></p>
-            <div class="alignRight">
-                <Checkbox disabled={bibles.find((a) => a?.attributionRequired)} id="showVersion" checked={showVersion} on:change={checked} />
-            </div>
-            {#if showVersion}
-                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (referenceMenuOpened = !referenceMenuOpened)}>
-                    {#if referenceMenuOpened}
-                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                    {:else}
-                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                    {/if}
-                </Button>
-            {/if}
-        </CombinedInput>
+        <InputRow style="margin-top: 10px;" arrow bind:open={referenceMenuOpened}>
+            <MaterialToggleSwitch label="scripture.reference" style="width: 100%;" checked={$scriptureSettings.showVerse} defaultValue={true} on:change={(e) => update("showVerse", e.detail)} />
+        </InputRow>
+        <InputRow arrow bind:open={referenceMenuOpened}>
+            <MaterialToggleSwitch label="scripture.version" disabled={!!bibles.find((a) => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={(e) => update("showVersion", e.detail)} />
+        </InputRow>
 
         {#if referenceMenuOpened}
             {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-                <CombinedInput>
-                    <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
-                </CombinedInput>
+                <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={(e) => update("customText", e.detail)} />
             {/if}
 
             <!-- {#if $scriptureSettings.showVerse}
@@ -555,31 +449,16 @@
 
             {#if showVersion || $scriptureSettings.showVerse}
                 <!-- {#if !$scriptureSettings.firstSlideReference} -->
-                <CombinedInput>
-                    <p style="flex: 1;"><T id="scripture.combine_with_text" /></p>
-                    <div class="alignRight">
-                        <Checkbox id="combineWithText" checked={$scriptureSettings.combineWithText} on:change={checked} />
-                    </div>
-                </CombinedInput>
+                <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={(e) => update("combineWithText", e.detail)} />
                 {#if $scriptureSettings.combineWithText}
-                    <CombinedInput>
-                        <p style="flex: 1;"><T id="scripture.reference_at_bottom" /></p>
-                        <div class="alignRight">
-                            <Checkbox id="referenceAtBottom" checked={$scriptureSettings.referenceAtBottom} on:change={checked} />
-                        </div>
-                    </CombinedInput>
+                    <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={(e) => update("referenceAtBottom", e.detail)} />
                 {/if}
                 <!-- {/if} -->
 
                 <!-- <br /> -->
                 <!-- WIP Unwanted: -->
                 {#if !$scriptureSettings.combineWithText}
-                    <CombinedInput>
-                        <p style="flex: 1;"><T id="edit.invert_items" /></p>
-                        <div class="alignRight">
-                            <Checkbox id="invertItems" checked={$scriptureSettings.invertItems} on:change={checked} />
-                        </div>
-                    </CombinedInput>
+                    <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={(e) => update("invertItems", e.detail)} />
                 {/if}
             {/if}
         {/if}
@@ -638,10 +517,5 @@
         font-size: 28px;
         font-style: italic;
         opacity: 0.7;
-    }
-
-    .alignRight {
-        flex: 0 !important;
-        padding: 0 10px;
     }
 </style>

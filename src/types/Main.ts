@@ -147,6 +147,7 @@ export interface Media {
     [key: string]: MediaStyle
 }
 export interface MediaStyle {
+    creationTime?: number // used for checking valid media thumbnail cache
     filter?: string
     flipped?: boolean
     flippedY?: boolean
@@ -165,6 +166,7 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+    pingbackUrl?: string // URL to ping after 30+ seconds of playback
     cropping?: Partial<Cropping>
 
     ignoreLayer?: boolean // foreground background type
@@ -340,7 +342,6 @@ export type Popups =
     | "next_timer"
     | "display_duration"
     | "manage_tags"
-    | "advanced_settings"
     | "about"
     | "shortcuts"
     | "unsaved"

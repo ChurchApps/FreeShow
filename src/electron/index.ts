@@ -65,8 +65,18 @@ if (disableHWA !== false) {
 if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", startApp)
 
-function startApp() {
+async function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
+    
+    // Wait for Widevine CDM components to be ready (required for castlabs electron)
+    try {
+        const { components } = require("electron")
+        await components.whenReady()
+        console.info("Widevine CDM components ready")
+    } catch (err) {
+        console.warn("Failed to initialize Widevine CDM components:", err)
+    }
+    
     setTimeout(createLoading)
 
     // Start these heavy operations in parallel, not blocking main window creation
@@ -100,7 +110,7 @@ function createLoading() {
 // ----- MAIN WINDOW -----
 
 export let mainWindow: BrowserWindow | null = null
-const MIN_WINDOW_SIZE = 200
+const MIN_WINDOW_SIZE = 400
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")

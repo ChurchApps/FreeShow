@@ -3,10 +3,9 @@
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, popupData, templates } from "../../../stores"
     import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import { getLayoutRef } from "../../helpers/show"
+    import { _show } from "../../helpers/shows"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     let action = $popupData.action
     let type = $activeEdit.type
@@ -51,7 +50,7 @@
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
                 newData: { key: "items", subkey: "actions", data: actions, indexes },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: "itemaction_" + indexes.join(",") },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "itemaction_" + indexes.join(",") }
             })
 
             return
@@ -60,11 +59,9 @@
         history({
             id: "setItems",
             newData: { style: { key: "actions", values: actions } },
-            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: indexes, override: "itemaction_" + slideRef.id + "_items_" + indexes.join(",") },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: indexes, override: "itemaction_" + slideRef.id + "_items_" + indexes.join(",") }
         })
     }
 </script>
 
-<CombinedInput>
-    <NumberInput {value} on:change={updateValue} max={3600} fixed={value.toString().includes(".") ? 1 : 0} decimals={1} />
-</CombinedInput>
+<MaterialNumberInput label="timer.seconds" {value} max={3600} on:change={updateValue} />

@@ -7,58 +7,52 @@ import { OutputHelper } from "../OutputHelper"
 import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
-    static displayOutput(data: { output: Output; enabled?: "toggle" | boolean; force?: boolean; autoPosition?: boolean; auto?: boolean; one?: boolean }) {
-        let window: BrowserWindow = OutputHelper.getOutput(data.output?.id || "")?.window
+    static toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
+        const newStates: { id: string; active: boolean | "invisible" }[] = []
+
+        data.outputs.forEach(output => {
+            const force = !!(data.force || output.allowMainScreen || output.boundsLocked)
+            const newState = OutputVisibility.toggleOutput(output, data.state, force, data.autoStartup, data.autoPosition)
+            newStates.push({ id: output.id, active: newState })
+        })
+
+        toApp(OUTPUT, { channel: "OUTPUT_STATE", data: newStates })
+    }
+
+    static toggleOutput(output: (Output & { id: string }), state: boolean, force?: boolean, autoStartup?: boolean, autoPosition?: boolean) {
+        if (!output?.id) return false
+
+        let window: BrowserWindow = OutputHelper.getOutput(output.id)?.window
 
         if (!window || window.isDestroyed()) {
-            if (!data.output) return
-
-            OutputHelper.Lifecycle.createOutput(data.output)
-            window = OutputHelper.getOutput(data.output?.id || "")?.window
-            if (!window || window.isDestroyed()) return
+            OutputHelper.Lifecycle.createOutput(output)
+            window = OutputHelper.getOutput(output.id)?.window
+            if (!window || window.isDestroyed()) return false
         }
 
-        if (data.enabled === "toggle") data.enabled = !window.isVisible()
-        if (data.enabled !== false) data.enabled = true
-
-        /// //
-
-        if (data.output?.invisible) {
-            OutputHelper.setOutput(data.output.id!, { ...OutputHelper.getOutput(data.output.id!), invisible: true })
+        if (output.invisible) {
+            OutputHelper.setOutput(output.id, { ...OutputHelper.getOutput(output.id), invisible: true })
             if (window.isVisible()) this.hideWindow(window)
-            // if just one output, send a message explaining why the button does not turn on?
-            return
+            return "invisible"
         }
+
+        let bounds: Rectangle = output.bounds
 
         // don't auto position on mac (because of virtual)
-        if (data.autoPosition && !data.force && !data.output?.forcedResolution?.width && process.platform !== "darwin") data.output.bounds = this.getSecondDisplay(data.output.bounds)
-        const bounds: Rectangle = data.output.bounds
-        const windowNotCoveringMain: boolean = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
+        if (autoPosition && !force && process.platform !== "darwin") bounds = this.getSecondDisplay(bounds)
+        const windowNotCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 
-        if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
+        if (state === true && (force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
             this.showWindow(window)
 
-            if (bounds) OutputHelper.Bounds.updateBounds({ id: data.output.id!, bounds: data.output.bounds })
+            OutputHelper.Bounds.updateBounds({ id: output.id, bounds })
+            return true
         } else {
-            this.hideWindow(window, data.output)
+            this.hideWindow(window, output)
 
-            if (data.enabled && !data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
-            // if (data.enabled && !data.auto) sendToMain(ToMain.ALERT, "error.display") // this will cause loading issues
-            data.enabled = false
+            if (state === true && !autoStartup) toApp(MAIN, { channel: "ALERT", data: "error.display" })
+            return false
         }
-
-        // get toggled state
-        setTimeout(() => {
-            const state = OutputHelper.getAllOutputs()
-                .filter((a) => !a.invisible)
-                .map(({ id, window: outputWindow }) => ({ id, active: outputWindow.isVisible() }))
-
-            toApp(OUTPUT, { channel: "OUTPUT_STATE", data: state })
-
-            const getVisibleState = [...new Set(state.map((a) => a.active))]
-            if (getVisibleState.length === 1) toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: getVisibleState[0] } })
-        })
-        // if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: data.enabled } })
     }
 
     static getSecondDisplay(bounds: Rectangle) {

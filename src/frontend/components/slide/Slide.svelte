@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
@@ -30,7 +30,7 @@
         textEditActive
     } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
-    import { wait } from "../../utils/common"
+    import { newToast, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
@@ -40,7 +40,7 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { checkMedia, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
+    import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
@@ -49,6 +49,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
     export let showId: string
     export let slide: Slide
@@ -136,10 +137,13 @@
         if ($checkedFiles.includes(id)) return
 
         checkedFiles.set([...$checkedFiles, id])
-        let exists = await checkMedia(path)
+        let exists = await doesMediaExist(path)
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
+            newToast("$error.media")
+            if ($special.autoLocateMedia === false) return
+
             let fileName = getFileName(path)
             sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return
@@ -353,6 +357,12 @@
         console.log(`Requesting to open URL: ${url}`) // For debugging
         sendMain(Main.URL, url)
     }
+
+    $: outputId = getActiveOutputs($outputs, false, true)
+
+    let updater = 0
+    const updaterInterval = setInterval(() => updater++, 3000)
+    onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 <div
@@ -449,7 +459,8 @@
                     <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
-                            {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                                <!-- && (!item.clickReveal || output?.clickRevealed) -->
                                 <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox

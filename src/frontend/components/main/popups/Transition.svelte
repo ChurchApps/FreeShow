@@ -4,18 +4,19 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { Transition } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, popupData, selected, showsCache, styles, templates, transitionData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { send } from "../../../utils/request"
     import { easings, transitionTypes } from "../../../utils/transitions"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import { getLayoutRef } from "../../helpers/show"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import Tabs from "../Tabs.svelte"
 
     let currentValue = $popupData.active || ""
 
@@ -108,8 +109,8 @@
         }
     }
 
-    let updated: string[] = []
-    let updatedTimeout: NodeJS.Timeout | null = null
+    // let updated: string[] = []
+    // let updatedTimeout: NodeJS.Timeout | null = null
     function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
@@ -138,11 +139,11 @@
         if (reset) data = { ...data, [key]: value }
 
         // visually show updated
-        updated = changeSpecific
-        if (updatedTimeout) clearTimeout(updatedTimeout)
-        updatedTimeout = setTimeout(() => {
-            updated = []
-        }, 800)
+        // updated = changeSpecific
+        // if (updatedTimeout) clearTimeout(updatedTimeout)
+        // updatedTimeout = setTimeout(() => {
+        //     updated = []
+        // }, 800)
 
         return data
     }
@@ -196,8 +197,12 @@
     $: currentMediaTransition = clone(isSlide ? slideMediaTransition : isStyle ? styleMediaTransition : $transitionData.media)
 
     type TransitionTypes = "text" | "media"
-    const TRANSITION_TYPES: TransitionTypes[] = ["text", "media"]
-    let selectedType = TRANSITION_TYPES[0]
+    const transitionTabs = {
+        text: { id: "text", name: translateText("transition.text") + (isSlide ? translateText("transition.current_slide") : ""), icon: "text" },
+        media: { id: "media", name: translateText("transition.media") + (isSlide ? translateText("transition.current_slide") : ""), icon: "image" }
+    }
+    let selectedType: TransitionTypes = "text"
+
     $: currentTransitionFull = selectedType === "text" ? currentTextTransition : currentMediaTransition
     let currentTransition = currentTransitionFull
     $: if (currentTransitionFull && enableSpecific !== undefined && selectedSpecific) updateTransition()
@@ -208,18 +213,27 @@
 
     $: isDisabled = currentTransition.type === "none"
     $: durationValue = currentTransition.duration ?? 0.5
-    $: easingValue = easings.find((a) => a.id === currentTransition.easing)?.name || "$:easings.sine:$"
+    $: easingValue = currentTransition.easing ?? "sine"
 
     // SPECIFIC
 
     const SPECIFIC_SCENARIOS = ["in", "out", "between"]
+    const specificTabs = {
+        in: { id: "in", name: translateText("transition.in"), icon: "down" },
+        out: { id: "out", name: translateText("transition.out"), icon: "up" },
+        between: { id: "between", name: translateText("transition.between"), icon: "arrow_forward" }
+    }
+    const specificTabsMedia = {
+        in: specificTabs.in,
+        out: specificTabs.out
+    }
     let specificScenatios = clone(SPECIFIC_SCENARIOS)
     $: if (isItem || selectedType === "media") specificScenatios = specificScenatios.slice(0, 2)
     else specificScenatios = clone(SPECIFIC_SCENARIOS)
 
     let enableSpecific = false
     let selectedSpecific: string = specificScenatios[0]
-    $: if (specificScenatios.find((a) => currentTransitionFull?.[a])) {
+    $: if (specificScenatios.find((a) => currentTransitionFull?.[a]) || showMore) {
         enableSpecific = true
     } else {
         selectedSpecific = specificScenatios[0]
@@ -245,46 +259,34 @@
     // CUSTOM VALUES
 
     const slideTypes = [
-        { id: "left_right", name: "$:edit.left_right:$" },
-        { id: "right_left", name: "$:edit.right_left:$" },
-        { id: "bottom_top", name: "$:edit.bottom_top:$" },
-        { id: "top_bottom", name: "$:edit.top_bottom:$" }
+        { value: "left_right", label: translateText("edit.left_right") },
+        { value: "right_left", label: translateText("edit.right_left") },
+        { value: "bottom_top", label: translateText("edit.bottom_top") },
+        { value: "top_bottom", label: translateText("edit.top_bottom") }
     ]
+
+    let showMore = false
 </script>
+
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+
+{#if showMore}
+    <MaterialButton class="popup-reset" icon="reset" iconSize={1.1} title="actions.reset" on:click={reset} white />
+{/if}
 
 <!-- ITEM (TEXT) / MEDIA -->
 {#if !isItem}
-    <div style="display: flex;">
-        {#each TRANSITION_TYPES as type}
-            <Button on:click={() => (selectedType = type)} style="flex: 1;border-bottom: 2px solid {selectedType === type ? 'var(--secondary)' : 'var(--primary-lighter)'} !important;white-space: nowrap;" bold={false} center dark>
-                <Icon id={type === "media" ? "image" : type} right />
-                <T id="transition.{type}" />{#if isSlide}&nbsp;<T id="transition.current_slide" />{/if}
-            </Button>
-        {/each}
-    </div>
+    <Tabs tabs={transitionTabs} bind:active={selectedType} />
 {/if}
 
 <!-- SPECIFIC -->
 
 {#if enableSpecific}
-    <div style="display: flex;">
-        {#each specificScenatios as specific}
-            <Button
-                on:click={() => (selectedSpecific = specific)}
-                style={selectedSpecific === specific || updated.includes(specific) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;white-space: nowrap;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);white-space: nowrap;"}
-                bold={false}
-                center
-                dark
-            >
-                <T id="transition.{specific}" />
-            </Button>
-        {/each}
-    </div>
-{:else}
-    <Button on:click={() => (enableSpecific = true)} bold={false} center dark>
-        <!-- <Icon id="noIcon" size={1.2} right /> -->
+    <Tabs tabs={selectedType === "media" ? specificTabsMedia : specificTabs} bind:active={selectedSpecific} />
+{:else if showMore}
+    <MaterialButton variant="outlined" style="font-weight: normal;" on:click={() => (enableSpecific = true)}>
         <T id="transition.specific" />
-    </Button>
+    </MaterialButton>
 {/if}
 
 <!-- TYPE -->
@@ -292,54 +294,47 @@
 <div class="types">
     {#each transitionTypes as type}
         {@const isActive = type.id === currentTransition.type}
-        <Button outline={isActive} active={isActive} on:click={() => changeTransition(selectedType, "type", type.id)} bold={false}>
+        <MaterialButton showOutline={isActive} {isActive} style={type.id === "none" ? "font-style: italic;" : ""} on:click={() => changeTransition(selectedType, "type", type.id)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
                 {@html icons[type.id]}
             </svg>
             <T id={type.name} />
-        </Button>
+        </MaterialButton>
     {/each}
 </div>
 
-<CombinedInput style="margin-top: 10px;">
-    <p><T id="transition.duration" /></p>
-    <NumberInput disabled={isDisabled} value={durationValue} max={20000} fixed={1} decimals={3} step={100} inputMultiplier={0.001} on:change={(e) => changeTransition(selectedType, "duration", e.detail)} />
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="transition.easing" /></p>
-    <Dropdown disabled={isDisabled} options={easings} value={easingValue} on:click={(e) => changeTransition(selectedType, "easing", e.detail.id)} />
-</CombinedInput>
-
 {#if currentTransition.type === "slide"}
-    <CombinedInput>
-        <p><T id="transition.direction" /></p>
-        <Dropdown
-            options={slideTypes}
-            value={slideTypes.find((a) => a.id === (currentTransition.custom?.direction || slideTypes[0].id))?.name || ""}
-            on:click={(e) => changeTransition(selectedType, "custom", { ...(currentTransition.custom || {}), direction: e.detail.id })}
-        />
-    </CombinedInput>
+    <MaterialDropdown
+        label="transition.direction"
+        style="margin-bottom: 10px;"
+        options={slideTypes}
+        value={currentTransition.custom?.direction || slideTypes[0].value}
+        on:change={(e) => changeTransition(selectedType, "custom", { ...(currentTransition.custom || {}), direction: e.detail })}
+    />
 {/if}
 
-<br />
-
-<Button on:click={reset} center dark>
-    <Icon id="reset" size={1.2} right />
-    <T id="actions.reset" />
-</Button>
+<InputRow>
+    <!-- defaultValue={selectedType === "media" ? 0.8 : 0.5} -->
+    <MaterialNumberInput label="transition.duration" disabled={isDisabled} value={durationValue / 1000} max={20} step={0.1} on:change={(e) => changeTransition(selectedType, "duration", e.detail * 1000)} />
+    <!-- defaultValue="sine" -->
+    <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
+</InputRow>
 
 <style>
     .types {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
+        justify-content: center;
         gap: 5px;
         padding: 15px 0;
     }
 
     .types :global(button) {
-        padding: 0.5em 0.8em;
+        font-weight: normal;
+        border: 2px solid var(--primary-lighter) !important;
+
+        padding: 0.6em;
         flex-direction: column;
+        gap: 5px;
     }
 </style>

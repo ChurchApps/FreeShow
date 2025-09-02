@@ -1,53 +1,30 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
-    import { Option } from "../../../../types/Main"
     import { TranslationMethod } from "../../../../types/Songbeamer"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, categories } from "../../../stores"
-    import { translate } from "../../../utils/language"
-    import { sortObject } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
+    import { activePopup, drawerTabsData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
+    import HRule from "../../input/HRule.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
 
     const encodingOptions = [
         {
-            id: "utf8",
-            name: translate("songbeamer_import.utf8"),
+            value: "utf8",
+            label: "UTF-8"
         },
         {
-            id: "latin1",
-            name: translate("songbeamer_import.latin1"),
-            extra: translate("songbeamer_import.older_versions"),
-        },
-    ]
-    let selectedEncoding: Option = encodingOptions[0]
-
-    const songbeamerCatId = "songbeamer"
-    let cats: any = [
-        ...sortObject(
-            Object.keys($categories).map((key: string) => ({
-                id: key,
-                ...$categories[key],
-            })),
-            "name"
-        ).map(
-            (cat: any): Option => ({
-                id: cat.id,
-                name: cat.default ? `$:${cat.name}:$` : cat.name,
-            })
-        ),
-    ]
-    let selectedCategory: Option = cats.find((el: Option) => el.id === songbeamerCatId)
-    if (!selectedCategory) {
-        selectedCategory = {
-            id: songbeamerCatId,
-            name: "Songbeamer",
+            value: "latin1",
+            label: "Latin 1",
+            data: translateText("songbeamer_import.older_versions")
         }
-        cats.unshift(selectedCategory)
-    }
+    ]
+    let selectedEncoding = encodingOptions[0].value
+
+    const activeCategory = $drawerTabsData.shows?.activeSubTab
+    const showCategory = activeCategory && activeCategory !== "all" && activeCategory !== "unlabeled" ? activeCategory : "songbeamer"
 
     let selectedTranslationMethod = TranslationMethod.MultiLine
 
@@ -55,85 +32,30 @@
         sendMain(Main.IMPORT, {
             channel: "songbeamer",
             format: { name: "Songbeamer", extensions: ["sng"] },
-            settings: { encoding: selectedEncoding, category: selectedCategory, translation: selectedTranslationMethod },
+            settings: { encoding: selectedEncoding, category: showCategory, translation: selectedTranslationMethod }
         })
         $activePopup = null
     }
 </script>
 
-<h4><T id="songbeamer_import.options" /></h4>
+<MaterialDropdown label="songbeamer_import.encoding" options={encodingOptions} value={selectedEncoding} on:change={(e) => (selectedEncoding = e.detail)} />
 
-<CombinedInput textWidth={30}>
-    <p><T id="songbeamer_import.encoding" /></p>
-    <Dropdown value={selectedEncoding?.name} options={encodingOptions} on:click={(evt) => (selectedEncoding = evt.detail)} />
-</CombinedInput>
+<HRule title="songbeamer_import.translations" />
 
-<CombinedInput textWidth={30}>
-    <p><T id="show.category" /></p>
-    <Dropdown options={cats} value={selectedCategory?.name} on:click={(evt) => (selectedCategory = evt.detail)} />
-</CombinedInput>
-
-<h4><T id="songbeamer_import.translations" /></h4>
-
-<div class="translation-method">
+<InputRow>
     {#each Object.values(TranslationMethod) as method}
-        <Button center dark active={method === selectedTranslationMethod} on:click={() => (selectedTranslationMethod = method)}>
+        <MaterialButton style="flex: 1;border-radius: 0;padding: 6px;border-width: 2px !important;" isActive={method === selectedTranslationMethod} on:click={() => (selectedTranslationMethod = method)}>
             <T id="songbeamer_import.translation_{method}" />
-        </Button>
+        </MaterialButton>
     {/each}
-</div>
+</InputRow>
 
-<p class="translation-description">
+<p style="margin: 10px 0;white-space: normal;opacity: 0.8;">
     <T id="songbeamer_import.translation_description_{selectedTranslationMethod}" />
 </p>
 
-<hr />
+<HRule />
 
-<div class="import-button">
-    <Button center dark on:click={importListener}>
-        <Icon id="import" size={1.2} right />
-        <T id="actions.import" />
-    </Button>
-</div>
-
-<style>
-    h4 {
-        color: var(--text);
-        margin: 20px 0;
-        text-align: center;
-    }
-    h4:first-child {
-        margin-top: 0;
-    }
-    h4:last-child {
-        margin-bottom: 0;
-    }
-
-    .translation-method {
-        display: flex;
-        flex-flow: wrap;
-    }
-    .translation-method :global(button) {
-        flex: 1;
-        border-bottom: 2px solid var(--primary-lighter);
-    }
-    .translation-method :global(button.active) {
-        border-bottom: 2px solid var(--secondary) !important;
-    }
-
-    hr {
-        border: none;
-        height: 2px;
-        margin: 20px 0;
-        background-color: var(--primary-lighter);
-    }
-
-    .translation-description {
-        margin: 10px 0;
-        white-space: normal;
-    }
-
-    .import-button > :global(button) {
-        width: 100%;
-    }
-</style>
+<MaterialButton variant="outlined" icon="import" on:click={importListener}>
+    <T id="actions.import" />
+</MaterialButton>

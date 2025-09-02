@@ -1,23 +1,21 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, playerVideos, popupData } from "../../../stores"
-    import { newToast } from "../../../utils/common"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import { playerVideos, popupData } from "../../../stores"
     import { clone } from "../../helpers/array"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     let active: string | null = $popupData.active
     let editId: string = $popupData.id || ""
     $: if (active) popupData.set({})
 
+    const currentId = editId || uid()
     let data = clone($playerVideos[editId] || { name: "", id: "" })
-    function add() {
+    $: if (data) update()
+
+    function update() {
         if (!data.id?.length) {
-            newToast("$toast.no_video_id")
-            return activePopup.set(null)
+            // newToast("$toast.no_video_id")
+            return
         }
 
         let id = data.id
@@ -37,50 +35,13 @@
         if (!name) name = id
 
         playerVideos.update((a) => {
-            a[editId || uid()] = { id, name, type: active as any }
+            a[currentId] = { id, name, type: active as any }
             return a
         })
-
-        activePopup.set(null)
-    }
-
-    function setValue(e: any, key: string) {
-        data[key] = e.target.value
-    }
-
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            ;(document.activeElement as any).blur()
-            add()
-        }
     }
 </script>
 
-<div on:keydown={keydown}>
-    {#if !editId}
-        <CombinedInput textWidth={40}>
-            <p><T id="inputs.name" /></p>
-            <!-- placeholder={$dictionary.inputs?.name} -->
-            <TextInput value={data.name} on:change={(e) => setValue(e, "name")} />
-        </CombinedInput>
-    {/if}
-    <CombinedInput textWidth={40}>
-        <p><T id="inputs.video_id" /></p>
-        <!-- placeholder="X-AJdKty74M" -->
-        <TextInput value={data.id || ""} on:change={(e) => setValue(e, "id")} />
-    </CombinedInput>
-
-    <br />
-
-    <CombinedInput>
-        <Button style="width: 100%;" on:click={add} center dark>
-            {#if editId}
-                <Icon id="edit" size={1.2} right />
-                <T id="timer.edit" />
-            {:else}
-                <Icon id="add" size={1.2} right />
-                <T id="settings.add" />
-            {/if}
-        </Button>
-    </CombinedInput>
-</div>
+{#if !editId}
+    <MaterialTextInput label="inputs.name" value={data.name} on:change={(e) => (data.name = e.detail)} autofocus={!data.name} />
+{/if}
+<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" on:change={(e) => (data.id = e.detail)} />

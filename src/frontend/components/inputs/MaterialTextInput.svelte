@@ -6,7 +6,8 @@
     import { dictionary } from "../../stores"
 
     export let value: string
-    export let defaultValue: string = ""
+    export let defaultValue: string | null = null
+    export let autofill: string = ""
     export let label: string
 
     export let id = ""
@@ -24,6 +25,20 @@
         if (autoselect) elem.select()
     }
 
+    function blurOnEnter(elem: HTMLInputElement) {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Enter") elem.blur()
+        }
+
+        elem.addEventListener("keydown", handler)
+
+        return {
+            destroy() {
+                elem.removeEventListener("keydown", handler)
+            }
+        }
+    }
+
     function input(e: Event) {
         value = (e.target as HTMLInputElement).value
         dispatch("input", value)
@@ -34,39 +49,51 @@
         dispatch("change", value)
     }
 
+    function updateValue(value: string | null) {
+        dispatch("change", value)
+        dispatch("input", value)
+    }
+
     // RESET
 
-    let resetFromValue = ""
+    let resetFromValue: string | null = null
     function reset() {
         resetFromValue = value
-        dispatch("change", defaultValue)
+        updateValue(defaultValue)
         setTimeout(() => {
-            resetFromValue = ""
+            resetFromValue = null
         }, 3000)
     }
 
     function undoReset() {
-        dispatch("change", resetFromValue)
-        resetFromValue = ""
+        updateValue(resetFromValue)
+        resetFromValue = null
     }
 </script>
 
-<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)}>
+<div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} style={$$props.style || null}>
     <div class="background" />
 
-    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} on:keydown />
+    <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 
     <span class="underline" />
 
-    {#if defaultValue}
+    {#if autofill}
+        <div class="remove">
+            <MaterialButton on:click={() => updateValue(autofill)} title="meta.autofill" white>
+                <Icon id="autofill" white />
+            </MaterialButton>
+        </div>
+    {/if}
+    {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>
                     <Icon id="reset" white />
                 </MaterialButton>
-            {:else if resetFromValue}
+            {:else if resetFromValue !== null}
                 <MaterialButton on:click={undoReset} title="actions.undo" white>
                     <Icon id="undo" white />
                 </MaterialButton>

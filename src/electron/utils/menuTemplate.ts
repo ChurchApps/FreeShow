@@ -46,16 +46,16 @@ export function template(strings: Dictionary): any {
             { label: strings.actions?.paste || "Paste", click: () => mc("paste") }, // , accelerator: "CmdOrCtrl+V"
             ...(isMac
                 ? [
-                      // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
-                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
-                      // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
-                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
-                  ]
+                    // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
+                    { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                    // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
+                    { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
+                ]
                 : [
-                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
-                      { type: "separator" },
-                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
-                  ])
+                    { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                    { type: "separator" },
+                    { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
+                ])
         ]
     }
 
@@ -74,6 +74,7 @@ export function template(strings: Dictionary): any {
     const helpMenu = {
         label: strings.titlebar?.help || "Help",
         submenu: [
+            { label: strings.popup?.quick_search || "Quick search", click: () => mc("quick_search") },
             { label: strings.popup?.shortcuts || "Shortcuts", click: () => mc("shortcuts") },
             { label: strings.main?.docs || "Docs", click: () => openURL("https://freeshow.app/docs") },
             { label: strings.guide?.start || "Quick start guide", click: () => mc("quick_start_guide") },

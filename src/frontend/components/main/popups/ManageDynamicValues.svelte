@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { dictionary, special } from "../../../stores"
+    import { special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     const alwaysEnabledIds = ["time", "show", "$"]
     const toggleSections = ["time", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "$"]
@@ -45,7 +46,7 @@
         url: string
         count: number
         divider?: string
-        updateInterval?: number
+        updateInterval?: string
     }
 
     const DEFAULT_RSS: RSS = { name: "", url: "", count: 5 }
@@ -83,7 +84,7 @@
     }
 
     function setValue(e: any, index: number, key: string) {
-        const value = e.target?.value || e.detail?.id || e.detail
+        const value = e.detail
 
         special.update((a) => {
             if (!a.dynamicRSS?.[index]) return a
@@ -102,85 +103,47 @@
     }
 
     const updateIntervalList = [
-        { id: "5", name: "5 $:settings.minutes:$" },
-        { id: "10", name: "10 $:settings.minutes:$" },
-        { id: "15", name: "15 $:settings.minutes:$" },
-        { id: "30", name: "30 $:settings.minutes:$" },
-        { id: "60", name: "60 $:settings.minutes:$" },
-        { id: "120", name: "120 $:settings.minutes:$" },
-        { id: "240", name: "240 $:settings.minutes:$" }
+        { value: "5", label: translateText("5 settings.minutes") },
+        { value: "10", label: translateText("10 settings.minutes") },
+        { value: "15", label: translateText("15 settings.minutes") },
+        { value: "30", label: translateText("30 settings.minutes") },
+        { value: "60", label: translateText("60 settings.minutes") },
+        { value: "120", label: translateText("120 settings.minutes") },
+        { value: "240", label: translateText("240 settings.minutes") }
     ]
 </script>
 
 <div>
     {#each toggleSections as section}
         {@const alwaysEnabled = alwaysEnabledIds.includes(section)}
-        <CombinedInput>
-            <!-- class:faded={alwaysEnabled} -->
-            <p class:faded={section === "rss" && !$special.dynamicRSS?.length} style="width: 100%;{hidden.includes(section) ? 'opacity: 0.5;' : ''}"><T id={getTitle(section)} /></p>
-            {#if !alwaysEnabled && (section !== "rss" || $special.dynamicRSS?.length)}
-                <Button style="min-width: 40px;" disabled={alwaysEnabled} on:click={() => toggleHidden(section)} center>
-                    <Icon id={hidden.includes(section) ? "private" : "eye"} white={alwaysEnabled || hidden.includes(section)} />
-                </Button>
-            {/if}
-        </CombinedInput>
+        {@const alwaysDisabled = section === "rss" && !$special.dynamicRSS?.length}
+
+        <MaterialCheckbox label={getTitle(section)} disabled={alwaysEnabled || alwaysDisabled} checked={alwaysDisabled ? false : alwaysEnabled || !hidden.includes(section)} on:change={() => toggleHidden(section)} />
     {/each}
 </div>
 
 <HRule title="settings.rss" />
 
-<div>
-    {#each rssList as rss, i}
-        <CombinedInput style={i === 0 ? "" : "border-top: 2px solid var(--primary-lighter);"} textWidth={40}>
-            <p><T id="inputs.name" /></p>
-            <TextInput value={rss.name} disabled={!!rss.name} on:change={(e) => setValue(e, i, "name")} />
+{#each rssList as rss, i}
+    <InputRow arrow>
+        <MaterialTextInput label="inputs.name" value={rss.name} disabled={!!(rss.name && rss.url)} on:change={(e) => setValue(e, i, "name")} />
 
-            <Button title={$dictionary.actions?.delete} on:click={() => deleteItem(i)} redHover>
-                <Icon id="delete" white />
-            </Button>
+        <MaterialButton icon="delete" title="actions.delete" on:click={() => deleteItem(i)} white />
 
-            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
-                {#if openedMenus.includes(i)}
-                    <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                {:else}
-                    <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                {/if}
-            </Button>
-        </CombinedInput>
+        <div slot="menu">
+            <InputRow>
+                <MaterialTextInput style="width: 75%;" label="inputs.url" value={rss.url} on:change={(e) => setValue(e, i, "url")} />
+                <MaterialTextInput style="width: 25%;" label="meta.text_divider" value={rss.divider || " | "} on:change={(e) => setValue(e, i, "divider")} />
+            </InputRow>
 
-        {#if openedMenus.includes(i)}
-            <CombinedInput textWidth={40}>
-                <p><T id="inputs.url" /></p>
-                <TextInput value={rss.url} on:change={(e) => setValue(e, i, "url")} />
-            </CombinedInput>
+            <InputRow>
+                <MaterialDropdown style="width: 75%;" label="edit.interval" options={updateIntervalList} value={rss.updateInterval || "60"} on:change={(e) => setValue(e, i, "updateInterval")} />
+                <MaterialNumberInput style="width: 25%;" label="edit.count" value={rss.count || 5} min={1} max={1000} on:change={(e) => setValue(e, i, "count")} />
+            </InputRow>
+        </div>
+    </InputRow>
+{/each}
 
-            <CombinedInput textWidth={40}>
-                <p><T id="meta.text_divider" /></p>
-                <TextInput value={rss.divider || " | "} on:change={(e) => setValue(e, i, "divider")} />
-            </CombinedInput>
-
-            <CombinedInput textWidth={40}>
-                <p><T id="edit.count" /></p>
-                <NumberInput value={rss.count || 5} min={1} on:change={(e) => setValue(e, i, "count")} />
-            </CombinedInput>
-
-            <CombinedInput textWidth={40}>
-                <p><T id="edit.interval" /></p>
-                <Dropdown options={updateIntervalList} value={updateIntervalList.find((a) => a.id === (rss.updateInterval || "60"))?.name || ""} on:click={(e) => setValue(e, i, "updateInterval")} />
-            </CombinedInput>
-        {/if}
-    {/each}
-    <CombinedInput>
-        <Button style="width: 100%;" on:click={addRSS} center dark>
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
-    </CombinedInput>
-</div>
-
-<style>
-    p.faded {
-        font-style: italic;
-        opacity: 0.7;
-    }
-</style>
+<MaterialButton variant="outlined" icon="add" on:click={addRSS}>
+    <T id="settings.add" />
+</MaterialButton>

@@ -1,14 +1,15 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { dictionary, emitters } from "../../stores"
-    import { getDropdownValue, initDropdownOptions } from "../input/inputs"
-    import { API_emitter } from "./api"
-    import Dropdown from "../inputs/Dropdown.svelte"
-    import T from "../helpers/T.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
-    import DynamicList from "../input/DynamicList.svelte"
-    import TextInput from "../inputs/TextInput.svelte"
+    import { emitters } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { clone } from "../helpers/array"
+    import T from "../helpers/T.svelte"
+    import DynamicList from "../input/DynamicList.svelte"
+    import InputRow from "../input/InputRow.svelte"
+    import { initDropdownOptions } from "../input/inputs"
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+    import { API_emitter } from "./api"
     import { formatData } from "./emitters"
     import MidiValues from "./MidiValues.svelte"
 
@@ -27,7 +28,7 @@
             let inputs = clone(emitter?.templates?.[v]?.inputs || [])
             value.templateValues = inputs
         } else if (key === "data") {
-            v = v.target?.value || ""
+            v = v.detail
         }
 
         value[key] = v
@@ -35,7 +36,7 @@
     }
 
     function setTemplateValue(index: string | number, e: any, key = "value") {
-        let v = e.target?.value
+        let v = e.detail
 
         if (!value.templateValues) value.templateValues = clone(emitter?.templates?.[v]?.inputs || [])
 
@@ -65,7 +66,7 @@
     }
 
     $: activeTemplate = value.template || "custom"
-    $: templatesList = [{ name: "$:actions.custom_key:$", id: "custom" }, ...initDropdownOptions(emitter?.templates || {})]
+    $: templatesList = [{ value: "custom", label: translateText("actions.custom_key") }, ...initDropdownOptions(emitter?.templates || {})]
     $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => emitter?.type === "midi" || a.name)
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))
@@ -73,46 +74,36 @@
     $: dataPreview = value.templateValues?.length ? formatData[emitter?.type]?.(value.templateValues, value.data) : ""
 </script>
 
-<CombinedInput textWidth={38}>
-    <p>
-        <T id="emitters.emitter" />
-        {#if emitter?.type}<span style="display: flex;align-items: center;padding: 0 10px;opacity: 0.5;text-transform: uppercase;">[{emitter.type}]</span>{/if}
-    </p>
-    <Dropdown options={emittersList} value={getDropdownValue(emittersList, value.emitter)} on:click={(e) => updateValue("emitter", e.detail.id)} />
-</CombinedInput>
+<MaterialDropdown
+    label="emitters.emitter {emitter?.type ? `<span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>${emitter.type.toUpperCase()}</span>` : ''}"
+    options={emittersList}
+    value={value.emitter}
+    on:change={(e) => updateValue("emitter", e.detail)}
+/>
 
 {#if value.emitter}
     {#if emitter?.description}
-        <CombinedInput textWidth={38}>
+        <InputRow>
             <p><T id="midi.description" /></p>
             <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.description}>{emitter.description}</p>
-        </CombinedInput>
+        </InputRow>
     {/if}
 
-    <CombinedInput textWidth={38}>
-        <p><T id="emitters.message_template" /></p>
-        <Dropdown options={templatesList} value={getDropdownValue(templatesList, activeTemplate)} on:click={(e) => updateValue("template", e.detail.id)} />
-    </CombinedInput>
+    <MaterialDropdown label="emitters.message_template" options={templatesList} value={activeTemplate || "custom"} on:change={(e) => updateValue("template", e.detail)} />
 
     {#if templateInputs.length}
         {#if emitter?.templates?.[activeTemplate]?.description}
-            <CombinedInput textWidth={38}>
+            <InputRow>
                 <p><T id="midi.description" /></p>
                 <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
-            </CombinedInput>
+            </InputRow>
         {/if}
 
         {#if emitter?.type !== "midi"}
             {#each templateInputs as input, i}
-                <CombinedInput textWidth={38}>
-                    <TextInput disabled value={input.name} style="width: var(--text-width);" />
-                    <TextInput
-                        disabled={!!input.value}
-                        placeholder={$dictionary.variables?.value}
-                        value={typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
-                        on:change={(e) => setTemplateValue(i, e)}
-                    />
-                </CombinedInput>
+                {@const stringValue = typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
+
+                <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={(e) => setTemplateValue(i, e)} />
             {/each}
         {/if}
     {:else if emitter?.type === "midi"}
@@ -126,25 +117,21 @@
             on:delete={(e) => removeTemplateValue(e.detail)}
             allowOpen={false}
             nothingText={false}
-            textWidth={38}
         >
-            <div style="display: flex;width: 100%;--text-width: calc(38% + 14px);">
-                <TextInput placeholder={$dictionary.inputs?.name} value={input.name} on:change={(e) => setTemplateValue(input.id, e, "name")} style="width: var(--text-width);" />
-                <TextInput placeholder={$dictionary.variables?.value} value={input.value} on:change={(e) => setTemplateValue(input.id, e, "value")} />
+            <div style="display: flex;width: 100%;">
+                <MaterialTextInput label="inputs.name" value={input.name} on:change={(e) => setTemplateValue(input.id, e, "name")} style="width: 50%;" />
+                <MaterialTextInput label="variables.value" value={input.value} on:change={(e) => setTemplateValue(input.id, e, "value")} style="width: 50%;" />
             </div>
         </DynamicList>
     {/if}
 
     <!-- extra DATA -->
     {#if emitter?.type === "osc"}
-        <CombinedInput textWidth={38}>
-            <p><T id="emitters.data" /></p>
-            <TextInput value={value.data || ""} on:change={(e) => updateValue("data", e)} />
-        </CombinedInput>
+        <MaterialTextInput label="emitters.data" value={value.data || ""} on:change={(e) => updateValue("data", e)} />
     {/if}
 
-    <CombinedInput textWidth={38}>
+    <InputRow style="background-color: var(--primary-darker);display: flex;align-items: center;justify-content: space-between;padding: 10px;">
         <p><T id="timer.preview" /></p>
         <p style="opacity: 0.5;overflow: hidden;" data-title={dataPreview}>{dataPreview}</p>
-    </CombinedInput>
+    </InputRow>
 {/if}

@@ -420,14 +420,10 @@ export const mainResponses: MainResponses = {
     },
     [ToMain.OPEN_FOLDER2]: (a) => {
         const receiveFOLDER = {
-            MEDIA: () => addDrawerFolder(a, "media"),
-            AUDIO: () => addDrawerFolder(a, "audio"),
-            SHOWS: () => showsPath.set(a.path),
-            DATA: () => dataPath.set(a.path),
-            DATA_SHOWS: () => {
-                dataPath.set(a.path)
-                if (a.showsPath) showsPath.set(a.showsPath)
-            }
+            MEDIA: () => addDrawerFolder(a, "media"), // menuClick
+            AUDIO: () => addDrawerFolder(a, "audio"), // menuClick
+            // SHOWS: () => showsPath.set(a.path),
+            // DATA: () => dataPath.set(a.path)
         }
 
         if (!receiveFOLDER[a.channel]) return

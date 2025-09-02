@@ -30,7 +30,7 @@
 </section>
 
 <style>
-/* stylelint-disable csstools/use-logical */
+    /* stylelint-disable csstools/use-logical */
     .square {
         position: absolute;
         transform: translate(-50%, -50%);
@@ -39,12 +39,14 @@
         aspect-ratio: 1/1;
         background-color: transparent;
         z-index: 3;
+
         /* border: 5px solid transparent; */
         /* outline: 1px solid white; */
         /* border-radius: 50%; */
     }
     .square.active {
         background-color: rgb(255 255 255 / 0.8);
+        border: 0.5px solid rgb(0 0 0 / 0.8);
     }
     .nw,
     .n,
@@ -144,6 +146,7 @@
         transform: translate(-50%, -50%);
 
         background-color: rgb(255 255 255 / 0.8);
+        border: 0.5px solid rgb(0 0 0 / 0.8);
         aspect-ratio: 1/1;
         border-radius: 50%;
         z-index: 2;
@@ -178,6 +181,7 @@
         top: 0;
 
         background-color: rgb(255 255 255 / 0.8);
+        border: 0.5px solid rgb(0 0 0 / 0.8);
         aspect-ratio: 1/1;
         transform: translateY(-50%) rotate(45deg);
         z-index: 2;
@@ -189,5 +193,5 @@
     .radius.active {
         opacity: 1;
     }
-/* stylelint-enable csstools/use-logical */
+    /* stylelint-enable csstools/use-logical */
 </style>

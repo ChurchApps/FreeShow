@@ -5,7 +5,6 @@
     import { customIcons, customIconsColors } from "../../../values/customIcons"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let colors = true
@@ -61,22 +60,22 @@
     {#each Object.keys(customIcons) as icon}
         {@const color = colors && customIconsColors[icon] ? "color: " + customIconsColors[icon] + ";" : ""}
         {@const disabled = $customizedIcons.disabled.includes(icon)}
-        <Button on:click={() => click(icon)} title={disabled ? $dictionary.actions?.enable : $dictionary.actions?.disable}>
+        <MaterialButton style="padding: 8px;" on:click={() => click(icon)} title={disabled ? $dictionary.actions?.enable : $dictionary.actions?.disable}>
             <Icon id={icon} size={2} custom white style={disabled ? "opacity: 0.2;" : color} />
-        </Button>
+        </MaterialButton>
     {/each}
 
-    <Button style="width: 100%;margin: 10px 0;" on:click={importSVG} center dark>
-        <Icon id="copy" size={1.2} right />
+    <MaterialButton variant="outlined" style="width: 100%;margin: 10px 0;" on:click={importSVG} center dark>
+        <Icon id="copy" size={1.2} />
         <T id="actions.svg_clipboard" />
-    </Button>
+    </MaterialButton>
 
     {#if $customizedIcons.svg.length}
         <div class="custom grid">
             {#each $customizedIcons.svg as icon}
-                <Button on:click={() => deleteCustom(icon.id)} title={$dictionary.actions?.delete}>
+                <MaterialButton style="padding: 12px;" on:click={() => deleteCustom(icon.id)} title={$dictionary.actions?.delete}>
                     {@html icon.path}
-                </Button>
+                </MaterialButton>
             {/each}
         </div>
     {/if}
@@ -89,7 +88,8 @@
 
         margin-bottom: 10px;
         font-style: italic;
-        opacity: 0.8;
+        opacity: 0.7;
+        font-size: 0.9em;
     }
 
     .grid {

@@ -2,7 +2,8 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
-    import { activeDays, activePopup, dictionary, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
+    import { activeDays, activePopup, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
     import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
@@ -10,14 +11,15 @@
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { changeTime } from "../../helpers/time"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDatePicker from "../../inputs/MaterialDatePicker.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialTimePicker from "../../inputs/MaterialTimePicker.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let stored = ""
 
@@ -107,8 +109,6 @@
         console.log(date)
         return date.toISOString().substring(0, 10)
     }
-    const inputChange = (e: any, key: string) => ((editEvent as any)[key] = e.target.value)
-    const check = (e: any, key: string) => ((editEvent as any)[key] = e.target.checked)
 
     function saveAll() {
         let { data } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
@@ -165,10 +165,10 @@
     }
 
     const repeats = [
-        { id: "day", name: "$:calendar.day:$" },
-        { id: "week", name: "$:calendar.week:$" },
-        { id: "month", name: "$:calendar.month:$" },
-        { id: "year", name: "$:calendar.year:$" }
+        { value: "day", label: translateText("calendar.day") },
+        { value: "week", label: translateText("calendar.week") },
+        { value: "month", label: translateText("calendar.month") },
+        { value: "year", label: translateText("calendar.year") }
     ]
 
     // "repeat_on": "on",
@@ -184,9 +184,9 @@
 
     // "ending_never": "the end of time",
     const endings = [
-        { id: "date", name: "$:calendar.ending_the:$" },
-        { id: "after", name: "$:calendar.ending_repeated:$" }
-        // { id: "never", name: "$:calendar.ending_never:$" },
+        { value: "date", label: translateText("calendar.ending_the") },
+        { value: "after", label: translateText("calendar.ending_repeated") }
+        // { value: "never", label: translateText("calendar.ending_never") },
     ]
 
     let actionData: any = {}
@@ -260,177 +260,105 @@
     $: actionDataString = ""
     $: if (JSON.stringify(actionData) !== actionDataString) actionDataString = JSON.stringify(actionData)
 
+    $: cantSave = selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true
+
     let actionSelector: any = null
+
+    let showMore = false
 </script>
 
-<div style="min-width: 45vw;min-height: 50vh;">
-    {#if !actionSelector}
-        {#if selectedType === "event"}
-            <CombinedInput textWidth={30}>
-                <p><T id="calendar.time" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={editEvent.time} on:change={(e) => check(e, "time")} />
-                </div>
-            </CombinedInput>
-        {/if}
+{#if selectedType === "event"}
+    <InputRow>
+        <MaterialTextInput label="calendar.name" value={editEvent.name} on:input={(e) => (editEvent.name = e.detail)} autofocus={!editEvent.name} />
+        <MaterialColorInput label="calendar.color" style="min-width: 200px;max-width: 200px;" value={editEvent.color || ""} on:input={(e) => (editEvent.color = e.detail)} noLabel />
+    </InputRow>
 
-        <!-- TODO: update totime if fromtime is newer -->
-        <CombinedInput textWidth={30}>
-            <p><T id="timer.from" /></p>
-            <div style="display: flex;">
-                <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-                <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
-            </div>
-        </CombinedInput>
-        {#if selectedType === "event"}
-            <CombinedInput textWidth={30}>
-                <p><T id="timer.to" /></p>
-                <div style="display: flex;">
-                    <input style="flex: 2;" type="date" data-title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-                    <input style="flex: 1;" type="time" data-title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
-                </div>
-            </CombinedInput>
-        {/if}
-
-        <CombinedInput textWidth={30}>
-            <p><T id="calendar.repeat" /></p>
-            <div class="alignRight">
-                <Checkbox disabled={editEvent.group} checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
-            </div>
-        </CombinedInput>
-
-        {#if editEvent.repeat}
-            <CombinedInput textWidth={30}>
-                <div style="display: flex;">
-                    <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-                    <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-                    <Dropdown disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
-                    <!-- TODO: select weekdays? -->
-                    <!-- {#if selectedRepeat.id === "week"}
-<span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
-<Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
-{/if} -->
-                    <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
-                    <Dropdown disabled={!!editEvent.group} style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
-
-                    {#if editEvent.repeatData.ending === "date"}
-                        <input disabled={!!editEvent.group} type="date" bind:value={editEvent.repeatData.endingDate} />
-                    {:else if editEvent.repeatData.ending === "after"}
-                        <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
-                        <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
-                    {/if}
-                </div>
-            </CombinedInput>
-        {/if}
+    {#if showMore}
+        <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={(e) => (editEvent.location = e.detail)} />
+        <MaterialTextInput label="calendar.notes" value={editEvent.notes || ""} on:input={(e) => (editEvent.notes = e.detail)} />
     {/if}
 
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+
+    {#if showMore}
+        <MaterialToggleSwitch label="calendar.time" style="margin-top: 10px;" checked={editEvent.time} defaultValue={true} on:change={(e) => (editEvent.time = e.detail)} />
+    {/if}
+{:else if selectedType === "action"}
+    {#if actionSelector !== null}
+        <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionSelector = null)} />
+
+        <CreateAction
+            actionId={actionData?.id || ""}
+            existingActions={actionData?.id ? [actionData.id] : []}
+            actionValue={actionData?.data || {}}
+            on:change={(e) => {
+                changeAction(e)
+                actionSelector = null
+            }}
+            mode="calendar"
+            list
+            full
+        />
+    {:else}
+        {#key actionDataString}
+            <!-- TODO: only choose actual "Actions" -->
+            <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} on:choose={() => (actionSelector = { id: actionData?.id || "" })} mode="calendar" choosePopup />
+        {/key}
+    {/if}
+{/if}
+
+{#if !actionSelector}
+    <!-- TODO: update totime if fromtime is newer -->
+    <InputRow style="margin-top: {showMore ? 0 : 10}px;">
+        <MaterialDatePicker label="calendar.from_date" style="flex: 1;" value={editEvent.isoFrom || ""} on:change={(e) => (editEvent.isoFrom = e.detail)} />
+        <MaterialTimePicker label="calendar.from_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.fromTime || ""} on:input={(e) => (editEvent.fromTime = e.detail)} on:change={() => updateTime("from")} />
+    </InputRow>
     {#if selectedType === "event"}
-        <CombinedInput textWidth={30} style="margin-top: 10px;">
-            <p>
-                <Icon id="edit" size={1.2} right />
-                <T id="calendar.name" />
-            </p>
-            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} autofocus={!editEvent.name} />
-        </CombinedInput>
-
-        <CombinedInput textWidth={30}>
-            <p>
-                <Icon id="theme" size={1.2} right />
-                <T id="calendar.color" />
-            </p>
-            <Color value={editEvent.color || ""} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
-        </CombinedInput>
-
-        <CombinedInput textWidth={30}>
-            <p>
-                <Icon id="location" size={1.2} right />
-                <T id="calendar.location" />
-            </p>
-            <TextInput value={editEvent.location || ""} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
-        </CombinedInput>
-
-        <CombinedInput textWidth={30}>
-            <p>
-                <Icon id="notes" size={1.2} right />
-                <T id="calendar.notes" />
-            </p>
-            <TextInput value={editEvent.notes || ""} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
-        </CombinedInput>
-    {:else if selectedType === "action"}
-        {#if actionSelector !== null}
-            <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (actionSelector = null)} />
-
-            <CreateAction
-                actionId={actionData?.id || ""}
-                existingActions={actionData?.id ? [actionData.id] : []}
-                actionValue={actionData?.data || {}}
-                on:change={(e) => {
-                    changeAction(e)
-                    actionSelector = null
-                }}
-                mode="calendar"
-                list
-                full
-            />
-        {:else}
-            <br />
-
-            {#key actionDataString}
-                <!-- TODO: only choose actual "Actions" -->
-                <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} on:choose={() => (actionSelector = { id: actionData?.id || "" })} mode="calendar" choosePopup />
-            {/key}
-        {/if}
+        <InputRow>
+            <MaterialDatePicker label="calendar.to_date" style="flex: 1;" value={editEvent.isoTo || ""} on:change={(e) => (editEvent.isoTo = e.detail)} />
+            <MaterialTimePicker label="calendar.to_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.toTime || ""} on:input={(e) => (editEvent.toTime = e.detail)} on:change={() => updateTime("to")} />
+        </InputRow>
     {/if}
 
-    {#if !actionSelector}
-        <br />
+    <MaterialToggleSwitch label="calendar.repeat" style="margin-top: 10px;" disabled={!!editEvent.group} checked={editEvent.repeat} on:change={(e) => (editEvent.repeat = e.detail)} />
 
-        <CombinedInput>
-            <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
-                {#if $eventEdit}
-                    <Icon id="save" right />
-                    <T id="actions.save" />
-                {:else}
-                    <Icon id="add" right />
-                    <T id="timer.create" />
-                {/if}
-            </Button>
-        </CombinedInput>
+    {#if editEvent.repeat}
+        <InputRow style="background-color: var(--primary-darker);border-radius: 4px;">
+            <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
+            <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.count} min={1} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+            <MaterialDropdown label="edit.interval" disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={editEvent.repeatData.type} on:change={(e) => (editEvent.repeatData.type = e.detail)} />
+            <!-- TODO: select weekdays? -->
+            <!-- {#if selectedRepeat.id === "week"}
+                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
+                <Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
+            {/if} -->
+            <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
+            <MaterialDropdown label="calendar.type" disabled={!!editEvent.group} style="width: 130px;" options={endings} value={editEvent.repeatData.ending} on:change={(e) => (editEvent.repeatData.ending = e.detail)} />
+
+            {#if editEvent.repeatData.ending === "date"}
+                <MaterialDatePicker label="calendar.to_date" style="flex: 0;" disabled={!!editEvent.group} value={editEvent.repeatData.endingDate} on:change={(e) => (editEvent.repeatData.endingDate = e.detail)} />
+            {:else if editEvent.repeatData.ending === "after"}
+                <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.afterRepeats} min={1} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
+                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
+            {/if}
+        </InputRow>
+    {/if}
+
+    <InputRow style="margin-top: 20px;">
+        <MaterialButton variant="contained" style="flex: 1;{cantSave ? '' : 'background-color: var(--secondary) !important;'}" disabled={cantSave} on:click={save}>
+            {#if $eventEdit}
+                <Icon id="save" white />
+                <T id="actions.save" />
+            {:else}
+                <Icon id="add" white />
+                <T id="timer.create" />
+            {/if}
+        </MaterialButton>
         {#if editEvent.group}
-            <CombinedInput>
-                <Button style="width: 100%;" on:click={saveAll} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
-                    <Icon id="save" right />
-                    <T id="calendar.save_all" />
-                </Button>
-            </CombinedInput>
+            <MaterialButton variant="contained" style="flex: 2;margin-left: 5px;{cantSave ? '' : 'background-color: var(--secondary) !important;'}" disabled={cantSave} on:click={saveAll}>
+                <Icon id="save" white />
+                <T id="calendar.save_all" />
+            </MaterialButton>
         {/if}
-    {/if}
-</div>
-
-<style>
-    input[type="date"],
-    input[type="time"] {
-        background-color: var(--primary-darker);
-        color: inherit;
-        /* width: 100%; */
-        font-size: inherit;
-        font-family: inherit;
-        border: 0;
-        padding: 5px;
-
-        transition: opacity 0.2s;
-    }
-
-    input:disabled {
-        opacity: 0.5;
-    }
-
-    input::-webkit-calendar-picker-indicator {
-        cursor: pointer;
-        opacity: 0.8;
-        filter: invert(1);
-    }
-    input::-webkit-calendar-picker-indicator:hover {
-        background-color: rgb(0 0 0 / 0.1);
-    }
-</style>
+    </InputRow>
+{/if}

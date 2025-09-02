@@ -10,7 +10,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { getActiveOutputs, refreshOut } from "../../helpers/output"
+    import { refreshOut, toggleOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -23,8 +23,6 @@
 
     let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
-
-    $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
 
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
@@ -141,16 +139,11 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    function toggleOutput(state: boolean) {
+    function _toggleOutput(state: boolean) {
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
         setTimeout(() => {
             updateOutput("enabled", state)
-            if ($outputDisplay) {
-                let enabled = getActiveOutputs($outputs, false)
-                Object.entries($outputs).forEach(([id, output]) => {
-                    send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
-                })
-            }
+            if ($outputDisplay) toggleOutput(currentOutput?.id || "")
         }, 100)
     }
 
@@ -270,11 +263,11 @@
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
-    $: outputLabel = `${currentOutput?.bounds.width || 1920}x${currentOutput?.bounds.height || 1080}`
+    $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
-    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={(e) => toggleOutput(e.detail)} />
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={(e) => _toggleOutput(e.detail)} />
 {/if}
 
 {#if stageId}

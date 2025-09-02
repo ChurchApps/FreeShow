@@ -2,6 +2,9 @@ appId: app.freeshow
 productName: FreeShow
 artifactName: FreeShow-${version}-${arch}.${ext}
 
+electronDownload:
+    mirror: https://github.com/castlabs/electron-releases/releases/download/
+
 files:
     - build/electron/**
     - build/types/**

@@ -7,9 +7,11 @@ npm install
 npm run build
 npm run pack
 chmod +x scripts/snap/*.sh
-mkdir snap
+mkdir -p snap
 mv scripts/snap/gui snap
 mv config/building/snapcraft.yaml snap
+if [ -e "dist/linux-arm64-unpacked" ]; then
+  mv dist/linux-arm64-unpacked dist/linux-unpacked
+fi
 cp scripts/snap/*.sh dist/linux-unpacked
-snapcraft --verbose
-
+snapcraft --verbose pack

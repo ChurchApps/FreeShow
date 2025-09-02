@@ -12,13 +12,13 @@
     $: stylesList = sortByName(keysToID($styles))
 
     // set id after deletion
-    $: if (Object.keys($styles)?.length && !$styles[styleId]) styleId = $styles.default ? "default" : Object.keys($styles)[0]
+    $: if (Object.keys($styles)?.length && !$styles[$activeStyle]) activeStyle.set($styles.default ? "default" : Object.keys($styles)[0])
 
     const defaultStyle: Styles = {
         name: $dictionary.example?.default || "Default"
     }
 
-    $: styleId = $activeStyle || Object.keys($styles)[0] || ""
+    $: styleId = $activeStyle || ""
     $: currentStyle = $styles[styleId] || clone(defaultStyle)
 
     function updateStyle(e: any, key: string, currentId = "") {

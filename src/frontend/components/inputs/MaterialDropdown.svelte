@@ -2,28 +2,30 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { cubicOut } from "svelte/easing"
     import { fade, fly } from "svelte/transition"
+    import type { DropdownOptions } from "../../../types/Input"
     import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
+    import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
-    import InputRow from "../input/InputRow.svelte"
 
     export let label: string
     export let value: string
     export let defaultValue: string = ""
-    export let options: { label: string; value: string; prefix?: string; style?: string }[]
+    export let options: DropdownOptions
 
     export let id = ""
     export let disabled = false
     export let allowEmpty = false
     export let flags = false
+    export let onlyArrow = false
 
     export let addNew: string | null = null
 
     const dispatch = createEventDispatcher()
-    let open = false
+    export let open = false
     let dropdownEl: HTMLDivElement
     // let triggerEl: HTMLDivElement;
     let highlightedIndex = -1
@@ -33,7 +35,7 @@
         addNewTextbox = false
 
         open = typeof force === "boolean" && value ? force : !open
-        if (open) calculateMaxHeight()
+        if (open) setTimeout(calculateMaxHeight)
 
         if (open && value) highlightedIndex = options.findIndex((o) => o.value === value)
         else highlightedIndex = -1
@@ -272,9 +274,11 @@
             createNewEvent()
         }
     }
+
+    $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" class:flags bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title={onlyArrow ? `${translateText(label)}: ${selected?.label || "—"}` : ""} bind:this={dropdownEl}>
     <div class="background" />
 
     <div
@@ -290,19 +294,23 @@
         aria-haspopup="listbox"
         aria-expanded={open}
     >
-        <span class="selected-text" style={selected?.style ?? null}>
-            {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-            {#if selected?.value}{selected?.label || "—"}{/if}
-        </span>
+        {#if !onlyArrow}
+            <span class="selected-text" style={selected?.style ?? null}>
+                {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
+                {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
+            </span>
+        {/if}
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
         </svg>
     </div>
 
-    <label for={id} class:selected={value}>{@html translateText(label, $dictionary)}</label>
+    {#if !onlyArrow}
+        <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
+    {/if}
     <span class="underline" />
 
-    {#if allowEmpty && value}
+    {#if allowEmpty && hasValue}
         <div class="remove">
             <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
                 <Icon id="close" white />
@@ -332,9 +340,20 @@
             {/if}
 
             {#each options as option, i}
-                <li style={option.style || null} role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
+                <li
+                    style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}"
+                    role="option"
+                    aria-selected={option.value === value}
+                    class:selected={option.value === value}
+                    class:highlighted={i === highlightedIndex}
+                    on:click={() => selectOption(option.value)}
+                >
                     {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
+
+                    {#if option.data}
+                        <div class="data">{option.data}</div>
+                    {/if}
                 </li>
             {/each}
 
@@ -387,6 +406,10 @@
             Cantarell,
             "Helvetica Neue",
             sans-serif !important;
+    }
+
+    .textfield.onlyArrow {
+        width: 50px;
     }
 
     .background {
@@ -513,11 +536,19 @@
         border-bottom: 1px solid var(--primary-lighter);
     }
 
+    .onlyArrow .dropdown {
+        --left: 160px;
+        left: calc(0 - var(--left));
+        width: calc(var(--left) + 48px);
+    }
+
     .dropdown li {
         padding: 0.5rem 0.75rem;
         cursor: pointer;
         color: var(--text);
         transition: background 0.2s;
+
+        display: flex;
     }
     .dropdown li:hover,
     .dropdown li.highlighted {
@@ -525,6 +556,12 @@
     }
     .dropdown li.selected {
         color: var(--secondary);
+    }
+
+    .dropdown .data {
+        color: var(--text);
+        opacity: 0.5;
+        font-size: 0.8em;
     }
 
     .disabled {

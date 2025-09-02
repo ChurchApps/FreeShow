@@ -46,6 +46,7 @@
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
+        if (e.target?.closest(".textfield")) return
         if (
             !e.target?.querySelector("#" + currentId) &&
             !e.target?.closest(".center")?.querySelector("#" + currentId) &&
@@ -87,10 +88,10 @@
 
             <div class="divider"></div>
 
-            <MaterialButton disabled={columns <= min} on:click={decrease} title="actions.zoomIn" center>
+            <MaterialButton disabled={addValue < 0 ? columns >= max : columns <= min} on:click={decrease} title="actions.zoomIn" center>
                 <Icon size={1.3} id="add" white />
             </MaterialButton>
-            <MaterialButton disabled={columns >= max} on:click={increase} title="actions.zoomOut" center>
+            <MaterialButton disabled={addValue < 0 ? columns <= min : columns >= max} on:click={increase} title="actions.zoomOut" center>
                 <Icon size={1.3} id="remove" white />
             </MaterialButton>
         </div>

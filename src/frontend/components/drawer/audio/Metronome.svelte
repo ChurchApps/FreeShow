@@ -8,7 +8,7 @@
     import MetronomeInputs from "./MetronomeInputs.svelte"
     import { toggleMetronome, updateMetronome } from "./metronome"
 
-    export let audioOutputs: { id: string; name: string }[] = []
+    export let audioOutputs: { value: string; label: string }[] = []
 
     function playPause() {
         paused = !paused

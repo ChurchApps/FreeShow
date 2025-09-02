@@ -2,7 +2,7 @@
     import { slide } from "svelte/transition"
     import { activeEdit, activeProfile, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
-    import { displayOutputs } from "../helpers/output"
+    import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
@@ -23,6 +23,8 @@
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 
+        const forceKey = e.ctrlKey || e.metaKey
+
         if (!$outputDisplay || confirm) {
             if (confirm) {
                 // prevent displaying just after close
@@ -31,11 +33,10 @@
             }
 
             confirm = false
-            displayOutputs(e)
+            toggleOutputs(null, { force: forceKey })
             return
         }
 
-        let forceKey = e.ctrlKey || e.metaKey
         if (forceKey) return
 
         confirm = true

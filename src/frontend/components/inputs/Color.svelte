@@ -123,7 +123,7 @@
                         <p style="color: {getContrast(value)};width: 100%;justify-content: center;font-weight: normal;"><T id="actions.choose_custom" /></p>
                     </Button>
                 {:else}
-                    <div class="color" style="margin-top: 10px;background: {value};">
+                    <div class="color" style="margin-top: 20px;background: {value};">
                         <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
                         <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
                     </div>
@@ -255,6 +255,8 @@
         position: relative;
         border-radius: var(--border-radius);
 
+        border-radius: 2px;
+
         /* transition: outline-width 0.1s; */
     }
     /* filter: brightness(0.98); */
@@ -270,6 +272,8 @@
         opacity: 0;
         width: 100%;
         border: none;
+
+        padding: 3px;
     }
 
     .picker {
@@ -328,6 +332,8 @@
 
         height: 30px;
         width: 30px;
+
+        border-radius: 2px;
     }
     .pickColor:hover {
         border: 2px solid #ddd !important;

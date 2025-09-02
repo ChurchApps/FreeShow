@@ -1,11 +1,12 @@
 <script lang="ts">
     import { customMetadata } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
     import { initializeMetadata } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import HRule from "../../input/HRule.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     $: defaultMetadata = Object.keys(initializeMetadata({}))
 
@@ -21,7 +22,7 @@
     }
 
     function updateCustom(name: string, e: any) {
-        let value = e.target?.value || ""
+        let value = e.detail
         let index = customMetadataValues.findIndex((a) => a === name)
         if (index < 0) return
 
@@ -53,29 +54,19 @@
 
 <div>
     {#each defaultMetadata as key}
-        <CombinedInput>
-            <p style="width: 100%;{hidden.includes(key) ? 'opacity: 0.5;' : ''}"><T id="meta.{key}" /></p>
-            <Button style="min-width: 40px;" on:click={() => toggleHidden(key)} center>
-                <Icon id={hidden.includes(key) ? "private" : "eye"} white={hidden.includes(key)} />
-            </Button>
-        </CombinedInput>
+        <MaterialCheckbox label="meta.{key}" checked={!hidden.includes(key)} on:change={() => toggleHidden(key)} />
     {/each}
 </div>
 
-<div style="margin-top: 10px;">
-    {#each customMetadataValues as name}
-        <CombinedInput>
-            <TextInput value={name} on:change={(e) => updateCustom(name, e)} autofocus={!name} />
-            <Button style="min-width: 40px;" on:click={() => removeCustom(name)} center>
-                <Icon id="delete" />
-            </Button>
-        </CombinedInput>
-    {/each}
+<HRule title="sort.custom" />
 
-    <CombinedInput>
-        <Button style="width: 100%;" on:click={addCustom} disabled={emptyEntry} dark center>
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
-    </CombinedInput>
-</div>
+{#each customMetadataValues as name}
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={name} on:change={(e) => updateCustom(name, e)} autofocus={!name} />
+        <MaterialButton icon="delete" on:click={() => removeCustom(name)} white />
+    </InputRow>
+{/each}
+
+<MaterialButton icon="add" variant="outlined" style="width: 100%;" disabled={emptyEntry} on:click={addCustom}>
+    <T id="settings.add" />
+</MaterialButton>

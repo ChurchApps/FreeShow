@@ -3,10 +3,9 @@
     import { syncDrive } from "../../../utils/drive"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function setMethod(method: "download" | "upload") {
         driveData.update((a) => {
@@ -17,9 +16,8 @@
         syncDrive(true)
     }
 
-    function updateValue(e: any, key: string) {
-        let value = e.target.value
-        if (!value) return
+    function updateValue(value: string, key: string) {
+        if (value === undefined) return
 
         driveData.update((a) => {
             a[key] = value
@@ -30,57 +28,59 @@
     let customFolderEnabled = false
 </script>
 
-<p style="max-width: 600px;white-space: normal;margin-bottom: 10px;"><T id="cloud.choose_method_tip" /></p>
+<p style="max-width: 600px;white-space: normal;margin-bottom: 10px;opacity: 0.9;"><T id="cloud.choose_method_tip" /></p>
 
-<div>
-    <Button on:click={() => setMethod("upload")}>
+<div class="choice" style="margin: 10px 0;">
+    <MaterialButton variant="outlined" on:click={() => setMethod("upload")}>
         <Icon id="export" size={6} />
-        <p><Icon id="screen" size={1.2} right /><T id="cloud.local" /></p>
-    </Button>
-    <Button on:click={() => setMethod("download")}>
+        <p><Icon id="screen" size={1.2} white /><T id="cloud.local" /></p>
+    </MaterialButton>
+    <MaterialButton variant="outlined" on:click={() => setMethod("download")}>
         <Icon id="import" size={6} />
-        <p><Icon id="cloud" size={1.2} right /><T id="settings.cloud" /></p>
-    </Button>
+        <p><Icon id="cloud" size={1.2} white /><T id="settings.cloud" /></p>
+    </MaterialButton>
 </div>
 
-<br />
+<MaterialToggleSwitch label="cloud.enable_custom_folder_id" checked={customFolderEnabled} defaultValue={false} on:change={(e) => (customFolderEnabled = e.detail)} />
 
 {#if customFolderEnabled}
-    <CombinedInput>
-        <p>
-            <T id="cloud.main_folder" />
-            <!-- <span style="font-size: 0.7em;opacity: 0.7;display: flex;align-items: center;justify-content: end;overflow: hidden;">drive.google.com/drive/folders/</span> -->
-        </p>
-        <TextInput style="z-index: 1;" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e, "mainFolderId")} />
-    </CombinedInput>
-{:else}
-    <CombinedInput>
-        <p><T id="cloud.enable_custom_folder_id" /></p>
-        <div class="alignRight">
-            <Checkbox checked={customFolderEnabled} on:change={() => (customFolderEnabled = !customFolderEnabled)} />
-        </div>
-    </CombinedInput>
+    <MaterialTextInput
+        label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}"
+        value={$driveData?.mainFolderId || ""}
+        defaultValue=""
+        on:change={(e) => updateValue(e.detail, "mainFolderId")}
+    />
 {/if}
 
 <style>
-    p {
+    .choice {
+        display: flex;
+        justify-content: center; /* space-evenly; */
+        flex-wrap: wrap;
+        width: 100%;
+
+        gap: 9px;
+
+        border-radius: 8px;
+        background-color: var(--primary-darker);
+        padding: 10px;
+    }
+
+    .choice :global(button) {
+        flex: 1;
+        aspect-ratio: 1;
+        min-width: 160px;
+        max-width: 280px;
+
+        /* border-radius: 0; */
+
+        gap: 12px;
+        flex-direction: column;
+    }
+
+    .choice p {
         display: flex;
         align-items: center;
-    }
-
-    div {
-        display: flex;
         gap: 10px;
-        align-self: center;
-    }
-
-    div :global(button) {
-        width: 200px;
-        height: 200px;
-
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: center;
     }
 </style>

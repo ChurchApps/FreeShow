@@ -106,7 +106,7 @@ export const paintCache: Writable<DrawLine[]> = writable([])
 
 // OUTPUTS
 export const outputDisplay: Writable<boolean> = writable(false)
-export const outputState: Writable<{ id: string; active: boolean }[]> = writable([])
+export const outputState: Writable<{ id: string; active: boolean | "invisible" }[]> = writable([])
 export const currentOutputSettings: Writable<string | null> = writable(null)
 export const slideTimers: Writable<{ [key: string]: SlideTimer }> = writable({})
 export const outputCache: Writable<any> = writable(null)

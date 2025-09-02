@@ -9,10 +9,41 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { createFolder, dataFolderNames, doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
+import { createFolder, dataFolderNames, deleteFile, doesPathExist, doesPathExistAsync, getFileStatsAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
+
+export async function doesMediaExist(data: { path: string; creationTime?: number; noCache?: boolean }) {
+    if (!(await doesPathExistAsync(data.path))) {
+        deleteThumbnails(data.path)
+        return { path: data.path, exists: false }
+    }
+
+    if (data.noCache) {
+        return { path: data.path, exists: true }
+    }
+
+    // if it exists, get the creation date
+    const stats = await getFileStatsAsync(data.path)
+    const creationTime = Math.floor(stats?.ctimeMs || 0)
+    if (data.creationTime && creationTime !== data.creationTime) {
+        deleteThumbnails(data.path)
+        return { path: data.path, exists: false }
+    }
+
+    return { path: data.path, exists: true, creationTime }
+}
+
+
+// delete thumbnail cache
+const sizes = [900, 500, 250, 100]
+function deleteThumbnails(filePath: string) {
+    sizes.forEach(size => {
+        const outputPath = getThumbnailPath(filePath, size)
+        if (doesPathExist(outputPath)) deleteFile(outputPath)
+    })
+}
 
 export function getThumbnail(data: { input: string; size: number }) {
     const output = createThumbnail(data.input, data.size || 500)

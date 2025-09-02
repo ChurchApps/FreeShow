@@ -1,8 +1,8 @@
+import dayjs from "dayjs"
+import extendedFormat from "dayjs/plugin/advancedFormat"
+import localizedFormat from "dayjs/plugin/localizedFormat"
 import type { ItemType } from "./../../../../types/Show"
 import { captionLanguages } from "./captionLanguages"
-import dayjs from "dayjs"
-import localizedFormat from "dayjs/plugin/localizedFormat"
-import extendedFormat from "dayjs/plugin/advancedFormat"
 
 // Initialize plugins
 dayjs.extend(localizedFormat)
@@ -53,6 +53,20 @@ export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] 
     section[keyIndex][key] = value
 }
 
+export function setBoxInputValue2(box: BoxContent2, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
+    // const newBox = (box.sections ? box : { edit: box, icon: "" }) as BoxContent
+    const newBox = box.sections
+
+    if (!sectionId) sectionId = "default"
+    if (!newBox?.[sectionId]) return
+
+    const inputs = newBox[sectionId].inputs.flat()
+    const keyIndex = inputs.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
+    if (keyIndex < 0) return
+
+    inputs[keyIndex][key] = value
+}
+
 export const mediaFitOptions: any[] = [
     { id: "contain", name: "media.contain" },
     { id: "cover", name: "media.cover" },
@@ -86,6 +100,77 @@ export const trackerEdits = [
 ]
 
 const now = new Date(2025, 0, 10)
+
+
+type Box2 = {
+    [key in ItemType]?: BoxContent2
+}
+type BoxContent2 = {
+    name?: string
+    icon: string
+    sections: {
+        [key: string]: {
+            // openApplyValue?: boolean // show apply value button
+            inputs: EditInput2[][]
+        }
+    }
+}
+export type EditInput2 = {
+    id: string
+    key?: string
+    type: string
+    value: string | number | boolean
+    values: { [key: string]: any }
+
+    // special
+    extension?: string
+    styleValue?: string
+}
+
+const textInputs: EditInput2[][] = [
+    [
+        { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 2;" } },
+        { id: "style", key: "font-size", type: "number", value: 100, extension: "px", values: { label: "edit.font_size", style: "flex: 1;" } },
+    ],
+    [
+        { id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.text_color", allowGradients: true } },
+
+    ],
+    [
+        { id: "auto", type: "checkbox", value: false, values: { label: "edit.auto_size" } },
+        {
+            id: "textFit",
+            type: "dropdown",
+            value: "shrinkToFit",
+            values: {
+                label: "edit.text_fit",
+                options: [
+                    { value: "shrinkToFit", label: "edit.shrink_to_fit" },
+                    { value: "growToFit", label: "edit.grow_to_fit" }
+                ]
+            }
+        },
+    ],
+    [
+        { id: "style", key: "font-weight", type: "toggle", value: "bold", values: { label: "edit._title_bold", icon: "bold" } },
+        { id: "style", key: "font-style", type: "toggle", value: "italic", values: { label: "edit._title_italic", icon: "italic" } },
+        { id: "style", key: "text-decoration", type: "toggle", value: "underline", values: { label: "edit._title_underline", icon: "underline" } },
+        { id: "style", key: "text-decoration", type: "toggle", value: "line-through", values: { label: "edit._title_strikethrough", icon: "strikethrough" } }
+    ]
+]
+
+export const itemBoxes: Box2 = {
+    text: {
+        // name: "items.text",
+        icon: "text",
+        sections: {
+            default: {
+                // openApplyValue: 
+                inputs: textInputs
+            }
+        }
+    }
+}
 
 export const boxes: Box = {
     text: {

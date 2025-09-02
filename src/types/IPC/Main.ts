@@ -78,6 +78,7 @@ export enum Main {
     GET_WINDOWS = "GET_WINDOWS",
     GET_DISPLAYS = "GET_DISPLAYS",
     OUTPUT = "OUTPUT",
+    DOES_MEDIA_EXIST = "DOES_MEDIA_EXIST",
     GET_THUMBNAIL = "GET_THUMBNAIL",
     SAVE_IMAGE = "SAVE_IMAGE",
     PDF_TO_IMAGE = "PDF_TO_IMAGE",
@@ -155,6 +156,7 @@ export interface MainSendPayloads {
     [Main.GET_EMPTY_SHOWS]: { path: string; cached: Shows }
     [Main.FULL_SHOWS_LIST]: { path: string }
     [Main.OUTPUT]: "true" | "false"
+    [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
     [Main.SAVE_IMAGE]: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
     [Main.PDF_TO_IMAGE]: { dataPath: string; filePath: string }
@@ -244,6 +246,7 @@ export interface MainReturnPayloads {
     [Main.FULL_SHOWS_LIST]: string[]
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
+    [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>
     [Main.GET_THUMBNAIL]: { output: string; input: string; size: number }
     // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>

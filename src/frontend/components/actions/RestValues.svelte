@@ -1,12 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import T from "../helpers/T.svelte"
 
-    import CombinedInput from "../inputs/CombinedInput.svelte"
-    import Dropdown from "../inputs/Dropdown.svelte"
-    import TextInput from "../inputs/TextInput.svelte"
-
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import type { API_rest_command } from "./api"
+    import InputRow from "../input/InputRow.svelte"
 
     export let value: API_rest_command
     export let emitter = false
@@ -25,8 +23,7 @@
      * @param e onChange Event
      */
     function updateUrl(e) {
-        // update url
-        rest.url = e.target.value
+        rest.url = e.detail
         change()
     }
 
@@ -36,8 +33,7 @@
      * @param e onChange Event
      */
     function updateMethod(e) {
-        // update method
-        rest.method = e.detail.name
+        rest.method = e.detail
         change()
     }
 
@@ -47,8 +43,7 @@
      * @param e onChange Event
      */
     function updatePayload(e) {
-        // update payload
-        rest.payload = e.target.value
+        rest.payload = e.detail
         change()
     }
 
@@ -58,8 +53,7 @@
      * @param e onChange Event
      */
     function updateContentType(e) {
-        // update ContentType
-        rest.contentType = e.target.value
+        rest.contentType = e.detail
         change()
     }
 
@@ -68,33 +62,24 @@
         dispatch("change", rest)
     }
 
-    let dropdownInputs = [{ name: "GET" }, { name: "POST" }, { name: "PUT" }, { name: "DELETE" }]
+    let dropdownInputs = [
+        { value: "GET", label: "GET" },
+        { value: "POST", label: "POST" },
+        { value: "PUT", label: "PUT" },
+        { value: "DELETE", label: "DELETE" }
+    ]
 </script>
 
-<!-- URL -->
-<CombinedInput>
-    <p><T id="inputs.url" /></p>
-    <TextInput value={rest.url || ""} placeholder={"127.0.0.1"} on:change={(e) => updateUrl(e)} />
-</CombinedInput>
+<MaterialTextInput label="inputs.url" value={rest.url || ""} placeholder="127.0.0.1" on:change={updateUrl} />
 
-<!-- Method -->
-<CombinedInput>
-    <p><T id="inputs.method" /></p>
-    <Dropdown value={rest.method || "GET"} options={dropdownInputs} on:click={(e) => updateMethod(e)} />
-</CombinedInput>
-
-<!-- ContentType -->
-<CombinedInput>
-    <p><T id="inputs.contentType" /></p>
-    <TextInput disabled={emitter} value={rest.contentType || ""} placeholder={"application/json"} on:change={(e) => updateContentType(e)} />
-</CombinedInput>
+<InputRow>
+    <MaterialDropdown label="inputs.method" value={rest.method || "GET"} options={dropdownInputs} on:change={updateMethod} />
+    <MaterialTextInput label="inputs.contentType" disabled={emitter} value={rest.contentType || "application/json"} placeholder="application/json" on:change={updateContentType} />
+</InputRow>
 
 <!-- Body -->
 {#if !emitter}
-    <CombinedInput>
-        <p><T id="inputs.payload" /></p>
-        <TextInput value={rest.payload || ""} placeholder={"{}"} on:change={(e) => updatePayload(e)} />
-    </CombinedInput>
+    <MaterialTextInput label="inputs.payload" disabled={emitter} value={rest.payload || ""} placeholder={"{}"} on:change={updatePayload} />
 {/if}
 
 <!--

@@ -103,16 +103,20 @@
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
                             {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
+                            {@const isFirst = i === 0}
+                            {@const isLast = i === projectItemsList.items.length - 1}
+                            {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
 
-                            <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
+                            <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <MaterialButton
                                         isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
-                                        style="justify-content: center;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em;{$fullColors
+                                        style="{borderRadiusStyle}justify-content: center;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em;{$fullColors
                                             ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};`
                                             : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
-                                        on:click={() => {
+                                        on:click={(e) => {
+                                            if (e.detail.ctrl) return
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })
                                         }}
@@ -133,15 +137,7 @@
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton
-                                        id={show.id}
-                                        {show}
-                                        {index}
-                                        class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`}
-                                        isFirst={i === 0}
-                                        isLast={i === projectItemsList.items.length - 1}
-                                        icon
-                                    />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} style={borderRadiusStyle} icon />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -157,10 +153,6 @@
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <!-- <BottomButton icon="section" scrollElem={scrollElem?.querySelector(".droparea")} title="new.section" on:click={addSection}>
-    {#if !$labelsDisabled}<T id="new.section" />{/if}
-</BottomButton> -->
-
     <FloatingInputs onlyOne round={lessVisibleSection}>
         <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
             {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
@@ -196,8 +188,6 @@
         border-radius: 10px;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
-
-        overflow: hidden;
     }
 
     .list#projectArea :global(.droparea) {

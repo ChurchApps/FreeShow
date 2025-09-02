@@ -16,6 +16,8 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
+    export let active: string | null = null
+
     export let id: string
     export let show: any // ShowList | ShowRef
     export let data: null | string = null
@@ -24,9 +26,6 @@
     $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
-
-    export let isFirst: boolean = false
-    export let isLast: boolean = false
 
     let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
@@ -71,12 +70,12 @@
     }
 
     $: selectedItem = $focusMode ? $activeFocus : $activeShow
-    $: active = index !== null ? selectedItem?.index === index : selectedItem?.id === id
+    $: isActive = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
     let editActive = false
     function click(e: ClickEvent) {
         const { ctrl, shift, target } = e.detail
-        if (editActive || ctrl || shift || active || target.closest("input")) return
+        if (editActive || ctrl || shift || isActive || target.closest("input")) return
 
         // set active show
         let pos = index
@@ -170,18 +169,16 @@
     $: if ($outputs) activeOutput = findMatchingOut(id)
 
     $: outline = activeOutput !== null || !!$playingAudio[id]
-
-    $: borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`
 </script>
 
 <div id="show_{id}" class="main">
     <MaterialButton
         on:click={click}
         on:dblclick={doubleClick}
-        isActive={active}
+        {isActive}
         showOutline={outline}
         class="context {$$props.class}{readOnly ? '_readonly' : ''}"
-        style="{borderRadiusStyle}font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}"
+        style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}"
         tab
     >
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
@@ -189,11 +186,15 @@
                 <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
             {/if}
 
-            {#if show.quickAccess?.number}
+            {#if active === "number" && show.quickAccess?.number}
                 <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-inline-end: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
             {/if}
 
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
+
+            {#if active !== "number" && show.quickAccess?.number}
+                <span style="opacity: 0.8;white-space: nowrap;">{show.quickAccess.number}</span>
+            {/if}
 
             {#if show.layoutInfo?.name}
                 <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>

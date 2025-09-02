@@ -2,10 +2,10 @@
     import { activePopup, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let prompt = $popupData.prompt
+    let prompt = $popupData.prompt || ""
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") confirm()
@@ -23,18 +23,20 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p>{@html prompt}</p>
+{#if prompt}
+    <p style="margin-bottom: 20px;">{@html prompt}</p>
+{/if}
 
-<CombinedInput style="margin-top: 20px;">
-    <Button style="flex: 1;" on:click={close} center dark>
-        <Icon id="close" size={1.1} right />
+<InputRow style="display: flex;justify-content: center;gap: 5px;">
+    <MaterialButton style="min-width: 150px;" on:click={close}>
+        <Icon id="close" style="fill: #ff5454;" size={1.1} white />
         <T id="main.no" />
-    </Button>
-    <Button on:click={confirm} center dark>
-        <Icon id="check" size={1.1} right />
+    </MaterialButton>
+    <MaterialButton style="min-width: 150px;" on:click={confirm}>
+        <Icon id="check" style="fill: #b7ffac;" size={1.1} white />
         <T id="main.yes" />
-    </Button>
-</CombinedInput>
+    </MaterialButton>
+</InputRow>
 
 <style>
     p {

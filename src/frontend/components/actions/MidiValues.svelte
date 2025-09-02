@@ -5,10 +5,10 @@
     import { destroyMain, receiveToMain, requestMain } from "../../IPC/main"
     import { popupData } from "../../stores"
     import T from "../helpers/T.svelte"
-    import Checkbox from "../inputs/Checkbox.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
-    import Dropdown from "../inputs/Dropdown.svelte"
-    import NumberInput from "../inputs/NumberInput.svelte"
+    import InputRow from "../input/InputRow.svelte"
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
     import type { API_midi } from "./api"
     import { defaultMidiActionChannels, midiToNote } from "./midi"
 
@@ -39,7 +39,11 @@
         dispatch("change", midi)
     }
 
-    let types = [{ name: "noteon" }, { name: "noteoff" }, { name: "control" }]
+    let types = [
+        { value: "noteon", label: "noteon" },
+        { value: "noteoff", label: "noteoff" },
+        { value: "control", label: "control" }
+    ]
 
     let inputs: any[] = [{ name: "—" }]
     let outputs: any[] = [{ name: "—" }]
@@ -67,7 +71,6 @@
 
     function setInitialData() {
         // set initial data
-        console.log(midi)
         if (midi.values?.note) return
 
         setTimeout(() => setValues("note", 0), 50)
@@ -90,7 +93,7 @@
     }
 
     function toggleDefaultValues(e: any) {
-        midi.defaultValues = e.target.checked
+        midi.defaultValues = e.detail
 
         if (midi.defaultValues && defaultMidiActionChannels[firstActionId]) {
             midi = { ...midi, ...defaultMidiActionChannels[firstActionId] }
@@ -100,20 +103,14 @@
     }
 
     $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId]))
-
-    $: console.log(value)
 </script>
 
 {#if type !== "emitter"}
-    <CombinedInput>
-        {#if type === "input"}
-            <p><T id="midi.input" /></p>
-            <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => setMidi("input", e.detail.name)} />
-        {:else}
-            <p><T id="midi.output" /></p>
-            <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => setMidi("output", e.detail.name)} />
-        {/if}
-    </CombinedInput>
+    {#if type === "input"}
+        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("input", e.detail)} />
+    {:else}
+        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("output", e.detail)} />
+    {/if}
 
     {#if type !== "output" && !simple}
         <br />
@@ -121,62 +118,38 @@
 {/if}
 
 {#if hasActions && midi.type !== "control"}
-    <CombinedInput>
-        <p><T id="midi.use_default_values" /></p>
-        <div class="alignRight">
-            <Checkbox disabled={midi.defaultValues && !defaultMidiActionChannels[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="midi.use_default_values" disabled={midi.defaultValues && !defaultMidiActionChannels[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
 {/if}
 
 {#if !noActionOrDefaultValues}
-    <CombinedInput>
-        <p style="flex: 1;"><T id="midi.auto_values" /></p>
-        <div style="flex: 0;padding: 0 10px;" class="alignRight">
-            <Checkbox checked={autoValues} on:change={toggleAutoValues} />
-        </div>
-    </CombinedInput>
+    <MaterialToggleSwitch label="midi.auto_values" checked={autoValues} on:change={toggleAutoValues} />
 {/if}
 
 {#if type !== "emitter"}
-    <CombinedInput>
-        <p><T id="midi.type" /></p>
-        <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-    </CombinedInput>
+    <MaterialDropdown label="midi.type" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail)} />
 {/if}
 
 {#if midi.type === "control"}
-    <CombinedInput>
-        <p><T id="midi.controller" /></p>
-        <NumberInput value={midi.values?.controller || 0} max={127} on:change={(e) => setValues("controller", Number(e.detail))} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="variables.value" /></p>
-        <NumberInput value={midi.values?.value || 0} max={127} on:change={(e) => setValues("value", Number(e.detail))} />
-    </CombinedInput>
+    <MaterialNumberInput label="midi.controller" value={midi.values?.controller || 0} max={127} on:change={(e) => setValues("controller", e.detail)} />
+    <MaterialNumberInput label="variables.value" value={midi.values?.value || 0} max={127} on:change={(e) => setValues("value", e.detail)} />
 {:else}
-    <CombinedInput>
-        <p>
-            <T id="midi.note" />
-            <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values?.note ?? 0)}</span>
-        </p>
-        <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-    </CombinedInput>
+    <MaterialNumberInput
+        label="midi.note <span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>{midiToNote(midi.values?.note ?? 0)}</span>"
+        disabled={noActionOrDefaultValues && type !== "output" && !playSlide}
+        value={midi.values?.note || 0}
+        max={127}
+        on:change={(e) => setValues("note", e.detail)}
+    />
+
     {#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
         {#if type === "input"}
-            <CombinedInput>
+            <InputRow>
                 <p style="font-size: 0.7em;opacity: 0.8;">
                     <T id="midi.tip_velocity" />
                 </p>
-            </CombinedInput>
+            </InputRow>
         {/if}
-        <CombinedInput>
-            <p><T id="midi.velocity" /></p>
-            <NumberInput value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", Number(e.detail))} />
-        </CombinedInput>
+        <MaterialNumberInput label="midi.velocity" value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", e.detail)} />
     {/if}
 {/if}
-<CombinedInput>
-    <p><T id="midi.channel" /></p>
-    <NumberInput value={midi.values?.channel ?? 1} min={1} max={16} on:change={(e) => setValues("channel", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-</CombinedInput>
+<MaterialNumberInput label="midi.channel" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.values?.channel ?? 1} min={1} max={16} on:change={(e) => setValues("channel", e.detail)} />

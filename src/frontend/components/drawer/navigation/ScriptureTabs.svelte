@@ -27,6 +27,7 @@
     function convertToButton(categories: any[]) {
         return categories
             .sort((a, b) => (b.customName || b.name).localeCompare(a.customName || a.name))
+            .reverse()
             .map((a: any) => {
                 const icon = a.api ? "scripture_alt" : a.collection ? "collection" : "scripture"
                 const count = a.collection?.versions?.length || 0

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { Show } from "../../../types/Show"
 import type { ShowObj } from "../../classes/Show"
 import { fixShowIssues } from "../../converters/importHelpers"
-import { destroyMain, receiveMain, sendMain } from "../../IPC/main"
+import { requestMain } from "../../IPC/main"
 import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
 import { Main } from "./../../../types/IPC/Main"
 import { getShowCacheId, updateCachedShow } from "./show"
@@ -87,67 +87,61 @@ export function setShow(id: string, value: "delete" | Show): Show {
 }
 
 export async function loadShows(s: string[], deleting = false) {
-    const savedWhenLoading: boolean = !deleting && get(saved)
+    const savedBeforeLoading: boolean = !deleting && get(saved)
 
-    return new Promise((resolve) => {
-        let count = 0
+    let notLoaded: string[] = []
+    s.forEach((id) => {
+        if (!get(shows)[id]) {
+            notFound.update((a) => {
+                a.show.push(id)
+                return a
+            })
+        } else if (!get(showsCache)[id]) {
+            notLoaded.push(id)
+        }
+    })
 
-        s.forEach((id) => {
-            if (!get(shows)[id]) {
-                count++
-                notFound.update((a) => {
-                    a.show.push(id)
-                    return a
-                })
-                // resolve("not_found")
-            } else if (!get(showsCache)[id]) {
-                sendMain(Main.SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
-            } else count++
-            // } else resolve("already_loaded")
-        })
-        // if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
+    if (!notLoaded.length) return
 
-        // RECEIVE
-        const listenerId = receiveMain(Main.SHOW, (data) => {
-            if (!s.includes(data.id)) return
-            count++
-
-            // prevent receiving multiple times
-            if (count >= s.length + 1) return
-
+    await Promise.all(notLoaded.map(async showId => {
+        await requestMain(Main.SHOW, { path: get(showsPath), name: get(shows)[showId].name, id: showId }, (data) => {
             if (data.error || !data.content) {
                 notFound.update((a) => {
                     a.show.push(data.id)
                     return a
                 })
-                // resolve("not_found")
-            } else if (!get(showsCache)[data.id]) {
-                if (get(notFound).show.includes(data.id)) {
-                    notFound.update((a) => {
-                        a.show.splice(a.show.indexOf(data.id), 1)
-                        return a
-                    })
+                return
+            }
+
+            // has been loaded in the meantime
+            if (get(showsCache)[data.id]) return
+
+            // remove from not found
+            if (get(notFound).show.includes(data.id)) {
+                notFound.update((a) => {
+                    a.show.splice(a.show.indexOf(data.id), 1)
+                    return a
+                })
+            }
+
+            // might have been saved wrongly
+            if (typeof data.content[1] === "string") {
+                try {
+                    data.content[1] = JSON.parse(data.content[1])
+                    if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
+                } catch (err) {
+                    return
                 }
-
-                const show = fixShowIssues(data.content[1])
-                setShow(data.id || data.content[0], show)
             }
 
-            if (count >= s.length) setTimeout(finished, 50)
+            const show = fixShowIssues(data.content[1])
+            setShow(data.id || data.content[0], show)
         })
-        if (count >= s.length) finished()
+    }))
 
-        function finished() {
-            if (savedWhenLoading) {
-                setTimeout(() => {
-                    saved.set(true)
-                }, 100)
-            }
-
-            destroyMain(listenerId)
-            resolve("loaded")
-        }
-    })
+    if (savedBeforeLoading) {
+        setTimeout(() => saved.set(true), 100)
+    }
 }
 
 let updateTimeout: NodeJS.Timeout | null = null

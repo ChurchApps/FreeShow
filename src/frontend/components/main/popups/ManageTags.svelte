@@ -3,14 +3,13 @@
     import { get } from "svelte/store"
     import { uid } from "uid"
     import type { Tag } from "../../../../types/Show"
-    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData, variableTags } from "../../../stores"
+    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, globalTags, mediaTags, popupData, variableTags } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
 
     const store = {
@@ -56,9 +55,7 @@
         getTags()
     }
 
-    function updateKey(e: any, tagId: string, key: string) {
-        let value = e.detail ?? e.target?.value ?? ""
-
+    function updateKey(value: string, tagId: string, key: string) {
         store[type]().update((a) => {
             a[tagId][key] = value
             return a
@@ -72,14 +69,11 @@
     {#if tags.length}
         {#key tags}
             {#each tags as tag}
-                <CombinedInput>
-                    <TextInput value={tag.name} on:change={(e) => updateKey(e, tag.id, "name")} autofocus={!tag.name} />
-                    <Color value={tag.color} style="min-width: 100px;" on:input={(e) => updateKey(e, tag.id, "color")} rightAlign />
-
-                    <Button on:click={() => deleteTag(tag.id)} title={$dictionary.actions?.delete}>
-                        <Icon id="delete" />
-                    </Button>
-                </CombinedInput>
+                <InputRow>
+                    <MaterialTextInput label="inputs.name" value={tag.name} on:change={(e) => updateKey(e.detail, tag.id, "name")} autofocus={!tag.name} />
+                    <MaterialColorInput label="edit.color" value={tag.color} style="min-width: 200px;max-width: 200px;" on:change={(e) => updateKey(e.detail, tag.id, "color")} noLabel />
+                    <MaterialButton icon="delete" title="actions.delete" on:click={() => deleteTag(tag.id)} white />
+                </InputRow>
             {/each}
         {/key}
     {:else}
@@ -88,14 +82,9 @@
         </Center>
     {/if}
 
-    <br />
-
-    <CombinedInput>
-        <Button style="width: 100%;" disabled={emptyTag} on:click={createTag} dark center>
-            <Icon id="add" right />
-            <T id="meta.new_tag" />
-        </Button>
-    </CombinedInput>
+    <MaterialButton variant="outlined" icon="add" style="margin-top: 20px;width: 100%;" disabled={emptyTag} on:click={createTag}>
+        <T id="meta.new_tag" />
+    </MaterialButton>
 </div>
 
 <style>

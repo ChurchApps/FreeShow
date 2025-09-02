@@ -12,7 +12,9 @@
     export let defaultValue: any = null
     export let name: string
     export let icon = ""
+    export let data: any | null = null
     export let popupId: Popups
+    export let openEvent: (() => {}) | null = null
 
     export let disabled = false
     export let allowEmpty = false
@@ -22,7 +24,12 @@
     function openPopup() {
         if (disabled) return
 
-        popupData.set({ active: value, id, trigger: (value) => dispatch("change", value) })
+        if (openEvent) {
+            openEvent()
+            return
+        }
+
+        popupData.set({ ...(data || {}), active: value, id, trigger: (value) => dispatch("change", value) })
         activePopup.set(popupId)
     }
 
@@ -55,7 +62,7 @@
     }
 </script>
 
-<div {id} class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)}>
+<div {id} class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)} style={$$props.style || null}>
     <div class="background" />
 
     <div

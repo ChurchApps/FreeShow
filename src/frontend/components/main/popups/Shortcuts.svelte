@@ -3,6 +3,7 @@
     import T from "../../helpers/T.svelte"
 
     const ctrl = $os.platform === "darwin" ? "cmd" : "ctrl"
+    const alt = $os.platform === "darwin" ? "option" : "alt"
 
     const shortcuts = {
         "actions.selectAll": `${ctrl} + a`,
@@ -42,7 +43,7 @@
 
         alt: "SEPERATOR",
 
-        "Show Import from Clipboard": `${ctrl} + alt + i`,
+        "Show Import from Clipboard": `${ctrl} + ${alt} + i`,
 
         clear: "SEPERATOR",
 
@@ -126,7 +127,8 @@
 
     .shortcut {
         background-color: var(--primary-darker);
-        border: 3px solid var(--primary-lighter);
+        border: 2px solid var(--primary-lighter);
+        border-radius: 3px;
 
         font-size: 0.9em;
         text-align: center;

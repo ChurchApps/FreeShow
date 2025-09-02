@@ -3,8 +3,8 @@
     import { getContrast } from "../../helpers/color"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
-    import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     function toggleColor(e, key = "customColors") {
         let color = e.detail || e.target?.value
@@ -50,7 +50,7 @@
 
 <Color value="" on:input={(e) => toggleColor(e, "customColorsGradient")} allowGradients visible custom />
 
-<Button
+<MaterialButton
     style="width: 100%;margin-top: 10px;border: 2px solid var(--primary-darker);"
     on:click={() => {
         popupData.set({
@@ -65,7 +65,7 @@
     center
 >
     <p style="width: 100%;justify-content: center;font-weight: normal;"><T id="actions.add_color" /></p>
-</Button>
+</MaterialButton>
 
 <style>
     .info {
@@ -75,6 +75,8 @@
         margin-bottom: 10px;
         font-style: italic;
         opacity: 0.8;
+        opacity: 0.7;
+        font-size: 0.9em;
     }
 
     .color {

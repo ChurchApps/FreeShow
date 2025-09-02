@@ -1,5 +1,6 @@
 <!-- Source: https://npmjs.com/package/@sveltejs/svelte-virtual-list -->
 <!-- fixed infinite loop with content_height of 0 while refreshing -->
+<!-- added auto scrolling to selected index -->
 
 <script>
 	import { onMount, tick } from 'svelte';
@@ -8,6 +9,31 @@
 	export let items;
 	export let height = '100%';
 	export let itemHeight = undefined;
+    /** @type number | null */
+    export let activeIndex = null
+
+    // custom scroll to index
+    $: if (mounted && activeIndex !== null) setTimeout(() => scrollToIndex(activeIndex))
+    function scrollToIndex(index) {
+        if (!viewport || !items || index < 0 || index >= items.length) return
+
+        // Calculate the scroll position for the item
+        let itemTop = 0
+        for (let i = 0; i < index; i++) {
+            itemTop += height_map[i] || average_height || itemHeight || 30
+        }
+        const itemHeightValue = height_map[index] || average_height || itemHeight || 30
+        const itemBottom = itemTop + itemHeightValue
+
+        // Get current viewport scroll range
+        const scrollTop = viewport.scrollTop
+        const scrollBottom = scrollTop + viewport_height
+
+        // Only scroll if not already in view        
+        if (itemTop < scrollTop || itemBottom > scrollBottom) {
+            viewport.scrollTo({ top: itemTop - (viewport_height * 0.3) })
+        }
+    }
 
 	let foo;
 
@@ -42,6 +68,9 @@
 
 		let content_height = top - scrollTop;
 		let i = start;
+
+        // loop fix
+        if (content_height < -500) return
 
 		while (content_height < viewport_height && i < items.length) {
 			let row = rows[i - start];

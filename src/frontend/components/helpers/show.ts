@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
 import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
-import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
+import { clone, keysToID, removeValues, sortByName } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
 import { _show } from "./shows"
@@ -170,7 +170,7 @@ export function updateShowsList(allShows: TrimmedShows) {
         sortedShows = showsList.sort((a, b) => (b.timestamps?.used || b.timestamps?.created) - (a.timestamps?.used || a.timestamps?.created))
     } else {
         // sort by name
-        sortedShows = sortByNameAndNumber(showsList)
+        sortedShows = sortByName(showsList)
         if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 

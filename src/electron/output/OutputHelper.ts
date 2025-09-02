@@ -17,7 +17,8 @@ export class OutputHelper {
         const outputResponses = {
             CREATE: (data: Output) => OutputHelper.Lifecycle.createOutput(data),
             REMOVE: (data: { id: string }) => OutputHelper.Lifecycle.removeOutput(data.id),
-            DISPLAY: (data: { output: Output; enabled?: "toggle" | boolean; force?: boolean; autoPosition?: boolean; auto?: boolean; one?: boolean }) => OutputHelper.Visibility.displayOutput(data),
+            // DISPLAY: (data: { output: Output; enabled?: "toggle" | boolean; force?: boolean; autoPosition?: boolean; auto?: boolean; one?: boolean }) => OutputHelper.Visibility.displayOutput(data),
+            TOGGLE_OUTPUTS: (data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) => OutputHelper.Visibility.toggleOutputs(data),
             ALIGN_WITH_SCREEN: () => OutputHelper.Bounds.alignWithScreens(),
 
             MOVE: (data: { enabled: boolean }) => (OutputHelper.Bounds.moveEnabled = data.enabled),

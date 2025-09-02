@@ -3,11 +3,12 @@ import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
-import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
+import { checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
+    actions,
     activePopup,
     activeProject,
     alertUpdates,
@@ -18,8 +19,8 @@ import {
     autosave,
     calendarAddShow,
     categories,
-    companion,
     chumsSyncCategories,
+    companion,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -28,6 +29,7 @@ import {
     drawer,
     drawerTabsData,
     driveData,
+    effects,
     effectsLibrary,
     emitters,
     formatNewShow,
@@ -45,13 +47,13 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
-    actions,
     openedFolders,
     outLocked,
     overlayCategories,
     overlays,
     playerVideos,
     ports,
+    profiles,
     projectView,
     remotePassword,
     resized,
@@ -73,9 +75,7 @@ import {
     version,
     videoMarkers,
     videosData,
-    videosTime,
-    effects,
-    profiles
+    videosTime
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -130,7 +130,7 @@ export function updateSettings(data: any) {
         // wait until content is loaded
         setTimeout(() => {
             restartOutputs()
-            if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
+            if (get(autoOutput)) setTimeout(() => toggleOutputs(null, { autoStartup: true }), 500)
             setTimeout(() => checkWindowCapture(true), 1000)
         }, 1500)
     }

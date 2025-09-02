@@ -11,7 +11,7 @@ import { sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getMediaStyle, getMediaType } from "../components/helpers/media"
-import { displayOutputs, getActiveOutputs, refreshOut, setOutput, startFolderTimer } from "../components/helpers/output"
+import { getActiveOutputs, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
@@ -71,7 +71,7 @@ const ctrlKeys = {
     n: () => createNew(),
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
-    o: () => displayOutputs(),
+    o: () => toggleOutputs(),
     s: () => save(),
     t: () => togglePanels(),
     y: () => redo(),
@@ -81,8 +81,15 @@ const ctrlKeys = {
 }
 
 const shiftCtrlKeys = {
+    d: () => get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : "",
+    // t: () => activePopup.set("translate"),
     f: () => menuClick("focus_mode"),
-    v: () => changeSlidesView()
+    n: () => activePopup.set("show"),
+    v: () => changeSlidesView(),
+}
+
+const altKeys = {
+    Enter: () => menuClick("cut_in_half", true, null, null, null, get(selected)),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -192,7 +199,14 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (e.altKey) return
+    if (e.altKey) {
+        if (altKeys[e.key]) {
+            e.preventDefault()
+            altKeys[e.key](e)
+        }
+        return
+    }
+
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
 
     // change tab with number keys

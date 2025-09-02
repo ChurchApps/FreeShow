@@ -2,11 +2,11 @@
     import { onMount } from "svelte"
     import { popupData, storedChordsData } from "../../../stores"
     import { chordTensions, chordTypes, keys, keysInverted, romanKeys } from "../../edit/values/chords"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let chordData = {
         key: "C",
@@ -16,7 +16,7 @@
         bass: "C",
         custom: "",
 
-        romanKeysActive: false,
+        romanKeysActive: false
     }
 
     let loaded = false
@@ -36,10 +36,6 @@
         if ((key === "type" || key === "tension") && chordData[key] === value) value = ""
 
         chordData[key] = value
-    }
-
-    function setCustom(e: any) {
-        chordData.custom = e.target?.value || ""
     }
 
     let combinedChord = "C"
@@ -65,29 +61,26 @@
         popupData.set({ id: "choose_chord", value: combinedChord })
     }
 
-    const isChecked = (e: any) => e.target.checked
-
     let showInvertedChords = false
 </script>
 
-<CombinedInput style="margin-bottom: 10px;">
-    <p><T id="actions.roman_keys" /></p>
-    <div class="alignRight">
-        <Checkbox checked={chordData.romanKeysActive} on:change={(e) => (chordData.romanKeysActive = isChecked(e))} />
-    </div>
-</CombinedInput>
+<MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={(e) => (chordData.romanKeysActive = e.detail)} />
+<MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={(e) => (chordData.custom = e.detail)} />
 
-<div class="chords">
+<div class="chords" style="margin: 10px 0;">
     <div class="list">
         {#if chordData.romanKeysActive}
             <p><T id="actions.chord_key" /></p>
             {#each romanKeys as key}
-                <Button outline={chordData.romanKey === key} disabled={chordData.custom} on:click={() => updateData("romanKey", key)} center>{key}</Button>
+                <MaterialButton showOutline={chordData.romanKey === key} disabled={!!chordData.custom} on:click={() => updateData("romanKey", key)}>{key}</MaterialButton>
             {/each}
         {:else}
-            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_key" /></p>
+            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}>
+                <Icon id="arrow_{showInvertedChords ? 'up' : 'down'}" size={1.1} white={!showInvertedChords} />
+                <T id="actions.chord_key" />
+            </p>
             {#each showInvertedChords ? keysInverted : keys as key}
-                <Button outline={chordData.key === key} disabled={chordData.custom} on:click={() => updateData("key", key)} center>{key}</Button>
+                <MaterialButton showOutline={chordData.key === key} disabled={!!chordData.custom} on:click={() => updateData("key", key)}>{key}</MaterialButton>
             {/each}
         {/if}
     </div>
@@ -95,45 +88,45 @@
     <div class="list">
         <p><T id="actions.chord_type" /></p>
         {#each chordTypes as type}
-            <Button outline={chordData.type === type} disabled={chordData.custom} on:click={() => updateData("type", type)} center>
+            <MaterialButton showOutline={chordData.type === type} disabled={!!chordData.custom} on:click={() => updateData("type", type)}>
                 {#if !type}
                     <span style="opacity: 0;">.</span>
                 {:else}
                     {type}
                 {/if}
-            </Button>
+            </MaterialButton>
         {/each}
     </div>
 
     <div class="list">
         <p><T id="actions.chord_tension" /></p>
         {#each chordTensions as tension}
-            <Button outline={chordData.tension === tension} disabled={chordData.custom} on:click={() => updateData("tension", tension)} center>
+            <MaterialButton showOutline={chordData.tension === tension} disabled={!!chordData.custom} on:click={() => updateData("tension", tension)}>
                 {#if !tension}
                     <span style="opacity: 0;">.</span>
                 {:else}
                     {tension}
                 {/if}
-            </Button>
+            </MaterialButton>
         {/each}
     </div>
 
     {#if !chordData.romanKeysActive}
         <div class="list">
-            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_bass" /></p>
+            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}>
+                <Icon id="arrow_{showInvertedChords ? 'up' : 'down'}" size={1.1} white={!showInvertedChords} />
+                <T id="actions.chord_bass" />
+            </p>
             {#each showInvertedChords ? keysInverted : keys as bass}
-                <Button outline={chordData.bass === bass} disabled={chordData.custom} on:click={() => updateData("bass", bass)} center>{bass}</Button>
+                <MaterialButton showOutline={chordData.bass === bass} disabled={!!chordData.custom} on:click={() => updateData("bass", bass)}>{bass}</MaterialButton>
             {/each}
         </div>
     {/if}
 </div>
 
-<CombinedInput style="margin-top: 10px;">
-    <p><T id="actions.custom_key" /></p>
-    <TextInput value={chordData.custom} on:input={setCustom} />
-</CombinedInput>
-
-<Button style="margin-top: 12px;" on:click={selectChord} dark center><T id="actions.select_chord" />: <span style="color: var(--secondary);font-weight: bold;margin-inline-start: 5px;">{combinedChord}</span></Button>
+<MaterialButton variant="outlined" on:click={selectChord}>
+    <T id="actions.select_chord" />: <span style="color: var(--secondary);font-weight: bold;">{combinedChord}</span>
+</MaterialButton>
 
 <style>
     .chords {
@@ -150,16 +143,37 @@
 
         background-color: var(--primary-darker);
         border-radius: var(--border-radius);
+
+        border-radius: 8px;
+        padding-bottom: 8px;
+        overflow: hidden;
+    }
+
+    .list :global(button) {
+        padding: 5px 40px;
+        font-weight: normal;
+        justify-content: left;
     }
 
     .list p {
         padding: 2px;
         font-weight: bold;
+        font-size: 0.8em;
         background: var(--primary-darkest);
+    }
+
+    .invert {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+
+        cursor: pointer;
+
+        transition: 0.1s background-color;
     }
 
     .invert:hover {
         background-color: var(--hover);
-        cursor: pointer;
     }
 </style>

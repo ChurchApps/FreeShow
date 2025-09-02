@@ -272,7 +272,7 @@
                             tab
                         >
                             <Icon id="templates" white={$projects[project.id]?.archived} />
-                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(project.id, e.detail.value)} bind:edit={editActive} />
+                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(e.detail.value, project.id)} bind:edit={editActive} />
                         </MaterialButton>
                     {/each}
                 </div>

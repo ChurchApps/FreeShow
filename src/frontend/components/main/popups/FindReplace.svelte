@@ -4,10 +4,9 @@
     import { format } from "../../context/menuClick"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let findValue = ""
     let replaceValue = ""
@@ -27,32 +26,18 @@
         activePopup.set(null)
     }
 
-    function updateValue(e, key) {
-        let value = e.target.value
-
-        if (key === "find") findValue = value
-        else if (key === "replace") replaceValue = value
-    }
+    let showMore = false
 </script>
 
-<CombinedInput>
-    <p><T id="actions.find" /></p>
-    <TextInput value={findValue} on:change={(e) => updateValue(e, "find")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="actions.replace" /></p>
-    <TextInput value={replaceValue} on:change={(e) => updateValue(e, "replace")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="actions.case_sensitive" /></p>
-    <div class="alignRight">
-        <Checkbox checked={caseSentitive} on:change={() => (caseSentitive = !caseSentitive)} />
-    </div>
-</CombinedInput>
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
-<CombinedInput>
-    <Button on:click={replace} style="width: 100%;" center>
-        <Icon id="find_replace" size={1.2} right />
-        <T id="actions.find_replace" />
-    </Button>
-</CombinedInput>
+{#if showMore}
+    <MaterialToggleSwitch label="actions.case_sensitive" checked={caseSentitive} defaultValue={true} on:change={(e) => (caseSentitive = e.detail)} />
+{/if}
+<MaterialTextInput label="actions.find" value={findValue} on:change={(e) => (findValue = e.detail)} autofocus />
+<MaterialTextInput label="actions.replace" value={replaceValue} on:change={(e) => (replaceValue = e.detail)} />
+
+<MaterialButton style="margin-top: 20px;" variant="contained" on:click={replace}>
+    <Icon id="find_replace" size={1.2} white />
+    <T id="actions.find_replace" />
+</MaterialButton>

@@ -30,7 +30,7 @@
         setTimeout(checkScroll, 110)
     }
 
-    $: className = $$props.class
+    $: className = $$props.class || ""
 
     // custom tab styling
     function getStyle(tabId: string) {

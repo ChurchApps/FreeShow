@@ -1,67 +1,34 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { dictionary } from "../../../stores"
-    import { getLeftParenthesis, getRightParenthesis } from "../../../utils/language"
     import type { API_metronome } from "../../actions/api"
-    import T from "../../helpers/T.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     export let values: API_metronome = {}
-    export let audioOutputs: { id: string; name: string }[] = []
+    export let audioOutputs: { value: string; label: string }[] = []
     export let action = false
 
     let dispatch = createEventDispatcher()
-    function updateValue(key, e) {
-        let value = e.detail !== undefined ? Number(e.detail) : e
-
-        if (typeof value === "number" && Math.floor(value) === value) value = Math.floor(value) // remove .0
+    function updateValue(key, value: number | undefined) {
+        if (typeof value === "number") value = Number(value.toFixed(3))
 
         dispatch("change", { ...values, [key]: value })
     }
-
-    const isChecked = (e: any) => e.target.checked
 </script>
 
 {#if action}
-    <CombinedInput>
-        <p><T id="audio.use_metadata_bpm" /></p>
-        <span class="alignRight">
-            <Checkbox checked={values.metadataBPM} on:change={(e) => updateValue("metadataBPM", isChecked(e))} />
-        </span>
-    </CombinedInput>
+    <MaterialToggleSwitch label="audio.use_metadata_bpm" checked={values.metadataBPM} defaultValue={false} on:change={(e) => updateValue("metadataBPM", e.detail)} />
 {/if}
 {#if !values.metadataBPM}
-    <CombinedInput>
-        <p><T id="audio.tempo" /> {getLeftParenthesis()}<T id="audio.bpm" />{getRightParenthesis()}</p>
-        <NumberInput value={values.tempo || 120} min={1} decimals={1} fixed={Math.floor(values.tempo || 0) === (values.tempo || 0) ? 0 : 1} max={320} on:change={(e) => updateValue("tempo", e)} />
-    </CombinedInput>
+    <MaterialNumberInput label="audio.tempo <span style='margin-left: 5px;opacity: 0.4;color: var(--text);'>audio.bpm</span>" value={values.tempo || 120} min={1} max={320} on:change={(e) => updateValue("tempo", e.detail)} />
 {/if}
-<CombinedInput>
-    <p><T id="audio.beats" /></p>
-    <NumberInput value={values.beats || 4} min={1} max={16} on:change={(e) => updateValue("beats", e)} />
-</CombinedInput>
+<MaterialNumberInput label="audio.beats" value={values.beats || 4} min={1} max={16} on:change={(e) => updateValue("beats", e.detail)} />
 <!-- <NumberInput value={values.notesPerBeat} min={1} max={4} on:change={(e) => (values.notesPerBeat = e.detail)} /> -->
 {#if !action}
-    <CombinedInput>
-        <p><T id="media.volume" /></p>
-        <NumberInput value={values.volume || 1} min={0.1} max={3} decimals={1} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
-    </CombinedInput>
+    <MaterialNumberInput label="media.volume" value={Number(((values.volume || 1) * 100).toFixed(2))} min={1} max={300} step={10} on:change={(e) => updateValue("volume", e.detail / 100)} />
 {/if}
 
 {#if audioOutputs.length}
-    <div class="input" style="margin-top: 5px;">
-        <CombinedInput>
-            <p data-title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
-            <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === values.audioOutput)?.name || "—"} on:click={(e) => updateValue("audioOutput", e.detail?.id)} />
-        </CombinedInput>
-    </div>
+    <MaterialDropdown label="audio.custom_output" style="margin-top: 5px;" options={audioOutputs} value={values.audioOutput || ""} on:change={(e) => updateValue("audioOutput", e.detail)} allowEmpty />
 {/if}
-
-<style>
-    .input :global(.dropdownElem) {
-        width: 50%; /* 0px / 90% works, not 100% */
-    }
-</style>

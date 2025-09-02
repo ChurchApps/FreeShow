@@ -4,18 +4,16 @@
     import { Main } from "../../../../types/IPC/Main"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, dictionary, maxConnections, os, outputs, popupData, ports, remotePassword, serverData, special } from "../../../stores"
+    import { activePopup, maxConnections, os, outputs, popupData, ports, remotePassword, serverData, special } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
@@ -41,7 +39,7 @@
     }
 
     $: port = $ports[id] || defaultPorts[id]
-    $: hostname = `${$os.name.toLowerCase()}${$os.platform === 'win32' ? '.local' : ''}`
+    $: hostname = `${$os.name.toLowerCase()}${$os.platform === "win32" ? ".local" : ""}`
     $: url = `http://${useHostname ? hostname : ip}:${port}`
     $: if (url) generateQR(url)
 
@@ -63,23 +61,30 @@
 
     let options = false
 
+    const RESERVED_PORTS = { nowPlaying: [5502], WebSocket: [5505], REST: [5506], companion: [5505, 5506], remote: [5510], stage: [5511], controller: [5512], output_stream: [5513] }
+    $: isReserved = !RESERVED_PORTS[id]?.includes(port) && Object.values(RESERVED_PORTS).flat().includes(port)
+
     function updatePort(e: any) {
-        let port = Number(e.detail)
-        if (Object.values($ports).includes(port)) return
+        port = e.detail
         ports.update((a) => {
             a[id] = port
             return a
         })
     }
 
-    const isChecked = (e: any) => e.target.checked
     const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
     // output
     $: outputsList = getList(clone($outputs))
     function getList(outputs) {
         let list = keysToID(outputs).filter((a) => !a.isKeyOutput && a.enabled === true)
-        return [{ id: "", name: "—" }, ...sortByName(list)]
+        return sortByName(list).map((a) => ({ label: a.name, value: a.id }))
+    }
+
+    function toggleAudio(e: any) {
+        let value = e.detail
+        updateData(value, "sendAudio")
+        if (value) AudioAnalyser.recorderActivate()
     }
 
     function updateData(e: any, key: string) {
@@ -95,66 +100,38 @@
         sendMain(Main.SERVER_DATA, $serverData)
     }
 
+    function updateSpecial(key: string, value: any) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
+
     // $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || getActiveOutputs($outputs, false, true).length > 1
 </script>
 
-{#if options}
-    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (options = false)} />
+<MaterialButton class="popup-options {options ? 'active' : ''}" icon="options" iconSize={1.3} title={options ? "actions.close" : "create_show.more_options"} on:click={() => (options = !options)} white />
 
-    <CombinedInput>
-        <p><T id="settings.port" /></p>
-        <NumberInput value={port} on:change={(e) => updatePort(e)} min={1025} max={65535} buttons={false} />
-    </CombinedInput>
+{#if options}
+    <div class="reserved" class:isReserved>
+        <MaterialNumberInput label="settings.port" value={port} defaultValue={RESERVED_PORTS[id]?.[0]} min={1025} max={65535} on:change={(e) => updatePort(e)} />
+    </div>
 
     {#if id === "remote"}
-        <CombinedInput>
-            <!-- <p style="text-transform: capitalize;"><T id="settings.password" /></p> -->
-            <p><T id="remote.password" /></p>
-            <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
-        </CombinedInput>
+        <MaterialTextInput label="remote.password" value={$remotePassword} on:change={setRemotePassword} />
     {:else if id === "output_stream"}
         <!-- {#if enableOutputSelector} -->
-        <CombinedInput>
-            <p><T id="midi.output" /></p>
-            <Dropdown value={outputsList.find((a) => a.id === $serverData?.output_stream?.outputId)?.name || "—"} options={outputsList} on:click={(e) => updateData(e.detail.id, "outputId")} />
-        </CombinedInput>
+        <MaterialDropdown label="midi.output" options={outputsList} value={$serverData?.output_stream?.outputId || ""} on:change={(e) => updateData(e.detail, "outputId")} allowEmpty />
         <!-- {/if} -->
 
-        <CombinedInput>
-            <p><T id="preview.audio" /></p>
-            <div class="alignRight">
-                <Checkbox
-                    checked={$serverData?.output_stream?.sendAudio}
-                    on:change={(e) => {
-                        let value = isChecked(e)
-                        updateData(value, "sendAudio")
-                        if (value) AudioAnalyser.recorderActivate()
-                    }}
-                />
-            </div>
-        </CombinedInput>
+        <MaterialToggleSwitch label="preview.audio" checked={$serverData?.output_stream?.sendAudio} defaultValue={false} on:change={toggleAudio} />
     {/if}
 
     {#if id !== "companion"}
         <hr />
 
-        <CombinedInput>
-            <p><T id="settings.max_connections" /></p>
-            <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
-        </CombinedInput>
-        <CombinedInput>
-            <p><T id="settings.use_hostname" /></p>
-            <div class="alignRight">
-                <Checkbox
-                    checked={$special.connectionHostname}
-                    on:change={(e) =>
-                        special.update((a) => {
-                            a.connectionHostname = isChecked(e)
-                            return a
-                        })}
-                />
-            </div>
-        </CombinedInput>
+        <MaterialNumberInput label="settings.max_connections" value={$maxConnections} max={100} on:change={(e) => maxConnections.set(e.detail)} />
+        <MaterialToggleSwitch label="settings.use_hostname" checked={$special.connectionHostname} defaultValue={false} on:change={(e) => updateSpecial("connectionHostname", e.detail)} />
     {/if}
 {:else}
     <div on:mousedown={mousedown}>
@@ -167,9 +144,6 @@
                 Bitfocus Companion Connection
                 <Icon id="launch" white />
             </Link>
-
-            <br />
-            <br />
         {:else}
             <p><T id="settings.connect" />:</p>
             <Link {url}>
@@ -194,10 +168,6 @@
             <p style="padding-top: 10px;font-size: 0.9em;"><T id="remote.password" />: <b>{$remotePassword}</b></p>
         {/if}
     </div>
-
-    <Button style="position: absolute;inset-inline-start: 10px;bottom: 10px;padding: 12px;" title={$dictionary.edit?.options} on:click={() => (options = true)}>
-        <Icon id="settings" size={1.5} white />
-    </Button>
 {/if}
 
 <style>
@@ -216,5 +186,13 @@
         height: 2px;
         margin: 20px 0;
         background-color: var(--primary-lighter);
+    }
+
+    div :global(img) {
+        border-radius: 4px;
+    }
+
+    .reserved.isReserved :global(input) {
+        color: #ff3232;
     }
 </style>

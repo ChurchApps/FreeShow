@@ -18,6 +18,12 @@ type PCORequestData = {
     params?: Record<string, string> // Add params type
 }
 
+type SongSection = {
+    label: string,
+    lyrics: string,
+    breaks_at?: number
+}
+
 interface ServiceType {
     id: string
     attributes: {
@@ -270,13 +276,19 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     const song = songArrangement.attributes
     const sequence = item.custom_arrangement_sequence || song.sequence || []
 
-    let sections = (await pcoRequest({
+    let sections: SongSection[] = (await pcoRequest({
         scope: "services",
         endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections`
     }))[0]?.attributes.sections || []
 
     if (!sections.length) {
         sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+    } else {
+        sections = sections.map(normalizeSongSection)
+    }
+
+    if (sequence.length && sections.length) {
+        sections = getOrderedSections(sections, sequence)
     }
 
     const show = getShow(songData, song, sections)
@@ -286,6 +298,33 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
         show: { id: showId, ...show },
         projectItem: { type: "show", id: showId, scheduleLength: item.attributes.length }
     }
+}
+
+function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
+    const sectionMap: { [key: string]: SongSection } = {}
+    sections.forEach((section) => {
+        sectionMap[section.label] = section
+    })
+
+    const orderedSections: SongSection[] = []
+    sequence.forEach((label) => {
+        if (sectionMap[label]) {
+            orderedSections.push(sectionMap[label])
+        }
+    })
+
+    return orderedSections
+}
+
+function normalizeSongSection(section: SongSection): SongSection {
+    return {
+        ...section,
+        lyrics: normalizeLineBreaks(section.lyrics)
+    }
+}
+
+function normalizeLineBreaks(text: string): string {
+    return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
 function processRegularItem(item: ProjectItem) {

@@ -22,7 +22,9 @@
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
-    import { getCustomStageLabel, stageItemToItem } from "./stage"
+    import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
+    import { isConditionMet } from "../edit/scripts/itemHelpers"
+    import { getItemText } from "../edit/scripts/textStyle"
 
     export let id: string
     export let item: StageItem
@@ -188,6 +190,13 @@
     }
 
     $: contextId = item.type === "text" ? "stage_text_item" : item.type === "current_output" ? "stage_item_output" : "stage_item"
+
+    let updater = 0
+    const updaterInterval = setInterval(() => updater++, 3000)
+    onDestroy(() => clearInterval(updaterInterval))
+
+    $: currentItemText = item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))
+    $: showItemState = isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -222,7 +231,7 @@
 
             <!-- conditions -->
             {#if Object.values(item?.conditions || {}).length}
-                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
                     </Button>

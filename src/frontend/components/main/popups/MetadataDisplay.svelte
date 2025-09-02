@@ -2,7 +2,7 @@
     import { activePopup, popupData } from "../../../stores"
     import { metadataDisplayValues } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     // VALUES
 
@@ -37,12 +37,12 @@
 <div class="types">
     {#each metadataDisplayValues as data}
         {@const isActive = data.id === value}
-        <Button outline={isActive} active={isActive} on:click={() => changeMetadata(data.id)} bold={false}>
+        <MaterialButton showOutline={isActive} {isActive} on:click={() => changeMetadata(data.id)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
                 {@html icons[data.id]}
             </svg>
             <T id={data.name} />
-        </Button>
+        </MaterialButton>
     {/each}
 </div>
 
@@ -51,13 +51,17 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 10px;
-        padding: 15px 0;
+        gap: 5px;
     }
 
     .types :global(button) {
-        padding: 0.5em 0.8em;
+        font-weight: normal;
+        border: 2px solid var(--primary-lighter) !important;
+
+        padding: 0.6em;
         flex-direction: column;
         gap: 5px;
+
+        /* min-width: 200px; */
     }
 </style>

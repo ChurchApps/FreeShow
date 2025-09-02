@@ -212,9 +212,15 @@ export interface Scrolling {
     speed?: number
 }
 
-export interface Condition {
-    scenario: string
-    values: { [key: string]: string }[]
+// pre 1.5.0
+// export interface Condition {
+//     scenario: string
+//     values: { [key: string]: string }[]
+// }
+// [outer_or, [outer_and, [inner_or, [inner_and, [content, {}}]]]]]
+export type Condition = ConditionValue[][][][]
+export interface ConditionValue {
+    [key: string]: string
 }
 
 export interface Weather {
@@ -317,7 +323,7 @@ export interface SlideData {
         stopTimers?: boolean
         trigger?: string
         audioStream?: string
-        outputStyle?: string
+        outputStyle?: string // deprecated
         startTimer?: boolean
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++

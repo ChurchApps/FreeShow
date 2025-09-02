@@ -12,7 +12,7 @@
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
-    import { boxes, setBoxInputValue } from "../values/boxes"
+    import { boxes, itemBoxes, setBoxInputValue, setBoxInputValue2 } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
     import { getExtension, getMediaType } from "../../helpers/media"
 
@@ -89,6 +89,9 @@
     const setBox = () => clone(boxes[id])
     let box = setBox()!
     $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()!
+    const setBox2 = () => clone(itemBoxes[id])!
+    let box2 = setBox2()
+    $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box2 = setBox2()
 
     // get item values
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
@@ -128,6 +131,9 @@
     $: if (id === "text") {
         setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
         setBoxInputValue(box, "default", "textFit", "hidden", !item?.auto)
+
+        setBoxInputValue2(box2, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
+        setBoxInputValue2(box2, "default", "textFit", "hidden", !item?.auto)
 
         // text
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
@@ -574,6 +580,21 @@
         })
     }
 
+    // $: boxSections = box2?.sections || {}
+    // function updateValue2(e: any) {
+    //     const input = clone(e.detail)
+    //     input.value = input.values.value
+    //     input.input = input.type
+
+    //     // setBoxInputValue(box, "default", "mirror.show", "name", "select_stage")
+    //     // boxSections.default.inputs[0].values[0].value = input.value
+
+    //     updateValue({ detail: input })
+
+    //     // { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", values: { label: "edit.family" } }
+    //     // { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+    // }
+
     let sessionId = ""
     if (item) sessionId = uid()
 
@@ -587,6 +608,8 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#if loaded}
+    <!-- <EditValues2 sections={boxSections} {item} {styles} on:change={updateValue2} /> -->
+
     <!-- WIP edit checkbox does not animate because of this refresh -->
     {#key id !== "media" && box}
         <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />

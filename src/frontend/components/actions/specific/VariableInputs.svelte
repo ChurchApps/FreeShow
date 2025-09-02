@@ -1,99 +1,101 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import type { Option } from "../../../../types/Main"
 
     import { variables } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import T from "../../helpers/T.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
 
     export let value
 
-    function convertToOptions(object) {
-        let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
-        return sortByName(options)
+    function convertToOptions(a) {
+        let options = Object.keys(a).map((id) => ({ value: id, label: a[id].name, data: translateText(`variables.${a[id].type}`) }))
+        return sortByName(options, "label")
     }
 
-    const variableOptions = convertToOptions($variables) // .map((a) => ({...a, type: $variables[a.id]?.type}))
+    const variableOptions = convertToOptions($variables)
 
-    const variableTextModes = [
-        { id: "enabled", name: "$:variables.set_state:$" }, // set enabled state
-        { id: "value", name: "$:variables.value:$" }
-    ]
-
-    const variableNumberModes = [
-        { id: "value", name: "$:variables.value:$" },
-        { id: "increment", name: "$:actions.increment:$" },
-        { id: "decrement", name: "$:actions.decrement:$" },
-        { id: "expression", name: "$:actions.expression:$" } // math & variables
-    ]
-
-    const variableRandomNumberModes = [
-        { id: "randomize", name: "$:variables.randomize:$" },
-        { id: "reset", name: "$:actions.reset:$" }
-    ]
-
-    const variableTextSetModes = [
-        { id: "next", name: "$:media.next:$" },
-        { id: "previous", name: "$:media.previous:$" },
-        { id: "value", name: "$:variables.value:$" }
-    ]
+    const variableModes = {
+        text: [
+            { value: "enabled", label: translateText("variables.set_state") }, // set enabled state
+            { value: "value", label: translateText("variables.value") }
+        ],
+        number: [
+            { value: "value", label: translateText("variables.value") },
+            { value: "increment", label: translateText("actions.increment") },
+            { value: "decrement", label: translateText("actions.decrement") },
+            { value: "expression", label: translateText("actions.expression") } // math & variables
+        ],
+        random_number: [
+            { value: "randomize", label: translateText("variables.randomize") },
+            { value: "reset", label: translateText("actions.reset") }
+        ],
+        text_set: [
+            { value: "next", label: translateText("media.next") },
+            { value: "previous", label: translateText("media.previous") },
+            { value: "value", label: translateText("variables.value") }
+        ]
+    }
+    const defaultMode = {
+        text: "enabled",
+        number: "value",
+        random_number: "randomize",
+        text_set: "next"
+    }
 
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
         let value = e?.detail ?? e?.target?.value ?? e
         dispatch("update", { key, value })
+
+        if (key === "id") {
+            dispatch("update", { key: "key", value: undefined })
+            dispatch("update", { key: "value", value: undefined })
+        }
     }
 
-    function checkboxChanged(e: any) {
-        dispatch("update", { key: "value", value: e.target.checked })
+    const stateOptions = [
+        { value: "", label: "Toggle" },
+        { value: "off", label: "Off" },
+        { value: "on", label: "On" }
+    ]
+    function textStateChange(e: any) {
+        let value = e.detail
+
+        if (value === "off") value = false
+        else if (value === "on") value = true
+        else value = undefined
+
+        dispatch("update", { key: "value", value })
     }
 
     $: variable = $variables[value?.id]
+    $: currentType = variable?.type
 </script>
 
-<CombinedInput>
-    <Dropdown style="width: 100%;" activeId={value?.id} value={variableOptions.find((a) => a.id === value?.id)?.name || value?.id || "—"} options={variableOptions} on:click={(e) => updateValue("id", e.detail?.id)} />
-</CombinedInput>
+<MaterialDropdown label="items.variable" options={variableOptions} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
 
 {#if value?.id}
-    <CombinedInput>
-        <p><T id="actions.mode" /></p>
-        {#if variable?.type === "text"}
-            <Dropdown style="width: 100%;" value={variableTextModes.find((a) => a.id === (value?.key || "enabled"))?.name || "—"} options={variableTextModes} on:click={(e) => updateValue("key", e.detail?.id)} />
-        {:else if variable?.type === "number"}
-            <Dropdown style="width: 100%;" value={variableNumberModes.find((a) => a.id === (value?.key || "value"))?.name || "—"} options={variableNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
-        {:else if variable?.type === "random_number"}
-            <Dropdown style="width: 100%;" value={variableRandomNumberModes.find((a) => a.id === (value?.key || "randomize"))?.name || "—"} options={variableRandomNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
-        {:else if variable?.type === "text_set"}
-            <Dropdown style="width: 100%;" value={variableTextSetModes.find((a) => a.id === (value?.key || "next"))?.name || "—"} options={variableTextSetModes} on:click={(e) => updateValue("key", e.detail?.id)} />
-        {/if}
-    </CombinedInput>
+    <InputRow>
+        <MaterialDropdown label="actions.mode" options={variableModes[currentType] || []} value={value?.key || defaultMode[currentType] || ""} on:change={(e) => updateValue("key", e.detail)} />
 
-    <!-- {#if variable?.type === "text_set"}
+        <!-- {#if variable?.type === "text_set"}
         <CombinedInput>
             <Dropdown style="width: 100%;" value={variable?.textSetKeys?.find((name) => name === value?.setId) || "—"} options={(variable?.textSetKeys || []).map((name) => ({ name }))} on:click={(e) => updateValue("setId", e.detail?.id)} />
         </CombinedInput>
     {/if} -->
 
-    {#if value?.key === "value" || variable?.type === "number"}
-        <CombinedInput>
+        {#if value?.key === "value" || variable?.type === "number"}
             {#if (variable?.type === "number" && value?.key !== "expression") || variable?.type === "text_set"}
-                <NumberInput value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} decimals={1} fixed={Number(value?.value).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue("value", e)} />
+                <MaterialNumberInput label="variables.value" value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} on:change={(e) => updateValue("value", e)} />
             {:else}
-                <TextInput value={isNaN(value?.value) ? value?.value || "" : ""} placeholder={value?.key === "expression" ? "Use math & dynamic variable values" : ""} on:change={(e) => updateValue("value", e)} />
+                <MaterialTextInput label="variables.value" value={isNaN(value?.value) ? value?.value || "" : ""} placeholder={value?.key === "expression" ? "Use math & dynamic variable values" : ""} on:change={(e) => updateValue("value", e)} />
             {/if}
-        </CombinedInput>
-    {:else if variable?.type === "text"}
-        <CombinedInput>
-            {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
-            <div class="alignRight" style="width: 100%;">
-                <Checkbox checked={!!value?.value} on:change={checkboxChanged} />
-            </div>
-        </CombinedInput>
-    {/if}
+        {:else if variable?.type === "text"}
+            <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+        {/if}
+    </InputRow>
 {/if}

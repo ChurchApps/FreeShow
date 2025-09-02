@@ -156,15 +156,15 @@ const loadActions = {
 
         const itemActions: any[] = []
         if (get(activeEdit).type !== "overlay") {
-            itemActions.push({ id: "clickReveal", label: "actions.click_reveal", icon: "click_action", enabled: !!currentItem?.clickReveal })
-            if (currentItem?.type === "text" || currentItem?.lines) itemActions.push({ id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", enabled: !!currentItem?.lineReveal })
+            itemActions.push({ id: "clickReveal", label: "actions.click_reveal", icon: "click_action", iconColor: "#d4a3f6", enabled: !!currentItem?.clickReveal })
+            if (currentItem?.type === "text" || currentItem?.lines) itemActions.push({ id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", iconColor: "#d4a3f6", enabled: !!currentItem?.lineReveal })
         }
 
         itemActions.push(
             ...[
                 // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
-                { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
-                { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false }
+                { id: "showTimer", label: "actions.show_timer", icon: "time_in", iconColor: "#cd86ff", enabled: Number(currentItemActions.showTimer || 0) || false },
+                { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", iconColor: "#cd86ff", enabled: Number(currentItemActions.hideTimer || 0) || false }
             ]
         )
 

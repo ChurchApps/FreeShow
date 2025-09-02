@@ -1,19 +1,17 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { dictionary, drawerTabsData, selected, variables } from "../../../stores"
+    import { drawerTabsData, selected, variables } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { clone, moveToPos } from "../../helpers/array"
     import { createStore, updateStore } from "../../helpers/historyStores"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let chosenType = ""
     const types = [
@@ -33,10 +31,9 @@
     let currentVariable = clone($variables[variableId] || DEFAULT_VARIABLE)
     let created = !existing
 
-    function updateValue(e: any, key: string, checkbox = false) {
+    function updateValue(e: any, key: string) {
         let value = e?.target?.value ?? e
-        if (checkbox) value = e.target.checked
-        if (!value && !checkbox) return
+        if (value === undefined) return
 
         // update current number if default is changed
         if (key === "default" && Number(currentVariable.number || 0) === Number(currentVariable.default || 0)) currentVariable.number = Number(value)
@@ -107,6 +104,7 @@
     const maxAbsolute = 10000000
     const minDefault = 0
     const maxDefault = 1000
+    $: console.log(currentVariable.minValue)
     $: min = Number(currentVariable.minValue ?? minDefault)
     $: max = Number(currentVariable.maxValue ?? maxDefault)
 
@@ -187,7 +185,7 @@
     function updateTextSetVariableName(index: number, e: any) {
         if (!currentVariable.textSetKeys) currentVariable.textSetKeys = [""]
 
-        let value = e.target?.value || ""
+        let value = e.detail || ""
         while (currentVariable.textSetKeys.find((name, i) => i !== index && name === value)) value += " 2"
         currentVariable.textSetKeys[index] = value
 
@@ -206,7 +204,7 @@
         if (!currentVariable.textSets) currentVariable.textSets = [{}]
 
         if (!currentVariable.textSets[index]) currentVariable.textSets[index] = {}
-        const value = e.target?.value || ""
+        const value = e.detail || ""
         currentVariable.textSets[index][name] = value
 
         variables.update((a) => {
@@ -214,6 +212,8 @@
             return a
         })
     }
+
+    let showMoreRN = false
 </script>
 
 {#if !existing && !chosenType}
@@ -229,94 +229,56 @@
         <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (chosenType = "")} />
     {/if}
 
-    <CombinedInput textWidth={30}>
-        <p><T id="inputs.name" /></p>
-        <TextInput disabled={!created && !!currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
-    </CombinedInput>
+    <MaterialTextInput label="inputs.name" style="margin-bottom: 10px;" disabled={!created && !!currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e.detail, "name")} autofocus={!currentVariable.name} />
 
     {#if currentVariable.type === "number"}
-        <CombinedInput textWidth={30}>
-            <p><T id="variables.default_value" /></p>
-            <NumberInput value={currentVariable.default || 0} step={1} decimals={1} {min} {max} fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue(e.detail, "default")} buttons={false} />
-        </CombinedInput>
-
-        <CombinedInput textWidth={30}>
-            <p><T id="variables.minimum" /></p>
-            <NumberInput
-                value={currentVariable.minValue ?? minDefault}
-                step={1}
-                decimals={1}
-                min={minAbsolute}
-                max={maxAbsolute}
-                fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0}
-                on:change={(e) => updateValue(e.detail, "minValue")}
-                buttons={false}
-            />
-        </CombinedInput>
-        <CombinedInput textWidth={30}>
-            <p><T id="variables.maximum" /></p>
-            <NumberInput
-                value={currentVariable.maxValue ?? maxDefault}
-                step={1}
-                decimals={1}
-                min={minAbsolute}
-                max={maxAbsolute}
-                fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0}
-                on:change={(e) => updateValue(e.detail, "maxValue")}
-                buttons={false}
-            />
-        </CombinedInput>
+        <MaterialNumberInput label="variables.default_value" value={currentVariable.default || 0} step={1} {min} {max} on:change={(e) => updateValue(e.detail, "default")} />
+        <InputRow>
+            <MaterialNumberInput label="variables.minimum" value={currentVariable.minValue ?? minDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "minValue")} />
+            <MaterialNumberInput label="variables.maximum" value={currentVariable.maxValue ?? maxDefault} step={1} min={minAbsolute} max={maxAbsolute} on:change={(e) => updateValue(e.detail, "maxValue")} />
+        </InputRow>
 
         <!-- WIP custom step sizes "1,8:2,10:2" ?? -->
     {:else if currentVariable.type === "random_number"}
-        <CombinedInput>
-            <p style="flex: 1;"><T id="popup.animate" /></p>
-            <span class="alignRight" style="flex: 0;padding: 0 10px;">
-                <Checkbox checked={currentVariable.animate} on:change={(e) => updateValue(e, "animate", true)} />
-            </span>
-        </CombinedInput>
+        <MaterialButton class="popup-options {showMoreRN ? 'active' : ''}" icon="options" iconSize={1.3} title={showMoreRN ? "actions.close" : "create_show.more_options"} on:click={() => (showMoreRN = !showMoreRN)} white />
 
-        <CombinedInput>
-            <p style="flex: 1;"><T id="edit.each_number_once" /></p>
-            <span class="alignRight" style="flex: 0;padding: 0 10px;">
-                <Checkbox checked={currentVariable.eachNumberOnce} on:change={(e) => updateValue(e, "eachNumberOnce", true)} />
-            </span>
-        </CombinedInput>
+        {#if showMoreRN}
+            <MaterialToggleSwitch label="popup.animate" checked={currentVariable.animate} defaultValue={false} on:change={(e) => updateValue(e.detail, "animate")} />
+            <MaterialToggleSwitch label="edit.each_number_once" checked={currentVariable.eachNumberOnce} defaultValue={false} on:change={(e) => updateValue(e.detail, "eachNumberOnce")} />
 
-        <HRule />
+            <HRule />
+        {/if}
 
         {#each currentVariable.sets || [DEFAULT_SET] as set, i}
-            <CombinedInput>
+            <InputRow style="border-radius: 4px;overflow: hidden;">
                 {#if (currentVariable.sets?.length || 0) > 1}
-                    <span style="font-weight: bold;display: flex;align-items: center;margin: 0 8px;"><span style="color: var(--secondary);display: flex;align-items: center;">#</span>{i + 1}</span>
-                    <TextInput style="flex: 1;" placeholder={$dictionary.inputs?.name} value={set.name} on:change={(e) => updateSet(i, e, "name")} autofocus={!!currentVariable.name && !set.name} />
+                    <span style="background-color: var(--primary-darker);font-weight: bold;font-size: 0.8em;display: flex;align-items: center;padding: 0 10px;"
+                        ><span style="color: var(--secondary);display: flex;align-items: center;">#</span>{i + 1}</span
+                    >
+                    <MaterialTextInput label="inputs.name" style="flex: 2;" value={set.name} on:change={(e) => updateSet(i, e.detail, "name")} autofocus={!!currentVariable.name && !set.name} />
                 {/if}
 
                 <!-- WIP no negative numbers at the moment -->
-                <NumberInput style="flex: 1;" title={$dictionary.variables?.minimum} value={set.minValue ?? DEFAULT_SET.minValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "minValue")} buttons={false} />
-                <NumberInput style="flex: 1;" title={$dictionary.variables?.maximum} value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} buttons={false} />
-                {#if i > 0 && i === (currentVariable.sets?.length || 0) - 1}
-                    <Button on:click={() => removeSet(i)} title={$dictionary.actions?.delete}>
-                        <Icon id="delete" />
-                    </Button>
+                <MaterialNumberInput label="variables.minimum" style="flex: 1;" value={set.minValue ?? DEFAULT_SET.minValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "minValue")} />
+                <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
+                <!-- {#if i > 0 && i === (currentVariable.sets?.length || 0) - 1} -->
+                {#if (currentVariable.sets?.length || 1) > 1}
+                    <MaterialButton icon="delete" title="actions.delete" on:click={() => removeSet(i)} />
                 {/if}
-            </CombinedInput>
+            </InputRow>
         {/each}
 
         <!-- {#if (currentVariable.sets?.length || 0) < 2 || currentVariable.sets?.[currentVariable.sets?.length - 1]?.name} -->
-        <CombinedInput>
-            <Button
-                on:click={() => {
-                    if (!currentVariable.sets) updateSet(0, DEFAULT_SET.minValue, "minValue")
-                    updateSet(currentVariable.sets?.length || 0, DEFAULT_SET.minValue, "minValue")
-                }}
-                style="width: 100%;"
-                center
-            >
-                <Icon id="add" right />
-                <T id="variables.add_set" />
-            </Button>
-        </CombinedInput>
+        <MaterialButton
+            variant="outlined"
+            icon="add"
+            on:click={() => {
+                if (!currentVariable.sets) updateSet(0, DEFAULT_SET.minValue, "minValue")
+                updateSet(currentVariable.sets?.length || 0, DEFAULT_SET.minValue, "minValue")
+            }}
+        >
+            <T id="variables.add_set" />
+        </MaterialButton>
         <!-- {/if} -->
 
         {#if currentVariable.setLog?.length}
@@ -324,70 +286,56 @@
 
             <div class="log" style="overflow: auto;max-height: 250px;">
                 {#each currentVariable.setLog as log}
-                    <CombinedInput>
-                        {#if (currentVariable.sets?.length || 0) > 1}<p style="width: 30%;min-width: initial;">{log.name}</p>{/if}
-                        <p>{log.number}</p>
-                    </CombinedInput>
+                    <InputRow style="border-radius: 4px;overflow: hidden;background-color: var(--primary-darker);border-bottom: 1px solid var(--primary-lighter);">
+                        {#if (currentVariable.sets?.length || 0) > 1}<p style="width: 30%;min-width: initial;padding: 6px 10px;">{log.name}</p>{/if}
+                        <p style="border-left: 1px solid var(--primary-lighter);padding: 6px 10px;">{log.number}</p>
+                    </InputRow>
                 {/each}
             </div>
         {/if}
     {:else if currentVariable.type === "text_set"}
         {#each currentVariable.textSets?.length ? currentVariable.textSets : [{}] as textSet, i}
-            <div class="text_set" style={i === 0 ? "margin-top: 10px;" : "border-top: 2px solid var(--primary-lighter);"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
-                <p style="border: none;min-height: unset;" class="part"><span style="color: var(--secondary);">#</span>{i + 1}</p>
+            <div class="text_set" style={i === 0 ? "" : "margin-top: 10px;"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
+                <p style="border-bottom: 1px solid var(--primary-lighter);" class="part"><span style="color: var(--secondary);">#</span>{i + 1}</p>
 
                 {#each currentVariable.textSetKeys ?? [""] as key, keyIndex}
-                    <CombinedInput>
+                    <InputRow>
                         {#if i === 0}
-                            <TextInput style="flex: 1;" placeholder={$dictionary.inputs?.name} disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:input={(e) => updateTextSetVariableName(keyIndex, e)} on:keydown={textSetKeydown} />
+                            <MaterialTextInput label="inputs.name" disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:input={(e) => updateTextSetVariableName(keyIndex, e)} on:keydown={textSetKeydown} />
                         {:else}
-                            <p>{key}</p>
+                            <p style="width: 50%;display: flex;align-items: center;padding: 0 10px;border-bottom: 1px solid var(--primary-lighter);">{key}</p>
                         {/if}
-                        <TextInput placeholder={$dictionary.variables?.value} disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
+
+                        <MaterialTextInput label="variables.value" disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
 
                         {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
                             {#if keyIndex > 0}
-                                <Button on:click={() => moveKeyUp(keyIndex)}>
-                                    <Icon id="up" white />
-                                </Button>
+                                <MaterialButton icon="up" on:click={() => moveKeyUp(keyIndex)} />
                             {/if}
-                            <Button on:click={() => removeTextSetVariable(keyIndex)} title={$dictionary.actions?.delete} style="padding: 8px;">
-                                <Icon id="delete" white />
-                            </Button>
+                            <MaterialButton icon="delete" title="actions.delete" on:click={() => removeTextSetVariable(keyIndex)} />
                         {/if}
-                    </CombinedInput>
+                    </InputRow>
                 {/each}
 
                 {#if i === 0}
-                    <CombinedInput>
-                        <Button on:click={addTextSetVariable} disabled={!currentVariable.textSetKeys?.length || currentVariable.textSetKeys.find((a) => !a) === ""} style="width: 100%;" center>
-                            <Icon id="add" right />
-                            <T id="new.variable" />
-                        </Button>
-                    </CombinedInput>
+                    <MaterialButton style="width: 100%;" icon="add" disabled={!currentVariable.textSetKeys?.length || currentVariable.textSetKeys.find((a) => !a) === ""} on:click={addTextSetVariable}>
+                        <T id="new.variable" />
+                    </MaterialButton>
                 {/if}
                 <!-- removed to clear up confusion in regards to the main variables being editable here -->
                 <!-- || (currentVariable.textSets?.length || 1) > 1 -->
                 {#if i > 0}
                     <div class="delete">
-                        <Button on:click={() => moveTextSetUp(i)} style="padding: 8px;">
-                            <Icon id="up" />
-                        </Button>
-
-                        <Button on:click={() => removeTextSet(i)} title={$dictionary.actions?.delete} style="padding: 8px;">
-                            <Icon id="delete" />
-                        </Button>
+                        <MaterialButton style="padding: 8px;" icon="up" on:click={() => moveTextSetUp(i)} />
+                        <MaterialButton style="padding: 8px;" icon="delete" title="actions.delete" on:click={() => removeTextSet(i)} />
                     </div>
                 {/if}
             </div>
         {/each}
 
-        <CombinedInput style="margin-top: 5px;">
-            <Button on:click={addTextSet} disabled={!currentVariable.textSets?.length} style="width: 100%;" center>
-                <Icon id="add" right />
-                <T id="variables.add_set" />
-            </Button>
-        </CombinedInput>
+        <MaterialButton variant="outlined" style="margin-top: 10px;width: 100%;" icon="add" disabled={!currentVariable.textSets?.length} on:click={addTextSet}>
+            <T id="variables.add_set" />
+        </MaterialButton>
     {/if}
 {/if}
 
@@ -401,6 +349,10 @@
         position: relative;
 
         background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+
+        border-radius: 8px;
+        overflow: hidden;
     }
     .text_set.active {
         border: 2px solid var(--secondary) !important;

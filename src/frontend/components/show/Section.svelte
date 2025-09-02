@@ -1,12 +1,14 @@
 <script lang="ts">
     import { actions, activeProject, activeShow, dictionary, projects, special } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { getActionIcon, runAction } from "../actions/actions"
+    import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
-    import Dropdown from "../inputs/Dropdown.svelte"
+    import InputRow from "../input/InputRow.svelte"
+    import Title from "../input/Title.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Notes from "./tools/Notes.svelte"
 
@@ -44,21 +46,17 @@
         ;(document.activeElement as any)?.blur()
     }
 
-    $: actionOptions = [
-        { id: "", name: "—" },
-        ...Object.entries($actions)
-            .map(([id, a]) => ({ id, name: a.name }))
-            .sort((a, b) => a.name?.localeCompare(b.name))
-    ]
+    $: actionOptions = sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
+
     function updateTrigger(e: any) {
         special.update((a) => {
-            a.sectionTriggerAction = e.detail.id
+            a.sectionTriggerAction = e.detail
             return a
         })
     }
 
     function updateTriggerLocal(e: any) {
-        let actionId = e.detail.id
+        let actionId = e.detail
 
         projects.update((a) => {
             a[$activeProject!].shows[section.index].data = { settings: { triggerAction: actionId } }
@@ -77,22 +75,13 @@
 
 {#if settingsOpened}
     <div class="settings">
-        <!-- WIP change color? -->
+        <Title label="popup.action" icon="actions" />
+        <div class="info">{translateText("settings.section_trigger_action")}</div>
 
-        <!-- GLOBAL -->
-        <h5><T id="groups.global" /></h5>
-
-        <CombinedInput>
-            <p><T id="settings.section_trigger_action" /></p>
-            <Dropdown disabled={localAction && $actions[localAction]} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
-        </CombinedInput>
-
-        <h5><T id="groups.current" /></h5>
-
-        <CombinedInput>
-            <p><T id="settings.section_trigger_action" /></p>
-            <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === localAction)?.name || "—"} on:click={updateTriggerLocal} />
-        </CombinedInput>
+        <InputRow>
+            <MaterialDropdown label="groups.global" disabled={localAction && $actions[localAction]} options={actionOptions} value={$special.sectionTriggerAction} on:change={updateTrigger} allowEmpty />
+            <MaterialDropdown label="groups.current" options={actionOptions} value={localAction} on:change={updateTriggerLocal} allowEmpty />
+        </InputRow>
     </div>
 {:else}
     {#key section}
@@ -133,17 +122,19 @@
         color: rgb(255 255 255 / 0.4);
     }
 
-    h5 {
-        overflow: visible;
-        text-align: center;
-        color: var(--text);
-        text-transform: uppercase;
+    .settings {
+        margin: 10px;
+        padding: 10px;
 
-        padding: 20px;
+        /* flex: 1; */
+        margin-block-end: auto;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 8px;
     }
 
-    .settings {
-        flex: 1;
-        /* background-color: var(--primary); */
+    .settings .info {
+        opacity: 0.8;
+        font-size: 0.9em;
+        margin-bottom: 10px;
     }
 </style>

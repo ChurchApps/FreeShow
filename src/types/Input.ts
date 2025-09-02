@@ -1,10 +1,11 @@
-import type { Option } from "./Main"
 import type { MidiValues } from "./Show"
 
 interface BaseInput {
-    name: string
+    label?: string
+    name?: string
     id: string
     settings?: any
+    style?: string
 }
 
 type InputString = {
@@ -22,8 +23,9 @@ type InputCheckbox = {
 type InputDropdown = {
     type: "dropdown"
     value: string
-    options: Option[]
+    options: DropdownOptions
 }
+export type DropdownOptions = { label: string; value: string; prefix?: string; style?: string; data?: string }[]
 
 type InputMidi = {
     type: "midi"

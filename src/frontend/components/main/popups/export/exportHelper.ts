@@ -5,19 +5,19 @@ import { getSlideThumbnail } from "../../../helpers/media"
 import { getLayoutRef } from "../../../helpers/show"
 
 export const exportFormats: Option[] = [
-    { name: "$:export.project:$", id: "project" }, // many shows in one file
-    { name: "$:formats.show:$", id: "show" }, // (json) - can also just be copied from the Shows folder
-    { name: "$:edit.text:$", id: "txt" },
+    { name: "export.project", id: "project" }, // many shows in one file
+    { name: "formats.show", id: "show" }, // (json) - can also just be copied from the Shows folder
+    { name: "edit.text", id: "txt" },
     { name: "PDF", id: "pdf" },
-    { name: "$:items.image:$", id: "image" }
+    { name: "items.image", id: "image" }
     // {name: "CSV", id: "csv"} // probably not needed
     // {name: "ChordPro", id: "chordpro"}
 ]
 
 export const exportTypes: Option[] = [
-    { name: "$:export.current_project:$", id: "project", icon: "project" },
-    { name: "$:export.selected_shows:$", id: "selected_shows", icon: "slide" }, // selected or currently opened
-    { name: "$:export.all_shows:$", id: "all_shows", icon: "shows" }
+    { name: "export.current_project", id: "project", icon: "project" },
+    { name: "export.selected_shows", id: "selected_shows", icon: "slide" }, // selected or currently opened
+    { name: "export.all_shows", id: "all_shows", icon: "shows" }
     // {name: "export.all_projects", id: "all_projects"}
 ]
 
