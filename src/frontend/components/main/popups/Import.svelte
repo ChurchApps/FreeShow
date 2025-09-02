@@ -117,6 +117,7 @@
         >
             <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
             <p>{format.name}</p>
+            {#if format.id === "powerkey"}Deprecated{/if}
         </MaterialButton>
     {/each}
 </div>
