@@ -25,7 +25,6 @@ jobs:
 
       - name: Build and release app
         env:
-          ELECTRON_MIRROR: "https://github.com/castlabs/electron-releases/releases/download/"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -53,7 +52,6 @@ jobs:
 
       - name: Build and release app
         env:
-          ELECTRON_MIRROR: "https://github.com/castlabs/electron-releases/releases/download/"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
 
@@ -156,7 +154,6 @@ jobs:
 
       - name: Build and release app
         env:
-          ELECTRON_MIRROR: "https://github.com/castlabs/electron-releases/releases/download/"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
