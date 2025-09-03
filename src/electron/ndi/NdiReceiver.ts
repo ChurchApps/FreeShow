@@ -2,12 +2,21 @@ import { toApp } from ".."
 import { NDI } from "../../types/Channels"
 import { OutputHelper } from "../output/OutputHelper"
 
-const loadGrandiose = () => eval('import("grandiose")')
+let warned = false
+const loadGrandiose = async () => {
+    try {
+        return await import('grandiose')
+    } catch (err) {
+        if (!warned) console.warn('NDI not available:', err.message)
+        warned = true
+        return null
+    }
+}
 
 export class NdiReceiver {
     static ndiDisabled = false
     static NDI_RECEIVERS: { [key: string]: { frameRate: number; isReceiving?: boolean; shouldStop?: boolean } } = {}
-    
+
     private static isCreatingReceiver = false
     private static findSourcesInterval: NodeJS.Timeout | null = null
     static allActiveReceivers: { [key: string]: any } = {}
@@ -19,6 +28,8 @@ export class NdiReceiver {
 
         try {
             const grandiose = await loadGrandiose()
+            if (!grandiose) return
+
             const config: any = { source, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA, allowVideoFields: false }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
 
@@ -36,7 +47,10 @@ export class NdiReceiver {
         if (this.ndiDisabled) return []
         if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
 
-        const finder = await (await loadGrandiose()).find({ showLocalSources: true })
+        const grandiose = await loadGrandiose()
+        if (!grandiose) return
+
+        const finder: any = await (grandiose).find({ showLocalSources: true })
         return new Promise<any[]>((resolve) => {
             let previousLength = 0
             this.findSourcesInterval = setInterval(() => {
@@ -52,7 +66,7 @@ export class NdiReceiver {
 
     static async receiveStreamFrameNDI({ source }: { source: { name: string; urlAddress: string; id: string } }) {
         if (this.ndiDisabled) return
-        
+
         try {
             if (!this.allActiveReceivers[source.id]) {
                 this.allActiveReceivers[source.id] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id }, true)
@@ -64,7 +78,7 @@ export class NdiReceiver {
             // For NDI-HX sources, start continuous reception for thumbnail generation
             if (!this.NDI_RECEIVERS[source.id]) {
                 this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: false, shouldStop: false }
-                
+
                 const receiverData = this.NDI_RECEIVERS[source.id]
                 if (!receiverData.isReceiving) {
                     receiverData.isReceiving = true
@@ -100,13 +114,13 @@ export class NdiReceiver {
 
     private static handleError(err: any, consecutiveErrors: number): { shouldContinue: boolean; delay: number; newErrorCount: number } {
         const msg = err.message || ''
-        
+
         if (msg.includes('Non-video data received')) return { shouldContinue: true, delay: 0, newErrorCount: Math.max(0, consecutiveErrors - 1) }
         if (msg.includes('No video data received')) return { shouldContinue: true, delay: 1, newErrorCount: consecutiveErrors }
-        
+
         const newCount = consecutiveErrors + 1
-        return { 
-            shouldContinue: newCount < 10, 
+        return {
+            shouldContinue: newCount < 10,
             delay: Math.min(5 * Math.pow(1.5, newCount), 100),
             newErrorCount: newCount
         }
@@ -115,14 +129,14 @@ export class NdiReceiver {
     private static updateAdaptiveDelay(processingTime: number, processingTimes: number[], currentDelay: number): { newTimes: number[], newDelay: number } {
         processingTimes.push(processingTime)
         if (processingTimes.length > 10) processingTimes.shift()
-        
+
         let adaptiveDelay = currentDelay
         if (processingTimes.length >= 5) {
             const avgTime = processingTimes.reduce((a, b) => a + b) / processingTimes.length
             if (avgTime < 5) adaptiveDelay = Math.max(8, adaptiveDelay - 1)
             else if (avgTime > 15) adaptiveDelay = Math.min(50, adaptiveDelay + 2)
         }
-        
+
         return { newTimes: processingTimes, newDelay: adaptiveDelay }
     }
 
@@ -130,34 +144,34 @@ export class NdiReceiver {
         let consecutiveErrors = 0
         let processingTimes: number[] = []
         let adaptiveDelay = 16
-        
+
         while (receiverData && !receiverData.shouldStop) {
             const loopStart = Date.now()
-            
+
             try {
                 const rawFrame = await receiver.video(50)
                 if (rawFrame) {
                     this.sendBuffer(sourceId, rawFrame)
                     consecutiveErrors = 0
-                    
+
                     const processingTime = Date.now() - loopStart
                     const result = this.updateAdaptiveDelay(processingTime, processingTimes, adaptiveDelay)
                     processingTimes = result.newTimes
                     adaptiveDelay = result.newDelay
-                    
+
                     await new Promise(resolve => setTimeout(resolve, adaptiveDelay))
                     continue
                 }
             } catch (err: any) {
                 const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
                 consecutiveErrors = newErrorCount
-                
+
                 if (!shouldContinue) {
                     console.error(`NDI source ${sourceId}: Too many errors, stopping`)
                     this.stopReceiversNDI({ id: sourceId })
                     return
                 }
-                
+
                 await new Promise(resolve => setTimeout(resolve, delay))
             }
         }
@@ -165,7 +179,7 @@ export class NdiReceiver {
 
     private static async thumbnailLoop(sourceId: string, receiver: any, receiverData: any) {
         let consecutiveErrors = 0
-        
+
         while (receiverData && !receiverData.shouldStop) {
             try {
                 const rawFrame = await receiver.video(50)
@@ -179,12 +193,12 @@ export class NdiReceiver {
             } catch (err: any) {
                 const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
                 consecutiveErrors = newErrorCount
-                
+
                 if (!shouldContinue) {
                     delete this.NDI_RECEIVERS[sourceId]
                     return
                 }
-                
+
                 await new Promise(resolve => setTimeout(resolve, delay))
             }
         }
@@ -200,7 +214,7 @@ export class NdiReceiver {
     static async captureStreamNDI({ source, outputId }: { source: { name: string; urlAddress: string; id: string }; outputId: string }) {
         if (this.ndiDisabled) return
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
-        
+
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
             receiver = this.allActiveReceivers[source.id] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id })

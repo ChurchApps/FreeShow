@@ -3,8 +3,18 @@ import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { CaptureTransmitter } from "../capture/helpers/CaptureTransmitter"
 import util from "./vingester-util"
-// Dynamic import for grandiose ES module using eval to prevent TypeScript compilation issues
-const loadGrandiose = () => eval('import("grandiose")')
+
+// Dynamic import for grandiose ES module to prevent TypeScript compilation issues
+let warned = false
+const loadGrandiose = async () => {
+    try {
+        return await import('grandiose')
+    } catch (err) {
+        if (!warned) console.warn('NDI not available:', err.message)
+        warned = true
+        return null
+    }
+}
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -41,6 +51,8 @@ export class NdiSender {
 
         try {
             const grandiose = await loadGrandiose()
+            if (!grandiose) return
+
             this.NDI[id].sender = await grandiose.send({
                 name: this.NDI[id].name,
                 clockVideo: false,
@@ -88,6 +100,8 @@ export class NdiSender {
 
         /*  optionally convert from BGRA to BGRX (no alpha channel)  */
         const grandiose = await loadGrandiose()
+        if (!grandiose) return
+
         const fourCC = grandiose.FOURCC_BGRA
         // if (!this.cfg.v) {
         //     util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
@@ -142,6 +156,8 @@ export class NdiSender {
         if (!ndiAudioBuffer) return
 
         const grandiose = await loadGrandiose()
+        if (!grandiose) return
+
         const now = this.timeStart + process.hrtime.bigint()
         const frame = {
             /*  base information  */
