@@ -99,7 +99,7 @@ jobs:
           "
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install FPM
         run:
@@ -116,6 +116,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USE_SYSTEM_FPM: true
+          ELECTRON_MIRROR: "https://registry.npmjs.org/electron/-/electron-"
         run: npm run release:arm64
 
   publish_mac:
