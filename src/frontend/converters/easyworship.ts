@@ -41,7 +41,7 @@ export function convertEasyWorship(data: any) {
     const songs = data.find((a: any) => a.content.song)?.content.song
     const songsWords = data.find((a: any) => a.content.word)?.content.word
     if (!songsWords) {
-        newToast("$toast.no_songswords_easyworship")
+        newToast("toast.no_songswords_easyworship")
         return
     }
 

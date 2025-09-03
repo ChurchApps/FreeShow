@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { settingsTab } from "../../stores"
-    import T from "../helpers/T.svelte"
+    import { dictionary, settingsTab } from "../../stores"
+    import { translateText } from "../../utils/language"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
     import FilesButtons from "./tabs/FilesButtons.svelte"
@@ -34,14 +34,10 @@
 
 <main>
     <div class="title" style={scrolled ? "box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);" : ""}>
-        <h2>
-            {#key tabId}
-                <T id="settings.{tabId}" />
-            {/key}
-        </h2>
+        <h2>{translateText(`settings.${tabId}`, $dictionary)}</h2>
 
         {#if hints[tabId]}
-            <p class="hint"><T id={hints[tabId]} /></p>
+            <p class="hint">{translateText(hints[tabId])}</p>
         {/if}
 
         {#if tabId === "theme"}

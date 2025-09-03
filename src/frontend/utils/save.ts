@@ -101,7 +101,7 @@ import { syncDrive } from "./drive"
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
-        newToast("$toast.saving")
+        newToast("toast.saving")
         customActionActivation("save")
     }
 
@@ -216,14 +216,14 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     deletedShows.set([])
     renamedShows.set([])
 
-    if (customTriggers.backup) newToast("$settings.backup_started")
+    if (customTriggers.backup) newToast("settings.backup_started")
     // trigger toast before saving
     setTimeout(() => sendMain(Main.SAVE, allSavedData))
 }
 
 export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     if (!closeWhenFinished) {
-        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
+        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("toast.saved")
 
         saved.set(true)
         console.info("SAVED!")

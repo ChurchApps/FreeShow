@@ -57,5 +57,5 @@ export function syncDrive(force = false, closeWhenFinished = false, startup = fa
         return
     }
 
-    newToast("$cloud.syncing")
+    newToast("cloud.syncing")
 }

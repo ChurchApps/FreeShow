@@ -15,7 +15,7 @@
 
     function replace() {
         if (!findValue) {
-            newToast("$empty.input")
+            newToast("empty.input")
             return
         }
 

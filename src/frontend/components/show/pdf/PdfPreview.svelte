@@ -87,7 +87,7 @@
     }
 
     function convertToImages() {
-        newToast("$actions.converting")
+        newToast("actions.converting")
         sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, filePath: path })
     }
 </script>

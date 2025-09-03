@@ -928,7 +928,7 @@ const deleteActions = {
                 return a
             })
         } else {
-            newToast("$error.keep_one_layout")
+            newToast("error.keep_one_layout")
         }
     },
     video_subtitle: (data: any) => {

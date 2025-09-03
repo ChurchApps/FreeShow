@@ -127,7 +127,13 @@
                     <Icon id="background" size={1.2} white />
                 </Button>
                 {#if !allCleared}
-                    <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
+                    <MaterialButton
+                        style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;"
+                        isActive={activeClear === "background"}
+                        disabled={backgroundCleared}
+                        on:click={() => openPreview("background")}
+                        title="preview.background"
+                    >
                         {#if activeClear === "background"}
                             <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                         {/if}
@@ -143,7 +149,7 @@
                 <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
             </Button>
             {#if !allCleared}
-                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
+                <MaterialButton style="padding: {activeClear === 'slide' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
                     {#if activeClear === "slide"}
                         <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                     {/if}
@@ -164,7 +170,7 @@
                 <Icon id="overlays" size={1.2} white />
             </Button>
             {#if !allCleared}
-                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "overlays"} disabled={overlayCleared} on:click={() => openPreview("overlays")} title="preview.overlays">
+                <MaterialButton style="padding: {activeClear === 'overlays' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "overlays"} disabled={overlayCleared} on:click={() => openPreview("overlays")} title="preview.overlays">
                     {#if activeClear === "overlays"}
                         <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                     {/if}
@@ -177,7 +183,7 @@
                 <Icon id={audioIcon} size={1.2} white />
             </Button>
             {#if !allCleared}
-                <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "audio"} disabled={audioCleared} on:click={() => openPreview("audio")} title="preview.audio">
+                <MaterialButton style="padding: {activeClear === 'audio' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "audio"} disabled={audioCleared} on:click={() => openPreview("audio")} title="preview.audio">
                     {#if activeClear === "audio"}
                         <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                     {/if}

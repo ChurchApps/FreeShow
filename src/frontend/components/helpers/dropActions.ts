@@ -222,7 +222,7 @@ export const dropActions = {
 
                 const showTemplateId: string = _show().get("settings.template") || ""
                 if (showTemplateId === templateId) {
-                    newToast("$toast.template_applied_globally")
+                    newToast("toast.template_applied_globally")
                     return
                 }
 
@@ -460,7 +460,7 @@ export function addDrawerFolder(file: any, type: "media" | "audio") {
     const path: string = file.path || window.api.showFilePath(file)
     const exists = Object.values(type === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
     if (exists) {
-        newToast("$error.folder_exists")
+        newToast("error.folder_exists")
         return
     }
 
@@ -907,14 +907,14 @@ const slideDrop = {
             const existingIndex = slideActions.findIndex((a) => {
                 const actionTriggerId = getActionTriggerId(a.triggers[0])
                 if (actionTriggerId !== triggerId) return false
-                
+
                 // If action cannot have multiple instances, replace any existing
                 if (!data.canAddMultiple) return true
-                
+
                 // If action can have multiple instances, only replace if values are exactly the same
                 return JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)
             })
-            
+
             if (existingIndex > -1) {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
                 return

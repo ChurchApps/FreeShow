@@ -247,7 +247,7 @@ export async function isVideoSupported(path: string) {
     // not reliable:
     // const isSupported = MediaSource.isTypeSupported(info.mimeCodec)
 
-    if (isUnsupported) newToast("$toast.unsupported_video")
+    if (isUnsupported) newToast("toast.unsupported_video")
     return !isUnsupported
 }
 

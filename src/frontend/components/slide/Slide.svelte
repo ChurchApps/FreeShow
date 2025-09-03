@@ -141,7 +141,7 @@
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
-            newToast("$error.media")
+            newToast("error.media")
             if ($special.autoLocateMedia === false) return
 
             let fileName = getFileName(path)

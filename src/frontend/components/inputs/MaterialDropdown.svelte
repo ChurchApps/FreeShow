@@ -549,6 +549,8 @@
         transition: background 0.2s;
 
         display: flex;
+        align-items: center;
+        gap: 5px;
     }
     .dropdown li:hover,
     .dropdown li.highlighted {

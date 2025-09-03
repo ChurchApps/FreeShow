@@ -159,7 +159,7 @@ export const mainResponses: MainResponses = {
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
     [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
-            newToast("$toast.delete_shows_empty")
+            newToast("toast.delete_shows_empty")
             return
         }
 
@@ -187,7 +187,7 @@ export const mainResponses: MainResponses = {
             if (get(activePopup) !== "initialize") activePopup.set(null)
             return
         }
-        if (starting) return newToast("$settings.restore_started")
+        if (starting) return newToast("settings.restore_started")
 
         // close opened
         activeEdit.set({ items: [] })
@@ -195,7 +195,7 @@ export const mainResponses: MainResponses = {
         activePage.set("show")
         if (get(activePopup) === "initialize") activePopup.set(null)
 
-        newToast("$settings.restore_finished")
+        newToast("settings.restore_finished")
     },
     [Main.LOCATE_MEDIA_FILE]: (data) => {
         if (!data) return
@@ -216,7 +216,7 @@ export const mainResponses: MainResponses = {
         })
 
         // sometimes when lagging the image will be "replaced" even when it exists
-        if (prevPath !== data.path) newToast("$toast.media_replaced")
+        if (prevPath !== data.path) newToast("toast.media_replaced")
     },
     [Main.MEDIA_TRACKS]: (data) => setMediaTracks(data),
     [ToMain.API_TRIGGER2]: (data) => triggerAction(data),
@@ -273,7 +273,7 @@ export const mainResponses: MainResponses = {
     [ToMain.PCO_CONNECT]: (data) => {
         if (!data.success) return
         pcoConnected.set(true)
-        if (data.isFirstConnection) newToast("$main.finished")
+        if (data.isFirstConnection) newToast("main.finished")
     },
     [ToMain.PCO_PROJECTS]: async (data) => {
         if (!data.projects) return
@@ -356,7 +356,7 @@ export const mainResponses: MainResponses = {
     [ToMain.CHUMS_CONNECT]: (data) => {
         if (!data.success) return
         chumsConnected.set(true)
-        if (data.isFirstConnection) newToast("$main.finished")
+        if (data.isFirstConnection) newToast("main.finished")
     },
     [ToMain.CHUMS_PROJECTS]: async (data) => {
         if (!data.projects) return

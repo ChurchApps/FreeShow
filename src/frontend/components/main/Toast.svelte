@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { toastMessages } from "../../stores"
-    import T from "../helpers/T.svelte"
+    import { translateText } from "../../utils/language"
 
     $: messages = $toastMessages
     $: if (messages?.length) startTimer()
@@ -10,8 +10,8 @@
     let currentTimer: NodeJS.Timeout | null = null
 
     const clearEarly = [
-        { if: "$toast.saving", when: "$toast.saved" },
-        { if: "$toast.recording_started", when: "$toast.recording_stopped" },
+        { if: "toast.saving", when: "toast.saved" },
+        { if: "toast.recording_started", when: "toast.recording_stopped" }
     ]
 
     function startTimer() {
@@ -41,13 +41,7 @@
 
 {#if messages?.[0]}
     <div class="toast" transition:slide>
-        {#if messages[0][0] === "$"}
-            {#key messages[0]}
-                <T id={messages[0].slice(1)} />
-            {/key}
-        {:else}
-            {messages[0]}
-        {/if}
+        {translateText(messages[0])}
     </div>
 {/if}
 
@@ -55,26 +49,28 @@
     .toast {
         position: absolute;
         bottom: 0;
-        inset-inline-end: 0;
-        max-width: var(--navigation-width);
-        /* bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%); */
+        inset-inline-end: 4px;
+        max-width: calc(var(--navigation-width) - 6px);
         z-index: 5000;
 
         background-color: var(--primary-darker);
         color: var(--text);
-        /* border: 2px solid var(--primary-lighter); */
         border: 2px solid var(--secondary);
-        border-bottom: none;
-        border-inline-end: none;
-        font-size: 1.2em;
 
+        border-radius: 8px;
+        /* border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+        border-inline-end: none; */
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
+
+        font-size: 1.2em;
         padding: 8px 16px;
 
         /* line-break: anywhere; */
         overflow-x: auto;
 
-        border-start-start-radius: 3px;
+        box-shadow: -2px -2px 5px rgb(0 0 0 / 0.2);
     }
 </style>

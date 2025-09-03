@@ -529,7 +529,7 @@
             if (currentItems[0].lines) {
                 let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
                 if (!textLength) {
-                    newToast("$empty.text")
+                    newToast("empty.text")
                     return
                 }
             }
@@ -564,7 +564,7 @@
         // values: {key: [[[]]]}
         let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
         if (input.key !== "text-align" && !aligns && !textLength) {
-            newToast("$empty.text")
+            newToast("empty.text")
             return
         }
 

@@ -131,7 +131,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
     const showRef = _show(data.showId || "active")
         .layouts(data.layoutId ? [data.layoutId] : "active")
         .ref()[0]
-    if (!showRef) return newToast("$toast.midi_no_show")
+    if (!showRef) return newToast("toast.midi_no_show")
 
     const slideRef = showRef[data.index]
     if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + data.index)
@@ -159,7 +159,7 @@ export function selectSlideByName(name: string) {
     if (!sortedSlides[0]) return
 
     const showRef = getLayoutRef()
-    if (!showRef) return newToast("$toast.midi_no_show")
+    if (!showRef) return newToast("toast.midi_no_show")
 
     const index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
     const slideRef = showRef[index]
@@ -191,7 +191,7 @@ export function selectOverlayByIndex(index: number) {
 
     const sortedOverlays = getSortedOverlays()
     const overlayId = sortedOverlays[index]?.id
-    if (!overlayId) return // newToast("$toast.action_no_id": action_id)
+    if (!overlayId) return // newToast("toast.action_no_id": action_id)
 
     setOutput("overlays", overlayId, false, "", true)
 }
@@ -447,11 +447,11 @@ export async function addGroup(data: API_group) {
 export function setTemplate(templateId: string) {
     const showId = get(activeShow)?.id
     if (!showId) {
-        // newToast("$empty.show")
+        // newToast("empty.show")
         return
     }
     if (_show(showId).get("locked")) {
-        newToast("$show.locked")
+        newToast("show.locked")
         return
     }
 

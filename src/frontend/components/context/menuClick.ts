@@ -132,7 +132,7 @@ const clickActions = {
     focus_mode: () => {
         const project = get(projects)[get(activeProject) || ""]
         if (!project?.shows?.length) {
-            newToast("$empty.project_select")
+            newToast("empty.project_select")
             return
         }
 
@@ -646,7 +646,7 @@ const clickActions = {
                 const showingOutputsList = Object.values(output).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
                 const newValue = !output[outputId].hideFromPreview
 
-                if (newValue && showingOutputsList.length <= 1) newToast("$toast.one_output")
+                if (newValue && showingOutputsList.length <= 1) newToast("toast.one_output")
                 else output[outputId].hideFromPreview = !output[outputId].hideFromPreview
 
                 return output
@@ -1275,7 +1275,7 @@ const clickActions = {
         } else {
             const mediaData = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
             if (!mediaData.video) {
-                newToast("$toast.error_media")
+                newToast("toast.error_media")
                 return
             }
 

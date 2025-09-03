@@ -585,7 +585,7 @@ export function shouldBeCaptured(outputId: string, startup = false) {
     }
 
     // alert user that screen recording starts
-    if (!startup && Object.values(captures).filter(Boolean).length) newToast("$toast.output_capture_enabled")
+    if (!startup && Object.values(captures).filter(Boolean).length) newToast("toast.output_capture_enabled")
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }

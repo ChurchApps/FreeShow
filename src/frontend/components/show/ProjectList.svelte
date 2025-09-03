@@ -153,7 +153,7 @@
     ///
 
     let pathToActive = ""
-    $: if ($activeProject) updateActivePath()
+    $: if ($activeProject || tree) updateActivePath()
     function updateActivePath() {
         let paths: string[] = []
         let currentParent = $projects[$activeProject!]?.parent

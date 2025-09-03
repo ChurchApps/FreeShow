@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, special, timeFormat } from "../../../stores"
+    import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, timeFormat } from "../../../stores"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
     import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
@@ -69,7 +69,10 @@
 <Title label="guide_title.output" icon="display_settings" />
 
 <MaterialToggleSwitch label="settings.auto_output" checked={$autoOutput} defaultValue={false} on:change={(e) => autoOutput.set(e.detail)} />
-<MaterialToggleSwitch label="settings.hide_cursor_in_output" checked={$special.hideCursor} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "hideCursor")} />
+<!-- apparently does not work on macos -->
+{#if $os.platform !== "darwin"}
+    <MaterialToggleSwitch label="settings.hide_cursor_in_output" checked={$special.hideCursor} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "hideCursor")} />
+{/if}
 <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
 
 <!-- SLIDES -->

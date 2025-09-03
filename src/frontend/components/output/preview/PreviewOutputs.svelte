@@ -35,7 +35,7 @@
                 let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
                 if (!activeList.length) {
                     a[id].active = true
-                    newToast("$toast.one_output")
+                    newToast("toast.one_output")
                 }
             }
 

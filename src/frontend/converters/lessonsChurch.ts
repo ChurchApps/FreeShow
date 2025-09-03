@@ -66,7 +66,7 @@ export async function convertLessonsPresentation(data: any) {
 
     if (!lesson) return
 
-    newToast("$popup.importing")
+    newToast("popup.importing")
     createCategory("Lessons", "book")
     createProject()
 
