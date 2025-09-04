@@ -39,6 +39,7 @@
         "postrelease:32bit": "node scripts/cleanBuilds.js",
         "pack": "electron-builder --config config/building/electron-builder.yaml --dir",
         "pack:arm64": "electron-builder --config config/building/electron-builder-lnxarm.yaml --dir",
+        "replace-electron": "node config/building/electron-replace-lnxarm.js",
         "---CHECKING---": "",
         "test": "npm-run-all -s test:playwright test:format test:svelte",
         "test:playwright": "npx playwright test --config config/testing/playwright.config.ts",
