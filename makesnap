@@ -4,10 +4,16 @@ set -e
 version=$(grep "\"version\"" package.json | cut -d ":" -f 2 | cut -d "\"" -f 2)
 sed -i "s/version:.*/version: ${version}/" config/building/snapcraft.yaml
 
-npm run replace-electron
+if [ "$(uname -m)" = "aarch64" ]; then
+  npm run replace-electron
+fi
 npm install
 npm run build
-npm run pack:arm64
+if [ "$(uname -m)" = "aarch64" ]; then
+  npm run pack:arm64
+else
+  npm run pack
+fi
 
 chmod +x scripts/snap/*.sh
 mkdir -p snap
