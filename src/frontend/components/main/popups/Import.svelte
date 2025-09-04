@@ -58,14 +58,14 @@
     ]
 
     const powerpoint_options = [
-        { name: "Plain text slides", description: "No formatting.", icon: "txt", click: pptText },
+        { name: "Text slides", description: "Limited formatting.", icon: "txt", click: pptText },
         { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
         { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
         { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
     ]
 
     function pptText() {
-        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
+        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] }, settings: { path: $dataPath } })
     }
     function libreOfficeConvert() {
         sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint", dataPath: $dataPath })
