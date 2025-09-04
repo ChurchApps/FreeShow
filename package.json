@@ -120,6 +120,7 @@
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#a334962",
         "jzz": "^1.9.3",
+        "libreoffice-convert": "^1.6.1",
         "mdb-reader": "^1.2.1",
         "mp4box": "^0.6.5",
         "music-metadata": "^7.14.0",
