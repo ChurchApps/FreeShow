@@ -27,9 +27,6 @@
     })
 
     function create(e: any) {
-        // Remove the problematic check that was preventing the button from working
-        // The original check was too restrictive and prevented child elements from triggering the action
-        
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
 
         if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
