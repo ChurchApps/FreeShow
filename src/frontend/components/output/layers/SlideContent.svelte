@@ -1,10 +1,13 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Item, OutSlide, SlideData } from "../../../../types/Show"
-    import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
+    import { activeTimers, playingAudio, playingAudioPaths, showsCache, variables, videosTime } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
+    import { loadCustomFonts } from "../../helpers/fonts"
+    import { _show } from "../../helpers/shows"
 
     export let outputId: string
     export let outSlide: OutSlide
@@ -25,6 +28,12 @@
     export let transitionEnabled = false
     export let isKeyOutput = false
     export let styleIdOverride = ""
+
+    onMount(() => {
+        // custom fonts
+        const currentShow = $showsCache[outSlide.id]
+        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+    })
 
     // TEST:
     // conditions

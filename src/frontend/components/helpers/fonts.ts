@@ -163,3 +163,25 @@ function addFonts(fonts: Family[], newFonts: Family[]) {
 
     return fonts
 }
+
+// PPT import
+export function loadCustomFonts(fonts: { name: string; path: string }[]) {
+    fonts.forEach((font) => {
+        // try loading from Google Fonts
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = "https://fonts.googleapis.com/css2?family=" + font.name + ":wght@400;700&display=swap"
+        document.head.appendChild(link)
+
+        // fetch(font.path)
+        // .then(res => res.arrayBuffer())
+        // .then(buffer => {
+        //     const font = new FontFace(font.name, buffer)
+        //     return font.load()
+        // })
+        // .then(font => {
+        //     document.fonts.add(font)
+        //     console.log('Font loaded from binary!')
+        // })
+    })
+}

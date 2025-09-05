@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
     import { wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
@@ -19,6 +20,7 @@
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import { loadCustomFonts } from "../helpers/fonts"
 
     export let showId: string
     export let layout = ""
@@ -27,6 +29,11 @@
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
     $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
+
+    onMount(() => {
+        // custom fonts
+        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+    })
 
     // fix broken media
     $: if (showId) fixBrokenMedia()
