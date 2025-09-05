@@ -27,8 +27,6 @@
     })
 
     function create(e: any) {
-        if (e.target.closest(".main") && !e.target.closest(".start")) return
-
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
 
         if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
