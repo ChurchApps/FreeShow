@@ -178,6 +178,7 @@ bind:offsetWidth={width} -->
 <style>
     .item {
         outline: 5px solid rgb(255 255 255 / 0.2);
+        outline-offset: 0;
         transition: background-color 0.3s;
         /* cursor: text; */
 

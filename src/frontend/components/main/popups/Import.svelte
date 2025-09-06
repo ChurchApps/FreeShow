@@ -58,7 +58,7 @@
     ]
 
     const powerpoint_options = [
-        { name: "Text slides", description: "Limited formatting.", icon: "txt", click: pptText },
+        { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
         { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
         { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
         { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }

@@ -26,7 +26,7 @@
         if (use12Hour === true) timeFormat.set("12")
     })
 
-    function create(e: any) {
+    function create() {
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
 
         if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
