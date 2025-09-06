@@ -198,8 +198,8 @@
 
     type TransitionTypes = "text" | "media"
     const transitionTabs = {
-        text: { id: "text", name: translateText("transition.text") + (isSlide ? translateText("transition.current_slide") : ""), icon: "text" },
-        media: { id: "media", name: translateText("transition.media") + (isSlide ? translateText("transition.current_slide") : ""), icon: "image" }
+        text: { id: "text", name: translateText("transition.text") + (isSlide ? " " + translateText("transition.current_slide") : ""), icon: "text" },
+        media: { id: "media", name: translateText("transition.media") + (isSlide ? " " + translateText("transition.current_slide") : ""), icon: "image" }
     }
     let selectedType: TransitionTypes = "text"
 
