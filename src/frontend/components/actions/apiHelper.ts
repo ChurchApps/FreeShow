@@ -53,7 +53,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_create_project, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -211,8 +211,35 @@ export function selectOverlayById(id: string) {
     setOutput("overlays", id, false, "", true)
 }
 
-export function toggleLock(value?: boolean) {
-    outLocked.set(value ?? !get(outLocked))
+export function toggleLock(data: API_output_lock) {
+    if (!data.outputId) {
+        // global lock
+        outLocked.set(data.value ?? !get(outLocked))
+        return
+    }
+
+    // const firstOutputId = getActiveOutputs(get(outputs), false, true, true)[0]
+    const isLocked = get(outputs)[data.outputId]?.active === false
+    toggleOutputLock(data.outputId, data.value ?? isLocked)
+}
+// similar to PreviewOutputs.svelte
+function toggleOutputLock(outputId: string, value: boolean) {
+    // const activeOutputIds = getActiveOutputs(get(outputs), false, true, true)
+
+    outputs.update((a) => {
+        if (!a[outputId]?.enabled) return a
+
+        console.log(outputId, value)
+        a[outputId].active = value
+
+        let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
+        if (!activeList.length) {
+            a[outputId].active = true
+            newToast("toast.one_output")
+        }
+
+        return a
+    })
 }
 
 export function moveStageConnection(id: string) {
@@ -714,7 +741,7 @@ export async function getPDFThumbnails({ path }: API_media) {
         canvas.height = viewport.height
         canvas.width = viewport.width
 
-        await page.render({ canvasContext: context, viewport }).promise
+        await page.render({ canvas, canvasContext: context, viewport }).promise
         const base64 = canvas.toDataURL("image/jpeg")
         pages.push(base64)
     }

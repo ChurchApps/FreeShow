@@ -5,10 +5,7 @@
     import { translateText } from "../../../utils/language"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-
-    export let currentOutputId: string | null
 
     // onMount(() => {
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
@@ -41,8 +38,6 @@
 
             return a
         })
-
-        currentOutputId = getActiveOutputs()[0]
     }
 
     // let allSameState = true

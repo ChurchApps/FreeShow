@@ -140,7 +140,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
             if (i > 0) return
 
-            const globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
+            const globalGroup = OSgroups[group.replace(/[0-9]/g, "").trim()]
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
             else slides[id].group = group
         })
@@ -234,26 +234,26 @@ function XMLtoBible(xml: string): Bible {
     const booksObj = getChildren(xmlDoc, "b")
     const books: any[] = []
 
-    ;[...booksObj].forEach((book: any, i: number) => {
-        let length = 0
-        const name = book.getAttribute("n")
-        const number = i + 1
-        const chapters: any[] = []
-        ;[...getChildren(book, "c")].forEach((chapter: any) => {
-            const chapterNumber = chapter.getAttribute("n")
-            const verses: any[] = []
-            ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                const text = verse.innerHTML
-                    .toString()
-                    .replace(/\[\d+\] /g, "") // remove [1], not [text]
-                    .trim()
-                length += text.length
-                if (text.length) verses.push({ number: verse.getAttribute("n"), text })
-            })
-            chapters.push({ number: chapterNumber, verses })
+        ;[...booksObj].forEach((book: any, i: number) => {
+            let length = 0
+            const name = book.getAttribute("n")
+            const number = i + 1
+            const chapters: any[] = []
+                ;[...getChildren(book, "c")].forEach((chapter: any) => {
+                    const chapterNumber = chapter.getAttribute("n")
+                    const verses: any[] = []
+                        ;[...getChildren(chapter, "v")].forEach((verse: any) => {
+                            const text = verse.innerHTML
+                                .toString()
+                                .replace(/\[\d+\] /g, "") // remove [1], not [text]
+                                .trim()
+                            length += text.length
+                            if (text.length) verses.push({ number: verse.getAttribute("n"), text })
+                        })
+                    chapters.push({ number: chapterNumber, verses })
+                })
+            if (length) books.push({ name, number, chapters })
         })
-        if (length) books.push({ name, number, chapters })
-    })
 
     return { name: "", metadata: { copyright: "" }, books }
 }

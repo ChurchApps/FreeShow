@@ -246,7 +246,7 @@
 
 <div id="previewArea" class="main">
     {#if enablePreview}
-        <PreviewOutputs bind:currentOutputId={outputId} />
+        <PreviewOutputs />
 
         <div class="top">
             <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>

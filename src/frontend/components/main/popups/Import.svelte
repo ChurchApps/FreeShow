@@ -5,7 +5,7 @@
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, dataPath } from "../../../stores"
-    import { translate, translateText } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -119,7 +119,7 @@
                 title={format.title}
                 style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
                 on:click={() => {
-                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                    let name = translateText(format.name)
                     sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
                     displayTutorial(format)
                 }}
@@ -181,7 +181,7 @@
                         importFromClipboard()
                         activePopup.set(null)
                     } else {
-                        let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                        let name = translateText(format.name)
                         sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
                         displayTutorial(format)
                     }

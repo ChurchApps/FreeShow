@@ -110,14 +110,15 @@ export class OutputVisibility {
         window.setKiosk(false)
         window.hide()
 
+        // seems to be fixed:
         if (!data) return
 
-        // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
-        const captureEnabled = Object.values(OutputHelper.getOutput(data.id!)?.captureOptions?.options || {}).find((a) => a === true)
-        if (!captureEnabled) return
+        // // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
+        // const captureEnabled = Object.values(OutputHelper.getOutput(data.id!)?.captureOptions?.options || {}).find((a) => a === true)
+        // if (!captureEnabled) return
 
-        console.info("RESTARTING OUTPUT:", data.id)
-        toApp(OUTPUT, { channel: "RESTART", data: { id: data.id } })
+        // console.info("RESTARTING OUTPUT:", data.id)
+        // toApp(OUTPUT, { channel: "RESTART", data: { id: data.id } })
     }
 
     /*

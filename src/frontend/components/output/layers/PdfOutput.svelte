@@ -43,7 +43,7 @@
         canvasElem.height = viewport.height
         canvasElem.width = viewport.width
 
-        page.render({ canvasContext: context, viewport })
+        page.render({ canvas: canvasElem, canvasContext: context, viewport })
     }
 
     let update = 0

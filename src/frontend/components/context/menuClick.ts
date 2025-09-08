@@ -956,8 +956,15 @@ const clickActions = {
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
-            const mode = action.shows?.length ? "slide_midi" : ""
-            popupData.set({ id: firstActionId, mode })
+
+            popupData.set({ id: firstActionId })
+
+            // slide midi
+            if (action.shows?.length) {
+                activePopup.set("slide_midi")
+                return
+            }
+
             activePopup.set("action")
         } else if (obj.sel.id === "timer") {
             activePopup.set("timer")
@@ -1567,10 +1574,10 @@ function changeSlideAction(obj: ObjData, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes: [layoutSlide] } })
 
-        const data = { id: midiId, index: layoutSlide, mode: "slide_midi" }
+        const data = { id: midiId, index: layoutSlide }
 
         popupData.set(data)
-        activePopup.set("action")
+        activePopup.set("slide_midi")
 
         return
     }

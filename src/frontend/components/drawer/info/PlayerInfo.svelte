@@ -7,17 +7,17 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
+    import InfoMetadata from "./InfoMetadata.svelte"
 
     $: active = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
 
-    // remove part after ? in URL
-    function removeExtra(link: string) {
-        link = link.replace("https://", "")
-        let extra = link.indexOf("?")
-        if (extra > -1) link = link.slice(0, extra)
-        if (link.endsWith("/")) link = link.slice(0, link.length - 1)
-        return link
-    }
+    $: info = [
+        { label: "info.likes", value: $photoApiCredits.likes },
+        { label: "info.artist", value: $photoApiCredits.artist },
+        { label: "info.artistUrl", value: $photoApiCredits.artistUrl, type: "url" },
+        { label: "info.photoUrl", value: $photoApiCredits.photoUrl, type: "url" }
+        // { label: "info.download", value: $photoApiCredits.downloadUrl, type: "url" },
+    ]
 
     $: isPlayingYoutube = getActiveOutputs($outputs, false, true, true).find((outputId) => {
         const bg = $outputs[outputId].out?.background
@@ -38,31 +38,9 @@
     {/if}
 {:else if active === $photoApiCredits.type}
     {#if $photoApiCredits.photo}
-        <main style="overflow-y: auto;">
-            <h2 style="text-align: center;padding: 10px;" data-title={$photoApiCredits.photo}>
-                {$photoApiCredits.photo}
-            </h2>
-            <p>
-                <span class="title"><T id={"info.likes"} /></span>
-                <span>{$photoApiCredits.likes}</span>
-            </p>
-            <p>
-                <span class="title"><T id={"info.artist"} /></span>
-                <span>{$photoApiCredits.artist}</span>
-            </p>
-            <p>
-                <span class="title"><T id={"info.artistUrl"} /></span>
-                <span><Link url={$photoApiCredits.artistUrl}>{removeExtra($photoApiCredits.artistUrl)}</Link></span>
-            </p>
-            <p>
-                <span class="title"><T id={"info.photoUrl"} /></span>
-                <span><Link url={$photoApiCredits.photoUrl}>{removeExtra($photoApiCredits.photoUrl)}</Link></span>
-            </p>
-            <!-- <p>
-                <span class="title"><T id={"info.download"} /></span>
-                <span>{$photoApiCredits.downloadUrl}</span>
-            </p> -->
-        </main>
+        <div style="flex: 1;margin-bottom: 25px;">
+            <InfoMetadata title={$photoApiCredits.photo} {info} />
+        </div>
 
         <div class="credits">
             Photo by <Link url={$photoApiCredits.artistUrl}>{$photoApiCredits.artist}</Link> on <span style="text-transform: capitalize;"><Link url={$photoApiCredits.homepage || $photoApiCredits.photoUrl}>{$photoApiCredits.type}</Link></span>
@@ -71,27 +49,6 @@
 {/if}
 
 <style>
-    main {
-        overflow-y: auto;
-    }
-
-    main p {
-        display: flex;
-        justify-content: space-between;
-        padding: 2px 10px;
-        gap: 5px;
-    }
-    main p:nth-child(even) {
-        background-color: rgb(0 0 20 / 0.15);
-    }
-
-    main p span:not(.title) {
-        opacity: 0.8;
-
-        overflow: hidden;
-        /* direction: rtl; */
-    }
-
     .scroll {
         display: flex;
         flex-direction: column;
@@ -102,17 +59,12 @@
         padding: 10px;
     }
 
-    /* hr {
-    border: none;
-    height: 2px;
-    margin: 20px 0;
-    background-color: var(--primary-lighter);
-  } */
-
     .credits {
         position: absolute;
         bottom: 10px;
         width: 100%;
         text-align: center;
+
+        opacity: 0.7;
     }
 </style>

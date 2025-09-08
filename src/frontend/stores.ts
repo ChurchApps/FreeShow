@@ -148,7 +148,6 @@ export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
 export const textEditActive: Writable<boolean> = writable(false)
-export const includeEmptySlides: Writable<boolean> = writable(false)
 export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 

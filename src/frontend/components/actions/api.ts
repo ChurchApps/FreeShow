@@ -117,7 +117,6 @@ interface API {
 type API_id = { id: string }
 export type API_id_optional = { id?: string }
 type API_index = { index: number }
-type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 export type API_id_index = { id: string; index: number }
@@ -134,6 +133,7 @@ export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputId?: string; styleId?: string }
+export type API_output_lock = { value?: boolean; outputId?: string }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
@@ -256,7 +256,7 @@ export const API_ACTIONS = {
     scripture_previous: () => triggerFunction("scripture_previous"), // BC
 
     // OUTPUT
-    lock_output: (data: API_boolval) => toggleLock(data.value), // BC
+    lock_output: (data: API_output_lock) => toggleLock(data), // BC
     toggle_output_windows: () => toggleOutputs(), // BC
     toggle_output: (data: API_id) => toggleOutput(data.id),
     // WIP disable stage ?

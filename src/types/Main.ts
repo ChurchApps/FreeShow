@@ -353,6 +353,7 @@ export type Popups =
     | "action"
     | "category_action"
     | "custom_action"
+    | "slide_midi"
     | "user_data_overwrite"
     | "connect"
     | "cloud_update"

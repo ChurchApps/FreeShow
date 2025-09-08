@@ -176,8 +176,8 @@
 {:else if inputId === "strval"}
     <!-- run by name -->
     <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={(e) => updateValue("value", e)} />
-{:else if inputId === "bolval"}
-    <!-- output lock toggle -->
+{:else if inputId === "output_lock"}
+    <MaterialDropdown label="stage.output" options={getOptions.normal_outputs()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "id"}
     {#if options.length || getOptions[actionId]}

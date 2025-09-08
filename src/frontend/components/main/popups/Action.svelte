@@ -9,6 +9,7 @@
     import type { API_midi } from "../../actions/api"
     import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, defaultMidiActionChannels, midiInListen } from "../../actions/midi"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, moveToPos, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -20,7 +21,6 @@
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import Icon from "../../helpers/Icon.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -53,7 +53,6 @@
         }
 
         if (!action.name) action.name = ""
-        if (mode === "slide_midi") action.midiEnabled = true
 
         loaded = true
     }
@@ -99,19 +98,19 @@
         let ref = getLayoutRef()
         let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
-        
+
         // find any action with the same trigger type
         const triggerId = action.triggers?.[0]
         if (!triggerId) return
-        
+
         // Check if this action type can have multiple instances
-        const data = actionData[triggerId.split(':')[0]] // remove unique suffix if present
+        const data = actionData[triggerId.split(":")[0]] // remove unique suffix if present
         const canAddMultiple = data?.canAddMultiple
-        
+
         // For actions that can't have multiple instances, find and replace existing
         if (!canAddMultiple) {
             let existingAction = slideActions.find((a) => a.triggers?.[0] === triggerId && (!id || a.id !== id))
-            
+
             if (!existingAction) return
 
             // remove new action if already existing
@@ -216,14 +215,15 @@
     // TODO: history!
     // WIP MIDI remove unused / empty actions from slide
 
+    let stopUpdate = false
     let saveTimeout: any = 0
     $: if (action) {
         if (saveTimeout) clearTimeout(saveTimeout)
         saveTimeout = setTimeout(saveAction, 50)
     }
     function saveAction() {
-        if (!loaded) return
-        if (mode !== "slide_midi" && mode !== "slide" && mode !== "template" && !action.name) return
+        if (!loaded || stopUpdate) return
+        if (mode !== "slide" && mode !== "template" && !action.name) return
 
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
@@ -246,15 +246,6 @@
         } else if (mode !== "slide") {
             let exists = !!$actions[id]
             actions.update((a) => {
-                if (mode === "slide_midi") {
-                    let shows = a[id]?.shows || []
-                    let showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
-                    if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
-                    action.shows = shows
-
-                    if (action.midi?.defaultValues) delete action.midi.defaultValues
-                }
-
                 // set tag
                 if (!exists && $drawerTabsData.functions?.activeSubTab === "actions" && $drawerTabsData.functions?.activeSubmenu) {
                     action.tags = [$drawerTabsData.functions?.activeSubmenu]
@@ -278,6 +269,9 @@
 
             saveSlide()
         }
+
+        stopUpdate = true
+        setTimeout(() => (stopUpdate = false), 100)
     }
 
     function saveSlide(remove = false) {
@@ -421,7 +415,7 @@
                 list
                 full
             />
-        {:else if mode !== "slide_midi"}
+        {:else}
             {#key hasNoName}
                 <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={hasNoName} />
             {/key}
@@ -478,7 +472,7 @@
                         <!-- specificActivation ? `${customActivation}__${specificActivation}` : "" -->
                         <MaterialDropdown label={specificActivations[customActivation]?.name} options={getSpecificActivation(customActivation)} value={specificActivation} on:change={(e) => updateValue("specificActivation", e.detail)} />
                     {:else if customActivation === "midi_signal_received"}
-                        <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} simple />
+                        <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} simple />
                     {/if}
                 </div>
             </InputRow>
@@ -486,7 +480,7 @@
             <hr />
         {/if}
 
-        {#if mode !== "slide_midi" && !actionSelector && !actionActivationSelector}
+        {#if !actionSelector && !actionActivationSelector}
             <!-- {#if action.triggers?.length}<hr />{/if} -->
             {#if !mode && !actionSelector && !actionActivationSelector}
                 {#if !showMore}
@@ -531,14 +525,10 @@
             </div>
         {/if}
 
-        {#if mode === "slide_midi" || (action.midiEnabled && customActivation !== "midi_signal_received" && !actionSelector && !actionActivationSelector)}
-            {#if mode === "slide_midi"}
-                <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
-            {:else}
-                <h3><T id="midi.midi" /></h3>
-            {/if}
+        {#if action.midiEnabled && customActivation !== "midi_signal_received" && !actionSelector && !actionActivationSelector}
+            <h3><T id="midi.midi" /></h3>
 
-            <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} />
+            <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} />
         {/if}
     {/if}
 </div>

@@ -43,7 +43,7 @@ export const actionData = {
     id_select_overlay: { common: true, canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
     // OUTPUT
-    lock_output: { SECTION: "guide_title.output", name: "actions.toggle_output_lock", icon: "locked", input: "bolval" },
+    lock_output: { SECTION: "guide_title.output", name: "actions.toggle_output_lock", icon: "locked", input: "output_lock" },
     toggle_output_windows: { name: "actions.toggle_output_windows", icon: "outputs", incompatible: ["toggle_output"] },
     toggle_output: { canAddMultiple: true, name: "actions.toggle_output_window", icon: "outputs", input: "id", incompatible: ["toggle_output_windows"] },
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },

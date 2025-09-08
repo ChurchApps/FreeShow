@@ -470,6 +470,7 @@
         "action": "Action",
         "category_action": "Category action",
         "custom_action": "Custom action",
+        "slide_midi": "Slide MIDI input",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
