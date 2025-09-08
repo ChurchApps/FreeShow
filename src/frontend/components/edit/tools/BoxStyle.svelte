@@ -5,8 +5,9 @@
     import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes, timers } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
-    import { hexToRgb, splitRgb } from "../../helpers/color"
+    import { splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
+    import { getExtension, getMediaType } from "../../helpers/media"
     import { getLayoutRef, getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -14,7 +15,7 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { boxes, itemBoxes, setBoxInputValue, setBoxInputValue2 } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
-    import { getExtension, getMediaType } from "../../helpers/media"
+    import EditValues2 from "./EditValues2.svelte"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -118,8 +119,14 @@
         return item[id] || null
     }
 
+    $: console.log(getLastLineAlign(item!, selection), selection)
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : getStyles(item?.align)
     $: alignStyle = item?.align ? getStyles(item.align) : {}
+
+    $: customValues = {
+        "text-align": lineAlignStyle["text-align"] || "center",
+        "align-items": alignStyle["align-items"] || "center"
+    }
 
     /// SET INPUT VALUES ///
 
@@ -132,8 +139,13 @@
         setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
         setBoxInputValue(box, "default", "textFit", "hidden", !item?.auto)
 
+        // NEW
         setBoxInputValue2(box2, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
-        setBoxInputValue2(box2, "default", "textFit", "hidden", !item?.auto)
+        // setBoxInputValue2(box2, "default", "textFit", "hidden", !item?.auto)
+        setBoxInputValue2(box2, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
+        setBoxInputValue2(box2, "lines", "specialStyle.lineBg", "value", item?.specialStyle?.lineBg || "")
+        setBoxInputValue2(box2, "lines", "specialStyle.lineRadius", "value", item?.specialStyle?.lineRadius || 0)
+        setBoxInputValue2(box2, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
 
         // text
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
@@ -269,45 +281,11 @@
         if (index !== undefined) setBoxInputValue(box, "default", "mirror.index", "value", index)
     }
 
-    // background opacity
-    // WIP duplicate of ItemStyle.svelte
-    function getBackgroundOpacity() {
-        let backgroundValue = item?.specialStyle?.lineBg || ""
-        if (!backgroundValue.includes("rgb") || !box?.edit?.lines) return
-
-        let rgb = splitRgb(backgroundValue)
-        let boIndex = box.edit.lines.findIndex((a) => a.id === "specialStyle.opacity")
-        if (boIndex < 0) return
-        box.edit.lines[boIndex].value = rgb.a
-    }
-    function getOldOpacity() {
-        let backgroundValue = item?.specialStyle?.lineBg || ""
-        if (!backgroundValue.includes("rgb")) return 1
-
-        let rgb = splitRgb(backgroundValue)
-        return rgb.a
-    }
-
     function setValue(input: any, allItems: any[]) {
         let value: any = input.value
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
-
-        // WIP duplicate of ItemStyle.svelte
-        const lineStyleChanged = input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg" && !input.value.includes("gradient"))
-        if (lineStyleChanged) setBackgroundOpacity()
-        function setBackgroundOpacity() {
-            let backgroundColor = input.id === "specialStyle.lineBg" ? input.value || "" : item?.specialStyle?.lineBg || "rgb(0 0 0);"
-            let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
-            let opacity = input.id === "specialStyle.opacity" ? input.value : getOldOpacity()
-            let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
-
-            input.id = "specialStyle.lineBg"
-            input.value = newColor
-
-            setTimeout(getBackgroundOpacity, 100)
-        }
 
         // set nested value
         if (input.id.includes(".")) {
@@ -337,7 +315,11 @@
         let newFontSize = 0
         if (input.id === "textFit") {
             // change font size to more clearly indicate what the different text fit does
-            newFontSize = input.value === "shrinkToFit" ? 100 : MAX_FONT_SIZE
+            if (input.value !== "growToFit" && Number(styles["font-size"]) < 200) {
+                newFontSize = 0
+            } else {
+                newFontSize = input.value !== "growToFit" ? 100 : MAX_FONT_SIZE
+            }
         } else if (input.id === "auto" && item?.textFit === "growToFit") {
             if (input.value && Number(styles["font-size"]) < MAX_FONT_SIZE) newFontSize = MAX_FONT_SIZE
             else if (!input.value && Number(styles["font-size"]) === MAX_FONT_SIZE) newFontSize = 100
@@ -580,20 +562,22 @@
         })
     }
 
-    // $: boxSections = box2?.sections || {}
-    // function updateValue2(e: any) {
-    //     const input = clone(e.detail)
-    //     input.value = input.values.value
-    //     input.input = input.type
+    $: boxSections = box2?.sections || {}
+    function updateValue2(e: any) {
+        const input = clone(e.detail)
+        input.value = input.values.value
+        input.input = input.type
 
-    //     // setBoxInputValue(box, "default", "mirror.show", "name", "select_stage")
-    //     // boxSections.default.inputs[0].values[0].value = input.value
+        if (input.id === "textFit") updateValue({ detail: { id: "auto", value: input.value !== "none" } })
 
-    //     updateValue({ detail: input })
+        // setBoxInputValue(box, "default", "mirror.show", "name", "select_stage")
+        // boxSections.default.inputs[0].values[0].value = input.value
 
-    //     // { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", values: { label: "edit.family" } }
-    //     // { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-    // }
+        updateValue({ detail: input })
+
+        // { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", values: { label: "edit.family" } }
+        // { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+    }
 
     let sessionId = ""
     if (item) sessionId = uid()
@@ -608,7 +592,7 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#if loaded}
-    <!-- <EditValues2 sections={boxSections} {item} {styles} on:change={updateValue2} /> -->
+    <EditValues2 sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />
 
     <!-- WIP edit checkbox does not animate because of this refresh -->
     {#key id !== "media" && box}

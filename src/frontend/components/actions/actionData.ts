@@ -36,6 +36,7 @@ export const actionData = {
     // MEDIA
     start_camera: { SECTION: "tabs.media", common: true, name: "actions.start_camera", icon: "camera", input: "camera" },
     start_screen: { common: true, name: "actions.start_screen", icon: "screen", input: "screen" },
+    toggle_playing_media: { name: "actions.toggle_playing_media", icon: "image" },
 
     // OVERLAYS
     // SECTION: "tabs.overlays",

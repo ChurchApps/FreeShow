@@ -756,6 +756,7 @@
         "start_screen": "Start screen",
         "id_start_effect": "Start effect",
         "id_select_overlay": "Start overlay",
+        "toggle_playing_media": "Toggle playing media",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
         "start_playlist": "Start playlist",

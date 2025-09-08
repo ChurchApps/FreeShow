@@ -278,7 +278,7 @@
     $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title={onlyArrow ? `${translateText(label)}: ${selected?.label || "—"}` : ""} bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title="{translateText(label)}: <b>{selected?.label || '—'}</b>" bind:this={dropdownEl}>
     <div class="background" />
 
     <div

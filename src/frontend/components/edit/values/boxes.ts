@@ -125,50 +125,111 @@ export type EditInput2 = {
     // special
     extension?: string
     styleValue?: string
+    multiplier?: number // number input
 }
 
-const textInputs: EditInput2[][] = [
+const alignX =
     [
-        { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 2;" } },
-        { id: "style", key: "font-size", type: "number", value: 100, extension: "px", values: { label: "edit.font_size", style: "flex: 1;" } },
-    ],
-    [
-        { id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.text_color", allowGradients: true } },
-
-    ],
-    [
-        { id: "auto", type: "checkbox", value: false, values: { label: "edit.auto_size" } },
-        {
-            id: "textFit",
-            type: "dropdown",
-            value: "shrinkToFit",
-            values: {
-                label: "edit.text_fit",
-                options: [
-                    { value: "shrinkToFit", label: "edit.shrink_to_fit" },
-                    { value: "growToFit", label: "edit.grow_to_fit" }
-                ]
-            }
-        },
-    ],
-    [
-        { id: "style", key: "font-weight", type: "toggle", value: "bold", values: { label: "edit._title_bold", icon: "bold" } },
-        { id: "style", key: "font-style", type: "toggle", value: "italic", values: { label: "edit._title_italic", icon: "italic" } },
-        { id: "style", key: "text-decoration", type: "toggle", value: "underline", values: { label: "edit._title_underline", icon: "underline" } },
-        { id: "style", key: "text-decoration", type: "toggle", value: "line-through", values: { label: "edit._title_strikethrough", icon: "strikethrough" } }
+        { id: "style", key: "text-align", type: "radio", value: "left", values: { label: "edit.left", icon: "alignLeft" } },
+        { id: "style", key: "text-align", type: "radio", value: "center", values: { label: "edit.center", icon: "alignCenter" } },
+        { id: "style", key: "text-align", type: "radio", value: "right", values: { label: "edit.right", icon: "alignRight" } },
+        { id: "style", key: "text-align", type: "radio", value: "justify", values: { label: "edit.justify", icon: "alignJustify" } }
     ]
-]
+const alignY =
+    [
+        { id: "style", key: "align-items", type: "radio", value: "flex-start", values: { label: "edit.align_top", icon: "alignTop" } },
+        { id: "style", key: "align-items", type: "radio", value: "center", values: { label: "edit.align_middle", icon: "alignMiddle" } },
+        { id: "style", key: "align-items", type: "radio", value: "flex-end", values: { label: "edit.align_bottom", icon: "alignBottom" } }
+    ]
+
+const textSections: { [key: string]: { inputs: EditInput2[][] } } = {
+    default: {
+        // openApplyValue:
+        inputs: [
+            [
+                { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 4;" } },
+                { id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.text_color", allowGradients: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } }
+            ],
+            [
+                { id: "style", key: "font-size", type: "number", value: 100, extension: "px", values: { label: "edit.font_size", style: "flex: 1;" } },
+                {
+                    id: "textFit",
+                    type: "dropdown",
+                    value: "",
+                    values: {
+                        // label: "edit.text_fit",
+                        label: "edit.auto_size",
+                        options: [
+                            // { value: "default", label: "example.default" },
+                            { value: "", label: "main.none" },
+                            { value: "shrinkToFit", label: "edit.shrink_to_fit" },
+                            { value: "growToFit", label: "edit.grow_to_fit" }
+                        ],
+                        style: "width: 50%;"
+                    }
+                }
+            ],
+            [
+                { id: "style", key: "font-weight", type: "toggle", value: "bold", values: { label: "edit._title_bold", icon: "bold" } },
+                { id: "style", key: "font-style", type: "toggle", value: "italic", values: { label: "edit._title_italic", icon: "italic" } },
+                { id: "style", key: "text-decoration", type: "toggle", value: "underline", values: { label: "edit._title_underline", icon: "underline" } },
+                { id: "style", key: "text-decoration", type: "toggle", value: "line-through", values: { label: "edit._title_strikethrough", icon: "strikethrough" } }
+            ]
+        ]
+    },
+    align: {
+        inputs: [alignX, alignY]
+    },
+    text: {
+        inputs: [
+            [
+                { id: "style", key: "letter-spacing", type: "number", value: 0, values: { label: "edit.letter_spacing", max: 100, min: -300 }, extension: "px" },
+                { id: "style", key: "word-spacing", type: "number", value: 0, values: { label: "edit.word_spacing", min: -100, max: 200 }, extension: "px" }
+            ],
+            [
+                {
+                    id: "style",
+                    key: "text-transform",
+                    type: "dropdown",
+                    value: "",
+                    values: {
+                        label: "edit.text_transform",
+                        options: [
+                            { label: "edit.uppercase", value: "uppercase", style: "text-transform: uppercase;" },
+                            { label: "edit.lowercase", value: "lowercase", style: "text-transform: lowercase;" },
+                            { label: "edit.capitalize", value: "capitalize", style: "text-transform: capitalize;" }
+                        ],
+                        allowEmpty: true
+                    }
+                }
+            ],
+            [
+                // probably not needed as we have line and item background color
+                // { label: "background_color", id: "style", key: "background-color", type: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
+                { id: "nowrap", type: "checkbox", value: false, values: { label: "edit.no_wrap" } }
+            ]
+        ]
+    },
+    lines: {
+        inputs: [
+            [
+                { id: "style", key: "line-height", type: "number", value: 1.1, multiplier: 10, extension: "em", values: { label: "edit.line_height", max: 50 } },
+                { id: "specialStyle.lineGap", type: "number", value: 0, values: { label: "edit.line_spacing", max: 500 } }
+            ],
+            [
+                { id: "specialStyle.lineBg", type: "color", value: "", values: { label: "edit.background_color", allowGradients: true, allowOpacity: true, enableNoColor: true, noLabel: true } }
+                // { id: "specialStyle.opacity", type: "number", value: 1, values: { label: "edit.background_opacity", step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } }
+            ],
+            [{ id: "specialStyle.lineRadius", type: "number", value: 0, values: { label: "edit.line_radius", max: 100 } }]
+        ]
+    }
+}
 
 export const itemBoxes: Box2 = {
     text: {
         // name: "items.text",
         icon: "text",
-        sections: {
-            default: {
-                // openApplyValue: 
-                inputs: textInputs
-            }
-        }
+        sections: textSections
     }
 }
 

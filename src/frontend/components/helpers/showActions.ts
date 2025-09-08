@@ -12,7 +12,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
-import { playFolder } from "../../utils/shortcuts"
+import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
@@ -386,6 +386,16 @@ async function goToNextShowInProject(slide, customOutputId) {
 let changeProjectItemTimeout: NodeJS.Timeout | null = null
 
 export function goToNextProjectItem(key = "") {
+    // play project media with arrow right if not already playing
+    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
+    if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
+        const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+        const outBg = get(outputs)[outputId]?.out?.background
+        if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
+            return togglePlayingMedia()
+        }
+    }
+
     if (changeProjectItemTimeout) return
     changeProjectItemTimeout = setTimeout(() => {
         changeProjectItemTimeout = null
@@ -909,9 +919,7 @@ export function startShowSync(showId: string) {
 export async function startShow(showId: string) {
     if (!showId) return
 
-    const show = await loadShows([showId])
-    if (show !== "loaded") return
-
+    await loadShows([showId])
     if (!get(showsCache)[showId]) return
     const activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
 

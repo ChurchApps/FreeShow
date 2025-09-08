@@ -1,19 +1,34 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import { uid } from "uid"
+    import { activePopup, popupData, special } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { defaultColors, getContrast } from "../helpers/color"
+    import { defaultColors, defaultGradients, getContrast, hexToRgb, rgbToHex, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
+    import Tabs from "../main/Tabs.svelte"
     import MaterialButton from "./MaterialButton.svelte"
+    import MaterialNumberInput from "./MaterialNumberInput.svelte"
 
     export let value: string = "#000000"
     export let defaultValue: string = ""
     export let label: string
     export let noLabel = false
+    export let allowGradients = false
+    export let allowOpacity = false
     export let enableNoColor = false
     export let disabled = false
     export let height = 0
     export let width = 0
+
+    $: hexValue = getHexValue(value)
+    function getHexValue(value: string) {
+        if (value.startsWith("#")) return value
+        if (value.includes("rgb")) {
+            opacity = splitRgb(value).a * 100
+            return rgbToHex(value)
+        }
+        return value
+    }
 
     const dispatch = createEventDispatcher()
 
@@ -29,31 +44,38 @@
         if (e.target.closest("#" + pickerId) || (e.target.closest(".colorpicker") && !e.target.closest(".pickColor"))) return
         if (e.target.closest(".color")) return
 
-        // if (pickerOpen) dispatch("change", value)
+        // if (pickerOpen) dispatch("change", hexValue)
 
         pickerOpen = false
     }
 
-    function selectColor(c: string) {
-        value = c
-        dispatch("change", value)
-        dispatch("input", value)
+    function selectColor(c: string, close: boolean = true) {
+        hexValue = c
 
-        pickerOpen = false
+        let actualValue = hexValue
+        if (allowOpacity && opacity < 100 && selectedMode === "normal") {
+            const rgb = hexToRgb(hexValue)
+            actualValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${opacity / 100})`
+        }
+
+        dispatch("change", actualValue)
+        dispatch("input", actualValue)
+
+        if (close) pickerOpen = false
     }
 
     function change(e: any) {
-        value = e.target?.value
-        dispatch("change", value)
+        hexValue = e.target?.value
+        dispatch("change", hexValue)
     }
 
     function input(e: any) {
-        value = e.target?.value
-        dispatch("input", value)
+        hexValue = e.target?.value
+        dispatch("input", hexValue)
     }
 
     function reset() {
-        resetFromValue = value
+        resetFromValue = hexValue
         selectColor(defaultValue)
         setTimeout(() => (resetFromValue = ""), 3000)
     }
@@ -95,41 +117,131 @@
         if (!colorElem) return
         isOverflowing = colorElem.getBoundingClientRect().left + colorElem.clientWidth / 2 + 200 > window.innerWidth
     })
+
+    // GRADIENTS
+
+    const tabs = { normal: { name: "color.normal", icon: "color" }, gradient: { name: "color.gradient", icon: "gradient" } }
+    $: selectedMode = allowGradients ? getCurrentMode(hexValue) : "normal"
+    function getCurrentMode(value: string) {
+        if (typeof value === "string" && value.includes("gradient")) return "gradient"
+        return "normal"
+    }
+
+    $: customGradients = ($special.customColorsGradient || []).map((value) => ({ name: "", value }))
+    $: gradientColors = [...defaultGradients, ...customGradients].filter((a) => !$special.disabledColorsGradient?.includes(a.value))
+
+    // OPACITY
+
+    // A layer with 100% opacity is completely solid and visible, while a layer with 0% opacity is completely transparent and invisible.
+    let opacity = 100
+    let updated: NodeJS.Timeout | null = null
+    let gotUpdate = false
+    $: if (opacity) opacityChanged()
+    function opacityChanged() {
+        if (updated) {
+            gotUpdate = true
+            return
+        }
+
+        updated = setTimeout(() => {
+            selectColor(hexValue, false)
+            updated = null
+            if (gotUpdate) {
+                gotUpdate = false
+                opacityChanged()
+            }
+        }, 50)
+    }
 </script>
 
 <svelte:window on:mousedown={mousedown} />
 
-<div id={pickerId} bind:this={colorElem} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(value)};{$$props.style || ''}" on:keydown={handleKey}>
+<div id={pickerId} bind:this={colorElem} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(hexValue)};{$$props.style || ''}" on:keydown={handleKey}>
     <div class="background" on:click={togglePicker} />
 
     <div class="color-display" data-title={noLabel ? translateText(label) : ""} style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
 
-    {#if !noLabel}
+    {#if !noLabel || value === ""}
         <label>{@html translateText(label)}</label>
     {/if}
     <span class="underline" />
 
     {#if pickerOpen}
-        <div class="picker" class:isOverflowing style={noLabel ? "left: 0;transform: initial;" : ""}>
-            {#if enableNoColor}
-                <div data-value={""} class="pickColor noColor" data-title={translateText("settings.remove")} tabindex="0" on:click={() => selectColor("")}>
-                    <Icon id="close" white />
-                </div>
+        <div class="picker" class:isOverflowing style={noLabel && !isOverflowing ? "left: 0;transform: initial;" : ""}>
+            {#if allowGradients}
+                <Tabs {tabs} bind:active={selectedMode} style="flex: 1;" />
             {/if}
-            {#each defaultColors as c}
-                <div data-value={c.value} class="pickColor {value === c.value ? 'active' : ''}" data-title={c.name} tabindex="0" style="background:{c.value};--outline-color: {getContrast(c.value)};" on:click={() => selectColor(c.value)}></div>
-            {/each}
 
-            <div class="color" style="background: {value};">
-                <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
-                <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={input} on:change={change} />
+            <div class="pickerContent">
+                {#if selectedMode === "gradient"}
+                    {#each gradientColors as color}
+                        <div
+                            class="pickColor"
+                            class:active={hexValue === color.value}
+                            data-title={color.name}
+                            style="background: {color.value};"
+                            tabindex="0"
+                            aria-label="Select gradient {color.name || color.value}"
+                            on:click={() => selectColor(color.value)}
+                        />
+                    {/each}
+
+                    <MaterialButton
+                        style="width: 100%;margin-top: 5px;background: {hexValue} !important;"
+                        on:click={() => {
+                            popupData.set({ value: hexValue, trigger: (newValue) => selectColor(newValue) })
+                            activePopup.set("color_gradient")
+                        }}
+                        center
+                    >
+                        <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
+                    </MaterialButton>
+                {:else}
+                    {#if enableNoColor}
+                        <div
+                            data-value={""}
+                            class="pickColor noColor"
+                            class:active={value === ""}
+                            data-title={translateText("settings.remove")}
+                            tabindex="0"
+                            on:click={() => {
+                                opacity = 100
+                                selectColor("")
+                            }}
+                        >
+                            <Icon id="close" white />
+                        </div>
+                    {/if}
+                    {#each defaultColors as c}
+                        <div
+                            data-value={c.value}
+                            class="pickColor"
+                            class:active={hexValue.toLowerCase() === c.value.toLowerCase()}
+                            data-title={c.name}
+                            tabindex="0"
+                            style="background:{c.value};--outline-color: {getContrast(c.value)};"
+                            on:click={() => selectColor(c.value)}
+                        ></div>
+                    {/each}
+
+                    {#if allowOpacity}
+                        <div class="opacity">
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
+                        </div>
+                    {/if}
+
+                    <div class="color" style="background: {hexValue};">
+                        <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
+                        <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value={hexValue} on:input={input} on:change={change} />
+                    </div>
+                {/if}
             </div>
         </div>
     {/if}
 
     {#if defaultValue}
         <div class="remove">
-            {#if value !== defaultValue}
+            {#if hexValue !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>
                     <Icon id="reset" white />
                 </MaterialButton>
@@ -225,8 +337,8 @@
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-radius: 8px;
-        display: flex;
-        flex-wrap: wrap;
+        /* display: flex;
+        flex-wrap: wrap; */
         z-index: 10;
 
         cursor: default;
@@ -235,8 +347,8 @@
         --padding: 10px;
         --gap: 5px;
         width: var(--width);
-        padding: var(--padding);
-        gap: var(--gap);
+        /* padding: var(--padding); */
+        /* gap: var(--gap); */
 
         display: flex;
         flex-wrap: wrap;
@@ -246,6 +358,13 @@
     .picker.isOverflowing {
         left: unset;
         right: 0;
+    }
+
+    .pickerContent {
+        padding: var(--padding);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--gap);
     }
 
     .pickColor {
@@ -322,5 +441,23 @@
         height: 100%;
 
         cursor: pointer;
+    }
+
+    .pickerContent :global(button) {
+        padding: 15px;
+        font-weight: normal;
+        font-size: 1em;
+        border: 2px solid transparent;
+    }
+    .pickerContent :global(button:hover) {
+        border-color: var(--outline-color) !important;
+    }
+
+    /* opacity */
+
+    .opacity {
+        display: block;
+        width: 100%;
+        padding-top: 5px;
     }
 </style>

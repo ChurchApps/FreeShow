@@ -11,13 +11,14 @@
 
     export let sections: any = {}
     export let styles: { [key: string]: string } = {}
+    export let customValues: { [key: string]: string } = {}
     // export let defaultSections: any = {}
     export let item: any = {}
 
     $: console.log(sections)
 
     function getValue(input: EditInput2, _updater: any) {
-        if (input.type === "toggle") {
+        if (input.type === "toggle" || input.type === "radio") {
             return input.value
         }
         // if (input.id === "auto" && isAuto) return true
@@ -30,8 +31,13 @@
 
         const defaultValue = input.value
 
-        if (input.key) return styles[input.key || ""] ?? defaultValue
-        return input.values.value ?? item[input.id] ?? defaultValue
+        let value: any = null
+        if (input.key) value = styles[input.key || ""] ?? defaultValue
+        else value = input.values.value ?? item[input.id] ?? defaultValue
+
+        if (input.multiplier) value *= input.multiplier
+
+        return value
     }
 
     function toggle(input: any) {
@@ -47,10 +53,17 @@
         dispatch("change", clone(input))
     }
 
+    function radio(input: any) {
+        let value = input.value
+        input.values.value = value
+        dispatch("change", clone(input))
+    }
+
     const dispatch = createEventDispatcher()
     function changed(e: any, input: any) {
         let value = e.detail
 
+        if (input.multiplier) value = value / input.multiplier
         if (input.extension) value += input.extension
 
         console.log("UPDATE", value, input)
@@ -82,6 +95,11 @@
                                 <Icon id={input.values.icon} size={1.2} white />
                                 <div class="highlight" class:active={styles[input.key || ""]?.includes(value)}></div>
                             </MaterialButton>
+                        {:else if input.type === "radio"}
+                            <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(input.values.label)} on:click={() => radio(input)}>
+                                <Icon id={input.values.icon} size={1.2} white />
+                                <div class="highlight radio" class:active={customValues[input.key || ""] === value}></div>
+                            </MaterialButton>
                         {:else}
                             <Input input={{ type: input.type, value, ...input.values }} on:change={(e) => changed(e, input)} />
                         {/if}
@@ -110,6 +128,10 @@
 
         background-color: var(--primary-lighter);
         transition: 0.2s background-color ease;
+    }
+    .highlight.radio {
+        width: 100%;
+        bottom: 0;
     }
     .highlight.active {
         background-color: var(--secondary);

@@ -185,19 +185,19 @@ export function getSelectionRange(): { start: number; end: number }[] {
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
     let style = ""
-    ;(pos || lines).forEach((_a: any, i: number) => {
-        let currentPos = 0
-        lines[i]?.text?.some((text) => {
-            // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
-            if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
-                style = text.style
-                return true
-            }
+        ; (pos || lines).forEach((_a: any, i: number) => {
+            let currentPos = 0
+            lines[i]?.text?.some((text) => {
+                // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
+                if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
+                    style = text.style
+                    return true
+                }
 
-            currentPos += text.value.length
-            return false
+                currentPos += text.value.length
+                return false
+            })
         })
-    })
 
     // filter out empty lines
     lines = lines.filter((a) => a.text.length)
@@ -209,8 +209,10 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 
 // get item align at selected pos
 export function getLastLineAlign(item: Item, selection: any): string {
+    if (!selection?.length) return item?.lines?.[0].align || ""
+
     let last = ""
-    item?.lines!.forEach((line, i) => {
+    item?.lines?.forEach((line, i) => {
         if (!selection || selection[i]?.start !== undefined) last = line.align
     })
     return last

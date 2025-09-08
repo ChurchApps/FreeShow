@@ -8,6 +8,7 @@ import { sendMain } from "../../IPC/main"
 import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
 import { syncDrive } from "../../utils/drive"
+import { togglePlayingMedia } from "../../utils/shortcuts"
 import { pcoSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
@@ -241,6 +242,7 @@ export const API_ACTIONS = {
     start_camera: (data: API_camera) => startCamera(data),
     start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
+    toggle_playing_media: () => togglePlayingMedia(),
     video_seekto: (data: API_seek) => videoSeekTo(data), // BC
     // play / pause playing
 
