@@ -169,7 +169,7 @@
     {#if pickerOpen}
         <div class="picker" class:isOverflowing style={noLabel && !isOverflowing ? "left: 0;transform: initial;" : ""}>
             {#if allowGradients}
-                <Tabs {tabs} bind:active={selectedMode} style="flex: 1;" />
+                <Tabs {tabs} bind:active={selectedMode} style="flex: 1;border-top-left-radius: 8px;border-top-right-radius: 8px;" />
             {/if}
 
             <div class="pickerContent">

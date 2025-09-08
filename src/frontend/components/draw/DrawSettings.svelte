@@ -97,13 +97,13 @@
 
         {#if !hidden}
             {#if key === "color"}
-                <MaterialColorInput label="draw.{key}" {value} on:change={(e) => update(e.detail, key)} />
+                <MaterialColorInput label="edit.color" {value} on:change={(e) => update(e.detail, key)} />
             {:else if key === "opacity"}
-                <MaterialNumberInput label="draw.{key}" value={value * 10} min={1} max={10} on:change={(e) => update(e.detail / 10, key)} />
+                <MaterialNumberInput label="edit.opacity" value={value * 10} min={1} max={10} on:change={(e) => update(e.detail / 10, key)} />
             {:else if key === "radius"}
-                <MaterialNumberInput label="draw.{key}" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
+                <MaterialNumberInput label="draw.radius" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
             {:else if key === "size"}
-                <MaterialNumberInput label="draw.{key}" {value} min={1} max={2000} step={10} on:change={(e) => update(e.detail, key)} />
+                <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} on:change={(e) => update(e.detail, key)} />
             {:else}
                 <MaterialCheckbox label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
             {/if}

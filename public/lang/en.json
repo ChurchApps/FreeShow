@@ -347,7 +347,6 @@
         "textInvert": "Inverted text",
         "secondary-text": "Selections",
         "secondary": "Secondary",
-        "secondary-opacity": "Secondary opacity",
         "hover": "Hover",
         "focus": "Focus"
     },
@@ -1174,9 +1173,6 @@
         "fill": "Fill",
         "paint": "Paint",
         "particles": "Particles",
-        "color": "Color",
-        "opacity": "Opacity",
-        "size": "Size",
         "radius": "Radius",
         "glow": "Glow",
         "hollow": "Hollow",

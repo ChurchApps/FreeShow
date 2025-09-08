@@ -143,6 +143,7 @@
         setBoxInputValue2(box2, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
         // setBoxInputValue2(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue2(box2, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
+        setBoxInputValue2(box2, "lines", "specialStyle.lineGap", "value", item?.specialStyle?.lineGap || 0)
         setBoxInputValue2(box2, "lines", "specialStyle.lineBg", "value", item?.specialStyle?.lineBg || "")
         setBoxInputValue2(box2, "lines", "specialStyle.lineRadius", "value", item?.specialStyle?.lineRadius || 0)
         setBoxInputValue2(box2, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)

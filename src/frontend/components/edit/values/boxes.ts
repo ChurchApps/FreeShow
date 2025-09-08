@@ -64,7 +64,11 @@ export function setBoxInputValue2(box: BoxContent2, sectionId: string, inputId: 
     const keyIndex = inputs.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
     if (keyIndex < 0) return
 
-    inputs[keyIndex][key] = value
+    if (key === "value") {
+        inputs[keyIndex].values.value = value
+    } else {
+        inputs[keyIndex][key] = value
+    }
 }
 
 export const mediaFitOptions: any[] = [
@@ -108,12 +112,12 @@ type Box2 = {
 type BoxContent2 = {
     name?: string
     icon: string
-    sections: {
-        [key: string]: {
-            // openApplyValue?: boolean // show apply value button
-            inputs: EditInput2[][]
-        }
-    }
+    sections: { [key: string]: EditBoxSection }
+}
+export type EditBoxSection = {
+    // openApplyValue?: boolean // show apply value button
+    inputs: EditInput2[][]
+    defaultValues?: any[]
 }
 export type EditInput2 = {
     id: string
@@ -121,6 +125,7 @@ export type EditInput2 = {
     type: string
     value: string | number | boolean
     values: { [key: string]: any }
+    hidden?: boolean
 
     // special
     extension?: string
@@ -142,7 +147,7 @@ const alignY =
         { id: "style", key: "align-items", type: "radio", value: "flex-end", values: { label: "edit.align_bottom", icon: "alignBottom" } }
     ]
 
-const textSections: { [key: string]: { inputs: EditInput2[][] } } = {
+const textSections: { [key: string]: EditBoxSection } = {
     default: {
         // openApplyValue:
         inputs: [
@@ -178,7 +183,8 @@ const textSections: { [key: string]: { inputs: EditInput2[][] } } = {
         ]
     },
     align: {
-        inputs: [alignX, alignY]
+        inputs: [alignX, alignY],
+        defaultValues: ["center", "center"]
     },
     text: {
         inputs: [

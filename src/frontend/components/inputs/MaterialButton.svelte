@@ -169,22 +169,22 @@
         outline-offset: -2px;
     }
 
-    button:not(.contained):not(.isActive):hover {
+    button:not(.contained):not(.isActive):not(:disabled):hover {
         background: rgba(255, 255, 255, 0.01) !important;
     }
-    button:not(.contained):not(.isActive):active {
+    button:not(.contained):not(.isActive):not(:disabled):active {
         background: rgba(255, 255, 255, 0.04) !important;
     }
-    button:not(.contained):not(.isActive):active:hover {
+    button:not(.contained):not(.isActive):not(:disabled):active:hover {
         background: rgba(255, 255, 255, 0.06) !important;
     }
-    button.contained:hover {
+    button.contained:not(:disabled):hover {
         filter: brightness(1.05);
     }
-    button.contained:active {
+    button.contained:not(:disabled):active {
         filter: brightness(1.09);
     }
-    button.contained:active:hover {
+    button.contained:not(:disabled):active:hover {
         filter: brightness(1.13);
     }
 
@@ -220,11 +220,11 @@
         fill: var(--text) !important;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
         box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
     }
 
-    button:focus-visible {
+    button:focus-visible:not(:disabled) {
         outline: 2px solid var(--secondary);
         outline-offset: 2px;
     }
