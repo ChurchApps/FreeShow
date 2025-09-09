@@ -5,7 +5,7 @@
     import { mediaExtensions } from "../../../values/extensions"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import { getFilters } from "../../helpers/style"
+    import { getFilters, getStyles } from "../../helpers/style"
     import Input from "../../input/Input.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -14,6 +14,8 @@
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import { parseShadowValue } from "../scripts/edit"
+    import { sectionColors } from "../values/item"
 
     export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
@@ -25,22 +27,21 @@
         if (input.type === "radio") return customValues[input.key || ""] || ""
         if (input.id.includes("CSS")) return getStyleString(input)
 
-        // if (input.id === "auto" && isAuto) return true
-        // if (input.id?.includes(".")) input.value = getItemValue(input)
-
-        // if (input.valueIndex !== undefined && styles[input.key || ""]) return removeExtension(styles[input.key!].split(" ")[input.valueIndex], input.extension)
-        // if (input.input === "dropdown") return input.values.options.find((a) => a.id === getKeyValue(input))?.name || "—"
-        // if (input.input === "checkbox") return !!input.value // closed
-        // if (input.id === "filter" || input.id === "backdrop-filter") return item?.filter ? getFilters(item.filter || "")[input.key || ""] || input.value : input.value
-
         const defaultValue = input.value
-
         let value: any = null
-        if (input.id === "filter" || input.id === "backdrop-filter") value = (item?.filter ? getFilters(item.filter || "")[input.key || ""] : "") || input.value
-        else if (input.key) {
+        if (input.id === "filter" || input.id === "backdrop-filter") {
+            value = getFilters(item[input.id] || getStyles(item?.style)[input.id])?.[input.key || ""] || input.values.value || input.value
+        } else if (input.key) {
             value = styles[input.key || ""]
-            if (input.valueIndex !== undefined) value = value?.split(" ")[input.valueIndex]
-            if (input.extension && value !== "") value = Number(value?.replace(input.extension, ""))
+            if (input.valueIndex !== undefined) {
+                if (input.key === "box-shadow" || input.key === "text-shadow") {
+                    const arr = parseShadowValue(value)
+                    value = arr[input.valueIndex]
+                } else {
+                    value = value?.split(" ")[input.valueIndex]
+                }
+            }
+            if (input.extension && value !== "") value = Number(value?.toString().replace(input.extension, ""))
         } else if (input.values.value !== undefined) {
             value = input.values.value
         } else {
@@ -112,13 +113,23 @@
             if (sections[sectionId]) {
                 const allKeyValues = sections[sectionId]?.inputs.flat().filter((a) => a.key === input.key)
                 const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
-                const fullValues = sortedKeys.map((a) => {
-                    let value = getValue(a)
-                    if (a.extension) value += a.extension
-                    return value
-                })
-                fullValues[input.valueIndex] = value
-                value = fullValues.join(" ")
+
+                let currentValue = styles[input.key || ""] || ""
+                let arr
+                if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
+                else arr = currentValue.split(" ").filter(Boolean)
+                arr[input.valueIndex] = value
+
+                // add any extensions
+                for (let i = 0; i < sortedKeys.length; i++) {
+                    if (sortedKeys[i].extension && arr[i] !== undefined && arr[i] !== "") {
+                        if (!arr[i].toString().endsWith(sortedKeys[i].extension)) {
+                            arr[i] = arr[i].toString().replace(/[^0-9.\-]+$/, "") + sortedKeys[i].extension
+                        }
+                    }
+                }
+
+                value = arr.join(" ")
             } else {
                 // reset
                 value = ""
@@ -228,20 +239,6 @@
 
     $: sectionValues = Object.entries(sections)
 
-    /// colors
-    const sectionColors = {
-        font: "#f079b4",
-        align: "#f079b2",
-        text: "#e490c9",
-        lines: "#ffb6e7",
-        list: "#a16adb",
-        outline: "#d8d8d8",
-        shadow: "#9e9e9e",
-        chords: "#ffbe86",
-        scrolling: "#ceffbe",
-        special: "#e9e495"
-    }
-
     ///
 
     const optionsLists = {
@@ -262,7 +259,7 @@
 
 <div class="tools">
     {#each sectionValues as [id, section]}
-        {@const hasChanged = id === "CSS" ? false : hasChangedValues(id, { styles, item })}
+        {@const hasChanged = section.noReset ? false : hasChangedValues(id, { styles, item })}
         {@const expanded = id === "default" || openedSections.includes(id)}
 
         <div class="section" style={expanded ? "margin-bottom: 3px;" : ""}>

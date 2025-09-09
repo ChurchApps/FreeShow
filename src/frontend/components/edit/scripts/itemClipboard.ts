@@ -4,11 +4,11 @@ import { activeEdit, activeShow, showsCache } from "../../../stores"
 import { wait } from "../../../utils/common"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
+import { getLayoutRef } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
-import { boxes } from "../values/boxes"
-import { itemEdits } from "../values/item"
-import { getLayoutRef } from "../../helpers/show"
+import { itemBoxes } from "../values/boxes"
+import { itemSections } from "../values/item"
 
 type StyleClipboard = {
     keys: { [key: string]: any }
@@ -118,7 +118,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             // })
             showsCache.update((a) => {
-                ;(a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
+                ; (a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
                     .filter((_, i) => items.includes(i))
                     .forEach((item) => {
                         item.lines?.forEach((line) => {
@@ -275,9 +275,9 @@ export function getItemKeys(isBox = false) {
     // replace just item style or just box style if not textbox
     let itemKeys: string[] = []
 
-    Object.values(itemEdits).forEach((values) => {
+    Object.values(itemSections).forEach((values) => {
         itemKeys.push(
-            ...values.map((a) => {
+            ...values.inputs.flat().map((a) => {
                 const key = a.id === "style" ? a.key : a.id
                 return key || ""
             })
@@ -293,16 +293,16 @@ export function getItemKeys(isBox = false) {
 
 function getSpecialBoxValues(item: Item) {
     const keyValues: any = {}
-    const inputs = Object.values(boxes[item.type || "text"]?.edit || {}).flat()
-    inputs.push({ id: "align", input: "" })
+    const inputIds = Object.values(itemBoxes[item.type || "text"]?.sections || {}).map(a => a.inputs.flat()).flat().map(({ id }) => id)
 
-    inputs.forEach((input) => {
-        let id = input.id
-        if (!id || id === "style") return
+    inputIds.forEach((id) => {
+        if (id === "style") return
 
         if (id.includes(".")) id = id.slice(0, id.indexOf("."))
         if (item[id] !== undefined) keyValues[id] = item[id]
     })
+
+    if (item.align) keyValues.align = item.align
 
     return keyValues
 }

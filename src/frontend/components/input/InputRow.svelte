@@ -38,7 +38,7 @@
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
     }
-    .row > :global(button:not(.isActive)) {
+    .row > :global(button:not(.isActive):not(:disabled)) {
         border-bottom: 1.2px solid var(--primary-lighter) !important;
     }
 

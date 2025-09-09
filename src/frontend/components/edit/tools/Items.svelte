@@ -12,7 +12,7 @@
     import Panel from "../../system/Panel.svelte"
     import { addItem, rearrangeItems } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
-    import { boxes } from "../values/boxes"
+    import { itemBoxes } from "../values/boxes"
 
     type ItemRef = { id: ItemType; icon?: string; name?: string; maxAmount?: number }
 
@@ -162,7 +162,7 @@
                 >
                     <span style="display: flex;">
                         <p style="margin-inline-end: 10px;">{i + 1}</p>
-                        <Icon id={type === "icon" ? currentItem.id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
+                        <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} />
                         <p style="margin-inline-start: 10px;">{$dictionary.items?.[type]}</p>
                         {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
                     </span>

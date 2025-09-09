@@ -25,10 +25,10 @@ export const getStyles = (str: string | null | undefined, removeTxt = false) => 
     return styles
 }
 
-export function getFilters(filter: string) {
-    const styles: StringObject = {}
-    if (!filter) return styles
+export function getFilters(filter: string | undefined) {
+    if (!filter) return null
 
+    const styles: StringObject = {}
     filter.split(" ").forEach((s) => {
         if (s.length) {
             const key: string = s.slice(0, s.indexOf("(")).trim()

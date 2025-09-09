@@ -11,7 +11,7 @@ import { getLayoutRef } from "../../helpers/show"
 import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
-import { boxes } from "../values/boxes"
+import { itemBoxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
@@ -21,11 +21,12 @@ function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     const positionStyle = templateItems?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
 
     // Get default styles from boxes configuration
-    const boxDefaults = boxes[type]?.edit?.font || []
+    const boxDefaults = itemBoxes[type]?.sections?.font?.inputs?.flat() || []
     let styleString = positionStyle
 
     // Add default font styles if they exist
     boxDefaults.forEach((def) => {
+        if (def.type === "toggle" || def.type === "radio") return
         if (def.key && def.value) {
             styleString += `${def.key}:${def.value};`
         }

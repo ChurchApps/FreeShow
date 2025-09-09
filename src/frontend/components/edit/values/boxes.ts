@@ -54,15 +54,14 @@ export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] 
     section[keyIndex][key] = value
 }
 
-export function setBoxInputValue2(box: BoxContent2, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
-    // const newBox = (box.sections ? box : { edit: box, icon: "" }) as BoxContent
-    const newBox = box.sections
+export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
+    const newBox = (box.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
     if (!sectionId) sectionId = "default"
     if (!newBox?.[sectionId]) return
 
     const inputs = newBox[sectionId].inputs.flat()
-    const keyIndex = inputs.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
+    const keyIndex = inputs.findIndex((a) => (a.key === inputId || a.id === inputId))
     if (keyIndex < 0) return
 
     if (key === "value" || key === "name" || key === "disabled") {
@@ -79,7 +78,7 @@ export const mediaFitOptions: any[] = [
     { id: "blur", name: "media.blur_fill" }
     // { id: "scale-down", name: "Scale down" },
 ]
-export const mediaFitOptions2: any[] = [
+export const mediaFitOptions2 = [
     { value: "contain", label: "media.contain" },
     { value: "cover", label: "media.cover" },
     { value: "fill", label: "media.fill" },
@@ -124,6 +123,7 @@ type BoxContent2 = {
 export type EditBoxSection = {
     // openApplyValue?: boolean // show apply value button
     inputs: EditInput2[][]
+    noReset?: boolean
     defaultValues?: any[]
     expandAutoValue?: { [key: string]: any }
 }
@@ -352,54 +352,39 @@ const textSections: { [key: string]: EditBoxSection } = {
         inputs: [[{ id: "button.press", type: "dropdown", value: "", values: { label: "edit.press_action", options: "actions", allowEmpty: true } }], [{ id: "button.release", type: "dropdown", value: "", values: { label: "edit.release_action", options: "actions", allowEmpty: true } }]]
     },
     CSS: {
+        noReset: true,
         inputs: [[{ id: "CSS_text", type: "textarea", value: "", values: { label: "CSS" } }]]
     }
 }
 
 // WIP same as media.ts mediaFilters
-export const filterSection = [[
+export const filterSection = splitIntoRows([
     { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },
-], [
     { id: "filter", key: "invert", type: "number", value: 0, multiplier: 10, values: { label: "filter.invert", defaultValue: 0, max: 10, showSlider: true } },
-], [
     { id: "filter", key: "blur", type: "number", value: 0, extension: "px", values: { label: "filter.blur", defaultValue: 0, max: 100, showSlider: true, sliderValues: { max: 50 } } },
-], [
     { id: "filter", key: "grayscale", type: "number", value: 0, multiplier: 10, values: { label: "filter.grayscale", defaultValue: 0, max: 10, showSlider: true } },
-], [
     { id: "filter", key: "sepia", type: "number", value: 0, multiplier: 10, values: { label: "filter.sepia", defaultValue: 0, max: 10, showSlider: true } },
-], [
     { id: "filter", key: "brightness", type: "number", value: 1, multiplier: 10, values: { label: "filter.brightness", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
-], [
     { id: "filter", key: "contrast", type: "number", value: 1, multiplier: 10, values: { label: "filter.contrast", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
-], [
     { id: "filter", key: "saturate", type: "number", value: 1, multiplier: 10, values: { label: "filter.saturate", defaultValue: 10, max: 100, showSlider: true, sliderValues: { max: 20 } } },
-], [
     { id: "filter", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "filter.opacity", defaultValue: 100, step: 10, max: 100, showSlider: true, sliderValues: { step: 1 } } }
-]]
+])
 
 const mediaSections: { [key: string]: EditBoxSection } = {
     default: {
-        inputs: [
-            [
-                { id: "src", type: "media", value: "", values: { label: "items.media" } },
-            ], [
-                { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions2 } },
-                // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
-            ], [
-                { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
-            ], [
-                { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
-            ], [
-                { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
-            ], [
-                { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
-            ], [
-                { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
-            ],
+        inputs: splitIntoRows([
+            { id: "src", type: "media", value: "", values: { label: "items.media" } },
+            { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions2 } },
+            // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
+            { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
+            { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
+            { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
+            { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+            { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
             // WIP crop image
             // object-position: 20px 20px;
             // transform: scale(1.2) translate(0, 5%);
-        ]
+        ])
     },
     filters: {
         inputs: filterSection
@@ -407,6 +392,10 @@ const mediaSections: { [key: string]: EditBoxSection } = {
 }
 
 ///
+
+export function splitIntoRows(inputs: EditInput2[]) {
+    return inputs.map(a => ([a]))
+}
 
 function eventText(defaultSection: any) {
     const defaultTextSection = clone(textSections.default)
@@ -459,11 +448,10 @@ export const itemBoxes: Box2 = {
         icon: "web",
         sections: {
             default: {
-                inputs: [[
+                inputs: splitIntoRows([
                     { id: "web.src", type: "string", value: "", values: { label: "inputs.url" } },
-                ], [
                     { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } }
-                ]]
+                ])
             }
         }
     },
@@ -471,9 +459,8 @@ export const itemBoxes: Box2 = {
         icon: "timer",
         sections: {
             ...nonTextboxTextStyle({
-                inputs: [[
+                inputs: splitIntoRows([
                     { id: "timer.id", type: "dropdown", value: "", values: { label: "items.timer", options: "timers" } },
-                ], [
                     {
                         id: "timer.viewType",
                         type: "dropdown",
@@ -487,11 +474,9 @@ export const itemBoxes: Box2 = {
                             ]
                         }
                     },
-                ], [
                     { id: "timer.circleMask", type: "checkbox", value: false, values: { label: "timer.mask", } },
-                ], [
                     { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours", } }
-                ]]
+                ])
             }),
         }
     },
@@ -499,7 +484,7 @@ export const itemBoxes: Box2 = {
         icon: "clock",
         sections: {
             ...(nonTextboxTextStyle({
-                inputs: [[
+                inputs: splitIntoRows([
                     {
                         id: "clock.type",
                         type: "dropdown",
@@ -513,7 +498,6 @@ export const itemBoxes: Box2 = {
                             ]
                         }
                     },
-                ], [
                     {
                         id: "clock.dateFormat",
                         type: "dropdown",
@@ -531,7 +515,6 @@ export const itemBoxes: Box2 = {
                             ]
                         }
                     },
-                ], [
                     {
                         id: "clock.showTime",
                         type: "checkbox",
@@ -541,7 +524,6 @@ export const itemBoxes: Box2 = {
                         },
                         hidden: true
                     },
-                ], [
                     {
                         id: "clock.seconds",
                         type: "checkbox",
@@ -551,7 +533,6 @@ export const itemBoxes: Box2 = {
                         },
                         hidden: true
                     },
-                ], [
                     {
                         id: "clock.customFormat",
                         type: "string",
@@ -564,7 +545,6 @@ export const itemBoxes: Box2 = {
                             placeholder: "E.g.: LT, LLLL, MMMM D YYYY h:mm A",
                         },
                     },
-                ], [
                     {
                         id: "tip",
                         type: "tip",
@@ -574,7 +554,7 @@ export const itemBoxes: Box2 = {
                             label: "",
                             subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>',
                         },
-                    }]]
+                    }])
             }))
         }
     },
@@ -582,15 +562,12 @@ export const itemBoxes: Box2 = {
         icon: "camera",
         sections: {
             default: {
-                inputs: [[
+                inputs: splitIntoRows([
                     { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
-                ], [
                     { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions2.filter((a) => a.value !== "blur") } },
-                ], [
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
-                ], [
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
-                ]]
+                ])
             }
         }
     },
@@ -610,16 +587,18 @@ export const itemBoxes: Box2 = {
                                 { value: "bar", label: "$:edit.progress_bar:$" },
                                 { value: "group", label: "$:tools.groups:$" }
                             ],
+                            style: "flex: 4;"
                         }
                     },
-                ], [
                     {
                         id: "tracker.accent",
                         type: "color",
                         value: "#F0008C",
                         values: {
                             label: "edit.accent_color",
-                            allowEmpty: true
+                            allowEmpty: true,
+                            noLabel: true,
+                            style: "flex: 1;"
                         }
                     },
                 ], [
@@ -682,120 +661,26 @@ export const itemBoxes: Box2 = {
         icon: "captions",
         sections: {
             default: {
-                inputs: [[
+                inputs: splitIntoRows([
                     { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map(a => ({ value: a.id, label: a.name })) } },
                     // this is very limited
                     // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
-                ], [
                     { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },
-                ], [
-                    // label?
                     { id: "", type: "tip", value: "", values: { label: "captions.powered_by", subtext: "CAPTION.Ninja" } }
-                ]]
+                ])
             },
             // WIP custom inputs for the css
             // https://github.com/steveseguin/captionninja?tab=readme-ov-file#changing-the-font-size-and-more
-            CSS: { inputs: [[{ id: "captions.style", type: "textarea", value: "", values: { label: "CSS" } }]] }
+            CSS: {
+                noReset: true,
+                inputs: [[{ id: "captions.style", type: "textarea", value: "", values: { label: "CSS" } }]]
+            }
         }
     },
     icon: {
         icon: "star",
         sections: {
             default: { inputs: [[{ id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.color", allowOpacity: true } }]] }
-        }
-    }
-}
-
-///
-
-// MIRROR is removed
-// // mirror other shows content on the same slide index
-// mirror: {
-//     icon: "mirror",
-//     edit: {
-//         // TODO: select show popup
-//         default: [
-//             { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
-//             { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
-//             { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
-//             { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
-//             { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 }
-//         ]
-//         // template, item index
-//     }
-// },
-export const boxes: Box = {
-    text: {
-        // name: "items.text",
-        icon: "text",
-        edit: {
-            default: []
-        }
-    },
-    media: {
-        icon: "image",
-        edit: {
-            default: [],
-        }
-    },
-    camera: {
-        icon: "camera",
-        edit: {
-            default: []
-        }
-    },
-    timer: {
-        icon: "timer",
-        edit: {
-            default: []
-        }
-    },
-    clock: {
-        icon: "clock",
-        edit: {
-            default: []
-        }
-    },
-    events: {
-        icon: "calendar",
-        edit: {
-            default: []
-        }
-    },
-    web: {
-        icon: "web",
-        edit: {
-            default: []
-        }
-    },
-    slide_tracker: {
-        icon: "percentage",
-        edit: {
-            default: []
-        }
-    },
-    weather: {
-        icon: "cloud",
-        edit: {
-            default: []
-        }
-    },
-    visualizer: {
-        icon: "visualizer",
-        edit: {
-            default: []
-        }
-    },
-    captions: {
-        icon: "captions",
-        edit: {
-            default: []
-        }
-    },
-    icon: {
-        icon: "star",
-        edit: {
-            default: []
         }
     }
 }

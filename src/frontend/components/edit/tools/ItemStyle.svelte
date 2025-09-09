@@ -1,23 +1,21 @@
 <script lang="ts">
-    import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
+    import { wait } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getFilters, getStyles } from "../../helpers/style"
-    import { getBackgroundOpacity, setBackgroundColor } from "../scripts/edit"
-    import { addFilterString, addStyleString } from "../scripts/textStyle"
-    import { itemEdits } from "../values/item"
-    import EditValues from "./EditValues.svelte"
-    import { setBoxInputValue } from "../values/boxes"
     import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
-    import { wait } from "../../../utils/common"
+    import { getStyles } from "../../helpers/style"
+    import { addFilterString, addStyleString } from "../scripts/textStyle"
+    import { setBoxInputValue2 } from "../values/boxes"
+    import { itemSections } from "../values/item"
+    import EditValues2 from "./EditValues2.svelte"
 
     export let allSlideItems: Item[]
     export let item: Item | null
 
-    let itemEditValues = clone(itemEdits)
+    let itemEditValues2 = clone(itemSections)
 
     let data: { [key: string]: string } = {}
 
@@ -27,9 +25,6 @@
         dataChanged()
     }
 
-    // CSS
-    $: if (itemEditValues?.CSS && item?.style) itemEditValues.CSS[0].value = item.style
-
     // $: if (data) dataChanged()
     function dataChanged() {
         // gradient
@@ -37,27 +32,27 @@
         const isGradient = styles.background?.includes("gradient")
         if (isGradient) data["background-color"] = styles.background
 
-        setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
+        // setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
+
+        const transform = data["transform"] || ""
+        const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
+        setBoxInputValue2(itemEditValues2, "transform", "perspective", "hidden", !showPerspective)
 
         data = stylePosToPercentage(data)
     }
 
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
-    $: if (itemBackFilters) getItemFilters()
-    function getItemFilters() {
-        if (!item) return
+    // $: if (itemBackFilters) getItemFilters()
+    // function getItemFilters() {
+    //     if (!item) return
 
-        // update backdrop filters
-        let backdropFilters = getFilters(itemBackFilters || "")
-        let defaultBackdropFilters = itemEditValues.backdrop_filters || []
-        itemEditValues.backdrop_filters.forEach((filter) => {
-            let value = backdropFilters[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
-            let index = itemEditValues.backdrop_filters.findIndex((a) => a.key === filter.key)
-            itemEditValues.backdrop_filters[index].value = value
-        })
-    }
-
-    $: if (item) itemEditValues = getBackgroundOpacity(itemEditValues, data)
+    //     itemEditValues.backdrop_filters?.inputs.forEach((a) => {
+    //         a.flat().forEach((filter) => {
+    //             let value = backdropFilters?.[filter.key || ""]
+    //             if (value) filter.values.value = value
+    //         })
+    //     })
+    // }
 
     async function updateStyle(e: any) {
         let input = e.detail
@@ -69,6 +64,7 @@
             input.key = input.id
         }
 
+        // gradient colors
         if (input.id === "style" && input.key === "background-color") {
             // set "background" value instead of "background-color"
             if (input.value.includes("gradient")) input.key = "background"
@@ -77,12 +73,6 @@
                 updateStyle({ detail: { ...input, key: "background", value: "" } })
                 await wait(10)
             }
-        }
-
-        // background opacity
-        if (input.id === "background-opacity" || (input.value?.toString()?.includes("rgb") && input.key === "background-color")) {
-            input = setBackgroundColor(input, data)
-            setTimeout(() => getBackgroundOpacity(itemEditValues, data), 100)
         }
 
         let allItems: number[] = $activeEdit.items
@@ -175,10 +165,15 @@
         })
     }
 
-    let sessionId = ""
-    if (item) sessionId = uid()
+    function updateStyle2(e: any) {
+        const input = clone(e.detail)
+        input.value = input.values.value
+        input.input = input.type
+
+        if (input.key === "left" || input.key === "top" || input.key === "width" || input.key === "height") input.relative = true
+
+        updateStyle({ detail: input })
+    }
 </script>
 
-{#key item}
-    <EditValues edits={itemEditValues} defaultEdits={clone(itemEdits)} styles={data} {item} on:change={updateStyle} {sessionId} />
-{/key}
+<EditValues2 sections={itemEditValues2} {item} styles={data} on:change={updateStyle2} />

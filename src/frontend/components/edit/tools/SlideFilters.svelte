@@ -27,7 +27,7 @@
         let filters = getFilters(currentSlideData.filter || "")
         let defaultFilters = slideFilters.media?.edit?.filters || []
         edits.filters.forEach((filter) => {
-            let value = filters[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
+            let value = filters?.[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
             let index = edits.filters.findIndex((a) => a.key === filter.key)
             edits.filters[index].value = value
         })
@@ -39,7 +39,7 @@
             let backdropFilters = getFilters(currentSlideData["backdrop-filter"] || "")
             let defaultBackdropFilters = slideFilters.media?.edit?.backdrop_filters || []
             edits.backdrop_filters.forEach((filter) => {
-                let value = backdropFilters[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
+                let value = backdropFilters?.[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
                 let index = edits.backdrop_filters.findIndex((a) => a.key === filter.key)
                 edits.backdrop_filters[index].value = value
             })

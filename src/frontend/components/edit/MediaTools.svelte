@@ -92,7 +92,7 @@
         let filters = getFilters(currentMedia.filter || "")
         let defaultFilters = mediaFilters.media?.edit?.default || []
         filterEdits.default.forEach((filter) => {
-            let value = filters[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
+            let value = filters?.[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
             let index = filterEdits.default.findIndex((a) => a.key === filter.key)
             filterEdits.default[index].value = value
         })

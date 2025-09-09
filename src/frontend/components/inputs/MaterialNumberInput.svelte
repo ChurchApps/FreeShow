@@ -19,10 +19,11 @@
     export let step = 1
     export let min: number | null = 0
     export let max: number | null = null // 1000
+    export let maxDecimals: number = 2
     export let padLength: number = 0
 
     // a string might be passed in
-    $: numberValue = Number(value.toFixed(3))
+    $: numberValue = Number(value.toFixed(maxDecimals))
 
     // Slider values and percent for filled track
     $: sliderMin = sliderValues.min ?? min ?? 0

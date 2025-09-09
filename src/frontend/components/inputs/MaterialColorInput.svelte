@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import { activePopup, popupData, special } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { addOpacityToGradient, getGradientOpacity } from "../edit/scripts/edit"
     import { defaultColors, defaultGradients, getContrast, hexToRgb, rgbToHex, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import Tabs from "../main/Tabs.svelte"
@@ -22,11 +23,17 @@
 
     $: hexValue = getHexValue(value)
     function getHexValue(value: string) {
+        if (value.includes("gradient")) {
+            if (!pickerOpen) opacity = getGradientOpacity(value) * 100
+            return value
+        }
+
         if (value.startsWith("#")) return value
         if (value.includes("rgb")) {
             opacity = splitRgb(value).a * 100
             return rgbToHex(value)
         }
+
         return value
     }
 
@@ -51,11 +58,15 @@
 
     function colorUpdate(color: string) {
         hexValue = color
-
         let actualValue = hexValue
-        if (allowOpacity && opacity < 100 && selectedMode === "normal") {
-            const rgb = hexToRgb(hexValue)
-            actualValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${opacity / 100})`
+
+        if (opacity === 0) opacity = 100
+        if (allowOpacity && opacity < 100) {
+            if (hexValue.includes("gradient")) actualValue = addOpacityToGradient(hexValue, opacity / 100)
+            else {
+                const rgb = hexToRgb(hexValue)
+                actualValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${opacity / 100})`
+            }
         }
 
         return actualValue
@@ -194,6 +205,12 @@
                             on:click={() => selectColor(color.value)}
                         />
                     {/each}
+
+                    {#if allowOpacity}
+                        <div class="opacity">
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
+                        </div>
+                    {/if}
 
                     <MaterialButton
                         style="width: 100%;margin-top: 5px;background: {hexValue} !important;"

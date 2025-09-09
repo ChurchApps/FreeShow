@@ -2,7 +2,7 @@
     import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
-    import { boxes, type EditInput, setBoxInputValue } from "../../edit/values/boxes"
+    import { type EditInput, setBoxInputValue } from "../../edit/values/boxes"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getStyles } from "../../helpers/style"
@@ -31,7 +31,10 @@
     function initEdits() {
         if (!item) return
 
-        edits = clone(boxes[type]?.edit || {})
+        // TODO:
+        // edits = clone(boxes[type]?.edit || {})
+        // { default: [] }
+        return
 
         if (type === "text") {
             setBoxInputValue(edits, "default", "font-family", "value", "Arial")

@@ -4,7 +4,7 @@
     import { getAccess } from "../../utils/profile"
     import { getItemKeys } from "../edit/scripts/itemClipboard"
     import { addStyleString } from "../edit/scripts/textStyle"
-    import { boxes } from "../edit/values/boxes"
+    import { itemBoxes } from "../edit/values/boxes"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
@@ -38,7 +38,7 @@
     $: type = item?.type || "text"
     $: if (type === "slide_text" || type === "slide_notes" || type === "current_output") type = "text"
     $: tabs.text.name = "items." + type
-    $: tabs.text.icon = boxes[type]?.icon || "text"
+    $: tabs.text.icon = itemBoxes[type]?.icon || "text"
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
