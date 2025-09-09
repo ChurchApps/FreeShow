@@ -172,10 +172,12 @@
         let defaultFontSize
         let maxFontSize
 
+        const isTextItem = (item.type || "text") === "text"
+
         if (isStage) {
             type = "growToFit"
         } else {
-            if ((item.type || "text") === "text" && !item.auto) {
+            if (isTextItem && !item.auto) {
                 fontSize = 0
                 return
             }
@@ -191,14 +193,14 @@
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (type === "growToFit") maxFontSize = itemFontSize
+            if (type === "growToFit" && isTextItem) maxFontSize = itemFontSize
         }
 
         let elem = itemElem
         if (!elem) return
 
         let textQuery = ""
-        if ((item.type || "text") === "text") {
+        if (isTextItem) {
             elem = elem.querySelector(".align") as HTMLElement
             textQuery = ".lines .break span"
         } else {

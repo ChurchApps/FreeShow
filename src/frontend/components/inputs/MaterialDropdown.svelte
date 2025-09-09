@@ -278,11 +278,12 @@
     $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title="{translateText(label)}: <b>{selected?.label || '—'}</b>" bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow bind:this={dropdownEl}>
     <div class="background" />
 
     <div
         class="input edit dropdown-trigger"
+        data-title="{translateText(label)}: <b>{selected?.label || '—'}</b>"
         role="button"
         tabindex={disabled ? undefined : 0}
         on:click={(e) => {

@@ -2,10 +2,14 @@
     import { activePopup, popupData } from "../../../stores"
     import Cameras from "../../drawer/live/Cameras.svelte"
 
+    // const active = $popupData.active || ""
+
     function selectCamera({ detail }) {
         let camera = detail.cam
 
-        popupData.set({ ...$popupData, value: camera })
+        if ($popupData.trigger) $popupData.trigger(camera)
+        else popupData.set({ ...$popupData, value: camera })
+
         activePopup.set(null)
     }
 </script>

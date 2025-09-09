@@ -15,7 +15,7 @@
     export let noLabel = false
     export let allowGradients = false
     export let allowOpacity = false
-    export let enableNoColor = false
+    export let allowEmpty = false
     export let disabled = false
     export let height = 0
     export let width = 0
@@ -49,14 +49,20 @@
         pickerOpen = false
     }
 
-    function selectColor(c: string, close: boolean = true) {
-        hexValue = c
+    function colorUpdate(color: string) {
+        hexValue = color
 
         let actualValue = hexValue
         if (allowOpacity && opacity < 100 && selectedMode === "normal") {
             const rgb = hexToRgb(hexValue)
             actualValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${opacity / 100})`
         }
+
+        return actualValue
+    }
+
+    function selectColor(c: string, close: boolean = true) {
+        let actualValue = colorUpdate(c)
 
         dispatch("change", actualValue)
         dispatch("input", actualValue)
@@ -65,13 +71,11 @@
     }
 
     function change(e: any) {
-        hexValue = e.target?.value
-        dispatch("change", hexValue)
+        dispatch("change", colorUpdate(e.target?.value))
     }
 
     function input(e: any) {
-        hexValue = e.target?.value
-        dispatch("input", hexValue)
+        dispatch("input", colorUpdate(e.target?.value))
     }
 
     function reset() {
@@ -111,9 +115,12 @@
         }
     }
 
+    let mounted = false
     let colorElem: HTMLDivElement | undefined
     let isOverflowing = false
     onMount(() => {
+        mounted = true
+
         if (!colorElem) return
         isOverflowing = colorElem.getBoundingClientRect().left + colorElem.clientWidth / 2 + 200 > window.innerWidth
     })
@@ -138,6 +145,8 @@
     let gotUpdate = false
     $: if (opacity) opacityChanged()
     function opacityChanged() {
+        if (!allowOpacity || !mounted) return
+
         if (updated) {
             gotUpdate = true
             return
@@ -197,7 +206,7 @@
                         <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
                     </MaterialButton>
                 {:else}
-                    {#if enableNoColor}
+                    {#if allowEmpty}
                         <div
                             data-value={""}
                             class="pickColor noColor"

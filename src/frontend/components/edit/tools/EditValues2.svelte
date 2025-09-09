@@ -1,25 +1,29 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import { actions, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { clone } from "../../helpers/array"
+    import { mediaExtensions } from "../../../values/extensions"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { getFilters } from "../../helpers/style"
     import Input from "../../input/Input.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialFontDropdown from "../../inputs/MaterialFontDropdown.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import type { EditBoxSection, EditInput2 } from "../values/boxes"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
 
     export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
     export let customValues: { [key: string]: string } = {}
-    // export let defaultSections: any = {}
     export let item: any = {}
-
-    $: console.log(sections)
 
     function getValue(input: EditInput2, _updater: any = null) {
         if (input.type === "toggle") return styles[input.key || ""] || ""
         if (input.type === "radio") return customValues[input.key || ""] || ""
+        if (input.id.includes("CSS")) return getStyleString(input)
 
         // if (input.id === "auto" && isAuto) return true
         // if (input.id?.includes(".")) input.value = getItemValue(input)
@@ -32,15 +36,51 @@
         const defaultValue = input.value
 
         let value: any = null
-        if (input.key) value = styles[input.key || ""] ?? defaultValue
-        else value = input.values.value ?? item[input.id] ?? defaultValue
+        if (input.id === "filter" || input.id === "backdrop-filter") value = (item?.filter ? getFilters(item.filter || "")[input.key || ""] : "") || input.value
+        else if (input.key) {
+            value = styles[input.key || ""]
+            if (input.valueIndex !== undefined) value = value?.split(" ")[input.valueIndex]
+            if (input.extension && value !== "") value = Number(value?.replace(input.extension, ""))
+        } else if (input.values.value !== undefined) {
+            value = input.values.value
+        } else {
+            const parts = input.id.split(".")
+            if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
+            else value = item[input.id]
+        }
 
-        if (input.type === "number") value = Number(value)
+        if (input.type === "number") {
+            if (value === "") value = undefined
+            else value = Number(value)
+            if (isNaN(value)) value = undefined
+        }
+        if (value === undefined) value = defaultValue
 
         if (input.multiplier) value *= input.multiplier
 
+        // pre 1.5.0 dropdowns
+        if (input.type === "fontDropdown") value = value.replaceAll("'", "")
+
         return value
     }
+
+    function getStyleString(input: EditInput2) {
+        let style = ""
+        if (input.id === "CSS_item") style = item?.style || ""
+        else if (typeof input.value === "string") style = input.values?.value // "CSS_text" / custom
+
+        if (!style) return ""
+
+        // sort alphabetically
+        let split = style.split(";").filter((a) => a)
+        let sorted = split.sort((a, b) => a.localeCompare(b))
+        style = sorted.join(";") + ";"
+
+        style = style.replaceAll(";", ";\n").replaceAll(": ", ":").replaceAll(":", ": ").trim()
+        return style
+    }
+
+    // CHANGE
 
     function toggle(input: any) {
         let value = styles[input.key || ""] || ""
@@ -62,17 +102,53 @@
     }
 
     const dispatch = createEventDispatcher()
-    function changed(e: any, input: any) {
+    function changed(e: any, input: any, sectionId: string = "") {
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier
         if (input.extension) value += input.extension
 
-        console.log("UPDATE", value, input)
+        if (input.valueIndex !== undefined) {
+            if (sections[sectionId]) {
+                const allKeyValues = sections[sectionId]?.inputs.flat().filter((a) => a.key === input.key)
+                const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
+                const fullValues = sortedKeys.map((a) => {
+                    let value = getValue(a)
+                    if (a.extension) value += a.extension
+                    return value
+                })
+                fullValues[input.valueIndex] = value
+                value = fullValues.join(" ")
+            } else {
+                // reset
+                value = ""
+            }
+        }
+
         input.values.value = value
-        dispatch("change", clone(input))
+        valueChanged(input)
 
         input.values.value = e.detail
+    }
+
+    // throttle output (max 20 updates per second)
+    let updateQueue: { [key: string]: any } = {}
+    function valueChanged(input: any) {
+        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
+        let exists = updateQueue[inputKey] !== undefined
+        updateQueue[inputKey] = clone(input)
+        if (exists) return
+
+        dispatch("change", updateQueue[inputKey])
+        updateQueue[inputKey] = "UPDATED"
+
+        setTimeout(() => {
+            if (updateQueue[inputKey] !== "UPDATED") {
+                dispatch("change", updateQueue[inputKey])
+            }
+
+            delete updateQueue[inputKey]
+        }, 50)
     }
 
     function hasChangedValues(id, _updater: any) {
@@ -95,56 +171,112 @@
         const currentValue = getValue(input)
 
         if (input.type === "toggle") {
-            return currentValue?.includes(defaultValue)
+            return !currentValue?.includes(defaultValue)
         }
 
         if (input.multiplier) defaultValue *= input.multiplier
 
-        if (currentValue !== defaultValue) console.log(input, currentValue, defaultValue) // DEBUG
         return currentValue === defaultValue
     }
 
     function resetSection(id: string) {
         sections[id].inputs.forEach((inputRow, rowIndex) => {
             inputRow.forEach((input) => {
-                let defaultValue = sections[id].defaultValues?.[rowIndex] ?? input.value
+                const customDefaultValue = sections[id].defaultValues?.[rowIndex]
+                if (isDefaultValue(input, customDefaultValue)) return
 
+                let defaultValue = customDefaultValue ?? input.value
+
+                if (input.type === "toggle") defaultValue = ""
                 if (input.type === "radio" && input.value !== defaultValue) return
 
                 if (input.multiplier) defaultValue *= input.multiplier
 
-                console.log(input, defaultValue)
-                changed({ detail: defaultValue }, input)
+                // without timeout only last change will take effect as item don't get to update first
+                setTimeout(() => changed({ detail: defaultValue }, input))
             })
         })
 
-        // toggleSection(id)
+        if (sections[id].expandAutoValue) setTimeout(() => toggleSection(id))
     }
 
     let openedSections: string[] = []
     function toggleSection(id: string) {
         const activeIndex = openedSections.indexOf(id)
-        if (activeIndex < 0) openedSections.push(id)
-        else openedSections.splice(activeIndex, 1)
+        if (activeIndex < 0) {
+            if (sections[id].expandAutoValue) {
+                Object.entries(sections[id].expandAutoValue).forEach(([key, value]) => {
+                    const input = clone(sections[id].inputs.flat().find((a) => a.id === key || a.key === key))
+                    if (!input) return
+
+                    if (input.valueIndex !== undefined) {
+                        delete input.valueIndex
+                        delete input.extension
+                    }
+
+                    changed({ detail: value }, input, id)
+                })
+            }
+
+            openedSections.push(id)
+        } else {
+            openedSections.splice(activeIndex, 1)
+        }
 
         openedSections = openedSections
     }
 
     $: sectionValues = Object.entries(sections)
+
+    /// colors
+    const sectionColors = {
+        font: "#f079b4",
+        align: "#f079b2",
+        text: "#e490c9",
+        lines: "#ffb6e7",
+        list: "#a16adb",
+        outline: "#d8d8d8",
+        shadow: "#9e9e9e",
+        chords: "#ffbe86",
+        scrolling: "#ceffbe",
+        special: "#e9e495"
+    }
+
+    ///
+
+    const optionsLists = {
+        timers: sortByName(keysToID($timers)).map((a) => ({ value: a.id, label: a.name })),
+        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
+    }
+    function getOptions(options: string | any[]): any[] {
+        if (typeof options === "string") return optionsLists[options] || []
+        return options
+    }
+
+    function getValues(input: any) {
+        const values = clone(input.values)
+        if (input.type === "dropdown") values.options = getOptions(values.options)
+        return values
+    }
 </script>
 
 <div class="tools">
     {#each sectionValues as [id, section]}
-        {@const hasChanged = hasChangedValues(id, { styles, item })}
+        {@const hasChanged = id === "CSS" ? false : hasChangedValues(id, { styles, item })}
         {@const expanded = id === "default" || openedSections.includes(id)}
 
-        <div class="section">
+        <div class="section" style={expanded ? "margin-bottom: 3px;" : ""}>
             {#if id !== "default"}
                 <div class="title">
                     <MaterialButton style="width: 100%;{hasChanged ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged} on:click={() => toggleSection(id)}>
                         <span style="display: flex;gap: 8px;align-items: center;">
-                            <Icon {id} white />
-                            <p>{translateText("edit." + id)}</p>
+                            {#if id === "CSS"}
+                                <Icon id="code" white />
+                                <p>CSS</p>
+                            {:else}
+                                <Icon {id} style="color: {sectionColors[id]};" white />
+                                <p>{translateText("edit." + id)}</p>
+                            {/if}
                         </span>
 
                         {#if hasChanged}
@@ -152,7 +284,8 @@
                                 <Icon id="reset" size={0.8} white />
                             </MaterialButton>
                         {:else}
-                            <Icon id="arrow_back_modern" class={expanded ? "open" : ""} size={0.6} style="opacity: 0.5;" white />
+                            <!-- paste / edit -->
+                            <Icon id={section.expandAutoValue && !expanded ? "add" : "arrow_back_modern"} class="arrow {expanded ? 'open' : ''}" size={section.expandAutoValue && !expanded ? 0.9 : 0.6} style="opacity: 0.5;" white />
                         {/if}
                     </MaterialButton>
                 </div>
@@ -164,28 +297,34 @@
                         {#each inputRow as input}
                             {#if !input.hidden}
                                 {@const value = getValue(input, { styles, item })}
+                                {@const values = getValues(input)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown
-                                        label={input.values.label}
-                                        {value}
-                                        style={input.values.style}
-                                        fontStyleValue={input.styleValue}
-                                        on:change={(e) => changed(e, input)}
-                                        on:fontStyle={(e) => changed(e, { ...input, key: "font" })}
-                                    />
+                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} />
                                 {:else if input.type === "toggle"}
-                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(input.values.label)} on:click={() => toggle(input)}>
-                                        <Icon id={input.values.icon} size={1.2} white />
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => toggle(input)}>
+                                        <Icon id={values.icon} size={1.2} white />
                                         <div class="highlight" class:active={value.includes(input.value)}></div>
                                     </MaterialButton>
                                 {:else if input.type === "radio"}
-                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(input.values.label)} on:click={() => radio(input)}>
-                                        <Icon id={input.values.icon} size={1.2} white />
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => radio(input)}>
+                                        <Icon id={values.icon} size={1.2} white />
                                         <div class="highlight radio" class:active={value === input.value}></div>
                                     </MaterialButton>
+                                {:else if input.type === "textarea"}
+                                    <MaterialTextarea label={values.label} {value} on:change={(e) => changed(e, input, id)} />
+                                {:else if input.type === "media"}
+                                    <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                {:else if input.type === "popup"}
+                                    <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                {:else if input.type === "tip"}
+                                    <p class="tip">
+                                        {#if values.label}{translateText(values.label)}{/if}
+                                        {@html input.values?.subtext || ""}
+                                        {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
+                                    </p>
                                 {:else}
-                                    <Input input={{ type: input.type, value, ...input.values }} on:change={(e) => changed(e, input)} />
+                                    <Input input={{ type: input.type, ...values, value }} on:change={(e) => changed(e, input, id)} />
                                 {/if}
                             {/if}
                         {/each}
@@ -202,7 +341,8 @@
 
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        /* gap: 5px; */
+        gap: 2px;
     }
 
     .title {
@@ -227,10 +367,11 @@
         opacity: 1;
     }
 
-    .title :global(svg) {
+    .title :global(svg.arrow) {
         transition: 0.1s transform ease;
+        transform: rotate(180deg);
     }
-    .title :global(svg.open) {
+    .title :global(svg.arrow.open) {
         transform: rotate(-90deg);
     }
 
@@ -266,5 +407,35 @@
         background-color: var(--secondary);
 
         box-shadow: 0 0 3px rgb(255 255 255 / 0.2);
+    }
+
+    /* tip */
+
+    .tip {
+        font-size: 0.8em;
+        opacity: 0.8;
+        padding: 8px;
+
+        text-align: center;
+        text-overflow: revert;
+        white-space: normal;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    /* Link */
+    .tip :global(a) {
+        color: var(--text);
+        opacity: 0.7;
+    }
+    .tip :global(a):hover {
+        opacity: 0.75;
+    }
+    .tip :global(a):active {
+        opacity: 0.9;
     }
 </style>

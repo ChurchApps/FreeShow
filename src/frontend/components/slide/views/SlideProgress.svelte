@@ -5,6 +5,7 @@
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
+    export let item: any = {}
     export let autoSize = 0
 
     let type: "number" | "bar" | "group" = "number"
@@ -45,13 +46,13 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <div class="autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
+        <div class="align autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{(item?.align || '').replaceAll('text-align', 'justify-content')}"><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
     {:else if type === "bar"}
         <!-- progress bar -->
         <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
-        <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
+        <div class="align groups autoFontSize" class:column style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
@@ -85,6 +86,14 @@
         height: 100%;
         background-color: var(--accent);
         transition: width 0.5s;
+    }
+
+    .align {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        outline: none !important;
     }
 
     .groups {

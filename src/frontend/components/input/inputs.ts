@@ -4,9 +4,11 @@ import MidiValues from "../actions/MidiValues.svelte"
 import RestValues from "../actions/RestValues.svelte"
 import { clone, sortByName } from "../helpers/array"
 import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
+import MaterialDatePicker from "../inputs/MaterialDatePicker.svelte"
 import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
 import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
 import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+import MaterialTimePicker from "../inputs/MaterialTimePicker.svelte"
 
 // [DEFAULT] IN: value= OUT=on:change
 export const commonInputs = {
@@ -15,6 +17,8 @@ export const commonInputs = {
     number: MaterialNumberInput,
     dropdown: MaterialDropdown,
     color: MaterialColorInput,
+    date: MaterialDatePicker,
+    time: MaterialTimePicker,
 
     midi: MidiValues,
     rest: RestValues,

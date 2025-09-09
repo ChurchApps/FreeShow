@@ -1,6 +1,5 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
 
     export let checked: boolean = false
@@ -34,7 +33,7 @@
 <div
     style={$$props.style || null}
     class="checkboxfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}"
-    data-title={translateText(title)}
+    data-title={translateText(title || label)}
     role="checkbox"
     aria-checked={checkedValue}
     tabindex={disabled ? undefined : 0}
@@ -48,7 +47,7 @@
 
     <label for={id} class="checkbox-label">
         <div class="custom-checkbox" aria-hidden="true"></div>
-        {@html translateText(label, $dictionary)}
+        {@html translateText(label)}
 
         {#if data}
             <span class="data">{data}</span>
@@ -97,7 +96,7 @@
 
     .checkbox-label {
         position: relative;
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: var(--text);
         opacity: 0.9;
         z-index: 1;
@@ -107,6 +106,11 @@
         gap: 0.75rem;
         width: 100%;
         pointer-events: none; /* prevents clicks on label text directly */
+
+        white-space: nowrap;
+        /* text-overflow: ellipsis;
+        overflow: hidden;
+        max-width: 100px; */
     }
 
     .custom-checkbox {

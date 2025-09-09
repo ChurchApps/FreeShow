@@ -3,6 +3,7 @@ import extendedFormat from "dayjs/plugin/advancedFormat"
 import localizedFormat from "dayjs/plugin/localizedFormat"
 import type { ItemType } from "./../../../../types/Show"
 import { captionLanguages } from "./captionLanguages"
+import { clone } from "../../helpers/array"
 
 // Initialize plugins
 dayjs.extend(localizedFormat)
@@ -64,8 +65,8 @@ export function setBoxInputValue2(box: BoxContent2, sectionId: string, inputId: 
     const keyIndex = inputs.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
     if (keyIndex < 0) return
 
-    if (key === "value") {
-        inputs[keyIndex].values.value = value
+    if (key === "value" || key === "name" || key === "disabled") {
+        inputs[keyIndex].values[key] = value
     } else {
         inputs[keyIndex][key] = value
     }
@@ -77,6 +78,12 @@ export const mediaFitOptions: any[] = [
     { id: "fill", name: "media.fill" },
     { id: "blur", name: "media.blur_fill" }
     // { id: "scale-down", name: "Scale down" },
+]
+export const mediaFitOptions2: any[] = [
+    { value: "contain", label: "media.contain" },
+    { value: "cover", label: "media.cover" },
+    { value: "fill", label: "media.fill" },
+    { value: "blur", label: "media.blur_fill" }
 ]
 
 export const trackerEdits = [
@@ -118,14 +125,17 @@ export type EditBoxSection = {
     // openApplyValue?: boolean // show apply value button
     inputs: EditInput2[][]
     defaultValues?: any[]
+    expandAutoValue?: { [key: string]: any }
 }
 export type EditInput2 = {
     id: string
     key?: string
+    valueIndex?: number // css key subvalue (e.g. box-shadow)
     type: string
     value: string | number | boolean
     values: { [key: string]: any }
     hidden?: boolean
+    disabled?: boolean
 
     // special
     extension?: string
@@ -133,11 +143,17 @@ export type EditInput2 = {
     multiplier?: number // number input
 }
 
+///
+
 const alignX =
     [
         { id: "style", key: "text-align", type: "radio", value: "left", values: { label: "edit.left", icon: "alignLeft" } },
         { id: "style", key: "text-align", type: "radio", value: "center", values: { label: "edit.center", icon: "alignCenter" } },
         { id: "style", key: "text-align", type: "radio", value: "right", values: { label: "edit.right", icon: "alignRight" } },
+    ]
+const alignTextX =
+    [
+        ...alignX,
         { id: "style", key: "text-align", type: "radio", value: "justify", values: { label: "edit.justify", icon: "alignJustify" } }
     ]
 const alignY =
@@ -149,7 +165,8 @@ const alignY =
 
 const textSections: { [key: string]: EditBoxSection } = {
     default: {
-        // openApplyValue:
+        // WIP icon color..?
+
         inputs: [
             [
                 { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 4;" } },
@@ -160,13 +177,12 @@ const textSections: { [key: string]: EditBoxSection } = {
                 {
                     id: "textFit",
                     type: "dropdown",
-                    value: "",
+                    value: "none",
                     values: {
                         // label: "edit.text_fit",
                         label: "edit.auto_size",
                         options: [
-                            // { value: "default", label: "example.default" },
-                            { value: "", label: "main.none" },
+                            { value: "none", label: "main.none" },
                             { value: "shrinkToFit", label: "edit.shrink_to_fit" },
                             { value: "growToFit", label: "edit.grow_to_fit" }
                         ],
@@ -183,8 +199,8 @@ const textSections: { [key: string]: EditBoxSection } = {
         ]
     },
     align: {
-        inputs: [alignX, alignY],
-        defaultValues: ["center", "center"]
+        defaultValues: ["center", "center"],
+        inputs: [alignTextX, alignY],
     },
     text: {
         inputs: [
@@ -223,533 +239,563 @@ const textSections: { [key: string]: EditBoxSection } = {
                 { id: "specialStyle.lineGap", type: "number", value: 0, values: { label: "edit.line_spacing", max: 500 } }
             ],
             [
-                { id: "specialStyle.lineBg", type: "color", value: "", values: { label: "edit.background_color", allowGradients: true, allowOpacity: true, enableNoColor: true, noLabel: true } }
+                { id: "specialStyle.lineBg", type: "color", value: "", values: { label: "edit.background_color", allowGradients: true, allowOpacity: true, allowEmpty: true, noLabel: true } }
                 // { id: "specialStyle.opacity", type: "number", value: 1, values: { label: "edit.background_opacity", step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } }
             ],
             [{ id: "specialStyle.lineRadius", type: "number", value: 0, values: { label: "edit.line_radius", max: 100 } }]
         ]
+    },
+    list: {
+        expandAutoValue: {
+            "list.enabled": true
+        },
+        inputs: [
+            [{ id: "list.enabled", type: "checkbox", value: false, values: { label: "edit.list" } }],
+            [
+                {
+                    type: "dropdown",
+                    id: "list.style",
+                    value: "disc",
+                    values: {
+                        label: "edit.style",
+                        options: [
+                            // common
+                            { value: "disc", label: "list.disc" },
+                            { value: "circle", label: "list.circle" },
+                            { value: "square", label: "list.square" },
+                            { value: "disclosure-closed", label: "list.disclosure-closed" },
+                            { value: "disclosure-open", label: "list.disclosure-open" },
+                            // numbers
+                            { value: "decimal", label: "list.decimal" },
+                            { value: "decimal-leading-zero", label: "list.decimal-leading-zero" },
+                            // alpha
+                            { value: "lower-alpha", label: "list.lower-alpha" }, // same as latin
+                            { value: "upper-alpha", label: "list.upper-alpha" }, // same as latin
+                            { value: "lower-roman", label: "list.lower-roman" },
+                            { value: "upper-roman", label: "list.upper-roman" },
+                            { value: "lower-greek", label: "list.lower-greek" }
+                            // special
+                            // {value: "bengali", label: "list.bengali" },
+                            // {value: "cambodian", label: "list.cambodian" },
+                            // {value: "devanagari", label: "list.devanagari" },
+                        ]
+                    }
+                }
+            ]
+        ]
+    },
+    outline: {
+        expandAutoValue: {
+            "-webkit-text-stroke-width": 2
+        },
+        inputs: [
+            [
+                { id: "style", key: "-webkit-text-stroke-width", type: "number", value: 0, extension: "px", values: { label: "edit.width", max: 100, style: "flex: 4;" } },
+                { id: "style", key: "-webkit-text-stroke-color", type: "color", value: "#000000", values: { label: "edit.color", allowOpacity: true, noLabel: true, style: "flex: 1;" } }
+            ]
+        ]
+    },
+    shadow: {
+        expandAutoValue: {
+            "text-shadow": "0 0 0 #000000"
+        },
+        inputs: [
+            [
+                { id: "style", key: "text-shadow", valueIndex: 2, type: "number", value: 10, extension: "px", values: { label: "edit.blur", style: "flex: 4;" } },
+                { id: "style", key: "text-shadow", valueIndex: 3, type: "color", value: "#000000", values: { label: "edit.color", allowOpacity: true, noLabel: true, style: "flex: 1;" } }
+            ],
+            [
+                { id: "style", key: "text-shadow", valueIndex: 0, type: "number", value: 2, extension: "px", values: { label: "edit.offsetX", min: -1000 } },
+                { id: "style", key: "text-shadow", valueIndex: 1, type: "number", value: 2, extension: "px", values: { label: "edit.offsetY", min: -1000 } }
+            ]
+        ]
+    },
+    chords: {
+        expandAutoValue: {
+            "chords.enabled": true
+        },
+        inputs: [
+            [{ id: "chords.enabled", type: "checkbox", value: false, values: { label: "edit.chords" } }],
+            [
+                { id: "chords.size", type: "number", value: 60, values: { label: "edit.size", style: "flex: 4;" } },
+                { id: "chords.color", type: "color", value: "#FF851B", values: { label: "edit.color", allowOpacity: true, noLabel: true, style: "flex: 1;" } }
+            ],
+            [{ id: "chords.offsetY", type: "number", value: 0, values: { label: "edit.vertical_offset", min: -1000 } }]
+        ]
+    },
+    scrolling: {
+        expandAutoValue: {
+            "scrolling.type": "right_left"
+        },
+        inputs: [
+            [
+                {
+                    id: "scrolling.type",
+                    type: "dropdown",
+                    value: "none",
+                    values: {
+                        label: "edit.scrolling",
+                        options: [
+                            { value: "none", label: "main.none" },
+                            { value: "top_bottom", label: "edit.top_bottom" },
+                            { value: "bottom_top", label: "edit.bottom_top" },
+                            { value: "left_right", label: "edit.left_right" },
+                            { value: "right_left", label: "edit.right_left" }
+                        ]
+                    }
+                }
+            ],
+            [{ id: "scrolling.speed", type: "number", value: 30, values: { label: "edit.scrolling_speed", min: 1, max: 100 } }]
+        ]
+    },
+    special: {
+        inputs: [[{ id: "button.press", type: "dropdown", value: "", values: { label: "edit.press_action", options: "actions", allowEmpty: true } }], [{ id: "button.release", type: "dropdown", value: "", values: { label: "edit.release_action", options: "actions", allowEmpty: true } }]]
+    },
+    CSS: {
+        inputs: [[{ id: "CSS_text", type: "textarea", value: "", values: { label: "CSS" } }]]
     }
 }
+
+// WIP same as media.ts mediaFilters
+export const filterSection = [[
+    { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },
+], [
+    { id: "filter", key: "invert", type: "number", value: 0, multiplier: 10, values: { label: "filter.invert", defaultValue: 0, max: 10, showSlider: true } },
+], [
+    { id: "filter", key: "blur", type: "number", value: 0, extension: "px", values: { label: "filter.blur", defaultValue: 0, max: 100, showSlider: true, sliderValues: { max: 50 } } },
+], [
+    { id: "filter", key: "grayscale", type: "number", value: 0, multiplier: 10, values: { label: "filter.grayscale", defaultValue: 0, max: 10, showSlider: true } },
+], [
+    { id: "filter", key: "sepia", type: "number", value: 0, multiplier: 10, values: { label: "filter.sepia", defaultValue: 0, max: 10, showSlider: true } },
+], [
+    { id: "filter", key: "brightness", type: "number", value: 1, multiplier: 10, values: { label: "filter.brightness", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
+], [
+    { id: "filter", key: "contrast", type: "number", value: 1, multiplier: 10, values: { label: "filter.contrast", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
+], [
+    { id: "filter", key: "saturate", type: "number", value: 1, multiplier: 10, values: { label: "filter.saturate", defaultValue: 10, max: 100, showSlider: true, sliderValues: { max: 20 } } },
+], [
+    { id: "filter", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "filter.opacity", defaultValue: 100, step: 10, max: 100, showSlider: true, sliderValues: { step: 1 } } }
+]]
+
+const mediaSections: { [key: string]: EditBoxSection } = {
+    default: {
+        inputs: [
+            [
+                { id: "src", type: "media", value: "", values: { label: "items.media" } },
+            ], [
+                { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions2 } },
+                // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
+            ], [
+                { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
+            ], [
+                { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
+            ], [
+                { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
+            ], [
+                { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+            ], [
+                { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
+            ],
+            // WIP crop image
+            // object-position: 20px 20px;
+            // transform: scale(1.2) translate(0, 5%);
+        ]
+    },
+    filters: {
+        inputs: filterSection
+    },
+}
+
+///
+
+function eventText(defaultSection: any) {
+    const defaultTextSection = clone(textSections.default)
+
+    return clone({
+        default: defaultSection,
+        font: defaultTextSection,
+        // align: textSections.align,
+        text: textSections.text,
+        lines: textSections.lines,
+        outline: textSections.outline,
+        shadow: textSections.shadow,
+        CSS: textSections.CSS,
+    })
+}
+
+function nonTextboxTextStyle(defaultSection: EditBoxSection) {
+    const defaultTextSection = clone(textSections.default)
+    defaultTextSection.inputs[1][1].value = "growToFit"
+    defaultTextSection.inputs[1][1].values.options.splice(1, 1)
+    defaultTextSection.inputs[0][1].values.allowGradients = false
+    // defaultTextSection.inputs[1][0].disabled = "auto"
+
+    const letterSpacing = { id: "style", key: "letter-spacing", type: "number", value: 0, values: { label: "edit.letter_spacing", max: 100, min: -300 }, extension: "px" }
+
+    return clone({
+        default: defaultSection,
+        font: defaultTextSection,
+        align: { defaultValues: ["center"], inputs: [alignX] },
+        text: { inputs: [[letterSpacing]] },
+        outline: textSections.outline,
+        shadow: textSections.shadow,
+        CSS: textSections.CSS,
+    })
+}
+
+///
 
 export const itemBoxes: Box2 = {
     text: {
         // name: "items.text",
         icon: "text",
         sections: textSections
+    },
+    media: {
+        icon: "image",
+        sections: mediaSections
+    },
+    web: {
+        icon: "web",
+        sections: {
+            default: {
+                inputs: [[
+                    { id: "web.src", type: "string", value: "", values: { label: "inputs.url" } },
+                ], [
+                    { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } }
+                ]]
+            }
+        }
+    },
+    timer: {
+        icon: "timer",
+        sections: {
+            ...nonTextboxTextStyle({
+                inputs: [[
+                    { id: "timer.id", type: "dropdown", value: "", values: { label: "items.timer", options: "timers" } },
+                ], [
+                    {
+                        id: "timer.viewType",
+                        type: "dropdown",
+                        value: "time",
+                        values: {
+                            label: "clock.type",
+                            options: [
+                                { value: "time", label: "timer.time" },
+                                { value: "line", label: "timer.line" },
+                                { value: "circle", label: "list.circle" }
+                            ]
+                        }
+                    },
+                ], [
+                    { id: "timer.circleMask", type: "checkbox", value: false, values: { label: "timer.mask", } },
+                ], [
+                    { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours", } }
+                ]]
+            }),
+        }
+    },
+    clock: {
+        icon: "clock",
+        sections: {
+            ...(nonTextboxTextStyle({
+                inputs: [[
+                    {
+                        id: "clock.type",
+                        type: "dropdown",
+                        value: "digital",
+                        values: {
+                            label: "clock.type",
+                            options: [
+                                { value: "digital", label: "clock.digital" },
+                                { value: "analog", label: "clock.analog" },
+                                { value: "custom", label: "clock.custom" }
+                            ]
+                        }
+                    },
+                ], [
+                    {
+                        id: "clock.dateFormat",
+                        type: "dropdown",
+                        value: "none",
+                        hidden: true,
+                        values: {
+                            label: "sort.date",
+                            options: [
+                                { value: "none", label: "main.none" },
+                                { value: "LL", label: `${dayjs(now).format("LL")}` }, // January 10, 2025
+                                { value: "ll", label: `${dayjs(now).format("ll")}` }, // Jan 10, 2025
+                                { value: "DD/MM/YYYY", label: `${dayjs(now).format("DD/MM/YYYY")}` }, // 10/01/2025
+                                { value: "MM/DD/YYYY", label: `${dayjs(now).format("MM/DD/YYYY")}` }, // 01/10/2025
+                                { value: "YYYY-MM-DD", label: `${dayjs(now).format("YYYY-MM-DD")}` } // 2025-01-10
+                            ]
+                        }
+                    },
+                ], [
+                    {
+                        id: "clock.showTime",
+                        type: "checkbox",
+                        value: true,
+                        values: {
+                            label: "clock.show_time",
+                        },
+                        hidden: true
+                    },
+                ], [
+                    {
+                        id: "clock.seconds",
+                        type: "checkbox",
+                        value: false,
+                        values: {
+                            label: "clock.seconds",
+                        },
+                        hidden: true
+                    },
+                ], [
+                    {
+                        id: "clock.customFormat",
+                        type: "string",
+                        value: "hh:mm a",
+                        hidden: true,
+                        values: {
+                            label: "actions.format",
+                            title: "Day: {DD}, Month: {MM}, Full year: {YYYY}, Hours: {hh}, Minutes: {mm}, Seconds: {ss}, AM/PM: {A}, Full date: {LLL}", // similar to getProjectName()
+                            defaultValue: "hh:mm a",
+                            placeholder: "E.g.: LT, LLLL, MMMM D YYYY h:mm A",
+                        },
+                    },
+                ], [
+                    {
+                        id: "tip",
+                        type: "tip",
+                        hidden: true,
+                        value: "",
+                        values: {
+                            label: "",
+                            subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>',
+                        },
+                    }]]
+            }))
+        }
+    },
+    camera: {
+        icon: "camera",
+        sections: {
+            default: {
+                inputs: [[
+                    { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
+                ], [
+                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions2.filter((a) => a.value !== "blur") } },
+                ], [
+                    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+                ], [
+                    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
+                ]]
+            }
+        }
+    },
+    slide_tracker: {
+        icon: "percentage",
+        sections: {
+            ...(nonTextboxTextStyle({
+                inputs: [[
+                    {
+                        id: "tracker.type",
+                        type: "dropdown",
+                        value: "number",
+                        values: {
+                            label: "clock.type",
+                            options: [
+                                { value: "number", label: "$:variables.number:$" },
+                                { value: "bar", label: "$:edit.progress_bar:$" },
+                                { value: "group", label: "$:tools.groups:$" }
+                            ],
+                        }
+                    },
+                ], [
+                    {
+                        id: "tracker.accent",
+                        type: "color",
+                        value: "#F0008C",
+                        values: {
+                            label: "edit.accent_color",
+                            allowEmpty: true
+                        }
+                    },
+                ], [
+                    { type: "checkbox", id: "tracker.childProgress", value: false, values: { label: "edit.sub_indexes" } },
+                ], [
+                    { type: "checkbox", id: "tracker.oneLetter", value: false, values: { label: "edit.one_letter" } }
+                ]]
+            }))
+        }
+    },
+    events: {
+        icon: "calendar",
+        sections: {
+            ...eventText({
+                inputs: [[
+                    { id: "events.maxEvents", type: "number", value: 5, values: { label: "edit.max_events", max: 20 } },
+                ], [
+                    { id: "events.startDaysFromToday", type: "number", value: 0, values: { label: "edit.start_days_from_today", max: 10000 } },
+                ], [
+                    { id: "events.justOneDay", type: "checkbox", value: false, values: { label: "edit.just_one_day" } },
+                ], [
+                    { id: "events.enableStartDate", type: "checkbox", value: false, values: { label: "edit.enable_start_date" } },
+                ], [
+                    { id: "events.startDate", type: "date", hidden: true, value: "", values: { label: "calendar.from_date" } },
+                    { id: "events.startTime", type: "time", hidden: true, value: "", values: { label: "calendar.from_time" } }
+                ]]
+            }),
+        }
+    },
+    weather: {
+        icon: "cloud",
+        sections: {
+            default: {
+                inputs: [[
+                    { id: "weather.size", type: "number", value: 100, values: { label: "edit.size", min: 0, max: 200 } },
+                ], [
+                    { id: "weather.latitude", type: "number", value: 0, values: { label: "edit.latitude", min: -90, max: 90 } },
+                    { id: "weather.longitude", type: "number", value: 0, values: { label: "edit.longitude", min: -180, max: 180 } },
+                    // {  id: "weather.altitude", type: "number", value: 0, values: { label: "edit.altitude", max: 5000 } },
+                ], [
+                    { id: "weather.useFahrenheit", type: "checkbox", value: false, values: { label: "edit.fahrenheit", } },
+                ], [
+                    { id: "weather.longRange", type: "checkbox", value: false, values: { label: "edit.longRange", } }
+                ]]
+            }
+        }
+    },
+    visualizer: {
+        icon: "visualizer",
+        sections: {
+            default: {
+                inputs: [[
+                    { id: "visualizer.padding", type: "number", value: 0, values: { label: "edit.padding", style: "flex: 4;" } },
+                    { id: "visualizer.color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } },
+                ]]
+            }
+        }
+    },
+    captions: {
+        icon: "captions",
+        sections: {
+            default: {
+                inputs: [[
+                    { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map(a => ({ value: a.id, label: a.name })) } },
+                    // this is very limited
+                    // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
+                ], [
+                    { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },
+                ], [
+                    // label?
+                    { id: "", type: "tip", value: "", values: { label: "captions.powered_by", subtext: "CAPTION.Ninja" } }
+                ]]
+            },
+            // WIP custom inputs for the css
+            // https://github.com/steveseguin/captionninja?tab=readme-ov-file#changing-the-font-size-and-more
+            CSS: { inputs: [[{ id: "captions.style", type: "textarea", value: "", values: { label: "CSS" } }]] }
+        }
+    },
+    icon: {
+        icon: "star",
+        sections: {
+            default: { inputs: [[{ id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.color", allowOpacity: true } }]] }
+        }
     }
 }
 
+///
+
+// MIRROR is removed
+// // mirror other shows content on the same slide index
+// mirror: {
+//     icon: "mirror",
+//     edit: {
+//         // TODO: select show popup
+//         default: [
+//             { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
+//             { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
+//             { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
+//             { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
+//             { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 }
+//         ]
+//         // template, item index
+//     }
+// },
 export const boxes: Box = {
     text: {
         // name: "items.text",
         icon: "text",
         edit: {
-            default: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF", values: { allowGradients: true } },
-                { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" },
-                { name: "auto_size", id: "auto", input: "checkbox", value: false },
-                {
-                    name: "text_fit",
-                    id: "textFit",
-                    input: "dropdown",
-                    value: "shrinkToFit",
-                    values: {
-                        options: [
-                            { id: "shrinkToFit", name: "$:edit.shrink_to_fit:$" },
-                            { id: "growToFit", name: "$:edit.grow_to_fit:$" }
-                        ]
-                    }
-                },
-                { input: "font-style" }
-            ],
-            align: [{ input: "align-x" }, { input: "align-y" }],
-            text: [
-                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -300 }, extension: "px" },
-                { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100, max: 200 }, extension: "px" },
-                {
-                    name: "text_transform",
-                    input: "dropdown",
-                    id: "style",
-                    key: "text-transform",
-                    value: "none",
-                    values: {
-                        options: [
-                            { id: "none", name: "$:main.none:$" },
-                            { id: "uppercase", name: "$:edit.uppercase:$" },
-                            { id: "lowercase", name: "$:edit.lowercase:$" },
-                            { id: "capitalize", name: "$:edit.capitalize:$" }
-                        ]
-                    }
-                },
-                // probably not needed as we have line and item background color
-                // { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
-                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false }
-            ],
-            lines: [
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 2, inputMultiplier: 10 }, extension: "em" },
-                { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
-                { name: "line_radius", id: "specialStyle.lineRadius", input: "number", value: 0, values: { max: 100 } },
-                { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { allowGradients: true, enableNoColor: true } },
-                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } }
-            ],
-            list: [
-                { name: "list", id: "list.enabled", input: "checkbox", value: false },
-                {
-                    name: "style",
-                    input: "dropdown",
-                    id: "list.style",
-                    value: "disc",
-                    values: {
-                        options: [
-                            // common
-                            { id: "disc", name: "$:list.disc:$" },
-                            { id: "circle", name: "$:list.circle:$" },
-                            { id: "square", name: "$:list.square:$" },
-                            { id: "disclosure-closed", name: "$:list.disclosure-closed:$" },
-                            { id: "disclosure-open", name: "$:list.disclosure-open:$" },
-                            // numbers
-                            { id: "decimal", name: "$:list.decimal:$" },
-                            { id: "decimal-leading-zero", name: "$:list.decimal-leading-zero:$" },
-                            // alpha
-                            { id: "lower-alpha", name: "$:list.lower-alpha:$" }, // same as latin
-                            { id: "upper-alpha", name: "$:list.upper-alpha:$" }, // same as latin
-                            { id: "lower-roman", name: "$:list.lower-roman:$" },
-                            { id: "upper-roman", name: "$:list.upper-roman:$" },
-                            { id: "lower-greek", name: "$:list.lower-greek:$" }
-                            // special
-                            // {id: "bengali", name: "$:list.bengali:$" },
-                            // {id: "cambodian", name: "$:list.cambodian:$" },
-                            // {id: "devanagari", name: "$:list.devanagari:$" },
-                        ]
-                    },
-                    // disabled: "list.interval", // WIP still disabled when set back to 0
-                    hidden: true
-                }
-                // { name: "one_at_a_time", id: "one_at_a_time", input: "checkbox", value: false },
-                // { name: "interval", id: "list.interval", input: "number", value: 0, hidden: true }, // slide timers can be user for this
-            ],
-            outline: [
-                { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
-            ],
-            shadow: [
-                { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-                { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
-            ],
-            chords: [
-                { name: "chords", id: "chords.enabled", input: "checkbox", value: false },
-                { name: "color", id: "chords.color", input: "color", value: "#FF851B", hidden: true },
-                { name: "size", id: "chords.size", input: "number", value: 60, hidden: true },
-                { name: "vertical_offset", id: "chords.offsetY", input: "number", value: 0, values: { min: -1000 }, hidden: true }
-            ],
-            special: [
-                {
-                    name: "scrolling",
-                    input: "dropdown",
-                    id: "scrolling.type",
-                    value: "none",
-                    values: {
-                        options: [
-                            { id: "none", name: "$:main.none:$" },
-                            { id: "top_bottom", name: "$:edit.top_bottom:$" },
-                            { id: "bottom_top", name: "$:edit.bottom_top:$" },
-                            { id: "left_right", name: "$:edit.left_right:$" },
-                            { id: "right_left", name: "$:edit.right_left:$" }
-                        ]
-                    }
-                },
-                { name: "scrolling_speed", id: "scrolling.speed", input: "number", value: 30, values: { min: 1, max: 100 } },
-                { name: "press_action", id: "button.press", input: "action", value: "" },
-                { name: "release_action", id: "button.release", input: "action", value: "" }
-            ],
-            CSS: [{ id: "text", input: "CSS" }]
-        }
-    },
-    // list has moved to textbox, but some might still have the old item
-    list: {
-        icon: "list",
-        edit: {
-            default: [
-                { name: "edit_list", input: "popup", popup: "edit_list", id: "list.items", icon: "list" },
-                {
-                    name: "style",
-                    input: "dropdown",
-                    id: "list.style",
-                    value: "disc",
-                    values: {
-                        options: [
-                            // common
-                            { id: "disc", name: "$:list.disc:$" },
-                            { id: "circle", name: "$:list.circle:$" },
-                            { id: "square", name: "$:list.square:$" },
-                            { id: "disclosure-closed", name: "$:list.disclosure-closed:$" },
-                            { id: "disclosure-open", name: "$:list.disclosure-open:$" },
-                            // numbers
-                            { id: "decimal", name: "$:list.decimal:$" },
-                            { id: "decimal-leading-zero", name: "$:list.decimal-leading-zero:$" },
-                            // alpha
-                            { id: "lower-alpha", name: "$:list.lower-alpha:$" }, // same as latin
-                            { id: "upper-alpha", name: "$:list.upper-alpha:$" }, // same as latin
-                            { id: "lower-roman", name: "$:list.lower-roman:$" },
-                            { id: "upper-roman", name: "$:list.upper-roman:$" },
-                            { id: "lower-greek", name: "$:list.lower-greek:$" }
-                            // special
-                            // {id: "bengali", name: "$:list.bengali:$" },
-                            // {id: "cambodian", name: "$:list.cambodian:$" },
-                            // {id: "devanagari", name: "$:list.devanagari:$" },
-                        ]
-                    },
-                    disabled: "list.interval"
-                },
-                // { name: "one_at_a_time", id: "one_at_a_time", input: "checkbox", value: false },
-                { name: "interval", id: "list.interval", input: "number", value: 0 }
-            ]
+            default: []
         }
     },
     media: {
         icon: "image",
         edit: {
-            default: [
-                { id: "src", input: "media" },
-                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
-                // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
-                { name: "actions.mute", id: "muted", input: "checkbox", value: false }, // , hidden: true
-                { name: "media._loop", id: "loop", input: "checkbox", value: true },
-                { name: "media.speed", id: "speed", input: "number", slider: true, value: 1, values: { min: 0.1, max: 15, step: 0.1, decimals: 1, fixed: 1 } },
-                { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
-                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
-                // WIP crop image
-                // object-position: 20px 20px;
-                // transform: scale(1.2) translate(0, 5%);
-            ],
-            // same as media.ts mediaFilters
-            filters: [
-                { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", slider: true, value: 0, values: { max: 360, step: 5 }, sliderValues: { step: 1 }, extension: "deg" },
-                { name: "filter.invert", id: "filter", key: "invert", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.blur", id: "filter", key: "blur", input: "number", slider: true, value: 0, values: { max: 100 }, extension: "px", sliderValues: { max: 50 } },
-                { name: "filter.grayscale", id: "filter", key: "grayscale", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.sepia", id: "filter", key: "sepia", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.brightness", id: "filter", key: "brightness", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
-                { name: "filter.contrast", id: "filter", key: "contrast", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
-                { name: "filter.saturate", id: "filter", key: "saturate", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { max: 2 } },
-                { name: "filter.opacity", id: "filter", key: "opacity", input: "number", slider: true, value: 1, values: { max: 1, step: 0.1, decimals: 2, inputMultiplier: 100 }, sliderValues: { step: 0.01 } }
-            ]
-            // shadow: [
-            //   { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-            //   { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-            //   { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-            //   { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
-            // ],
+            default: [],
         }
     },
     camera: {
         icon: "camera",
         edit: {
-            default: [
-                { name: "choose_camera", id: "device", input: "popup", popup: "choose_camera", icon: "camera" },
-                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions.filter((a) => a.id !== "blur") } },
-                { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
-                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false }
-            ]
+            default: []
         }
     },
     timer: {
         icon: "timer",
         edit: {
-            default: [
-                { id: "timer.id", input: "editTimer" },
-                {
-                    name: "clock.type",
-                    input: "dropdown",
-                    id: "timer.viewType",
-                    value: "time",
-                    values: {
-                        options: [
-                            { id: "time", name: "$:timer.time:$" },
-                            { id: "line", name: "$:timer.line:$" },
-                            { id: "circle", name: "$:list.circle:$" }
-                        ]
-                    }
-                },
-                { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
-                { name: "timer.hours", id: "timer.showHours", input: "checkbox", value: true }
-            ],
-            // font: [
-            //     { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-            //     { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-            // ],
-            // style: [
-            //     { input: "font-style" }
-            //     { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }
-            // ],
-
-            font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
-                { name: "auto_size", id: "auto", input: "checkbox", value: true },
-                { input: "font-style" }
-            ],
-            align: [{ input: "align-x" }], // , { input: "align-y" }
-            style: [
-                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" }
-                // { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", values: { enableNoColor: true } },
-                // { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
-            ],
-
-            outline: [
-                { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
-            ],
-            shadow: [
-                { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-                { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
-            ],
-            CSS: [{ id: "text", input: "CSS" }]
+            default: []
         }
     },
     clock: {
         icon: "clock",
         edit: {
-            default: [
-                {
-                    name: "clock.type",
-                    input: "dropdown",
-                    id: "clock.type",
-                    value: "digital",
-                    values: {
-                        options: [
-                            { id: "digital", name: "$:clock.digital:$" },
-                            { id: "analog", name: "$:clock.analog:$" },
-                            { id: "custom", name: "$:clock.custom:$" }
-                        ]
-                    }
-                },
-                {
-                    name: "sort.date",
-                    input: "dropdown",
-                    id: "clock.dateFormat",
-                    value: "none",
-                    hidden: true,
-                    values: {
-                        options: [
-                            { id: "none", name: "$:main.none:$" },
-                            { id: "LL", name: `${dayjs(now).format("LL")}` }, // January 10, 2025
-                            { id: "ll", name: `${dayjs(now).format("ll")}` }, // Jan 10, 2025
-                            { id: "DD/MM/YYYY", name: `${dayjs(now).format("DD/MM/YYYY")}` }, // 10/01/2025
-                            { id: "MM/DD/YYYY", name: `${dayjs(now).format("MM/DD/YYYY")}` }, // 01/10/2025
-                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` } // 2025-01-10
-                        ]
-                    }
-                },
-                {
-                    name: "clock.show_time",
-                    input: "checkbox",
-                    id: "clock.showTime",
-                    value: true,
-                    hidden: true
-                },
-                {
-                    name: "clock.seconds",
-                    input: "checkbox",
-                    id: "clock.seconds",
-                    value: false,
-                    hidden: true
-                },
-                {
-                    name: "actions.format",
-                    title: "Day: {DD}, Month: {MM}, Full year: {YYYY}, Hours: {hh}, Minutes: {mm}, Seconds: {ss}, AM/PM: {A}, Full date: {LLL}", // similar to getProjectName()
-                    input: "text",
-                    id: "clock.customFormat",
-                    value: "hh:mm a",
-                    hidden: true
-                    // input_placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
-                },
-                {
-                    name: "",
-                    input: "tip",
-                    values: { subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>' },
-                    hidden: true,
-                    disabled: "clock"
-                }
-            ],
-            font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }
-            ],
-            style: [{ input: "font-style" }, { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }],
-            outline: [
-                { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
-            ],
-            shadow: [
-                { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-                { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
-            ],
-            CSS: [{ id: "text", input: "CSS" }]
+            default: []
         }
     },
     events: {
         icon: "calendar",
         edit: {
-            default: [
-                { name: "max_events", id: "events.maxEvents", input: "number", value: 5, values: { max: 20 } },
-                { name: "start_days_from_today", id: "events.startDaysFromToday", disabled: "events.enableStartDate", input: "number", value: 0, values: { max: 10000 } },
-                { name: "just_one_day", id: "events.justOneDay", input: "checkbox", value: false },
-                { name: "enable_start_date", id: "events.enableStartDate", input: "checkbox", value: false },
-                { name: "calendar.from_date", id: "events.startDate", hidden: true, input: "date" },
-                { name: "calendar.from_time", id: "events.startTime", hidden: true, input: "time" }
-            ],
-            font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "size", id: "style", key: "font-size", input: "number", value: 80, extension: "px" } // , disabled: "item.autoSize"
-                // { name: "auto_size", id: "auto", input: "checkbox", value: false },
-            ],
-            text: [
-                { input: "font-style" },
-                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 0.9, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
-                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
-                { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
-                {
-                    name: "text_transform",
-                    input: "dropdown",
-                    id: "style",
-                    key: "text-transform",
-                    value: "none",
-                    values: {
-                        options: [
-                            { id: "none", name: "$:main.none:$" },
-                            { id: "uppercase", name: "$:edit.uppercase:$" },
-                            { id: "lowercase", name: "$:edit.lowercase:$" },
-                            { id: "capitalize", name: "$:edit.capitalize:$" }
-                        ]
-                    }
-                }
-            ],
-            // align: [{ input: "align-x" //, value: "left" }, { input: "align-y" }],
-            outline: [
-                { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" }
-            ],
-            shadow: [
-                { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-                { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" }
-            ],
-            CSS: [{ id: "text", input: "CSS" }]
-        }
-    },
-    // variable has moved to textbox, but some might still have the old item
-    variable: {
-        icon: "variable",
-        edit: {
-            default: [
-                {
-                    name: "popup.variable",
-                    input: "selectVariable",
-                    id: "variable.id",
-                    value: ""
-                }
-            ]
+            default: []
         }
     },
     web: {
         icon: "web",
         edit: {
-            default: [
-                { name: "inputs.url", id: "web.src", input: "text", value: "" },
-                { name: "disable_navigation", id: "web.noNavigation", input: "checkbox", value: false }
-            ]
-        }
-    },
-    // mirror other shows content on the same slide index
-    mirror: {
-        icon: "mirror",
-        edit: {
-            // TODO: select show popup
-            default: [
-                { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
-                { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
-                { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
-                { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
-                { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 }
-            ]
-            // template, item index
+            default: []
         }
     },
     slide_tracker: {
         icon: "percentage",
         edit: {
-            default: trackerEdits,
-            font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
-                { name: "auto_size", id: "auto", input: "checkbox", value: false },
-                { input: "font-style" }
-            ]
+            default: []
         }
     },
     weather: {
         icon: "cloud",
         edit: {
-            default: [
-                { name: "size", id: "weather.size", input: "number", value: 100, values: { min: 0, max: 200 } },
-                { name: "latitude", id: "weather.latitude", input: "number", value: 0, values: { min: -90, max: 90, decimals: 2, fixed: 2 } },
-                { name: "longitude", id: "weather.longitude", input: "number", value: 0, values: { min: -180, max: 180, decimals: 2, fixed: 2 } },
-                // { name: "altitude", id: "weather.altitude", input: "number", value: 0, values: { max: 5000 } },
-                { name: "fahrenheit", id: "weather.useFahrenheit", input: "checkbox", value: false },
-                { name: "longRange", id: "weather.longRange", input: "checkbox", value: false }
-            ]
+            default: []
         }
     },
     visualizer: {
         icon: "visualizer",
         edit: {
-            default: [
-                { name: "color", id: "visualizer.color", input: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
-                { name: "padding", id: "visualizer.padding", input: "number", value: 0 }
-            ]
+            default: []
         }
     },
     captions: {
         icon: "captions",
         edit: {
-            default: [
-                { name: "captions.language", id: "captions.language", input: "dropdown", value: "en-US", values: { options: captionLanguages } },
-                // this is very limited
-                // { name: "captions.translate", id: "captions.translate", input: "dropdown", value: "en-US", values: { options: captionTranslateLanguages } },
-                { name: "captions.showtime", id: "captions.showtime", input: "number", value: 5, values: { min: 1, max: 60 } },
-                // label?
-                { name: "captions.powered_by", values: { subtext: "CAPTION.Ninja" }, input: "tip" }
-            ],
-            // WIP custom inputs for the css
-            // https://github.com/steveseguin/captionninja?tab=readme-ov-file#changing-the-font-size-and-more
-            CSS: [{ id: "captions.style", input: "CSS" }]
+            default: []
         }
     },
     icon: {
         icon: "star",
         edit: {
-            default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }]
+            default: []
         }
     }
-    // item: {
-    //   icon: "item",
-    //   edit: {
-    //     element: [{
-
-    //     }]
-    //   }
-    // }
 }

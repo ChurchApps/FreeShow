@@ -81,13 +81,13 @@
 {:else if item.type === "timer"}
     <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} {edit} />
 {:else if item.type === "clock"}
-    <Clock autoSize={edit ? autoSize : fontSize} style={false} {...item.clock} />
+    <Clock {item} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
         <Cam cam={item.device} item style={cameraStyleString} />
     {/if}
 {:else if item.type === "slide_tracker"}
-    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} />
+    <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} />
 {:else if item.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item.type === "weather"}
