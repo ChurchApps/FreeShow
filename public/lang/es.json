@@ -1224,6 +1224,7 @@
         "never": "Nunca",
         "minutes": "minutos",
         "use24hClock": "Usar reloj de 24 horas",
+        "firstDayOfWeek": "Primer día de semana",
         "styles_hint": "Cree diferentes estilos que se puedan aplicar a la salida para cambiar la apariencia.",
         "outputs_hint": "Cree múltiples ventanas de salida, colóquelas en pantallas externas o envíe una captura de pantalla.",
         "hide_output_hint": "Doble clic en la ventana de salida para ocultarla. Mantenga Ctrl para habilitar el arrastre.",
@@ -1571,6 +1572,8 @@
         "artistUrl": "Página del artista"
     },
     "guide_title": {
+        "regional": "Regional",
+        "interface": "Interfaz",
         "projects": "Proyectos",
         "project": "Proyecto",
         "drawer": "El Cajón",

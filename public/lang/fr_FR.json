@@ -821,6 +821,7 @@
         "never": "Jamais",
         "minutes": "minutes",
         "use24hClock": "Utiliser horloge 24h",
+        "firstDayOfWeek": "Premier jour de la semaine",
         "styles_hint": "Créer des mises en forme qui peuvent s'appliquer à la sortie pour changer son apparence.",
         "hide_output_hint": "Double click sur la fenêtre de sortie pour la masquer. Maintenir CTRL pour permettre le glisser-déposer. ",
         "hide_menubar_hint": "Pour cacher la barre de menu, activer le Mode Kiosque ou pour MacOS dans les préférences générale activer \"Cacher ou montrer automatiquement la barre de menu\".",

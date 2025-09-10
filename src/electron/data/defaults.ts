@@ -35,6 +35,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     autoOutput: false,
     autosave: "never",
     timeFormat: "24",
+    firstDayOfWeek: "mon",
     remotePassword: "",
     ports: { remote: 5510, stage: 5511 },
     disabledServers: {},

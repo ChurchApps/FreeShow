@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, timeFormat } from "../../../stores"
+    import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, firstDayOfWeek, timeFormat } from "../../../stores"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
     import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
@@ -49,10 +49,25 @@
 
         return strings.join(`<span style="opacity: 0.4;">|</span>`)
     }
+
+    const firstDayOfWeekList = [
+        { value: "sun", label: $dictionary.weekday?.[7] || "Sunday"},
+        { value: "mon", label: $dictionary.weekday?.[1] || "Monday"},
+    ]
 </script>
+
+<!-- REGIONAL -->
+
+<Title label="guide_title.regional" icon="web" />
 
 <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
 <MaterialToggleSwitch label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
+<MaterialDropdown label="settings.firstDayOfWeek" value={$firstDayOfWeek} defaultValue="mon" options={firstDayOfWeekList} on:change={(e) => firstDayOfWeek.set(e.detail)} />
+
+<!-- USER INTERFACE -->
+
+<Title label="guide_title.interface" icon="show" />
+
 <MaterialToggleSwitch label="settings.disable_labels" checked={$labelsDisabled} defaultValue={false} on:change={(e) => labelsDisabled.set(e.detail)} />
 
 <!-- PROJECT -->

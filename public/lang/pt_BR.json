@@ -1224,6 +1224,7 @@
         "never": "Nunca",
         "minutes": "minutos",
         "use24hClock": "Usar relógio de 24 horas",
+        "firstDayOfWeek": "Primeiro dia da semana",
         "styles_hint": "Cria estilos diferentes que podem ser aplicados à saída para alterar a aparência.",
         "outputs_hint": "Cria múltiplas janelas de saída, posicione-as em telas externas ou envia uma captura de tela.",
         "hide_output_hint": "Clique duas vezes na janela de saída para ocultá-la. Segure CTRL para permitir mover.",
@@ -1571,6 +1572,8 @@
         "artistUrl": "Página do artista"
     },
     "guide_title": {
+        "regional": "Regional",
+        "interface": "Interface",
         "projects": "Projetos",
         "project": "Projeto",
         "drawer": "Drawer",

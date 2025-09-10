@@ -61,6 +61,7 @@ import {
     showRecentlyUsedProjects,
     showsPath,
     slidesOptions,
+    firstDayOfWeek,
     sorted,
     special,
     styles,
@@ -265,6 +266,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     serverData: (v: any) => serverData.set(v),
     autosave: (v: any) => autosave.set(v),
     timeFormat: (v: any) => timeFormat.set(v),
+    firstDayOfWeek: (v: any) => firstDayOfWeek.set(v),
     outputs: (v: any) => {
         Object.keys(v).forEach((id: string) => {
             delete v[id].out

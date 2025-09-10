@@ -1007,6 +1007,7 @@
         "never": "Mai",
         "minutes": "minuti",
         "use24hClock": "Usa il formato 24 ore",
+        "firstDayOfWeek": "Primo giorno della settimana",
         "styles_hint": "Crea stili diversi che possono essere applicati all'output per cambiare l'aspetto.",
         "hide_output_hint": "Fare doppio clic sulla finestra di output per nasconderla. Tieni premuto CTRL per abilitare il trascinamento.",
         "hide_menubar_hint": "Per nascondere la barra dei menu, attiva la modalità kiosk o attiva \"Nascondi o mostra automaticamente la barra dei menu\" nelle impostazioni generali di MacOS.",

@@ -279,6 +279,7 @@ export const special: Writable<any> = writable({}) // {}
 export const language: Writable<string> = writable("en") // get locale
 export const autosave: Writable<string> = writable("never") // "never"
 export const timeFormat: Writable<string> = writable("24") // "24"
+export const firstDayOfWeek: Writable<string> = writable("mon") // false
 export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false
 export const labelsDisabled: Writable<boolean> = writable(false) // false
@@ -401,6 +402,7 @@ export const $ = {
     language,
     direction: localeDirection,
     timeFormat,
+    firstDayOfWeek,
     alertUpdates,
     autoOutput,
     labelsDisabled,

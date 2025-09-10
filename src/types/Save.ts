@@ -45,6 +45,7 @@ export type SaveListSettings =
     | "autoOutput"
     | "autosave"
     | "timeFormat"
+    | "firstDayOfWeek"
     | "showsPath"
     | "dataPath"
     | "lockedOverlays"

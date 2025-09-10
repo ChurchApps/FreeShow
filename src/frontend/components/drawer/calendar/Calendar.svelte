@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData } from "../../../stores"
+    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData, firstDayOfWeek } from "../../../stores"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -15,7 +15,7 @@
     // WIP search for events
     $: console.log(searchValue)
 
-    let sundayFirstDay = false
+    let sundayFirstDay = ($firstDayOfWeek == "sun" ? true : false) // Use settings value
 
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())

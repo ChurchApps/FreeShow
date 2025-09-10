@@ -1219,6 +1219,7 @@
         "never": "Never",
         "minutes": "minutes",
         "use24hClock": "Use 24-hour clock",
+        "firstDayOfWeek": "First day of week",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
         "outputs_hint": "Create multiple output windows, position them on external screens, or send a screen capture.",
         "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
@@ -1572,6 +1573,8 @@
         "artistUrl": "Artist page"
     },
     "guide_title": {
+        "regional": "Regional",
+        "interface": "Interface",
         "projects": "Projects",
         "project": "Project",
         "drawer": "The Drawer",

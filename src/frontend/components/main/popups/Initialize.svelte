@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, dictionary, guideActive, language, showsPath, timeFormat } from "../../../stores"
+    import { activePopup, dataPath, dictionary, guideActive, language, showsPath, firstDayOfWeek, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -40,6 +40,11 @@
 
     $: languageText = translateText("settings.language", $dictionary)
     $: languageLabel = `${languageText}${languageText === "Language" ? "" : "/Language"}`
+
+    const firstDayOfWeekList = [
+        { value: "sun", label: $dictionary.weekday?.[7] || "Sunday"},
+        { value: "mon", label: $dictionary.weekday?.[1] || "Monday"},
+    ]
 </script>
 
 <MaterialButton style="inset-inline-end: 0;" class="popup-options" icon="import" iconSize={1.3} title="setup.restore_data" disabled={!$showsPath} on:click={restore} white />
@@ -55,6 +60,7 @@
     <InputRow>
         <MaterialDropdown style="width: 50%;" label={languageLabel} value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
         <MaterialToggleSwitch style="width: 50%;" label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
+         <MaterialDropdown label="settings.firstDayOfWeek" value={$firstDayOfWeek} defaultValue="mon" options={firstDayOfWeekList} on:change={(e) => firstDayOfWeek.set(e.detail)} />
     </InputRow>
 
     <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={(e) => dataPath.set(e.detail)} openButton={false} />
