@@ -1362,6 +1362,7 @@
     "calendar": {
         "type": "Type",
         "event": "Event",
+        "first_day": "First day of week",
         "schedule_action": "Schedule action",
         "name": "Name",
         "color": "Color",
