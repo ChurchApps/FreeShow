@@ -1239,7 +1239,7 @@
         "reset_theme": "Reset témy",
         "reset_themes": "Reset tém",
         "capitalize_words": "Kapitalizovať slová",
-        "comma_seperated": "Oddelené čiarkou",
+        "comma_separated": "Oddelené čiarkou",
         "backup_all": "Zálohovať všetko",
         "restore": "Obnoviť",
         "backup_started": "Zálohuje sa ...",
@@ -1408,7 +1408,7 @@
     "interval": {
         "daily": "Denne",
         "weekly": "Týždenne",
-        "mothly": "Mesačne"
+        "monthly": "Mesačne"
     },
     "info": {
         "created": "Vytvorené",

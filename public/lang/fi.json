@@ -1199,7 +1199,7 @@
         "reset_theme": "Palauta teema",
         "reset_themes": "Palauta teemat",
         "capitalize_words": "Kirjoita sanat isoilla alkukirjaimilla",
-        "comma_seperated": "Erota pilkulla",
+        "comma_separated": "Erota pilkulla",
         "backup_all": "Varmuuskopioi kaikki",
         "restore": "Palauta",
         "backup_started": "Varmuuskopioidaan...",
@@ -1361,7 +1361,7 @@
     "interval": {
         "daily": "Päivittäin",
         "weekly": "Viikoittain",
-        "mothly": "Kuukausittain"
+        "monthly": "Kuukausittain"
     },
     "info": {
         "created": "Luotu",

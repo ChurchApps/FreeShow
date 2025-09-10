@@ -1322,7 +1322,7 @@
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",
         "capitalize_words": "Szavak nagybetűsítése",
-        "comma_seperated": "Vesszővel elválasztva",
+        "comma_separated": "Vesszővel elválasztva",
         "backup_all": "Teljes biztonsági mentés",
         "backup_info": "Ez nem vonatkozik a helyi szövegfájlokra és médiafájlokra, mivel azok a rendszerén találhatók.",
         "restore": "Visszaállítás",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "Napi",
         "weekly": "Heti",
-        "mothly": "Havi"
+        "monthly": "Havi"
     },
     "effect": {
         "stars": "Csillagok",

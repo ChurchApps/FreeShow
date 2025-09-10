@@ -1210,7 +1210,7 @@
         "reset_theme": "Resetuj motyw",
         "reset_themes": "Resetuj wszystkie motywy",
         "capitalize_words": "Słowa pisane wielkimi literami",
-        "comma_seperated": "Oddzielone przecinkiem",
+        "comma_separated": "Oddzielone przecinkiem",
         "backup_all": "Stwórz kopię zapasową",
         "restore": "Odtwórz kopię zapasową",
         "backup_started": "Zapisywanie kopii...",
@@ -1377,7 +1377,7 @@
     "interval": {
         "daily": "Dziennie",
         "weekly": "Tygodniowo",
-        "mothly": "Miesięcznie"
+        "monthly": "Miesięcznie"
     },
     "info": {
         "created": "Utworzony",

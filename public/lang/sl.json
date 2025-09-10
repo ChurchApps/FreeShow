@@ -1322,7 +1322,7 @@
         "reset_theme": "Ponastavi temo",
         "reset_themes": "Ponastavi teme",
         "capitalize_words": "Z velikimi začetnicami",
-        "comma_seperated": "Ločeno z vejico",
+        "comma_separated": "Ločeno z vejico",
         "backup_all": "Varnostno kopiraj vse",
         "backup_info": "To ne vključuje krajevnih datotek spisov in predstavnosti, saj se nahajajo na vašem računalniku.",
         "restore": "Obnovi",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "Dnevno",
         "weekly": "Tedensko",
-        "mothly": "Mesečno"
+        "monthly": "Mesečno"
     },
     "effect": {
         "stars": "Zvezde",

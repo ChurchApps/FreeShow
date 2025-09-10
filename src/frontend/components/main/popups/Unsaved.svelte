@@ -17,7 +17,7 @@
         }
     }
 
-    // auto close after X seconds if $errorHasOccured??
+    // auto close after X seconds if $errorHasOccurred??
 </script>
 
 <svelte:window on:keydown={keydown} />

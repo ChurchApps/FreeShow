@@ -1310,7 +1310,7 @@
         "reset_theme": "Thema opnieuw instellen",
         "reset_themes": "Thema's opnieuw instellen",
         "capitalize_words": "Woorden kapitaliseren",
-        "comma_seperated": "Gescheiden door komma's",
+        "comma_separated": "Gescheiden door komma's",
         "backup_all": "Maak een back-up van alles",
         "backup_info": "Dit geldt niet voor lokale geschriften en mediabestanden, omdat deze zich op je systeem bevinden.",
         "restore": "Herstel",
@@ -1492,7 +1492,7 @@
     "interval": {
         "daily": "Dagelijks",
         "weekly": "Wekelijks",
-        "mothly": "Maandelijks"
+        "monthly": "Maandelijks"
     },
     "effect": {
         "stars": "Sterren",

@@ -1,6 +1,7 @@
 import path, { join } from "path"
+// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the declaration exists)
 import protobufjs from "protobufjs"
-// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
+// @ts-ignore
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import MDBReader from "mdb-reader"

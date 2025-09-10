@@ -332,7 +332,7 @@ const initalOutputData = {
     DRAW_TOOL: { data: "drawTool" },
     DRAW_SETTINGS: "drawSettings",
 
-    VIZUALISER_DATA: "visualizerData",
+    VISUALIZER_DATA: "visualizerData",
     MEDIA: "media",
     EFFECTS: "effects",
     TIMERS: "timers",

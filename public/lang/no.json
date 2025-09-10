@@ -1322,7 +1322,7 @@
         "reset_theme": "Tilbakestill tema",
         "reset_themes": "Tilbakestill temaer",
         "capitalize_words": "Endre til stor forbokstav",
-        "comma_seperated": "Separer med komma",
+        "comma_separated": "Separer med komma",
         "backup_all": "Sikkerhetskopier alt",
         "backup_info": "Dette ekskluderer lokale Bibler og mediefiler ettersom de ligger på systemet ditt.",
         "restore": "Gjenopprett",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "Daglig",
         "weekly": "Ukentlig",
-        "mothly": "Månedlig"
+        "monthly": "Månedlig"
     },
     "effect": {
         "stars": "Stjerner",

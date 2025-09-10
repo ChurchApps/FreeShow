@@ -1322,7 +1322,7 @@
         "reset_theme": "重置主题",
         "reset_themes": "重置主题",
         "capitalize_words": "单词首字母大写",
-        "comma_seperated": "用逗号分隔",
+        "comma_separated": "用逗号分隔",
         "backup_all": "全部备份",
         "backup_info": "本地经文及媒体文件除外（因存储于本地系统）",
         "restore": "恢复",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "每天",
         "weekly": "每周",
-        "mothly": "每月"
+        "monthly": "每月"
     },
     "effect": {
         "stars": "星标",

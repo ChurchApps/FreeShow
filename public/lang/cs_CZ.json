@@ -1322,7 +1322,7 @@
         "reset_theme": "Resetovat téma",
         "reset_themes": "Resetovat témata",
         "capitalize_words": "Zkapitalizovat slova",
-        "comma_seperated": "Odděleno čárkou",
+        "comma_separated": "Odděleno čárkou",
         "backup_all": "Zálohovat všechno",
         "backup_info": "Toto vylučuje místní Bible a soubory médií, jelikož se nachází na vašem zařízení.",
         "restore": "Obnovit",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "Denní",
         "weekly": "Týdenní",
-        "mothly": "Měsíční"
+        "monthly": "Měsíční"
     },
     "effect": {
         "stars": "Hvězdy",

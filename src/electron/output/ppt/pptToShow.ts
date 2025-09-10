@@ -1,5 +1,5 @@
 import path from 'path'
-// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
+// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the declaration exists)
 import PPTX2Json from "pptx2json"
 import { createFolder, dataFolderNames, writeFile } from "../../utils/files"
 

@@ -57,7 +57,7 @@
         { value: "never", label: translateText("settings.never") },
         { value: "daily", label: translateText("interval.daily") },
         { value: "weekly", label: translateText("interval.weekly") },
-        { value: "mothly", label: translateText("interval.mothly") }
+        { value: "monthly", label: translateText("interval.monthly") }
     ]
 
     // RESET

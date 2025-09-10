@@ -1310,7 +1310,7 @@
         "reset_theme": "Repor tema",
         "reset_themes": "Repor temas",
         "capitalize_words": "Capitalizar palavras",
-        "comma_seperated": "Separado por vírgula",
+        "comma_separated": "Separado por vírgula",
         "backup_all": "Backup de tudo",
         "backup_info": "Isto não inclui Bíblias locais & arquivos de multimédia, já que estes estão localizados no seu dispositivo.",
         "restore": "Restaurar",
@@ -1492,7 +1492,7 @@
     "interval": {
         "daily": "Diariamente",
         "weekly": "Semanalmente",
-        "mothly": "Mensalmente"
+        "monthly": "Mensalmente"
     },
     "effect": {
         "stars": "Estrelas",

@@ -1112,7 +1112,7 @@
         "reset_theme": "Resetați tema",
         "reset_themes": "Resetați temele",
         "capitalize_words": "Scrieți cuvintele cu majuscule",
-        "comma_seperated": "Despărțite prin virgulă",
+        "comma_separated": "Despărțite prin virgulă",
         "backup_all": "Faceți backup pentru tot",
         "restore": "Resetaurare",
         "backup_started": "Se face backup...",
@@ -1270,7 +1270,7 @@
     "interval": {
         "daily": "Zilnic",
         "weekly": "Săptămânal",
-        "mothly": "Lunar"
+        "monthly": "Lunar"
     },
     "info": {
         "created": "Creat",

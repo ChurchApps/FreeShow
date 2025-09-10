@@ -154,6 +154,6 @@ export function timeAgo(time: number) {
 export function getTimeFromInterval(interval) {
     if (interval === "daily") return 86400000
     if (interval === "weekly") return 604800000
-    if (interval === "mothly") return 2592000000
+    if (interval === "monthly") return 2592000000
     return 0
 }

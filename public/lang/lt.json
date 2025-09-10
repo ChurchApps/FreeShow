@@ -1281,7 +1281,7 @@
         "reset_theme": "Atstatyti apipavidalinimą",
         "reset_themes": "Atstatyti apipavidalinimus",
         "capitalize_words": "Rašyti šiuos žodžius didžiąja raide",
-        "comma_seperated": "Seperated by comma",
+        "comma_separated": "Separated by comma",
         "backup_all": "Daryti visų duomenų atsarginę kopiją",
         "restore": "Atkurti",
         "backup_started": "Daroma atsarginė kopija...",
@@ -1460,7 +1460,7 @@
     "interval": {
         "daily": "Kas dieną",
         "weekly": "Kas savaitę",
-        "mothly": "Kas mėnesį"
+        "monthly": "Kas mėnesį"
     },
     "effect": {
         "stars": "Žvaigždės",

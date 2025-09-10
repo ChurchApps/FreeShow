@@ -1318,7 +1318,7 @@
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
         "capitalize_words": "Capitalize words",
-        "comma_seperated": "Seperated by comma",
+        "comma_separated": "Separated by comma",
         "backup_all": "Backup everything",
         "backup_info": "This excludes local scriptures & media files as they are located on your system.",
         "restore": "Restore",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "Daily",
         "weekly": "Weekly",
-        "mothly": "Monthly"
+        "monthly": "Monthly"
     },
     "effect": {
         "stars": "Stars",

@@ -1281,7 +1281,7 @@
         "reset_theme": "Temayı sıfırla",
         "reset_themes": "Temaları sıfırla",
         "capitalize_words": "Kelimeleri büyük harfle yaz",
-        "comma_seperated": "Virgül ile ayrılmış",
+        "comma_separated": "Virgül ile ayrılmış",
         "backup_all": "Her şeyi yedekle",
         "restore": "Eski haline getir",
         "backup_started": "Yedekleniyor...",
@@ -1460,7 +1460,7 @@
     "interval": {
         "daily": "Günlük",
         "weekly": "Haftalık",
-        "mothly": "Aylık"
+        "monthly": "Aylık"
     },
     "effect": {
         "stars": "Yıldızlar",

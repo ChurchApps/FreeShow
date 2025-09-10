@@ -1322,7 +1322,7 @@
         "reset_theme": "테마 재설정",
         "reset_themes": "테마 재설정",
         "capitalize_words": "단어 대문자화",
-        "comma_seperated": "반점으로 구분",
+        "comma_separated": "반점으로 구분",
         "backup_all": "모든 것을 백업",
         "backup_info": "시스템에 위치한 로컬 성경 및 미디어 파일은 제외합니다.",
         "restore": "복원",
@@ -1519,7 +1519,7 @@
     "interval": {
         "daily": "매일",
         "weekly": "매주",
-        "mothly": "매달"
+        "monthly": "매달"
     },
     "effect": {
         "stars": "별",

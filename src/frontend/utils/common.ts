@@ -12,7 +12,7 @@ import {
     currentWindow,
     disabledServers,
     drawer,
-    errorHasOccured,
+    errorHasOccurred,
     focusedArea,
     os,
     outputs,
@@ -152,7 +152,7 @@ export function logerror(err) {
         stack: err.reason?.stack || err.error?.stack,
     }
 
-    errorHasOccured.set(true) // always show close popup if this has happened (so the user can choose to not save)
+    errorHasOccurred.set(true) // always show close popup if this has happened (so the user can choose to not save)
     sendMain(Main.LOG_ERROR, log)
 }
 

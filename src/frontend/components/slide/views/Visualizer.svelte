@@ -39,7 +39,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
         visualizerData.set(null)
-        if (preview) send(OUTPUT, ["VIZUALISER_DATA"], null)
+        if (preview) send(OUTPUT, ["VISUALIZER_DATA"], null)
 
         if (rendering) cancelAnimationFrame(rendering)
         if (checkInterval) clearInterval(checkInterval)
@@ -97,7 +97,7 @@
                 cancelAnimationFrame(rendering)
                 rendering = 0
 
-                if (preview) send(OUTPUT, ["VIZUALISER_DATA"], null)
+                if (preview) send(OUTPUT, ["VISUALIZER_DATA"], null)
 
                 return
             }
@@ -132,7 +132,7 @@
                 generateBar({ height: barHeight, percentage })
             }
 
-            send(OUTPUT, ["VIZUALISER_DATA"], { bars, buffers: bufferLength })
+            send(OUTPUT, ["VISUALIZER_DATA"], { bars, buffers: bufferLength })
         }
 
         if (rendering) cancelAnimationFrame(rendering)
