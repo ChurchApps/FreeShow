@@ -68,6 +68,9 @@
         if (!hasLoaded || mirror) return
         hasLoaded = false
 
+        // has custom start time
+        if (Math.max(startAt, mediaStyle.fromTime || 0) || 0 === 0) return
+
         // go to custom start time
         videoData.paused = true
         setTimeout(() => {
@@ -102,6 +105,9 @@
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
+
+    // some videos don't like high playback speed (above 5.9)
+    // https://issues.chromium.org/issues/40167938
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">

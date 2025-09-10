@@ -10,10 +10,11 @@
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
+    import { newDropdown } from "../edit/scripts/edit"
 
     export let label: string
     export let value: string
-    export let defaultValue: string = ""
+    export let defaultValue: string | null = null
     export let options: DropdownOptions
 
     export let id = ""
@@ -258,6 +259,8 @@
 
     let addNewTextbox = false
     function createNew() {
+        if (newDropdown[addNew!]) return newDropdown[addNew!]()
+
         open = false
         addNewTextbox = true
     }
@@ -298,7 +301,8 @@
         {#if !onlyArrow}
             <span class="selected-text" style={selected?.style ?? null}>
                 {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-                {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
+                <!-- show value if options list has not loaded yet (e.g. fonts) -->
+                {#if selected?.value !== undefined}{selected?.label || "—"}{:else if value}{value}{/if}
             </span>
         {/if}
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -318,7 +322,7 @@
             </MaterialButton>
         </div>
     {/if}
-    {#if defaultValue}
+    {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>

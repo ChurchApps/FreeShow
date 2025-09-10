@@ -1,8 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { actions, timers } from "../../../stores"
+    import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
+    import { getSortedTimers } from "../../drawer/timers/timers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getFilters, getStyles } from "../../helpers/style"
@@ -11,16 +13,17 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialFontDropdown from "../../inputs/MaterialFontDropdown.svelte"
-    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
-    import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import { parseShadowValue } from "../scripts/edit"
+    import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import { sectionColors } from "../values/item"
 
     export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
     export let customValues: { [key: string]: string } = {}
     export let item: any = {}
+    export let isStage: boolean = false
 
     function getValue(input: EditInput2, _updater: any = null) {
         if (input.type === "toggle") return styles[input.key || ""] || ""
@@ -30,7 +33,7 @@
         const defaultValue = input.value
         let value: any = null
         if (input.id === "filter" || input.id === "backdrop-filter") {
-            value = getFilters(item[input.id] || getStyles(item?.style)[input.id])?.[input.key || ""] || input.values.value || input.value
+            value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
         } else if (input.key) {
             value = styles[input.key || ""]
             if (input.valueIndex !== undefined) {
@@ -42,13 +45,12 @@
                 }
             }
             if (input.extension && value !== "") value = Number(value?.toString().replace(input.extension, ""))
-        } else if (input.values.value !== undefined) {
-            value = input.values.value
         } else {
             const parts = input.id.split(".")
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
             else value = item[input.id]
         }
+        if (value === undefined) value = input.values.value
 
         if (input.type === "number") {
             if (value === "") value = undefined
@@ -67,7 +69,7 @@
 
     function getStyleString(input: EditInput2) {
         let style = ""
-        if (input.id === "CSS_item") style = item?.style || ""
+        if (input.id === "CSS_item") style = item.style || ""
         else if (typeof input.value === "string") style = input.values?.value // "CSS_text" / custom
 
         if (!style) return ""
@@ -104,6 +106,8 @@
 
     const dispatch = createEventDispatcher()
     function changed(e: any, input: any, sectionId: string = "") {
+        console.log(input)
+
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier
@@ -136,33 +140,24 @@
             }
         }
 
+        /// CUSTOM
+
+        // reset text shadow if unchanged & setting text color to gradient
+        // there is also a different check to remove it if gradient & shadow does not exist (but only in the output)
+        if (input.key === "color" && item.lines && sections["shadow"] && !hasChangedValues("shadow") && value.includes("gradient")) {
+            toggleSection("shadow")
+        }
+
+        ///
+
         input.values.value = value
-        valueChanged(input)
+        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
+        throttle(inputKey, clone(input), (value) => dispatch("change", value), 20)
 
         input.values.value = e.detail
     }
 
-    // throttle output (max 20 updates per second)
-    let updateQueue: { [key: string]: any } = {}
-    function valueChanged(input: any) {
-        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
-        let exists = updateQueue[inputKey] !== undefined
-        updateQueue[inputKey] = clone(input)
-        if (exists) return
-
-        dispatch("change", updateQueue[inputKey])
-        updateQueue[inputKey] = "UPDATED"
-
-        setTimeout(() => {
-            if (updateQueue[inputKey] !== "UPDATED") {
-                dispatch("change", updateQueue[inputKey])
-            }
-
-            delete updateQueue[inputKey]
-        }, 50)
-    }
-
-    function hasChangedValues(id, _updater: any) {
+    function hasChangedValues(id, _updater: any = null) {
         let allInputsToCheck: EditInput2[] = []
         let filterOut: string[] = []
 
@@ -242,7 +237,7 @@
     ///
 
     const optionsLists = {
-        timers: sortByName(keysToID($timers)).map((a) => ({ value: a.id, label: a.name })),
+        timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
         actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
     }
     function getOptions(options: string | any[]): any[] {
@@ -252,7 +247,10 @@
 
     function getValues(input: any) {
         const values = clone(input.values)
-        if (input.type === "dropdown") values.options = getOptions(values.options)
+        if (input.type === "dropdown") {
+            if (values.options === "timers") values.addNew = "new.timer"
+            values.options = getOptions(values.options)
+        }
         return values
     }
 </script>
@@ -260,12 +258,12 @@
 <div class="tools">
     {#each sectionValues as [id, section]}
         {@const hasChanged = section.noReset ? false : hasChangedValues(id, { styles, item })}
-        {@const expanded = id === "default" || openedSections.includes(id)}
+        {@const expanded = id === "default" || section.alwaysOpen || openedSections.includes(id)}
 
         <div class="section" style={expanded ? "margin-bottom: 3px;" : ""}>
             {#if id !== "default"}
                 <div class="title">
-                    <MaterialButton style="width: 100%;{hasChanged ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged} on:click={() => toggleSection(id)}>
+                    <MaterialButton style="width: 100%;{hasChanged ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged || section.alwaysOpen} on:click={() => toggleSection(id)}>
                         <span style="display: flex;gap: 8px;align-items: center;">
                             {#if id === "CSS"}
                                 <Icon id="code" white />
@@ -280,7 +278,7 @@
                             <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection(id)}>
                                 <Icon id="reset" size={0.8} white />
                             </MaterialButton>
-                        {:else}
+                        {:else if !section.alwaysOpen}
                             <!-- paste / edit -->
                             <Icon id={section.expandAutoValue && !expanded ? "add" : "arrow_back_modern"} class="arrow {expanded ? 'open' : ''}" size={section.expandAutoValue && !expanded ? 0.9 : 0.6} style="opacity: 0.5;" white />
                         {/if}

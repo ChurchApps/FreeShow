@@ -15,7 +15,7 @@
     export let allSlideItems: Item[]
     export let item: Item | null
 
-    let itemEditValues2 = clone(itemSections)
+    let currentItemSections = clone(itemSections)
 
     let data: { [key: string]: string } = {}
 
@@ -36,7 +36,7 @@
 
         const transform = data["transform"] || ""
         const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
-        setBoxInputValue2(itemEditValues2, "transform", "perspective", "hidden", !showPerspective)
+        setBoxInputValue2(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
 
         data = stylePosToPercentage(data)
     }
@@ -166,7 +166,7 @@
     }
 
     function updateStyle2(e: any) {
-        const input = clone(e.detail)
+        const input = e.detail
         input.value = input.values.value
         input.input = input.type
 
@@ -176,4 +176,4 @@
     }
 </script>
 
-<EditValues2 sections={itemEditValues2} {item} styles={data} on:change={updateStyle2} />
+<EditValues2 sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />

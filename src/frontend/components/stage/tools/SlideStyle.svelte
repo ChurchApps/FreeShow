@@ -1,12 +1,12 @@
 <script lang="ts">
     import { activeStage, outputs, stageShows } from "../../../stores"
-    import T from "../../helpers/T.svelte"
+    import { translateText } from "../../../utils/language"
+    import Icon from "../../helpers/Icon.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
 
     $: currentStage = $stageShows[$activeStage.id || ""]
     $: settings = currentStage.settings
@@ -18,105 +18,65 @@
         history({ id: "UPDATE", newData: { data: value, key: "settings", subkey: key }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
     }
 
-    function toggleValue(e: any, key: string) {
-        let value = e.target.checked
-        updateStageSettings(value, key)
-    }
-
-    // VALUES
-
-    const defaultSettings = {
-        output: "—",
-        background: false,
-        color: "#000000",
-        resolution: false,
-        size: { width: 10, height: 20 },
-        labels: false,
-        showLabelIfEmptySlide: true,
-    }
-
-    // show labels
+    // add?:
     // flash on update
-    // stage notes/message
     // password
 
-    let outputList: any[] = []
-    $: outputList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput))
+    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))
 </script>
 
-<div class="section">
-    <CombinedInput>
-        <p><T id="stage.source_output" /></p>
-        <Dropdown
-            style="width: 100%;"
-            options={[{ id: "", name: "—" }, ...outputList]}
-            value={$outputs[settings.output || ""] ? $outputs[settings.output || ""].name : defaultSettings.output}
-            on:click={(e) => updateStageSettings(e.detail.id, "output")}
-        />
-    </CombinedInput>
+<div class="tools">
+    <div>
+        <MaterialDropdown label="stage.source_output" options={outputsList} value={settings.output || ""} on:change={(e) => updateStageSettings(e.detail, "output")} allowEmpty />
+    </div>
 
-    <h6><T id="edit.style" /></h6>
-    <CombinedInput>
-        <p><T id="edit.background_color" /></p>
-        <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e.detail, "color")} />
-    </CombinedInput>
-    <!-- probably not needed -->
-    <!-- <CombinedInput>
-        <p><T id="stage.auto_stretch" /></p>
-        <div class="alignRight">
-            <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
+    <div>
+        <div class="title">
+            <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                <Icon id="style" white />
+                <p>{translateText("edit.style")}</p>
+            </span>
         </div>
-    </CombinedInput> -->
 
-    <CombinedInput>
-        <p><T id="stage.labels" /></p>
-        <div class="alignRight">
-            <Checkbox checked={settings.labels ?? false} on:change={(e) => toggleValue(e, "labels")} />
-        </div>
-    </CombinedInput>
-    {#if settings.labels}
-        <CombinedInput>
-            <p><T id="stage.label_color" /></p>
-            <Color value={settings.labelColor || "#ac9c35"} on:input={(e) => updateStageSettings(e.detail, "labelColor")} />
-        </CombinedInput>
-    {/if}
+        <MaterialColorInput label="edit.background_color" value={settings.color || "#000000"} defaultValue="#000000" on:input={(e) => updateStageSettings(e.detail, "color")} />
 
-    <!-- <h6><T id="tools.notes" /></h6>
-  <div class="notes">
-      <Notes value={note} on:edit={edit} />
-  </div> -->
+        <MaterialCheckbox label="stage.labels" checked={settings.labels} on:change={(e) => updateStageSettings(e.detail, "labels")} />
+        {#if settings.labels}
+            <MaterialColorInput label="stage.label_color" value={settings.labelColor || "#ac9c35"} defaultValue={"#ac9c35"} on:input={(e) => updateStageSettings(e.detail, "labelColor")} />
+        {/if}
+    </div>
 </div>
 
-<!-- <EditValues edits={textEdits} styles={data} {item} on:change={updateStyle} /> -->
+<!-- probably not needed -->
+<!-- <CombinedInput>
+    <p><T id="stage.auto_stretch" /></p>
+    <div class="alignRight">
+        <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
+    </div>
+</CombinedInput> -->
 
 <style>
-    .section {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
         flex-direction: column;
-        margin: 10px;
-        margin-bottom: 40px;
+        gap: 5px;
     }
 
-    h6 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
+    /* title */
 
-    p {
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
+    }
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
         opacity: 0.8;
-        font-size: 0.9em;
     }
-
-    /* .notes :global(div) {
-        display: block !important;
-    }
-
-    .notes :global(div.paper) {
-        position: relative;
-        display: block;
-        background: var(--primary-darker);
-    } */
 </style>

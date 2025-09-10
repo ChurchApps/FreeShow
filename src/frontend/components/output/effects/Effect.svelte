@@ -33,10 +33,12 @@
         renderer?.stop()
     })
 
-    const fullReloadTypes = ["stars", "galaxy"]
+    const fullReloadTypes = ["stars", "galaxy", "bloom"]
     const fullReloadKeys = ["count", "color", "flareDiscNum"]
     const fullReloadKeysSpecific = {
-        rain: ["length", "width"],
+        rain: ["length", "width", "speed"],
+        snow: ["size", "speed", "drift"],
+        bubbles: ["size", "speed", "pulseSpeed"],
         city: ["height", "width"],
         grass: ["height", "speed"]
     }

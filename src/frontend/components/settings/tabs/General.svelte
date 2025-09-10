@@ -47,7 +47,7 @@
             if (a.label) strings.push(`<span style="color: ${a.color};">${a.label}</span>`)
         })
 
-        return strings.join(`<span style="opacity: 0.4;">|</span>`)
+        return strings.join(`<span style="opacity: 0.4;"> | </span>`)
     }
 </script>
 

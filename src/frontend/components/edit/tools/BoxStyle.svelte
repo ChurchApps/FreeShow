@@ -109,11 +109,7 @@
     }
 
     $: if (box?.sections.CSS && id !== "captions") {
-        if (id === "text") {
-            setBoxInputValue2(box, "CSS", "CSS_text", "value", style)
-        } else if (box?.sections.CSS) {
-            if (style) setBoxInputValue2(box, "CSS", "CSS_text", "value", style)
-        }
+        setBoxInputValue2(box, "CSS", "CSS_text", "value", style)
     }
 
     $: if (box?.sections.font) {
@@ -456,7 +452,7 @@
 
     $: boxSections = box?.sections || {}
     function updateValue2(e: any) {
-        const input = clone(e.detail)
+        const input = e.detail
         input.value = input.values.value
         input.input = input.type
 

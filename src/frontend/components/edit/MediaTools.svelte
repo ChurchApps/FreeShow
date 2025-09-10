@@ -5,14 +5,14 @@
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
-    import { getFilters } from "../helpers/style"
     import T from "../helpers/T.svelte"
     import { removeStore, updateStore } from "../helpers/update"
     import Button from "../inputs/Button.svelte"
     import Tabs from "../main/Tabs.svelte"
     import { addFilterString } from "./scripts/textStyle"
-    import EditValues from "./tools/EditValues.svelte"
-    import { croppingEdit, mediaEdits, mediaFilters, videoEdit } from "./values/media"
+    import EditValues2 from "./tools/EditValues2.svelte"
+    import { setBoxInputValue2 } from "./values/boxes"
+    import { filterSections, mediaBoxes } from "./values/media"
 
     let tabs: TabsObj = {
         media: { name: "items.media", icon: "image" },
@@ -25,34 +25,13 @@
     $: mediaId = $activeEdit.id || $activeShow!.id
     $: currentMedia = $media[mediaId] || {}
 
-    let edits = clone(mediaEdits.media?.edit)!
-    let filterEdits = clone(mediaFilters.media?.edit)!
-
     $: mediaType = $activeEdit.type === "camera" ? "camera" : getMediaType(getExtension(mediaId))
+
+    $: mediaSections = clone(mediaBoxes[mediaType]?.sections || {})
 
     // WIP camera / video cropping ??
 
     $: isVideo = mediaType === "video"
-    $: isImage = mediaType === "image"
-    $: isCamera = mediaType === "camera"
-    $: if (isVideo) addVideoOptions()
-    else if (isImage) addImageOptions()
-    else if (isCamera) setCameraOptions()
-    else edits = clone(mediaEdits.media?.edit)!
-    function addVideoOptions() {
-        if (!edits) return
-        edits.video = clone(videoEdit)
-    }
-    function addImageOptions() {
-        if (!edits) return
-        edits.cropping = clone(croppingEdit)
-    }
-    function setCameraOptions() {
-        edits.default[0].hidden = true
-        const blurIndex = edits.default[1].values.options.findIndex((a) => a.id === "blur")
-        if (blurIndex > -1) edits.default[1].values.options.splice(blurIndex, 1)
-    }
-
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {
         let video = document.createElement("video")
@@ -63,39 +42,12 @@
             let videoDuration = video?.duration || 0
             if (!videoDuration) return
 
-            edits.video[3].value = currentMedia?.toTime || videoDuration
-            edits.video[2].values = { max: videoDuration }
-            edits.video[3].values = { max: videoDuration }
+            setBoxInputValue2(mediaSections, "video", "toTime", "value", currentMedia?.toTime || videoDuration)
+            setBoxInputValue2(mediaSections, "video", "toTime", "default", videoDuration)
+            setBoxInputValue2(mediaSections, "video", "fromTime", "values", { max: videoDuration })
+            setBoxInputValue2(mediaSections, "video", "toTime", "values", { max: videoDuration })
+            mediaSections = mediaSections
         }
-    }
-
-    // set values
-    $: if (currentMedia) {
-        edits.default[0].value = currentMedia?.videoType || ""
-        edits.default[1].value = currentMedia.fit || ""
-        edits.default[2].value = currentMedia.flipped || false
-        edits.default[3].value = currentMedia.flippedY || false
-        if (edits.video) {
-            edits.video[0].value = currentMedia.speed || "1"
-            edits.video[1].value = currentMedia.volume ?? 100
-            edits.video[2].value = currentMedia.fromTime || 0
-            edits.video[3].value = currentMedia.toTime || edits.video[3].value
-        }
-        if (edits.cropping) {
-            edits.cropping[0].value = currentMedia.cropping?.top || 0
-            edits.cropping[1].value = currentMedia.cropping?.right || 0
-            edits.cropping[2].value = currentMedia.cropping?.bottom || 0
-            edits.cropping[3].value = currentMedia.cropping?.left || 0
-        }
-
-        // update filters
-        let filters = getFilters(currentMedia.filter || "")
-        let defaultFilters = mediaFilters.media?.edit?.default || []
-        filterEdits.default.forEach((filter) => {
-            let value = filters?.[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
-            let index = filterEdits.default.findIndex((a) => a.key === filter.key)
-            filterEdits.default[index].value = value
-        })
     }
 
     function reset() {
@@ -131,15 +83,25 @@
         bg[input.id] = value
         setOutput("background", bg)
     }
+
+    function valueChanged2(e: any) {
+        const input = e.detail
+
+        input.value = input.values.value
+        input.input = input.type
+
+        valueChanged(input)
+    }
 </script>
 
 <div class="main border editTools">
     <Tabs {tabs} bind:active />
+
     <div class="content">
         {#if active === "media"}
-            <EditValues {edits} on:change={(e) => valueChanged(e.detail)} />
+            <EditValues2 sections={mediaSections} item={currentMedia} on:change={valueChanged2} />
         {:else if active === "filters"}
-            <EditValues edits={filterEdits} on:change={(e) => valueChanged(e.detail)} />
+            <EditValues2 sections={clone(filterSections)} item={currentMedia} on:change={valueChanged2} />
         {/if}
     </div>
 

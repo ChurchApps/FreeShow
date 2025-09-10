@@ -2,10 +2,27 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Timer } from "../../../../types/Show"
 import { activeTimers, events, timers } from "../../../stores"
-import { clone } from "../../helpers/array"
+import { clone, keysToID, sortByName } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
 import { customActionActivation } from "../../actions/actions"
+import { joinTimeBig } from "../../helpers/time"
+
+const typeOrder = { counter: 1, clock: 2, event: 3 }
+export function getSortedTimers(updater = get(timers), options: { showHours?: boolean; firstActive?: boolean }) {
+    const today = new Date()
+
+    let timersList = sortByName(keysToID(updater), "name", true)
+        .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+        .map((a) => {
+            const currentTime = getCurrentTimerValue(a, { id: a.id }, today)
+            const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, options.showHours)
+            return { id: a.id, name: a.name || a.id, extraInfo: timeValue }
+        })
+    if (options.firstActive) timersList = [{ id: "", name: "$:stage.first_active_timer:$", extraInfo: "" }, ...timersList]
+
+    return timersList
+}
 
 export function getShowTimers(showRef: any) {
     let list: string[] = []

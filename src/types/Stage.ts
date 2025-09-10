@@ -49,6 +49,7 @@ export interface StageItem {
     // textbox
     chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
+    textFit?: string // auto size text fix option (default: growToFit)
     button?: { press?: string; release?: string } // click actions
 
     // slide text

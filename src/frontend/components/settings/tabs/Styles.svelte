@@ -102,7 +102,7 @@
     }
 
     $: transitionLabel = textTransitionData?.name || ""
-    $: mediaFitLabel = mediaFitOptions.find((a) => a.id === mediaFit)?.name || ""
+    $: mediaFitLabel = mediaFitOptions.find((a) => a.value === mediaFit)?.label || ""
     $: aspectRatioLabel = aspectRatio.outputResolutionAsRatio ? "settings.output_resolution_ratio" : `${aspectRatio.width}:${aspectRatio.height}`
 
     const layerOptions = [

@@ -45,9 +45,7 @@ export const itemSections: { [key: string]: EditBoxSection } = {
     default: {
         inputs: splitIntoRows([
             { id: "style", key: "background-color", type: "color", value: "", values: { label: "edit.background_color", allowGradients: true, allowOpacity: true, allowEmpty: true, noLabel: true } },
-            // { id: "background-opacity", type: "number", value: 0, values: {label: "edit.background_opacity", step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
-            { id: "style", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "edit.opacity", step: 10, min: 1, max: 100, showSlider: true, sliderValues: { step: 1 } } },
-            { id: "style", key: "padding", type: "number", value: 0, extension: "px", values: { label: "edit.padding", step: 5, max: 300, showSlider: true, sliderValues: { step: 1 } } },
+            { id: "style", key: "padding", type: "number", value: 0, extension: "px", values: { label: "edit.padding", step: 5, max: 300, showSlider: true, sliderValues: { step: 1, max: 100 } } },
             { id: "style", key: "border-radius", type: "number", value: 0, multiplier: 0.1, values: { label: "edit.corner_radius", step: 2, max: 500, showSlider: true, sliderValues: { step: 1, max: 50 } }, extension: "px" },
         ])
     },
@@ -63,6 +61,7 @@ export const itemSections: { [key: string]: EditBoxSection } = {
     },
     transform: {
         inputs: splitIntoRows([
+            { id: "style", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "edit.opacity", step: 10, min: 1, max: 100, showSlider: true, sliderValues: { step: 1 } } },
             { id: "transform", key: "rotate", type: "number", value: 0, extension: "deg", values: { label: "edit.rotation", max: 360, showSlider: true } },
             { id: "transform", key: "scaleX", type: "number", value: 1, multiplier: 10, values: { label: "media.flip", min: -10, max: 10, showSlider: true } },
             { id: "transform", key: "rotateX", type: "number", value: 0, extension: "deg", values: { label: "edit.tilt", max: 360, showSlider: true } },
@@ -88,10 +87,10 @@ export const itemSections: { [key: string]: EditBoxSection } = {
             { id: "style", key: "box-shadow", valueIndex: 2, type: "number", value: 0, extension: "px", values: { label: "edit.blur", style: "flex: 4;" } },
             { id: "style", key: "box-shadow", valueIndex: 4, type: "color", value: "#000000", values: { label: "edit.color", allowOpacity: true, noLabel: true, style: "flex: 1;" } },
         ], [
-            { id: "style", key: "box-shadow", valueIndex: 3, type: "number", value: 0, extension: "px", values: { label: "edit.length", min: -100 } },
-        ], [
             { id: "style", key: "box-shadow", valueIndex: 0, type: "number", value: 0, extension: "px", values: { label: "edit.offsetX", min: -1000 } },
             { id: "style", key: "box-shadow", valueIndex: 1, type: "number", value: 0, extension: "px", values: { label: "edit.offsetY", min: -1000 } },
+        ], [
+            { id: "style", key: "box-shadow", valueIndex: 3, type: "number", value: 0, extension: "px", values: { label: "edit.length", min: -100 } },
         ]]
     },
     // TODO: inset shadow

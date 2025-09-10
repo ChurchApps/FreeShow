@@ -1,9 +1,9 @@
 import dayjs from "dayjs"
 import extendedFormat from "dayjs/plugin/advancedFormat"
 import localizedFormat from "dayjs/plugin/localizedFormat"
+import { clone } from "../../helpers/array"
 import type { ItemType } from "./../../../../types/Show"
 import { captionLanguages } from "./captionLanguages"
-import { clone } from "../../helpers/array"
 
 // Initialize plugins
 dayjs.extend(localizedFormat)
@@ -54,7 +54,7 @@ export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] 
     section[keyIndex][key] = value
 }
 
-export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
+export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
     const newBox = (box.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
     if (!sectionId) sectionId = "default"
@@ -64,26 +64,16 @@ export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSec
     const keyIndex = inputs.findIndex((a) => (a.key === inputId || a.id === inputId))
     if (keyIndex < 0) return
 
-    if (key === "value" || key === "name" || key === "disabled") {
+    if (key === "values") {
+        inputs[keyIndex].values = { ...inputs[keyIndex].values, ...value }
+    } else if (key === "default") {
+        inputs[keyIndex].value = value
+    } else if (key === "value" || key === "name" || key === "disabled" || key === "options") {
         inputs[keyIndex].values[key] = value
     } else {
         inputs[keyIndex][key] = value
     }
 }
-
-export const mediaFitOptions: any[] = [
-    { id: "contain", name: "media.contain" },
-    { id: "cover", name: "media.cover" },
-    { id: "fill", name: "media.fill" },
-    { id: "blur", name: "media.blur_fill" }
-    // { id: "scale-down", name: "Scale down" },
-]
-export const mediaFitOptions2 = [
-    { value: "contain", label: "media.contain" },
-    { value: "cover", label: "media.cover" },
-    { value: "fill", label: "media.fill" },
-    { value: "blur", label: "media.blur_fill" }
-]
 
 export const trackerEdits = [
     {
@@ -115,7 +105,7 @@ const now = new Date(2025, 0, 10)
 type Box2 = {
     [key in ItemType]?: BoxContent2
 }
-type BoxContent2 = {
+export type BoxContent2 = {
     name?: string
     icon: string
     sections: { [key: string]: EditBoxSection }
@@ -124,6 +114,7 @@ export type EditBoxSection = {
     // openApplyValue?: boolean // show apply value button
     inputs: EditInput2[][]
     noReset?: boolean
+    alwaysOpen?: boolean
     defaultValues?: any[]
     expandAutoValue?: { [key: string]: any }
 }
@@ -145,6 +136,32 @@ export type EditInput2 = {
 
 ///
 
+export const mediaFitOptions = [
+    { value: "contain", label: "media.contain" },
+    { value: "cover", label: "media.cover" },
+    { value: "fill", label: "media.fill" },
+    { value: "blur", label: "media.blur_fill" }
+]
+export const mediaFitOptionsNoBlur = [
+    { value: "contain", label: "media.contain" },
+    { value: "cover", label: "media.cover" },
+    { value: "fill", label: "media.fill" }
+]
+
+export const filterSection = splitIntoRows([
+    { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },
+    { id: "filter", key: "invert", type: "number", value: 0, multiplier: 10, values: { label: "filter.invert", defaultValue: 0, max: 10, showSlider: true } },
+    { id: "filter", key: "blur", type: "number", value: 0, extension: "px", values: { label: "filter.blur", defaultValue: 0, max: 100, showSlider: true, sliderValues: { max: 50 } } },
+    { id: "filter", key: "grayscale", type: "number", value: 0, multiplier: 10, values: { label: "filter.grayscale", defaultValue: 0, max: 10, showSlider: true } },
+    { id: "filter", key: "sepia", type: "number", value: 0, multiplier: 10, values: { label: "filter.sepia", defaultValue: 0, max: 10, showSlider: true } },
+    { id: "filter", key: "brightness", type: "number", value: 1, multiplier: 10, values: { label: "filter.brightness", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
+    { id: "filter", key: "contrast", type: "number", value: 1, multiplier: 10, values: { label: "filter.contrast", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
+    { id: "filter", key: "saturate", type: "number", value: 1, multiplier: 10, values: { label: "filter.saturate", defaultValue: 10, max: 100, showSlider: true, sliderValues: { max: 20 } } },
+    { id: "filter", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "filter.opacity", defaultValue: 100, step: 10, max: 100, showSlider: true, sliderValues: { step: 1 } } }
+])
+
+///
+
 const alignX =
     [
         { id: "style", key: "text-align", type: "radio", value: "left", values: { label: "edit.left", icon: "alignLeft" } },
@@ -163,7 +180,7 @@ const alignY =
         { id: "style", key: "align-items", type: "radio", value: "flex-end", values: { label: "edit.align_bottom", icon: "alignBottom" } }
     ]
 
-const textSections: { [key: string]: EditBoxSection } = {
+export const textSections: { [key: string]: EditBoxSection } = {
     default: {
         // WIP icon color..?
 
@@ -297,7 +314,7 @@ const textSections: { [key: string]: EditBoxSection } = {
     },
     shadow: {
         expandAutoValue: {
-            "text-shadow": "0 0 0 #000000"
+            "text-shadow": "0 0 0 rgb(0 0 0 / 0)"
         },
         inputs: [
             [
@@ -357,24 +374,11 @@ const textSections: { [key: string]: EditBoxSection } = {
     }
 }
 
-// WIP same as media.ts mediaFilters
-export const filterSection = splitIntoRows([
-    { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },
-    { id: "filter", key: "invert", type: "number", value: 0, multiplier: 10, values: { label: "filter.invert", defaultValue: 0, max: 10, showSlider: true } },
-    { id: "filter", key: "blur", type: "number", value: 0, extension: "px", values: { label: "filter.blur", defaultValue: 0, max: 100, showSlider: true, sliderValues: { max: 50 } } },
-    { id: "filter", key: "grayscale", type: "number", value: 0, multiplier: 10, values: { label: "filter.grayscale", defaultValue: 0, max: 10, showSlider: true } },
-    { id: "filter", key: "sepia", type: "number", value: 0, multiplier: 10, values: { label: "filter.sepia", defaultValue: 0, max: 10, showSlider: true } },
-    { id: "filter", key: "brightness", type: "number", value: 1, multiplier: 10, values: { label: "filter.brightness", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
-    { id: "filter", key: "contrast", type: "number", value: 1, multiplier: 10, values: { label: "filter.contrast", defaultValue: 10, max: 100, showSlider: true, sliderValues: { min: 2, max: 18 } } },
-    { id: "filter", key: "saturate", type: "number", value: 1, multiplier: 10, values: { label: "filter.saturate", defaultValue: 10, max: 100, showSlider: true, sliderValues: { max: 20 } } },
-    { id: "filter", key: "opacity", type: "number", value: 1, multiplier: 100, values: { label: "filter.opacity", defaultValue: 100, step: 10, max: 100, showSlider: true, sliderValues: { step: 1 } } }
-])
-
 const mediaSections: { [key: string]: EditBoxSection } = {
     default: {
         inputs: splitIntoRows([
             { id: "src", type: "media", value: "", values: { label: "items.media" } },
-            { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions2 } },
+            { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions } },
             // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
             { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
             { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
@@ -564,7 +568,7 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: splitIntoRows([
                     { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
-                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions2.filter((a) => a.value !== "blur") } },
+                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter((a) => a.value !== "blur") } },
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
                 ])

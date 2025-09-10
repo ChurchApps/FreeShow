@@ -1283,12 +1283,23 @@ export class EffectRender {
             const b = hex.length === 3 ? (bigint & 0xf) * 17 : bigint & 255
             return `rgba(${r},${g},${b},${opacity})`
         } else {
+            // Match either rgb(61,153,112) OR rgb(61 153 112 / 0.6)
             const match = baseColor.match(/rgba?\(([^)]+)\)/)
             if (match) {
-                const [r, g, b] = match[1].split(",").map((n: string) => parseFloat(n.trim()))
-                return `rgba(${r},${g},${b},${opacity})`
+                let parts = match[1].trim()
+
+                // modern syntax with spaces
+                if (parts.includes("/")) {
+                    const [rgbPart] = parts.split("/")
+                    const [r, g, b] = rgbPart.trim().split(/\s+/).map((n: string) => parseFloat(n))
+                    return `rgba(${r},${g},${b},${opacity})`
+                } else {
+                    const [r, g, b] = parts.split(",").map((n: string) => parseFloat(n.trim()))
+                    return `rgba(${r},${g},${b},${opacity})`
+                }
             }
         }
+
         return baseColor
     }
 

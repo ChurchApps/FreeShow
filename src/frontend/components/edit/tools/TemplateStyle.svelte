@@ -1,19 +1,17 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
-    import { activeEdit, activePopup, dictionary, overlays, popupData, templates } from "../../../stores"
-    import { getList } from "../../../utils/common"
+    import { activeEdit, overlays, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
-    import { clone } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import { getFileName } from "../../helpers/media"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import MediaPicker from "../../inputs/MediaPicker.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
 
     $: templateId = $activeEdit?.id || ""
     $: template = $templates[templateId] || {}
@@ -43,98 +41,94 @@
         update()
     }
 
-    $: overlayList = getList($overlays, true).filter((a) => a.name)
+    $: overlayList = sortByName(keysToID($overlays))
+        .filter((a) => a.name)
+        .map((a) => ({ value: a.id, label: a.name }))
 </script>
 
-<div class="section">
-    <CombinedInput>
-        <p><T id="edit.background_color" /></p>
-        <Color value={settings.backgroundColor || ""} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.background_media" /></p>
-        <MediaPicker id={"bg_" + templateId} title={settings.backgroundPath} style="overflow: hidden;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => setValue(e, "backgroundPath")}>
-            <Icon id="image" right />
-            {#if settings.backgroundPath}
-                <p style="padding: 0;opacity: 1;">{getFileName(settings.backgroundPath)}</p>
-            {:else}
-                <p style="padding: 0;"><T id="edit.choose_media" /></p>
-            {/if}
-        </MediaPicker>
-        {#if settings.backgroundPath}
-            <Button title={$dictionary.actions?.remove} on:click={() => setValue("", "backgroundPath")} redHover>
-                <Icon id="close" size={1.2} white />
-            </Button>
-        {/if}
-    </CombinedInput>
-
-    <CombinedInput>
-        <p data-title={$dictionary.edit?.overlay_content}><T id="edit.overlay_content" /></p>
-        <Dropdown options={overlayList} value={$overlays[settings.overlayId || ""]?.name || "—"} on:click={(e) => setValue(e?.detail?.id, "overlayId")} />
-    </CombinedInput>
-
-    <CombinedInput>
-        <p data-title={$dictionary.edit?.different_first_template}><T id="edit.different_first_template" /></p>
-        <Button
-            on:click={() => {
-                popupData.set({
-                    action: "select_template",
-                    active: settings.firstSlideTemplate || "",
-                    hideIds: [templateId],
-                    trigger: (id) => setValue(id, "firstSlideTemplate")
-                })
-                activePopup.set("select_template")
+<div class="tools">
+    <div>
+        <MaterialColorInput
+            label="edit.background_color"
+            value={settings.backgroundColor}
+            on:input={(e) => {
+                settings.backgroundColor = e.detail
+                update()
             }}
-            style="overflow: hidden;"
-            bold={!settings.firstSlideTemplate}
-        >
-            <div style="display: flex;align-items: center;padding: 0;">
-                <Icon id="templates" />
-                <p style="opacity: 1;font-size: 1em;">
-                    {#if settings.firstSlideTemplate}
-                        {$templates[settings.firstSlideTemplate || ""]?.name || "—"}
-                    {:else}
-                        <T id="popup.select_template" />
-                    {/if}
-                </p>
-            </div>
-        </Button>
-        {#if settings.firstSlideTemplate}
-            <Button title={$dictionary.actions?.remove} on:click={() => setValue("", "firstSlideTemplate")} redHover>
-                <Icon id="close" size={1.2} white />
-            </Button>
-        {/if}
-    </CombinedInput>
+            allowEmpty
+            noLabel
+        />
 
-    <CombinedInput>
-        <p data-title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
-        <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
-    </CombinedInput>
+        <InputRow>
+            <MaterialFilePicker label="edit.background_media" value={settings.backgroundPath} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => setValue(e, "backgroundPath")} allowEmpty />
+            <!-- {#if settings.backgroundPath}<MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />{/if} -->
+        </InputRow>
+    </div>
 
-    <CombinedInput>
-        <p data-title={$dictionary.edit?.break_long_lines_tip}><T id="edit.break_long_lines" /></p>
-        <NumberInput value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
-    </CombinedInput>
+    <div>
+        <div class="title">
+            <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                <Icon id="text" white />
+                <p>{translateText("edit.text")}</p>
+            </span>
+        </div>
+
+        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
+    </div>
+
+    <div>
+        <div class="title">
+            <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                <Icon id="special" white />
+                <p>{translateText("edit.special")}</p>
+            </span>
+        </div>
+
+        <MaterialDropdown label="edit.overlay_content" options={overlayList} value={settings.overlayId || ""} on:change={(e) => setValue(e.detail, "overlayId")} allowEmpty />
+
+        <InputRow>
+            <MaterialPopupButton
+                label="edit.different_first_template"
+                value={settings.firstSlideTemplate}
+                name={$templates[settings.firstSlideTemplate || ""]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={(e) => {
+                    settings.firstSlideTemplate = e.detail
+                    update()
+                }}
+                allowEmpty
+            />
+            <!-- {#if settings.firstSlideTemplate && $templates[settings.firstSlideTemplate]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(settings.firstSlideTemplate || "")} />
+                {/if} -->
+        </InputRow>
+    </div>
 </div>
 
 <style>
-    .section {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
         flex-direction: column;
-        margin: 10px;
+        gap: 5px;
     }
 
-    /* h6 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    } */
+    /* title */
 
-    p {
-        overflow: hidden !important;
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
+    }
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
         opacity: 0.8;
-        font-size: 0.9em;
     }
 </style>
