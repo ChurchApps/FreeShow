@@ -357,7 +357,7 @@
             </div>
 
             {#if !playingInOutput}
-                <div class="seperator" />
+                <div class="separator" />
 
                 <MediaPicker id="subtitles" filter={{ name: "Video Text Track", extensions: ["vtt", "srt"] }} on:picked={subtitlePicked} dark={false}>
                     <Icon id="add" right />
@@ -395,7 +395,7 @@
             </div>
 
             {#if previewControls && !playingInOutput}
-                <div class="seperator" />
+                <div class="separator" />
 
                 <Button on:click={addMarker}>
                     <Icon id="add" right />
@@ -425,7 +425,7 @@
                 <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
             </Button>
 
-            <div class="seperator" />
+            <div class="separator" />
 
             <Button
                 style="flex: 0;"
@@ -468,7 +468,7 @@
         background-color: var(--primary);
     }
 
-    .seperator {
+    .separator {
         width: 1px;
         height: 100%;
         background-color: var(--primary);

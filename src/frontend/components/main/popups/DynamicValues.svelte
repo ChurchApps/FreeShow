@@ -34,9 +34,9 @@
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
-            const seperator = seperators.find((a) => value.id.includes(a)) || ""
-            if (seperator && seperatorId !== seperator && seperatorId !== "$") {
-                seperatorId = seperator
+            const separator = seperators.find((a) => value.id.includes(a)) || ""
+            if (separator && seperatorId !== separator && seperatorId !== "$") {
+                seperatorId = separator
                 newList[seperatorId] = []
             }
 

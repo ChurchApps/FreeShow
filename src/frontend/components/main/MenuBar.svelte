@@ -52,7 +52,7 @@
         <div class="contextMenu menu" style="inset-inline-start: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
             {#key activeMenu}
                 {#each activeMenu as id}
-                    {#if id === "SEPERATOR"}
+                    {#if id === "SEPARATOR"}
                         <hr />
                     {:else if contextMenuItems[id]?.items}
                         <ContextChild {id} topBar />

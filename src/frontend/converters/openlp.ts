@@ -298,7 +298,7 @@ function XMLtoObject(xml: string) {
 
         if (typeof lines !== "string") lines = ""
 
-        // remove unused line seperator char
+        // remove unused line separator char
         lines = lines.replaceAll("&#8232;", "")
         // find line breaks
         lines = lines.replaceAll('xmlns="http://openlyrics.info/namespace/2009/song"', "").replaceAll("<br/>", "\n").replaceAll("<br />", "\n")

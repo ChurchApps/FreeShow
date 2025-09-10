@@ -21,7 +21,7 @@
     let sections: any[] = []
     $: sections = [
         [{ id: "TITLE", label: "scripture.collections" }, ...convertToButton(collections)],
-        [{ id: "TITLE", label: "scripture.bibles_section" }, ...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? [{ id: "SEPERATOR", label: "API" }] : []), ...convertToButton(apiBibles)]
+        [{ id: "TITLE", label: "scripture.bibles_section" }, ...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? [{ id: "SEPARATOR", label: "API" }] : []), ...convertToButton(apiBibles)]
     ]
 
     function convertToButton(categories: any[]) {

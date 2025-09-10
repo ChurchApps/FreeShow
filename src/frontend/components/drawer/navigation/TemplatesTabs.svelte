@@ -27,7 +27,7 @@
             { id: "all", label: "category.all", icon: "all", count: unarchivedOverlays.length },
             { id: "unlabeled", label: "category.unlabeled", icon: "noIcon", count: uncategorizedOverlaysLength, hidden: !uncategorizedOverlaysLength && activeSubTab !== "unlabeled" }
         ],
-        [{ id: "TITLE", label: "guide_title.categories" }, ...convertToButton(unarchivedCategoriesList), ...(archivedCategoriesList.length ? [{ id: "SEPERATOR", label: "actions.archive_title" }, ...convertToButton(archivedCategoriesList)] : [])]
+        [{ id: "TITLE", label: "guide_title.categories" }, ...convertToButton(unarchivedCategoriesList), ...(archivedCategoriesList.length ? [{ id: "SEPARATOR", label: "actions.archive_title" }, ...convertToButton(archivedCategoriesList)] : [])]
     ]
 
     function convertToButton(categories: any[]) {

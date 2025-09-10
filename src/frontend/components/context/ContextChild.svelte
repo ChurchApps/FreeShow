@@ -82,11 +82,11 @@
         <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-14px'});">
             {#if menu?.items?.length}
                 {#each menu.items as itemId}
-                    {#if itemId === "SEPERATOR"}
+                    {#if itemId === "SEPARATOR"}
                         <hr />
                     {:else if itemId.includes("LOAD_")}
                         {#each loadItems(itemId.slice(5, itemId.length)) as [id, menu]}
-                            {#if id === "SEPERATOR" || menu === "SEPERATOR"}
+                            {#if id === "SEPARATOR" || menu === "SEPARATOR"}
                                 <hr />
                             {:else}
                                 <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} />

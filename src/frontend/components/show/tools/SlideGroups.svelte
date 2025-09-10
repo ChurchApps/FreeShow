@@ -103,7 +103,7 @@
         </div>
 
         {#if displayGlobalGroups}
-            <div class="seperator" />
+            <div class="separator" />
 
             <div class="main" style={displayGlobalGroups ? "width: 50%;" : ""}>
                 <h4><T id="groups.global" /></h4>
@@ -243,7 +243,7 @@
         color: var(--text);
     }
 
-    .seperator {
+    .separator {
         width: 1px;
         height: 100%;
         margin: 0 10px;
