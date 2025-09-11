@@ -81,7 +81,7 @@
 {#if type === "analog"}
     <AnalogClock date={d} {...{ h, m, s }} {seconds} />
 {:else if type === "custom"}
-    <div class="align autoFontSize" style="{fontStyle}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
+    <div class="align autoFontSize" style="{fontStyle}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
         {#if style}
             <span class="colored">{formattedCustom}</span>
         {:else}
@@ -89,7 +89,7 @@
         {/if}
     </div>
 {:else}
-    <div class="align autoFontSize" class:styled={style} style="{fontStyle}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
+    <div class="align autoFontSize" class:styled={style} style="{fontStyle}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
         {#if style}
             <span class="colored">{("0" + h).slice(-2)}</span>:
             <span class="colored">{("0" + m).slice(-2)}</span>
@@ -107,6 +107,8 @@
     .align {
         display: flex;
         justify-content: center;
+        /* stage align */
+        justify-content: var(--text-align);
         align-items: center;
         height: 100%;
 

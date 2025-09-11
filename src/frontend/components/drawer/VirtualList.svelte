@@ -16,6 +16,9 @@
     $: if (mounted && activeIndex !== null) setTimeout(() => scrollToIndex(activeIndex))
     function scrollToIndex(index) {
         if (!viewport || !items || index < 0 || index >= items.length) return
+        
+        // init if not already scrolled
+        handle_scroll()
 
         // Calculate the scroll position for the item
         let itemTop = 0

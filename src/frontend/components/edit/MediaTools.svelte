@@ -10,7 +10,7 @@
     import Button from "../inputs/Button.svelte"
     import Tabs from "../main/Tabs.svelte"
     import { addFilterString } from "./scripts/textStyle"
-    import EditValues2 from "./tools/EditValues2.svelte"
+    import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue2 } from "./values/boxes"
     import { filterSections, mediaBoxes } from "./values/media"
 
@@ -99,9 +99,9 @@
 
     <div class="content">
         {#if active === "media"}
-            <EditValues2 sections={mediaSections} item={currentMedia} on:change={valueChanged2} />
+            <EditValues sections={mediaSections} item={currentMedia} on:change={valueChanged2} />
         {:else if active === "filters"}
-            <EditValues2 sections={clone(filterSections)} item={currentMedia} on:change={valueChanged2} />
+            <EditValues sections={clone(filterSections)} item={currentMedia} on:change={valueChanged2} />
         {/if}
     </div>
 

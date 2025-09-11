@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeStage, stageShows } from "../../../stores"
     import { addFilterString, addStyleString } from "../../edit/scripts/textStyle"
-    import EditValues2 from "../../edit/tools/EditValues2.svelte"
+    import EditValues from "../../edit/tools/EditValues.svelte"
     import { setBoxInputValue2 } from "../../edit/values/boxes"
     import { itemSections } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
@@ -103,4 +103,4 @@
     }
 </script>
 
-<EditValues2 sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />
+<EditValues sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />

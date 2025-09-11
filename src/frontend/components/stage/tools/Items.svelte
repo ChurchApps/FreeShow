@@ -3,20 +3,18 @@
     import { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, labelsDisabled, selected, special, stageShows, timers } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getSortedStageItems, rearrangeStageItems, updateSortedStageItems } from "../../edit/scripts/itemHelpers"
     import { getItemText } from "../../edit/scripts/textStyle"
     import { itemBoxes } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { getFileName } from "../../helpers/media"
     import { checkWindowCapture, sortItemsByType } from "../../helpers/output"
     import { getDynamicIds, replaceDynamicValues } from "../../helpers/showActions"
-    import Button from "../../inputs/Button.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import IconButton from "../../inputs/IconButton.svelte"
-    import Center from "../../system/Center.svelte"
-    import Panel from "../../system/Panel.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import { getCustomStageLabel, updateStageShow } from "../stage"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
@@ -123,162 +121,136 @@
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
         .filter((id) => !excludeValues.find((v) => id.includes(v)))
-        .map((id) => ({ name: `{${id}}`, id, extraInfo: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
+        .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 
-<div class="main">
-    <Panel>
-        <h6 style="margin-top: 10px;"><T id="stage.output" /></h6>
+<div class="tools">
+    <!-- <h6 style="margin-top: 10px;"><T id="stage.output" /></h6> -->
+    <div class="section">
+        {#each dynamicItems as item}
+            {@const title = (item.id === "slide_text" && slideTextItems.length === 1 ? "stage.next_slide_text" : "items." + item.name || item.id) + (item.id === "slide_text" && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : "")}
+            {@const disabled = !!(item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount)}
 
-        <div class="grid">
-            {#each dynamicItems as item}
-                {@const title = item.id === "slide_text" && slideTextItems.length === 1 ? $dictionary.stage?.next_slide_text : $dictionary.items?.[item.name || item.id]}
-                {@const icon = item.icon || item.id}
-                {@const disabled = item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
+            <MaterialButton variant="outlined" {disabled} {title} style="width: 100%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+                <Icon id={item.icon || item.id} />
+                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+            </MaterialButton>
+        {/each}
+    </div>
 
-                {#if item.id === "current_output"}
-                    <hr class="divider" />
-                {/if}
+    <!-- common -->
 
-                <IconButton style="min-width: 100%;" name title="{title}{item.id === 'slide_text' && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : ''}" {icon} {disabled} on:click={() => addItem(item.id)} />
-            {/each}
-        </div>
+    <!-- <h6><T id="edit.add_items" /></h6> -->
+    <!-- <h6><T id="tools.items" /></h6> -->
+    <div class="section" style="margin-top: 5px;">
+        <InputRow>
+            <MaterialButton variant="outlined" icon="text" title="settings.add: <b>items.text</b>" style="width: 100%;" on:click={() => addItem("text")}>
+                {#if !$labelsDisabled}{translateText("items.text")}{/if}
+            </MaterialButton>
 
-        <hr class="divider" />
-        <!-- <h6><T id="edit.add_items" /></h6> -->
-        <h6><T id="tools.items" /></h6>
+            <MaterialDropdown label="" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} title="actions.dynamic_values" onlyArrow />
+        </InputRow>
+    </div>
 
-        <div class="grid normal">
-            <div class="flex">
-                <IconButton name title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
+    <div class="section">
+        {#each normalItems as item}
+            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style="justify-content: left;width: 50%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+                <Icon id={item.icon || item.id} size={0.9} />
+                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+            </MaterialButton>
+        {/each}
+    </div>
 
-                <Dropdown options={dynamicValues} value="" on:click={(e) => addItem("text", e.detail.name)} title={$dictionary.actions?.dynamic_values} arrow />
+    {#if invertedItemList.length}
+        <div style="margin-top: 10px;">
+            <div class="title">
+                <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                    <Icon id="rearrange" white />
+                    <p>{translateText("edit.arrange_items")}</p>
+                </span>
             </div>
 
-            <hr class="divider" />
-
-            {#each normalItems as item}
-                <!-- i === 4 ? "min-width: 100%;" : - center align last item -->
-                <IconButton
-                    style={$labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
-                    name
-                    title={$dictionary.items?.[item.name || item.id]}
-                    icon={item.icon || item.id}
-                    disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
-                    on:click={() => addItem(item.id)}
-                />
-
-                <!-- {#if i === 0}<hr class="divider" />{/if} -->
-            {/each}
-        </div>
-
-        <h6><T id="edit.arrange_items" /></h6>
-        <div
-            class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
-            style="display: flex;flex-direction: column;"
-            on:mousedown={(e) => {
-                if (e.button !== 2) return
-                // select on right click for context menu
-                const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
-                activeStage.set({ ...$activeStage, items: [itemId] })
-            }}
-        >
-            {#if invertedItemList.length}
+            <div
+                class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
+                style="display: flex;flex-direction: column;"
+                on:mousedown={(e) => {
+                    if (e.button !== 2) return
+                    // select on right click for context menu
+                    const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
+                    activeStage.set({ ...$activeStage, items: [itemId] })
+                }}
+            >
                 {#each invertedItemList as currentItem, i}
                     {@const id = currentItem.id}
                     {@const type = currentItem.type || "text"}
-                    <Button
+
+                    <MaterialButton
                         id="#{id}"
+                        variant="outlined"
                         class="item_button"
-                        style="width: 100%;justify-content: space-between;"
-                        active={$activeStage.items.includes(id)}
-                        dark
+                        style="width: 100%;justify-content: space-between;padding: 2px 8px;"
+                        isActive={$activeStage.items.includes(id)}
+                        tab
                         on:click={(e) => {
-                            if (!e.target?.closest(".up")) {
-                                selected.set({ id: null, data: [] })
-                                activeStage.update((ae) => {
-                                    if (e.ctrlKey || e.metaKey) {
-                                        if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
-                                        else ae.items.push(id)
-                                    } else if (!ae.items.includes(id)) ae.items = [id]
-                                    else ae.items = []
-                                    return ae
-                                })
-                            }
+                            selected.set({ id: null, data: [] })
+                            activeStage.update((ae) => {
+                                if (e.detail.ctrl) {
+                                    if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
+                                    else ae.items.push(id)
+                                } else if (!ae.items.includes(id)) ae.items = [id]
+                                else ae.items = []
+                                return ae
+                            })
                         }}
                     >
-                        <span style="display: flex;flex: 1;overflow: hidden;">
-                            <p style="margin-inline-end: 10px;">{i + 1}</p>
-                            <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} />
-                            <p style="margin-inline-start: 10px;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || $dictionary.items?.[type]}</p>
-                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
+                        <span style="display: flex;align-items: center;max-width: 70%;">
+                            <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
+                            <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <p style="opacity: 0.9;margin-inline-start: 10px;;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>
+                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
                         </span>
-                        {#if i > 0}
-                            <Button class="up" on:click={() => rearrangeStageItems("forward", id)}>
-                                <Icon id="up" />
-                            </Button>
-                        {/if}
-                    </Button>
+                        <span>
+                            <MaterialButton disabled={i === allItems.length - 1} icon="down" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />
+                            <MaterialButton disabled={i === 0} icon="up" style="padding: 8px;" on:click={() => rearrangeStageItems("forward", id)} />
+                        </span>
+                    </MaterialButton>
                 {/each}
-            {:else}
-                <Center faded>
-                    <T id="empty.general" />
-                </Center>
-            {/if}
+            </div>
         </div>
-    </Panel>
+    {/if}
 </div>
 
 <style>
-    .grid {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
-        /* gap: 10px; */
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 5px;
     }
 
-    .grid :global(#icon) {
-        flex: 1;
-        background-color: var(--primary-darker);
-        padding: 9px;
-
-        /* min-width: 100%; */
-    }
-    .grid :global(#icon:hover) {
-        background-color: var(--primary-lighter);
-    }
-
-    /* .normal */
-    .grid :global(#icon) {
-        min-width: 49%;
-    }
-
-    .flex {
-        display: flex;
-        flex: 1;
-        /* min-width: 45%; */
-    }
-    .flex :global(.dropdownElem button) {
+    /* .section {
+        border-radius: 8px;
+        border: 1px solid var(--primary-lighter);
+        overflow: hidden;
+    } */
+    /* .section :global(button) {
         border: none;
-        border-left: 2px solid var(--primary);
-    }
-    .flex :global(.dropdownElem .dropdown) {
-        width: 260px;
-    }
+    } */
 
-    .divider {
-        height: 2px;
-        width: 100%;
-        background-color: var(--primary);
-        margin: 0;
+    /* title */
+
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
     }
-
-    .items p {
-        width: auto;
-    }
-
-    /*  */
-
-    .main :global(button.active) {
-        font-weight: 600;
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
+        opacity: 0.8;
     }
 </style>

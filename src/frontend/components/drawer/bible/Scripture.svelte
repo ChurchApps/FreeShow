@@ -18,6 +18,7 @@
         playScripture,
         resized,
         scriptureHistory,
+        scriptureHistoryUsed,
         scriptureMode,
         scriptures,
         scripturesCache,
@@ -1304,10 +1305,18 @@
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </MaterialButton>
 
-        {#if open}
+        {#if open || $scriptureHistoryUsed}
             <div class="divider" />
 
-            <MaterialButton disabled={!currentHistory.length && !history} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
+            <MaterialButton
+                disabled={!currentHistory.length && !history}
+                active={history}
+                on:click={() => {
+                    history = !history
+                    scriptureHistoryUsed.set(true)
+                }}
+                title={$dictionary.popup?.history}
+            >
                 <Icon size={1.2} id="history" white={!currentHistory.length} />
             </MaterialButton>
         {/if}

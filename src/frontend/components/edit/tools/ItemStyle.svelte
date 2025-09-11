@@ -10,7 +10,7 @@
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { setBoxInputValue2 } from "../values/boxes"
     import { itemSections } from "../values/item"
-    import EditValues2 from "./EditValues2.svelte"
+    import EditValues from "./EditValues.svelte"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -176,4 +176,4 @@
     }
 </script>
 
-<EditValues2 sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />
+<EditValues sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />

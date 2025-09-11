@@ -357,7 +357,7 @@
                     {option.label || "—"}
 
                     {#if option.data}
-                        <div class="data">{option.data}</div>
+                        <div class="data" data-title={option.data}>{option.data}</div>
                     {/if}
                 </li>
             {/each}
@@ -536,6 +536,7 @@
         padding: 0.25rem 0;
         max-height: 350px;
         overflow-y: auto;
+        overflow-x: hidden;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 
         border-bottom: 1px solid var(--primary-lighter);
@@ -569,6 +570,11 @@
         color: var(--text);
         opacity: 0.5;
         font-size: 0.8em;
+
+        max-width: 40%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
     .disabled {

@@ -6,7 +6,7 @@
     import { addFilterString } from "../scripts/textStyle"
     import { EditInput2 } from "../values/boxes"
     import { slideFilterSections } from "../values/filters"
-    import EditValues2 from "./EditValues2.svelte"
+    import EditValues from "./EditValues.svelte"
 
     const currentSlideFilterSections = clone(slideFilterSections)
 
@@ -29,4 +29,4 @@
     }
 </script>
 
-<EditValues2 sections={currentSlideFilterSections} item={currentSlideData} on:change={(e) => valueChanged(e.detail)} />
+<EditValues sections={currentSlideFilterSections} item={currentSlideData} on:change={(e) => valueChanged(e.detail)} />

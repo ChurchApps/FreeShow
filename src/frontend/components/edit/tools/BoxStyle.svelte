@@ -12,7 +12,7 @@
     import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { itemBoxes, setBoxInputValue2 } from "../values/boxes"
-    import EditValues2 from "./EditValues2.svelte"
+    import EditValues from "./EditValues.svelte"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -471,5 +471,5 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#if loaded}
-    <EditValues2 sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />
+    <EditValues sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />
 {/if}

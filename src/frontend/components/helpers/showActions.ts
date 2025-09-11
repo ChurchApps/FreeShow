@@ -318,7 +318,6 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
-        console.log(index, hasLinesEnded, newSlideOut, slide)
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) goToNextProjectItem(e.key)
         return
     }

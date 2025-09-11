@@ -48,13 +48,15 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <div class="align autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{(item?.align || '').replaceAll('text-align', 'justify-content')}"><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
+        <div class="align autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
+            <span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}
+        </div>
     {:else if type === "bar"}
         <!-- progress bar -->
         <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
-        <div class="align groups autoFontSize" class:column style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
+        <div class="align groups autoFontSize" class:column style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
@@ -96,6 +98,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        /* stage align */
+        justify-content: var(--text-align);
         outline: none !important;
     }
 

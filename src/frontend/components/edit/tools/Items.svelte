@@ -1,22 +1,19 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, dictionary, labelsDisabled, selected, showsCache, timers, variables } from "../../../stores"
+    import { activeEdit, activePopup, labelsDisabled, selected, showsCache, timers, variables } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
     import { sortItemsByType } from "../../helpers/output"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import IconButton from "../../inputs/IconButton.svelte"
-    import Center from "../../system/Center.svelte"
-    import Panel from "../../system/Panel.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { addItem, rearrangeItems } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
     import { itemBoxes } from "../values/boxes"
 
     type ItemRef = { id: ItemType; icon?: string; name?: string; maxAmount?: number }
 
-    const items: ItemRef[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "web" }, { id: "timer" }, { id: "clock" }]
+    const commonItems: ItemRef[] = [{ id: "media", icon: "image" }, { id: "web" }, { id: "timer" }, { id: "clock" }]
 
     const specialItems: ItemRef[] = [
         // { id: "table" },
@@ -69,161 +66,140 @@
     $: sortedItems = sortItemsByType(invertedItemList)
 </script>
 
-<Panel>
-    <h6 style="margin-top: 10px;"><T id="edit.add_items" /></h6>
+<div class="tools">
+    <div class="section">
+        <MaterialButton variant="outlined" icon="text" title="settings.add: <b>items.text</b>" style="width: 100%;" on:click={() => addItem("text")}>
+            {#if !$labelsDisabled}{translateText("items.text")}{/if}
+        </MaterialButton>
+    </div>
 
-    <div class="grid">
-        {#each items as item, i}
-            <IconButton
-                style={i === 0 ? "min-width: 100%;" : $labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
-                name
-                title={$dictionary.items?.[item.name || item.id]}
-                icon={item.icon || item.id}
-                disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
-                on:click={() => addItem(item.id, null, {}, $activeEdit.type === "template" ? $dictionary.example?.text || "" : "")}
-            />
-
-            {#if i === 0}
-                <hr class="divider" />
-            {/if}
+    <div class="section">
+        {#each commonItems as item}
+            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style="justify-content: left;width: 50%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+                <Icon id={item.icon || item.id} size={0.9} />
+                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+            </MaterialButton>
         {/each}
     </div>
 
-    <hr class="divider" />
-
-    <div class="grid special">
+    <div class="section">
         {#each specialItems as item}
-            <IconButton
-                style={$labelsDisabled ? "" : "justify-content: start;padding-inline-start: 15px;"}
-                name
-                title={$dictionary.items?.[item.name || item.id]}
-                icon={item.icon || item.id}
-                disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
-                on:click={() => addItem(item.id)}
-            />
+            {@const disabled = !!(item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount)}
+
+            <MaterialButton variant="outlined" {disabled} title="settings.add: <b>items.{item.id}</b>" style="justify-content: left;width: 50%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+                <Icon id={item.icon || item.id} size={0.9} />
+                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+            </MaterialButton>
         {/each}
     </div>
-
-    <hr class="divider" />
 
     <div>
         <!-- square, circle, triangle, star, heart, ... -->
-        <Button
-            id="button"
-            style="width: 100%;"
-            title={$dictionary.edit?.add_icons}
+        <MaterialButton
+            variant="outlined"
+            style="width: 100%;padding: 5px;"
+            title="edit.add_icons"
             on:click={() => {
                 selected.set({ id: "slide_icon", data: [{ ...$activeEdit }] })
                 activePopup.set("icon")
             }}
-            dark
-            center
         >
-            <Icon id="star" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="items.icon" />{/if}
-        </Button>
+            <Icon id="star" size={0.9} />
+            {#if !$labelsDisabled}{translateText("items.icon")}{/if}
+        </MaterialButton>
     </div>
 
-    <h6><T id="edit.arrange_items" /></h6>
-    <div
-        class="items {invertedItemList.length > 1 ? 'context #items_list_item' : ''}"
-        style="display: flex;flex-direction: column;"
-        on:mousedown={(e) => {
-            if (e.button !== 2) return
-            // select on right click for context menu
-            const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
-            activeEdit.set({ ...$activeEdit, items: [index] })
-        }}
-    >
-        {#if invertedItemList.length}
-            {#each invertedItemList as currentItem, i}
-                {@const index = invertedItemList.length - i - 1}
-                {@const type = getType(currentItem)}
-                <!-- TODO: context menu (delete / move to top/bottom / etc.) -->
-                <Button
-                    id="#{index}"
-                    class="item_button"
-                    style="width: 100%;justify-content: space-between;"
-                    active={$activeEdit.items.includes(index)}
-                    dark
-                    on:click={(e) => {
-                        if (!e.target?.closest(".up")) {
+    {#if invertedItemList.length}
+        <div style="margin-top: 10px;">
+            <div class="title">
+                <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                    <Icon id="rearrange" white />
+                    <p>{translateText("edit.arrange_items")}</p>
+                </span>
+            </div>
+
+            <div
+                class="items {invertedItemList.length > 1 ? 'context #items_list_item' : ''}"
+                style="display: flex;flex-direction: column;"
+                on:mousedown={(e) => {
+                    if (e.button !== 2) return
+                    // select on right click for context menu
+                    const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
+                    activeEdit.set({ ...$activeEdit, items: [index] })
+                }}
+            >
+                {#each invertedItemList as currentItem, i}
+                    {@const index = invertedItemList.length - i - 1}
+                    {@const type = getType(currentItem)}
+                    <!-- TODO: context menu (delete / move to top/bottom / etc.) -->
+
+                    <MaterialButton
+                        id="#{index}"
+                        variant="outlined"
+                        class="item_button"
+                        style="width: 100%;justify-content: space-between;padding: 2px 8px;"
+                        isActive={$activeEdit.items.includes(index)}
+                        tab
+                        on:click={(e) => {
                             selected.set({ id: null, data: [] })
                             activeEdit.update((ae) => {
-                                if (e.ctrlKey || e.metaKey) {
+                                if (e.detail.ctrl) {
                                     if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
                                     else ae.items.push(index)
                                 } else if (!ae.items.includes(index)) ae.items = [index]
                                 else ae.items = []
                                 return ae
                             })
-                        }
-                    }}
-                >
-                    <span style="display: flex;">
-                        <p style="margin-inline-end: 10px;">{i + 1}</p>
-                        <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} />
-                        <p style="margin-inline-start: 10px;">{$dictionary.items?.[type]}</p>
-                        {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
-                    </span>
-                    <!-- {#if i < allSlideItems.length - 1}
-                        <Icon id="down" />
-                    {/if} -->
-                    {#if i > 0}
-                        <Button class="up" on:click={() => rearrangeItems("forward", index)}>
-                            <Icon id="up" />
-                        </Button>
-                    {/if}
-                </Button>
-            {/each}
-        {:else}
-            <Center faded>
-                <T id="empty.general" />
-            </Center>
-        {/if}
-    </div>
-</Panel>
+                        }}
+                    >
+                        <span style="display: flex;align-items: center;max-width: 70%;">
+                            <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
+                            <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <p style="opacity: 0.9;margin-inline-start: 10px;">{translateText("items." + type)}</p>
+                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
+                        </span>
+                        <span>
+                            <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />
+                            <MaterialButton disabled={i === 0} icon="up" style="padding: 8px;" on:click={() => rearrangeItems("forward", index)} />
+                        </span>
+                    </MaterialButton>
+                {/each}
+            </div>
+        </div>
+    {/if}
+</div>
 
 <style>
-    .grid {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
-        /* gap: 10px; */
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 5px;
     }
 
-    .grid :global(#icon) {
-        flex: 1;
-        background-color: var(--primary-darker);
-        padding: 9px;
-
-        /* min-width: 100%; */
-    }
-    .grid :global(#icon:hover) {
-        background-color: var(--primary-lighter);
-    }
-
-    /* .special */
-    .grid :global(#icon) {
-        /* min-width: 32%; */
-        min-width: 49%;
-    }
-
-    /* p.divider {
-        background-color: var(--primary-darkest);
-        text-align: center;
-        padding: 2px;
-        font-size: 0.8em;
-        / * font-weight: 600;
-        text-transform: uppercase; * /
+    /* .section {
+        border-radius: 8px;
+        border: 1px solid var(--primary-lighter);
+        overflow: hidden;
     } */
-    .divider {
-        height: 2px;
-        width: 100%;
-        background-color: var(--primary);
-        margin: 0;
-    }
+    /* .section :global(button) {
+        border: none;
+    } */
 
-    .items p {
-        width: auto;
+    /* title */
+
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
+    }
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
+        opacity: 0.8;
     }
 </style>

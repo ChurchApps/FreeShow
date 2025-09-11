@@ -6,7 +6,7 @@
     import T from "../helpers/T.svelte"
     import { removeStore, updateStore } from "../helpers/update"
     import Button from "../inputs/Button.svelte"
-    import EditValues2 from "./tools/EditValues2.svelte"
+    import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue2 } from "./values/boxes"
     import { audioSections } from "./values/media"
 
@@ -63,7 +63,7 @@
 
 <div class="main border editTools">
     <div class="content">
-        <EditValues2 sections={currentAudioSections} item={currentMedia} on:change={valueChanged2} />
+        <EditValues sections={currentAudioSections} item={currentMedia} on:change={valueChanged2} />
     </div>
 
     <span style="display: flex;">

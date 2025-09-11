@@ -12,7 +12,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
     import Tabs from "../main/Tabs.svelte"
-    import EditValues2 from "./tools/EditValues2.svelte"
+    import EditValues from "./tools/EditValues.svelte"
     import { effectSections } from "./values/effects"
 
     let tabs: TabsObj = {
@@ -117,7 +117,7 @@
                             </InputRow>
 
                             {#if openedMenus[i] && editContent}
-                                <EditValues2 sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
+                                <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
                             {/if}
                         {/each}
                     {/key}

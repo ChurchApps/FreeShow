@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
-    import EditValues2 from "../../edit/tools/EditValues2.svelte"
+    import EditValues from "../../edit/tools/EditValues.svelte"
     import { itemBoxes, setBoxInputValue2 } from "../../edit/values/boxes"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -202,4 +202,4 @@
     let timeout: NodeJS.Timeout | null = null
 </script>
 
-<EditValues2 sections={stageSections} styles={data} {item} {customValues} on:change={updateStyle2} isStage />
+<EditValues sections={stageSections} styles={data} {item} {customValues} on:change={updateStyle2} isStage />

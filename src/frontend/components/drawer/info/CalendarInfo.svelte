@@ -37,7 +37,7 @@
 
     $: if (!$special.firstDayOfWeek) getPreferredFirstDay()
     function getPreferredFirstDay() {
-        const localeInfo: any = new Intl.Locale($language)
+        const localeInfo: any = new Intl.Locale(navigator.language || $language)
         const firstDay = localeInfo.getWeekInfo().firstDay
         if (firstDay) updateSpecial(firstDay.toString(), "firstDayOfWeek")
     }
