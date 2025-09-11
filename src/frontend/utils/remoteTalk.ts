@@ -14,7 +14,7 @@ import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { destroyMain, receiveMain } from "../IPC/main"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { waitUntilValueIsDefined } from "./common"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
@@ -122,7 +122,7 @@ export const receiveREMOTE: any = {
             if (out && out.id !== "temp") {
                 id = out.id
                 oldOutSlide = id
-                msg.data.show = await convertBackgrounds(get(showsCache)[id])
+                msg.data.show = await convertBackgrounds(get(showsCache)[id], false, true)
                 msg.data.show.id = id
             }
 
@@ -164,13 +164,13 @@ export const receiveREMOTE: any = {
 
         if (isApi) {
             const apiId = scriptureEntry?.id || id
-            
+
             if (bookKey && !chapterKey) {
                 // Fetch chapters only (mirror drawer behavior: some APIs include a 0 entry)
-                let chapters: any[] = await fetchBible("chapters", apiId, { 
-                    bookId: bookKey, 
-                    versesList: [], 
-                    chapterId: `${bookKey}.1` 
+                let chapters: any[] = await fetchBible("chapters", apiId, {
+                    bookId: bookKey,
+                    versesList: [],
+                    chapterId: `${bookKey}.1`
                 })
                 if (chapters?.[0] && Number.parseInt(chapters[0].number, 10) === 0) {
                     chapters = chapters.slice(1)
@@ -182,18 +182,18 @@ export const receiveREMOTE: any = {
                 msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
                 return msg
             }
-            
+
             if (bookKey && chapterKey) {
                 // Fetch verses only
-                const versesMeta: any[] = await fetchBible("verses", apiId, { 
-                    bookId: bookKey, 
-                    chapterId: chapterKey, 
-                    versesList: [] 
+                const versesMeta: any[] = await fetchBible("verses", apiId, {
+                    bookId: bookKey,
+                    chapterId: chapterKey,
+                    versesList: []
                 })
-                const versesTextResp: any[] = await fetchBible("versesText", apiId, { 
-                    bookId: bookKey, 
-                    chapterId: chapterKey, 
-                    versesList: versesMeta 
+                const versesTextResp: any[] = await fetchBible("versesText", apiId, {
+                    bookId: bookKey,
+                    chapterId: chapterKey,
+                    versesList: versesMeta
                 })
                 // Build the verses consistent with drawer's convertVerses (index-based mapping)
                 const mappedVerses = (versesTextResp || []).map((d: any, i: number) => ({
@@ -203,7 +203,7 @@ export const receiveREMOTE: any = {
                 msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
                 return msg
             }
-            
+
             // Initial: prefer cached books2 from scriptures store; fallback to fetch
             const objectId = Object.entries(get(scriptures)).find(([_id, a]: any) => a?.id === id)?.[0] || id
             const cachedBooks: any[] = (get(scriptures) as any)[objectId]?.books2 || []
@@ -243,17 +243,17 @@ export async function initializeRemote(id: string) {
 
     // Get current output state
     const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    const styleRes = currentOutput?.style ? 
-        get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : 
+    const styleRes = currentOutput?.style ?
+        get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution :
         null
 
     const outSlide = currentOutput?.out?.slide
-    const out: any = { 
-        slide: outSlide ? outSlide.index : null, 
-        layout: outSlide?.layout || null, 
-        styleRes 
+    const out: any = {
+        slide: outSlide ? outSlide.index : null,
+        layout: outSlide?.layout || null,
+        styleRes
     }
-    
+
     if (out.slide !== null && outSlide?.id && outSlide?.id !== "temp") {
         oldOutSlide = outSlide.id
         // Output & thumbnail
@@ -265,7 +265,7 @@ export async function initializeRemote(id: string) {
             window.api.send(REMOTE, await receiveREMOTE.SHOW({ channel: "SHOW", id, data: oldOutSlide }))
         })
     }
-    
+
     // Send targeted initial state to this connection
     // Use sendData so the proper OUT payload is constructed (handles scripture 'temp' etc.)
     sendData(REMOTE, { id, channel: "OUT" })
@@ -276,7 +276,7 @@ export async function initializeRemote(id: string) {
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 
-export async function convertBackgrounds(show: Show, noLoad = false) {
+export async function convertBackgrounds(show: Show, noLoad = false, init = false) {
     if (!show?.media) return {}
 
     show = clone(show)
@@ -299,6 +299,9 @@ export async function convertBackgrounds(show: Show, noLoad = false) {
                 show.media[id].path = getThumbnailPath(path, mediaSize.slideSize)
                 return
             }
+
+            const remoteConnections = Object.keys(get(connections).REMOTE || {})?.length || 0
+            if (!init && remoteConnections === 0) return
 
             const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
             if (base64Path) show.media[id].path = base64Path

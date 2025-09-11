@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
-    import { wait } from "../../utils/common"
+    import { limitUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
@@ -54,9 +54,13 @@
 
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: {
+    $: updateOffset({ $outputs })
+    async function updateOffset(_updater: any) {
+        if (!loaded || !scrollElem) return
+        if (!(await limitUpdate("SHOWS_SCROLL_OFFSET", 50))) return
+
         let output = $outputs[activeOutputs[0]] || {}
-        if (loaded && scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
+        if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = ((scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount, onDestroy } from "svelte"
     import type { Cropping, Resolution } from "../../../types/Settings"
     import { draw, outputs, styles } from "../../stores"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
@@ -40,6 +41,27 @@
 
     let slideWidth = 0
     let slideHeight = 0
+    let slideElem: HTMLDivElement | null = null
+
+    let resizeObserver: ResizeObserver | null = null
+    onMount(() => {
+        if (!slideElem) return
+
+        resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (slideWidth !== width || slideHeight !== height) {
+                    slideWidth = width
+                    slideHeight = height
+                }
+            }
+        })
+        resizeObserver.observe(slideElem)
+    })
+    onDestroy(() => {
+        if (resizeObserver && slideElem) resizeObserver.unobserve(slideElem)
+    })
+
     export let ratio = 1
     $: shouldUseHeightRatio = outputRes.width < outputRes.height && stylesRatio.width > stylesRatio.height && styleAspectRatio === defaultRatio
     $: ratio = Math.max(0.01, shouldUseHeightRatio ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
@@ -77,8 +99,7 @@
 
 <div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
-        bind:offsetWidth={slideWidth}
-        bind:offsetHeight={slideHeight}
+        bind:this={slideElem}
         class="slide"
         class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
         class:hideOverflow

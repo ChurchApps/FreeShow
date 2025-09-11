@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item, OutSlide, SlideData } from "../../../../types/Show"
-    import { activeTimers, playingAudio, playingAudioPaths, showsCache, variables, videosTime } from "../../../stores"
+    import { showsCache } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
+    import { loadCustomFonts } from "../../helpers/fonts"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
-    import { loadCustomFonts } from "../../helpers/fonts"
-    import { _show } from "../../helpers/shows"
 
     export let outputId: string
     export let outSlide: OutSlide
@@ -47,13 +46,14 @@
     let show = false
 
     const showItemRef = { outputId, slideIndex: outSlide?.index }
-    $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
-    $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let update = 0
-    function updateValues() {
+    // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
+    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
+    let updater = 0
+    const updaterInterval = setInterval(() => {
         if (isClearing) return
-        update++
-    }
+        if (currentItems.find((a) => a.conditions)) updater++
+    }, 100)
+    onDestroy(() => clearInterval(updaterInterval))
 
     // do not update if only line has changed
     $: currentOutSlide = "{}"
@@ -150,7 +150,7 @@
 <!-- Updating this with another "store" causes svelte transition bug! -->
 {#key show}
     {#each currentItems as item}
-        {#if show && shouldItemBeShown(item, currentItems, showItemRef, update) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+        {#if show && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
             <SlideItemTransition
                 {preview}
                 {transitionEnabled}

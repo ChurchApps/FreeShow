@@ -182,9 +182,13 @@ async function toDataURL(url: string): Promise<string> {
 //     })
 // }
 
+let existingMedia: string[] = []
 export async function doesMediaExist(path: string, noCache: boolean = false) {
+    if (existingMedia.includes(path)) return true
+
     if (noCache) {
         const existsData = await requestMain(Main.DOES_MEDIA_EXIST, { path, noCache })
+        if (existsData.exists) existingMedia.push(path)
         return existsData.exists
     }
 
@@ -204,6 +208,7 @@ export async function doesMediaExist(path: string, noCache: boolean = false) {
         })
     }
 
+    if (existsData.exists) existingMedia.push(path)
     return existsData.exists
 }
 

@@ -187,7 +187,7 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id))
 }
 
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
@@ -318,6 +318,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
+        console.log(index, hasLinesEnded, newSlideOut, slide)
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) goToNextProjectItem(e.key)
         return
     }
@@ -384,7 +385,6 @@ async function goToNextShowInProject(slide, customOutputId) {
 
 // only let "first" output change project item if multiple outputs
 let changeProjectItemTimeout: NodeJS.Timeout | null = null
-
 export function goToNextProjectItem(key = "") {
     // play project media with arrow right if not already playing
     const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
@@ -455,7 +455,7 @@ export function goToPreviousProjectItem(key = "") {
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function previousSlideIndividual(e: any) {
-    getActiveOutputs().forEach((id) => previousSlide(e, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach((id) => previousSlide(e, id))
 }
 
 export function previousSlide(e: any, customOutputId?: string) {
@@ -704,7 +704,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     }
 
     // get output slide
-    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs(get(outputs), true, false, true)
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)

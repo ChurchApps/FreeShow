@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
-    import { activeTimers, allOutputs, outputs, playingAudio, playingAudioPaths, stageShows, variables, videosTime } from "../../stores"
+    import { allOutputs, outputs, stageShows } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { getAccess } from "../../utils/profile"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
@@ -38,7 +39,13 @@
 
     $: stageItems = getSortedStageItems(id, $stageShows)
 
-    $: videoTime = $videosTime[stageOutputId] || 0
+    // $: videoTime = $videosTime[stageOutputId] || 0
+    // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
+    let updater = 0
+    const updaterInterval = setInterval(() => {
+        if (stageItems.find((a) => a.conditions)) updater++
+    }, 1000)
+    onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 <!-- WIP duplicate of StageLayout.svelte (pretty much) -->
@@ -56,7 +63,7 @@
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime })}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, updater)}
                             <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}

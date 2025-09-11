@@ -36,6 +36,7 @@
     import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
+    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
@@ -49,7 +50,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
 
     export let showId: string
     export let slide: Slide
@@ -361,7 +361,9 @@
     $: outputId = getActiveOutputs($outputs, false, true)
 
     let updater = 0
-    const updaterInterval = setInterval(() => updater++, 3000)
+    const updaterInterval = setInterval(() => {
+        if (itemsList.find((a) => a.conditions)) updater++
+    }, 3000)
     onDestroy(() => clearInterval(updaterInterval))
 </script>
 

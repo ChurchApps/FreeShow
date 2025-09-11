@@ -29,7 +29,8 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
         return
     }
 
-    const base64path = await getBase64Path(path)
+    const stageConnections = Object.keys(get(connections).STAGE || {})?.length || 0
+    const base64path = stageConnections > 0 ? await getBase64Path(path) : ""
 
     const bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
 

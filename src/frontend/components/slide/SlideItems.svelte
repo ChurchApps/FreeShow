@@ -31,6 +31,7 @@
     export let disableListTransition = false
     export let smallFontSize = false
     export let fontSize = 0
+    export let outputId: string = ""
 
     export let ratio = 1
     export let ref: {
@@ -87,7 +88,7 @@
         <Cam cam={item.device} item style={cameraStyleString} />
     {/if}
 {:else if item.type === "slide_tracker"}
-    <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} />
+    <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />
 {:else if item.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item.type === "weather"}

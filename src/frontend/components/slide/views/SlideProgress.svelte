@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { dictionary, groups, outputs } from "../../../stores"
+    import { allOutputs, dictionary, groups, outputs } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
+    export let outputId: string = ""
     export let item: any = {}
     export let autoSize = 0
 
@@ -12,8 +13,9 @@
     $: type = tracker.type || "number"
     $: accent = tracker.accent
 
-    $: outputId = getActiveOutputs()[0]
-    $: currentSlideOut = $outputs[outputId]?.out?.slide || null
+    $: if (!outputId) outputId = getActiveOutputs()[0]
+    $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
+    $: currentSlideOut = currentOutput?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
     $: currentLayoutRef = getLayoutRef(currentShowId)
@@ -92,6 +94,7 @@
         width: 100%;
         height: 100%;
         display: flex;
+        align-items: center;
         justify-content: center;
         outline: none !important;
     }

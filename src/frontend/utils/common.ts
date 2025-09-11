@@ -212,10 +212,10 @@ export function isDarkTheme() {
 }
 
 let throttled: { [key: string]: any } = {}
-export function throttle(id: string, value: any, callback: (value: any) => {}, maxUpdatesPerSecond: number) {
+export function throttle(id: string, value: any, callback: (value: any) => void, maxUpdatesPerSecond: number) {
     // value = clone(value)
 
-    if (throttled[id]) {
+    if (throttled[id] !== undefined) {
         throttled[id] = value
         return
     }
@@ -227,4 +227,23 @@ export function throttle(id: string, value: any, callback: (value: any) => {}, m
         if (throttled[id] !== "WAITING") callback(throttled[id])
         delete throttled[id]
     }, 1000 / maxUpdatesPerSecond)
+}
+
+let limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
+export function limitUpdate(id: string, maxUpdatesMs: number = 0): Promise<boolean> {
+    // resolve any existing updates as false as there is a newer one
+    if (limited[id]) {
+        clearTimeout(limited[id].timeout)
+        limited[id].pending(false)
+    }
+
+    return new Promise((resolve) => {
+        limited[id] = {
+            timeout: setTimeout(() => {
+                delete limited[id]
+                resolve(true)
+            }, maxUpdatesMs),
+            pending: resolve,
+        }
+    })
 }

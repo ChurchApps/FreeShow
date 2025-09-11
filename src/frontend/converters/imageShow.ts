@@ -11,7 +11,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
 
     const layoutId = uid()
     const showId = uid()
-    const show = new ShowObj(false, categoryId, layoutId)
+    const show = new ShowObj(false, categoryId, layoutId, new Date().getTime(), false)
 
     show.name = checkName(name, showId)
 
