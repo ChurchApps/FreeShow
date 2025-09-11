@@ -10,10 +10,11 @@
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
+    import { newDropdown } from "../edit/scripts/edit"
 
     export let label: string
     export let value: string
-    export let defaultValue: string = ""
+    export let defaultValue: string | null = null
     export let options: DropdownOptions
 
     export let id = ""
@@ -258,6 +259,8 @@
 
     let addNewTextbox = false
     function createNew() {
+        if (newDropdown[addNew!]) return newDropdown[addNew!]()
+
         open = false
         addNewTextbox = true
     }
@@ -278,11 +281,12 @@
     $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow data-title={onlyArrow ? `${translateText(label)}: ${selected?.label || "—"}` : ""} bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow bind:this={dropdownEl}>
     <div class="background" />
 
     <div
         class="input edit dropdown-trigger"
+        data-title="{translateText(label)}: <b>{selected?.label || '—'}</b>"
         role="button"
         tabindex={disabled ? undefined : 0}
         on:click={(e) => {
@@ -297,7 +301,8 @@
         {#if !onlyArrow}
             <span class="selected-text" style={selected?.style ?? null}>
                 {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
-                {#if selected?.value !== undefined}{selected?.label || "—"}{/if}
+                <!-- show value if options list has not loaded yet (e.g. fonts) -->
+                {#if selected?.value !== undefined}{selected?.label || "—"}{:else if value}{value}{/if}
             </span>
         {/if}
         <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -317,7 +322,7 @@
             </MaterialButton>
         </div>
     {/if}
-    {#if defaultValue}
+    {#if defaultValue !== null}
         <div class="remove">
             {#if value !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>
@@ -352,7 +357,7 @@
                     {option.label || "—"}
 
                     {#if option.data}
-                        <div class="data">{option.data}</div>
+                        <div class="data" data-title={option.data}>{option.data}</div>
                     {/if}
                 </li>
             {/each}
@@ -531,6 +536,7 @@
         padding: 0.25rem 0;
         max-height: 350px;
         overflow-y: auto;
+        overflow-x: hidden;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 
         border-bottom: 1px solid var(--primary-lighter);
@@ -549,6 +555,8 @@
         transition: background 0.2s;
 
         display: flex;
+        align-items: center;
+        gap: 5px;
     }
     .dropdown li:hover,
     .dropdown li.highlighted {
@@ -562,6 +570,11 @@
         color: var(--text);
         opacity: 0.5;
         font-size: 0.8em;
+
+        max-width: 40%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
     .disabled {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
@@ -31,6 +31,26 @@
 
     let width = 0
     let height = 0
+    let mainElem: HTMLDivElement | null = null
+
+    let resizeObserver: ResizeObserver | null = null
+    onMount(() => {
+        if (!mainElem) return
+
+        resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width: w, height: h } = entry.contentRect
+                if (width !== w || height !== h) {
+                    width = w
+                    height = h
+                }
+            }
+        })
+        resizeObserver.observe(mainElem)
+    })
+    onDestroy(() => {
+        if (resizeObserver && mainElem) resizeObserver.unobserve(mainElem)
+    })
 
     // type
     $: if (!type && path) {
@@ -108,7 +128,7 @@
     }
 </script>
 
-<div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
+<div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:this={mainElem}>
     {#key path}
         {#if type === "camera"}
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">

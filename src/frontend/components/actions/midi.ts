@@ -114,7 +114,7 @@ export function receivedMidi(msg) {
 
     const hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
-        newToast("$toast.midi_no_velocity")
+        newToast("toast.midi_no_velocity")
         index = 0
     }
 

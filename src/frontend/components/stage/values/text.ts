@@ -1,21 +1,26 @@
-import type { EditInput } from "../../edit/values/boxes"
+import { splitIntoRows, textSections, type EditBoxSection } from "../../edit/values/boxes"
 
-export const slideTextEdits: EditInput[] = [
-    { name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -10, max: 20 } },
-    { name: "max_lines", id: "lineCount", input: "number", value: 0 },
-    { name: "includeMedia", id: "includeMedia", input: "checkbox", value: false },
-    { name: "keepStyle", id: "keepStyle", input: "checkbox", value: false },
-    { name: "item_number", id: "itemNumber", input: "number", value: 0 },
-    { name: "invert_items", id: "invertItems", input: "checkbox", value: false },
-]
-
-export const slideNotesEdit: EditInput[] = [{ name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -10, max: 20 } }]
-
-export const variableEdits: EditInput[] = [
-    {
-        name: "popup.variable",
-        input: "selectVariable",
-        id: "variable.id",
-        value: "",
+export const slideTextSections: { [key: string]: EditBoxSection } = {
+    default: {
+        inputs: splitIntoRows([
+            { id: "slideOffset", type: "number", value: 0, values: { label: "edit.slide_offset", min: -10, max: 20 } },
+            { id: "lineCount", type: "number", value: 0, values: { label: "edit.max_lines", } },
+            { id: "includeMedia", type: "checkbox", value: false, values: { label: "edit.includeMedia", } },
+            { id: "keepStyle", type: "checkbox", value: false, values: { label: "edit.keepStyle", } },
+            { id: "itemNumber", type: "number", value: 0, values: { label: "edit.item_number", } },
+            { id: "invertItems", type: "checkbox", value: false, values: { label: "edit.invert_items", } },
+        ])
     },
-]
+    font: {
+        noReset: true,
+        inputs: textSections.default.inputs
+    },
+    align: textSections.align,
+    text: textSections.text,
+    // lines: textSections.lines,
+    outline: textSections.outline,
+    shadow: textSections.shadow,
+    chords: textSections.chords,
+    special: textSections.special,
+    // CSS: textSections.CSS,
+}

@@ -404,7 +404,7 @@ const receiveCLOUD = {
         })
 
         if (!changes.length) {
-            newToast("$cloud.sync_complete")
+            newToast("cloud.sync_complete")
 
             if (get(activePopup) !== "cloud_update") return
 
@@ -419,7 +419,7 @@ const receiveCLOUD = {
         activeShow.set(null)
 
         // show completed toast
-        newToast("$cloud.sync_complete")
+        newToast("cloud.sync_complete")
 
         // show popup if manually syncing
         if (get(activePopup) === "cloud_update") {

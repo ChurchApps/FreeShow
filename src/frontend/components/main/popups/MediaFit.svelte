@@ -35,12 +35,12 @@
 
 <div class="types">
     {#each mediaFitOptions as fit}
-        {@const isActive = fit.id === currentValue}
-        <MaterialButton showOutline={isActive} {isActive} on:click={() => changeFit(fit.id)}>
+        {@const isActive = fit.value === currentValue}
+        <MaterialButton showOutline={isActive} {isActive} on:click={() => changeFit(fit.value)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
-                {@html icons[fit.id]}
+                {@html icons[fit.value]}
             </svg>
-            <T id={fit.name} />
+            <T id={fit.label} />
         </MaterialButton>
     {/each}
 </div>

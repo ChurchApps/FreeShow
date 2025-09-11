@@ -23,7 +23,7 @@
     import SlideFilters from "./tools/SlideFilters.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
     import TemplateStyle from "./tools/TemplateStyle.svelte"
-    import { boxes } from "./values/boxes"
+    import { itemBoxes } from "./values/boxes"
 
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
@@ -33,7 +33,7 @@
         filters: { name: "edit.filters", icon: "filter", overflow: true }
     }
     let active: string = Object.keys(tabs)[0]
-    $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
+    $: tabs.text.icon = item?.type && itemBoxes[item.type] ? itemBoxes[item.type]!.icon : "text"
     $: tabs.text.name = "items." + (item?.type || "text")
 
     // is not template or overlay

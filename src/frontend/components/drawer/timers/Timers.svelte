@@ -19,6 +19,7 @@
     const profile = getAccess("functions")
     const readOnly = profile.timers === "read"
 
+    // $: sortedTimers = getSortedTimers($timers)
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))

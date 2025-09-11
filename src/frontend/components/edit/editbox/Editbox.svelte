@@ -153,6 +153,7 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : `editItem item ${isLocked ? "" : "context #edit_box"}`}
     class:selected={$activeEdit.items.includes(index)}
+    class:decoration={item.decoration}
     class:isDisabledVariable
     class:chords={chordsMode}
     class:isOptimized
@@ -177,6 +178,7 @@ bind:offsetWidth={width} -->
 <style>
     .item {
         outline: 5px solid rgb(255 255 255 / 0.2);
+        outline-offset: 0;
         transition: background-color 0.3s;
         /* cursor: text; */
 
@@ -203,5 +205,10 @@ bind:offsetWidth={width} -->
         /* .item:hover > .edit { */
         background-color: rgb(255 255 255 / 0.05);
         backdrop-filter: blur(20px);
+    }
+
+    .item.decoration:not(.selected) {
+        pointer-events: none;
+        outline: none !important;
     }
 </style>

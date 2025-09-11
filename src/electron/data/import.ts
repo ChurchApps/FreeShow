@@ -1,30 +1,27 @@
 import path, { join } from "path"
-// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
-import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
-// @ts-ignore
+// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
+import MDBReader from "mdb-reader"
 // @ts-ignore
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
+import { pptToShow } from "../output/ppt/pptToShow"
 import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompress, isZip } from "./zip"
-import MDBReader from "mdb-reader"
 
 type FileData = { content: Buffer | string | object; name?: string; extension?: string }
 
 const specialImports = {
-    powerpoint: async (files: string[]) => {
+    powerpoint: async (files: string[], dataPath: string) => {
         const data: FileData[] = []
 
-        // https://www.npmjs.com/package/pptx2json
-        const pptx2json = new PPTX2Json()
         for await (const filePath of files) {
-            const json = await pptx2json.toJson(filePath)
+            const json = await pptToShow(filePath, dataPath)
             data.push({ name: getFileName(filePath), content: json })
         }
 
@@ -145,7 +142,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
         return
     }
 
-    if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files)
+    if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files, importSettings?.path || "")
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         for (let i = 0; i < files.length; i += BATCH_SIZE) {

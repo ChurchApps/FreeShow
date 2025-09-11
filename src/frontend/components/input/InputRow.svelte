@@ -38,11 +38,12 @@
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
     }
-    .row > :global(button:not(.isActive)) {
+    .row > :global(button:not(.isActive):not(:disabled)) {
         border-bottom: 1.2px solid var(--primary-lighter) !important;
     }
 
     .row :global(.togglefield:not(:first-child)),
+    .row :global(.checkboxfield:not(:first-child)),
     .row :global(.textfield:not(:first-child)),
     .row :global(button:not(:first-child)) {
         border-left: 1px solid var(--primary-lighter) !important;

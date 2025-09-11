@@ -83,7 +83,7 @@
                         <LazyLoad component={() => import("./components/edit/EffectTools.svelte")} show={$activeEdit.type === "effect"} />
                     {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}
                         {#if ($activeEdit.type || "show") === "show" && $textEditActive}
-                            <LazyLoad component={() => import("./components/edit/TextEditTools.svelte")} show={($activeEdit.type || "show") === "show" && $textEditActive} />
+                            <!-- <LazyLoad component={() => import("./components/edit/TextEditTools.svelte")} show={($activeEdit.type || "show") === "show" && $textEditActive} /> -->
                         {:else if !$focusMode}
                             <LazyLoad component={() => import("./components/edit/EditTools.svelte")} show={!$focusMode} />
                         {/if}
@@ -91,7 +91,7 @@
                 {:else if page === "draw"}
                     <LazyLoad component={() => import("./components/draw/DrawSettings.svelte")} show={page === "draw"} />
                 {:else if page === "stage" && $activeStage.id}
-                    <LazyLoad component={() => import("./components/stage/StageTools.svelte")} show={page === "stage" && $activeStage.id} />
+                    <LazyLoad component={() => import("./components/stage/StageTools.svelte")} show={page === "stage" && !!$activeStage.id} />
                 {:else if page === "settings"}
                     <LazyLoad component={() => import("./components/settings/SettingsTools.svelte")} show={page === "settings"} />
                 {/if}

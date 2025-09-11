@@ -58,7 +58,7 @@
             if (started && currentSequence.length && !outSlide) return stopRecording()
             if (!outSlide || outSlide.layout !== activeLayout || outSlide.index === undefined) return
 
-            if (!currentSequence.length) newToast("$toast.recording_started")
+            if (!currentSequence.length) newToast("toast.recording_started")
 
             let layoutSlide = layoutRef[outSlide.index]
             // if (layoutSlide.parent) layoutSlide = layoutSlide.parent
@@ -78,7 +78,7 @@
     function stopRecording() {
         if (!started) return
 
-        newToast("$toast.recording_stopped")
+        newToast("toast.recording_stopped")
         started = false
         if (outputListenerUnsubscribe) outputListenerUnsubscribe()
 

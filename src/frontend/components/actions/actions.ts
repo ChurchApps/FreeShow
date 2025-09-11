@@ -156,7 +156,7 @@ export function customActionActivation(id: string) {
     })
 
     if (actionTriggered && id === "startup") {
-        newToast("$toast.starting_action")
+        newToast("toast.starting_action")
     }
 }
 

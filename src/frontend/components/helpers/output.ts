@@ -111,7 +111,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
     outputs.update((a) => {
         const bindings = data?.layout ? ref[data.index]?.data?.bindings || [] : []
-        const allOutputIds = bindings.length ? bindings : getActiveOutputs()
+        const allOutputIds = bindings.length ? bindings : getActiveOutputs(a, true, false, true)
         const outs = outputId ? [outputId] : allOutputIds
         const inputData = clone(data)
 
@@ -585,7 +585,7 @@ export function shouldBeCaptured(outputId: string, startup = false) {
     }
 
     // alert user that screen recording starts
-    if (!startup && Object.values(captures).filter(Boolean).length) newToast("$toast.output_capture_enabled")
+    if (!startup && Object.values(captures).filter(Boolean).length) newToast("toast.output_capture_enabled")
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }

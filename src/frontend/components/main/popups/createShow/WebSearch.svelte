@@ -22,7 +22,7 @@
         let artist = ""
         let title = query
         if (!title) {
-            newToast("$toast.no_name")
+            newToast("toast.no_name")
             return
         }
 
@@ -47,7 +47,7 @@
         data = filterBadArtists(data)
 
         if (!data.length) {
-            newToast("$empty.search")
+            newToast("empty.search")
             setValue("")
         }
 
@@ -64,7 +64,7 @@
         })
 
         if (!data.lyrics) {
-            newToast("$toast.lyrics_undefined")
+            newToast("toast.lyrics_undefined")
             setValue("")
             return
         }

@@ -75,7 +75,7 @@
         }}
         on:keydown={handleKeydown}
     >
-        <span class="selected-text">
+        <span class="selected-text" data-title={value ? name : ""}>
             {#if value}
                 <!-- {#if icon}<Icon id={icon} white />{/if} -->
 
@@ -193,10 +193,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: 88%;
 
-        display: flex;
+        /* display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 8px; */
     }
 
     .arrow {
@@ -226,6 +227,11 @@
         transition: all 0.2s ease;
         pointer-events: none;
         z-index: 1;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        max-width: 80%;
     }
     label.selected {
         top: 0.25rem;

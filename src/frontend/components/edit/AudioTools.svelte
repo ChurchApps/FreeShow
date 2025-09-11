@@ -7,30 +7,24 @@
     import { removeStore, updateStore } from "../helpers/update"
     import Button from "../inputs/Button.svelte"
     import EditValues from "./tools/EditValues.svelte"
-    import { audioEdits } from "./values/media"
+    import { setBoxInputValue2 } from "./values/boxes"
+    import { audioSections } from "./values/media"
 
     // update values
     $: audioId = $activeEdit.id || $activeShow!.id
     $: currentMedia = $media[audioId] || {}
 
-    let edits = clone(audioEdits.media?.edit)!
+    let currentAudioSections = clone(audioSections)
 
     $: if (audioId) getAudioDuration()
     async function getAudioDuration() {
         const duration = await AudioPlayer.getDuration(audioId)
 
-        edits.default[3].value = currentMedia?.toTime || duration
-        edits.default[2].values = { max: duration }
-        edits.default[3].values = { max: duration }
-    }
-
-    // set values
-    $: if (currentMedia && edits) {
-        edits.default[0].value = currentMedia.audioType || ""
-        edits.default[1].value = (currentMedia.volume || 1) * 100
-
-        edits.default[2].value = currentMedia.fromTime || 0
-        edits.default[3].value = currentMedia.toTime || edits.default[3].value
+        setBoxInputValue2(currentAudioSections, "default", "toTime", "value", currentMedia?.toTime || duration)
+        setBoxInputValue2(currentAudioSections, "default", "toTime", "default", duration)
+        setBoxInputValue2(currentAudioSections, "default", "fromTime", "values", { max: duration })
+        setBoxInputValue2(currentAudioSections, "default", "toTime", "values", { max: duration })
+        currentAudioSections = currentAudioSections
 
         // WIP set min/max based on each other
     }
@@ -50,17 +44,26 @@
         let value = input.value
         if (value?.id !== undefined) value = value.id
         if (input.id === "volume") {
-            value = Math.min(1, Math.max(0, value / 100))
+            // value = Math.min(1, Math.max(0, value / 100))
             setTimeout(() => AudioPlayer.updateVolume(audioId))
         }
 
         updateStore("media", { keys: [audioId, input.id], value })
     }
+
+    function valueChanged2(e: any) {
+        const input = e.detail
+
+        input.value = input.values.value
+        input.input = input.type
+
+        valueChanged(input)
+    }
 </script>
 
 <div class="main border editTools">
     <div class="content">
-        <EditValues {edits} on:change={(e) => valueChanged(e.detail)} />
+        <EditValues sections={currentAudioSections} item={currentMedia} on:change={valueChanged2} />
     </div>
 
     <span style="display: flex;">

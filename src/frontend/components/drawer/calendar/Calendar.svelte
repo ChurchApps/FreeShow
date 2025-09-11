@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData } from "../../../stores"
+    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -15,7 +15,7 @@
     // WIP search for events
     $: console.log(searchValue)
 
-    let sundayFirstDay = false
+    $: sundayFirstDay = $special.firstDayOfWeek === "7"
 
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
@@ -25,9 +25,9 @@
     activeDays.set([copyDate(today).getTime()])
 
     let days: Date[][] = []
-    $: getDays(month)
+    $: getDays(month, sundayFirstDay)
 
-    function getDays(month: number) {
+    function getDays(month: number, _updater: any) {
         let daysList: any = []
         for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i))
 
@@ -73,6 +73,7 @@
 
     let weekdays: string[] = []
     $: {
+        weekdays = []
         for (let i = 0; i < 7; i++) {
             let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
             weekdays.push($dictionary.weekday?.[index] || "")

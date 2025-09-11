@@ -28,9 +28,7 @@
         })
     }
 
-    async function toggle(e: any, key: string) {
-        let checked = typeof e === "boolean" ? e : e.target.checked
-
+    async function toggle(checked: boolean, key: string) {
         if (key === "customUserDataLocation") {
             let existingData = false
             if (checked) {
@@ -149,9 +147,7 @@
         })
     }
 
-    function toggleData(e: any, key, invert = false) {
-        let checked: boolean = typeof e === "boolean" ? e : e.target.checked || false
-
+    function toggleData(checked: boolean, key, invert = false) {
         driveData.update((a) => {
             a[key] = invert ? !checked : checked
             return a

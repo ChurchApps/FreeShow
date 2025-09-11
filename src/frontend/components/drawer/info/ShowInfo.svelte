@@ -1,6 +1,7 @@
 <script lang="ts">
-    import type { Line } from "../../../../types/Show"
+    import type { Line, Show, TrimmedShow } from "../../../../types/Show"
     import { activeShow, activeTagFilter, categories, globalTags, shows, showsCache, templates } from "../../../stores"
+    import { limitUpdate } from "../../../utils/common"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -8,8 +9,15 @@
     import Button from "../../inputs/Button.svelte"
     import InfoMetadata from "./InfoMetadata.svelte"
 
-    $: show = $activeShow?.id ? $shows[$activeShow.id] : null
-    $: fullShow = $activeShow?.id ? $showsCache[$activeShow.id] : null
+    let show: TrimmedShow | null = null
+    let fullShow: Show | null = null
+    $: if ($shows || $showsCache) updateShows()
+    async function updateShows() {
+        if (!(await limitUpdate("SHOW_INFO", 200))) return
+
+        show = $activeShow?.id ? $shows[$activeShow.id] : null
+        fullShow = $activeShow?.id ? $showsCache[$activeShow.id] : null
+    }
 
     $: created = show?.timestamps?.created || null
     $: modified = show?.timestamps?.modified || null

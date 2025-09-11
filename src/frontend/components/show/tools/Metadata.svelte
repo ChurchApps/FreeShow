@@ -10,7 +10,6 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import Panel from "../../system/Panel.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -19,7 +18,6 @@
     let metadata: any = {}
     let outputShowSettings: any = {}
 
-    let loaded = false
     onMount(getValues)
     $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
     $: if ($activeShow!.id || messageUpdate || $customMetadata) getValues()
@@ -38,8 +36,6 @@
 
         let outputId = getActiveOutputs($outputs)[0]
         outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}
-
-        setTimeout(() => (loaded = true), 100)
     }
 
     const changeValue = (value: string, key: string) => {
@@ -83,19 +79,6 @@
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow!.id }, location: { page: "show", id: "show_key", override } })
     }
 
-    // I have no idea why, but the ui jump around without resetting this new checkbox
-    let tempHide = false
-    $: setHide = metadata.display || metadata.template || message.template
-    $: if (setHide) hide()
-    function hide() {
-        if (!loaded) return
-        tempHide = true
-        setTimeout(() => (tempHide = false), 10)
-
-        // scroll to bottom
-        setTimeout(() => document.querySelector(".content")?.scrollTo(0, 999), 20)
-    }
-
     // AUTOFILL
 
     const autofillValues = {
@@ -113,7 +96,7 @@
     // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
 </script>
 
-<Panel flex column={!tempHide}>
+<section>
     {#if metadata.autoMedia !== true}
         <div class="context #metadata_tools" style="padding: 10px;">
             {#each Object.entries(values) as [key, value]}
@@ -184,4 +167,14 @@
     <div class="tags" style="display: flex;flex-direction: column;">
         <Tags />
     </div> -->
-</Panel>
+</section>
+
+<style>
+    section {
+        height: 100%;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+    }
+</style>

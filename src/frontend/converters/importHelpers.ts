@@ -40,7 +40,7 @@ export function setTempShows(tempShows: { id: string; show: Show }[]) {
     }
 
     activePopup.set(null)
-    newToast("$main.finished")
+    newToast("main.finished")
 }
 
 export function importShow(files: { content: string; name?: string; extension?: string }[]) {
@@ -123,7 +123,7 @@ export function importSpecific(data: { content: string; name?: string; extension
         })
     })
 
-    newToast("$main.finished")
+    newToast("main.finished")
 }
 
 export function fixShowIssues(show) {

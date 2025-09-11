@@ -18,9 +18,9 @@
 </script>
 
 {#if input.type === "dropdown"}
-    <MaterialDropdown {label} value={input.value} options={input.options?.map((a) => ({ ...a, label: translateText(a.label) }))} style={input.style || ""} on:change={changed} />
+    <MaterialDropdown {label} {...input} options={input.options?.map((a) => ({ ...a, label: translateText(a.label) }))} on:change={changed} />
 {:else if input.type === "checkbox"}
     <MaterialCheckbox {label} checked={input.value} style="flex: 1;{input.style || ''}" on:change={changed} />
 {:else}
-    <svelte:component this={commonInputs[input.type]} {label} value={input.value} style={input.style || ""} {...input.settings || {}} on:change={changed} />
+    <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} on:change={changed} />
 {/if}

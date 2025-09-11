@@ -87,7 +87,7 @@
 
     let autoValues = false
     function toggleAutoValues(e: any) {
-        autoValues = e.target.checked
+        autoValues = e.detail
 
         change()
     }

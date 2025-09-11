@@ -1,18 +1,19 @@
 <script lang="ts">
     import type { EffectItem } from "../../../types/Effects"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activePopup, dictionary, effects } from "../../stores"
+    import { activeEdit, activePopup, effects } from "../../stores"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { addToPos } from "../helpers/mover"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import InputRow from "../input/InputRow.svelte"
     import Color from "../inputs/Color.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
     import Tabs from "../main/Tabs.svelte"
     import EditValues from "./tools/EditValues.svelte"
-    import { effectEdits } from "./values/effects"
+    import { effectSections } from "./values/effects"
 
     let tabs: TabsObj = {
         effect: { name: "items.effect", icon: "effects" },
@@ -24,67 +25,31 @@
     // update values
     $: effectId = $activeEdit.id || ""
     $: currentEffect = $effects[effectId] || {}
-    // $: currentEdits = effectEdits[currentEffect.type]
-
-    // let edits: any = {}
-    // // let filterEdits = clone(currentEffect.edit)
-    // $: if (currentEffect) edits = {} // clone(currentEffect?.items)
-    // $: console.log(edits)
-
-    // $: if (geteffectType(getExtension(effectId)) === "video") addVideoOptions()
-    // else edits = clone(effectEdits.effect?.edit)
-    // function addVideoOptions() {
-    //     if (!edits) return
-
-    //     edits.video = clone(videoEdit)
-    // }
-
-    // set values
-    // $: if (currenteffect) {
-    //     edits.default[1].value = currenteffect.flipped || false
-    //     edits.default[0].value = currenteffect.fit || "contain"
-    //     if (edits.video) edits.video[0].value = currenteffect.speed || "1"
-
-    //     // update filters
-    //     let filters = getFilters(currenteffect.filter)
-    //     let defaultFilters = effectFilters.effect?.edit?.default || []
-    //     filterEdits.default.forEach((filter) => {
-    //         let value = filters[filter.key] ?? defaultFilters.find((a) => a.key === filter.key)?.value
-    //         let index = filterEdits.default.findIndex((a) => a.key === filter.key)
-    //         filterEdits.default[index].value = value
-    //     })
-    // }
 
     export function valueChanged(input: any, itemIndex: number) {
         if (!effectId) return
 
         effects.update((a) => {
-            a[effectId].items[itemIndex][input.id] = input.value
+            a[effectId].items[itemIndex][input.id] = input.values.value
             return a
         })
     }
 
-    function getEdits(item: EffectItem) {
-        const edits = clone(effectEdits[item.type] || [])
-
-        edits.forEach((edit) => {
-            const value = item[edit.id]
-            if (value !== undefined) edit.value = value
-        })
-
-        return { default: edits }
-    }
-
-    let openedMenus: number[] = []
-    function toggleMenu(index: number) {
-        if (openedMenus.includes(index)) openedMenus.splice(openedMenus.indexOf(index), 1)
-        else openedMenus.push(index)
-        openedMenus = openedMenus
+    function getItemSections(item: EffectItem) {
+        if (!effectSections[item.type]) return null
+        return { default: clone(effectSections[item.type]) }
     }
 
     function deleteItem(index: number) {
-        if (openedMenus.includes(index)) toggleMenu(index)
-        openedMenus = openedMenus.map((i) => (i > index ? i - 1 : i))
+        // not tested:
+        let newOpenedMenus: number[] = []
+        Object.keys(openedMenus).forEach((menuIndex: string | number) => {
+            menuIndex = Number(menuIndex)
+            if (!openedMenus[menuIndex] || menuIndex === index) return
+            newOpenedMenus.push(menuIndex + (menuIndex > index ? 1 : 0))
+        })
+        openedMenus = {}
+        newOpenedMenus.forEach((index) => (openedMenus[index] = true))
 
         effects.update((a) => {
             a[effectId].items.splice(index, 1)
@@ -101,6 +66,8 @@
 
     let moved = false
     function move(index: number, newIndex: number) {
+        openedMenus = {}
+
         effects.update((a) => {
             const item = a[effectId].items.splice(index, 1)
             a[effectId].items = addToPos(a[effectId].items, item, newIndex)
@@ -111,78 +78,64 @@
         setTimeout(() => (moved = false))
     }
 
-    // $: if ((currentEffect.items || []).length < currentItems.length) {
-    //     openedMenus.push(currentItems.length - 1)
-    //     openedMenus = openedMenus
-    // }
     let currentItems: any[]
     $: currentItems = currentEffect.items || []
+
+    let openedMenus: { [key: string]: boolean } = {}
 </script>
 
 <div class="main border editTools">
     <Tabs {tabs} bind:active />
+
     <div class="content">
         {#if active === "effect"}
             {#if currentEffect}
                 <div class="items">
                     {#key moved}
                         {#each currentItems as item, i}
-                            <CombinedInput textWidth={10} style={i === 0 ? "" : "border-top: 2px solid var(--primary-lighter);"}>
-                                <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
+                            {@const editContent = getItemSections(item)}
+
+                            <InputRow arrow={!!editContent} bind:open={openedMenus[i]}>
+                                <div class="title">
+                                    <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
+                                </div>
 
                                 {#if i < currentItems.length - 1}
-                                    <Button class="down" on:click={() => move(i, i + 1)}>
-                                        <Icon id="down" />
-                                    </Button>
+                                    <MaterialButton class="down" icon="down" on:click={() => move(i, i + 1)} />
                                 {/if}
                                 {#if i > 0}
-                                    <Button class="up" on:click={() => move(i, i - 1)}>
-                                        <Icon id="up" />
-                                    </Button>
+                                    <MaterialButton class="up" icon="up" on:click={() => move(i, i - 1)} />
                                 {/if}
 
-                                <Button on:click={() => toggleHidden(i)}>
+                                <MaterialButton on:click={() => toggleHidden(i)}>
                                     <Icon id={item.hidden ? "hide" : "eye"} white={!item.hidden} />
-                                </Button>
+                                </MaterialButton>
 
-                                <Button title={$dictionary.actions?.delete} on:click={() => deleteItem(i)} redHover>
+                                <MaterialButton title="actions.delete" on:click={() => deleteItem(i)}>
                                     <Icon id="delete" white />
-                                </Button>
+                                </MaterialButton>
+                            </InputRow>
 
-                                {#if effectEdits[item.type]}
-                                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => toggleMenu(i)}>
-                                        {#if openedMenus.includes(i)}
-                                            <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
-                                        {:else}
-                                            <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
-                                        {/if}
-                                    </Button>
-                                {/if}
-                            </CombinedInput>
-
-                            {#if openedMenus.includes(i)}
-                                <EditValues edits={getEdits(item)} on:change={(e) => valueChanged(e.detail, i)} />
+                            {#if openedMenus[i] && editContent}
+                                <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
                             {/if}
                         {/each}
                     {/key}
                 </div>
             {/if}
 
-            <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
-                <Button
-                    style="width: 100%;"
-                    on:click={() => {
-                        activePopup.set("effect_items")
-                        const nextIndex = currentItems.length
-                        if (!openedMenus.includes(nextIndex)) openedMenus.push(nextIndex)
-                    }}
-                    center
-                    dark
-                >
-                    <Icon id="add" right />
-                    <T id="settings.add" />
-                </Button>
-            </CombinedInput>
+            <MaterialButton
+                variant="outlined"
+                style="width: 100%;margin-top: 8px;"
+                icon="add"
+                on:click={() => {
+                    activePopup.set("effect_items")
+                    const nextIndex = currentItems.length
+                    if (!openedMenus[nextIndex]) openedMenus[nextIndex] = true
+                }}
+            >
+                <T id="settings.add" />
+            </MaterialButton>
 
             <!-- {:else if active === "filters"}
             <EditValues edits={filterEdits} on:change={(e) => valueChanged(e.detail)} /> -->
@@ -222,13 +175,6 @@
             </div>
         {/if}
     </div>
-
-    <!-- <span style="display: flex;">
-        <Button style="flex: 1;" on:click={() => console.log("reset")} dark center>
-            <Icon id="reset" right />
-            <T id={"actions.reset"} />
-        </Button>
-    </span> -->
 </div>
 
 <style>
@@ -252,13 +198,23 @@
         flex-direction: column;
     }
 
-    .content :global(.section) {
-        margin: 0;
+    .items :global(button) {
+        padding: 12px;
     }
 
-    .section {
+    .title {
         display: flex;
-        flex-direction: column;
-        margin: 10px;
+        align-items: center;
+        flex: 1;
+        padding: 0 10px;
+
+        background-color: var(--primary-darker);
+    }
+
+    .content :global(.tools) {
+        padding: 0;
+    }
+    .content :global(.section) {
+        border: none;
     }
 </style>

@@ -19,10 +19,11 @@
     export let step = 1
     export let min: number | null = 0
     export let max: number | null = null // 1000
+    export let maxDecimals: number = 2
     export let padLength: number = 0
 
     // a string might be passed in
-    $: numberValue = Number(value)
+    $: numberValue = Number((value || 0).toFixed(maxDecimals))
 
     // Slider values and percent for filled track
     $: sliderMin = sliderValues.min ?? min ?? 0
@@ -150,7 +151,7 @@
     <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
 
     {#if showSlider}
-        <div class="slider-wrapper">
+        <div class="slider-wrapper" style="padding-right: {defaultValue === null ? 40 : 70}px;">
             <input tabindex="-1" class="slider" type="range" {disabled} min={sliderMin} max={sliderMax} step={sliderStep} bind:value={numberValue} on:input={() => updateValue(numberValue)} style="--slider-fill: {sliderPercent}%;" />
         </div>
     {/if}

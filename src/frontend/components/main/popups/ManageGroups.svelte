@@ -43,7 +43,7 @@
 
     function addGroup() {
         // if (!value.group.length) {
-        //     newToast("$toast.no_name")
+        //     newToast("toast.no_name")
         //     return
         // }
 

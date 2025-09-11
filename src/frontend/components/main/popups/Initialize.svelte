@@ -14,8 +14,6 @@
     import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
-
     onMount(() => {
         if (!$dataPath) sendMain(Main.DATA_PATH)
         if (!$showsPath) sendMain(Main.SHOWS_PATH)
@@ -26,9 +24,7 @@
         if (use12Hour === true) timeFormat.set("12")
     })
 
-    function create(e: any) {
-        if (e.target.closest(".main") && !e.target.closest(".start")) return
-
+    function create() {
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
 
         if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
@@ -62,10 +58,6 @@
     </InputRow>
 
     <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={(e) => dataPath.set(e.detail)} openButton={false} />
-    <!-- <div>
-    <p><T id="settings.auto_output" /></p>
-    <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
-  </div> -->
 
     <MaterialButton variant="outlined" class="start" style="font-size: 1.8em;padding: 15px;margin-top: 20px;" on:click={create} white>
         <Icon id="check" size={2.5} />

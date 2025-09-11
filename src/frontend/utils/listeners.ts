@@ -1,14 +1,17 @@
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
     $,
+    actions,
     activeProject,
     activeScripture,
     activeShow,
+    activeTimers,
     audioData,
     cachedShowsData,
     colorbars,
@@ -17,12 +20,12 @@ import {
     drawSettings,
     drawTool,
     driveKeys,
+    effects,
     events,
     folders,
     gain,
     groups,
     media,
-    actions,
     openedFolders,
     outputs,
     outputSlideCache,
@@ -42,23 +45,18 @@ import {
     timers,
     transitionData,
     variables,
-    volume,
-    effects,
-    activeTimers
+    volume
 } from "../stores"
+import { limitUpdate } from "./common"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
-import { AudioPlayer } from "../audio/audioPlayer"
 
 export function storeSubscriber() {
-    // load new show on show change
-    activeShow.subscribe((a) => {
-        if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
-    })
+    shows.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_SHOWS", 200))) return
 
-    shows.subscribe((data) => {
         // sendData(REMOTE, { channel: "SHOWS", data })
 
         // temporary cache shows data
@@ -68,41 +66,39 @@ export function storeSubscriber() {
         // send(OUTPUT, ["SHOWS_DATA"], data)
     })
 
-    let timeout: NodeJS.Timeout | null = null
-    showsCache.subscribe((data) => {
+    showsCache.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_SHOWSCACHE"), 50)) return
+
         send(OUTPUT, ["SHOWS"], data)
 
-        if (timeout) clearTimeout(timeout)
-        timeout = setTimeout(() => {
-            // STAGE
-            // sendData(STAGE, { channel: "SLIDES" })
-            sendData(STAGE, { channel: "SHOW_DATA" })
+        // STAGE
+        // sendData(STAGE, { channel: "SLIDES" })
+        sendData(STAGE, { channel: "SHOW_DATA" })
 
-            // REMOTE
+        // REMOTE
 
-            // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+        // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
 
-            // WIP convertBackgrounds is triggered many times...
+        // WIP convertBackgrounds is triggered many times...
 
-            // TODO: ?
-            // send(REMOTE, ["SHOW"], data )
-            timedout(REMOTE, { channel: "SHOW", data }, () =>
-                eachConnection(REMOTE, "SHOW", async (connection) => {
-                    return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
-                })
-            )
-            // TODO: this, timedout +++
-            // this is just for updating output slide pos I guess
-            sendData(REMOTE, { channel: "OUT" })
+        // TODO: ?
+        // send(REMOTE, ["SHOW"], data )
+        timedout(REMOTE, { channel: "SHOW", data }, () =>
+            eachConnection(REMOTE, "SHOW", async (connection) => {
+                return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
+            })
+        )
+        // TODO: this, timedout +++
+        // this is just for updating output slide pos I guess
+        // sendData(REMOTE, { channel: "OUT" })
 
-            // cache shows data for faster show loading (if it's less than 100)
-            if (Object.keys(data).length < 100) updateCachedShows(data)
-
-            timeout = null
-        }, 80)
+        // cache shows data for faster show loading (if it's less than 100)
+        if (Object.keys(data).length < 100) updateCachedShows(data)
     })
 
-    templates.subscribe((data) => {
+    templates.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_TEMPLATES"), 50)) return
+
         send(OUTPUT, ["TEMPLATES"], data)
 
         // set all loaded shows to false, so show style can be updated from template again
@@ -119,7 +115,9 @@ export function storeSubscriber() {
         //     if (get(showsCache)[id]?.settings?.template === id) // set false
         // });
     })
-    overlays.subscribe((data) => {
+    overlays.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_OVERLAYS"), 50)) return
+
         send(OUTPUT, ["OVERLAYS"], data)
         send(REMOTE, ["OVERLAYS"], data)
     })
@@ -134,20 +132,21 @@ export function storeSubscriber() {
     scriptures.subscribe((data) => {
         send(REMOTE, ["SCRIPTURE"], data)
     })
-    // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
-    let activeScriptureTimer: any
-    activeScripture.subscribe((data) => {
-        if (activeScriptureTimer) clearTimeout(activeScriptureTimer)
-        activeScriptureTimer = setTimeout(() => {
-            const source: any = (data && (data.api || data.bible)) || data || {}
-            const hasBook = source.bookId !== undefined && source.bookId !== null
-            const hasChapter = source.chapterId !== undefined && source.chapterId !== null
-            const hasVerses = Array.isArray(source.activeVerses) && source.activeVerses.length > 0
-            if (hasBook && hasChapter && hasVerses) send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
-        }, 120)
+    activeScripture.subscribe(async (data) => {
+        // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
+        if (!(await limitUpdate("LISTENER_ACTIVE_SCRIPTURE"), 120)) return
+
+        const source: any = (data && (data.api || data.bible)) || data || {}
+        const hasBook = source.bookId !== undefined && source.bookId !== null
+        const hasChapter = source.chapterId !== undefined && source.chapterId !== null
+        const hasVerses = Array.isArray(source.activeVerses) && source.activeVerses.length > 0
+        if (hasBook && hasChapter && hasVerses) send(REMOTE, ["ACTIVE_SCRIPTURE"], data)
     })
 
-    outputs.subscribe((data) => {
+    outputs.subscribe(async (data) => {
+        // wait in case multiple slide layers get activated right after each other - to reduce the amount of updates
+        if (!(await limitUpdate("LISTENER_OUTPUTS"))) return
+
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
@@ -170,7 +169,9 @@ export function storeSubscriber() {
     playerVideos.subscribe((data) => {
         send(OUTPUT, ["PLAYER_VIDEOS"], data)
     })
-    stageShows.subscribe((data) => {
+    stageShows.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_STAGE"), 50)) return
+
         send(OUTPUT, ["STAGE_SHOWS"], data)
 
         // STAGE
@@ -211,7 +212,9 @@ export function storeSubscriber() {
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
     })
-    outputSlideCache.subscribe((a) => {
+    outputSlideCache.subscribe(async (a) => {
+        if (!(await limitUpdate("LISTENER_SLIDE_CACHE"), 50)) return
+
         send(OUTPUT, ["OUT_SLIDE_CACHE"], a)
         send(STAGE, ["OUT_SLIDE_CACHE"], a)
     })
@@ -220,7 +223,9 @@ export function storeSubscriber() {
         send(OUTPUT, ["CUSTOM_CREDITS"], data)
     })
 
-    effects.subscribe((data) => {
+    effects.subscribe(async (data) => {
+        if (!(await limitUpdate("LISTENER_EFFECTS"), 50)) return
+
         send(OUTPUT, ["EFFECTS"], data)
     })
 
@@ -294,6 +299,9 @@ export function storeSubscriber() {
         if (!data?.id) return
         const type = data?.type || "show"
         if (type !== "show") return
+
+        // load new show on show change
+        loadShows([data.id])
 
         const show = get(showsCache)[data.id]
         cachedShowsData.update((a) => {

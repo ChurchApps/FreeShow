@@ -10,7 +10,7 @@
     export let value: API_output_style
 
     let styleId: string = value.outputStyle || ""
-    $: if (!Object.keys($styles).length) newToast("$toast.empty_styles")
+    $: if (!Object.keys($styles).length) newToast("toast.empty_styles")
 
     let styleOutputs = value.styleOutputs || { type: "active" }
 

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog } from "../../types/Main"
-import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
+import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
 import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
@@ -116,14 +116,6 @@ export function startAutosave() {
     }, saveInterval)
 }
 
-// get dropdown list
-export function getList(object: any, addEmptyValue = false) {
-    let list = sortByName(keysToID(object))
-    if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
-
-    return list
-}
-
 // error logger
 const ERROR_FILTER = [
     "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
@@ -217,4 +209,41 @@ export function triggerFunction(id: string) {
 export function isDarkTheme() {
     const contrastColor = getContrast(get(themes)[get(theme)]?.colors?.primary || "")
     return contrastColor === "#FFFFFF"
+}
+
+let throttled: { [key: string]: any } = {}
+export function throttle(id: string, value: any, callback: (value: any) => void, maxUpdatesPerSecond: number) {
+    // value = clone(value)
+
+    if (throttled[id] !== undefined) {
+        throttled[id] = value
+        return
+    }
+
+    callback(value)
+    throttled[id] = "WAITING"
+
+    setTimeout(() => {
+        if (throttled[id] !== "WAITING") callback(throttled[id])
+        delete throttled[id]
+    }, 1000 / maxUpdatesPerSecond)
+}
+
+let limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
+export function limitUpdate(id: string, maxUpdatesMs: number = 0): Promise<boolean> {
+    // resolve any existing updates as false as there is a newer one
+    if (limited[id]) {
+        clearTimeout(limited[id].timeout)
+        limited[id].pending(false)
+    }
+
+    return new Promise((resolve) => {
+        limited[id] = {
+            timeout: setTimeout(() => {
+                delete limited[id]
+                resolve(true)
+            }, maxUpdatesMs),
+            pending: resolve,
+        }
+    })
 }

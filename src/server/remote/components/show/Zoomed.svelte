@@ -34,7 +34,7 @@
 
         color: white;
         font-size: 100px;
-        font-family: "CMGSans";
+        font-family: sans-serif; /* "CMGSans"; */
         line-height: 1.1;
         -webkit-text-stroke-color: #000000;
         text-shadow: 2px 2px 10px #000000;

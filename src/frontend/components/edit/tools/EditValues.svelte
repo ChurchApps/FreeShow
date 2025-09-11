@@ -1,167 +1,76 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { uid } from "uid"
-    import type { Item } from "../../../../types/Show"
-    import type { StageItem } from "../../../../types/Stage"
-    import { activePopup, dictionary, actions, popupData, storedEditMenuState, variables } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import { clone, keysToID, sortByName } from "../../helpers/array"
-    import { getFileName } from "../../helpers/media"
-    import { getFilters } from "../../helpers/style"
-    import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import DateInput from "../../inputs/DateInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import FontDropdown from "../../inputs/FontDropdown.svelte"
-    import IconButton from "../../inputs/IconButton.svelte"
-    import MediaPicker from "../../inputs/MediaPicker.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import Slider from "../../inputs/Slider.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import TimeInput from "../../inputs/TimeInput.svelte"
-    import Notes from "../../show/tools/Notes.svelte"
-    import { getOriginalValue, openDrawer, removeExtension } from "../scripts/edit"
-    import type { EditInput } from "../values/boxes"
-    import EditTimer from "./EditTimer.svelte"
+    import { actions, timers } from "../../../stores"
+    import { throttle } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
+    import { getSortedTimers } from "../../drawer/timers/timers"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
+    import { getFilters, getStyles } from "../../helpers/style"
+    import Input from "../../input/Input.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
+    import MaterialFontDropdown from "../../inputs/MaterialFontDropdown.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
+    import { parseShadowValue } from "../scripts/edit"
+    import type { EditBoxSection, EditInput2 } from "../values/boxes"
+    import { sectionColors } from "../values/item"
 
-    export let edits: { [key: string]: EditInput[] }
-    export let defaultEdits: { [key: string]: EditInput[] } = {}
-    export let item: Item | StageItem | null = null
+    export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
-    export let lineAlignStyle: { [key: string]: string } = {}
-    export let alignStyle: { [key: string]: string } = {}
-    export let customLabels: string[] = []
-    export let noClosing = false
-    export let sessionId = ""
-    export let isStage = false
+    export let customValues: { [key: string]: string } = {}
+    export let item: any = {}
+    export let isStage: boolean = false
 
-    const inputs = {
-        fontDropdown: FontDropdown,
-        color: Color,
-        number: NumberInput,
-        text: TextInput,
-        dropdown: Dropdown,
-        checkbox: Checkbox,
-        date: DateInput,
-        time: TimeInput
-    }
+    function getValue(input: EditInput2, _updater: any = null) {
+        if (input.type === "toggle") return styles[input.key || ""] || ""
+        if (input.type === "radio") return customValues[input.key || ""] || ""
+        if (input.id.includes("CSS")) return getStyleString(input)
 
-    let dispatch = createEventDispatcher()
-    function valueChange(e: any, input: EditInput, inputUpdate = false) {
-        if (inputUpdate && input.input === "text") return
-
-        let value = e.detail ?? e.target?.value ?? null
-
-        if (input.input === "checkbox") value = e.target?.checked
-        else if (input.input === "dropdown" || input.input === "selectVariable" || input.input === "action") value = value?.id || ""
-        else if (input.input === "number") value = Number(value)
-        // else if (input.input === "multiselect" && Array.isArray(input.value)) {
-        //     if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
-        //     else value = [...input.value, value]
-        // }
-
-        // closed update
-        if (!value && value !== "" && e.detail !== undefined) value = e.detail
-
-        if (input.extension) value += input.extension
-
-        // the changed value is part af a larger string
-        if (input.valueIndex !== undefined) {
-            let inset = input.key?.includes("inset_")
-            if (inset) input.key = input.key?.substring(6)
-
-            let actualValue = styles[input.key || ""] || getOriginalValue(clone(edits), (inset ? "inset_" : "") + input.key)
-
-            // replace rgb() because it has spaces
-            if (input.input === "color") {
-                let rgbIndex: number = actualValue.indexOf("rgb")
-                if (rgbIndex > 5) actualValue = actualValue.slice(0, rgbIndex) + "#000000"
+        const defaultValue = input.value
+        let value: any = null
+        if (input.id === "filter" || input.id === "backdrop-filter") {
+            value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
+        } else if (input.key) {
+            value = styles[input.key || ""]
+            if (input.valueIndex !== undefined) {
+                if (input.key === "box-shadow" || input.key === "text-shadow") {
+                    const arr = parseShadowValue(value)
+                    value = arr[input.valueIndex]
+                } else {
+                    value = value?.split(" ")[input.valueIndex]
+                }
             }
-            let splittedValue = actualValue.split(" ")
-
-            if (inset && !splittedValue.includes("inset")) splittedValue.unshift("inset")
-            splittedValue[input.valueIndex] = value
-
-            value = splittedValue.join(" ")
-
-            // update current styles value (to properly set/reset)
-            styles[input.key || ""] = value
+            if (input.extension && value !== "") value = Number(value?.toString().replace(input.extension, ""))
+        } else {
+            const parts = input.id.split(".")
+            if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
+            else value = item[input.id]
         }
+        if (value === undefined) value = input.values.value
 
-        dispatch("change", { ...input, value })
-    }
-
-    const lineInputs = {
-        "font-style": [
-            { id: "style", icon: "bold", toggle: true, key: "font-weight", value: "bold" },
-            { id: "style", icon: "italic", toggle: true, key: "font-style", value: "italic" },
-            { id: "style", icon: "underline", toggle: true, key: "text-decoration", value: "underline" },
-            { id: "style", icon: "strikethrough", toggle: true, key: "text-decoration", value: "line-through" }
-        ],
-        "align-x": [
-            { id: "style", icon: "alignLeft", title: "left", key: "text-align", value: "left" },
-            { default: true, id: "style", icon: "alignCenter", title: "center", key: "text-align", value: "center" },
-            { id: "style", icon: "alignRight", title: "right", key: "text-align", value: "right" },
-            { id: "style", icon: "alignJustify", title: "justify", key: "text-align", value: "justify" }
-        ],
-        "align-y": [
-            { id: "style", icon: "alignTop", title: "top", key: "align-items", value: "flex-start" },
-            { default: true, id: "style", icon: "alignMiddle", title: "center", key: "align-items", value: "center" },
-            { id: "style", icon: "alignBottom", title: "bottom", key: "align-items", value: "flex-end" }
-        ]
-    }
-
-    function toggle(input: EditInput) {
-        if (typeof input.value !== "string") return
-
-        let value: string = styles[input.key || ""] || ""
-
-        let exists: number = value.indexOf(input.value)
-        if (exists > -1) value = value.slice(0, exists) + value.substring(exists + input.value.length)
-        else value = value + " " + input.value
-        value = value.trim()
-
-        dispatch("change", { ...input, value })
-    }
-
-    function getValue(input: EditInput, _updater: any) {
-        // if (input.id === "auto" && isAuto) return true
-        if (input.id?.includes(".")) input.value = getItemValue(input)
-
-        if (input.valueIndex !== undefined && styles[input.key || ""]) return removeExtension(styles[input.key!].split(" ")[input.valueIndex], input.extension)
-        if (input.input === "dropdown") return input.values.options.find((a) => a.id === getKeyValue(input))?.name || "—"
-        if (input.input === "checkbox") return !!input.value // closed
-        if (input.id === "filter" || input.id === "backdrop-filter") return item?.filter ? getFilters(item.filter || "")[input.key || ""] || input.value : input.value
-
-        return styles[input.key || ""] || input.value
-    }
-
-    function getItemValue(input: EditInput) {
-        // get nested value
-        let splitted = input.id?.split(".") || []
-        let value = item?.[splitted[0]]?.[splitted[1]]
-        return value !== undefined ? value : input.value
-    }
-
-    function getKeyValue(input: EditInput) {
-        if (!item || !input.id || !item[input.id]) return input.value
-        if (input.key) {
-            if (item[input.id][input.key]) return item[input.id][input.key]
-            if (!styles[input.key]) return input.value
-            return styles[input.key]
+        if (input.type === "number") {
+            if (value === "") value = undefined
+            else value = Number(value)
+            if (isNaN(value)) value = undefined
         }
-        return item[input.id]
+        if (value === undefined) value = defaultValue
+
+        if (input.multiplier) value *= input.multiplier
+
+        // pre 1.5.0 dropdowns
+        if (input.type === "fontDropdown") value = value.replaceAll("'", "")
+
+        return value
     }
 
-    // $: if (input.input === "CSS" && item) getStyleString()
-    function getStyleString(input: EditInput) {
+    function getStyleString(input: EditInput2) {
         let style = ""
-        if (input.id === "item") style = item?.style || ""
-        else if (typeof input.value === "string") style = input.value // "text" / custom
+        if (input.id === "CSS_item") style = item.style || ""
+        else if (typeof input.value === "string") style = input.values?.value // "CSS_text" / custom
 
         if (!style) return ""
 
@@ -174,514 +83,328 @@
         return style
     }
 
-    $: if ($activePopup === null && $popupData.value) findChangedInput()
-    function findChangedInput() {
-        let changedInput = edits[$popupData.section]?.find((a) => a.id === $popupData.id)
-        if (!changedInput) return
+    // CHANGE
 
-        changedInput.value = $popupData.value
-        valueChange({ detail: changedInput.value }, changedInput)
+    function toggle(input: any) {
+        let value = styles[input.key || ""] || ""
+
+        let exists: number = value.indexOf(input.value)
+        if (exists > -1) value = value.slice(0, exists) + value.substring(exists + input.value.length)
+        else value = value + " " + input.value
+        value = value.trim()
+
+        // changed({ detail: value }, input)
+        input.values.value = value
+        dispatch("change", clone(input))
     }
 
-    function openPopup(input: EditInput, section: string) {
-        activePopup.set(input.popup || (input.id as any) || null)
-        let data = { id: input.id, section, value: input.value, type: "" }
-        if (input.id === "list.items") data.type = (edits[section].find((a) => a.id === "list.style")?.value || "") as string
-        popupData.set(data)
+    function radio(input: any) {
+        let value = input.value
+        input.values.value = value
+        dispatch("change", clone(input))
     }
 
-    // CLOSED STYLES
+    const dispatch = createEventDispatcher()
+    function changed(e: any, input: any, sectionId: string = "") {
+        console.log(input)
 
-    const closed = {
-        // content
-        text: {
-            "style_letter-spacing": 1
-        },
-        lines: {
-            // "style_line-height": 1.2,
-            "specialStyle.lineGap": 1
-        },
-        align: {
-            "style_text-align": "left"
-        },
-        outline: {
-            // "style_-webkit-text-stroke-color": "#000000",
-            "style_-webkit-text-stroke-width": 2
-        },
-        shadow: {
-            // "style_text-shadow_3": "#000000",
-            "style_text-shadow_0": 0,
-            "style_text-shadow_1": 0,
-            "style_text-shadow_2": 0,
+        let value = e.detail
 
-            // item
-            "style_box-shadow_4": "rgb(0 0 0 / 0.5)",
-            "style_box-shadow_0": 2,
-            "style_box-shadow_1": 2,
-            "style_box-shadow_2": 8
-            // "style_box-shadow_3": 0,
-        },
-        list: {
-            "list.enabled": true
-        },
-        chords: {
-            "chords.enabled": true
-        },
-        // media
-        filters: {
-            "filter_hue-rotate": 100
-        },
-        special: {
-            "scrolling.type": "left_right"
-        },
+        if (input.multiplier) value = value / input.multiplier
+        if (input.extension) value += input.extension
 
-        // item
-        transform: {
-            // transform_scaleX: -1,
-            transform_perspective: 1
-        },
-        // style: {
-        //     // WIP opacity does not get applied here
-        //     // "style_background-color": "rgb(0 0 0 / 0.3)",
-        //     // "(style_)background-opacity": "0.3", (this is linked to the color)
-        //     style_padding: 10,
-        // },
-        border: {
-            "style_border-width": 5
-        },
-        backdrop_filters: {
-            "backdrop-filter_grayscale": 1
+        if (input.valueIndex !== undefined) {
+            if (sections[sectionId]) {
+                const allKeyValues = sections[sectionId]?.inputs.flat().filter((a) => a.key === input.key)
+                const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
+
+                let currentValue = styles[input.key || ""] || ""
+                let arr
+                if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
+                else arr = currentValue.split(" ").filter(Boolean)
+                arr[input.valueIndex] = value
+
+                // add any extensions
+                for (let i = 0; i < sortedKeys.length; i++) {
+                    if (sortedKeys[i].extension && arr[i] !== undefined && arr[i] !== "") {
+                        if (!arr[i].toString().endsWith(sortedKeys[i].extension)) {
+                            arr[i] = arr[i].toString().replace(/[^0-9.\-]+$/, "") + sortedKeys[i].extension
+                        }
+                    }
+                }
+
+                value = arr.join(" ")
+            } else {
+                // reset
+                value = ""
+            }
         }
+
+        /// CUSTOM
+
+        // reset text shadow if unchanged & setting text color to gradient
+        // there is also a different check to remove it if gradient & shadow does not exist (but only in the output)
+        if (input.key === "color" && item.lines && sections["shadow"] && !hasChangedValues("shadow") && value.includes("gradient")) {
+            toggleSection("shadow")
+        }
+
+        ///
+
+        input.values.value = value
+        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
+        throttle(inputKey, clone(input), (value) => dispatch("change", value), 20)
+
+        input.values.value = e.detail
     }
 
-    const ALWAYS_CLOSED = ["CSS", "position"]
+    function hasChangedValues(id, _updater: any = null) {
+        let allInputsToCheck: EditInput2[] = []
+        let filterOut: string[] = []
 
-    function checkIsClosed(id: string, _updater: any = null) {
-        if (noClosing) return false
-        if (ALWAYS_CLOSED.includes(id)) return true
-
-        let closedVal = closed[id]
-        let defaultEdit = defaultEdits?.[id]
-        let currentEdit = clone(edits[id])
-
-        if (!closedVal || !defaultEdit || !currentEdit) return false
-        currentEdit.forEach((a, i) => {
-            let lineInputValues = clone(lineInputs[a.input])
-            if (!lineInputValues) return
-
-            // set default
-            let defaultValue = lineInputValues.find((a) => a.default)
-            if (!defaultValue) return
-            defaultEdit[i] = defaultValue
-
-            // get value
-            let lineInput = lineInputValues[0]
-            let currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles
-            let keyStyle = currentStyle[lineInput.key] || defaultValue.value
-
-            let newInput = lineInputValues.find((a) => keyStyle.includes(a.value)) || { ...lineInput, value: defaultValue.value }
-            currentEdit[i] = newInput
+        sections[id].inputs.flat().forEach((input) => {
+            if (filterOut.includes(input.key || "")) return
+            if (input.type === "radio") filterOut.push(input.key || "")
+            allInputsToCheck.push(input)
         })
 
-        // check if value has changed
-        let differentValue = currentEdit.find((currentInput, i) => {
-            let defaultInput = defaultEdit[i]
-            let currentValue = getValue(currentInput, {})
-            let defaultValue = defaultInput.value
-
-            if (currentInput.name === "background_opacity") return false
-
-            // convert "0" to 0, but no false or ""
-            if (Number(currentValue) == currentValue && typeof currentValue !== "boolean" && currentValue.toString().length) currentValue = Number(currentValue)
-
-            if (defaultInput.input === "dropdown") {
-                // if checkbox is not value and it's not unset!
-                if (!currentValue.includes(defaultValue) && currentValue !== "—") return true
-            } else if (defaultValue !== currentValue) return true
-
-            return false
-        })
-
-        let state = !differentValue
-
-        return state
+        const hasChanged = !!allInputsToCheck.find((a, i) => !isDefaultValue(a, sections[id].defaultValues?.[i]))
+        if (hasChanged && !openedSections.includes(id)) openedSections.push(id)
+        return hasChanged
     }
 
-    const setDefaults: string[] = ["list", "outline", "shadow", "chords", "border"]
-    function openEdit(id: string) {
-        storedEditMenuState.update((a) => {
-            if (!a[sessionId]) a[sessionId] = []
-            if (!a[sessionId].includes(id)) a[sessionId].push(id)
+    function isDefaultValue(input: EditInput2, defaultValue: any) {
+        if (!defaultValue) defaultValue = input.value
+        const currentValue = getValue(input)
 
-            return a
-        })
+        if (input.type === "toggle") {
+            return !currentValue?.includes(defaultValue)
+        }
 
-        if (setDefaults.includes(id)) setCustomValues(id)
+        if (input.multiplier) defaultValue *= input.multiplier
+
+        return currentValue === defaultValue
     }
 
-    function setCustomValues(id: string) {
-        let closedVal = clone(closed[id])
-        let currentEdit = clone(edits[id])
+    function resetSection(id: string) {
+        sections[id].inputs.forEach((inputRow, rowIndex) => {
+            inputRow.forEach((input) => {
+                const customDefaultValue = sections[id].defaultValues?.[rowIndex]
+                if (isDefaultValue(input, customDefaultValue)) return
 
-        if (!closedVal || !currentEdit) return
-        currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
+                let defaultValue = customDefaultValue ?? input.value
 
-        setStyle()
-        function setStyle(i = 0) {
-            let input = currentEdit[i]
-            if (!input) return
+                if (input.type === "toggle") defaultValue = ""
+                if (input.type === "radio" && input.value !== defaultValue) return
 
-            const currentKey = Object.keys(closedVal).find((styleId) => {
-                let dataId: string = styleId.split("_")[0]
-                let key: string | undefined = styleId.split("_")[1]
-                let valueIndex: string | undefined = styleId.split("_")[2]
+                if (input.multiplier) defaultValue *= input.multiplier
 
-                if (valueIndex) return input.valueIndex === Number(valueIndex) && input.key === key
-                else if (key) return input.key === key
-                else return input.id === dataId
+                // without timeout only last change will take effect as item don't get to update first
+                setTimeout(() => changed({ detail: defaultValue }, input))
             })
-            let newValue: any = closedVal[currentKey]
+        })
 
-            if (newValue === undefined) return setStyle(i + 1)
-
-            valueChange({ detail: newValue }, input)
-            input.value = newValue
-
-            setTimeout(() => setStyle(i + 1), 20)
-        }
+        if (sections[id].expandAutoValue) setTimeout(() => toggleSection(id))
     }
 
-    function resetAndClose(id: string) {
-        if (id === "CSS") {
-            closeEdit("CSS")
-            return
-        }
+    let openedSections: string[] = []
+    function toggleSection(id: string) {
+        const activeIndex = openedSections.indexOf(id)
+        if (activeIndex < 0) {
+            if (sections[id].expandAutoValue) {
+                Object.entries(sections[id].expandAutoValue).forEach(([key, value]) => {
+                    const input = clone(sections[id].inputs.flat().find((a) => a.id === key || a.key === key))
+                    if (!input) return
 
-        // don't "reset" if just closing (if different styles on multiple textboxes!)
-        if (checkIsClosed(id)) {
-            closeEdit(id)
-            return
-        }
+                    if (input.valueIndex !== undefined) {
+                        delete input.valueIndex
+                        delete input.extension
+                    }
 
-        let closedVal = closed[id]
-        let defaultEdit = clone(defaultEdits?.[id])
-        let currentEdit = clone(edits[id])
-
-        if (!closedVal || !defaultEdit || !currentEdit) return
-
-        resetInput()
-        function resetInput(i = 0) {
-            let input = currentEdit[i]
-            if (!input) return
-            if (input.name === "background_opacity") return resetInput(i + 1)
-
-            if (lineInputs[input.input]) {
-                input = lineInputs[input.input]?.[0] || {}
-                defaultEdit[i] = { ...defaultEdit[i], value: "center" }
+                    changed({ detail: value }, input, id)
+                })
             }
 
-            // TODO: remove value instead of setting to default...
-            let newValue = defaultEdit[i]?.value
-            let currentValue = getValue(input, { styles, item })
-            if (newValue == currentValue) return resetInput(i + 1)
-
-            valueChange({ detail: newValue }, input)
-
-            setTimeout(() => resetInput(i + 1), 10)
+            openedSections.push(id)
+        } else {
+            openedSections.splice(activeIndex, 1)
         }
 
-        // update menu state after values have changed!
-        let timeout = currentEdit.length * 10 + 30
-        setTimeout(() => closeEdit(id), timeout)
+        openedSections = openedSections
     }
 
-    function closeEdit(id: string) {
-        storedEditMenuState.update((a) => {
-            let currentTabIndex = a[sessionId].indexOf(id)
-            if (currentTabIndex > -1) a[sessionId].splice(currentTabIndex, 1)
+    $: sectionValues = Object.entries(sections)
 
-            return a
-        })
+    ///
+
+    const optionsLists = {
+        timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
+        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
+    }
+    function getOptions(options: string | any[]): any[] {
+        if (typeof options === "string") return optionsLists[options] || []
+        return options
     }
 
-    // WIP resetting will close these menus
-    $: if (!sessionId) sessionId = uid()
-    $: if (sessionId) updateSectionsState()
-    function updateSectionsState() {
-        storedEditMenuState.update((a) => {
-            if (!a[sessionId]) a[sessionId] = ["default"]
-
-            Object.keys(edits || {}).forEach((section) => {
-                if (a[sessionId].includes(section)) return
-                if (!checkIsClosed(section)) a[sessionId].push(section)
-            })
-
-            return a
-        })
+    function getValues(input: any) {
+        const values = clone(input.values)
+        if (input.type === "dropdown") {
+            if (values.options === "timers") values.addNew = "new.timer"
+            values.options = getOptions(values.options)
+        }
+        return values
     }
-
-    $: actionOptions = [
-        { id: "", name: "—" },
-        ...Object.entries($actions)
-            .map(([id, a]) => ({ id, name: a.name }))
-            .sort((a, b) => a.name?.localeCompare(b.name))
-    ]
 </script>
 
-{#each Object.keys(edits || {}) as section, i}
-    <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-        {#if !noClosing && section !== "default" && !$storedEditMenuState[sessionId]?.includes(section)}
-            <!-- closed -->
-            <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
-                {#if section === "CSS"}
-                    <Icon id="code" right />
-                    <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
-                {:else}
-                    <Icon id={section} right />
-                    <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
-                {/if}
-            </Button>
-        {:else}
-            {#if section !== "default"}
-                <!-- opened -->
-                <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
-                    {#if customLabels[i]}
-                        <T id={customLabels[i]} />
-                    {:else if section[0] === section[0].toUpperCase()}
-                        {section}
-                    {:else}
-                        <T id="edit.{section}" />
-                    {/if}
+<div class="tools">
+    {#each sectionValues as [id, section]}
+        {@const hasChanged = section.noReset ? false : hasChangedValues(id, { styles, item })}
+        {@const expanded = id === "default" || section.alwaysOpen || openedSections.includes(id)}
 
-                    {#if !noClosing && (closed[section] || ALWAYS_CLOSED.includes(section))}
-                        <Button style="position: absolute;inset-inline-end: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
-                            {#if checkIsClosed(section, item)}
-                                <Icon id="remove" white />
+        <div class="section" style={expanded ? "margin-bottom: 3px;" : ""}>
+            {#if id !== "default"}
+                <div class="title">
+                    <MaterialButton style="width: 100%;{hasChanged ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged || section.alwaysOpen} on:click={() => toggleSection(id)}>
+                        <span style="display: flex;gap: 8px;align-items: center;">
+                            {#if id === "CSS"}
+                                <Icon id="code" white />
+                                <p>CSS</p>
                             {:else}
-                                <Icon id="reset" white />
+                                <Icon {id} style="color: {sectionColors[id]};" white />
+                                <p>{translateText("edit." + id)}</p>
                             {/if}
-                        </Button>
-                    {/if}
-                </h6>
+                        </span>
+
+                        {#if hasChanged}
+                            <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection(id)}>
+                                <Icon id="reset" size={0.8} white />
+                            </MaterialButton>
+                        {:else if !section.alwaysOpen}
+                            <!-- paste / edit -->
+                            <Icon id={section.expandAutoValue && !expanded ? "add" : "arrow_back_modern"} class="arrow {expanded ? 'open' : ''}" size={section.expandAutoValue && !expanded ? 0.9 : 0.6} style="opacity: 0.5;" white />
+                        {/if}
+                    </MaterialButton>
+                </div>
             {/if}
 
-            {#each edits[section] as input}
-                {#if input.input === "editTimer"}
-                    {#if item}
-                        <EditTimer {item} on:change={(e) => valueChange(e, input)} {isStage} />
-                    {/if}
-                {:else if input.input === "selectVariable"}
-                    {@const variablesList = sortByName(keysToID($variables)).map((a) => ({ ...a, name: a.name || a.id }))}
-                    <CombinedInput>
-                        {#if variablesList.length}
-                            <!-- <p data-title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
-                            <Dropdown style="width: 100%;" value={variablesList.find((a) => a.id === input.value)?.name || "—"} options={variablesList} on:click={(e) => valueChange(e, input)} />
-                        {:else}
-                            <Button on:click={() => openDrawer("variables", true)} style="width: 100%;" center>
-                                <Icon id="add" right />
-                                <T id="new.variable" />
-                            </Button>
-                        {/if}
-                    </CombinedInput>
-                {:else if input.input === "tip"}
-                    {#if !input.hidden || (input.disabled === "clock" && item?.clock?.type === "custom")}
-                        <p class="tip">
-                            {#if input.name}<T id={input.name} />{/if}
-                            {@html input.values?.subtext || ""}
-                            {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
-                        </p>
-                    {/if}
-                {:else if input.input === "popup"}
-                    <CombinedInput>
-                        <Button style="width: 100%;" on:click={() => openPopup(input, section)} dark center>
-                            <Icon id={input.icon || input.id || ""} right />
-                            {#key input.name}
-                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name?.includes('.') || !input.name?.includes(' ') ? '' : 'opacity: 1;'}">
-                                    {#if input.name?.includes(" ")}
-                                        {input.name}
-                                    {:else}
-                                        <T id={input.name?.includes(".") ? input.name : "popup." + input.name} />
-                                    {/if}
-                                </p>
-                            {/key}
-                        </Button>
-                    </CombinedInput>
-                {:else if input.input === "action"}
-                    <CombinedInput>
-                        <p><T id="edit.{input.name}" /></p>
-                        <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === input.value)?.name || "—"} on:click={(e) => valueChange(e, input)} />
-                    </CombinedInput>
-                {:else if input.input === "media"}
-                    <CombinedInput>
-                        <MediaPicker
-                            id={"item_" + sessionId}
-                            title={typeof input.value === "string" ? input.value : ""}
-                            style="width: 100%;min-width: 85%;"
-                            filter={{ name: "Media files", extensions: mediaExtensions }}
-                            on:picked={(e) => valueChange(e, input)}
-                        >
-                            <span style="display: flex;align-items: center;max-width: 100%;">
-                                <Icon id="image" right />
-                                {#if input.value && typeof input.value === "string"}
-                                    <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
+            {#if expanded}
+                {#each section.inputs as inputRow}
+                    <InputRow>
+                        {#each inputRow as input}
+                            {#if !input.hidden}
+                                {@const value = getValue(input, { styles, item })}
+                                {@const values = getValues(input)}
+
+                                {#if input.type === "fontDropdown"}
+                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} />
+                                {:else if input.type === "toggle"}
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => toggle(input)}>
+                                        <Icon id={values.icon} size={1.2} white />
+                                        <div class="highlight" class:active={value.includes(input.value)}></div>
+                                    </MaterialButton>
+                                {:else if input.type === "radio"}
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => radio(input)}>
+                                        <Icon id={values.icon} size={1.2} white />
+                                        <div class="highlight radio" class:active={value === input.value}></div>
+                                    </MaterialButton>
+                                {:else if input.type === "textarea"}
+                                    <MaterialTextarea label={values.label} {value} on:change={(e) => changed(e, input, id)} />
+                                {:else if input.type === "media"}
+                                    <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                {:else if input.type === "popup"}
+                                    <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                {:else if input.type === "tip"}
+                                    <p class="tip">
+                                        {#if values.label}{translateText(values.label)}{/if}
+                                        {@html input.values?.subtext || ""}
+                                        {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
+                                    </p>
                                 {:else}
-                                    <p style="padding: 0;"><T id="edit.choose_media" /></p>
+                                    <Input input={{ type: input.type, ...values, value }} on:change={(e) => changed(e, input, id)} />
                                 {/if}
-                            </span>
-                        </MediaPicker>
-                        {#if input.value}
-                            <Button title={$dictionary.actions?.remove} on:click={() => valueChange({ detail: "" }, input)} redHover>
-                                <Icon id="close" size={1.2} white />
-                            </Button>
-                        {/if}
-                    </CombinedInput>
-                    <!-- {:else if input.input === "multiselect"}
-                    <div class="line">
-                        {#each input.values as option}
-                            <Button
-                                on:click={() => valueChange({ detail: option.id }, input)}
-                                style={Array.isArray(input.value) && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
-                                bold={false}
-                                center
-                                dark
-                            >
-                                {#if option.icon}
-                                    <Icon id={option.icon} right />
-                                {/if}
-                                <T id={option.name} />
-                            </Button>
+                            {/if}
                         {/each}
-                    </div> -->
-                {:else if lineInputs[input.input]}
-                    <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
-                    <CombinedInput>
-                        {#each lineInputs[input.input] as lineInput}
-                            {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
-                            <IconButton
-                                on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
-                                title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
-                                icon={lineInput.icon}
-                                active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
-                            />
-                        {/each}
-                    </CombinedInput>
-                    <!-- </div> -->
-                {:else if input.input === "CSS"}
-                    <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                        <Notes lines={8} value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
-                    </div>
-                {:else if input.input === "checkbox"}
-                    {@const value = getValue(input, { styles, item })}
-                    {#if !input.hidden}
-                        <CombinedInput>
-                            <p data-title={$dictionary[input.name?.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name?.includes(".") ? input.name.split(".")[1] : input.name || ""]}>
-                                {#key input.name}
-                                    <T id={input.name?.includes(".") ? input.name : "edit." + input.name} />
-                                {/key}
-                            </p>
-                            <div class="alignRight">
-                                <Checkbox {...input.values || {}} checked={item?.[input.id || ""] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
-                            </div>
-                        </CombinedInput>
-                    {/if}
-                {:else if !input.name}
-                    Missing input name: {input.input}
-                {:else}
-                    {@const value = getValue(input, { styles, item })}
-                    {#if !input.hidden}
-                        <CombinedInput style={input.slider ? "border-bottom: 1px solid var(--primary-lighter);" : ""}>
-                            <p data-title={input.title || $dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                                {#key input.name}
-                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
-                                {/key}
-                            </p>
-                            <svelte:component
-                                this={inputs[input.input]}
-                                class="customInput"
-                                {...input.values || {}}
-                                {value}
-                                fontStyleValue={input.styleValue || ""}
-                                disabled={typeof input.disabled === "string" ? item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value : input.disabled}
-                                disableHold
-                                on:click={(e) => valueChange(e, input)}
-                                on:fontStyle={(e) => valueChange(e, { ...input, key: "font" })}
-                                on:input={(e) => valueChange(e, input, true)}
-                                on:change={(e) => valueChange(e, input)}
-                            />
-                        </CombinedInput>
-                        {#if input.slider}
-                            <Slider
-                                {...{ ...(input.values || {}), ...(input.sliderValues || {}) }}
-                                {value}
-                                style="border-bottom: 2px solid var(--primary-lighter);"
-                                on:input={(e) => valueChange(e, input, true)}
-                                on:change={(e) => valueChange(e, input)}
-                            />
-                        {/if}
-                    {/if}
-                {/if}
-            {/each}
-        {/if}
-    </div>
-{/each}
+                    </InputRow>
+                {/each}
+            {/if}
+        </div>
+    {/each}
+</div>
 
 <style>
-    .section {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
         flex-direction: column;
-        margin: 0 10px;
-        /* margin: 20px 10px; */
         /* gap: 5px; */
-    }
-    .section:last-child {
-        margin-bottom: 10px;
-    }
-    .section.top {
-        margin-top: 10px;
+        gap: 2px;
     }
 
-    h6 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-
-    /* hr {
-        width: 100%;
-        height: 2px;
-        background-color: var(--primary-lighter);
-        border: none;
-    } */
-
-    /* .line {
-        display: flex;
-        align-items: center;
+    .title {
         background-color: var(--primary-darker);
-        flex-flow: wrap;
-    } */
+        border-bottom: 1px solid var(--primary-lighter);
 
-    div :global(input[type="color"]),
-    div :global(.dropdownElem),
-    div :global(.color) {
-        min-width: 50% !important;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
     }
-
-    div :global(.customInput .dropdown) {
-        width: 160%;
-        inset-inline-end: 0;
-    }
-
-    p {
-        width: 100%;
-        /* width: 75%; */
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
         opacity: 0.8;
-        align-self: center;
-        font-size: 0.9em;
-
-        overflow: hidden !important;
     }
+
+    .title :global(button) {
+        display: flex;
+        justify-content: space-between;
+
+        /* when disabled */
+        opacity: 1;
+    }
+
+    .title :global(svg.arrow) {
+        transition: 0.1s transform ease;
+        transform: rotate(180deg);
+    }
+    .title :global(svg.arrow.open) {
+        transform: rotate(-90deg);
+    }
+
+    .section {
+        border: 1px solid var(--primary-lighter);
+
+        border-radius: 6px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+
+        /* overflow: hidden; */
+    }
+
+    /* toggle */
+
+    .highlight {
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        height: 2px;
+        width: 80%;
+
+        background-color: var(--primary-lighter);
+        transition: 0.2s background-color ease;
+    }
+    .highlight.radio {
+        width: 100%;
+        bottom: 0;
+    }
+    .highlight.active {
+        background-color: var(--secondary);
+
+        box-shadow: 0 0 3px rgb(255 255 255 / 0.2);
+    }
+
+    /* tip */
 
     .tip {
         font-size: 0.8em;
@@ -696,6 +419,7 @@
         justify-content: center;
         align-items: center;
         gap: 5px;
+        width: 100%;
     }
 
     /* Link */

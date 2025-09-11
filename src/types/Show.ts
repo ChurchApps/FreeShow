@@ -23,6 +23,7 @@ export interface Show {
         // resolution?: Resolution
         template: null | ID
         customAction?: string // special custom trigger
+        customFonts?: { name: string; path: string }[]
     }
     timestamps: {
         created: number
@@ -113,6 +114,7 @@ export interface Item {
     clock?: Clock
     events?: DynamicEvent
     type?: ItemType
+    decoration?: boolean // ppt imported shapes (no selection directly)
     mirror?: Mirror
     src?: string // media item path
     customSvg?: string

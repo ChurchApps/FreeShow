@@ -6,7 +6,6 @@
     import { dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { newToast, wait } from "../../../utils/common"
-    import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -79,7 +78,7 @@
             canvas!.height = viewport.height
             canvas!.width = viewport.width
 
-            await page.render({ canvasContext: context, viewport }).promise
+            await page.render({ canvas: canvas!, canvasContext: context, viewport }).promise
 
             // display when the first page has loaded
             loading = false
@@ -87,7 +86,7 @@
     }
 
     function convertToImages() {
-        newToast("$actions.converting")
+        newToast("actions.converting")
         sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, filePath: path })
     }
 </script>

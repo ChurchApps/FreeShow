@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
-    import { includeEmptySlides, textEditActive, textEditZoom } from "../../stores"
+    import { textEditActive, textEditZoom } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
     import Icon from "../helpers/Icon.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -13,10 +13,8 @@
 
     export let currentShow: Show | undefined
 
-    $: allowEmpty = $includeEmptySlides
-
     let text = ""
-    $: if (currentShow) text = getPlainEditorText("", allowEmpty)
+    $: if (currentShow) text = getPlainEditorText()
 
     // transpose chords
     function transposeUp() {

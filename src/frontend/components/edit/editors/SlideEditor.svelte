@@ -92,7 +92,7 @@
     $: if (bgPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
 
     $: {
-        if (active.length) updateStyles()
+        if (active.length) setTimeout(updateStyles)
         else newStyles = {}
     }
 

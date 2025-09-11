@@ -1,0 +1,27 @@
+appId: app.freeshow
+productName: FreeShow
+artifactName: FreeShow-${version}-${arch}.${ext}
+
+files:
+    - build/electron/**
+    - build/types/**
+    - public/**
+    - "!node_modules/@napi-rs"
+
+extraResources:
+    - from: node_modules/slideshow/
+      to: slideshow
+      filter:
+          - connector-*
+
+# linux
+
+linux:
+    asarUnpack:
+        - node_modules/grandiose/**
+    category: AudioVideo
+    target:
+        - AppImage
+        - deb
+        - rpm
+    icon: build/public

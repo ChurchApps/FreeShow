@@ -145,7 +145,7 @@ export function clearSlide(shouldClearAll = false) {
         }
 
         // slide gets outlined if not blurred
-        ;(document.activeElement as any)?.blur()
+        ; (document.activeElement as any)?.blur()
     }
 
     setOutput("slide", null)
@@ -181,6 +181,8 @@ export function clearOverlays(specificOutputId = "") {
 }
 
 export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
+    if (specificOutputId && !get(slideTimers)[specificOutputId] && !get(outputs)[specificOutputId]?.out?.transition) return
+
     // clear slide timers
     setOutput("transition", null, false, specificOutputId)
 

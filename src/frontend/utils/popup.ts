@@ -71,6 +71,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import SlideMidi from "../components/main/popups/SlideMidi.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -136,6 +137,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     action: Action,
     category_action: CategoryAction,
     custom_action: CustomAction,
+    slide_midi: SlideMidi,
     user_data_overwrite: UserDataOverwrite,
     connect: Connect,
     cloud_update: CloudUpdate,

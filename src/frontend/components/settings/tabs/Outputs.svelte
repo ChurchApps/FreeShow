@@ -43,7 +43,7 @@
             reverted.push(key)
             setTimeout(() => {
                 updateOutput(key, false, outputId)
-                newToast("$toast.reverted")
+                newToast("toast.reverted")
             }, revertTime * 1000)
         }
 
@@ -55,7 +55,7 @@
 
         if (key === "ndi") {
             if (value) {
-                newToast("$toast.output_capture_enabled")
+                newToast("toast.output_capture_enabled")
 
                 const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
                 if (enabledOutputs.length > 1) {

@@ -1,18 +1,21 @@
 <script lang="ts">
-    import { dictionary, groups, outputs } from "../../../stores"
+    import { allOutputs, dictionary, groups, outputs } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
+    export let outputId: string = ""
+    export let item: any = {}
     export let autoSize = 0
 
     let type: "number" | "bar" | "group" = "number"
     $: type = tracker.type || "number"
     $: accent = tracker.accent
 
-    $: outputId = getActiveOutputs()[0]
-    $: currentSlideOut = $outputs[outputId]?.out?.slide || null
+    $: if (!outputId) outputId = getActiveOutputs()[0]
+    $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
+    $: currentSlideOut = currentOutput?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
     $: currentLayoutRef = getLayoutRef(currentShowId)
@@ -45,13 +48,15 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <div class="autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
+        <div class="align autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
+            <span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}
+        </div>
     {:else if type === "bar"}
         <!-- progress bar -->
         <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
-        <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
+        <div class="align groups autoFontSize" class:column style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
@@ -85,6 +90,17 @@
         height: 100%;
         background-color: var(--accent);
         transition: width 0.5s;
+    }
+
+    .align {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* stage align */
+        justify-content: var(--text-align);
+        outline: none !important;
     }
 
     .groups {

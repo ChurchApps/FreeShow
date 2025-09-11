@@ -38,7 +38,7 @@
     }
 </script>
 
-<div class="tabs">
+<div class="tabs" style={$$props.style || null}>
     {#each Object.entries(tabs) as [id, tab]}
         {#if tab.remove !== true && (!tab.overflow || !overflowHidden)}
             <MaterialButton

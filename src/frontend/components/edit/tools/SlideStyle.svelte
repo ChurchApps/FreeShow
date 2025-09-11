@@ -1,24 +1,23 @@
 <script lang="ts">
-    import { activeEdit, activePopup, activeShow, activeTriggerFunction, dictionary, groups, popupData, showsCache, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeShow, activeTriggerFunction, showsCache, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Notes from "../../show/tools/Notes.svelte"
-
-    // TODO: templates / overlays
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
 
     $: slideId = getLayoutRef()[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
 
-    $: globalGroup = _show().get("slides")[slideId]?.globalGroup || ""
-    $: groupData = $groups[globalGroup] || {}
-    $: groupTemplate = groupData.template
+    // $: globalGroup = _show().get("slides")[slideId]?.globalGroup || ""
+    // $: groupData = $groups[globalGroup] || {}
+    // $: groupTemplate = groupData.template
 
     let notesElem: HTMLElement | undefined
     $: if (notesElem && $activeTriggerFunction === "slide_notes") {
@@ -39,7 +38,7 @@
     function setValues() {
         settings = {
             template: editSlide?.settings?.template,
-            color: editSlide?.settings?.color || "",
+            color: editSlide?.settings?.color || ""
         }
     }
 
@@ -52,7 +51,7 @@
             id: "slideStyle",
             oldData: { style: editSlide?.settings },
             newData,
-            location: { page: "edit", show: $activeShow!, slide: slideId },
+            location: { page: "edit", show: $activeShow!, slide: slideId }
         })
     }
 
@@ -64,100 +63,82 @@
 
         _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
     }
+
+    function editTemplate(id: string) {
+        activeDrawerTab.set("templates")
+        activeEdit.set({ type: "template", id, items: [] })
+        activePage.set("edit")
+    }
 </script>
 
-<div class="section">
-    <CombinedInput>
-        <p><T id="edit.background_color" /></p>
-        <Color
-            bind:value={settings.color}
+<div class="tools">
+    <div>
+        <MaterialColorInput
+            label="edit.background_color"
+            value={settings.color}
             on:input={(e) => {
                 settings.color = e.detail
                 update()
             }}
-            enableNoColor
+            allowEmpty
+            noLabel
         />
-    </CombinedInput>
-    <CombinedInput>
-        <p>
-            <T id="show.slide_template" />
-            {#if groupTemplate && !settings.template}
+        <InputRow>
+            <!-- {#if groupTemplate && !settings.template}
                 <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
-            {/if}
-        </p>
-        <Button
-            on:click={() => {
-                popupData.set({
-                    action: "select_template",
-                    active: settings.template || "",
-                    trigger: (id) => {
-                        settings.template = id
-                        update()
-                    },
-                })
-                activePopup.set("select_template")
-            }}
-            style="overflow: hidden;"
-            bold={!settings.template}
-        >
-            <div style="display: flex;align-items: center;padding: 0;">
-                <Icon id="templates" />
-                <p style="opacity: 1;font-size: 1em;">
-                    {#if settings.template}
-                        {$templates[settings.template || ""]?.name || "—"}
-                    {:else}
-                        <T id="popup.select_template" />
-                    {/if}
-                </p>
-            </div>
-        </Button>
-        {#if settings.template}
-            <Button
-                title={$dictionary.actions?.remove}
-                on:click={() => {
-                    settings.template = ""
+            {/if} -->
+            <MaterialPopupButton
+                label="show.slide_template"
+                value={settings.template}
+                name={$templates[settings.template || ""]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={(e) => {
+                    settings.template = e.detail
                     update()
                 }}
-                redHover
-            >
-                <Icon id="close" size={1.2} white />
-            </Button>
-        {/if}
-    </CombinedInput>
+                allowEmpty
+            />
+            {#if settings.template && $templates[settings.template]}
+                <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(settings.template || "")} />
+            {/if}
+        </InputRow>
+    </div>
 
-    <h6><T id="tools.notes" /></h6>
-    <div class="notes" bind:this={notesElem}>
-        <Notes value={note} on:edit={edit} />
+    <div>
+        <div class="title">
+            <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                <Icon id="notes" white />
+                <p>{translateText("tools.notes")}</p>
+            </span>
+        </div>
+
+        <MaterialTextarea label="tools.notes" value={note} rows={3} on:change={edit} />
     </div>
 </div>
 
 <style>
-    .section {
+    .tools {
+        padding: 8px 5px;
+
         display: flex;
         flex-direction: column;
-        margin: 10px;
+        gap: 5px;
     }
 
-    h6 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
+    /* title */
 
-    p {
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
+    }
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
         opacity: 0.8;
-        font-size: 0.9em;
-    }
-
-    .notes :global(div) {
-        display: block !important;
-    }
-
-    .notes :global(div.paper) {
-        position: relative;
-        display: block;
-        background: var(--primary-darker);
     }
 </style>

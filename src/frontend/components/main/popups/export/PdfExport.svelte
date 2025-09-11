@@ -43,7 +43,7 @@
         }
     }
 
-    const pdfTypeOptions = [
+    $: pdfTypeOptions = [
         { value: "default", label: translateText("example.default") },
         { value: "text", label: translateText("export.text") },
         { value: "slides", label: translateText("export.slides") },

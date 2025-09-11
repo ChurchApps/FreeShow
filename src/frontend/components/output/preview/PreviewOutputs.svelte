@@ -5,10 +5,7 @@
     import { translateText } from "../../../utils/language"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-
-    export let currentOutputId: string | null
 
     // onMount(() => {
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
@@ -35,14 +32,12 @@
                 let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
                 if (!activeList.length) {
                     a[id].active = true
-                    newToast("$toast.one_output")
+                    newToast("toast.one_output")
                 }
             }
 
             return a
         })
-
-        currentOutputId = getActiveOutputs()[0]
     }
 
     // let allSameState = true

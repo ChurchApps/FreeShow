@@ -53,6 +53,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
+import { libreConvert } from "../output/ppt/libreConverter"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -141,6 +142,7 @@ export const mainResponses: MainResponses = {
     [Main.ACCESS_MICROPHONE_PERMISSION]: () => getPermission("microphone"),
     [Main.ACCESS_SCREEN_PERMISSION]: () => getPermission("screen"),
     // PPT
+    [Main.LIBREOFFICE_CONVERT]: (data) => libreConvert(data),
     [Main.SLIDESHOW_GET_APPS]: () => getPresentationApplications(),
     [Main.START_SLIDESHOW]: (data) => startSlideshow(data),
     [Main.PRESENTATION_CONTROL]: (data) => presentationControl(data),
@@ -203,6 +205,7 @@ export const mainResponses: MainResponses = {
 
 // IMPORT
 export function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
+    console.log(data.format)
     const files: string[] = selectFilesDialog("", data.format)
 
     const needsFileAndNoFileSelected = data.format.extensions && !files.length

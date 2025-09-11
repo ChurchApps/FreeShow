@@ -6,9 +6,10 @@
     import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
+    import type { StageItem } from "../../../../types/Stage"
     import { joinTimeBig } from "../../helpers/time"
 
-    export let item: null | Item = null
+    export let item: null | Item | StageItem = null
     // export let timer: any = item?.timer
     // export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; slideId?: string; id: string }
     export let id: string
@@ -126,7 +127,7 @@
 {:else if item?.timer?.viewType === "circle"}
     <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
 {:else}
-    <div class="align autoFontSize" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
+    <div class="align autoFontSize" style="{style}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
             {#if !blinkingOverflow || !blinkingOff}
                 {#if overflow && negative}
@@ -143,6 +144,8 @@
     .align {
         display: flex;
         justify-content: center;
+        /* stage align */
+        justify-content: var(--text-align);
         height: 100%;
         align-items: center;
     }

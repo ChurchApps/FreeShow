@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Transition, Item } from "../../../../types/Show"
-    import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
+    import { onDestroy } from "svelte"
+    import type { Item, Transition } from "../../../../types/Show"
     import { custom } from "../../../utils/transitions"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
 
@@ -17,17 +17,17 @@
     // WIP metadata "auto size / align / etc." does not work
 
     $: showItemRef = { outputId, slideIndex: -1 }
-    $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
-    $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let update = 0
-    function updateValues() {
+    // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
+    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
+    let updater = 0
+    const updaterInterval = setInterval(() => {
         if (isClearing) return
-        update++
-    }
+        if (conditions) updater++
+    }, 500)
+    onDestroy(() => clearInterval(updaterInterval))
 
     $: tempItem = { style: "", lines: [{ align: "", text: [{ value, style }] }], conditions } as Item
-    $: shouldShow = shouldItemBeShown(tempItem, [tempItem], showItemRef, update)
-    $: console.log(shouldShow, tempItem, update)
+    $: shouldShow = shouldItemBeShown(tempItem, [tempItem], showItemRef, updater)
 </script>
 
 {#if shouldShow}

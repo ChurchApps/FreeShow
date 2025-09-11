@@ -1,8 +1,7 @@
 const DEF_FONT_SIZE = 100
 export const MAX_FONT_SIZE = 800
 const MIN_FONT_SIZE = 10
-
-// const BREAK_MARGIN = 2 // px
+const PRECISION = 5
 
 // shrinkToFit: text is set font size by default, but can shrink if the text does not fit in the textbox
 // growToFit: text will grow to fill the entire textbox, but maximum the set font size
@@ -74,7 +73,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         else lowestValue = fontSize
 
         // if difference is less than 2px margin, return early
-        if (highestValue - lowestValue < 2) return
+        if (highestValue - lowestValue < PRECISION) return
 
         // always double/half the amount for the quickest search
         fontSize = (highestValue + lowestValue) * 0.5
@@ -122,7 +121,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
 
         for (const elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
-            ;(elemHide as HTMLElement).style.display = "none"
+            ; (elemHide as HTMLElement).style.display = "none"
         }
 
         elem.after(cloned)

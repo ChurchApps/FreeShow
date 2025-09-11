@@ -305,7 +305,7 @@ export const previewShortcuts = {
                     e.preventDefault()
                     return setOutput("overlays", currentShow.id, false, "", true)
                 } else if ((currentShow?.type === "video" || currentShow?.type === "image" || currentShow?.type === "player") && (out?.background?.path || out?.background?.id) !== currentShow?.id) {
-                    return playMedia(e)
+                    return togglePlayingMedia(e)
                     // } else if (currentShow?.type === "folder") {
                     //     return playMedia(e)
                 }
@@ -345,7 +345,7 @@ export const previewShortcuts = {
                 e.preventDefault()
                 return setOutput("overlays", currentShow.id, false, "", true)
             }
-            return playMedia(e)
+            return togglePlayingMedia(e)
         }
 
         const allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
@@ -416,14 +416,14 @@ function createNew() {
     }
 }
 
-function playMedia(e: Event, back = false) {
+export function togglePlayingMedia(e: Event | null = null, back = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
     const item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
     const type: ShowType | undefined = item?.type
     if (!item || !type) return
-    e.preventDefault()
+    e?.preventDefault()
 
     const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}

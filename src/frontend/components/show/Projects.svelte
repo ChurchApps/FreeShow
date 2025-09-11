@@ -11,7 +11,6 @@
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
-    import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
@@ -211,9 +210,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <Button style="flex: 1;padding: 0.3em 0.5em;" on:click={back} active={$projectView} center dark title={$dictionary.remote?.projects}>
-                    <Icon id="back" white />
-                </Button>
+                <MaterialButton style="flex: 1;padding: 0.3em 0.5em;" icon="back" title="remote.projects" on:click={back} />
                 <!-- {recentlyUsedList.length ? '' : 'border-bottom: 1px solid var(--secondary);'} -->
                 <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
                     <!-- <Icon id="project" white right /> -->

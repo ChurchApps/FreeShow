@@ -12,7 +12,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
-import { playFolder } from "../../utils/shortcuts"
+import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
@@ -187,7 +187,7 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id))
 }
 
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
@@ -384,8 +384,17 @@ async function goToNextShowInProject(slide, customOutputId) {
 
 // only let "first" output change project item if multiple outputs
 let changeProjectItemTimeout: NodeJS.Timeout | null = null
-
 export function goToNextProjectItem(key = "") {
+    // play project media with arrow right if not already playing
+    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
+    if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
+        const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+        const outBg = get(outputs)[outputId]?.out?.background
+        if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
+            return togglePlayingMedia()
+        }
+    }
+
     if (changeProjectItemTimeout) return
     changeProjectItemTimeout = setTimeout(() => {
         changeProjectItemTimeout = null
@@ -445,7 +454,7 @@ export function goToPreviousProjectItem(key = "") {
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function previousSlideIndividual(e: any) {
-    getActiveOutputs().forEach((id) => previousSlide(e, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach((id) => previousSlide(e, id))
 }
 
 export function previousSlide(e: any, customOutputId?: string) {
@@ -694,7 +703,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     }
 
     // get output slide
-    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs(get(outputs), true, false, true)
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
@@ -909,9 +918,7 @@ export function startShowSync(showId: string) {
 export async function startShow(showId: string) {
     if (!showId) return
 
-    const show = await loadShows([showId])
-    if (show !== "loaded") return
-
+    await loadShows([showId])
     if (!get(showsCache)[showId]) return
     const activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
 

@@ -54,7 +54,7 @@
     {/if}
 
     {#if id === "shows"}
-        <Shows {id} {active} {searchValue} bind:firstMatch />
+        <Shows {active} {searchValue} bind:firstMatch />
     {:else if id === "media"}
         <Media {active} {searchValue} bind:streams />
     {:else if id === "audio"}

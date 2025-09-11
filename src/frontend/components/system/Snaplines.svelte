@@ -1,5 +1,6 @@
 <script lang="ts">
     import { outputs } from "../../stores"
+    import { throttle } from "../../utils/common"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
     import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
@@ -67,7 +68,7 @@
             styles[key] = Number(styles[key]).toFixed(2) + "px"
         })
 
-        newStyles = styles
+        throttle("EDIT_ITEM_MOVE", styles, (value) => (newStyles = value), 50)
     }
 
     function mouseup() {

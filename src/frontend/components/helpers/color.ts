@@ -74,6 +74,15 @@ export function splitRgb(rgb: string) {
     }
 }
 
+export function rgbToHex(rgb: string) {
+    const splitted = splitRgb(rgb)
+    return "#" + componentToHex(splitted.r) + componentToHex(splitted.g) + componentToHex(splitted.b)
+}
+function componentToHex(c) {
+    var hex = c.toString(16)
+    return hex.length == 1 ? "0" + hex : hex
+}
+
 // CONTRAST
 
 export function getContrast(hex: string) {

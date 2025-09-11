@@ -39,7 +39,7 @@
         }
 
         function openEdit() {
-            activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
+            activeEdit.set({ slide: $activeEdit.slide || 0, items: [], showId: $activeShow?.id })
         }
     }
 </script>

@@ -4,8 +4,8 @@
     import { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, dataPath, os } from "../../../stores"
-    import { translate, translateText } from "../../../utils/language"
+    import { activePopup, alertMessage, dataPath } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -24,15 +24,7 @@
         { name: "formats.text", extensions: ["txt"], id: "txt" },
         { name: "CSV", extensions: ["csv"], id: "csv" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
-        {
-            name: "PowerPoint",
-            extensions: ["ppt", "pptx"],
-            id: "powerpoint",
-            tutorial:
-                "This will import the plain text as a show." +
-                ($os.platform === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") +
-                " Or you can import directly as PDF or images if you don't need animations."
-        },
+        // { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will import the plain text as a show." + ($os.platform === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") + " Or you can import directly as PDF or images if you don't need animations." },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json", "proBundle"], id: "propresenter" },
         {
@@ -61,8 +53,31 @@
     const media_formats = [
         { name: "Lessons.church", title: "ChurchApps\nhttps://lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
         { name: "PDF", title: "Added to your project", extensions: ["pdf"], id: "pdf" },
-        { name: "PowerPoint/Keynote", title: "Added to your project", extensions: presentationExtensions, id: "powerkey" }
+        // { name: "PowerPoint/Keynote", title: "Added to your project", extensions: presentationExtensions, id: "powerkey" }
+        { name: "PowerPoint", extensions: [], id: "powerpoint" }
     ]
+
+    const powerpoint_options = [
+        { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
+        { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
+        { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
+        { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
+    ]
+
+    function pptText() {
+        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] }, settings: { path: $dataPath } })
+    }
+    function libreOfficeConvert() {
+        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint", dataPath: $dataPath })
+    }
+    function onlineConvert() {
+        sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")
+        // https://cloudconvert.com/ppt-to-jpg
+        activePopup.set(null)
+    }
+    function pptController() {
+        sendMain(Main.IMPORT, { channel: "powerkey", format: { name: "PowerPoint/Keynote", extensions: presentationExtensions } })
+    }
 
     function displayTutorial(format: any) {
         if (!format.tutorial) {
@@ -73,113 +88,112 @@
         alertMessage.set(format.tutorial)
         activePopup.set("alert")
     }
+
+    let openedPage = ""
 </script>
 
-<div style="display: flex;gap: 5px;">
-    {#each freeshow_formats as format}
-        <MaterialButton
-            variant="outlined"
-            title={format.title}
-            style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
-            on:click={() => {
-                let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
-                sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
-                displayTutorial(format)
-            }}
-        >
-            <Icon style="height: 60px;" id={format.icon} size={2.5} white />
-            <p>{translateText(format.name)}</p>
+{#if openedPage === "powerpoint"}
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
-            <div class="freeshow">
-                <img style="height: 18px;padding: 0;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
-            </div>
-        </MaterialButton>
-    {/each}
-</div>
+    <p class="tip" style="padding-bottom: 20px;">The best option would generally be to get a hold of the presentation as PDF format in the first place.</p>
 
-<MaterialButton style="margin-top: 5px;" variant="outlined" title="actions.paste [Ctrl+Alt+I]">
-    <Icon id="paste" size={1.2} white />
-    {translateText("formats.clipboard")}
-</MaterialButton>
+    <div style="display: flex;flex-direction: column;gap: 5px;">
+        {#each powerpoint_options as option}
+            <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
+                <img style="height: 60px;width: 70px;" src="./import-logos/{option.icon}.webp" alt="{option.name}-logo" draggable={false} />
 
-<HRule title="settings.media_import" />
+                <div style="display: flex;flex-direction: column;align-items: start;gap: 5px;">
+                    <p style="font-size: 1.1em;">{translateText(option.name)}</p>
+                    <span style="opacity: 0.5;">{translateText(option.description)}</span>
+                </div>
+            </MaterialButton>
+        {/each}
+    </div>
 
-<div style="display: flex;gap: 5px;">
-    {#each media_formats as format}
-        <MaterialButton
-            variant="outlined"
-            title={format.title}
-            style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
-            on:click={() => {
-                sendMain(Main.IMPORT, { channel: format.id, format })
-                displayTutorial(format)
-            }}
-        >
-            <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
-            <p>{format.name}</p>
-            {#if format.id === "powerkey"}Deprecated{/if}
-        </MaterialButton>
-    {/each}
-</div>
-
-<HRule title="settings.text_import" />
-
-<div style="display: flex;gap: 5px;">
-    {#each text_formats as format}
-        <MaterialButton
-            variant="outlined"
-            style="justify-content: start;width: calc((100% / 3) - (5px * 2 / 3));min-height: 50px;font-weight: normal;border: 1px solid var(--primary-lighter);"
-            on:click={() => {
-                if (format.popup) {
-                    tick().then(() => {
-                        if (format.popup) {
-                            activePopup.set(format.popup)
-                        }
-                    })
-                } else if (format.id === "clipboard") {
-                    importFromClipboard()
-                    activePopup.set(null)
-                } else {
-                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+    <!-- <p class="tip" style="padding-top: 20px;">Making/maintaining our own PPT converter that keeps all of the formatting would be too much work.</p> -->
+{:else}
+    <div style="display: flex;gap: 5px;">
+        {#each freeshow_formats as format}
+            <MaterialButton
+                variant="outlined"
+                title={format.title}
+                style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
+                on:click={() => {
+                    let name = translateText(format.name)
                     sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
                     displayTutorial(format)
-                }
-            }}
-            title={format.shortcut ? ` [${format.shortcut}]` : ""}
-        >
-            <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
-            <p>{translateText(format.name)}</p>
-        </MaterialButton>
-    {/each}
-</div>
+                }}
+            >
+                <Icon style="height: 60px;" id={format.icon} size={2.5} white />
+                <p>{translateText(format.name)}</p>
 
-<!-- <div>
-    {#each text_formats as format}
-        <MaterialButton
-            style="width: calc((100% / 5) - (5px * 4 / 5));flex-direction: column;min-height: 160px;font-weight: normal;gap: 0;border: 1px solid var(--primary-lighter);"
-            on:click={() => {
-                if (format.popup) {
-                    tick().then(() => {
-                        if (format.popup) {
-                            activePopup.set(format.popup)
-                        }
-                    })
-                } else if (format.id === "clipboard") {
-                    importFromClipboard()
-                    activePopup.set(null)
-                } else {
-                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
-                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
+                <div class="freeshow">
+                    <img style="height: 18px;padding: 0;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
+                </div>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <MaterialButton style="margin-top: 5px;" variant="outlined" title="actions.paste [Ctrl+Alt+I]">
+        <Icon id="paste" size={1.2} white />
+        {translateText("formats.clipboard")}
+    </MaterialButton>
+
+    <HRule title="settings.media_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each media_formats as format}
+            <MaterialButton
+                variant="outlined"
+                title={format.title}
+                style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                on:click={() => {
+                    if (format.id === "powerpoint") {
+                        openedPage = "powerpoint"
+                        return
+                    }
+
+                    sendMain(Main.IMPORT, { channel: format.id, format })
                     displayTutorial(format)
-                }
-            }}
-            title={format.shortcut ? ` [${format.shortcut}]` : ""}
-        >
-            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
-            <p>{translateText(format.name)}</p>
-        </MaterialButton>
-    {/each}
-</div> -->
+                }}
+            >
+                <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{format.name}</p>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <HRule title="settings.text_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each text_formats as format}
+            <MaterialButton
+                variant="outlined"
+                style="justify-content: start;width: calc((100% / 3) - (5px * 2 / 3));min-height: 50px;font-weight: normal;border: 1px solid var(--primary-lighter);"
+                on:click={() => {
+                    if (format.popup) {
+                        tick().then(() => {
+                            if (format.popup) {
+                                activePopup.set(format.popup)
+                            }
+                        })
+                    } else if (format.id === "clipboard") {
+                        importFromClipboard()
+                        activePopup.set(null)
+                    } else {
+                        let name = translateText(format.name)
+                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
+                        displayTutorial(format)
+                    }
+                }}
+                title={format.shortcut ? ` [${format.shortcut}]` : ""}
+            >
+                <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{translateText(format.name)}</p>
+            </MaterialButton>
+        {/each}
+    </div>
+{/if}
 
 <style>
     div {
@@ -200,5 +214,10 @@
         position: absolute;
         bottom: 7px;
         right: 10px;
+    }
+
+    .tip {
+        opacity: 0.7;
+        font-size: 0.85em;
     }
 </style>

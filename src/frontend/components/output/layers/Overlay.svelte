@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item, Overlay, Transition } from "../../../../types/Show"
-    import { activeTimers, playingAudio, playingAudioPaths, variables, videosTime } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
@@ -36,18 +36,19 @@
     }
 
     const showItemRef = { outputId, type: "default" }
-    $: videoTime = $videosTime[outputId] || 0
-    $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let update = 0
-    function updateValues() {
+    // $: videoTime = $videosTime[outputId] || 0
+    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
+    let updater = 0
+    const updaterInterval = setInterval(() => {
         if (isClearing) return
-        update++
-    }
+        if (currentItems.find((a) => a.conditions)) updater++
+    }, 100)
+    onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 {#key show}
     {#each currentItems as item}
-        {#if show && (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, showItemRef, update)}
+        {#if show && (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, showItemRef, updater)}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
                 <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} />
             </SlideItemTransition>

@@ -100,14 +100,25 @@
     let today = new Date()
     const dateInterval = setInterval(() => (today = new Date()), 1000)
 
-    onDestroy(() => clearInterval(dateInterval))
+    onDestroy(() => {
+        clearInterval(dateInterval)
+        if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
+    })
 
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
     let alignElem
     let size = 100
     // currentSlide & timeout to update auto size properly if slide notes
-    $: if (alignElem && item && currentSlide !== undefined) setTimeout(() => (size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })))
+    $: if (alignElem && item && currentSlide !== undefined && item.auto) updateAutoSize()
+    let currentAutoSizeTimeout: NodeJS.Timeout | null = null
+    function updateAutoSize() {
+        if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
+        currentAutoSizeTimeout = setTimeout(() => {
+            size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+            currentAutoSizeTimeout = null
+        }, 20)
+    }
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
@@ -196,7 +207,7 @@
     onDestroy(() => clearInterval(updaterInterval))
 
     $: currentItemText = item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))
-    $: showItemState = isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater)
+    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater) : false
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -240,7 +251,7 @@
         </div>
     {/if}
 
-    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
+    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX || 'center'};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
@@ -289,14 +300,14 @@
                     <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto} isStage />
                 {/if}
             {:else if item.type}
-                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} />
+                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} outputId={stageOutputId} />
             {:else}
                 <!-- OLD CODE -->
                 <div>
                     {#if id.includes("slide_tracker")}
-                        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
                     {:else if id.includes("clock")}
-                        <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
+                        <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
                     {:else if id.includes("video")}
                         <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                     {:else if id.includes("first_active_timer")}

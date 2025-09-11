@@ -197,9 +197,10 @@
     $: currentMediaTransition = clone(isSlide ? slideMediaTransition : isStyle ? styleMediaTransition : $transitionData.media)
 
     type TransitionTypes = "text" | "media"
+    const slideLabel = isSlide ? translateText(" transition.current_slide") : ""
     const transitionTabs = {
-        text: { id: "text", name: translateText("transition.text") + (isSlide ? translateText("transition.current_slide") : ""), icon: "text" },
-        media: { id: "media", name: translateText("transition.media") + (isSlide ? translateText("transition.current_slide") : ""), icon: "image" }
+        text: { id: "text", name: translateText("transition.text") + slideLabel, icon: "text" },
+        media: { id: "media", name: translateText("transition.media") + slideLabel, icon: "image" }
     }
     let selectedType: TransitionTypes = "text"
 
@@ -276,13 +277,13 @@
 
 <!-- ITEM (TEXT) / MEDIA -->
 {#if !isItem}
-    <Tabs tabs={transitionTabs} bind:active={selectedType} />
+    <Tabs tabs={transitionTabs} bind:active={selectedType} style="font-weight: normal;" />
 {/if}
 
 <!-- SPECIFIC -->
 
 {#if enableSpecific}
-    <Tabs tabs={selectedType === "media" ? specificTabsMedia : specificTabs} bind:active={selectedSpecific} />
+    <Tabs tabs={selectedType === "media" ? specificTabsMedia : specificTabs} bind:active={selectedSpecific} style="font-weight: normal;" />
 {:else if showMore}
     <MaterialButton variant="outlined" style="font-weight: normal;" on:click={() => (enableSpecific = true)}>
         <T id="transition.specific" />

@@ -135,11 +135,11 @@
     // delete media thumbnail cache
     // function deleteCache() {
     //     if (!Object.keys($mediaCache).length) {
-    //         newToast("$toast.empty_cache")
+    //         newToast("toast.empty_cache")
     //         return
     //     }
 
-    //     newToast("$toast.deleted_cache")
+    //     newToast("toast.deleted_cache")
     //     mediaCache.set({})
     //     cacheSize = "0 Bytes"
     // }

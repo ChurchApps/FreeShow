@@ -85,7 +85,7 @@
             // look for existing shows with the same title
             if (values.name) {
                 const exists = Object.values($shows).find((a) => a?.name?.toLowerCase() === values.name.toLowerCase())
-                if (exists) newToast("$create_show.exists")
+                if (exists) newToast("create_show.exists")
             }
         }
     }
@@ -219,7 +219,7 @@
         <List top={5}>
             <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} defaultValue={true} on:change={(e) => special.set({ ...$special, autoGroups: e.detail })} />
             <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} defaultValue={false} on:change={(e) => formatNewShow.set(e.detail)} />
-            <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={(e) => splitLines.set(e.detail)} />
+            <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={(e) => splitLines.set(e.detail)} hideWhenZero />
         </List>
     {/if}
 

@@ -14,7 +14,7 @@
 
     function update() {
         if (!data.id?.length) {
-            // newToast("$toast.no_video_id")
+            // newToast("toast.no_video_id")
             return
         }
 
