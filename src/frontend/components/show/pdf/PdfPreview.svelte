@@ -3,7 +3,7 @@
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { dataPath, focusMode, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { newToast, wait } from "../../../utils/common"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -107,19 +107,21 @@
     {/if}
 </div>
 
-<!-- <FloatingInputs side="left">
+{#if !$focusMode}
+    <!-- <FloatingInputs side="left">
     <span style="min-width: 60px;display: flex;align-items: center;justify-content: center;opacity: 0.8;">PDF</span>
 </FloatingInputs> -->
 
-<FloatingInputs>
-    <MaterialButton icon="image" on:click={convertToImages} style="white-space: nowrap;">
-        {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
-    </MaterialButton>
+    <FloatingInputs>
+        <MaterialButton icon="image" on:click={convertToImages} style="white-space: nowrap;">
+            {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
+        </MaterialButton>
 
-    <div class="divider"></div>
+        <div class="divider"></div>
 
-    <MaterialZoom columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
-</FloatingInputs>
+        <MaterialZoom columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+    </FloatingInputs>
+{/if}
 
 <style>
     canvas {

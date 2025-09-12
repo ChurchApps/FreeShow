@@ -69,7 +69,7 @@ const ctrlKeys = {
     e: () => activePopup.set("export"),
     i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
-    h: () => activePopup.set("history"),
+    h: () => get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => toggleOutputs(),
     s: () => save(),

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Line, Show, TrimmedShow } from "../../../../types/Show"
     import { activeShow, activeTagFilter, categories, globalTags, shows, showsCache, templates } from "../../../stores"
-    import { limitUpdate } from "../../../utils/common"
+    import { hasNewerUpdate } from "../../../utils/common"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -13,7 +13,7 @@
     let fullShow: Show | null = null
     $: if ($shows || $showsCache) updateShows()
     async function updateShows() {
-        if (!(await limitUpdate("SHOW_INFO", 200))) return
+        if (await hasNewerUpdate("SHOW_INFO", 200)) return
 
         show = $activeShow?.id ? $shows[$activeShow.id] : null
         fullShow = $activeShow?.id ? $showsCache[$activeShow.id] : null

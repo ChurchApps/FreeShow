@@ -107,9 +107,9 @@
 
 {#if type !== "emitter"}
     {#if type === "input"}
-        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("input", e.detail)} />
+        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map((a) => ({ value: a.name, label: a.name }))} on:change={(e) => setMidi("input", e.detail)} />
     {:else}
-        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map((a) => ({ value: a.name, label: a.name }))} on:click={(e) => setMidi("output", e.detail)} />
+        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map((a) => ({ value: a.name, label: a.name }))} on:change={(e) => setMidi("output", e.detail)} />
     {/if}
 
     {#if type !== "output" && !simple}
@@ -126,7 +126,7 @@
 {/if}
 
 {#if type !== "emitter"}
-    <MaterialDropdown label="midi.type" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail)} />
+    <MaterialDropdown label="midi.type" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.type || "noteon"} options={types} on:change={(e) => setMidi("type", e.detail)} />
 {/if}
 
 {#if midi.type === "control"}

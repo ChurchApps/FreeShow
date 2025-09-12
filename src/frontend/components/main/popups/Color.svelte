@@ -4,11 +4,11 @@
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
-    import Color from "../../inputs/Color.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
 
     let value = "#FFFFFF"
-    let enableNoColor = $selected.id === "show" // || $selected.id === "slide"
+    let allowEmpty = $selected.id === "show" // || $selected.id === "slide"
 
     const selection = $selected
 
@@ -102,4 +102,4 @@
 
 <MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={() => activePopup.set("manage_colors")} white />
 
-<Color {value} on:input={update} {enableNoColor} visible />
+<MaterialColorInput label="" {value} on:input={update} {allowEmpty} alwaysVisible />

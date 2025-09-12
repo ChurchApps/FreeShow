@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { ClickEvent } from "../../../types/Main"
     import { activeEdit, activePage, activeShow, editHistory, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
@@ -16,7 +17,7 @@
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
 
-    function addSlide(e: any) {
+    function addSlide(e: ClickEvent) {
         let index = 1
         let isParent = false
 
@@ -26,8 +27,8 @@
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 
-        if (e.shiftKey) isParent = true
-        history({ id: "SLIDES", newData: { index, replace: { parent: isParent }, addItems: !e.ctrlKey && !e.metaKey } })
+        if (e.detail.shift) isParent = true
+        history({ id: "SLIDES", newData: { index, replace: { parent: isParent }, addItems: !e.detail.ctrl } })
     }
 
     const names = {

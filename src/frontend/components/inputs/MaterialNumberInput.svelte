@@ -23,6 +23,7 @@
     export let padLength: number = 0
 
     // a string might be passed in
+    $: rawInput = padLength ? String(Number(value)).padStart(padLength, "0") : String(value)
     $: numberValue = Number((value || 0).toFixed(maxDecimals))
 
     // Slider values and percent for filled track
@@ -35,22 +36,46 @@
 
     let inputElem: HTMLInputElement
 
-    function updateValue(newVal: number) {
+    function updateValue(newVal: number | string) {
         if (disabled) return
 
-        if (min !== null) newVal = Math.max(min, newVal)
-        if (max !== null) newVal = Math.min(max, newVal)
-        numberValue = newVal
+        // convert , to .
+        let normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
+
+        let calcVal: number
+        if (!padLength) {
+            try {
+                calcVal = typeof normalizedVal === "string" ? new Function(`return ${normalizedVal}`)() : normalizedVal
+            } catch {
+                // invalid expression
+                return
+            }
+        } else {
+            calcVal = Number(normalizedVal)
+        }
+        // invalid value
+        if (isNaN(calcVal)) return
+
+        if (min !== null) calcVal = Math.max(min, calcVal)
+        if (max !== null) calcVal = Math.min(max, calcVal)
+        calcVal = Number(calcVal.toFixed(maxDecimals))
+        numberValue = calcVal
+
+        // set padded value
+        rawInput = padLength ? String(calcVal).padStart(padLength, "0") : String(calcVal)
 
         dispatch("input", numberValue)
         dispatch("change", numberValue)
     }
 
     function handleInput(e: Event) {
-        const newValue = parseFloat((e.target as HTMLInputElement).value)
-        if (isNaN(newValue)) return
+        const inputVal = (e.target as HTMLInputElement).value
+        rawInput = inputVal
+    }
 
-        updateValue(newValue)
+    function handleChange(e: Event) {
+        const inputVal = (e.target as HTMLInputElement).value
+        updateValue(inputVal)
     }
 
     function increment(customStep: number = step) {
@@ -85,6 +110,9 @@
         } else if (e.key === "ArrowDown") {
             e.preventDefault()
             decrement()
+        } else if (e.key === "Enter") {
+            e.preventDefault()
+            updateValue(rawInput)
         }
     }
 
@@ -117,8 +145,8 @@
     <div class="input-wrapper">
         <input
             bind:this={inputElem}
-            value={padLength ? String(numberValue).padStart(padLength, "0") : numberValue}
-            type="number"
+            value={rawInput}
+            type="text"
             {id}
             {placeholder}
             {disabled}
@@ -130,6 +158,9 @@
             class:noValue={hideWhenZero && !padLength && !numberValue}
             on:keydown={handleKeyDown}
             on:input={handleInput}
+            on:change={handleChange}
+            inputmode="decimal"
+            autocomplete="off"
         />
 
         <div class="buttons">
@@ -200,12 +231,12 @@
     }
 
     /* Hide default browser arrows */
-    input[type="number"]::-webkit-inner-spin-button,
+    /* input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
         -webkit-appearance: none;
         margin: 0;
-    }
-    input[type="number"].noValue:not(:focus) {
+    } */
+    input[type="text"].noValue:not(:focus) {
         color: transparent;
     }
 

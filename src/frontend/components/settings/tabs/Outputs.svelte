@@ -13,7 +13,6 @@
     import { refreshOut, toggleOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -136,8 +135,6 @@
             return a
         })
     }
-
-    const isChecked = (e: any) => e.target.checked
 
     function _toggleOutput(state: boolean) {
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
@@ -354,12 +351,7 @@
             />
         </CombinedInput>
 
-        <CombinedInput>
-            <p><T id="settings.alpha_key" /></p>
-            <div class="alignRight">
-                <Checkbox checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(isChecked(e), "alphaKey")} />
-            </div>
-        </CombinedInput>
+        <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
     {/if}
 {/if}
 

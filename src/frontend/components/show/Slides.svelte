@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
-    import { limitUpdate, wait } from "../../utils/common"
+    import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
@@ -57,7 +57,7 @@
     $: updateOffset({ $outputs })
     async function updateOffset(_updater: any) {
         if (!loaded || !scrollElem) return
-        if (!(await limitUpdate("SHOWS_SCROLL_OFFSET", 50))) return
+        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 50)) return
 
         let output = $outputs[activeOutputs[0]] || {}
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {

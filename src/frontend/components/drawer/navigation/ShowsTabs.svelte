@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { TrimmedShow } from "../../../../types/Show"
     import { categories, drawerTabsData, labelsDisabled, shows } from "../../../stores"
-    import { limitUpdate } from "../../../utils/common"
+    import { hasNewerUpdate } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -22,7 +22,7 @@
     let currentShows: TrimmedShow[] = []
     $: if ($shows) updateShows()
     async function updateShows() {
-        if (!(await limitUpdate("SHOWS_TABS", 200))) return
+        if (await hasNewerUpdate("SHOWS_TABS", 200)) return
         currentShows = Object.values($shows)
     }
 

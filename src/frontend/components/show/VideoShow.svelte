@@ -363,6 +363,7 @@
                     <Icon id="add" right />
                     <T id="scripture.local" />
                 </MediaPicker>
+                <!-- <MaterialFilePicker label="scripture.local" style="flex: 1;" icon="add" value="" filter={{ name: "Video Text Track", extensions: ["vtt", "srt"] }} on:change={subtitlePicked} /> -->
             {/if}
         </div>
     {/if}
