@@ -702,8 +702,10 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         return
     }
 
+    const bindings = data?.bindings || []
+
     // get output slide
-    const outputIds = specificOutputId ? [specificOutputId] : data.bindings?.length ? data.bindings : getActiveOutputs(get(outputs), true, false, true)
+    const outputIds = specificOutputId ? [specificOutputId] : bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
@@ -714,6 +716,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     // let maxLines = slideLines && outSlide.index !== null ? (outputWithLines >= slideLines ? 0 : Math.ceil(slideLines / outputWithLines)) : 0
     const duration = data.nextTimer
     // if (maxLines) duration /= maxLines
+
 
     // find any selected output with no lines
     const outputAtLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line)
@@ -758,6 +761,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             if (bg && bgPath !== outputBg?.path) {
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 const mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
+                mediaStyle.fit = get(media)[bgPath]?.fit || ""
+                delete mediaStyle.fitOptions
+
                 const loop = bg.loop !== false
                 const muted = bg.muted !== false
 
@@ -770,10 +776,10 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     loop,
                     muted,
                     ...mediaStyle,
-                    ignoreLayer: mediaStyle.videoType === "foreground"
+                    ignoreLayer: mediaStyle.videoType === "foreground",
+                    bindings
                 }
 
-                // outBackground.set(bgData)
                 setOutput("background", bgData, false, outputId)
             }
         }

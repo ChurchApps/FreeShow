@@ -29,7 +29,8 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    $: backgroundOutputId = allActiveOutputs.find((id) => getLayersFromId(id).includes("background")) || outputId
+    $: backgroundOutputIds = allActiveOutputs.filter((id) => getLayersFromId(id).includes("background"))
+    $: backgroundOutputId = backgroundOutputIds.find((id) => $outputs[id]?.out?.background) || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
 
     function getLayersFromId(id: string) {

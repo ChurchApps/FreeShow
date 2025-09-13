@@ -17,6 +17,9 @@ export interface Styles {
     backgroundImage?: string
     clearStyleBackgroundOnText?: boolean
     fit?: MediaFit | null
+    blurAmount?: number
+    blurOpacity?: number
+    volume?: number
     resolution?: Resolution // pre 1.3.9
     aspectRatio?: AspectRatio
     cropping?: Cropping // pre 1.3.3

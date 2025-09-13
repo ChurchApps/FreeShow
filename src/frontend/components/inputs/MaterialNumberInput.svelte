@@ -23,8 +23,8 @@
     export let padLength: number = 0
 
     // a string might be passed in
-    $: rawInput = padLength ? String(Number(value)).padStart(padLength, "0") : String(value)
-    $: numberValue = Number((value || 0).toFixed(maxDecimals))
+    $: rawInput = padLength ? String(numberValue).padStart(padLength, "0") : String(Number(numberValue.toFixed(maxDecimals)))
+    $: numberValue = Number(value || 0)
 
     // Slider values and percent for filled track
     $: sliderMin = sliderValues.min ?? min ?? 0

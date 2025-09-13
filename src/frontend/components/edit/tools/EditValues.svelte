@@ -106,8 +106,6 @@
 
     const dispatch = createEventDispatcher()
     function changed(e: any, input: any, sectionId: string = "") {
-        console.log(input)
-
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier

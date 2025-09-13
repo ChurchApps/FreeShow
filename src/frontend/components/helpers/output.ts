@@ -110,7 +110,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     }
 
     outputs.update((a) => {
-        const bindings = data?.layout ? ref[data.index]?.data?.bindings || [] : []
+        const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
         const allOutputIds = bindings.length ? bindings : getActiveOutputs(a, true, false, true)
         const outs = outputId ? [outputId] : allOutputIds
         const inputData = clone(data)
@@ -138,7 +138,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // run category action if show slide is not currently outputted, and it does not have a custom override action
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
-                if (!overrideCategoryAction && get(categories)[category]?.action) runAction(get(actions)[get(categories)[category].action!], {}, true)
+                const categoryActionId = get(categories)[category]?.action
+                if (!overrideCategoryAction && categoryActionId) runAction(get(actions)[categoryActionId], {}, true)
             }
 
             if (overrideCategoryAction) resetActionTrigger = true
@@ -179,6 +180,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                     else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
                 })
             } else {
+                if (data) delete data.bindings // currently used for bg muting
                 outData = data
 
                 if (type === "overlays" || type === "effects") {
@@ -793,9 +795,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
-    templateItems = clone(templateItems)
+    templateItems = clone(templateItems).reverse()
 
-    const sortedTemplateItems = sortItemsByType(templateItems)
+    const sorted = sortItemsByType(templateItems)
+    const sortedTemplateItems = clone(sorted)
 
     // reduce template textboxes to slide items
     const slideTextboxes = slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
@@ -894,12 +897,17 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         }
     })
 
-    // let remainingTextTemplateItems = []
     if (addOverflowTemplateItems) {
-        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text || [])
-        // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
+        const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
+        sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
     } else {
         delete sortedTemplateItems.text
+
+        // // don't add overflow textboxes that are not empty or does not have a dynamic value ({) ?
+        // sortedTemplateItems.text = sortedTemplateItems.text.filter(a => {
+        //     const text = getItemText(a)
+        //     return !text || text.includes("{")
+        // })
     }
 
     // remove textbox items
@@ -915,7 +923,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
-    return newSlideItems
+    return newSlideItems.reverse()
 }
 
 export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false) {
@@ -1118,7 +1126,6 @@ export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
-
     const newItems = mergeWithTemplate(slideItems || [], templateItems, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 

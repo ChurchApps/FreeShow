@@ -164,7 +164,7 @@
     // FADE OUT AUDIO
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? 100) / 100))
+    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100))
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {

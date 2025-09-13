@@ -69,6 +69,11 @@ export function importShow(files: { content: string; name?: string; extension?: 
         if (!show) return
         show = fixShowIssues(show)
 
+        // set to selected category if set category does not exist
+        let categoryId = show.category && get(categories)[show.category] ? show.category : get(drawerTabsData).shows?.activeSubTab
+        if (categoryId === "all" || categoryId === "unlabeled") categoryId = null
+        show.category = categoryId
+
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
     })
 

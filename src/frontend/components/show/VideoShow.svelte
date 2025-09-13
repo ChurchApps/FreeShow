@@ -3,7 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, styles, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, encodeFilePath, getExtension, getFileName, removeExtension } from "../helpers/media"
@@ -48,6 +48,7 @@
         videoData.paused = true
         // trigger time update
         videoTime = 0
+        autoPause = false
     }
     function setVideoData() {
         videoData = { ...$videosData[outputId], muted: true }
@@ -62,8 +63,20 @@
         timeMarkersEnabled = !!$videoMarkers[showId]?.length || false
     }
 
-    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
-    $: currentOutput = $outputs[outputId]
+    $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
+    // $: outputId = allActiveOutputs[0]
+    // $: currentOutput = $outputs[outputId]
+
+    // background output
+    $: backgroundOutputIds = allActiveOutputs.filter((id) => getLayersFromId(id).includes("background"))
+    $: outputId = backgroundOutputIds.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    $: currentOutput = outputId ? $outputs[outputId] || null : null
+
+    function getLayersFromId(id: string) {
+        const layers = $styles[$outputs[id]?.style || ""]?.layers
+        if (Array.isArray(layers)) return layers
+        return ["background"]
+    }
 
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}
@@ -297,12 +310,14 @@
     }
 
     $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(${mediaStyle.fitOptions?.blurAmount ?? 6}px) opacity(${mediaStyle.fitOptions?.blurOpacity || 0.3});object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let blurVideo: HTMLVideoElement | undefined
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
+
+    // WIP if paused on mount, blur video does not get paused
 </script>
 
 {#key showId}

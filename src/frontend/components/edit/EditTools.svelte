@@ -38,7 +38,7 @@
 
     // is not template or overlay
     $: isShow = !$activeEdit.id
-    $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ?
+    $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ? ( && $activeEdit.type !== "template")
     $: tabs.slide.remove = !isShow && $activeEdit.type !== "template"
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
 
