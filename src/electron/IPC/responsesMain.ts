@@ -40,7 +40,7 @@ import {
     loadFile,
     loadShows,
     locateMediaFile,
-    openSystemFolder,
+    openInSystem,
     readExifData,
     readFile,
     selectFiles,
@@ -106,10 +106,10 @@ export const mainResponses: MainResponses = {
     [Main.SHOWS_PATH]: () => getDocumentsFolder(),
     [Main.DATA_PATH]: () => getDocumentsFolder(null, ""),
     [Main.LOG_ERROR]: (data) => logError(data),
-    [Main.OPEN_LOG]: () => openSystemFolder(error_log.path),
-    [Main.OPEN_CACHE]: () => openSystemFolder(getThumbnailFolderPath()),
-    [Main.OPEN_APPDATA]: () => openSystemFolder(path.dirname(config.path)),
-    [Main.OPEN_FOLDER_PATH]: (folderPath) => openSystemFolder(folderPath),
+    [Main.OPEN_LOG]: () => openInSystem(error_log.path),
+    [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath()),
+    [Main.OPEN_APPDATA]: () => openInSystem(path.dirname(config.path)),
+    [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS
@@ -168,7 +168,7 @@ export const mainResponses: MainResponses = {
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
     // FILES
     [Main.RESTORE]: (data) => restoreFiles(data),
-    [Main.SYSTEM_OPEN]: (data) => openSystemFolder(data),
+    [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
     [Main.DOES_PATH_EXIST]: (data) => {
         let configPath = data.path
         if (configPath === "data_config") configPath = path.join(data.dataPath, dataFolderNames.userData)
@@ -320,7 +320,7 @@ export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
     writeFile(filePath, buffer)
 
     if (!systemOpened) {
-        openSystemFolder(folder)
+        openInSystem(folder)
         systemOpened = true
     }
 }
