@@ -123,7 +123,7 @@
 
     .dropdown.up {
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         position: absolute;
         transform: translateY(-100%);
     }

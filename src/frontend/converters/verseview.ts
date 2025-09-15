@@ -5,6 +5,7 @@ import { ShowObj } from "../classes/Show"
 import { createCategory, setTempShows } from "./importHelpers"
 import { checkName, initializeMetadata } from "../components/helpers/show"
 import { get } from "svelte/store"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 function cdataString(data: any): string {
     if (typeof data === "string") {
@@ -39,7 +40,7 @@ function createSlides({ slide, slide2 }: any) {
 
             const items = [
                 {
-                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                    style: DEFAULT_ITEM_STYLE,
                     lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
                 },
             ]

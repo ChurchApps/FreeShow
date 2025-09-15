@@ -629,7 +629,7 @@
         width: 100%;
         height: 100%;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
 
         opacity: 0.25;
     }
@@ -654,7 +654,7 @@
         background-color: rgb(255 255 255 / 0.05);
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         z-index: 1;
     }
 
@@ -704,7 +704,7 @@
 
     .childLink {
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
         width: 8px;
@@ -718,7 +718,7 @@
     .lineProgress {
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         transform: translateY(-100%);
         width: 100%;
         height: 2px;
@@ -737,7 +737,7 @@
 
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         transform: translateY(-100%);
         width: 100%;
         padding: 4px 8px;

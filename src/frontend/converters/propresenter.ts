@@ -7,8 +7,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-
-const itemStyle = "inset-inline-start:50px;top:120px;width:1820px;height:840px;"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 export function convertProPresenter(data: any) {
     alertMessage.set("popup.importing")
@@ -133,7 +132,7 @@ function convertJSONBundleToSlides(song: any) {
         lyrics = lyrics.replaceAll("<p>", "").replaceAll("</p>", "")
         const items = [
             {
-                style: itemStyle,
+                style: DEFAULT_ITEM_STYLE,
                 lines: lyrics.split("<br>").map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
             }
         ]
@@ -174,7 +173,7 @@ function convertJSONToSlides(song: any) {
 
         const items = [
             {
-                style: itemStyle,
+                style: DEFAULT_ITEM_STYLE,
                 lines: text.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
             }
         ]
@@ -327,7 +326,7 @@ function getSlideItems(slide: any) {
         // console.log(text)
 
         if (text === "Double-click to edit") text = ""
-        items.push({ style: itemStyle, lines: splitTextToLines(text) })
+        items.push({ style: DEFAULT_ITEM_STYLE, lines: splitTextToLines(text) })
     })
 
     return items
@@ -644,12 +643,12 @@ function convertProToSlides(song: any) {
 
 function convertItem(item: any) {
     const text = item.text
-    let style = itemStyle
+    let style = DEFAULT_ITEM_STYLE
     if (item.bounds) {
         const pos = item.bounds.origin
         const size = item.bounds.size
         if (Object.keys(pos).length === 2 && Object.keys(size).length === 2) {
-            style = `inset-inline-start:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
+            style = `left:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
         }
     }
 

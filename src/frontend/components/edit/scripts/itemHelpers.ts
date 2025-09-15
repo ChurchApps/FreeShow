@@ -14,7 +14,7 @@ import { getStyles, removeText } from "../../helpers/style"
 import { itemBoxes } from "../values/boxes"
 import { getItemText } from "./textStyle"
 
-export const DEFAULT_ITEM_STYLE = "top:120px;inset-inline-start:50px;height:840px;width:1820px;"
+export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
 function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts

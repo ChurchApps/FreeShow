@@ -214,7 +214,7 @@
     .toggles {
         position: absolute;
         bottom: 50px;
-        inset-inline-start: 50%;
+        left: 50%;
         transform: translateX(-50%);
         width: 80vw;
         display: flex;
@@ -252,7 +252,7 @@
     .draw {
         position: absolute;
         top: 50%;
-        inset-inline-start: 50%;
+        left: 50%;
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
@@ -275,7 +275,7 @@
         pointer-events: none;
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         width: 100%;
         height: 100%;
     }
@@ -284,7 +284,7 @@
     .controller {
         position: absolute;
         top: 50%;
-        inset-inline-start: 50%;
+        left: 50%;
         transform: translate(-50%, -50%);
         /* transform: translate(-50%, -50%) rotate(45deg); */
 
@@ -339,7 +339,7 @@
     }
     .quart:nth-child(1) {
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         border-inline-end: 5px solid var(--primary);
     }
     .quart:nth-child(1) :global(svg) {
@@ -347,7 +347,7 @@
     }
     .quart:nth-child(2) {
         top: 0;
-        inset-inline-start: 50%;
+        left: 50%;
         border-inline-start: 5px solid var(--primary);
     }
     .quart:nth-child(2) :global(svg) {

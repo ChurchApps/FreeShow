@@ -177,7 +177,7 @@
         height: 80%;
         flex-wrap: wrap;
         place-items: start;
-        inset-inline-start: 0;
+        left: 0;
     }
     .icons.right {
         /* inset-inline-end: 2px; */

@@ -32,7 +32,7 @@
     // custom dynamic size
     let newSizes = `;
     top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-    inset-inline-start: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
     width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
     height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
   `
@@ -251,18 +251,16 @@
     }
 
     // Event deduplication variables
-    let lastEventType: string = ''
+    let lastEventType: string = ""
     let eventTimeout: NodeJS.Timeout | null = null
     let isEventBlocked: boolean = false
     let blockTimeout: NodeJS.Timeout | null = null
-    
+
     // Detect mobile browsers that fire both touch and pointer events
-    const isMobileBrowser = typeof navigator !== 'undefined' && 
-        (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         /SamsungBrowser/i.test(navigator.userAgent))
+    const isMobileBrowser = typeof navigator !== "undefined" && (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || /SamsungBrowser/i.test(navigator.userAgent))
 
     function clearEventType() {
-        lastEventType = ''
+        lastEventType = ""
     }
 
     function setEventType(type: string) {
@@ -284,10 +282,10 @@
     // Touch event handlers for mobile browsers (iOS Safari, Android Chrome, Samsung Internet, etc.)
     function handleTouchStart(e: TouchEvent) {
         // Block if events are currently blocked or wrong event type
-        if (isEventBlocked || (lastEventType && lastEventType !== 'touch')) return
-        
-        setEventType('touch')
-        
+        if (isEventBlocked || (lastEventType && lastEventType !== "touch")) return
+
+        setEventType("touch")
+
         // Only handle press/release actions
         if (item.button?.press || item.button?.release) {
             // Prevent default only for press/release actions to stop ghost clicks
@@ -303,8 +301,8 @@
 
     function handleTouchEnd(e: TouchEvent) {
         // Only handle if we're in a touch sequence
-        if (lastEventType !== 'touch') return
-        
+        if (lastEventType !== "touch") return
+
         // Only handle press/release actions
         if (item.button?.press || item.button?.release) {
             // Prevent default only for press/release actions
@@ -320,9 +318,9 @@
     // Mouse event handlers for desktop compatibility (fallback for older browsers)
     function handleMouseDown() {
         // Skip on mobile or if wrong event type or events blocked
-        if (isMobileBrowser || isEventBlocked || lastEventType === 'pointer' || lastEventType === 'touch') return
-        
-        setEventType('mouse')
+        if (isMobileBrowser || isEventBlocked || lastEventType === "pointer" || lastEventType === "touch") return
+
+        setEventType("mouse")
         if (item.button?.press || item.button?.release) {
             blockEvents()
             press()
@@ -331,8 +329,8 @@
 
     function handleMouseUp() {
         // Only handle if we're in a mouse sequence and not mobile
-        if (isMobileBrowser || lastEventType !== 'mouse') return
-        
+        if (isMobileBrowser || lastEventType !== "mouse") return
+
         if (item.button?.press || item.button?.release) {
             release()
         }
@@ -342,22 +340,22 @@
     function handlePointerDown(e: PointerEvent) {
         // Block if events are blocked
         if (isEventBlocked) return
-        
+
         // On mobile, completely ignore pointer events if we have touch events
         if (isMobileBrowser) {
-            if (e.pointerType === 'touch') return // Touch events handle this
+            if (e.pointerType === "touch") return // Touch events handle this
             // For non-touch pointer events on mobile (stylus, etc.)
-            if (lastEventType === 'touch') return
+            if (lastEventType === "touch") return
         }
-        
-        if (e.pointerType === 'touch') {
-            if (lastEventType === 'touch') return
-            setEventType('touch')
+
+        if (e.pointerType === "touch") {
+            if (lastEventType === "touch") return
+            setEventType("touch")
         } else {
-            if (lastEventType === 'mouse' || lastEventType === 'touch') return
-            setEventType('pointer')
+            if (lastEventType === "mouse" || lastEventType === "touch") return
+            setEventType("pointer")
         }
-        
+
         if (item.button?.press || item.button?.release) {
             blockEvents()
             press()
@@ -366,11 +364,11 @@
 
     function handlePointerUp(e: PointerEvent) {
         // On mobile, ignore pointer events completely
-        if (isMobileBrowser && e.pointerType === 'touch') return
-        
-        if (e.pointerType === 'touch' && lastEventType !== 'touch') return
-        if (e.pointerType !== 'touch' && lastEventType !== 'pointer') return
-        
+        if (isMobileBrowser && e.pointerType === "touch") return
+
+        if (e.pointerType === "touch" && lastEventType !== "touch") return
+        if (e.pointerType !== "touch" && lastEventType !== "pointer") return
+
         if (item.button?.press || item.button?.release) {
             release()
         }
@@ -378,14 +376,14 @@
 
     // Keyboard event handler for accessibility
     function handleKeyDown(e: KeyboardEvent) {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
             e.preventDefault()
             press()
         }
     }
 
     function handleKeyUp(e: KeyboardEvent) {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
             e.preventDefault()
             release()
         }
@@ -531,7 +529,7 @@
     .clickable:active {
         filter: brightness(0.8);
     }
-    
+
     /* iOS Safari specific optimizations */
     @supports (-webkit-touch-callout: none) {
         .clickable {
@@ -542,7 +540,7 @@
     .actions {
         position: absolute;
         bottom: 0;
-        inset-inline-start: 50%;
+        left: 50%;
         /* transform: translate(-50%, 100%); */
         transform: translateX(-50%);
 

@@ -9,6 +9,7 @@ import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 type Song = {
     title: string
@@ -105,7 +106,7 @@ function createSlides(song: Song) {
 
         let items: Item[] = [
             {
-                style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                style: DEFAULT_ITEM_STYLE,
                 lines: parseLines(allLines),
             },
         ]

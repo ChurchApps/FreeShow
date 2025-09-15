@@ -167,7 +167,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         z-index: 1;
         font-size: 0.9em;
 

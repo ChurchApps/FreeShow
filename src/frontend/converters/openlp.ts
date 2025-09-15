@@ -7,6 +7,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface Song {
     title: string
@@ -112,7 +113,7 @@ function createSlides({ verseOrder, lyrics }: Song) {
 
         const items = [
             {
-                style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                style: DEFAULT_ITEM_STYLE,
                 lines: verse.lines.map((a, i) => {
                     const line: Line = { align: "", text: [{ style: "", value: formatText(a) }] }
                     if (verse.chords?.[i]?.length) line.chords = verse.chords[i]
@@ -218,10 +219,10 @@ function XMLtoObject(xml: string) {
         (Array.isArray(properties.comments)
             ? properties.comments?.map((comment) => comment["#text"] || "").join("\n")
             : typeof properties.comments?.comment === "string"
-              ? properties.comments.comment
-              : typeof properties.comments === "string"
-                ? properties.comments
-                : "") ||
+                ? properties.comments.comment
+                : typeof properties.comments === "string"
+                    ? properties.comments
+                    : "") ||
         ""
 
     const newSong: Song = {

@@ -44,7 +44,7 @@
     const resolution = { width: 1920, height: 1080 }
     const halfWidth = resolution.width * 0.5
     const halfHeight = resolution.height * 0.5
-    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;inset-inline-start: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
+    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
     const smallItems = ["timer", "clock", "slide_tracker"]
 
     let timeout: NodeJS.Timeout | null = null
@@ -59,7 +59,7 @@
                 const left = halfWidth - width * 0.5
                 const height = 150
                 const top = halfHeight - height * 0.5
-                style = `width: ${width}px;height: ${height}px;inset-inline-start: ${left}px;top: ${top}px;`
+                style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
             }
 
             let item: StageItem = { type: itemType, style, align: "" }

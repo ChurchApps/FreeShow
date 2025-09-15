@@ -357,7 +357,7 @@
 
     .timebar {
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         bottom: 0;
         transform: translateY(50%);
 

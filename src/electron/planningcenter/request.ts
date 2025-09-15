@@ -324,7 +324,7 @@ function normalizeSongSection(section: SongSection): SongSection {
 }
 
 function normalizeLineBreaks(text: string): string {
-    return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
 function processRegularItem(item: ProjectItem) {
@@ -395,7 +395,7 @@ function getDateTitle(dateString: string) {
     return date.toISOString().slice(0, 10)
 }
 
-const itemStyle = "inset-inline-start:50px;top:120px;width:1820px;height:840px;"
+const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []

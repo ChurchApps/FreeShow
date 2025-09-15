@@ -233,7 +233,7 @@
         <div class="actions">
             <!-- button -->
             {#if item?.button?.press || item?.button?.release}
-                <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;">
+                <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                     <span style="padding: 5px;z-index: 3;font-size: 0;">
                         <Icon id="button" white />
                     </span>
@@ -242,7 +242,7 @@
 
             <!-- conditions -->
             {#if Object.values(item?.conditions || {}).length}
-                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};inset-inline-start: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
+                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
                     </Button>
@@ -266,7 +266,7 @@
                     {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
                     <!-- WIP this only includes "next" slide background -->
                     {#if typeof slideBackground?.path === "string"}
-                        <div class="image" style="position: absolute;inset-inline-start: 0;top: 0;width: 100%;height: 100%;">
+                        <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
                             <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
                         </div>
                     {/if}
@@ -434,7 +434,7 @@
     .actions {
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
 
         display: flex;
         flex-direction: column;

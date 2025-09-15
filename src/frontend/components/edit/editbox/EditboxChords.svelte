@@ -153,7 +153,7 @@
         content: "";
         position: absolute;
         bottom: -5px;
-        inset-inline-start: 50%;
+        left: 50%;
         transform: translate(-50%, 100%);
         width: 5px;
         /* this height works best as 100px font size */

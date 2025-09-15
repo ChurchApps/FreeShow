@@ -20,14 +20,14 @@ export function createData(paths: MainFilePaths) {
             items: {
                 textCurrent: {
                     type: "slide_text",
-                    style: "width:1870px;height:680px;inset-inline-start:25px;top:25px;font-family: Arial;font-weight:bold;",
+                    style: "width:1870px;height:680px;left:25px;top:25px;font-family: Arial;font-weight:bold;",
                     align: ""
                 },
                 textNext: {
                     type: "slide_text",
                     slideOffset: 1,
                     lineCount: 2,
-                    style: "width:1870px;height:330px;inset-inline-start:25px;top:725px;font-family: Arial;font-weight:bold;color:#aaaaaa;",
+                    style: "width:1870px;height:330px;left:25px;top:725px;font-family: Arial;font-weight:bold;color:#aaaaaa;",
                     align: ""
                 }
             }
@@ -149,7 +149,7 @@ export function setExampleOverlays() {
             category: "notice",
             items: [
                 {
-                    style: "top:870px;inset-inline-start:1248px;height:170px;width:630px;",
+                    style: "top:870px;left:1248px;height:170px;width:630px;",
                     align: "align-items:flex-end;",
                     lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#F0008C;" }] }]
                 }
@@ -162,9 +162,9 @@ export function setExampleOverlays() {
             category: "visuals",
             // TODO: create box
             items: [
-                { style: "top:35px;inset-inline-start:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
-                { style: "top:80px;inset-inline-start:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
-                { style: "top:80px;inset-inline-start:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }
+                { style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
+                { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
+                { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }
             ]
         }
         a.clock = {
@@ -172,7 +172,7 @@ export function setExampleOverlays() {
             name: get(dictionary).example?.clock || "Clock",
             color: "dodgerblue",
             category: "visuals",
-            items: [{ style: "top:70px;inset-inline-start:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }]
+            items: [{ style: "top:70px;left:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }]
         }
         a.clock_analog = {
             isDefault: true,
@@ -181,7 +181,7 @@ export function setExampleOverlays() {
             category: "visuals",
             items: [
                 {
-                    style: "top:72.50px;inset-inline-start:50px;height:936.40px;width:936.40px;font-family:CMGSans;color:#FFFFFF;left:492.00px;border-radius:500px;border-width:2px;background-color:rgb(0 0 0 / 0.5);",
+                    style: "top:72.50px;left:50px;height:936.40px;width:936.40px;font-family:CMGSans;color:#FFFFFF;left:492.00px;border-radius:500px;border-width:2px;background-color:rgb(0 0 0 / 0.5);",
                     type: "clock",
                     clock: { type: "analog", dateFormat: "none", showTime: true, seconds: false }
                 }
@@ -194,10 +194,10 @@ export function setExampleOverlays() {
             category: "visuals",
             displayDuration: 4,
             items: [
-                { style: "top:875px;inset-inline-start:80px;height:135px;width:750px;background-color: #0b57a2;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
-                { style: "top:875px;inset-inline-start:80px;height:135px;width:50px;background-color: #74cbfb;" },
+                { style: "top:875px;left:80px;height:135px;width:750px;background-color: #0b57a2;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
+                { style: "top:875px;left:80px;height:135px;width:50px;background-color: #74cbfb;" },
                 {
-                    style: "top:935px;inset-inline-start:130px;height:75px;width:700px;background-color: #0b57a2;padding: 0 10px;",
+                    style: "top:935px;left:130px;height:75px;width:700px;background-color: #0b57a2;padding: 0 10px;",
                     actions: {
                         showTimer: 1,
                         transition: { type: "slide", duration: 500, easing: "cubic" }
@@ -206,7 +206,7 @@ export function setExampleOverlays() {
                     lines: [{ align: "text-align: left;", text: [{ value: "Name Surname", style: "font-family: Arial;font-size: 70px;text-shadow: 0 0 #000000;" }] }]
                 },
                 {
-                    style: "top:875px;inset-inline-start:130px;height:60px;width:700px;background-color: #006fcf;padding: 0 10px;",
+                    style: "top:875px;left:130px;height:60px;width:700px;background-color: #006fcf;padding: 0 10px;",
                     actions: {
                         transition: { type: "slide", duration: 500, easing: "cubic" }
                     },
@@ -222,10 +222,10 @@ export function setExampleOverlays() {
             category: "visuals",
             locked: true,
             items: [
-                { style: "top:0px;inset-inline-start:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 100%, transparent 50px, black 0px);" },
+                { style: "top:0px;left:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 100%, transparent 50px, black 0px);" },
                 { style: "top:0px;inset-inline-end:0px;height:50px;width:50px;background:radial-gradient(circle at 0 100%, transparent 50px, black 0px);" },
                 { style: "bottom:0px;inset-inline-end:0px;height:50px;width:50px;background:radial-gradient(circle at 0 0, transparent 50px, black 0px);" },
-                { style: "bottom:0px;inset-inline-start:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" }
+                { style: "bottom:0px;left:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" }
             ]
         }
         a.vignette = {
@@ -234,7 +234,7 @@ export function setExampleOverlays() {
             color: "#dddddd",
             category: "visuals",
             locked: true,
-            items: [{ style: "top: -180px;inset-inline-start: -200px;width: 2320px;height: 1440px;border-radius: 500px;box-shadow: inset 0px 0px 248px 0px #FFFFFF;" }]
+            items: [{ style: "top: -180px;left: -200px;width: 2320px;height: 1440px;border-radius: 500px;box-shadow: inset 0px 0px 248px 0px #FFFFFF;" }]
         }
         // this requires a variable
         // a.progress = {
@@ -262,7 +262,7 @@ export function setExampleTemplates() {
             category: "song", // "metadata"
             items: [
                 {
-                    style: "top: 910px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
                 }
@@ -276,7 +276,7 @@ export function setExampleTemplates() {
             category: "song", // "metadata"
             items: [
                 {
-                    style: "top: 50px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 50px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
                 }
@@ -290,7 +290,7 @@ export function setExampleTemplates() {
             category: "presentation",
             items: [
                 {
-                    style: "top:428.50px;inset-inline-start:208.50px;height:220px;width:1500px;",
+                    style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 180px;font-weight: bold;" }] }]
                 }
@@ -303,12 +303,12 @@ export function setExampleTemplates() {
             category: "presentation",
             items: [
                 {
-                    style: "top:35px;inset-inline-start:50.5px;height:220px;width:1820px;",
+                    style: "top:35px;left:50.5px;height:220px;width:1820px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 120px;font-weight: bold;" }] }]
                 },
                 {
-                    style: "top:290px;inset-inline-start:50.5px;height:750px;width:1820px;",
+                    style: "top:290px;left:50.5px;height:750px;width:1820px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.text || "Text", style: "font-size: 80px;" }] }]
                 }
@@ -431,7 +431,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:310px;inset-inline-start:0px;height:460px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
+                    style: "top:310px;left:0px;height:460px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
@@ -449,13 +449,13 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:0px;inset-inline-start:0px;height:1080px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
+                    style: "top:0px;left:0px;height:1080px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
                     align: "",
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     lines: []
                 },
                 {
-                    style: "top:310px;inset-inline-start:0px;height:460px;width:1920px;",
+                    style: "top:310px;left:0px;height:460px;width:1920px;",
                     align: "",
                     actions: { transition: { type: "fade", duration: 500, easing: "sine" } },
                     lines: [
@@ -474,7 +474,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:387.50px;inset-inline-start:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;",
+                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
@@ -491,7 +491,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:310px;inset-inline-start:100px;height:460px;width:1720px;",
+                    style: "top:310px;left:100px;height:460px;width:1720px;",
                     align: "",
                     specialStyle: { lineGap: 20, lineBg: "#000000" },
                     lines: [
@@ -525,7 +525,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:200px;inset-inline-start:0px;height:682px;width:1920px;background:linear-gradient(0deg, transparent 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.5) 80%, transparent 100%);",
+                    style: "top:200px;left:0px;height:682px;width:1920px;background:linear-gradient(0deg, transparent 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.5) 80%, transparent 100%);",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-size: 100px;" }] },
@@ -545,7 +545,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;",
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;",
                     align: "",
                     auto: true,
                     lines: [{ align: "", text: [{ value: "1", style: "font-size: 70px;font-weight: bold;text-transform:uppercase;" }] }]
@@ -559,7 +559,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background-color: #FFFFFF;border-radius:20px;padding:25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background-color: #FFFFFF;border-radius:20px;padding:25px;border-color: #000000;border-style: solid;border-width: 5px;",
                     align: "",
                     auto: true,
                     lines: [{ align: "", text: [{ value: "1", style: "color: #000000;font-size: 70px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
@@ -573,7 +573,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(16,28,65) 0%, rgba(18,75,135) 40%, rgba(68,135,196) 76%, rgba(107,212,240) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(16,28,65) 0%, rgba(18,75,135) 40%, rgba(68,135,196) 76%, rgba(107,212,240) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
@@ -588,7 +588,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgb(154, 12, 114) 0%, rgb(108, 4, 129) 20%, rgb(105, 33, 193) 40%, rgba(33,88,193,1) 80%, rgb(14, 177, 174) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgb(154, 12, 114) 0%, rgb(108, 4, 129) 20%, rgb(105, 33, 193) 40%, rgba(33,88,193,1) 80%, rgb(14, 177, 174) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
@@ -603,7 +603,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top: 820px;inset-inline-start: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(199,213,255) 0%, rgba(219,187,245) 34%, rgba(137,224,226) 76%, rgba(189,254,220) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(199,213,255) 0%, rgba(219,187,245) 34%, rgba(137,224,226) 76%, rgba(189,254,220) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
@@ -621,12 +621,12 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 30px;inset-inline-start: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
+                    style: "top: 30px;left: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;" }] }]
                 },
                 {
-                    style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
                 }
@@ -640,18 +640,18 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 475px;inset-inline-start: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 475px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }]
                 },
                 {
-                    style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
                 }
@@ -665,24 +665,24 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 320px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 320px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 600px;inset-inline-start: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 600px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }]
                 },
                 {
-                    style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
                 }
@@ -696,30 +696,30 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 250px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 250px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 460px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 460px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }]
                 },
                 {
                     // auto: true,
-                    style: "top: 670px;inset-inline-start: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 670px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }]
                 },
                 {
-                    style: "top: 900px;inset-inline-start: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
                 }
@@ -780,17 +780,17 @@ export function setExampleTemplates() {
             items: [
                 // 1080 x 1920
                 {
-                    style: "inset-inline-start:720px;top:640px;width:1130px;height:210px;",
+                    style: "left:720px;top:640px;width:1130px;height:210px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }]
                 },
                 {
-                    style: "inset-inline-start:720px;top:850px;width:1130px;height:60px;",
+                    style: "left:720px;top:850px;width:1130px;height:60px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }]
                 },
                 {
-                    style: "inset-inline-start:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
+                    style: "left:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
                     align: "",
                     lines: [{ align: "", text: [{ value: "", style: "" }] }]
                 }
@@ -804,7 +804,7 @@ export function setExampleTemplates() {
             items: [
                 // 1080 x 1920
                 {
-                    style: "inset-inline-start:550px;top:50px;width:1320px;height:980px;",
+                    style: "left:550px;top:50px;width:1320px;height:980px;",
                     align: "",
                     lines: [
                         { align: "text-align: left", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
@@ -815,7 +815,7 @@ export function setExampleTemplates() {
                     ]
                 },
                 {
-                    style: "inset-inline-start:0px;top:0px;width:500px;height:1080px;background-color: #2957ff;",
+                    style: "left:0px;top:0px;width:500px;height:1080px;background-color: #2957ff;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "", style: "" }] }]
                 }
@@ -872,7 +872,7 @@ export function createDefaultShow() {
                 notes: "",
                 items: [
                     {
-                        style: "top:428.50px;inset-inline-start:208.50px;height:220px;width:1500px;",
+                        style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
                         align: "",
                         lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }]
                     }
@@ -899,12 +899,12 @@ export function createDoubleTemplate() {
             category: "song",
             items: [
                 {
-                    style: "top: 550px;inset-inline-start: 30px;width: 1860px;height: 500px;",
+                    style: "top: 550px;left: 30px;width: 1860px;height: 500px;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "2", style: "font-size: 80px;color: #dddddd;" }] }]
                 },
                 {
-                    style: "top: 30px;inset-inline-start: 30px;width: 1860px;height: 500px;",
+                    style: "top: 30px;left: 30px;width: 1860px;height: 500px;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "1", style: "font-size: 80px;" }] }]
                 }

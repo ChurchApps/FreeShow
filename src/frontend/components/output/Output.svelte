@@ -412,7 +412,7 @@
     .attributionString {
         position: absolute;
         bottom: 15px;
-        inset-inline-start: 50%;
+        left: 50%;
         transform: translateX(-50%);
 
         font-size: 28px;

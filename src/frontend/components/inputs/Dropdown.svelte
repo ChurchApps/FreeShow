@@ -20,7 +20,7 @@
     export let flags = false
     export let up = false
     let normalizedValue: any = value
-    $: (normalizedValue = value || options[0]?.name || "—"), $language
+    $: ((normalizedValue = value || options[0]?.name || "—"), $language)
 
     let self: HTMLDivElement
 
@@ -156,7 +156,7 @@
 
     .dropdown.up {
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         position: absolute;
         transform: translateY(-100%);
     }

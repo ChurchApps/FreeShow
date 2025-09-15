@@ -43,7 +43,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
     const layouts: any[] = []
 
     // TODO: use template
-    const itemStyle = "inset-inline-start:100px;top:120px;width:1770px;height:840px;"
+    const itemStyle = "left:100px;top:120px;width:1770px;height:840px;"
     const titleStyle = "font-weight: bold;line-height:1.5em;"
     const timeStyle = "font-weight: bold;font-size:60px;font-family:Arial;"
     const nameStyle = "font-size:80px;"

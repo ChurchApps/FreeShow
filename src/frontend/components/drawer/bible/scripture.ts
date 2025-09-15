@@ -277,7 +277,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
 
     bibles.forEach((bible, bibleIndex) => {
         const currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
-        const itemStyle = currentTemplate?.style || "top: 150px;inset-inline-start: 50px;width: 1820px;height: 780px;"
+        const itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
         const itemAlignStyle = currentTemplate?.align || ""
         const alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: start;"
         const textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
@@ -483,7 +483,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
             } else {
                 slides[slideIndex].push({
                     lines,
-                    style: metaTemplate?.style || "top: 910px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
                     actions: metaTemplate?.actions || {}
                 })

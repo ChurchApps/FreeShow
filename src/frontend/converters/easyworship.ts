@@ -8,6 +8,7 @@ import { activePopup, alertMessage, dictionary, groups, shows } from "./../store
 import { createCategory, setTempShows } from "./importHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { trimNameFromString } from "./txt"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface Song {
     administrator: string
@@ -210,7 +211,7 @@ function createSlides({ words }: Words) {
             layout.push({ id })
             const items = [
                 {
-                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                    style: DEFAULT_ITEM_STYLE,
                     lines: slideLines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] }))
                 }
             ]
