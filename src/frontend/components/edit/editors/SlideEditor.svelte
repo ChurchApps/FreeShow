@@ -4,6 +4,7 @@
     import type { ItemType } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
+    import { triggerFunction } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -382,6 +383,13 @@
             <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
 
             {#if open}
+                <div class="divider"></div>
+
+                <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>
+                    <Icon id="add" white />
+                    {#if !$labelsDisabled}<T id="edit.insert_virtual_break" />{/if}
+                </MaterialButton>
+
                 <div class="divider"></div>
             {/if}
 

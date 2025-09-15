@@ -24,6 +24,7 @@ export interface Styles {
     aspectRatio?: AspectRatio
     cropping?: Cropping // pre 1.3.3
     lines?: number
+    skipVirtualBreaks?: boolean // break on [_VB] chars only for templates with this option
     template?: string // slide
     templateScripture?: string
     templateScripture_2?: string

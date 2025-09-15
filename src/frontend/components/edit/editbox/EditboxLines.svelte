@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -15,6 +15,7 @@
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
+    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
 
     export let item: Item
     export let ref: {
@@ -532,6 +533,8 @@
         }
     }
 
+    $: if ($activeTriggerFunction === "insert_virtual_break") paste({}, VIRTUAL_BREAK_CHAR)
+
     // paste
     let pasting = false
     function paste(e: any, clipboardText = "") {
@@ -541,6 +544,11 @@
         pasting = true
 
         let sel = getSelectionRange()
+        if (!sel.length && lastCaretPos.line > -1) {
+            // create range from lastCaretPos (probably only used with "insert_virtual_break")
+            const linesLength = getNewLines().length
+            sel = [...Array(linesLength)].map((_, i) => (i === lastCaretPos.line ? { start: lastCaretPos.pos, end: lastCaretPos.pos } : ({} as any)))
+        }
         let caret = { line: 0, pos: 0 }
         let emptySelection = !sel.filter((a) => Object.keys(a).length).length
 

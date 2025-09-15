@@ -195,7 +195,7 @@
 
 <Title label="preview.slide" icon="slide" />
 
-<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
+<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" data={{ styleId }} on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
 
 <InputRow>
     <!-- WIP doubleClick ?? -->

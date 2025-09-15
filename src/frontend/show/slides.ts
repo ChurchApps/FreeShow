@@ -882,3 +882,21 @@ export function breakLongLines(showId: string, breakPoint: number) {
 
     return slides
 }
+
+export const VIRTUAL_BREAK_CHAR = "[_VB]"
+export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
+    if (!lines?.length) return []
+
+    const replaceWith = skip ? "" : "<br>"
+    lines.forEach(a => {
+        a.text.forEach(text => {
+            text.value = text.value.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith)
+
+            // remove spaces
+            text.value = text.value.replace(/\s*<br>\s*/g, "<br>")
+        })
+    })
+
+
+    return lines
+}
