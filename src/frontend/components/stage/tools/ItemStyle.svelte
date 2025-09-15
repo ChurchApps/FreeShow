@@ -18,7 +18,6 @@
     $: item = activeItemId ? stageItems[activeItemId] : null
 
     let currentItemSections = clone(itemSections)
-    delete currentItemSections["backdrop_filters"]
 
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) updateData()
@@ -42,13 +41,15 @@
         data = stylePosToPercentage(data)
     }
 
+    $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
+
     let timeout: NodeJS.Timeout | null = null
     function updateStyle(e: any) {
         let input = e.detail
         input = percentageToAspectRatio(input)
 
-        if (input.id === "transform") {
-            let oldString = data[input.id]
+        if (input.id === "backdrop-filter" || input.id === "transform") {
+            let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
             input.value = addFilterString(oldString || "", [input.key, input.value])
             input.key = input.id
         }
