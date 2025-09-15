@@ -15,6 +15,7 @@
     import Loader from "../Loader.svelte"
 
     let revert = $popupData.revert
+    let allowEmpty = !!$popupData.allowEmpty
 
     $: hideIds = $popupData.hideIds || []
     $: sortedTemplates = sortByName(keysToID($templates).filter((a) => !hideIds.includes(a.id)))
@@ -125,8 +126,8 @@
         </Center>
     {:else if searchedTemplates.length}
         <div class="grid">
-            {#if customTypes && selectedType !== types[0]?.value}
-                <Card active={!value} label={translate("example.default")} icon="star" {resolution} on:click={() => selectTemplate("")}>
+            {#if allowEmpty || (customTypes && selectedType !== types[0]?.value)}
+                <Card active={!value} label={translate(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
                     <!--  -->
                 </Card>
             {/if}

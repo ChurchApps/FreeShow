@@ -601,7 +601,7 @@ const clickActions = {
 
         const selectedTemplate = get(categories)[id]?.template
 
-        popupData.set({ active: selectedTemplate, trigger: (value) => setCategoryTemplate(value) })
+        popupData.set({ active: selectedTemplate, allowEmpty: true, trigger: (value) => setCategoryTemplate(value) })
         activePopup.set("select_template")
 
         function setCategoryTemplate(templateId: string) {

@@ -218,18 +218,18 @@ export function toggleLock(data: API_output_lock) {
         return
     }
 
-    // const firstOutputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    const isLocked = get(outputs)[data.outputId]?.active === false
-    toggleOutputLock(data.outputId, data.value ?? isLocked)
+    const outputIds = data.outputId === "all" ? getActiveOutputs(get(outputs), false, true, true) : [data.outputId]
+
+    const isLocked = get(outputs)[outputIds[0]]?.active === false
+    outputIds.forEach(outputId => {
+        toggleOutputLock(outputId, typeof data.value === "boolean" ? !data.value : isLocked)
+    })
 }
 // similar to PreviewOutputs.svelte
 function toggleOutputLock(outputId: string, value: boolean) {
-    // const activeOutputIds = getActiveOutputs(get(outputs), false, true, true)
-
     outputs.update((a) => {
         if (!a[outputId]?.enabled) return a
 
-        console.log(outputId, value)
         a[outputId].active = value
 
         let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)

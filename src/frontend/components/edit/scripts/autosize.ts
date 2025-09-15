@@ -92,7 +92,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
     function addStyleToElemText(currentFontSize: number) {
         let i = 0
-        for (const textElem of textChildren) {
+        for (const textElem of (textChildren as any)) {
             if (!styles[i]) styles[i] = textElem.getAttribute("style") || ""
             textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize}px !important;`)
             i++
@@ -120,7 +120,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.alignItems = "center"
         if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
 
-        for (const elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
+        for (const elemHide of (cloned.querySelectorAll(".hideFromAutosize") as any)) {
             ; (elemHide as HTMLElement).style.display = "none"
         }
 
