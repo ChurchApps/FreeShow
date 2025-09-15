@@ -594,6 +594,22 @@ const clickActions = {
         popupData.set({ id })
         activePopup.set("category_action")
     },
+    category_template: (obj: ObjData) => {
+        const id = obj.sel?.data[0]
+        if (!id) return
+
+        const selectedTemplate = get(categories)[id]?.template
+
+        popupData.set({ active: selectedTemplate, trigger: (value) => setCategoryTemplate(value) })
+        activePopup.set("select_template")
+
+        function setCategoryTemplate(templateId: string) {
+            categories.update(a => {
+                a[id].template = templateId
+                return a
+            })
+        }
+    },
     use_as_archive: (obj: ObjData) => {
         const categoryStores = {
             category_shows: () => categories.update(toggleArchive),

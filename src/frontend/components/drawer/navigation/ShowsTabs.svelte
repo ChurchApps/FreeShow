@@ -47,9 +47,10 @@
     function convertToButton(categories: any[]) {
         return sortObject(categories, "name").map((a: any) => {
             const action = a.action
+            const template = a.template
             const count = allVisibleShows.reduce((count, show) => count + (show.category === a.id ? 1 : 0), 0)
             const readOnly = profile.global === "read" || profile[a.id] === "read"
-            return { id: a.id, label: a.name, icon: a.icon, action, count, readOnly }
+            return { id: a.id, label: a.name, icon: a.icon, action, template, count, readOnly }
         })
     }
 

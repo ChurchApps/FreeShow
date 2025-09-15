@@ -468,6 +468,7 @@
         "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
+        "category_template": "Category template",
         "custom_action": "Custom action",
         "slide_midi": "Slide MIDI input",
         "user_data_overwrite": "Found existing data",
