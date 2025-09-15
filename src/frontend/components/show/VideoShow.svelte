@@ -3,12 +3,13 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, styles, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, encodeFilePath, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { getFirstOutputIdWithAudableBackground } from "../helpers/video"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
@@ -68,15 +69,8 @@
     // $: currentOutput = $outputs[outputId]
 
     // background output
-    $: backgroundOutputIds = allActiveOutputs.filter((id) => getLayersFromId(id).includes("background"))
-    $: outputId = backgroundOutputIds.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
     $: currentOutput = outputId ? $outputs[outputId] || null : null
-
-    function getLayersFromId(id: string) {
-        const layers = $styles[$outputs[id]?.style || ""]?.layers
-        if (Array.isArray(layers)) return layers
-        return ["background"]
-    }
 
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}

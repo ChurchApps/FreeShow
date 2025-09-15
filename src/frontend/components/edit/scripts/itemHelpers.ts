@@ -244,9 +244,9 @@ export function updateSortedStageItems() {
     })
 }
 
-export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null) {
+export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview: boolean = false) {
     // check bindings
-    if (item.bindings?.length && !item.bindings.includes(outputId)) return false
+    if (!preview && item.bindings?.length && !item.bindings.includes(outputId)) return false
 
     if (type === "stage") allItems = getTempItems(item, allItems)
 

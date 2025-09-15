@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special, styles } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -12,6 +12,7 @@
     import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
+    import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
     import Button from "../../inputs/Button.svelte"
     import ShowActions from "../ShowActions.svelte"
     import Audio from "../tools/Audio.svelte"
@@ -29,15 +30,8 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    $: backgroundOutputIds = allActiveOutputs.filter((id) => getLayersFromId(id).includes("background"))
-    $: backgroundOutputId = backgroundOutputIds.find((id) => $outputs[id]?.out?.background) || outputId
+    $: backgroundOutputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
-
-    function getLayersFromId(id: string) {
-        const layers = $styles[$outputs[id]?.style || ""]?.layers
-        if (Array.isArray(layers)) return layers
-        return ["background"]
-    }
 
     let numberKeyTimeout: NodeJS.Timeout | null = null
     let previousNumberKey = ""

@@ -9,6 +9,7 @@
     import Title from "../input/Title.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
+    import MaterialTimePicker from "../inputs/MaterialTimePicker.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Notes from "./tools/Notes.svelte"
 
@@ -32,11 +33,15 @@
     }
 
     function updateName(e: any) {
+        updateSection("name", e.target.value || "")
+    }
+
+    function updateSection(key: string, value: any) {
         if (!$activeProject) return
 
         projects.update((a) => {
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
-            if (index >= 0) a[$activeProject!].shows[index].name = e.target.value || ""
+            if (index >= 0) a[$activeProject!].shows[index][key] = value
             return a
         })
     }
@@ -57,9 +62,13 @@
 
     function updateTriggerLocal(e: any) {
         let actionId = e.detail
+        updateSectionData("settings", { triggerAction: actionId })
+    }
 
+    function updateSectionData(key: string, value: any) {
         projects.update((a) => {
-            a[$activeProject!].shows[section.index].data = { settings: { triggerAction: actionId } }
+            const currentData = a[$activeProject!].shows[section.index].data || {}
+            a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
             return a
         })
     }
@@ -85,10 +94,14 @@
     </div>
 {:else}
     {#key section}
-        <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
-            <TextInput value={section?.name || ""} placeholder={$dictionary.main?.unnamed} on:input={updateName} on:keydown={keydown} />
-        </h4>
-        <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
+        <InputRow>
+            <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
+                <TextInput value={section?.name || ""} placeholder={$dictionary.main?.unnamed} on:input={updateName} on:keydown={keydown} />
+            </h4>
+            <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
+
+            <MaterialTimePicker label="calendar.time" value={section?.data?.time} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
+        </InputRow>
 
         <Notes value={note} on:edit={edit} />
     {/key}

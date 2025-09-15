@@ -15,7 +15,7 @@ import { convertRSSToString, getRSS } from "../../utils/rss"
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
-import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
@@ -1352,6 +1352,22 @@ const dynamicValues = {
     time_str_day: () => getWeekday(new Date().getDay(), get(dictionary), true),
     time_str_month: () => getMonthName(new Date().getMonth(), get(dictionary), true),
 
+    // project
+    project_section: ({ outSlide }) => {
+        const active = getActiveProjectSection({ outSlide })
+        return active?.name || get(shows)[active?.id || ""]?.name
+    },
+    project_section_next: ({ outSlide }) => {
+        const active = getActiveProjectSection({ outSlide }, true)
+        return active?.name || get(shows)[active?.id || ""]?.name
+    },
+    project_section_time: () => getActiveProjectSection()?.data?.time || "00:00",
+    project_section_time_next: () => getActiveProjectSection({}, true)?.data?.time || "00:00",
+    project_section_time_until_next: () => {
+        const projectTime = getActiveProjectSection({}, true)?.data?.time
+        return projectTime ? joinTimeBig(getTimeUntilClock(getActiveProjectSection({}, true)?.data?.time)) : "00:00"
+    },
+
     // show
     show_name: ({ show }) => show.name || "",
     show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
@@ -1412,6 +1428,51 @@ export function getVariableNameId(name: string) {
 export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
     const numberVariables = Object.values(variableUpdater).filter((a) => a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{")))
     return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+}
+
+// PROJECT SECTION DATA
+
+function getActiveProjectSection(data: any = {}, next: boolean = false): ProjectShowRef | null {
+    const project = get(projects)[get(activeProject) || ""]
+    if (!project?.shows) return null
+
+    const hasTime = project.shows.find(a => a.data?.time)
+    if (!hasTime) {
+        // get active outputted if any
+        const showId = data.outSlide?.id
+        const showIndex = project.shows.findIndex(a => a.id === showId)
+        if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
+        return project.shows[showIndex] || null
+    }
+
+    const active = getClosestProjectSectionByTime()
+    return project.shows.find(a => a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
+}
+
+function getClosestProjectSectionByTime() {
+    const project = get(projects)[get(activeProject) || ""]
+    if (!project?.shows) return null
+
+    let closestPassedTime = 0
+    let closestUpcommingTime = 0
+    let closestPassedId = ""
+    let closestUpcommingId = ""
+    project.shows.forEach(a => {
+        const time = a.data?.time
+        if (!time) return
+
+        const timeUntil = getTimeUntilClock(time)
+        if (timeUntil < 0 && (!closestPassedTime || timeUntil > closestPassedTime)) {
+            closestPassedTime = timeUntil
+            closestPassedId = a.id
+        }
+        if (timeUntil > 0 && (!closestUpcommingTime || timeUntil < closestUpcommingTime)) {
+            closestUpcommingTime = timeUntil
+            closestUpcommingId = a.id
+        }
+    })
+
+    return { closestPassedId, closestUpcommingId }
 }
 
 // AUDIO METADATA

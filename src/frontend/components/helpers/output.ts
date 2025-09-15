@@ -56,6 +56,7 @@ import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { getFirstOutputIdWithAudableBackground } from "./video"
 
 export function toggleOutputs(outputIds: string[] | null = null, options: { force?: boolean, autoStartup?: boolean, state?: boolean } = {}) {
     if (outputIds === null) outputIds = getActiveOutputs(get(outputs), false)
@@ -115,12 +116,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         const outs = outputId ? [outputId] : allOutputIds
         const inputData = clone(data)
 
-        let firstOutputWithBackground = allOutputIds.findIndex((id) => {
-            let layers = get(styles)[get(outputs)[id]?.style || ""]?.layers
-            if (!Array.isArray(layers)) layers = ["background"]
-            return !a[id]?.isKeyOutput && !a[id]?.stageOutput && layers.includes("background")
-        })
-        firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
+        const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
 
         if (type === "slide" && data?.id) {
             // reset slide cache (after update)
@@ -162,8 +158,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 const slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                const index = allOutputIds.findIndex((outId) => outId === id)
-                data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputIds[firstOutputWithBackground] })
+                data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && id !== backgroundId, videoOutputId: backgroundId })
             }
 
             let outData = a[id].out?.[type] || null

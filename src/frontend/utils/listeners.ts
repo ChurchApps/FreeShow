@@ -188,20 +188,32 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
-        const activeOutputs = getActiveOutputs(get(outputs), true, true, true)
-        activeOutputs.forEach((id) => {
-            send(OUTPUT, ["DRAW"], { id, data })
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW"], { id, data })
+            else send(OUTPUT, ["DRAW"], { id, data: null })
         })
     })
     drawTool.subscribe((data) => {
         // WIP changing tool while output is not active, will not update tool in output if set to active before changing tool again
-        const activeOutputs = getActiveOutputs()
-        activeOutputs.forEach((id) => {
-            send(OUTPUT, ["DRAW_TOOL"], { id, data })
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW_TOOL"], { id, data })
+            else send(OUTPUT, ["DRAW_TOOL"], { id, data: "focus" })
         })
     })
     drawSettings.subscribe((data) => {
-        send(OUTPUT, ["DRAW_SETTINGS"], data)
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW_SETTINGS"], data)
+            else {
+                send(OUTPUT, ["DRAW_TOOL"], { id, data: "focus" })
+                send(OUTPUT, ["DRAW"], { id, data: null })
+            }
+        })
     })
 
     transitionData.subscribe((data) => {

@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { actions, activeFocus, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
+    import { getTimeUntilClock } from "../drawer/timers/timers"
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -16,6 +18,7 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { joinTimeBig } from "../helpers/time"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -91,28 +94,45 @@
             splittedProjectsList.at(-1)!.items.push(a)
         })
     }
+
+    // update today
+    let today = new Date()
+    const interval = setInterval(() => {
+        today = new Date()
+    }, 1000)
+    onDestroy(() => clearInterval(interval))
+
+    let closestTime = 0
+    $: {
+        closestTime = 0
+        projectItemsList?.find((a) => {
+            const timeLeft = getTimeUntilClock(a.data?.time, today)
+            if (timeLeft > 0 && (!closestTime || timeLeft < closestTime)) closestTime = timeLeft
+        })
+    }
 </script>
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>
         <DropArea id="project" selectChildren let:fileOver file>
             {#if projectItemsList.length}
-                {#each splittedProjectsList as projectItemsList}
-                    <div class="listSection" style="--border-color: {projectItemsList.color};">
-                        {#each projectItemsList.items as show, i}
+                {#each splittedProjectsList as splittedItemsList}
+                    <div class="listSection" style="--border-color: {splittedItemsList.color};">
+                        {#each splittedItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
                             {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
                             {@const isFirst = i === 0}
-                            {@const isLast = i === projectItemsList.items.length - 1}
+                            {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+                            {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
 
                             <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <MaterialButton
                                         isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
-                                        style="{borderRadiusStyle}justify-content: center;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em;{$fullColors
+                                        style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors
                                             ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};`
                                             : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
                                         on:click={(e) => {
@@ -122,6 +142,16 @@
                                         }}
                                         tab
                                     >
+                                        {#if sectionTime}
+                                            <span style="font-weight: normal;">
+                                                <span style="opacity: 0.7;">{show.data.time}</span>
+                                                <!-- && sectionTime < 3600 -->
+                                                {#if sectionTime > 0 && closestTime === sectionTime}
+                                                    <span style="color: var(--secondary);">{joinTimeBig(sectionTime)}</span>
+                                                {/if}
+                                            </span>
+                                        {/if}
+
                                         <p style="min-height: 10px;">
                                             {#if show.name?.length}
                                                 {show.name}

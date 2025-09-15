@@ -1160,7 +1160,8 @@ const duplicateActions = {
                 if (!a[id] || a[id].shows?.length) return
 
                 const newAction = clone(a[id])
-                newAction.name = data.length === 1 ? "" : newAction.name + " 2"
+                // newAction.name = data.length === 1 ? "" : newAction.name + " 2"
+                newAction.name = newAction.name + " 2"
 
                 const newId = uid()
                 a[newId] = newAction

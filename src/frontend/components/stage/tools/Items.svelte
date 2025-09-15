@@ -117,10 +117,10 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["time_", "audio_", "meta_"]
+    const excludeValues = ["project_", "time_", "audio_", "meta_"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
-        .filter((id) => !excludeValues.find((v) => id.includes(v)))
+        .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
         .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 

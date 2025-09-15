@@ -144,8 +144,7 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
-        const todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
-        currentTime = (todayTime.getTime() - today.getTime()) / 1000
+        currentTime = getTimeUntilClock(timer.time!, today)
     } else if (timer.type === "event") {
         const eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
         currentTime = (eventTime - today.getTime()) / 1000
@@ -154,6 +153,11 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
     if (currentTime < 0 && !timer.overflow) currentTime = 0
 
     return currentTime
+}
+
+export function getTimeUntilClock(time: string, today: Date = new Date(), _updater: any = null) {
+    const todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), time].join(" "))
+    return (todayTime.getTime() - today.getTime()) / 1000
 }
 
 // ACTIONS

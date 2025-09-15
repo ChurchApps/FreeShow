@@ -139,6 +139,7 @@ export const actionHistory: Writable<{ action: string; data: any; time: number; 
 export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 export const scriptureHistoryUsed: Writable<boolean> = writable(false)
+export const actionRevealUsed: Writable<boolean> = writable(false)
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)
