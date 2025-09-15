@@ -340,13 +340,13 @@
                 values[slideId].push(newAligns)
             } else if (currentSlideItem.lines) {
                 if (input.id.includes("CSS")) {
-                    values[slideId].push(addStyle(selected, currentSlideItem, input.value.replaceAll("\n", "")).lines!.map((a) => a.text))
+                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map((a) => a.text))
                 } else {
                     values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map((a) => a.text))
                 }
             } else {
                 if (input.id.includes("CSS")) {
-                    values[slideId] = [input.value.replaceAll("\n", "")]
+                    values[slideId] = [input.value]
                 } else {
                     // TODO: don't replace full item style (position) when changing multiple (Like EditTools.svelte:152)
                     values[slideId] = [addStyleString(item?.style || "", [input.key, input.value])]

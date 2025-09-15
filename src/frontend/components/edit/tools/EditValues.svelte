@@ -16,6 +16,7 @@
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import { parseShadowValue } from "../scripts/edit"
+    import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
     import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import { sectionColors } from "../values/item"
 
@@ -69,8 +70,9 @@
 
     function getStyleString(input: EditInput2) {
         let style = ""
-        if (input.id === "CSS_item") style = item.style || ""
-        else if (typeof input.value === "string") style = input.values?.value // "CSS_text" / custom
+        const isItem = input.id === "CSS_item"
+        const currentStyle = isItem ? item?.style : input.values?.value
+        style = (item.type || "text") === "text" ? currentStyle : filterItemStyle(currentStyle, isItem)
 
         if (!style) return ""
 
@@ -144,6 +146,11 @@
         // there is also a different check to remove it if gradient & shadow does not exist (but only in the output)
         if (input.key === "color" && item.lines && sections["shadow"] && !hasChangedValues("shadow") && value.includes("gradient")) {
             toggleSection("shadow")
+        }
+
+        if (input.id.includes("CSS")) {
+            value = value.replaceAll("\n", "")
+            value = (item.type || "text") === "text" ? value : mergeWithStyle(value, item.style, input.id === "CSS_item")
         }
 
         ///

@@ -136,13 +136,12 @@
             })
         })
 
-        if (input.id === "CSS") {
-            values = { [slides[0]]: [input.value.replaceAll("\n", "")] }
+        if (input.id.includes("CSS")) {
+            values = { [slides[0]]: [input.value] }
             // only change one selected
             allItems = [allItems[0]]
         }
 
-        console.log(values)
         if (!Object.values(values).length) return
 
         if ($activeEdit.id) {

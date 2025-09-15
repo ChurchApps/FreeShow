@@ -150,14 +150,14 @@
 
         if (input.key === "text-align" || input.key === "align-items") updateAlign(input)
 
-        if (input.id !== "style" && input.id !== "CSS") {
+        if (input.id !== "style" && !input.id.includes("CSS")) {
             setValue(input)
             return
         }
 
         let value: string = addStyleString(item?.style || "", [input.key, input.value]) || ""
 
-        if (input.id === "CSS") value = input.value.replaceAll("\n", "")
+        if (input.id.includes("CSS")) value = input.value.replaceAll("\n", "")
 
         if (!value) return
 
@@ -170,7 +170,7 @@
             let item = stageItems[itemId]
             if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
 
-            styles[itemId] = input.id === "CSS" ? value : addStyleString(item.style, [input.key, input.value])
+            styles[itemId] = input.id.includes("CSS") ? value : addStyleString(item.style, [input.key, input.value])
         })
 
         history({

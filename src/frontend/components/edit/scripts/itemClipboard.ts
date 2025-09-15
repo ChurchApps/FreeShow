@@ -56,6 +56,26 @@ export function getItemStyle(item: Item): StyleClipboard {
     return clone({ keys: {}, style: newStyles })
 }
 
+// get current item style
+export function filterItemStyle(style: string, isItem: boolean) {
+    if (typeof style !== "string" || !style) return ""
+
+    const itemKeys = getItemKeys()
+    const styles = getStyles(style)
+
+    // only keep item keys
+    let newStyle = ""
+    Object.entries(styles).forEach(([key, value]) => {
+        const hasItemKey = itemKeys.includes(key)
+        if (isItem ? hasItemKey : !hasItemKey) newStyle += `${key}: ${value};`
+    })
+
+    return newStyle
+}
+export function mergeWithStyle(newStyle: string, oldStyle: string, isItem: boolean) {
+    return filterItemStyle(oldStyle, !isItem) + newStyle
+}
+
 export function getSlideStyle(): StyleClipboard {
     const ref = getLayoutRef()
     const settings = _show()
