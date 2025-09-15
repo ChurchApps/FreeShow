@@ -10,7 +10,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import autosize from "../scripts/autosize"
     import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
@@ -317,25 +317,29 @@
     $: textFit = item?.textFit
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
-    $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
+    $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || !item.auto) return
+        if (isTyping || !loaded || !alignElem || (!item.auto && !item.textFit)) return
 
         if (loopStop) return
         loopStop = setTimeout(() => (loopStop = null), 200)
 
-        let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
+        if (ref.type === "stage") {
+            itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
+        }
+
+        let type = item?.textFit || "shrinkToFit"
         let defaultFontSize = itemFontSize
         let maxFontSize
 
-        if (ref.type === "stage") {
-            type = "growToFit"
-        }
+        // if (ref.type === "stage") {
+        //     type = "growToFit"
+        // }
 
         if (type === "growToFit") {
             defaultFontSize = 100

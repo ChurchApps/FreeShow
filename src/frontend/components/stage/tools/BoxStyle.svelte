@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeStage, stageShows, theme, themes } from "../../../stores"
+    import { MAX_FONT_SIZE } from "../../edit/scripts/autosize"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
     import { itemBoxes, setBoxInputValue2 } from "../../edit/values/boxes"
@@ -26,6 +27,7 @@
     }
 
     $: isSlideText = item?.type === "slide_text" // || activeItemId?.includes("slide_text")
+    $: isTextItem = item?.type === "slide_text" || item?.type === "text"
     $: stageSections = item ? clone(isSlideText ? slideTextSections : itemBoxes[item.type || ""]?.sections) : {}
 
     $: if (item?.type === "text") {
@@ -36,11 +38,6 @@
     $: if (isSlideText) {
         stageSections = clone(item?.keepStyle ? { default: slideTextSections.default } : slideTextSections)
 
-        // WIP stage shrinkToFit ?
-        setBoxInputValue2(stageSections, "font", "textFit", "options", [
-            { value: "none", label: "main.none" },
-            { value: "growToFit", label: "edit.grow_to_fit" }
-        ])
         // setBoxInputValue2(stageSections, "font", "font-family", "default", "Arial")
         // setBoxInputValue2(stageSections, "font", "font-weight", "default", "bold")
     }
@@ -64,7 +61,7 @@
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
     $: if (stageSections?.font || type === "text") {
-        setBoxInputValue2(stageSections, "font", "font-size", "disabled", item?.textFit !== "none")
+        setBoxInputValue2(stageSections, "font", "font-size", "disabled", !isTextItem && item?.textFit === "growToFit")
         setBoxInputValue2(stageSections, "font", "textFit", "value", item?.textFit || "growToFit")
         // setBoxInputValue2(stageSections, "font", "auto", "value", item.auto ?? true)
     }
@@ -72,7 +69,7 @@
     $: if (item && type === "text") {
         let sectionId = stageSections.font ? "font" : "default"
         setBoxInputValue2(stageSections, sectionId, "font-family", "styleValue", data["font"] || "")
-        setBoxInputValue2(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
+        // setBoxInputValue2(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
     $: if (item && isSlideText) {
@@ -194,7 +191,17 @@
         input.value = input.values.value
         input.input = input.type
 
-        if (input.id === "textFit") updateStyle({ detail: { id: "auto", value: input.value !== "none" } })
+        if (input.id === "textFit") {
+            updateStyle({ detail: { id: "auto", value: input.value !== "none" } })
+
+            if (isTextItem) {
+                let newFontSize = 0
+                // change font size to more clearly indicate what the different text fit does
+                if (input.value !== "growToFit" && Number(data["font-size"]) < 200) newFontSize = 0
+                else newFontSize = input.value !== "growToFit" ? 100 : MAX_FONT_SIZE
+                if (newFontSize) updateStyle({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
+            }
+        }
 
         updateStyle({ detail: input })
     }

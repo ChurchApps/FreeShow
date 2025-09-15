@@ -42,8 +42,9 @@
 
     let error: null | string = null
 
-    onMount(capture)
+    let retryTimeout: NodeJS.Timeout | null = null
 
+    onMount(capture)
     function capture() {
         error = ""
 
@@ -66,11 +67,13 @@
                 loaded = true
 
                 // retry
-                if ($os.platform === "darwin") setTimeout(capture, 5000)
+                if ($os.platform === "darwin") retryTimeout = setTimeout(capture, 5000)
             })
     }
 
     onDestroy(() => {
+        if (retryTimeout) clearTimeout(retryTimeout)
+
         if (!videoElem) return
         ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null

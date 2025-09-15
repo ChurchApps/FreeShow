@@ -19,6 +19,7 @@
         overlays,
         projects,
         redoHistory,
+        scriptures,
         selected,
         shows,
         showsCache,
@@ -187,8 +188,13 @@
             disabled = true
         },
         favourite: () => {
-            let path = $selected.data[0]?.path || $selected.data[0]?.id
-            if (path && $media[path]?.favourite === true) enabled = true
+            if ($selected.id?.includes("category_scripture")) {
+                let id = $selected.data[0]
+                enabled = !!$scriptures[id]?.favorite
+            } else {
+                let path = $selected.data[0]?.path || $selected.data[0]?.id
+                enabled = !!$media[path]?.favourite
+            }
         },
         effects_library_add: () => {
             // WIP don't show this if not an effect

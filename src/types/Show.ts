@@ -1,3 +1,4 @@
+import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Input } from "./Input"
 import type { Animation } from "./Output"
 import type { Resolution } from "./Settings"
@@ -103,7 +104,7 @@ export interface Item {
     lines?: Line[]
     list?: List
     auto?: boolean
-    textFit?: string // auto size text fix option (default: shrinkToFit)
+    textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
     autoFontSize?: number // only used to store the calculated auto size text size
     style: string
     align?: string

@@ -1,3 +1,4 @@
+import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Resolution } from "./Settings"
 import type { Condition, Line } from "./Show"
 
@@ -49,7 +50,7 @@ export interface StageItem {
     // textbox
     chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
-    textFit?: string // auto size text fix option (default: growToFit)
+    textFit?: AutosizeTypes // auto size text fix option (default: growToFit)
     button?: { press?: string; release?: string } // click actions
 
     // slide text

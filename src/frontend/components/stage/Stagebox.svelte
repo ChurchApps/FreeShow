@@ -107,15 +107,25 @@
 
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
+    $: autoSizeEnabled = item.type === "current_output" ? false : item.type?.includes("text") ? item.auto || (item.textFit && item.textFit !== "none") : item.auto !== false || item.textFit !== "none"
+
     let alignElem
     let size = 100
     // currentSlide & timeout to update auto size properly if slide notes
-    $: if (alignElem && item && currentSlide !== undefined && item.auto) updateAutoSize()
+    $: if (alignElem && item && currentSlide !== undefined && autoSizeEnabled) updateAutoSize()
     let currentAutoSizeTimeout: NodeJS.Timeout | null = null
     function updateAutoSize() {
         if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
         currentAutoSizeTimeout = setTimeout(() => {
-            size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+            let itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
+
+            let defaultFontSize = itemFontSize
+            let maxFontSize = item.textFit === "growToFit" ? itemFontSize : 0
+
+            const isTextItem = item?.type === "slide_text" || item?.type === "text"
+            if (!isTextItem) maxFontSize = 0
+
+            size = autosize(alignElem, { type: item.textFit || "growToFit", textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
             currentAutoSizeTimeout = null
         }, 20)
     }
@@ -297,10 +307,10 @@
                         </span>
                     {/key}
                 {:else}
-                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto} isStage />
+                    <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || item.textFit !== "none"} isStage />
                 {/if}
             {:else if item.type}
-                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} outputId={stageOutputId} />
+                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} />
             {:else}
                 <!-- OLD CODE -->
                 <div>

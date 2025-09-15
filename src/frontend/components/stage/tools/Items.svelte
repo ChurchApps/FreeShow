@@ -67,6 +67,7 @@
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
             else if (itemType === "slide_text") {
                 item.slideOffset = slideTextItems.length
+                item.style += "font-size: 800px;"
             }
 
             a[stageId].items[itemId] = item

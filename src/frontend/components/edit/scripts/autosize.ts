@@ -6,7 +6,7 @@ const PRECISION = 5
 // shrinkToFit: text is set font size by default, but can shrink if the text does not fit in the textbox
 // growToFit: text will grow to fill the entire textbox, but maximum the set font size
 
-export type AutosizeTypes = "shrinkToFit" | "growToFit"
+export type AutosizeTypes = "shrinkToFit" | "growToFit" | "none"
 type Options = {
     type?: AutosizeTypes // "shrinkToFit"
     textQuery?: string // all children by default (or self)

@@ -55,6 +55,9 @@
 
     // AUTO SIZE
 
+    $: noAutoSize = item.auto === false && item.textFit === "none"
+
+    // this only applies to the stage slide editor
     $: if (edit && item && itemElem) calculateAutosize()
     let autoSize = 0
     let loopStop: NodeJS.Timeout | null = null
@@ -67,6 +70,7 @@
         let textQuery = item.type === "slide_tracker" ? ".progress div" : ""
         // timeout to update size after content change (e.g. Clock seconds)
         setTimeout(() => {
+            // item.textFit || (always growToFit)
             autoSize = autosize(itemElem!, { type: "growToFit", textQuery })
         }, 50)
     }
@@ -80,9 +84,9 @@
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}
-    <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} {edit} />
+    <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} {edit} />
 {:else if item.type === "clock"}
-    <Clock {item} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
+    <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
         <Cam cam={item.device} item style={cameraStyleString} />

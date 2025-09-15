@@ -54,6 +54,7 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
+    scriptures,
     selected,
     settingsTab,
     showRecentlyUsedProjects,
@@ -1244,15 +1245,26 @@ const clickActions = {
     favourite: (obj: ObjData) => {
         if (!obj.sel) return
 
+        if (obj.sel.id === "category_scripture") {
+            const favourite: boolean = get(scriptures)[obj.sel.data[0]]?.favorite !== true
+            scriptures.update((a) => {
+                obj.sel!.data.forEach((id) => {
+                    a[id].favorite = favourite
+                })
+                return a
+            })
+            return
+        }
+
         const favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
-        obj.sel.data.forEach((card) => {
-            const path = card.path || card.id
-            media.update((a) => {
+        media.update((a) => {
+            obj.sel!.data.forEach((card) => {
+                const path = card.path || card.id
                 if (!a[path]) a[path] = { filter: "" }
                 if (obj.sel!.id === "audio") a[path].audio = true
                 a[path].favourite = favourite
-                return a
             })
+            return a
         })
     },
     effects_library_add: (obj: ObjData) => {
