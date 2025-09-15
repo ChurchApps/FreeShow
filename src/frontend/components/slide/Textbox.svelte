@@ -175,7 +175,7 @@
         const isTextItem = (item.type || "text") === "text"
 
         if (isStage) {
-            if (!isTextItem) type = stageItem?.textFit || "growToFit"
+            if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
             let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100

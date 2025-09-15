@@ -122,7 +122,7 @@
             let defaultFontSize = itemFontSize
             let maxFontSize = item.textFit === "growToFit" ? itemFontSize : 0
 
-            const isTextItem = item?.type === "slide_text" || item?.type === "text"
+            const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
             if (!isTextItem) maxFontSize = 0
 
             size = autosize(alignElem, { type: item.textFit || "growToFit", textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
