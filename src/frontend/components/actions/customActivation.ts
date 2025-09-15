@@ -13,6 +13,7 @@ export const customActionActivations = [
     { id: "show_created", name: "actions.activate_show_created", icon: "slide" },
     { id: "show_opened", name: "actions.activate_show_opened", icon: "slide" },
     { id: "slide_click", name: "actions.activate_slide_clicked", icon: "slide" },
+    { id: "group_start", common: true, name: "actions.activate_group_start", icon: "groups", inputs: true },
 
     { id: "slide_cleared", common: true, name: "actions.activate_slide_cleared", icon: "slide" },
     { id: "background_cleared", common: true, name: "actions.activate_background_cleared", icon: "background" },

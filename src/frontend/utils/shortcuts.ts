@@ -89,7 +89,7 @@ const shiftCtrlKeys = {
 }
 
 const altKeys = {
-    Enter: () => menuClick("cut_in_half", true, null, null, null, get(selected)),
+    Enter: () => get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null,
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]

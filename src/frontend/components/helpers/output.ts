@@ -92,9 +92,9 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")
+        const slide = _show(data.id).get("slides")[ref[data.index]?.id] || {}
         if (showReference?.type === "scripture") {
             const translation = showReference.data
-            const slide = _show(data.id).get("slides")[ref[data.index]?.id]
 
             const scripture = get(scriptures)[translation.collection] || {}
             const versions = scripture.collection?.versions || [scripture.id || ""]
@@ -108,6 +108,9 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // set attributionString
             if (translation.attributionString) data.attributionString = translation.attributionString
         }
+
+        const groupId = slide.globalGroup
+        if (groupId) customActionActivation("group_start", groupId)
     }
 
     outputs.update((a) => {

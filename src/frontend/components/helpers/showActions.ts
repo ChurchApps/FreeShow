@@ -954,12 +954,13 @@ export function changeOutputStyle(data: API_output_style) {
 
             outputs.update((a) => {
                 a[outputId].style = outputStyle
-
                 return a
             })
         }
+
+        refreshOut()
+        return
     }
-    ///
 
     const outputIds = data.outputId ? [data.outputId] : getActiveOutputs(get(outputs), false, true, true)
     outputs.update((a) => {
@@ -968,7 +969,6 @@ export function changeOutputStyle(data: API_output_style) {
         })
         return a
     })
-
 
     refreshOut()
 }

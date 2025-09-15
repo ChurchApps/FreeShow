@@ -77,8 +77,12 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
     {/if}
 
     {#each outs as output}
-        <div id={output.id} class="outputPreview output_button context #output_preview" style={!fullscreen || fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;"}>
-            <PreviewOutput outputId={output.id} {disableTransitions} style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};width:calc(50% - 2px)` : ""} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
+        <div
+            id={output.id}
+            class="outputPreview output_button context #output_preview"
+            style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : ""}
+        >
+            <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
         </div>
     {/each}
 </div>
@@ -89,9 +93,11 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         flex-wrap: wrap;
         /* this is changed in electron v31 (chromium) */
         height: fit-content;
-        margin-top: 6px;
-        gap: 4px;
         /* height: 100%; */
+
+        /* width: calc(50% - 0.5px); */
+        /* margin-top: 1px;
+        gap: 1px; */
     }
     /*
     .multipleOutputs.multiple:not(.fullscreen) :global(.zoomed) {

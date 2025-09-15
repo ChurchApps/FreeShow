@@ -119,6 +119,8 @@
             return
         }
 
+        // WIP replace with exising altKeys cut_in_half shortcuts.ts
+
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target?.closest(".item") || e.target?.closest(".quickEdit"))) {
             // incorrect editbox

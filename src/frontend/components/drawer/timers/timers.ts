@@ -184,7 +184,7 @@ export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedSt
         return a
     })
 
-    if (index < 0) customActionActivation(`timer_start___` + id)
+    if (index < 0) customActionActivation("timer_start", id)
 
     // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
 }
