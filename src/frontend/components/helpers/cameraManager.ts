@@ -23,9 +23,23 @@ class CameraManager {
         if (!keepWarm) return
 
         console.info("Camera warming enabled - initializing cameras...")
-        const cameras = await this.getAvailableCameras()
-        
-        for (const camera of cameras) {
+        const allCameras = await this.getAvailableCameras()
+        const selectedCameraIds = get(special).selectedCameras || []
+
+        // If no cameras are selected, don't warm any cameras
+        if (selectedCameraIds.length === 0) {
+            console.info("No cameras selected for warming")
+            return
+        }
+
+        // Only warm cameras that are selected
+        const camerasToWarm = allCameras.filter(camera =>
+            selectedCameraIds.includes(camera.id)
+        )
+
+        console.info(`Warming ${camerasToWarm.length} selected cameras of ${allCameras.length} available`)
+
+        for (const camera of camerasToWarm) {
             await this.warmUpCamera(camera)
         }
 
@@ -34,7 +48,7 @@ class CameraManager {
     }
 
     // Get available cameras
-    private async getAvailableCameras(): Promise<Array<{id: string, name: string, groupId: string}>> {
+    private async getAvailableCameras(): Promise<Array<{ id: string, name: string, groupId: string }>> {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices()
             return devices
@@ -51,7 +65,7 @@ class CameraManager {
     }
 
     // Warm up a specific camera
-    private async warmUpCamera(camera: {id: string, name: string, groupId: string}) {
+    private async warmUpCamera(camera: { id: string, name: string, groupId: string }) {
         if (this.activeCameras.has(camera.id)) {
             console.info(`Camera ${camera.name} is already warmed up`)
             return
@@ -59,7 +73,7 @@ class CameraManager {
 
         try {
             console.info(`Warming up camera: ${camera.name}`)
-            
+
             const constraints = {
                 video: {
                     deviceId: { exact: camera.id },
@@ -70,7 +84,7 @@ class CameraManager {
             }
 
             const stream = await navigator.mediaDevices.getUserMedia(constraints)
-            
+
             // Create a hidden video element to keep the stream active
             const videoElement = document.createElement('video')
             videoElement.style.position = 'absolute'
@@ -81,10 +95,10 @@ class CameraManager {
             videoElement.style.height = '1px'
             videoElement.muted = true
             videoElement.srcObject = stream
-            
+
             // Add to DOM to keep it active but hidden
             document.body.appendChild(videoElement)
-            
+
             // Start playing
             await videoElement.play()
 
@@ -116,7 +130,7 @@ class CameraManager {
     }
 
     // Retry camera warming with exponential backoff
-    private scheduleRetry(camera: {id: string, name: string, groupId: string}, errorMessage: string) {
+    private scheduleRetry(camera: { id: string, name: string, groupId: string }, errorMessage: string) {
         const existingCamera = this.activeCameras.get(camera.id)
         const retryCount = existingCamera ? existingCamera.retryCount + 1 : 1
 
@@ -126,7 +140,7 @@ class CameraManager {
         }
 
         const delay = this.RETRY_DELAY * Math.pow(2, retryCount - 1) // Exponential backoff
-        console.info(`Scheduling retry ${retryCount}/${this.MAX_RETRIES} for camera ${camera.name} in ${delay/1000}s`)
+        console.info(`Scheduling retry ${retryCount}/${this.MAX_RETRIES} for camera ${camera.name} in ${delay / 1000}s`)
 
         setTimeout(() => {
             this.retryCameraWarming(camera, retryCount, errorMessage)
@@ -134,7 +148,7 @@ class CameraManager {
     }
 
     // Retry warming a specific camera
-    private async retryCameraWarming(camera: {id: string, name: string, groupId: string}, retryCount: number = 0, lastError: string = '') {
+    private async retryCameraWarming(camera: { id: string, name: string, groupId: string }, retryCount: number = 0, lastError: string = '') {
         // Clean up existing camera first
         this.cleanupCamera(camera.id)
 
@@ -204,8 +218,8 @@ class CameraManager {
 
     // Get status of all cameras
     getCameraStatus() {
-        const status: Array<{id: string, name: string, active: boolean, retryCount: number, lastError: string | null}> = []
-        
+        const status: Array<{ id: string, name: string, active: boolean, retryCount: number, lastError: string | null }> = []
+
         for (const camera of this.activeCameras.values()) {
             status.push({
                 id: camera.id,
@@ -215,7 +229,7 @@ class CameraManager {
                 lastError: camera.lastError
             })
         }
-        
+
         return status
     }
 
@@ -255,6 +269,11 @@ class CameraManager {
                 await this.retryCameraWarming({ id: camera.id, name: camera.name, groupId: camera.groupId })
             }
         }
+    }
+
+    // Public method to get available cameras for UI selection
+    async getAvailableCamerasForSelection(): Promise<Array<{ id: string, name: string, groupId: string }>> {
+        return await this.getAvailableCameras()
     }
 }
 
