@@ -2,9 +2,11 @@ import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
+import { cameraManager } from "../components/helpers/cameraManager"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
+import { initializeCameraWarming } from "./cameraStartup"
 import {
     $,
     actions,
@@ -52,6 +54,26 @@ import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
+
+let isCameraWarmingInitialized = false
+
+// Handle camera warming toggle
+async function handleCameraWarmingChange(data: any) {
+    const keepWarm = data.keepCamerasWarm
+    
+    if (keepWarm && !isCameraWarmingInitialized) {
+        // Initialize camera warming for the first time
+        isCameraWarmingInitialized = true
+        await initializeCameraWarming()
+    } else if (keepWarm || !keepWarm) {
+        // Toggle camera warming on/off
+        try {
+            await cameraManager.toggleCameraWarming(keepWarm)
+        } catch (error) {
+            console.error("Failed to toggle camera warming:", error)
+        }
+    }
+}
 
 export function storeSubscriber() {
     shows.subscribe(async (data) => {
@@ -261,6 +283,9 @@ export function storeSubscriber() {
 
     special.subscribe((data) => {
         send(OUTPUT, ["SPECIAL"], data)
+
+        // Handle camera warming toggle
+        handleCameraWarmingChange(data)
     })
 
     volume.subscribe((data) => {

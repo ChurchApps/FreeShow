@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { getMediaStyle } from "../helpers/media"
+    import { cameraManager } from "../helpers/cameraManager"
     import { media } from "../../stores"
 
     export let id: string
@@ -17,6 +18,18 @@
     }
 
     onMount(() => {
+        // Try to get a warmed camera stream first
+        const warmStream = cameraManager.getWarmCamera(id)
+        if (warmStream) {
+            console.info(`Using warmed camera stream for output: ${id}`)
+            if (videoElem) {
+                videoElem.srcObject = warmStream
+                videoElem.onloadedmetadata = loaded
+            }
+            return
+        }
+
+        // Fallback to normal camera initialization
         navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
             if (!videoElem) return
 

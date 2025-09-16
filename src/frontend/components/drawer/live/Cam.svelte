@@ -5,6 +5,7 @@
     import { sendMain } from "../../../IPC/main"
     import { dictionary, media, os, outputs } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
+    import { cameraManager } from "../../helpers/cameraManager"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
@@ -48,6 +49,19 @@
     function capture() {
         error = ""
 
+        // Try to get a warmed camera stream first
+        const warmStream = cameraManager.getWarmCamera(cam.id)
+        if (warmStream) {
+            console.info(`Using warmed camera stream for ${cam.name}`)
+            if (videoElem) {
+                videoElem.srcObject = warmStream
+                loaded = true
+                videoElem.play()
+                return
+            }
+        }
+
+        // Fallback to normal camera initialization
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((mediaStream) => {
