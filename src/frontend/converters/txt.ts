@@ -8,7 +8,7 @@ import { history } from "../components/helpers/history"
 import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
-import { activePopup, activeProject, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
+import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
 import { setTempShows } from "./importHelpers"
 
 export function getQuickExample() {
@@ -158,7 +158,8 @@ export function convertText({ name = "", origin = "", category = null, text, noF
         // WIP DON'T OPEN
     }
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, oldData: { id: showId }, location: { page: "show", id: "show" } })
+    const selectedIndex = get(activeShow)?.index === undefined ? undefined : get(activeShow)!.index! + 1
+    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index: selectedIndex } }, oldData: { id: showId }, location: { page: "show", id: "show" } })
 
     return { id: showId, show }
 }

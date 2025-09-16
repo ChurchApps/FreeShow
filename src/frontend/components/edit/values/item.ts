@@ -95,6 +95,7 @@ export const itemSections: { [key: string]: EditBoxSection } = {
     },
     // TODO: inset shadow
     backdrop_filters: {
+        name: "edit.filters",
         inputs: backdropFilters,
     },
     CSS: {

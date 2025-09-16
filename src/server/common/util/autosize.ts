@@ -9,7 +9,7 @@ const MIN_FONT_SIZE = 10
 
 export type AutosizeTypes = "shrinkToFit" | "growToFit"
 type Options = {
-    type?: AutosizeTypes // "shrinkToFit"
+    type?: AutosizeTypes | "none" // "shrinkToFit"
     textQuery?: string // all children by default (or self)
     defaultFontSize?: number // 50
     maxFontSize?: number // 800
@@ -121,7 +121,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.alignItems = "center"
 
         for (let elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
-            ;(elemHide as HTMLElement).style.display = "none"
+            ; (elemHide as HTMLElement).style.display = "none"
         }
 
         elem.after(cloned)

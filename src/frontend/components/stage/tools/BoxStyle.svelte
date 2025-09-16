@@ -33,12 +33,10 @@
     $: if (item?.type === "text") {
         delete stageSections.chords
         delete stageSections.scrolling
-        delete stageSections.CSS
     }
     $: if (isSlideText) {
         stageSections = clone(item?.keepStyle ? { default: slideTextSections.default } : slideTextSections)
 
-        // setBoxInputValue2(stageSections, "font", "font-family", "default", "Arial")
         // setBoxInputValue2(stageSections, "font", "font-weight", "default", "bold")
     }
 
@@ -57,18 +55,21 @@
         "align-items": alignStyle["align-items"] || "center"
     }
 
-    let data: { [key: string]: any } = {}
-    $: if (item?.style || item === null) data = getStyles(item?.style, true)
+    let styles: { [key: string]: any } = {}
+    $: if (item?.style || item === null) styles = getStyles(item?.style, true)
 
     $: if (stageSections?.font || type === "text") {
         setBoxInputValue2(stageSections, "font", "font-size", "disabled", !isTextItem && item?.textFit === "growToFit")
         setBoxInputValue2(stageSections, "font", "textFit", "value", item?.textFit || "growToFit")
         // setBoxInputValue2(stageSections, "font", "auto", "value", item.auto ?? true)
+
+        setBoxInputValue2(stageSections, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
     }
 
     $: if (item && type === "text") {
         let sectionId = stageSections.font ? "font" : "default"
-        setBoxInputValue2(stageSections, sectionId, "font-family", "styleValue", data["font"] || "")
+        setBoxInputValue2(stageSections, sectionId, "font-family", "default", "Arial")
+        setBoxInputValue2(stageSections, sectionId, "font-family", "styleValue", styles["font"] || "")
         // setBoxInputValue2(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
@@ -147,6 +148,8 @@
 
         if (input.key === "text-align" || input.key === "align-items") updateAlign(input)
 
+        if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
+
         if (input.id !== "style" && !input.id.includes("CSS")) {
             setValue(input)
             return
@@ -197,7 +200,7 @@
             if (isTextItem) {
                 let newFontSize = 0
                 // change font size to more clearly indicate what the different text fit does
-                if (input.value !== "growToFit" && Number(data["font-size"]) < 200) newFontSize = 0
+                if (input.value !== "growToFit" && Number(styles["font-size"]) < 200) newFontSize = 0
                 else newFontSize = input.value !== "growToFit" ? 100 : MAX_FONT_SIZE
                 if (newFontSize) updateStyle({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
             }
@@ -209,4 +212,4 @@
     let timeout: NodeJS.Timeout | null = null
 </script>
 
-<EditValues sections={stageSections} styles={data} {item} {customValues} on:change={updateStyle2} isStage />
+<EditValues sections={stageSections} {styles} {item} {customValues} on:change={updateStyle2} isStage />

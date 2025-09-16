@@ -113,6 +113,7 @@ export type BoxContent2 = {
 export type EditBoxSection = {
     // openApplyValue?: boolean // show apply value button
     inputs: EditInput2[][]
+    name?: string
     noReset?: boolean
     alwaysOpen?: boolean
     defaultValues?: any[]

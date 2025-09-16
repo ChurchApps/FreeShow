@@ -1,4 +1,5 @@
 import type { Item, Line, Slide } from "../../../../types/Show"
+import { replaceVirtualBreaks } from "../../../show/slides"
 
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
@@ -243,7 +244,7 @@ export function getTextLines(slide: Slide | { items: Item[] }) {
         if (!fullText.length) lines.pop()
     })
 
-    return lines
+    return lines.map((a) => replaceVirtualBreaks(a))
 }
 
 // get text of slides

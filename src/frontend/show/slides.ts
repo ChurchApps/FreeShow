@@ -92,7 +92,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
 function getConnectedGroups(newGroup: string, slides: number[], ref: LayoutRef[]) {
     // slides next to each other will be one group
     const groups: { slides: LayoutRef[]; groupData: GroupData }[] = []
-    const parentIndexes = slides.map((index) => ref[index].parent?.layoutIndex ?? index)
+    const parentIndexes = slides.map((index) => ref[index]?.parent?.layoutIndex ?? index)
 
     let previousParentIndex = -1
     ref.forEach((slideRef) => {
@@ -890,13 +890,13 @@ export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
     const replaceWith = skip ? "" : "<br>"
     lines.forEach(a => {
         a.text.forEach(text => {
-            text.value = text.value.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith)
-
-            // remove spaces
-            text.value = text.value.replace(/\s*<br>\s*/g, "<br>")
+            text.value = replaceVirtualBreaks(text.value, replaceWith)
         })
     })
 
-
     return lines
+}
+export function replaceVirtualBreaks(line: string, replaceWith: string = "<br>") {
+    // replace & remove spaces
+    return line.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith).replace(/\s*<br>\s*/g, "<br>")
 }

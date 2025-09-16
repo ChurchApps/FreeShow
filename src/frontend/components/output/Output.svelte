@@ -265,7 +265,8 @@
     $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
 
     // draw zoom
-    $: drawZoom = $drawTool === "zoom" ? ($drawSettings.zoom?.size || 200) / 100 : 1
+    $: zoomActive = currentOutput.active || (mirror && !preview)
+    $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
     // CLEARING
     $: if (slide !== undefined) updateSlide()
@@ -403,7 +404,7 @@
     {/if}
 
     <!-- draw -->
-    {#if currentOutput.active || (mirror && !preview)}
+    {#if zoomActive}
         <Draw />
     {/if}
 </Zoomed>

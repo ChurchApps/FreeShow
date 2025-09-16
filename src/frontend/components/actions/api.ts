@@ -46,6 +46,7 @@ import {
     addGroup,
     addToProject,
     audioSeekTo,
+    changeDrawZoom,
     changeShowLayout,
     changeVariable,
     createProject,
@@ -138,6 +139,7 @@ export type API_output_lock = { value?: boolean; outputId?: string }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
+export type API_draw_zoom = { size?: number; x?: number; y?: number }
 export type API_edit_timer = { id: string; key: string; value: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
@@ -300,6 +302,9 @@ export const API_ACTIONS = {
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
     start_trigger: (data: API_id) => activateTriggerSync(data.id),
+
+    // DRAW
+    change_draw_zoom: (data: API_draw_zoom) => changeDrawZoom(data),
 
     // CONNECTION
     sync_drive: () => syncDrive(true),

@@ -8,7 +8,12 @@
     import { slideFilterSections } from "../values/filters"
     import EditValues from "./EditValues.svelte"
 
-    const currentSlideFilterSections = clone(slideFilterSections)
+    let currentSlideFilterSections = clone(slideFilterSections)
+    $: if (currentSlideNumber) currentSlideFilterSections = clone(slideFilterSections)
+
+    $: if (!filterData["backdrop-filter"]) {
+        delete currentSlideFilterSections.backdrop_filters
+    }
 
     // get slide filters
     $: currentId = $activeShow?.id || ""

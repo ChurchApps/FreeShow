@@ -16,6 +16,8 @@
         if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
             $selected.data.forEach((a, i) => {
                 let slide = a.id ? a : getLayoutRef()[a.index]
+                if (!slide) return
+
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""

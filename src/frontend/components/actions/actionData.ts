@@ -76,6 +76,8 @@ export const actionData = {
     change_variable: { SECTION: "tabs.functions", common: true, canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },
     start_trigger: { common: true, canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
 
+    change_draw_zoom: { SECTION: "menu.draw", name: "actions.change_draw_zoom", icon: "zoom", input: "draw_zoom" },
+
     // EMIT
     // send_midi: { SECTION: "actions.emit_data", canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
     // send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },

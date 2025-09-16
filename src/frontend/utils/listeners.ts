@@ -188,6 +188,8 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
+        // if (await hasNewerUpdate("LISTENER_DRAW")) return
+
         const allOutputs = getActiveOutputs(get(outputs), false, false, true)
         const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
         allOutputs.forEach((id) => {

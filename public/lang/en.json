@@ -770,6 +770,7 @@
         "change_transition": "Change transition",
         "change_variable": "Change variable",
         "start_trigger": "Start trigger",
+        "change_draw_zoom": "Change draw zoom",
         "run_action": "Run action",
         "toggle_action": "Toggle action",
         "emit_data": "Emit data",

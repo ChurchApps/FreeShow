@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import autosize, { AutosizeTypes } from "../../../common/util/autosize"
+    import { createVirtualBreaks } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
 
     export let item: Item
@@ -77,7 +78,7 @@
     {#if item.lines}
         <div class="align" style={item.align}>
             <div class="lines" style={lineStyleBox}>
-                {#each item.lines as line}
+                {#each createVirtualBreaks(item.lines) as line}
                     <div class="break" style="{lineStyle}{line.align}">
                         {#each line.text || [] as text}
                             <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
