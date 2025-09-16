@@ -48,7 +48,7 @@
 
 {#key show}
     {#each currentItems as item}
-        {#if show && (!item.bindings?.length || item.bindings.includes(outputId)) && shouldItemBeShown(item, currentItems, showItemRef, updater)}
+        {#if show && shouldItemBeShown(item, currentItems, showItemRef, updater)}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
                 <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} />
             </SlideItemTransition>

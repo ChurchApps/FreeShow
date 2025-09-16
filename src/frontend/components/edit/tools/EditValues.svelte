@@ -72,8 +72,7 @@
         let style = ""
         const isItem = input.id === "CSS_item"
         const currentStyle = isItem ? item?.style : input.values?.value
-        style = (item.type || "text") === "text" ? currentStyle : filterItemStyle(currentStyle, isItem)
-
+        style = (item.type || "text") === "text" && !isStage ? currentStyle : filterItemStyle(currentStyle, isItem)
         if (!style) return ""
 
         // sort alphabetically
@@ -150,7 +149,7 @@
 
         if (input.id.includes("CSS")) {
             value = value.replaceAll("\n", "")
-            value = (item.type || "text") === "text" ? value : mergeWithStyle(value, item.style, input.id === "CSS_item")
+            value = (item.type || "text") === "text" && !isStage ? value : mergeWithStyle(value, item.style, input.id === "CSS_item")
         }
 
         ///
@@ -163,6 +162,8 @@
     }
 
     function hasChangedValues(id, _updater: any = null) {
+        if (!sections[id]) return
+
         let allInputsToCheck: EditInput2[] = []
         let filterOut: string[] = []
 
@@ -275,7 +276,7 @@
                                 <p>CSS</p>
                             {:else}
                                 <Icon {id} style="color: {sectionColors[id]};" white />
-                                <p>{translateText("edit." + id)}</p>
+                                <p>{translateText(section.name || "edit." + id)}</p>
                             {/if}
                         </span>
 

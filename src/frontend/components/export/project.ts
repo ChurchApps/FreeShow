@@ -14,6 +14,8 @@ import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
 export async function exportProject(project: Project, projectId: string) {
+    if (!project) return
+
     const shows: Shows = {}
     let files: string[] = []
     const overlays: Overlays = {}

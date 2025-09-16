@@ -376,7 +376,7 @@
         /* filter & dynamic CSS variable transition */
         transition:
             filter 500ms,
-            backdrop-filter 500ms,
+            /* not supported */ backdrop-filter 500ms,
             all 0.1s;
     }
     .item.isStage {

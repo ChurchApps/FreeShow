@@ -1,4 +1,4 @@
-import type { LayoutRef, Show } from "../../../types/Show"
+import type { LayoutRef, Line, Show } from "../../../types/Show"
 import { clone, keysToID } from "./helpers"
 
 export function getLayoutRef(currentShow: Show, layoutId: string = "") {
@@ -71,4 +71,22 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
 
     return name
+}
+
+export const VIRTUAL_BREAK_CHAR = "[_VB]"
+export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
+    if (!lines?.length) return []
+
+    const replaceWith = skip ? "" : "<br>"
+    lines.forEach(a => {
+        a.text.forEach(text => {
+            text.value = replaceVirtualBreaks(text.value, replaceWith)
+        })
+    })
+
+    return lines
+}
+export function replaceVirtualBreaks(line: string, replaceWith: string = "<br>") {
+    // replace & remove spaces
+    return line.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith).replace(/\s*<br>\s*/g, "<br>")
 }

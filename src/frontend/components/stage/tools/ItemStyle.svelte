@@ -64,7 +64,7 @@
 
         let value: string = addStyleString(item?.style || "", [input.key, input.value]) || ""
 
-        if (input.id === "CSS") value = input.value.replaceAll("\n", "")
+        if (input.id.includes("CSS")) value = input.value
 
         if (!value) return
 
@@ -74,7 +74,7 @@
             let item = stageItems[itemId]
             if (!item) return
 
-            styles[itemId] = input.id === "CSS" ? value : addStyleString(item.style, [input.key, input.value])
+            styles[itemId] = input.id.includes("CSS") ? value : addStyleString(item.style, [input.key, input.value])
         })
 
         history({
@@ -104,4 +104,4 @@
     }
 </script>
 
-<EditValues sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />
+<EditValues sections={currentItemSections} {item} styles={data} on:change={updateStyle2} isStage />

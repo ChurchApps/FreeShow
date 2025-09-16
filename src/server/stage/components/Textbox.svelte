@@ -10,6 +10,7 @@
     import { dictionary, updateTransposed, variables } from "../util/stores"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import { send } from "../util/socket"
+    import { createVirtualBreaks } from "../../common/util/show"
 
     export let showId: string
     export let item: Item
@@ -63,7 +64,15 @@
         if (loopStop || !alignElem || !autoSize) return
         loopStop = setTimeout(() => (loopStop = null), 200)
 
-        let type: AutosizeTypes = "growToFit"
+        let type = item?.textFit || "shrinkToFit"
+        let defaultFontSize
+        let maxFontSize
+
+        if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
+        let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
+        defaultFontSize = itemFontSize
+        if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+
         let textQuery = ""
         if ((item.type || "text") === "text") {
             // elem = elem.querySelector(".align")
@@ -73,7 +82,7 @@
             if (item.type === "slide_tracker") textQuery = ".progress div"
         }
 
-        fontSize = autosize(alignElem, { type, textQuery })
+        fontSize = autosize(alignElem, { type, textQuery, defaultFontSize, maxFontSize })
     }
 
     // CHORDS
@@ -430,7 +439,7 @@
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
             <div class="lines" style="{style ? lineStyleBox : ''}{chordsStyle}">
-                {#each item.lines as line, i}
+                {#each createVirtualBreaks(item.lines) as line, i}
                     {#if !maxLines || i < maxLines}
                         <!-- WIP chords are way bigger than stage preview for some reason -->
                         {#if chordLines[i]}

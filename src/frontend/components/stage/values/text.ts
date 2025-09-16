@@ -22,5 +22,5 @@ export const slideTextSections: { [key: string]: EditBoxSection } = {
     shadow: textSections.shadow,
     chords: textSections.chords,
     special: textSections.special,
-    // CSS: textSections.CSS,
+    CSS: textSections.CSS,
 }

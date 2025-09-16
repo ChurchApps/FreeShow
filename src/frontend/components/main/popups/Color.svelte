@@ -16,6 +16,8 @@
         if (selection.id === "slide") {
             let firstSelected = selection.data[0]
             let ref: any = getLayoutRef()[firstSelected.index]
+            if (!ref) return
+
             if (ref.type === "child") ref = ref.parent
             value = _show().slides([ref.id]).get("color")[0] || ""
         } else if (selection.id === "group") {
@@ -33,6 +35,8 @@
         slide: () => {
             selection.data.forEach((a) => {
                 let ref: any = a.id ? { id: a.id } : getLayoutRef()[a.index]
+                if (!ref) return
+
                 if (ref.type === "child") ref = ref.parent
 
                 // remove global group if active

@@ -10,6 +10,7 @@ import { history } from "../helpers/history"
 import { isEmpty } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { VIRTUAL_BREAK_CHAR } from "../../show/slides"
 
 export function formatText(text: string, showId = "") {
     if (!showId) showId = get(activeShow)?.id || ""
@@ -365,7 +366,7 @@ function getChords(line: string) {
 
         if (char === "]") {
             currentlyInChord = false
-            if (currentChord.length > 12)
+            if (currentChord.length > 12 || `[${currentChord}]` === VIRTUAL_BREAK_CHAR)
                 text += `[${currentChord}]` // probably not a chord
             else chords.push(createChord(text.length, currentChord))
             return

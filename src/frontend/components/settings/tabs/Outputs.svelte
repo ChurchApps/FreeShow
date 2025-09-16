@@ -9,7 +9,7 @@
     import { newToast } from "../../../utils/common"
     import { destroy, receive, send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
-    import { keysToID, sortByName, sortObject } from "../../helpers/array"
+    import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
     import { refreshOut, toggleOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
@@ -24,7 +24,7 @@
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
 
     let currentOutput: Output | null = null
-    $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
+    $: if ($currentOutputSettings) currentOutput = clone({ id: $currentOutputSettings, ...$outputs[$currentOutputSettings] })
 
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
