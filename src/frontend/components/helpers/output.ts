@@ -92,7 +92,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")
-        const slide = _show(data.id).get("slides")[ref[data.index]?.id] || {}
+        const slide = _show(data.id).get("slides")?.[ref[data.index]?.id] || {}
         if (showReference?.type === "scripture") {
             const translation = showReference.data
 

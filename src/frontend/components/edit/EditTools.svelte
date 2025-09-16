@@ -105,12 +105,13 @@
     }
 
     function getItemsStyle(_updater: any = null) {
+        if (!items?.length) return [getCurrentStyle()]
         return items.map((item) => getCurrentStyle(item))
     }
 
-    function getCurrentStyle(item) {
-        if (active === "text") return getBoxStyle(item)
-        if (active === "item") return getItemStyle(item)
+    function getCurrentStyle(item: Item | null = null) {
+        if (active === "text" && item) return getBoxStyle(item)
+        if (active === "item" && item) return getItemStyle(item)
         if (active === "slide") return getSlideStyle()
         if (active === "filters") return getFilterStyle()
         return null
@@ -302,7 +303,8 @@
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
-    $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""]))
+    $: currentItemStyle = getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""])
+    $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(currentItemStyle)
 
     function copyToCreateData() {
         const slide = $activeEdit?.type === "overlay" ? $overlays[$activeEdit.id || ""] : $activeEdit?.type === "template" ? $templates[$activeEdit.id || ""] : null
@@ -397,7 +399,7 @@
                             </Button>
                         {/if}
                     {:else}
-                        <Button style={copiedStyleDifferent ? "" : "flex: 1;"} title={$dictionary.actions?.copy} on:click={copyStyle} dark center>
+                        <Button disabled={!currentItemStyle?.length} style={copiedStyleDifferent ? "" : "flex: 1;"} title={$dictionary.actions?.copy} on:click={copyStyle} dark center>
                             <Icon id="copy" right={!copiedStyleDifferent} white />
                             {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
                         </Button>

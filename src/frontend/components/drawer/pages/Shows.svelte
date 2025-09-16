@@ -183,7 +183,8 @@
 
         const { ctrl } = e.detail
         if (ctrl) {
-            history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
+            const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
+            history({ id: "UPDATE", newData: { remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
         } else {
             activePopup.set("show")
         }

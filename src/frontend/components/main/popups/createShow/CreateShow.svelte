@@ -134,7 +134,8 @@
         } else {
             let show = new ShowObj(false, category)
             show.name = checkName(values.name)
-            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
+            const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
+            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
         }
 
         values = { name: "", text: "", origin: "" }

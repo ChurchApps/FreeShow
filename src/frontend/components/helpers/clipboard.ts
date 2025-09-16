@@ -1199,6 +1199,8 @@ const duplicateActions = {
         variables.update((a) => {
             data.forEach(({ id }) => {
                 const newVariable = clone(a[id])
+                // add name (can't rename currently)
+                // newVariable.name = newVariable.name + " 2"
                 newVariable.name = data.length === 1 ? "" : newVariable.name + " 2"
 
                 const newId = uid()
