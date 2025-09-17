@@ -39,10 +39,10 @@ class CameraManager {
     private readonly MAX_RETRIES = 3
     private readonly RETRY_DELAY = 5000 // 5 seconds
 
-    // set startup cameras for faster activation
+    // Camera selection management
     setStartupCameras(cameraIds: string[]) {
         special.update(a => {
-            a.startupCameras = cameraIds
+            a.selectedCameras = cameraIds
             return a
         })
 
@@ -50,7 +50,16 @@ class CameraManager {
     }
 
     getStartupCameras(): string[] {
-        return get(special).startupCameras || []
+        return get(special).selectedCameras || []
+    }
+
+    // PUBLIC: Get warm camera stream (for components)  
+    getWarmCamera(cameraId: string): MediaStream | null {
+        const camera = this.activeCameras.get(cameraId)
+        if (!camera?.stream) return null
+
+        // Return a clone to avoid conflicts
+        return camera.stream.clone()
     }
 
     private async getCameraFromId(cameraId: string) {
@@ -59,6 +68,12 @@ class CameraManager {
     }
 
     async initializeCameraWarming() {
+        const keepWarm = get(special).keepCamerasWarm
+        if (!keepWarm) {
+            this.cleanupAllCameras()
+            return
+        }
+
         const allCameras = await this.getCamerasList()
         const selectedCameraIds = this.getStartupCameras()
 
@@ -67,9 +82,14 @@ class CameraManager {
             if (!selectedCameraIds.includes(cameraId)) this.cleanupCamera(cameraId)
         }
 
-        if (!selectedCameraIds.length) return
+        // If no cameras are selected, don't warm any cameras
+        if (selectedCameraIds.length === 0) {
+            return
+        }
 
+        // Only warm cameras that are selected
         const camerasToWarm = allCameras.filter(camera => selectedCameraIds.includes(camera.id))
+
         for (const camera of camerasToWarm) {
             await this.warmUpCamera(camera)
         }
@@ -192,7 +212,7 @@ class CameraManager {
 
     async getCameraStream(cameraId: string, groupId?: string) {
         // get existing "warmed" camera
-        const warmStream = cameraManager.getWarmCamera(cameraId)
+        const warmStream = this.getWarmCamera(cameraId)
         if (warmStream) return warmStream
 
         groupId = groupId || (await this.getCameraFromId(cameraId))?.group
@@ -217,14 +237,6 @@ class CameraManager {
             const error = err.name + ":<br />" + msg
             return error
         }
-    }
-
-    private getWarmCamera(cameraId: string): MediaStream | null {
-        const camera = this.activeCameras.get(cameraId)
-        if (!camera?.stream) return null
-
-        // Return a clone to avoid conflicts
-        return camera.stream.clone()
     }
 
     cleanupAllCameras() {
