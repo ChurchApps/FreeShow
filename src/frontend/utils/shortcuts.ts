@@ -201,6 +201,7 @@ export function keydown(e: KeyboardEvent) {
 
     if (e.altKey) {
         if (altKeys[e.key]) {
+            // if (document.activeElement?.classList.contains("edit") || document.activeElement?.tagName === "INPUT") return
             e.preventDefault()
             altKeys[e.key](e)
         }

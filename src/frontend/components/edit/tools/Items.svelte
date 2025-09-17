@@ -68,7 +68,7 @@
 
 <div class="tools">
     <div class="section">
-        <MaterialButton variant="outlined" icon="text" title="settings.add: <b>items.text</b>" style="width: 100%;" on:click={() => addItem("text")}>
+        <MaterialButton variant="outlined" icon="text" title="settings.add: <b>items.text</b>" style="width: 100%;" on:click={() => addItem("text", null, {}, $activeEdit.type === "template" ? translateText("example.text") : "")}>
             {#if !$labelsDisabled}{translateText("items.text")}{/if}
         </MaterialButton>
     </div>

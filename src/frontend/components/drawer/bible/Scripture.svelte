@@ -1277,6 +1277,7 @@
                         {displayedBible.version}:
                     </MaterialButton>
                 {:else}
+                    {#if displayedBible?.api}<Icon id="web" style="margin-right: 5px;" white />{/if}
                     <span style="opacity: 0.8;">{displayedBible.version}:</span>
                 {/if}
                 {displayedBible?.book || ""}

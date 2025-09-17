@@ -20,6 +20,10 @@ type InputCheckbox = {
     type: "checkbox"
     value: boolean
 }
+type InputColor = {
+    type: "color"
+    value: string
+}
 type InputDropdown = {
     type: "dropdown"
     value: string
@@ -36,7 +40,7 @@ type InputRest = {
     value: RestValues
 }
 
-type Inputs = InputString | InputNumber | InputCheckbox | InputDropdown | InputMidi | InputRest
+type Inputs = InputString | InputNumber | InputCheckbox | InputColor | InputDropdown | InputMidi | InputRest
 export type Input = BaseInput & Inputs
 
 type ExtractType<T> = T extends { type: infer U } ? U : never

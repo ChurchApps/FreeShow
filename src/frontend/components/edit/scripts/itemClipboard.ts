@@ -123,11 +123,20 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 
         // item keys
         Object.keys(style.keys).forEach((key) => {
+            const value = style.keys[key]
             history({
                 id: "setItems",
                 newData: { style: { key, values: [style.keys[key]] } },
                 location: { page: "edit", show: get(activeShow)!, slide: slide.id, items }
             })
+
+            if (key === "textFit") {
+                history({
+                    id: "setItems",
+                    newData: { style: { key: "auto", values: [value && value !== "none"] } },
+                    location: { page: "edit", show: get(activeShow)!, slide: slide.id, items }
+                })
+            }
         })
 
         // line align

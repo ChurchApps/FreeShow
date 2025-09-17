@@ -414,7 +414,7 @@
         </InputRow>
         {#if $scriptureSettings.verseNumbers && verseMenuOpened}
             <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={(e) => update("numberColor", e.detail)} />
-            <MaterialNumberInput label="edit.size" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={(e) => update("numberSize", e.detail)} />
+            <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={(e) => update("numberSize", e.detail)} />
         {/if}
 
         <!-- Red Jesus -->

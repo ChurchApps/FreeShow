@@ -162,6 +162,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     effects_library_add: { label: "media.effects_library_add", icon: "effect", iconColor: "#fff1ad" },
     system_open: { label: "main.system_open", icon: "launch" },
     // LIVE
+    startup_activate: { label: "actions.activate_on_startup", icon: "startup" },
     recording: { label: "actions.start_recording", icon: "record", iconColor: "#ff7a7a" },
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked", iconColor: "#ff5454" },
@@ -251,7 +252,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     screen_card: ["recording"],
-    camera_card: ["edit", "SEPERATOR", "recording"],
+    camera_card: ["edit", "SEPERATOR", "startup_activate", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
     actions_readonly: ["action_tag_filter"],

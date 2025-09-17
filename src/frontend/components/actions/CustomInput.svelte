@@ -2,6 +2,7 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
+    import { cameraManager } from "../../media/cameraManager"
     import { actions, activePopup, audioPlaylists, audioStreams, effects, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
@@ -11,12 +12,12 @@
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+    import { getGlobalGroupName } from "../show/tools/groups"
     import ChooseEmitter from "./ChooseEmitter.svelte"
     import MidiValues from "./MidiValues.svelte"
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
-    import { getGlobalGroupName } from "../show/tools/groups"
 
     export let inputId: string
     export let value
@@ -64,12 +65,9 @@
 
     let cameras: { label: string; id: string; groupId: string }[] = []
     if (inputId === "camera") getCameras()
-    function getCameras() {
-        navigator.mediaDevices?.enumerateDevices()?.then((devices) => {
-            if (!devices) return
-            let cameraList = devices.filter((a) => a.kind === "videoinput").map((a) => ({ label: a.label, id: a.deviceId, groupId: a.groupId }))
-            cameras = sortByName(cameraList, "label")
-        })
+    async function getCameras() {
+        const cameraList = await cameraManager.getCamerasList()
+        cameras = sortByName(cameraList).map((a) => ({ label: a.name, id: a.id, groupId: a.group }))
     }
 
     let screens: { name: string; id: string }[] = []
