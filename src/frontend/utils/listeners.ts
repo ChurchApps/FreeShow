@@ -47,7 +47,7 @@ import {
     variables,
     volume
 } from "../stores"
-import { limitUpdate } from "./common"
+import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
@@ -55,7 +55,7 @@ import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } 
 
 export function storeSubscriber() {
     shows.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_SHOWS", 200))) return
+        if (await hasNewerUpdate("LISTENER_SHOWS", 200)) return
 
         // sendData(REMOTE, { channel: "SHOWS", data })
 
@@ -67,7 +67,7 @@ export function storeSubscriber() {
     })
 
     showsCache.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_SHOWSCACHE"), 50)) return
+        if (await hasNewerUpdate("LISTENER_SHOWSCACHE", 50)) return
 
         send(OUTPUT, ["SHOWS"], data)
 
@@ -97,7 +97,7 @@ export function storeSubscriber() {
     })
 
     templates.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_TEMPLATES"), 50)) return
+        if (await hasNewerUpdate("LISTENER_TEMPLATES", 50)) return
 
         send(OUTPUT, ["TEMPLATES"], data)
 
@@ -116,7 +116,7 @@ export function storeSubscriber() {
         // });
     })
     overlays.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_OVERLAYS"), 50)) return
+        if (await hasNewerUpdate("LISTENER_OVERLAYS", 50)) return
 
         send(OUTPUT, ["OVERLAYS"], data)
         send(REMOTE, ["OVERLAYS"], data)
@@ -134,7 +134,7 @@ export function storeSubscriber() {
     })
     activeScripture.subscribe(async (data) => {
         // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
-        if (!(await limitUpdate("LISTENER_ACTIVE_SCRIPTURE"), 120)) return
+        if (await hasNewerUpdate("LISTENER_ACTIVE_SCRIPTURE", 120)) return
 
         const source: any = (data && (data.api || data.bible)) || data || {}
         const hasBook = source.bookId !== undefined && source.bookId !== null
@@ -145,7 +145,7 @@ export function storeSubscriber() {
 
     outputs.subscribe(async (data) => {
         // wait in case multiple slide layers get activated right after each other - to reduce the amount of updates
-        if (!(await limitUpdate("LISTENER_OUTPUTS"))) return
+        if (await hasNewerUpdate("LISTENER_OUTPUTS")) return
 
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
@@ -170,7 +170,7 @@ export function storeSubscriber() {
         send(OUTPUT, ["PLAYER_VIDEOS"], data)
     })
     stageShows.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_STAGE"), 50)) return
+        if (await hasNewerUpdate("LISTENER_STAGE", 50)) return
 
         send(OUTPUT, ["STAGE_SHOWS"], data)
 
@@ -188,20 +188,34 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
-        const activeOutputs = getActiveOutputs(get(outputs), true, true, true)
-        activeOutputs.forEach((id) => {
-            send(OUTPUT, ["DRAW"], { id, data })
+        // if (await hasNewerUpdate("LISTENER_DRAW")) return
+
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW"], { id, data })
+            else send(OUTPUT, ["DRAW"], { id, data: null })
         })
     })
     drawTool.subscribe((data) => {
         // WIP changing tool while output is not active, will not update tool in output if set to active before changing tool again
-        const activeOutputs = getActiveOutputs()
-        activeOutputs.forEach((id) => {
-            send(OUTPUT, ["DRAW_TOOL"], { id, data })
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW_TOOL"], { id, data })
+            else send(OUTPUT, ["DRAW_TOOL"], { id, data: "focus" })
         })
     })
     drawSettings.subscribe((data) => {
-        send(OUTPUT, ["DRAW_SETTINGS"], data)
+        const allOutputs = getActiveOutputs(get(outputs), false, false, true)
+        const activeOutputs = getActiveOutputs(get(outputs), true, false, true)
+        allOutputs.forEach((id) => {
+            if (activeOutputs.includes(id)) send(OUTPUT, ["DRAW_SETTINGS"], data)
+            else {
+                send(OUTPUT, ["DRAW_TOOL"], { id, data: "focus" })
+                send(OUTPUT, ["DRAW"], { id, data: null })
+            }
+        })
     })
 
     transitionData.subscribe((data) => {
@@ -213,7 +227,7 @@ export function storeSubscriber() {
         send(OUTPUT, ["MEDIA"], data)
     })
     outputSlideCache.subscribe(async (a) => {
-        if (!(await limitUpdate("LISTENER_SLIDE_CACHE"), 50)) return
+        if (await hasNewerUpdate("LISTENER_SLIDE_CACHE", 50)) return
 
         send(OUTPUT, ["OUT_SLIDE_CACHE"], a)
         send(STAGE, ["OUT_SLIDE_CACHE"], a)
@@ -224,7 +238,7 @@ export function storeSubscriber() {
     })
 
     effects.subscribe(async (data) => {
-        if (!(await limitUpdate("LISTENER_EFFECTS"), 50)) return
+        if (await hasNewerUpdate("LISTENER_EFFECTS", 50)) return
 
         send(OUTPUT, ["EFFECTS"], data)
     })

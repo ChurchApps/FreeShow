@@ -44,7 +44,7 @@
     const resolution = { width: 1920, height: 1080 }
     const halfWidth = resolution.width * 0.5
     const halfHeight = resolution.height * 0.5
-    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;inset-inline-start: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
+    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
     const smallItems = ["timer", "clock", "slide_tracker"]
 
     let timeout: NodeJS.Timeout | null = null
@@ -59,7 +59,7 @@
                 const left = halfWidth - width * 0.5
                 const height = 150
                 const top = halfHeight - height * 0.5
-                style = `width: ${width}px;height: ${height}px;inset-inline-start: ${left}px;top: ${top}px;`
+                style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
             }
 
             let item: StageItem = { type: itemType, style, align: "" }
@@ -67,6 +67,7 @@
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
             else if (itemType === "slide_text") {
                 item.slideOffset = slideTextItems.length
+                item.style += "font-size: 800px;"
             }
 
             a[stageId].items[itemId] = item
@@ -117,10 +118,10 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["time_", "audio_", "meta_"]
+    const excludeValues = ["project_", "time_", "audio_", "meta_"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
-        .filter((id) => !excludeValues.find((v) => id.includes(v)))
+        .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
         .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 
@@ -128,12 +129,12 @@
     <!-- <h6 style="margin-top: 10px;"><T id="stage.output" /></h6> -->
     <div class="section">
         {#each dynamicItems as item}
-            {@const title = (item.id === "slide_text" && slideTextItems.length === 1 ? "stage.next_slide_text" : "items." + item.name || item.id) + (item.id === "slide_text" && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : "")}
+            {@const title = (item.id === "slide_text" && slideTextItems.length === 1 ? "stage.next_slide_text" : "items." + (item.name || item.id)) + (item.id === "slide_text" && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : "")}
             {@const disabled = !!(item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount)}
 
-            <MaterialButton variant="outlined" {disabled} {title} style="width: 100%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+            <MaterialButton variant="outlined" {disabled} title="settings.add: <b>{title}</b>" style="width: 100%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
                 <Icon id={item.icon || item.id} />
-                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+                {#if !$labelsDisabled}{translateText(title)}{/if}
             </MaterialButton>
         {/each}
     </div>

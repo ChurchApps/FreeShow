@@ -164,7 +164,7 @@
     // FADE OUT AUDIO
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? 100) / 100))
+    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100))
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {
@@ -248,7 +248,7 @@
     .overlay {
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         background-color: transparent;

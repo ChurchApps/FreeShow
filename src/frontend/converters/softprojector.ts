@@ -4,6 +4,7 @@ import { ShowObj } from "../classes/Show"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 // interface Songbook {
 //     title: string
@@ -90,7 +91,7 @@ function createSlides(song: Song) {
 
         const items = [
             {
-                style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                style: DEFAULT_ITEM_STYLE,
                 lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] })),
             },
         ]

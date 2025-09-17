@@ -4,6 +4,7 @@
     import type { ItemType } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
+    import { triggerFunction } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -29,7 +30,7 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
-    import { setCaretAtEnd } from "../scripts/textStyle"
+    import { getSlideText, setCaretAtEnd } from "../scripts/textStyle"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -294,6 +295,8 @@
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
+
+    $: hasTextContent = getSlideText(Slide)?.length
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} />
@@ -383,14 +386,23 @@
 
             {#if open}
                 <div class="divider"></div>
+
+                {#if hasTextContent}
+                    <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>
+                        <Icon id="add" white />
+                        {#if !$labelsDisabled}<T id="edit.insert_virtual_break" />{/if}
+                    </MaterialButton>
+
+                    <div class="divider"></div>
+                {/if}
             {/if}
 
             <!-- no need to add chords on scripture/events -->
-            {#if !currentShow?.reference?.type && Slide && !isLocked}
+            {#if !currentShow?.reference?.type && Slide && !isLocked && hasTextContent}
                 <!-- {#if open || slideChords.length} -->
                 <MaterialButton isActive={chordsMode} on:click={toggleChords} title="edit.chords">
                     <Icon id="chords" white={!slideChords.length} />
-                    {#if open && !$labelsDisabled}<T id="edit.chords" />{/if}
+                    <!-- {#if open && !$labelsDisabled}<T id="edit.chords" />{/if} -->
                 </MaterialButton>
                 <!-- {/if} -->
 
@@ -401,7 +413,7 @@
 
             <MaterialButton title="show.text" on:click={() => textEditActive.set(true)}>
                 <Icon id="text_edit" white />
-                {#if open && !$labelsDisabled}<p><T id="show.text" /></p>{/if}
+                <!-- {#if open && !$labelsDisabled}<p><T id="show.text" /></p>{/if} -->
             </MaterialButton>
         </FloatingInputs>
 

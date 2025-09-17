@@ -12,6 +12,7 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
+import { cameraManager } from "../media/cameraManager"
 
 let initialized = false
 export function startup() {
@@ -63,6 +64,7 @@ async function startupMain() {
 
     await wait(5000)
     unsavedUpdater()
+    cameraManager.initializeCameraWarming()
 
     // CHECK LISTENERS
     // console.log(window.api.getListeners())

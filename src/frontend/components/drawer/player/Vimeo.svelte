@@ -1,6 +1,6 @@
 <script>
     import Player from "@vimeo/player"
-    import { currentWindow, theme, themes, volume } from "../../../stores"
+    import { currentWindow, focusMode, theme, themes, volume } from "../../../stores"
     import { OUTPUT } from "../../../../types/Channels"
     import { createEventDispatcher } from "svelte"
     import { send } from "../../../utils/request"
@@ -20,7 +20,7 @@
         loop: videoData.loop,
         muted: videoData.muted,
         color: $themes[$theme]?.colors?.secondary,
-        controls: false,
+        controls: false
         // title: false,
         // byline: false,
     }
@@ -48,7 +48,7 @@
 
         loaded = true
 
-        videoData.paused = false
+        videoData.paused = $focusMode
         seekTo(videoTime)
         dispatch("loaded", true)
 

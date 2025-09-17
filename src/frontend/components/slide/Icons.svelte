@@ -204,7 +204,7 @@
             </div>
         </div>
     {/if}
-    {#if background && looping && isVideo && backgroundCount > 4}
+    {#if background && looping && isVideo && backgroundCount > 1}
         <div>
             <div class="button">
                 <Button style="padding: 3px;{layoutSlide.actions?.nextAfterMedia ? 'opacity: 0.5;' : ''}" redHover title={$dictionary.media?._loop} {zoom} on:click={() => removeLoop()}>

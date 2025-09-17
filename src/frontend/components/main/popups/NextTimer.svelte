@@ -55,6 +55,8 @@
                 let layoutId = _show().get("settings.activeLayout")
                 showsCache.update((a) => {
                     let ref = goToStartRefs[0]
+                    if (!ref) return a
+
                     if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
                     else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
                     return a

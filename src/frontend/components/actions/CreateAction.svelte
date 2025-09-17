@@ -1,6 +1,27 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actions, activePopup, audioPlaylists, audioStreams, categories, dictionary, effects, emitters, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import {
+        actionRevealUsed,
+        actions,
+        activePopup,
+        audioPlaylists,
+        audioStreams,
+        categories,
+        dictionary,
+        effects,
+        emitters,
+        outputs,
+        overlays,
+        popupData,
+        projects,
+        shows,
+        stageShows,
+        styles,
+        templates,
+        timers,
+        triggers,
+        variables
+    } from "../../stores"
     import { translate, translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
@@ -212,7 +233,7 @@
         return ""
     }
 
-    let commonOnly = full && mode !== "slide"
+    let commonOnly = !$actionRevealUsed && full && mode !== "slide"
 </script>
 
 <svelte:window on:keydown={chooseAction} />
@@ -229,7 +250,17 @@
         <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 
         {#if mode !== "slide"}
-            <MaterialButton class="popup-options {!commonOnly ? 'active' : ''}" icon={!commonOnly ? "eye" : "hide"} iconSize={1.3} title={!commonOnly ? "actions.close" : "create_show.more_options"} on:click={() => (commonOnly = !commonOnly)} white />
+            <MaterialButton
+                class="popup-options {!commonOnly ? 'active' : ''}"
+                icon={!commonOnly ? "eye" : "hide"}
+                iconSize={1.3}
+                title={!commonOnly ? "actions.close" : "create_show.more_options"}
+                on:click={() => {
+                    commonOnly = !commonOnly
+                    actionRevealUsed.set(!commonOnly)
+                }}
+                white
+            />
         {/if}
 
         {#if searchedActions.length}

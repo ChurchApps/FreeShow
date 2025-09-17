@@ -69,7 +69,7 @@ const ctrlKeys = {
     e: () => activePopup.set("export"),
     i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
-    h: () => activePopup.set("history"),
+    h: () => get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => toggleOutputs(),
     s: () => save(),
@@ -89,7 +89,7 @@ const shiftCtrlKeys = {
 }
 
 const altKeys = {
-    Enter: () => menuClick("cut_in_half", true, null, null, null, get(selected)),
+    Enter: () => get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null,
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -201,6 +201,7 @@ export function keydown(e: KeyboardEvent) {
 
     if (e.altKey) {
         if (altKeys[e.key]) {
+            // if (document.activeElement?.classList.contains("edit") || document.activeElement?.tagName === "INPUT") return
             e.preventDefault()
             altKeys[e.key](e)
         }

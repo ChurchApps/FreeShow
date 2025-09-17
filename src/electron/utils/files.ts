@@ -193,10 +193,9 @@ export function selectFolderDialog(title = "", defaultPath = ""): string {
 
 // DATA FOLDERS
 
-export function openSystemFolder(folderPath: string) {
-    if (!doesPathExist(folderPath)) return sendToMain(ToMain.ALERT, "This does not exist!")
-
-    shell.openPath(folderPath).catch((err) => console.error("Could not open system folder: " + String(err)))
+export function openInSystem(path: string) {
+    if (!doesPathExist(path)) return sendToMain(ToMain.ALERT, "This does not exist!")
+    shell.showItemInFolder(path)
 }
 
 const appFolderName = "FreeShow"
@@ -754,7 +753,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
     })
 
     // open folder
-    openSystemFolder(outputPath)
+    openInSystem(outputPath)
     currentlyBundling = false
 }
 
@@ -880,7 +879,7 @@ const FIXES = {
     },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
-        openSystemFolder(stores.SETTINGS.path)
+        openInSystem(stores.SETTINGS.path)
     }
 }
 function specialCaseFixer() {

@@ -8,6 +8,7 @@ import { setActiveScripture } from "./bible"
 import { createCategory, setTempShows } from "./importHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import type { Chords } from "../../types/Show"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface Song {
     title: string
@@ -125,7 +126,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
             const items = [
                 {
-                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
+                    style: DEFAULT_ITEM_STYLE,
                     lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords }))
                 }
             ]

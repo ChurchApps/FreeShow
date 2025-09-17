@@ -64,7 +64,7 @@
 
     .volume {
         position: absolute;
-        inset-inline-start: 50%;
+        left: 50%;
         top: 50%;
         transform: translate(-50%, -45%);
         pointer-events: none;

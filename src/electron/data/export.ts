@@ -13,7 +13,7 @@ import type { Show, Slide, Template } from "../../types/Show"
 import type { Message } from "../../types/Socket"
 import { isProd } from "../index"
 import { sendMain, sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
+import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openInSystem, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
 
@@ -78,7 +78,7 @@ function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string
 
     // open export location in system when completed
     if (!err && !systemOpened) {
-        openSystemFolder(exportFolder)
+        openInSystem(exportFolder)
         systemOpened = true
     } else if (err) msg = err.toString()
 

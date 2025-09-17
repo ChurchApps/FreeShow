@@ -273,6 +273,7 @@
 
     function keydown(e: any) {
         if (e.key === "Enter") {
+            e.preventDefault()
             newValue = e.target?.value || ""
             createNewEvent()
         }

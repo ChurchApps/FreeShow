@@ -18,6 +18,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleButtons from "../../inputs/MaterialToggleButtons.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -152,6 +153,10 @@
     $: metadataDividerValue = currentStyle.metadataDivider === undefined ? defaultDivider : currentStyle.metadataDivider
     $: metadataTemplate = currentStyle.metadataTemplate || "metadata"
     $: messageTemplate = currentStyle.messageTemplate || "message"
+
+    function updateCustom(e: any) {
+        updateStyle(e.value, e.key)
+    }
 </script>
 
 <MaterialColorInput
@@ -178,15 +183,19 @@
 {/if}
 
 <MaterialPopupButton label="popup.transition" id="style" value={currentStyle.transition} name={transitionLabel} popupId="transition" icon="transition" on:change={(e) => updateStyle(e.detail || "", "transition")} allowEmpty />
-<MaterialPopupButton label="edit.media_fit" value={mediaFit} defaultValue="contain" name={mediaFitLabel} popupId="media_fit" icon="media_fit" on:change={(e) => updateStyle(e.detail, "fit")} />
+<MaterialPopupButton label="edit.media_fit" value={mediaFit} defaultValue="contain" name={mediaFitLabel} popupId="media_fit" icon="media_fit" data={{ updateCustom, styleId }} on:change={(e) => updateStyle(e.detail, "fit")} />
 <MaterialPopupButton label="settings.aspect_ratio" value={aspectRatio} defaultValue={defaultAspectRatio} name={aspectRatioLabel} popupId="aspect_ratio" icon="aspect_ratio" on:change={(e) => updateStyle(e.detail, "aspectRatio")} />
 
 <MaterialToggleButtons label="settings.active_layers" value={activeLayers} options={layerOptions} on:change={(e) => updateStyle(e.detail, "layers")} />
 <!-- WIP toggle meta -->
 
+<Title label="preview.background" icon="background" />
+
+<MaterialNumberInput label="media.volume" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
+
 <Title label="preview.slide" icon="slide" />
 
-<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
+<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" data={{ styleId }} on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
 
 <InputRow>
     <!-- WIP doubleClick ?? -->

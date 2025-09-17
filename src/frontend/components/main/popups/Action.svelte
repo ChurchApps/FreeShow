@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { actions, activePopup, activeShow, drawerTabsData, popupData, showsCache, templates, timers } from "../../../stores"
+    import { actions, activePopup, activeShow, drawerTabsData, groups, popupData, showsCache, templates, timers } from "../../../stores"
     import { translate, translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -312,7 +312,7 @@
 
     // custom activations
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
-    $: specificActivation = action.specificActivation || ""
+    $: specificActivation = action.specificActivation?.includes(customActivation) ? action.specificActivation.split("__")[1] || "" : ""
 
     const specificActivations = {
         timer_end: {
@@ -322,6 +322,10 @@
         timer_start: {
             name: "items.timer",
             list: () => sortByName(keysToID($timers)).map(({ id, name }) => ({ value: id, label: name }))
+        },
+        group_start: {
+            name: "actions.choose_group",
+            list: () => sortByName(keysToID($groups)).map((a) => ({ value: a.id, label: a.default ? translateText("groups." + a.name) : a.name }))
         }
     }
     // .map((a) => ({ ...a, value: `${customActivation}__${a.value}` }))
@@ -468,9 +472,13 @@
                 />
 
                 <div slot="menu">
-                    {#if customActivation === "timer_end" || customActivation === "timer_start"}
-                        <!-- specificActivation ? `${customActivation}__${specificActivation}` : "" -->
-                        <MaterialDropdown label={specificActivations[customActivation]?.name} options={getSpecificActivation(customActivation)} value={specificActivation} on:change={(e) => updateValue("specificActivation", e.detail)} />
+                    {#if ["timer_end", "timer_start", "group_start"].includes(customActivation)}
+                        <MaterialDropdown
+                            label={specificActivations[customActivation]?.name}
+                            options={getSpecificActivation(customActivation)}
+                            value={specificActivation}
+                            on:change={(e) => updateValue("specificActivation", `${customActivation}__${e.detail}`)}
+                        />
                     {:else if customActivation === "midi_signal_received"}
                         <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} simple />
                     {/if}

@@ -48,7 +48,7 @@
     // WIP this does not update when window size changes...
     let newSizes = `;
         top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-        inset-inline-start: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+        left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
         width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
         height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
     `

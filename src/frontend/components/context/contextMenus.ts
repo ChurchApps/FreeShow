@@ -65,6 +65,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     createCollection: { label: "new.collection", icon: "collection" },
     changeIcon: { label: "context.changeIcon", icon: "star", iconColor: "#6effbe" },
     category_action: { label: "popup.category_action", icon: "actions", iconColor: "#d497ff" },
+    category_template: { label: "popup.category_template", icon: "templates", iconColor: "#d497ff" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
     archive: { label: "actions.move_to_archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
@@ -161,6 +162,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     effects_library_add: { label: "media.effects_library_add", icon: "effect", iconColor: "#fff1ad" },
     system_open: { label: "main.system_open", icon: "launch" },
     // LIVE
+    startup_activate: { label: "actions.activate_on_startup", icon: "startup" },
     recording: { label: "actions.start_recording", icon: "record", iconColor: "#ff7a7a" },
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked", iconColor: "#ff5454" },
@@ -206,13 +208,13 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media: ["newFolder"],
     category_audio: ["newFolder"],
     category_scripture: ["newScripture", "createCollection"],
-    category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "category_action", "use_as_archive"],
+    category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "category_action", "category_template", "SEPERATOR", "use_as_archive"],
     category_shows_button_readonly: [],
     category_overlays_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_templates_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_media_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
     category_audio_button: ["rename", "delete_remove", "SEPERATOR", "system_open"],
-    category_scripture_button: ["rename", "delete"],
+    category_scripture_button: ["rename", "delete", "SEPERATOR", "favourite"],
     playlist: ["rename", "delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "SEPERATOR", "manage_show_tags", "tag_filter", "sort_shows_by"],
@@ -250,7 +252,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     screen_card: ["recording"],
-    camera_card: ["edit", "SEPERATOR", "recording"],
+    camera_card: ["edit", "SEPERATOR", "startup_activate", "SEPERATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
     actions_readonly: ["action_tag_filter"],

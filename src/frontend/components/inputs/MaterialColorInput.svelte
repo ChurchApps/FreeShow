@@ -17,6 +17,8 @@
     export let allowGradients = false
     export let allowOpacity = false
     export let allowEmpty = false
+    export let alwaysVisible = false
+    export let editMode = false
     export let disabled = false
     export let height = 0
     export let width = 0
@@ -57,6 +59,8 @@
     }
 
     function colorUpdate(color: string) {
+        if (editMode) return color
+
         hexValue = color
         let actualValue = hexValue
 
@@ -145,8 +149,16 @@
         return "normal"
     }
 
+    $: disabledColors = $special.disabledColors || []
+    $: disabledGradientColors = $special.disabledColorsGradient || []
+
+    $: customColors = ($special.customColors || []).map((value) => ({ name: "", value }))
+    $: colorsList = editMode ? [...defaultColors, "BREAK", ...customColors] : [...defaultColors, ...customColors]
+    $: if (!editMode) colorsList = colorsList.filter((a) => !disabledColors.includes(a.value))
+
     $: customGradients = ($special.customColorsGradient || []).map((value) => ({ name: "", value }))
-    $: gradientColors = [...defaultGradients, ...customGradients].filter((a) => !$special.disabledColorsGradient?.includes(a.value))
+    $: gradientColorsList = editMode ? [...defaultGradients, "BREAK", ...customGradients] : [...defaultGradients, ...customGradients]
+    $: if (!editMode) gradientColorsList = gradientColorsList.filter((a) => !disabledGradientColors.includes(a.value))
 
     // OPACITY
 
@@ -177,33 +189,48 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div id={pickerId} bind:this={colorElem} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(hexValue)};{$$props.style || ''}" on:keydown={handleKey}>
-    <div class="background" on:click={togglePicker} />
+    {#if !alwaysVisible}
+        <div class="background" on:click={togglePicker} />
 
-    <div class="color-display" data-title={noLabel ? translateText(label) : ""} style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
+        <div class="color-display" data-title={noLabel ? translateText(label) : ""} style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
 
-    {#if !noLabel || value === ""}
-        <label>{@html translateText(label)}</label>
+        {#if !noLabel || value === ""}
+            <label>{@html translateText(label)}</label>
+        {/if}
+        <span class="underline" />
     {/if}
-    <span class="underline" />
 
-    {#if pickerOpen}
-        <div class="picker" class:isOverflowing style={noLabel && !isOverflowing ? "left: 0;transform: initial;" : ""}>
-            {#if allowGradients}
+    {#if pickerOpen || alwaysVisible}
+        <div class="picker" class:isOverflowing class:alwaysVisible style={noLabel && !isOverflowing ? "left: 0;transform: initial;" : ""}>
+            {#if allowGradients || editMode}
                 <Tabs {tabs} bind:active={selectedMode} style="flex: 1;border-top-left-radius: 8px;border-top-right-radius: 8px;" />
             {/if}
 
             <div class="pickerContent">
                 {#if selectedMode === "gradient"}
-                    {#each gradientColors as color}
-                        <div
-                            class="pickColor"
-                            class:active={hexValue === color.value}
-                            data-title={color.name}
-                            style="background: {color.value};"
-                            tabindex="0"
-                            aria-label="Select gradient {color.name || color.value}"
-                            on:click={() => selectColor(color.value)}
-                        />
+                    {#each gradientColorsList as color}
+                        {@const isCustom = editMode && customGradients.find((a) => a.value === color.value)}
+
+                        {#if color === "BREAK"}
+                            <div style="display: block;margin: 10px;width: 100%;"></div>
+                        {:else}
+                            <div
+                                class="pickColor"
+                                class:active={!editMode && hexValue === color.value}
+                                class:disabled={disabledGradientColors.includes(color.value)}
+                                data-title={color.name}
+                                style="background: {color.value};"
+                                tabindex="0"
+                                aria-label="Select gradient {color.name || color.value}"
+                                on:click={() => selectColor(color.value)}
+                            >
+                                {#if editMode}
+                                    <div class="hover" class:visible={disabledGradientColors.includes(color.value)}>
+                                        <Icon id={isCustom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
                     {/each}
 
                     {#if allowOpacity}
@@ -215,12 +242,18 @@
                     <MaterialButton
                         style="width: 100%;margin-top: 5px;background: {hexValue} !important;"
                         on:click={() => {
-                            popupData.set({ value: hexValue, trigger: (newValue) => selectColor(newValue) })
+                            popupData.set({
+                                value: hexValue,
+                                trigger: (newValue) => {
+                                    selectColor(newValue)
+                                    if (editMode) setTimeout(() => activePopup.set("manage_colors"))
+                                }
+                            })
                             activePopup.set("color_gradient")
                         }}
                         center
                     >
-                        <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
+                        <p style="color: var(--outline-color);">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
                     </MaterialButton>
                 {:else}
                     {#if allowEmpty}
@@ -238,16 +271,29 @@
                             <Icon id="close" white />
                         </div>
                     {/if}
-                    {#each defaultColors as c}
-                        <div
-                            data-value={c.value}
-                            class="pickColor"
-                            class:active={hexValue.toLowerCase() === c.value.toLowerCase()}
-                            data-title={c.name}
-                            tabindex="0"
-                            style="background:{c.value};--outline-color: {getContrast(c.value)};"
-                            on:click={() => selectColor(c.value)}
-                        ></div>
+                    {#each colorsList as color}
+                        {@const isCustom = editMode && customColors.find((a) => a.value === color.value)}
+
+                        {#if color === "BREAK"}
+                            <div style="display: block;margin: 10px;width: 100%;"></div>
+                        {:else}
+                            <div
+                                data-value={color.value}
+                                class="pickColor"
+                                class:active={!editMode && hexValue.toLowerCase() === color.value.toLowerCase()}
+                                class:disabled={disabledColors.includes(color.value)}
+                                data-title={color.name}
+                                tabindex="0"
+                                style="background:{color.value};--outline-color: {getContrast(color.value)};"
+                                on:click={() => selectColor(color.value)}
+                            >
+                                {#if editMode}
+                                    <div class="hover" class:visible={disabledColors.includes(color.value)}>
+                                        <Icon id={isCustom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
                     {/each}
 
                     {#if allowOpacity}
@@ -257,7 +303,7 @@
                     {/if}
 
                     <div class="color" style="background: {hexValue};">
-                        <p style="color: var(--outline-color);">{translateText("actions.choose_custom")}</p>
+                        <p style="color: var(--outline-color);">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
                         <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value={hexValue} on:input={input} on:change={change} />
                     </div>
                 {/if}
@@ -485,5 +531,43 @@
         display: block;
         width: 100%;
         padding-top: 5px;
+    }
+
+    /* ALWAYS VISIBLE */
+
+    .textfield:has(.picker.alwaysVisible) {
+        height: unset;
+    }
+    .picker.alwaysVisible {
+        position: relative;
+        top: unset;
+        left: unset;
+
+        box-shadow: none;
+
+        width: 100%;
+    }
+    .picker.alwaysVisible .pickerContent {
+        width: 100%;
+    }
+
+    /* MANAGE */
+
+    .pickColor.disabled {
+        opacity: 0.5;
+        /* filter: blur(3px); */
+    }
+    .pickColor .hover {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+    .pickColor .hover:not(.visible) {
+        display: none;
+    }
+    .pickColor:hover .hover {
+        display: flex;
     }
 </style>

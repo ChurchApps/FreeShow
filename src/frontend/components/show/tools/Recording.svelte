@@ -3,7 +3,7 @@
     import { Unsubscriber } from "svelte/store"
     import { uid } from "uid"
     import type { Recording } from "../../../../types/Show"
-    import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache, special } from "../../../stores"
+    import { activeSlideRecording, labelsDisabled, outputs, showsCache, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { addSlideAction } from "../../actions/actions"
     import { clone } from "../../helpers/array"
@@ -15,8 +15,7 @@
     import T from "../../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     export let showId: string
@@ -157,7 +156,6 @@
         settingsOpened = false
     }
 
-    const isChecked = (e: any) => e.target.checked
     // function setRecordingKey(key: string, value: any) {
     //     let layout = clone(showLayout)
     //     if (!layout.recording) return
@@ -231,12 +229,7 @@
 <div class="padding">
     {#if settingsOpened && recordingData}
         <div class="settings">
-            <CombinedInput textWidth={70}>
-                <p data-title={$dictionary.recording?.use_duration_tip}><T id="recording.use_duration" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={useDurationTime} on:change={(e) => setSpecialValue("useDurationTime", isChecked(e))} />
-                </div>
-            </CombinedInput>
+            <MaterialToggleSwitch label="recording.use_duration" checked={useDurationTime} defaultValue={true} on:change={(e) => setSpecialValue("useDurationTime", e.detail)} />
         </div>
     {:else if recordingData}
         {#if recordingPlaying}
@@ -364,7 +357,7 @@
 
     .timebar {
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         bottom: 0;
         transform: translateY(50%);
 

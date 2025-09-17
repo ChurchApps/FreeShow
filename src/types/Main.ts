@@ -151,7 +151,8 @@ export interface MediaStyle {
     filter?: string
     flipped?: boolean
     flippedY?: boolean
-    fit?: MediaFit
+    fit?: MediaFit | ""
+    fitOptions?: any
     speed?: string
     fromTime?: number
     toTime?: number

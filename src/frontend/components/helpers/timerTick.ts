@@ -68,7 +68,7 @@ function increment(timer: { id: string; start: number; end: number;[key: string]
 
         // ended
         checkNextAfterMedia(timer.id, "timer")
-        customActionActivation(`timer_end___` + timer.id)
+        customActionActivation("timer_end", timer.id)
     }
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
@@ -199,7 +199,7 @@ export function checkTimers() {
 
         if (time < 0 && time >= -1) {
             checkNextAfterMedia(id, "timer")
-            customActionActivation(`timer_end___` + id)
+            customActionActivation("timer_end", id)
         }
     })
 

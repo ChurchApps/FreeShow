@@ -5,7 +5,7 @@
     import type { Item, Transition } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
     import { send } from "../../utils/request"
-    import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
+    import autosize from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
@@ -167,7 +167,7 @@
         }, 200)
         previousItem = newItem
 
-        let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
+        let type = item?.textFit || "shrinkToFit"
 
         let defaultFontSize
         let maxFontSize
@@ -175,7 +175,13 @@
         const isTextItem = (item.type || "text") === "text"
 
         if (isStage) {
-            type = "growToFit"
+            if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
+
+            // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
+            let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
+
+            defaultFontSize = itemFontSize
+            if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
         } else {
             if (isTextItem && !item.auto) {
                 fontSize = 0
@@ -370,7 +376,7 @@
         /* filter & dynamic CSS variable transition */
         transition:
             filter 500ms,
-            backdrop-filter 500ms,
+            /* not supported */ backdrop-filter 500ms,
             all 0.1s;
     }
     .item.isStage {

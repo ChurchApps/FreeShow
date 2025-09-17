@@ -234,15 +234,15 @@
     function onPointerMove(e: PointerEvent) {
         if (!dragging) return
         e.preventDefault()
-        
+
         const total = window.innerWidth
         const resizers = 12 // two resizers of 6px each
         const delta = e.clientX - startX
-        
+
         if (dragging === "left") {
             let proposed = startLeft + delta
             const maxLeft = total - rightWidth - resizers - minCenter
-            
+
             // Snap to default position
             if (Math.abs(proposed - defaultWidth) < snapThreshold) {
                 proposed = defaultWidth
@@ -250,12 +250,12 @@
             } else {
                 isSnapping = false
             }
-            
+
             leftWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxLeft)))
         } else if (dragging === "right") {
             let proposed = startRight - delta
             const maxRight = total - leftWidth - resizers - minCenter
-            
+
             // Snap to default position
             if (Math.abs(proposed - defaultWidth) < snapThreshold) {
                 proposed = defaultWidth
@@ -263,7 +263,7 @@
             } else {
                 isSnapping = false
             }
-            
+
             rightWidth = Math.max(minPanel, Math.min(proposed, Math.max(minPanel, maxRight)))
         }
     }
@@ -308,7 +308,7 @@
 {/if}
 
 {#if !isFullscreen}
-	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft} class:snapping={dragging === "left" && isSnapping}></div>
+    <div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownLeft} class:snapping={dragging === "left" && isSnapping}></div>
 {/if}
 
 <div class="center">
@@ -345,9 +345,15 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={(e) => (e.key === 'Enter' ? playSlide(i) : null)}>
+                                <span
+                                    style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
+                                    role="button"
+                                    tabindex="0"
+                                    on:click={() => playSlide(i)}
+                                    on:keydown={(e) => (e.key === "Enter" ? playSlide(i) : null)}
+                                >
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                                        <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
+                                        <span style="left: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
                                     </span>
                                     {#each $activeShow.slides[layoutSlide.id].items as item}
@@ -412,7 +418,7 @@
 </div>
 
 {#if !isFullscreen}
-	<div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight} class:snapping={dragging === "right" && isSnapping}></div>
+    <div class="resizer" role="separator" aria-orientation="vertical" on:pointerdown={onPointerDownRight} class:snapping={dragging === "right" && isSnapping}></div>
 {/if}
 
 {#if !isFullscreen}
@@ -512,7 +518,9 @@
         width: 2px; /* single visual line */
         transform: translateX(-50%);
         background-color: var(--primary-lighter);
-        transition: background-color 0.2s ease, width 0.2s ease;
+        transition:
+            background-color 0.2s ease,
+            width 0.2s ease;
     }
 
     .resizer:hover,
@@ -551,11 +559,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .scroll::-webkit-scrollbar-track,
-    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .scroll::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .scroll::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
 
     /* ///// */
 

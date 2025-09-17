@@ -66,7 +66,7 @@
     onMount(() => {
         Object.entries($events).forEach(addEvent)
         eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? -1 : 1))
-        timer.event = eventList[0]?.id || ""
+        if (!timer.event) timer.event = eventList[0]?.id || ""
     })
 
     const addEvent = ([id, event]: any) => {

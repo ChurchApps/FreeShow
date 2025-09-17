@@ -20,8 +20,7 @@ export const transitionTypes: { id: TransitionType; name: string }[] = [
 ]
 
 export const transitions: { [key in TransitionType]: any } = {
-    // eslint-disable-next-line
-    none: () => { },
+    none: (node, data) => fade(node, { ...data, duration: 0 }),
     blur,
     fade,
     crossfade,

@@ -13,6 +13,9 @@ import {
     activeTimers,
     audioPlaylists,
     dictionary,
+    draw,
+    drawSettings,
+    drawTool,
     folders,
     gain,
     groupNumbers,
@@ -53,7 +56,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_create_project, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -218,18 +221,18 @@ export function toggleLock(data: API_output_lock) {
         return
     }
 
-    // const firstOutputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    const isLocked = get(outputs)[data.outputId]?.active === false
-    toggleOutputLock(data.outputId, data.value ?? isLocked)
+    const outputIds = data.outputId === "all" ? getActiveOutputs(get(outputs), false, true, true) : [data.outputId]
+
+    const isLocked = get(outputs)[outputIds[0]]?.active === false
+    outputIds.forEach(outputId => {
+        toggleOutputLock(outputId, typeof data.value === "boolean" ? !data.value : isLocked)
+    })
 }
 // similar to PreviewOutputs.svelte
 function toggleOutputLock(outputId: string, value: boolean) {
-    // const activeOutputIds = getActiveOutputs(get(outputs), false, true, true)
-
     outputs.update((a) => {
         if (!a[outputId]?.enabled) return a
 
-        console.log(outputId, value)
         a[outputId].active = value
 
         let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
@@ -748,6 +751,19 @@ export async function getPDFThumbnails({ path }: API_media) {
 
     loadingTask.destroy()
     return { path, pages }
+}
+
+// DRAW
+
+export function changeDrawZoom(data: API_draw_zoom) {
+    drawSettings.update((a) => {
+        a.zoom.size = data.size || 100
+        return a
+    })
+
+    // 0-100 %
+    draw.set({ x: 1920 * ((data.x ?? 50) / 100), y: 1080 * ((data.y ?? 50) / 100) })
+    drawTool.set("zoom")
 }
 
 // ADD

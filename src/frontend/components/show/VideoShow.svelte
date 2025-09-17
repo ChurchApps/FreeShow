@@ -9,6 +9,7 @@
     import { enableSubtitle, encodeFilePath, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { getFirstOutputIdWithAudableBackground } from "../helpers/video"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
@@ -48,6 +49,7 @@
         videoData.paused = true
         // trigger time update
         videoTime = 0
+        autoPause = false
     }
     function setVideoData() {
         videoData = { ...$videosData[outputId], muted: true }
@@ -62,8 +64,13 @@
         timeMarkersEnabled = !!$videoMarkers[showId]?.length || false
     }
 
-    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
-    $: currentOutput = $outputs[outputId]
+    $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
+    // $: outputId = allActiveOutputs[0]
+    // $: currentOutput = $outputs[outputId]
+
+    // background output
+    $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    $: currentOutput = outputId ? $outputs[outputId] || null : null
 
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}
@@ -297,12 +304,14 @@
     }
 
     $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(${mediaStyle.fitOptions?.blurAmount ?? 6}px) opacity(${mediaStyle.fitOptions?.blurOpacity || 0.3});object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let blurVideo: HTMLVideoElement | undefined
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
+
+    // WIP if paused on mount, blur video does not get paused
 </script>
 
 {#key showId}
@@ -363,6 +372,7 @@
                     <Icon id="add" right />
                     <T id="scripture.local" />
                 </MediaPicker>
+                <!-- <MaterialFilePicker label="scripture.local" style="flex: 1;" icon="add" value="" filter={{ name: "Video Text Track", extensions: ["vtt", "srt"] }} on:change={subtitlePicked} /> -->
             {/if}
         </div>
     {/if}

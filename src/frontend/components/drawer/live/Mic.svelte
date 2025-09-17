@@ -75,8 +75,9 @@
         audio.volume = 0
     }
 
-    onMount(capture)
+    let retryTimeout: NodeJS.Timeout | null = null
 
+    onMount(capture)
     function capture() {
         navigator.mediaDevices
             .getUserMedia({ audio: { deviceId: { exact: mic.id } } })
@@ -88,12 +89,13 @@
                 }
 
                 // retry
-                setTimeout(capture, 5000)
+                retryTimeout = setTimeout(capture, 5000)
             })
     }
 
     onDestroy(() => {
         audioStream?.getAudioTracks().forEach((track) => track.stop())
+        if (retryTimeout) clearTimeout(retryTimeout)
     })
 
     $: muted = !$playingAudio[mic.id]

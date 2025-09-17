@@ -30,7 +30,7 @@
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
         let seperatorId = ""
-        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "timer_", "rss_"]
+        const seperators = ["$", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "timer_", "rss_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
@@ -50,6 +50,7 @@
 
     function getTitle(id: string) {
         if (id === "time_") return "timer.time"
+        if (id === "project_") return "guide_title.project"
         if (id === "show_") return "guide_title.show"
         if (id === "slide_text_") return "edit.text"
         if (id === "video_") return "edit.video"

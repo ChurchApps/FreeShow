@@ -35,7 +35,7 @@
         {#if !layoutSlide.disabled}
             <span style="padding: 5px;{$outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}">
                 <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                    <span style="inset-inline-start: 0;position: absolute;">{i + 1}</span>
+                    <span style="left: 0;position: absolute;">{i + 1}</span>
                     <span>{slides[layoutSlide.id].group === null ? "" : getName(slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
                 </span>
                 {#each slides[layoutSlide.id].items as item}
@@ -72,11 +72,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .lyrics::-webkit-scrollbar { width: 8px; height: 8px; }
+    .lyrics::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .lyrics::-webkit-scrollbar-track,
-    .lyrics::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .lyrics::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .lyrics::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .lyrics::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .lyrics::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .lyrics::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
     .lyric {
         font-size: 1.1em;
         text-align: center;

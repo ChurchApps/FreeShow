@@ -5,6 +5,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface VideoPsalm {
     Guid: string
@@ -302,7 +303,7 @@ function createSlides({ Verses, Sequence }: Song) {
             lines.push(line)
         })
 
-        const items = [{ style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;", lines }]
+        const items = [{ style: DEFAULT_ITEM_STYLE, lines }]
 
         slides[id] = {
             group: "",

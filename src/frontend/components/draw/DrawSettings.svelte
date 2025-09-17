@@ -103,7 +103,7 @@
             {:else if key === "radius"}
                 <MaterialNumberInput label="draw.radius" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
             {:else if key === "size"}
-                <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} on:change={(e) => update(e.detail, key)} />
+                <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} defaultValue={tool === "zoom" ? 100 : null} on:change={(e) => update(e.detail, key)} />
             {:else}
                 <MaterialCheckbox label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
             {/if}

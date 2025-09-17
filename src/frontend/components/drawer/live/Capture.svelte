@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
     import { outputs } from "../../../stores"
@@ -39,6 +39,11 @@
         }
     }
 
+    let retryTimeout: NodeJS.Timeout | null = null
+    onDestroy(() => {
+        if (retryTimeout) clearTimeout(retryTimeout)
+    })
+
     onMount(capture)
     function capture() {
         navigator.mediaDevices
@@ -62,7 +67,7 @@
                 // }
 
                 // retry
-                setTimeout(capture, 5000)
+                retryTimeout = setTimeout(capture, 5000)
             })
     }
 </script>
@@ -99,7 +104,7 @@
 <style>
     video {
         position: absolute;
-        inset-inline-start: 50%;
+        left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
     }

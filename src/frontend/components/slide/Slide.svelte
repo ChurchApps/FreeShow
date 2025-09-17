@@ -461,7 +461,7 @@
                     <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
-                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater, true) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <!-- && (!item.clickReveal || output?.clickRevealed) -->
                                 <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
@@ -629,7 +629,7 @@
         width: 100%;
         height: 100%;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
 
         opacity: 0.25;
     }
@@ -654,7 +654,7 @@
         background-color: rgb(255 255 255 / 0.05);
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         z-index: 1;
     }
 
@@ -704,7 +704,7 @@
 
     .childLink {
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
         width: 8px;
@@ -718,7 +718,7 @@
     .lineProgress {
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         transform: translateY(-100%);
         width: 100%;
         height: 2px;
@@ -737,7 +737,7 @@
 
         position: absolute;
         top: 0;
-        inset-inline-start: 0;
+        left: 0;
         transform: translateY(-100%);
         width: 100%;
         padding: 4px 8px;

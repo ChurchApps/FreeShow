@@ -14,7 +14,7 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { sortByName } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -192,7 +192,11 @@
                             size={3}
                             on:click={() => {
                                 if (!$outLocked) {
-                                    setOutput("background", { path: background.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...mediaStyle })
+                                    let style = clone(mediaStyle)
+                                    style.fit = $media[background.path || ""]?.fit || ""
+                                    delete style.fitOptions
+
+                                    setOutput("background", { path: background.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...style })
                                     if (background.type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}

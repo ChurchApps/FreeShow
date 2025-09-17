@@ -6,7 +6,7 @@ const PRECISION = 5
 // shrinkToFit: text is set font size by default, but can shrink if the text does not fit in the textbox
 // growToFit: text will grow to fill the entire textbox, but maximum the set font size
 
-export type AutosizeTypes = "shrinkToFit" | "growToFit"
+export type AutosizeTypes = "shrinkToFit" | "growToFit" | "none"
 type Options = {
     type?: AutosizeTypes // "shrinkToFit"
     textQuery?: string // all children by default (or self)
@@ -92,7 +92,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
     function addStyleToElemText(currentFontSize: number) {
         let i = 0
-        for (const textElem of textChildren) {
+        for (const textElem of Array.from(textChildren)) {
             if (!styles[i]) styles[i] = textElem.getAttribute("style") || ""
             textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize}px !important;`)
             i++
@@ -120,7 +120,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.alignItems = "center"
         if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
 
-        for (const elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
+        for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
             ; (elemHide as HTMLElement).style.display = "none"
         }
 

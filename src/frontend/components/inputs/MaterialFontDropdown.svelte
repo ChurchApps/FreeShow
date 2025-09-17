@@ -8,6 +8,8 @@
     export let label: string
     export let value: string
     export let fontStyleValue: string = ""
+    export let enableFontStyles: boolean = false
+    export let allowEmpty: boolean = false
 
     let systemFontsList: DropdownOptions = []
     let fontsStylesList: DropdownOptions = []
@@ -17,7 +19,7 @@
     })
 
     let defaultFontStyleValue = ""
-    $: if (value) updateStyles()
+    $: if (value && enableFontStyles) updateStyles()
     function updateStyles() {
         const { fontStyles, defaultValue } = getFontStyleList(value)
         fontsStylesList = fontStyles
@@ -34,11 +36,13 @@
         fontStyleValue = e.detail
         dispatch("fontStyle", fontStyleValue)
     }
+
+    $: fontStylesVisible = enableFontStyles && value !== "CMGSans"
 </script>
 
 <InputRow style={$$props.style || ""}>
-    <MaterialDropdown {label} options={systemFontsList} {value} on:change={change} />
-    {#if fontsStylesList.length > 1}
-        <MaterialDropdown label="settings.font_style" options={fontsStylesList} value={fontStyleValue || defaultFontStyleValue} on:change={styleChange} onlyArrow />
+    <MaterialDropdown {label} options={systemFontsList} {value} style={fontStylesVisible ? "max-width: 80%;" : ""} on:change={change} {allowEmpty} />
+    {#if fontStylesVisible}
+        <MaterialDropdown label="settings.font_style" disabled={fontsStylesList.length < 2} options={fontsStylesList} value={fontStyleValue || defaultFontStyleValue} on:change={styleChange} onlyArrow />
     {/if}
 </InputRow>

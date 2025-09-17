@@ -8,6 +8,7 @@ import { actions as actionsStores, activePopup, activeProject, activeShow, alert
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
         const { project, parentFolder, shows, overlays, effects, actions, media } = JSON.parse(content)
+        if (!project) return
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"

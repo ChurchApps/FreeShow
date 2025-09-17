@@ -103,7 +103,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         <!--  && !Slide.isDefault -->
         {#if Slide}
-            <Zoomed background="transparent" checkered border style={widthOrHeight} bind:ratio hideOverflow={false} center={zoom >= 1}>
+            <Zoomed background="transparent" checkered border {resolution} style={widthOrHeight} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {#each Slide.items as item, index}
                     <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />

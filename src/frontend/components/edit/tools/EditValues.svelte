@@ -16,6 +16,7 @@
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import { parseShadowValue } from "../scripts/edit"
+    import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
     import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import { sectionColors } from "../values/item"
 
@@ -69,9 +70,9 @@
 
     function getStyleString(input: EditInput2) {
         let style = ""
-        if (input.id === "CSS_item") style = item.style || ""
-        else if (typeof input.value === "string") style = input.values?.value // "CSS_text" / custom
-
+        const isItem = input.id === "CSS_item"
+        const currentStyle = isItem ? item?.style : input.values?.value
+        style = (item.type || "text") === "text" && !isStage ? currentStyle : filterItemStyle(currentStyle, isItem)
         if (!style) return ""
 
         // sort alphabetically
@@ -106,8 +107,6 @@
 
     const dispatch = createEventDispatcher()
     function changed(e: any, input: any, sectionId: string = "") {
-        console.log(input)
-
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier
@@ -148,6 +147,11 @@
             toggleSection("shadow")
         }
 
+        if (input.id.includes("CSS")) {
+            value = value.replaceAll("\n", "")
+            value = (item.type || "text") === "text" && !isStage ? value : mergeWithStyle(value, item.style, input.id === "CSS_item")
+        }
+
         ///
 
         input.values.value = value
@@ -158,6 +162,8 @@
     }
 
     function hasChangedValues(id, _updater: any = null) {
+        if (!sections[id]) return
+
         let allInputsToCheck: EditInput2[] = []
         let filterOut: string[] = []
 
@@ -270,7 +276,7 @@
                                 <p>CSS</p>
                             {:else}
                                 <Icon {id} style="color: {sectionColors[id]};" white />
-                                <p>{translateText("edit." + id)}</p>
+                                <p>{translateText(section.name || "edit." + id)}</p>
                             {/if}
                         </span>
 
@@ -295,7 +301,15 @@
                                 {@const values = getValues(input)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} />
+                                    <MaterialFontDropdown
+                                        label={values.label}
+                                        {value}
+                                        style={values.style}
+                                        fontStyleValue={input.styleValue}
+                                        on:change={(e) => changed(e, input)}
+                                        on:fontStyle={(e) => changed(e, { ...input, key: "font" })}
+                                        enableFontStyles
+                                    />
                                 {:else if input.type === "toggle"}
                                     <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />

@@ -5,6 +5,7 @@
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import { commonInputs } from "./inputs"
     import { translateText } from "../../utils/language"
+    import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
 
     export let input: Input
 
@@ -21,6 +22,8 @@
     <MaterialDropdown {label} {...input} options={input.options?.map((a) => ({ ...a, label: translateText(a.label) }))} on:change={changed} />
 {:else if input.type === "checkbox"}
     <MaterialCheckbox {label} checked={input.value} style="flex: 1;{input.style || ''}" on:change={changed} />
+{:else if input.type === "color"}
+    <MaterialColorInput {label} {...input} {...input.settings || {}} on:input={changed} />
 {:else}
     <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} on:change={changed} />
 {/if}

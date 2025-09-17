@@ -48,6 +48,7 @@ import {
     mediaTags,
     metronome,
     openedFolders,
+    os,
     outLocked,
     overlayCategories,
     overlays,
@@ -130,9 +131,9 @@ export function updateSettings(data: any) {
         // wait until content is loaded
         setTimeout(() => {
             restartOutputs()
-            if (get(autoOutput)) setTimeout(() => toggleOutputs(null, { autoStartup: true }), 500)
-            setTimeout(() => checkWindowCapture(true), 1000)
-        }, 1500)
+            if (get(autoOutput)) setTimeout(() => toggleOutputs(null, { autoStartup: true }), get(os).platform === "darwin" ? 1500 : 500)
+            setTimeout(() => checkWindowCapture(true), get(os).platform === "darwin" ? 2000 : 1000)
+        }, get(os).platform === "darwin" ? 2500 : 1500)
     }
 
     // remote

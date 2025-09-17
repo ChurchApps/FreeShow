@@ -27,7 +27,7 @@
 
     function blurOnEnter(elem: HTMLInputElement) {
         const handler = (e: KeyboardEvent) => {
-            if (e.key === "Enter") elem.blur()
+            if (e.key === "Enter") setTimeout(() => elem?.blur())
         }
 
         elem.addEventListener("keydown", handler)

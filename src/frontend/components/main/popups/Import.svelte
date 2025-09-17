@@ -134,7 +134,15 @@
         {/each}
     </div>
 
-    <MaterialButton style="margin-top: 5px;" variant="outlined" title="actions.paste [Ctrl+Alt+I]">
+    <MaterialButton
+        style="margin-top: 5px;"
+        variant="outlined"
+        on:click={() => {
+            importFromClipboard()
+            activePopup.set(null)
+        }}
+        title="actions.paste [Ctrl+Alt+I]"
+    >
         <Icon id="paste" size={1.2} white />
         {translateText("formats.clipboard")}
     </MaterialButton>
@@ -177,9 +185,6 @@
                                 activePopup.set(format.popup)
                             }
                         })
-                    } else if (format.id === "clipboard") {
-                        importFromClipboard()
-                        activePopup.set(null)
                     } else {
                         let name = translateText(format.name)
                         sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })

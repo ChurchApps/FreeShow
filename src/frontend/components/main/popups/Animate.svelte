@@ -7,19 +7,21 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { addToPos } from "../../helpers/mover"
+    import { getLayoutRef } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import { getLayoutRef } from "../../helpers/show"
+    import { translateText } from "../../../utils/language"
 
     const easings = [
-        { id: "linear", name: "$:easings.linear:$" },
-        { id: "ease", name: "$:easings.ease:$" },
-        { id: "ease-in", name: "$:easings.ease-in:$" },
-        { id: "ease-out", name: "$:easings.ease-out:$" },
-        { id: "ease-in-out", name: "$:easings.ease-in-out:$" }
+        { value: "linear", label: translateText("easings.linear") },
+        { value: "ease", label: translateText("easings.ease") },
+        { value: "ease-in", label: translateText("easings.ease-in") },
+        { value: "ease-out", label: translateText("easings.ease-out") },
+        { value: "ease-in-out", label: translateText("easings.ease-in-out") }
     ]
 
     const types = [
@@ -122,11 +124,6 @@
     //     let value = e.target.value
     //     animation.actions[i].value = value
     // }
-
-    function changeRepeat(e: any) {
-        let value = e.target.checked
-        animation.repeat = value
-    }
 
     // get active output
     $: currentActive = $popupData.indexes.includes($activeAnimate.slide)
@@ -239,16 +236,8 @@
 
 <br />
 
-<CombinedInput>
-    <p><T id="calendar.repeat" /></p>
-    <span class="alignRight">
-        <Checkbox checked={animation.repeat} disabled={!animation.actions.find((a) => a.type === "wait")} on:change={changeRepeat} />
-    </span>
-</CombinedInput>
-<CombinedInput>
-    <p><T id="transition.easing" /></p>
-    <Dropdown options={easings} value={getOptionName(animation.easing || "ease", easings)} on:click={(e) => (animation.easing = e.detail.id)} />
-</CombinedInput>
+<MaterialToggleSwitch label="calendar.repeat" checked={animation.repeat} disabled={!animation.actions.find((a) => a.type === "wait")} on:change={(e) => (animation.repeat = e.detail)} />
+<MaterialDropdown label="transition.easing" options={easings} value={animation.easing || "ease"} on:change={(e) => (animation.easing = e.detail)} />
 
 <!-- <br />
 

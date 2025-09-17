@@ -12,9 +12,10 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     const alwaysEnabledIds = ["time", "show", "$"]
-    const toggleSections = ["time", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "$"]
+    const toggleSections = ["time", "project", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "$"]
     function getTitle(id: string) {
         if (id === "time") return "timer.time"
+        if (id === "project") return "guide_title.project"
         if (id === "show") return "guide_title.show"
         if (id === "slide_text") return "edit.text"
         if (id === "video") return "edit.video"

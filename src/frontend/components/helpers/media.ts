@@ -280,11 +280,18 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
 }
 
 export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {
+    const fitOptions = {
+        blurAmount: currentStyle?.blurAmount ?? 6,
+        blurOpacity: currentStyle?.blurOpacity || 0.3
+    }
+
     const mediaStyle: MediaStyle = {
         filter: "",
         flipped: false,
         flippedY: false,
         fit: currentStyle?.fit || "contain",
+        fitOptions,
+        volume: currentStyle?.volume ?? 100,
         speed: "1",
         fromTime: 0,
         toTime: 0,

@@ -456,7 +456,7 @@ function getItemStyle(item: any, clrSchemes: any, svgStyled: boolean = false) {
         border = `border:${strokeWidth}px ${strokeDasharray ? "dashed" : "solid"} ${stroke};`
     }
 
-    return `inset-inline-start:${left}px;top:${top}px;width:${width}px;height:${height}px;${transform}${color}${border}`
+    return `left:${left}px;top:${top}px;width:${width}px;height:${height}px;${transform}${color}${border}`
 }
 
 // function inheritColor(rawLayoutItems) {

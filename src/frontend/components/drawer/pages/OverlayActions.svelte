@@ -22,7 +22,7 @@
     const actionsList = [
         { id: "locked", title: $dictionary.context?.lock_to_output, icon: "locked" },
         { id: "placeUnderSlide", title: $dictionary.context?.place_under_slide, icon: "under" },
-        { id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" },
+        { id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" }
     ]
 
     $: zoom = 5 / columns
@@ -51,7 +51,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         /* right: 2px; */
         z-index: 1;
         font-size: 0.9em;

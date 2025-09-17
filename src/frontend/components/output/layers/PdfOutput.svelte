@@ -36,7 +36,7 @@
 
         const page = await loadedDoc.getPage(pageNumber)
 
-        const context = canvasElem.getContext("2d")
+        const context = canvasElem?.getContext("2d")
         if (!context) return
 
         const viewport = page.getViewport({ scale: 4 })

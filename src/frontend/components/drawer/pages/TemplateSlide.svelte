@@ -89,7 +89,7 @@ checkered={template.items?.length > 0 && transparentOutput} -->
         {/each}
     {:else}
         {#each template.items as item}
-            <Textbox {item} ref={{ type: "template", id: templateId }} dynamicValues={false} />
+            <Textbox backdropFilter={template["backdrop-filter"] || ""} {item} ref={{ type: "template", id: templateId }} dynamicValues={false} />
         {/each}
     {/if}
 

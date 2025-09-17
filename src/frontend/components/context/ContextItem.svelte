@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { cameraManager } from "../../media/cameraManager"
     import {
         actions,
         activeEdit,
@@ -19,6 +20,7 @@
         overlays,
         projects,
         redoHistory,
+        scriptures,
         selected,
         shows,
         showsCache,
@@ -187,8 +189,13 @@
             disabled = true
         },
         favourite: () => {
-            let path = $selected.data[0]?.path || $selected.data[0]?.id
-            if (path && $media[path]?.favourite === true) enabled = true
+            if ($selected.id?.includes("category_scripture")) {
+                let id = $selected.data[0]
+                enabled = !!$scriptures[id]?.favorite
+            } else {
+                let path = $selected.data[0]?.path || $selected.data[0]?.id
+                enabled = !!$media[path]?.favourite
+            }
         },
         effects_library_add: () => {
             // WIP don't show this if not an effect
@@ -199,6 +206,11 @@
 
             enabled = isEnabled
             menu.label = isEnabled ? "media.effects_library_remove" : "media.effects_library_add"
+        },
+        startup_activate: () => {
+            const startupCameras = cameraManager.getStartupCameras()
+            const camId = $selected.data[0]?.id
+            enabled = camId && startupCameras.includes(camId)
         },
         lock_to_output: () => {
             let id = $selected.data[0]

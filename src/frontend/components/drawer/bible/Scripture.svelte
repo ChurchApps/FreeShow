@@ -9,7 +9,6 @@
         activeScripture,
         activeTriggerFunction,
         customScriptureBooks,
-        dictionary,
         notFound,
         openScripture,
         os,
@@ -27,6 +26,7 @@
     } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
     import { newToast } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -692,7 +692,7 @@
         if (formattedChapter === null) {
             // if (isNaN(Number(chapter))) return ""
             if (chapter.length > 2) return ""
-            let msg = $dictionary.toast?.chapter_undefined || ""
+            let msg = translateText("toast.chapter_undefined")
             msg = msg.replace("{}", chapter)
             newToast(msg)
             return ""
@@ -739,7 +739,7 @@
             // allow verses to load
             setTimeout(() => {
                 if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
-                    let msg = $dictionary.toast?.verse_undefined || ""
+                    let msg = translateText("toast.verse_undefined")
                     msg = msg.replace("{}", verse)
                     if (verse.length < 3) newToast(msg)
                 }
@@ -778,6 +778,18 @@
             if (!outputIsScripture) return
             e.preventDefault()
             playOrClearScripture(true)
+            return
+        }
+
+        if (e.key === "h") {
+            e.preventDefault()
+            history = !history
+            scriptureHistoryUsed.set(true)
+            return
+        }
+
+        if (e.key === "b") {
+            searchBibleActive = true
             return
         }
 
@@ -1012,7 +1024,7 @@
                                         playOrClearScripture(true)
                                         resetContentSearch()
                                     },
-                                    match.api ? 50 : 10
+                                    match.api ? 500 : 10
                                 )
                             }}
                             data-title={formatBibleText(match.text)}
@@ -1137,7 +1149,7 @@
                                         }
                                     })}
                                     class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                                    data-title={$dictionary.tooltip?.scripture}
+                                    data-title={translateText("tooltip.scripture")}
                                 >
                                     {id}
                                     <!-- WIP style position not very good -->
@@ -1235,7 +1247,7 @@
                                 }
                             })}
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
-                            data-title={$dictionary.tooltip?.scripture}
+                            data-title={translateText("tooltip.scripture")}
                         >
                             <span class="v" style="white-space: nowrap;">
                                 {id}
@@ -1265,6 +1277,7 @@
                         {displayedBible.version}:
                     </MaterialButton>
                 {:else}
+                    {#if displayedBible?.api}<Icon id="web" style="margin-right: 5px;" white />{/if}
                     <span style="opacity: 0.8;">{displayedBible.version}:</span>
                 {/if}
                 {displayedBible?.book || ""}
@@ -1276,32 +1289,32 @@
 
 {#if searchBibleActive}
     <FloatingInputs>
-        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
+        <TextInput placeholder={translateText("scripture.search")} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
     </FloatingInputs>
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
     <FloatingInputs arrow let:open>
         {#if open || outputIsScripture}
-            <MaterialButton disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
+            <MaterialButton disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={translateText("preview._previous_slide")} on:click={() => moveSelection(true)}>
                 <Icon size={1.3} id="previous" white={!outputIsScripture} />
             </MaterialButton>
             <MaterialButton
                 disabled={Object.keys(verses[displayedBibleId] || {}).length > 0 &&
                     activeVerses.includes(Object.keys(verses[displayedBibleId] || {}).length.toString()) &&
                     (chapterId >= chapters[displayedBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[displayedBibleId].length + 1}`)}
-                title={$dictionary.preview?._next_slide}
+                title="preview._next_slide"
                 on:click={() => moveSelection(false)}
             >
                 <Icon size={1.3} id="next" white={!outputIsScripture} />
             </MaterialButton>
         {/if}
 
-        <MaterialButton disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
+        <MaterialButton disabled={$outLocked} title={outputIsScripture ? "preview._update [Ctrl+R]" : "menu._title_display"} on:click={() => playOrClearScripture(true)}>
             <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
         </MaterialButton>
 
         <div class="divider" />
 
-        <MaterialButton disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title={$dictionary.show?.[$scriptureMode === "grid" ? "grid" : "list"]}>
+        <MaterialButton disabled={history} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title="show.{[$scriptureMode === 'grid' ? 'grid' : 'list']}">
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </MaterialButton>
 
@@ -1315,13 +1328,13 @@
                     history = !history
                     scriptureHistoryUsed.set(true)
                 }}
-                title={$dictionary.popup?.history}
+                title="popup.history [Ctrl+H]"
             >
                 <Icon size={1.2} id="history" white={!currentHistory.length} />
             </MaterialButton>
         {/if}
 
-        <MaterialButton title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
+        <MaterialButton title="scripture.search [Ctrl+B]" on:click={() => (searchBibleActive = true)}>
             <Icon size={1.1} id="search" white />
         </MaterialButton>
     </FloatingInputs>

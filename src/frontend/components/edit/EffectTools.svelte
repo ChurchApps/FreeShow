@@ -7,10 +7,9 @@
     import { addToPos } from "../helpers/mover"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
-    import Color from "../inputs/Color.svelte"
-    import CombinedInput from "../inputs/CombinedInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import NumberInput from "../inputs/NumberInput.svelte"
+    import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import Tabs from "../main/Tabs.svelte"
     import EditValues from "./tools/EditValues.svelte"
     import { effectSections } from "./values/effects"
@@ -142,36 +141,30 @@
         {:else if active === "options"}
             <!-- canvas settings -->
             <div class="section">
-                <CombinedInput>
-                    <p><T id="edit.background_color" /></p>
-                    <Color
-                        bind:value={currentEffect.background}
-                        on:input={(e) => {
-                            effects.update((a) => {
-                                a[effectId].background = e.detail
-                                return a
-                            })
-                        }}
-                        enableNoColor
-                        allowGradients
-                    />
-                </CombinedInput>
-                <CombinedInput>
-                    <p><T id="edit.opacity" /></p>
-                    <NumberInput
-                        value={currentEffect.opacity ?? 1}
-                        max={1}
-                        step={0.01}
-                        decimals={2}
-                        inputMultiplier={100}
-                        on:change={(e) => {
-                            effects.update((a) => {
-                                a[effectId].opacity = Number(e.detail)
-                                return a
-                            })
-                        }}
-                    />
-                </CombinedInput>
+                <MaterialColorInput
+                    label="edit.background_color"
+                    value={currentEffect.background}
+                    on:input={(e) => {
+                        effects.update((a) => {
+                            a[effectId].background = e.detail
+                            return a
+                        })
+                    }}
+                    allowEmpty
+                    noLabel
+                />
+                <!-- allowGradients -->
+                <MaterialNumberInput
+                    label="edit.opacity"
+                    value={(currentEffect.opacity ?? 1) * 100}
+                    max={100}
+                    on:change={(e) => {
+                        effects.update((a) => {
+                            a[effectId].opacity = e.detail / 100
+                            return a
+                        })
+                    }}
+                />
             </div>
         {/if}
     </div>

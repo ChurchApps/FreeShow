@@ -1,7 +1,7 @@
 <script>
     import { createEventDispatcher, onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, playerVideos, special, volume } from "../../../stores"
+    import { currentWindow, focusMode, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
     import YouTubePlayer from "./YouTubePlayer.svelte"
 
@@ -71,7 +71,7 @@
 
         loaded = true
 
-        videoData.paused = false
+        videoData.paused = $focusMode
         // if live, it should not start from the beginning
         if (videoTime > 0) seekTo(videoTime)
         else

@@ -230,18 +230,18 @@ export function throttle(id: string, value: any, callback: (value: any) => void,
 }
 
 let limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
-export function limitUpdate(id: string, maxUpdatesMs: number = 0): Promise<boolean> {
+export function hasNewerUpdate(id: string, maxUpdatesMs: number = 0): Promise<boolean> {
     // resolve any existing updates as false as there is a newer one
     if (limited[id]) {
         clearTimeout(limited[id].timeout)
-        limited[id].pending(false)
+        limited[id].pending(true)
     }
 
     return new Promise((resolve) => {
         limited[id] = {
             timeout: setTimeout(() => {
                 delete limited[id]
-                resolve(true)
+                resolve(false)
             }, maxUpdatesMs),
             pending: resolve,
         }

@@ -10,6 +10,7 @@ import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from "../stores"
 import { setTempShows } from "./importHelpers"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "f"]
 const chorus = ["start_of_chorus", "soc"]
@@ -172,7 +173,7 @@ export function convertChordPro(data: any) {
                 text = text.replaceAll("\r", "")
 
                 const slideItems = slides[slides.length - 1].items
-                if (!slideItems.length) slideItems.push({ lines: [], style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;" })
+                if (!slideItems.length) slideItems.push({ lines: [], style: DEFAULT_ITEM_STYLE })
                 slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
             }
 

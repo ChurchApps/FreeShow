@@ -7,6 +7,7 @@ import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
+import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
@@ -54,6 +55,7 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
+    scriptures,
     selected,
     settingsTab,
     showRecentlyUsedProjects,
@@ -593,6 +595,22 @@ const clickActions = {
 
         popupData.set({ id })
         activePopup.set("category_action")
+    },
+    category_template: (obj: ObjData) => {
+        const id = obj.sel?.data[0]
+        if (!id) return
+
+        const selectedTemplate = get(categories)[id]?.template
+
+        popupData.set({ active: selectedTemplate, allowEmpty: true, trigger: (value) => setCategoryTemplate(value) })
+        activePopup.set("select_template")
+
+        function setCategoryTemplate(templateId: string) {
+            categories.update(a => {
+                a[id].template = templateId
+                return a
+            })
+        }
     },
     use_as_archive: (obj: ObjData) => {
         const categoryStores = {
@@ -1228,15 +1246,26 @@ const clickActions = {
     favourite: (obj: ObjData) => {
         if (!obj.sel) return
 
+        if (obj.sel.id === "category_scripture") {
+            const favourite: boolean = get(scriptures)[obj.sel.data[0]]?.favorite !== true
+            scriptures.update((a) => {
+                obj.sel!.data.forEach((id) => {
+                    a[id].favorite = favourite
+                })
+                return a
+            })
+            return
+        }
+
         const favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
-        obj.sel.data.forEach((card) => {
-            const path = card.path || card.id
-            media.update((a) => {
+        media.update((a) => {
+            obj.sel!.data.forEach((card) => {
+                const path = card.path || card.id
                 if (!a[path]) a[path] = { filter: "" }
                 if (obj.sel!.id === "audio") a[path].audio = true
                 a[path].favourite = favourite
-                return a
             })
+            return a
         })
     },
     effects_library_add: (obj: ObjData) => {
@@ -1276,6 +1305,18 @@ const clickActions = {
     },
 
     // live
+    startup_activate: (obj: ObjData) => {
+        if (obj.sel?.id !== "camera") return
+
+        let cameraIds: string[] = obj.sel.data.filter(a => a.type === "camera").map(a => a.id)
+        const currentlySelected = cameraManager.getStartupCameras()
+        const shouldActivate = !currentlySelected.includes(cameraIds[0])
+
+        if (shouldActivate) cameraIds = [...(new Set([...currentlySelected, ...cameraIds]))]
+        else cameraIds = currentlySelected.filter(id => !cameraIds.includes(id))
+
+        cameraManager.setStartupCameras(cameraIds)
+    },
     recording: (obj: ObjData) => {
         if (get(activeRecording)) {
             stopMediaRecorder()

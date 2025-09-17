@@ -3,6 +3,7 @@ import { splitIntoRows, type Box, type EditBoxSection } from "./boxes"
 export const slideFilterSections: { [key: string]: EditBoxSection } = {
     // background
     filters: {
+        name: "preview.background",
         alwaysOpen: true,
         inputs: splitIntoRows([
             { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },

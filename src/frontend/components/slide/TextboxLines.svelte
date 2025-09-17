@@ -7,6 +7,7 @@
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
+    import { createVirtualBreaks } from "../../show/slides"
 
     export let item: Item
     export let slideIndex = 0
@@ -38,7 +39,7 @@
     export let centerPreview = false
     export let revealed = -1
 
-    $: lines = clone(item?.lines || [])
+    $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
         lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
 

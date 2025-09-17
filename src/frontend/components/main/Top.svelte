@@ -152,7 +152,7 @@
 
     .unsaved {
         position: absolute;
-        inset-inline-start: 0;
+        left: 0;
         height: 100%;
         width: 5px;
         background-color: rgb(255 0 0 / 0.25);

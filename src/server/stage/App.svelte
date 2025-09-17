@@ -134,7 +134,7 @@
         font-size: 1.5em;
 
         height: 100%;
-        
+
         /* iOS Safari touch optimizations */
         touch-action: manipulation;
         -webkit-text-size-adjust: 100%; /* Prevents iOS Safari from auto-zooming */
@@ -190,7 +190,7 @@
     .clicked {
         position: absolute;
         bottom: 0;
-        inset-inline-start: 0;
+        left: 0;
         width: calc(100% - 20px);
         margin: 10px;
         padding: 10px;

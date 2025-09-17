@@ -32,3 +32,18 @@ function getLayersFromId(id: string) {
     if (Array.isArray(layers)) return layers
     return ["background"]
 }
+
+export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], _updater: any = null) {
+    if (!outputIds.length) outputIds = getActiveOutputs(get(outputs), false, true, true)
+
+    return outputIds.find(id => {
+        const output = get(outputs)[id]
+        if (!output || output.isKeyOutput || output.stageOutput) return false
+
+        const style = get(styles)[output.style || ""]
+        let layers = style?.layers
+        if (!Array.isArray(layers)) layers = ["background"]
+
+        return layers.includes("background") && style?.volume !== 0
+    }) || null
+}

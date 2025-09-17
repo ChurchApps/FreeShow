@@ -382,8 +382,8 @@ export const dropActions = {
         if (drag.id !== "slide") return
 
         drag.data.forEach(({ index }) => {
-            const ref = getLayoutRef()[index]
-            const slides: Slide[] = _show().get().slides
+            const ref = getLayoutRef()[index] || {}
+            const slides: { [key: string]: Slide } = _show().get().slides || {}
             const slide = ref.type === "child" ? slides[ref.parent!.id] : slides[ref.id]
             const activeTab: string | null = get(drawerTabsData)[get(activeDrawerTab)]?.activeSubTab
 

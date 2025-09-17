@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -10,11 +10,12 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import autosize from "../scripts/autosize"
     import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
+    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
 
     export let item: Item
     export let ref: {
@@ -118,6 +119,8 @@
             e.preventDefault()
             return
         }
+
+        // WIP replace with exising altKeys cut_in_half shortcuts.ts
 
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target?.closest(".item") || e.target?.closest(".quickEdit"))) {
@@ -315,25 +318,29 @@
     $: textFit = item?.textFit
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
-    $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
+    $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || !item.auto) return
+        if (isTyping || !loaded || !alignElem || (!item.auto && !item.textFit)) return
 
         if (loopStop) return
         loopStop = setTimeout(() => (loopStop = null), 200)
 
-        let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
+        if (ref.type === "stage") {
+            itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
+        }
+
+        let type = item?.textFit || "shrinkToFit"
         let defaultFontSize = itemFontSize
         let maxFontSize
 
-        if (ref.type === "stage") {
-            type = "growToFit"
-        }
+        // if (ref.type === "stage") {
+        //     type = "growToFit"
+        // }
 
         if (type === "growToFit") {
             defaultFontSize = 100
@@ -526,6 +533,8 @@
         }
     }
 
+    $: if ($activeTriggerFunction === "insert_virtual_break") paste({}, VIRTUAL_BREAK_CHAR)
+
     // paste
     let pasting = false
     function paste(e: any, clipboardText = "") {
@@ -535,6 +544,11 @@
         pasting = true
 
         let sel = getSelectionRange()
+        if (!sel.length && lastCaretPos.line > -1) {
+            // create range from lastCaretPos (probably only used with "insert_virtual_break")
+            const linesLength = getNewLines().length
+            sel = [...Array(linesLength)].map((_, i) => (i === lastCaretPos.line ? { start: lastCaretPos.pos, end: lastCaretPos.pos } : ({} as any)))
+        }
         let caret = { line: 0, pos: 0 }
         let emptySelection = !sel.filter((a) => Object.keys(a).length).length
 

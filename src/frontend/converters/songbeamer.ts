@@ -9,6 +9,7 @@ import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { categories, globalTags } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface ImportSettings {
     category: string
@@ -472,7 +473,7 @@ function parseSongbeamerSlides(sections: string[], metadata: typeof songbeamerMe
 
 function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
     const textbox: Item = {
-        style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
+        style: DEFAULT_ITEM_STYLE,
         lines: [],
     }
     let lineCount = 0
@@ -514,7 +515,7 @@ function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
 }
 function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: number): Item {
     const textbox: Item = {
-        style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
+        style: DEFAULT_ITEM_STYLE,
     }
     if (language < 0 || language >= songbeamerSlide.lines.length) {
         return textbox
@@ -679,7 +680,7 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
             notes: "",
             items: [
                 {
-                    style: "top:50px;inset-inline-start:50px;height:980px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     lines: lineObjects,
                 },
             ],

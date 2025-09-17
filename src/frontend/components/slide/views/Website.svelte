@@ -152,7 +152,7 @@
         z-index: 1;
         position: absolute;
         bottom: 0;
-        inset-inline-start: 0;
+        left: 0;
 
         background-color: black;
         border-start-end-radius: 3px;

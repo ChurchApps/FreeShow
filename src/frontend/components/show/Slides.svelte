@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
-    import { limitUpdate, wait } from "../../utils/common"
+    import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
+    import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
@@ -57,7 +57,7 @@
     $: updateOffset({ $outputs })
     async function updateOffset(_updater: any) {
         if (!loaded || !scrollElem) return
-        if (!(await limitUpdate("SHOWS_SCROLL_OFFSET", 50))) return
+        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 50)) return
 
         let output = $outputs[activeOutputs[0]] || {}
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
@@ -158,6 +158,9 @@
         if (!loaded) return
 
         let showTemplate = currentShow?.settings?.template || ""
+        // get category template if no show template
+        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow.category || ""]?.template || ""
+
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
 
@@ -193,15 +196,16 @@
 
         function capitalize(value: string) {
             $special.capitalize_words.split(",").forEach((word) => {
-                let newWord = word.trim().toLowerCase()
+                let newWord = word.trim()
                 if (!newWord.length) return
 
-                const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
+                // match whole words, respecting Unicode letters (accented characters)
+                const regEx = new RegExp(`(?<!\\p{L})${newWord.toLowerCase()}(?!\\p{L})`, "giu")
                 value = value.replace(regEx, (match) => {
                     // always capitalize: newWord.charAt(0).toUpperCase() + newWord.slice(1)
                     // use the input case styling (meaning all uppercase/lowercase also works)
                     // but don't change anything if the text is already fully uppercase
-                    return match === match.toUpperCase() ? match : word.trim()
+                    return match === match.toUpperCase() ? match : newWord
                 })
             })
 

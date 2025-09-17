@@ -136,6 +136,7 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
 //     return list
 // }
 
+const ONE_HOUR = 3600000 // 60 * 60 * 1000
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime = 0
     if (!timer) return currentTime
@@ -144,16 +145,46 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
-        const todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
-        currentTime = (todayTime.getTime() - today.getTime()) / 1000
+        currentTime = getTimeUntilClock(timer.time!, today)
     } else if (timer.type === "event") {
-        const eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
+        let currentEvent = get(events)[timer.event || ""] || {}
+        // if repeating event & has passed more than an hour ago
+        if (currentEvent.group && (new Date(currentEvent.from)?.getTime() || 0) < (today.getTime() - ONE_HOUR)) {
+            const newEvent = getClosestUpcommingEvent(currentEvent.group)
+            if (newEvent) currentEvent = newEvent
+        }
+
+        const eventTime = new Date(currentEvent.from)?.getTime() || 0
         currentTime = (eventTime - today.getTime()) / 1000
     }
 
     if (currentTime < 0 && !timer.overflow) currentTime = 0
 
     return currentTime
+}
+
+function getClosestUpcommingEvent(eventGroup: string) {
+    const eventsList = keysToID(get(events)).filter(a => a.group === eventGroup)
+    if (!eventsList.length) return null
+
+    const today = Date.now()
+
+    let closestTime: number = 0
+    let closestId: string = ""
+    eventsList.forEach(a => {
+        const currentTime = (new Date(a?.from)?.getTime() || 0)
+        if (currentTime > today && (!closestTime || currentTime < closestTime)) {
+            closestTime = currentTime
+            closestId = a.id
+        }
+    })
+
+    return get(events)[closestId]
+}
+
+export function getTimeUntilClock(time: string, today: Date = new Date(), _updater: any = null) {
+    const todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), time].join(" "))
+    return (todayTime.getTime() - today.getTime()) / 1000
 }
 
 // ACTIONS
@@ -180,7 +211,7 @@ export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedSt
         return a
     })
 
-    if (index < 0) customActionActivation(`timer_start___` + id)
+    if (index < 0) customActionActivation("timer_start", id)
 
     // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
 }
