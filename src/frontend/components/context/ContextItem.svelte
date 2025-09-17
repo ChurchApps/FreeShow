@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { cameraManager } from "../../media/cameraManager"
     import {
         actions,
         activeEdit,
@@ -205,6 +206,11 @@
 
             enabled = isEnabled
             menu.label = isEnabled ? "media.effects_library_remove" : "media.effects_library_add"
+        },
+        startup_activate: () => {
+            const startupCameras = cameraManager.getStartupCameras()
+            const camId = $selected.data[0].id
+            enabled = startupCameras.includes(camId)
         },
         lock_to_output: () => {
             let id = $selected.data[0]

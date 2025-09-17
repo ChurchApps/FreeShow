@@ -1,29 +1,21 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { getMediaStyle } from "../helpers/media"
+    import { createEventDispatcher, onDestroy } from "svelte"
+    import { cameraManager } from "../../media/cameraManager"
     import { media } from "../../stores"
+    import { getMediaStyle } from "../helpers/media"
 
     export let id: string
     export let groupId: string
     let videoElem: HTMLVideoElement | undefined
 
-    $: constraints = {
-        video: {
-            deviceId: { exact: id },
-            groupId,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-        }
+    $: if (id) updateCamera()
+    async function updateCamera() {
+        const cameraStream = await cameraManager.getCameraStream(id, groupId)
+        if (typeof cameraStream === "string" || !videoElem) return
+
+        videoElem.srcObject = cameraStream
+        videoElem.onloadedmetadata = loaded
     }
-
-    onMount(() => {
-        navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-            if (!videoElem) return
-
-            videoElem.srcObject = stream
-            videoElem.onloadedmetadata = loaded
-        })
-    })
 
     onDestroy(stopStream)
     function stopStream() {

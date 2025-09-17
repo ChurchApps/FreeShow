@@ -7,6 +7,7 @@ import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
+import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
@@ -1304,6 +1305,18 @@ const clickActions = {
     },
 
     // live
+    startup_activate: (obj: ObjData) => {
+        if (obj.sel?.id !== "camera") return
+
+        let cameraIds: string[] = obj.sel.data.filter(a => a.type === "camera").map(a => a.id)
+        const currentlySelected = cameraManager.getStartupCameras()
+        const shouldActivate = !currentlySelected.includes(cameraIds[0])
+
+        if (shouldActivate) cameraIds = [...(new Set([...currentlySelected, ...cameraIds]))]
+        else cameraIds = currentlySelected.filter(id => !cameraIds.includes(id))
+
+        cameraManager.setStartupCameras(cameraIds)
+    },
     recording: (obj: ObjData) => {
         if (get(activeRecording)) {
             stopMediaRecorder()
