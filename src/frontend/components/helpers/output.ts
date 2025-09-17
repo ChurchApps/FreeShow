@@ -793,7 +793,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
-    templateItems = clone(templateItems).reverse()
+    templateItems = clone(templateItems) // .reverse()
 
     const sorted = sortItemsByType(templateItems)
     const sortedTemplateItems = clone(sorted)
@@ -921,7 +921,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
-    return newSlideItems.reverse()
+    return newSlideItems // .reverse()
 }
 
 export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false) {
