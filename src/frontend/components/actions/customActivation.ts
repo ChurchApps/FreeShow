@@ -7,7 +7,7 @@
 // That's it! :)
 
 export const customActionActivations = [
-    { id: "startup", name: "actions.activate_on_startup", icon: "upload" },
+    { id: "startup", name: "actions.activate_on_startup", icon: "startup" },
     { id: "save", name: "actions.activate_save", icon: "save" },
 
     { id: "show_created", name: "actions.activate_show_created", icon: "slide" },

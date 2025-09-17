@@ -1264,7 +1264,6 @@
         "startup_projects_list": "Show the projects list on startup",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
-        "keep_cameras_warm": "Keep cameras active on startup",
         "clear_media_when_finished": "Clear media when finished",
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
@@ -1620,20 +1619,5 @@
     "chums": {
         "sync_categories": "Sync categories",
         "sync_categories_description": "Select which categories to sync as songs with Chums"
-    },
-    "status": {
-        "camera_warming": "Camera Warming",
-        "no_cameras_found": "No cameras found"
-    },
-    "camera_selector": {
-        "title": "Select Cameras to Initialize",
-        "loading": "Loading cameras...",
-        "refresh": "Refresh camera list",
-        "no_cameras_found": "No cameras found on this device",
-        "failed_to_load": "Failed to load cameras. Check permissions.",
-        "no_cameras": "No cameras available",
-        "select_all": "Select All",
-        "select_none": "Select None",
-        "selected_count": "Selected {{selected}} of {{total}} cameras"
     }
 }

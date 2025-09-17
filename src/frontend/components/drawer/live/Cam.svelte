@@ -1,23 +1,16 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
-    import { sendMain } from "../../../IPC/main"
-    import { dictionary, media, os, outputs } from "../../../stores"
+    import { type CameraData, cameraManager } from "../../../media/cameraManager"
+    import { dictionary, media, os, outputs, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { cameraManager } from "../../helpers/cameraManager"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
-    interface Cam {
-        id: string
-        name: string
-        group: string
-    }
-    export let cam: Cam
+    export let cam: CameraData
     export let item = false
     export let style = ""
     export let showPlayOnHover = true
@@ -26,70 +19,34 @@
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
     let videoElem: HTMLVideoElement | undefined
-
-    // https://stackoverflow.com/questions/33761770/what-constraints-should-i-pass-to-getusermedia-in-order-to-get-two-video-media
-    // https://blog.addpipe.com/getusermedia-video-constraints/
-    let constraints = {
-        video: {
-            deviceId: { exact: cam.id },
-            groupId: cam.group,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-            // aspectRatio: 1.777777778,
-            // frameRate: { max: 30 },
-            // facingMode: { exact: "user" }
-        }
-    }
-
     let error: null | string = null
-
     let retryTimeout: NodeJS.Timeout | null = null
 
     onMount(capture)
-    function capture() {
+    async function capture() {
         error = ""
 
-        // Try to get a warmed camera stream first
-        const warmStream = cameraManager.getWarmCamera(cam.id)
-        if (warmStream) {
-            console.info(`Using warmed camera stream for ${cam.name}`)
-            if (videoElem) {
-                videoElem.srcObject = warmStream
-                loaded = true
-                videoElem.play()
-                return
-            }
+        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group)
+        if (typeof cameraStream === "string") {
+            error = cameraStream
+            loaded = true
+
+            // retry
+            if ($os.platform === "darwin") retryTimeout = setTimeout(capture, 5000)
+        } else {
+            if (!videoElem) return
+
+            videoElem.srcObject = cameraStream
+            loaded = true
+            videoElem.play()
         }
-
-        // Fallback to normal camera initialization
-        navigator.mediaDevices
-            .getUserMedia(constraints)
-            .then((mediaStream) => {
-                if (!videoElem) return
-
-                videoElem.srcObject = mediaStream
-                loaded = true
-                videoElem.play()
-            })
-            .catch((err) => {
-                let msg: string = err.message
-                if (err.name === "NotReadableError") {
-                    msg += "<br />Maybe it's in use by another program."
-                    sendMain(Main.ACCESS_CAMERA_PERMISSION)
-                }
-                error = err.name + ":<br />" + msg
-                loaded = true
-
-                // retry
-                if ($os.platform === "darwin") retryTimeout = setTimeout(capture, 5000)
-            })
     }
 
     onDestroy(() => {
         if (retryTimeout) clearTimeout(retryTimeout)
 
         if (!videoElem) return
-        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
+        cameraManager.stopTracks(videoElem.srcObject as MediaStream)
         videoElem.srcObject = null
     })
 
@@ -124,6 +81,15 @@
             return a
         })
     }
+
+    let startupCameras: string[] = []
+    $: if ($special) startupCameras = cameraManager.getStartupCameras()
+    function removeFromStartup(cameraId: string) {
+        iconClicked = setTimeout(() => (iconClicked = null), 50)
+
+        const newCameraIds = startupCameras.filter((id) => id !== cameraId)
+        cameraManager.setStartupCameras(newCameraIds)
+    }
 </script>
 
 {#if item}
@@ -137,6 +103,16 @@
         <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
             <!-- icons -->
             <div class="icons">
+                {#if startupCameras.includes(cam.id)}
+                    <div style="max-width: 100%;">
+                        <div class="button">
+                            <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeFromStartup(cam.id)}>
+                                <Icon id="startup" size={0.9} white />
+                            </Button>
+                        </div>
+                    </div>
+                {/if}
+
                 {#if !!mediaStyle.filter?.length || $media[cam.id]?.fit || mediaStyle.flipped || mediaStyle.flippedY || Object.keys(mediaStyle.cropping || {}).length}
                     <div style="max-width: 100%;">
                         <div class="button">

@@ -8,8 +8,6 @@
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import CameraStatus from "../CameraStatus.svelte"
-    import CameraSelector from "../CameraSelector.svelte"
 
     function updateSpecial(value: any, key: string, allowEmpty = false) {
         special.update((a) => {
@@ -75,15 +73,6 @@
 {#if $os.platform !== "darwin"}
     <MaterialToggleSwitch label="settings.hide_cursor_in_output" checked={$special.hideCursor} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "hideCursor")} />
 {/if}
-<MaterialToggleSwitch label="settings.keep_cameras_warm" checked={$special.keepCamerasWarm} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "keepCamerasWarm")} />
-
-<!-- Camera selector component - shown when camera warming is enabled -->
-{#if $special.keepCamerasWarm}
-    <CameraSelector />
-{/if}
-
-<!-- Camera status component -->
-<CameraStatus />
 
 <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
 
