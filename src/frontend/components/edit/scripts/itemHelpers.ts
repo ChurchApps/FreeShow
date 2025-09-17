@@ -89,8 +89,8 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         const size = 300
         let style = getStyles(newData.style)
         const top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
-        const insetInlineStart: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
-        style = { ...style, top, insetInlineStart, width: size + "px", height: size + "px", color: options.color }
+        const left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
+        style = { ...style, top, left, width: size + "px", height: size + "px", color: options.color }
         let styleString = ""
         Object.entries(style).forEach(([key, value]) => {
             styleString += `${key}: ${value};`

@@ -129,12 +129,12 @@
     <!-- <h6 style="margin-top: 10px;"><T id="stage.output" /></h6> -->
     <div class="section">
         {#each dynamicItems as item}
-            {@const title = (item.id === "slide_text" && slideTextItems.length === 1 ? "stage.next_slide_text" : "items." + item.name || item.id) + (item.id === "slide_text" && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : "")}
+            {@const title = (item.id === "slide_text" && slideTextItems.length === 1 ? "stage.next_slide_text" : "items." + (item.name || item.id)) + (item.id === "slide_text" && slideTextItems.length > 1 ? ` (+${slideTextItems.length})` : "")}
             {@const disabled = !!(item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount)}
 
-            <MaterialButton variant="outlined" {disabled} {title} style="width: 100%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+            <MaterialButton variant="outlined" {disabled} title="settings.add: <b>{title}</b>" style="width: 100%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
                 <Icon id={item.icon || item.id} />
-                {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
+                {#if !$labelsDisabled}{translateText(title)}{/if}
             </MaterialButton>
         {/each}
     </div>

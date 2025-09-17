@@ -35,6 +35,7 @@
 
         const MAX_WIDTH = 250
         const TOOLTIP_HEIGHT = 80 // 40 // approximate height
+        const OFFSET = 12
 
         let x = e.clientX
         let y = e.clientY
@@ -49,9 +50,15 @@
             // so minimum x is tooltip width + margin from left viewport edge
             x = Math.max(x, MAX_WIDTH)
             x = Math.min(x, window.innerWidth)
+
+            // add offset to not show behind mouse
+            x -= OFFSET * 0.7
         } else {
             // Normal: x is left edge of tooltip
             x = Math.min(Math.max(x, 0), window.innerWidth - MAX_WIDTH)
+
+            // add offset to not show behind mouse
+            x += OFFSET
         }
 
         // Clamp Y

@@ -301,7 +301,15 @@
                                 {@const values = getValues(input)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} />
+                                    <MaterialFontDropdown
+                                        label={values.label}
+                                        {value}
+                                        style={values.style}
+                                        fontStyleValue={input.styleValue}
+                                        on:change={(e) => changed(e, input)}
+                                        on:fontStyle={(e) => changed(e, { ...input, key: "font" })}
+                                        enableFontStyles
+                                    />
                                 {:else if input.type === "toggle"}
                                     <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />

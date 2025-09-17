@@ -187,7 +187,7 @@ export const textSections: { [key: string]: EditBoxSection } = {
 
         inputs: [
             [
-                { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 4;" } },
+                { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 4;max-width: 80%;" } },
                 { id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.text_color", allowGradients: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } }
             ],
             [

@@ -72,7 +72,7 @@
         })
     }
 
-    const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
+    const setRemotePassword = (e: any) => remotePassword.set(e.detail)
 
     // output
     $: outputsList = getList(clone($outputs))

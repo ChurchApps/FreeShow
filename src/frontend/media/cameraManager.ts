@@ -110,8 +110,12 @@ class CameraManager {
         }
     }
 
+    failed: string[] = []
     private async warmUpCamera(camera: CameraData, { retryCount, lastError }: any = {}) {
         if (this.activeCameras.has(camera.id)) return
+
+        const activeCamera: ActiveCamera = { id: camera.id, name: camera.name, groupId: camera.group, stream: null, videoElement: null, retryCount: retryCount || 0, lastError: lastError || null }
+        this.activeCameras.set(camera.id, activeCamera)
 
         try {
             console.info(`Warming up camera: ${camera.name}`)
@@ -141,16 +145,11 @@ class CameraManager {
 
             await videoElement.play()
 
-            const activeCamera: ActiveCamera = {
-                id: camera.id,
-                name: camera.name,
-                groupId: camera.group,
-                stream,
-                videoElement,
-                retryCount: retryCount || 0,
-                lastError: lastError || null
-            }
+            const activeCamera = this.activeCameras.get(camera.id)
+            if (!activeCamera) return
 
+            activeCamera.stream = stream
+            activeCamera.videoElement = videoElement
             this.activeCameras.set(camera.id, activeCamera)
             console.info(`Camera ${camera.name} started`)
 
@@ -161,7 +160,12 @@ class CameraManager {
                     this.retryCameraWarming(camera)
                 })
             })
+
+            const didFail = this.failed.indexOf(camera.id)
+            if (didFail > -1) this.failed.splice(didFail, 1)
         } catch (error) {
+            if (!this.failed.includes(camera.id)) this.failed.push(camera.id)
+
             console.error(`Failed to warm up camera ${camera.name}:`, error)
             this.scheduleRetry(camera, error.message)
         }
@@ -169,6 +173,8 @@ class CameraManager {
 
     // Retry camera warming with exponential backoff
     private scheduleRetry(camera: CameraData, errorMessage: string) {
+        if (!this.activeCameras.has(camera.id)) return
+
         const existingCamera = this.activeCameras.get(camera.id)
         const retryCount = existingCamera ? existingCamera.retryCount + 1 : 1
 
@@ -186,13 +192,15 @@ class CameraManager {
     }
 
     private async retryCameraWarming(camera: CameraData, retryCount: number = 0, lastError: string = '') {
+        if (!this.activeCameras.has(camera.id)) return
+
         this.cleanupCamera(camera.id)
         await this.warmUpCamera(camera, { retryCount, lastError })
     }
 
     async getCameraStream(cameraId: string, groupId?: string) {
         // get existing "warmed" camera
-        const warmStream = cameraManager.getWarmCamera(cameraId)
+        const warmStream = this.getWarmCamera(cameraId)
         if (warmStream) return warmStream
 
         groupId = groupId || (await this.getCameraFromId(cameraId))?.group
@@ -266,6 +274,8 @@ class CameraManager {
 
     private async checkAndRestartDeadCameras() {
         for (const camera of this.activeCameras.values()) {
+            if (this.failed.includes(camera.id)) return
+
             if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some(track => track.readyState === 'ended')) {
                 console.warn(`Camera ${camera.name} stream is not active, restarting...`)
                 await this.retryCameraWarming({ id: camera.id, name: camera.name, group: camera.groupId })

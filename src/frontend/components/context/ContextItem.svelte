@@ -209,8 +209,8 @@
         },
         startup_activate: () => {
             const startupCameras = cameraManager.getStartupCameras()
-            const camId = $selected.data[0].id
-            enabled = startupCameras.includes(camId)
+            const camId = $selected.data[0]?.id
+            enabled = camId && startupCameras.includes(camId)
         },
         lock_to_output: () => {
             let id = $selected.data[0]

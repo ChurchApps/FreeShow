@@ -60,7 +60,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         actionId = getActionTriggerId(actionId)
 
         if (actionId === "wait") {
-            await wait(triggerData.number * 1000)
+            await wait((triggerData.number || 0) * 1000)
             return
         }
 
