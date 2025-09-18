@@ -31,7 +31,16 @@
         canvas.height = height * 1.2
     })
 
-    $: if (capture) updateCanvas()
+    let lastUpdate = 0
+    const frameRateLimit = 1000 / 30 // Limit to 30 FPS
+    $: if (capture) throttledUpdateCanvas()
+    function throttledUpdateCanvas() {
+        const now = Date.now()
+        if (now - lastUpdate < frameRateLimit) return
+        lastUpdate = now
+        updateCanvas()
+    }
+
     async function updateCanvas() {
         if (!canvas) return
 
@@ -39,9 +48,11 @@
         const pixels = new ImageData(arr, capture.size.width, capture.size.height)
         const bitmap = await createImageBitmap(pixels)
 
-        if (!canvas) return
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+
+        // Clean up bitmap to prevent memory leaks
+        bitmap.close()
     }
 </script>
 

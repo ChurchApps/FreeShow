@@ -38,8 +38,6 @@
     // Add frame rate limiting to reduce performance impact
     let lastUpdate = 0
     const frameRateLimit = 1000 / 30 // Limit to 30 FPS
-
-    // TODO: render in real time this...
     $: if (capture) throttledUpdateCanvas()
     function throttledUpdateCanvas() {
         const now = Date.now()
@@ -47,7 +45,7 @@
         lastUpdate = now
         updateCanvas()
     }
-    
+
     async function updateCanvas() {
         if (!canvas || !capture) return
 
@@ -58,7 +56,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-            
+
             // Clean up bitmap to prevent memory leaks
             bitmap.close()
         } catch (error) {
