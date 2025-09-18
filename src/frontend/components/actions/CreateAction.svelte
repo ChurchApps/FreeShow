@@ -22,7 +22,7 @@
         triggers,
         variables
     } from "../../stores"
-    import { translate, translateText } from "../../utils/language"
+    import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -97,7 +97,7 @@
         ...Object.keys(API_ACTIONS)
             .map((id) => {
                 let data = actionData[id] || {}
-                let name = translate(data.name || "") || id
+                let name = translateText(data.name || "") || id
                 let icon = data.icon || "actions"
                 let common = !!data.common
 

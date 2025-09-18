@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeShow, dictionary, shows, templates } from "../../stores"
-    import { translate } from "../../utils/language"
+    import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { getActionName, getActionTriggerId } from "../actions/actions"
     import { clone } from "../helpers/array"
@@ -95,13 +95,13 @@
             {@const customData = actionData[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
             {@const specialData = action?.customData?.[actionId] || action?.customData?.[action.triggers?.[0]] || {}}
-            {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
+            {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
                 <Button
                     style="padding: 3px;{getCustomStyle(specialData)}"
                     redHover
-                    title="{$dictionary.actions?.remove}: <b>{translate(customData.name)}</b>{action.name && action.name !== translate(customData.name) ? `\n${action.name}` : ''}"
+                    title="{$dictionary.actions?.remove}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}"
                     {zoom}
                     on:click={(e) => deleteSlideAction(e, action.id || actionId)}
                 >

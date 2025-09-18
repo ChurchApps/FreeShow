@@ -3,7 +3,8 @@ import { uid } from "uid"
 import type { Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
-import { activeDays, calendarAddShow, dictionary, events, showsCache } from "../../../stores"
+import { activeDays, calendarAddShow, events, showsCache } from "../../../stores"
+import { translateText } from "../../../utils/language"
 import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates, sortByTime } from "../../helpers/array"
 import { loadShows } from "../../helpers/setShow"
@@ -53,7 +54,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
     currentEvents.forEach(createEventSlide)
     function createEventSlide(day: any) {
         const id = uid()
-        let textDay = new Date(day.date).getDate() + ". " + get(dictionary).month?.[new Date(day.date).getMonth() + 1]
+        let textDay = new Date(day.date).getDate() + ". " + translateText("month." + new Date(day.date).getMonth() + 1)
         let group: string = textDay
 
         const from = new Date(day.events[0].from)
@@ -167,7 +168,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
     const show: Show = clone(_show(showId).get() || new ShowObj(false, "events", layoutId, new Date().getTime(), false))
 
     show.slides = slides
-    show.layouts = { [layoutId]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
+    show.layouts = { [layoutId]: { name: translateText("example.default"), notes: "", slides: layouts } }
     show.media = showMedia
 
     if (showId) return { show }
@@ -183,10 +184,10 @@ function getEventStringOverMultipleDays(textDay, [day, from, to]: Date[]): strin
     const startAndEndSameYear = from.getFullYear() === to.getFullYear()
     const startAndEndSameMonth = from.getMonth() === to.getMonth()
 
-    if (startAndEndSameMonth && startAndEndSameYear) return `${new Date(day).getDate()}.-${to.getDate()}. ${get(dictionary).month?.[to.getMonth() + 1]}`
+    if (startAndEndSameMonth && startAndEndSameYear) return `${new Date(day).getDate()}.-${to.getDate()}. ${translateText("month." + to.getMonth() + 1)}`
 
     if (!startAndEndSameYear) textDay += " " + from.getFullYear()
-    textDay += ` - ${to.getDate()}. ${get(dictionary).month?.[to.getMonth() + 1]}`
+    textDay += ` - ${to.getDate()}. ${translateText("month." + to.getMonth() + 1)}`
     if (!startAndEndSameYear) textDay += " " + to.getFullYear()
 
     return textDay
@@ -197,11 +198,11 @@ function getDayNameIfCloseToToday(day: Date): string {
     const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const daysUntilEvent = Math.floor((new Date(day).getTime() - todayWithoutTime.getTime()) / MILLISECONDS_IN_A_DAY)
 
-    if (daysUntilEvent === 0) return get(dictionary).calendar?.today || ""
-    if (daysUntilEvent === 1) return get(dictionary).calendar?.tomorrow || ""
+    if (daysUntilEvent === 0) return translateText("calendar.today")
+    if (daysUntilEvent === 1) return translateText("calendar.tomorrow")
     if (daysUntilEvent < 7 && daysUntilEvent > 0) {
         const weekDay = new Date(day).getDay() || 7
-        const dayString = get(dictionary).weekday?.[weekDay] || ""
+        const dayString = translateText("weekday." + weekDay)
 
         return dayString[0].toUpperCase() + dayString.slice(1, dayString.length)
     }

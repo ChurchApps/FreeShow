@@ -12,7 +12,6 @@ import {
     activeProject,
     activeTimers,
     audioPlaylists,
-    dictionary,
     draw,
     drawSettings,
     drawTool,
@@ -110,7 +109,7 @@ export function selectProjectByIndex(index: number) {
     // select project
     const selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
     if (!selectedProject) {
-        newToast(get(dictionary).toast?.midi_no_project + " " + index)
+        newToast("toast.midi_no_project " + index)
         return
     }
 
@@ -137,7 +136,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
     if (!showRef) return newToast("toast.midi_no_show")
 
     const slideRef = showRef[data.index]
-    if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + data.index)
+    if (!slideRef) return newToast("toast.midi_no_slide " + data.index)
 
     outputSlide(showRef, data)
 }

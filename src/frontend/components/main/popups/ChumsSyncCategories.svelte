@@ -2,13 +2,13 @@
     import { keysToID, sortByName } from "../../../components/helpers/array"
     import T from "../../../components/helpers/T.svelte"
     import { categories, chumsSyncCategories, shows } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     const mappedCategories = keysToID($categories)
         .filter((a) => !a.isArchive && a.name)
         .map((category) => {
-            const name = category.default ? translate(category.name) || category.name : category.name
+            const name = category.default ? translateText(category.name) || category.name : category.name
             const count = Object.values($shows).filter((show) => show.category === category.id).length
             return { id: category.id, name, icon: category.icon, count }
         })

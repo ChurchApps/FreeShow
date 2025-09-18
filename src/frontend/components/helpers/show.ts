@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
 import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
+import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
@@ -8,7 +9,7 @@ import { _show } from "./shows"
 
 // check if name exists and add number
 export function checkName(name = "", showId = "") {
-    if (!name || typeof name !== "string") name = get(dictionary).main?.unnamed || "Unnamed"
+    if (!name || typeof name !== "string") name = translateText("main.unnamed")
     name = formatToFileName(name)
 
     let number = 1
@@ -135,11 +136,11 @@ export function getCustomMetadata() {
 }
 
 export const metadataDisplayValues = [
-    { id: "never", name: "$:show_at.never:$" },
-    { id: "first", name: "$:show_at.first:$" },
-    { id: "last", name: "$:show_at.last:$" },
-    { id: "first_last", name: "$:show_at.first_last:$" },
-    { id: "always", name: "$:show_at.always:$" }
+    { id: "never", name: "show_at.never" },
+    { id: "first", name: "show_at.first" },
+    { id: "last", name: "show_at.last" },
+    { id: "first_last", name: "show_at.first_last" },
+    { id: "always", name: "show_at.always" }
 ]
 
 // create new slides

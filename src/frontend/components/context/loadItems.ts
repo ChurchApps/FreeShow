@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
 import {
+    actions,
     actionTags,
     activeActionTagFilter,
     activeEdit,
@@ -13,7 +14,6 @@ import {
     groups,
     media,
     mediaTags,
-    actions,
     outputs,
     overlays,
     selected,
@@ -22,7 +22,7 @@ import {
     variables,
     variableTags
 } from "../../stores"
-import { translate } from "../../utils/language"
+import { translateText } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
 import { getActionName, getActionTriggerId } from "../actions/actions"
@@ -254,9 +254,9 @@ const loadActions = {
                     const triggerId = getActionTriggerId(action.triggers?.[0])
                     const customData = actionData[triggerId] || {}
                     const actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
-                    const customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
+                    const customName = getActionName(triggerId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")
 
-                    const label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
+                    const label = translateText(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
                     const icon = actionData[triggerId]?.icon || "actions"
 
                     return { id: action.id || triggerId, label, translate: false, icon, type: "action" }
@@ -341,8 +341,8 @@ function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media")
 
 function sortItemsByLabel(items: ContextMenuItem[]) {
     return items.sort((a, b) => {
-        const aName = a.translate ? translate(a.label) : a.label
-        const bName = b.translate ? translate(b.label) : b.label
+        const aName = a.translate ? translateText(a.label) : a.label
+        const bName = b.translate ? translateText(b.label) : b.label
 
         return aName.localeCompare(bName)
     })

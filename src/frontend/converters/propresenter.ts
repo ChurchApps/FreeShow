@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout, Line, Slide, SlideData } from "../../types/Show"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
+import { translateText } from "../utils/language"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
+import { activePopup, alertMessage, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 export function convertProPresenter(data: any) {
     alertMessage.set("popup.importing")
@@ -101,7 +102,7 @@ export function convertProPresenter(data: any) {
 
             layouts.forEach((layout: any, i: number) => {
                 show.layouts[i === 0 ? layoutID : layout.id] = {
-                    name: layout.name || get(dictionary).example?.default || "",
+                    name: layout.name || translateText("example.default"),
                     notes: i === 0 ? song["@notes"] || "" : "",
                     slides: layout.slides
                 }

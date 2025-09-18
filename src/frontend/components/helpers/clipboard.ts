@@ -6,11 +6,13 @@ import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import {
+    actions,
     activeDays,
     activeDrawerTab,
     activePage,
     activePopup,
     activeProject,
+    activeRename,
     activeShow,
     activeStage,
     audioFolders,
@@ -19,17 +21,18 @@ import {
     categories,
     clipboard,
     currentOutputSettings,
-    dictionary,
     drawerTabsData,
+    effects,
     events,
     focusedArea,
     folders,
     media,
     mediaFolders,
-    actions,
     outputs,
     overlayCategories,
     overlays,
+    popupData,
+    profiles,
     projects,
     refreshEditSlide,
     scriptures,
@@ -46,13 +49,10 @@ import {
     timers,
     triggers,
     variables,
-    videoMarkers,
-    effects,
-    profiles,
-    activeRename,
-    popupData
+    videoMarkers
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
+import { translateText } from "../../utils/language"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
@@ -62,10 +62,10 @@ import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
+import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { select } from "./select"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -1128,7 +1128,7 @@ const duplicateActions = {
         data.forEach(({ id }) => {
             const theme = clone(get(themes)[id])
             let name = theme.name
-            if (theme.default) name = get(dictionary).themes?.[name] || name
+            if (theme.default) name = translateText("themes." + name)
 
             history({ id: "UPDATE", newData: { data: theme, replace: { default: false, name: name + " 2" } }, location: { page: "settings", id: "settings_theme" } })
         })

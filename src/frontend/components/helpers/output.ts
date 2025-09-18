@@ -16,7 +16,6 @@ import {
     categories,
     currentOutputSettings,
     currentWindow,
-    dictionary,
     disabledServers,
     effects,
     lockedOverlays,
@@ -42,6 +41,7 @@ import {
 } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { newToast } from "../../utils/common"
+import { translateText } from "../../utils/language"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { videoExtensions } from "../../values/extensions"
@@ -654,7 +654,7 @@ export function addOutput(onlyFirst = false, styleId = "") {
         let n = 0
         while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
-        if (onlyFirst) output[id].name = get(dictionary).theme?.primary || "Primary"
+        if (onlyFirst) output[id].name = translateText("theme.primary")
 
         // show
         // , rate: get(special).previewRate || "auto"

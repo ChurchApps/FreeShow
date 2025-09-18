@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { REMOTE } from "../../../types/Channels"
 import { ShowObj } from "../../classes/Show"
 import {
     activeDrawerTab,
@@ -35,18 +36,18 @@ import {
     theme,
     themes
 } from "../../stores"
+import { translateText } from "../../utils/language"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { EMPTY_CATEGORY, EMPTY_EFFECT, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
+import { addToPos } from "./mover"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
-import { addToPos } from "./mover"
-import { REMOTE } from "../../../types/Channels"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: { ...EMPTY_CATEGORY, icon: tabId === "shows" ? "song" : null },
@@ -361,7 +362,7 @@ export const _updaters = {
             if (get(drawerTabsData).shows?.activeSubTab !== "all") replacer.category = get(drawerTabsData).shows?.activeSubTab
 
             // name
-            replacer.name = checkName(get(dictionary).main?.unnamed || "Unnamed")
+            replacer.name = checkName(translateText("main.unnamed"))
 
             // update remote project shows data, so the new show is properly added
             setTimeout(() => window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) }))
@@ -555,7 +556,7 @@ export const _updaters = {
 
                 // create output if no normal outputs (in case stage outputs are still active)
                 outputs.update((a) => {
-                    a.default = { enabled: true, active: true, name: get(dictionary).theme?.primary || "Primary", color: "#F0008C", bounds: { x: 0, y: 0, width: 1920, height: 1080 }, screen: null, style: "default", show: {} }
+                    a.default = { enabled: true, active: true, name: translateText("theme.primary"), color: "#F0008C", bounds: { x: 0, y: 0, width: 1920, height: 1080 }, screen: null, style: "default", show: {} }
                     return a
                 })
             }, 100)
@@ -619,9 +620,9 @@ function replaceEmptyValues(object: any, replacer: any) {
 }
 
 export const projectReplacers = [
-    { id: "DD", title: get(dictionary).calendar?.day || "Day", value: (date) => addZero(date.getDate()) },
-    { id: "MM", title: get(dictionary).calendar?.month || "Month", value: (date) => addZero(date.getMonth() + 1) },
-    { id: "YY", title: get(dictionary).calendar?.year || "Year", value: (date) => date.getFullYear().toString().slice(-2) },
+    { id: "DD", title: translateText("calendar.day"), value: (date) => addZero(date.getDate()) },
+    { id: "MM", title: translateText("calendar.month"), value: (date) => addZero(date.getMonth() + 1) },
+    { id: "YY", title: translateText("calendar.year"), value: (date) => date.getFullYear().toString().slice(-2) },
     { id: "YYYY", title: "Full year", value: (date) => date.getFullYear() },
     { id: "hh", title: "Hours", value: (date) => date.getHours() },
     { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },

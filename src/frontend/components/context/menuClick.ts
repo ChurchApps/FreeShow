@@ -31,7 +31,6 @@ import {
     currentOutputSettings,
     currentWindow,
     dataPath,
-    dictionary,
     drawer,
     drawerTabsData,
     effects,
@@ -73,7 +72,7 @@ import {
     variables
 } from "../../stores"
 import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
-import { translate } from "../../utils/language"
+import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
@@ -538,7 +537,7 @@ const clickActions = {
         const layoutId = uid()
         const show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
         const folderName = splitPath(data[0]?.path).at(-2) || ""
-        show.name = checkName(get(dictionary).create_show?.slideshow + (folderName ? `" "${folderName}` : ""))
+        show.name = checkName(translateText("create_show.slideshow") + (folderName ? `" "${folderName}` : ""))
 
         const videoData = { muted: false, loop: false }
         const duration = 6
@@ -691,12 +690,12 @@ const clickActions = {
         }
 
         if (obj.contextElem?.classList.contains("#category_media") || obj.sel?.id === "category_media") {
-            sendMain(Main.OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
+            sendMain(Main.OPEN_FOLDER, { channel: "MEDIA", title: translateText("new.folder") })
             return
         }
 
         if (obj.contextElem?.classList.contains("#category_audio") || obj.sel?.id === "category_audio") {
-            sendMain(Main.OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
+            sendMain(Main.OPEN_FOLDER, { channel: "AUDIO", title: translateText("new.folder") })
             return
         }
     },
@@ -766,7 +765,7 @@ const clickActions = {
     import: (obj: ObjData) => {
         if (obj.contextElem?.classList.value.includes("#projectsTab")) {
             const extensions = ["project", "shows", "json", "zip"]
-            const name = translate("formats.project")
+            const name = translateText("formats.project")
             sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
             return
         }
@@ -1540,7 +1539,7 @@ const clickActions = {
     },
     reset: (obj: ObjData) => {
         if (obj.sel?.id === "style") {
-            const defaultStyle = { name: get(dictionary).example?.default || "Default" }
+            const defaultStyle = { name: translateText("example.default") }
 
             obj.sel.data.forEach(({ id }) => {
                 const styleId = id || (get(styles).default ? uid() : "default")
@@ -1769,7 +1768,7 @@ export async function removeSlide(data: any[], type: "delete" | "remove" = "dele
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
-        const prompt = `${get(dictionary).confirm?.statement_slide_exists_layout} ${get(dictionary).confirm?.question_delete}`
+        const prompt = translateText("confirm.statement_slide_exists_layout confirm.question_delete")
         if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
 
