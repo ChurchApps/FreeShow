@@ -539,7 +539,7 @@ export const _updaters = {
             setTimeout(() => {
                 const allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
                     const output = get(outputs)[outputId]
-                    return !output.isKeyOutput && !output.stageOutput
+                    return !output.stageOutput
                 })
 
                 if (allNormalOutputs.length > 0) {

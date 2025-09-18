@@ -11,7 +11,6 @@
     export let slideFilter = ""
 
     export let ratio = 1
-    export let isKeyOutput = false
 
     export let animationStyle = ""
     export let mirror = false
@@ -139,7 +138,7 @@
     }
 </script>
 
-<div class="media" {style} class:key={isKeyOutput}>
+<div class="media" {style}>
     {#if background1}
         <div class="media" class:hidden={loading && !firstActive}>
             <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} transition={transition1} {currentStyle} animationStyle={animation1} {duration} {mirror} {styleBackground} on:loaded={() => loaded(true)} />
@@ -153,12 +152,6 @@
 </div>
 
 <style>
-    .key {
-        /* filter: brightness(50); */
-        filter: grayscale(1) brightness(1000) contrast(100);
-        /* filter: invert(1) grayscale(1) brightness(1000); */
-    }
-
     .hidden {
         opacity: 0;
     }

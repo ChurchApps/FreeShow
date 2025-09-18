@@ -1,6 +1,6 @@
 <script lang="ts">
     export let component: () => Promise<any>
-    export let show: boolean = false
+    export let show = false
 
     let loadedComponent: any = null
 

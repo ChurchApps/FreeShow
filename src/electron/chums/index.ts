@@ -5,10 +5,6 @@ import { ChumsExport } from "./ChumsExport"
 import { ChumsImport } from "./ChumsImport"
 import type { ChumsScopes } from "./types"
 
-export function chumsConnect(scope: ChumsScopes) {
-    return ChumsConnect.connect(scope)
-}
-
 export function chumsDisconnect(scope?: ChumsScopes) {
     return ChumsConnect.disconnect(scope)
 }

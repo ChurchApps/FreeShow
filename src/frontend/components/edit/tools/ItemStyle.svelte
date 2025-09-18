@@ -8,7 +8,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { getStyles } from "../../helpers/style"
     import { addFilterString, addStyleString } from "../scripts/textStyle"
-    import { setBoxInputValue2 } from "../values/boxes"
+    import { setBoxInputValue } from "../values/boxes"
     import { itemSections } from "../values/item"
     import EditValues from "./EditValues.svelte"
 
@@ -36,7 +36,7 @@
 
         const transform = data["transform"] || ""
         const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
-        setBoxInputValue2(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
+        setBoxInputValue(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
 
         data = stylePosToPercentage(data)
     }

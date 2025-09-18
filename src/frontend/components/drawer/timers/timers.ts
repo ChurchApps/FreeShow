@@ -24,19 +24,6 @@ export function getSortedTimers(updater = get(timers), options: { showHours?: bo
     return timersList
 }
 
-export function getShowTimers(showRef: any) {
-    let list: string[] = []
-
-    if (showRef.type !== undefined && showRef.type !== "show") return []
-    if (!get(showsCache)[showRef.id]) return [] // await loadShows([showRef.id])
-
-    const timerItems = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
-
-    if (timerItems.length) list = timerItems.map((a) => a.timer?.id || a.timerId)
-
-    return list
-}
-
 export function getTimer(ref: any) {
     let timer: any = {}
     if (!ref.id) return timer
@@ -104,38 +91,6 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     })
 }
 
-// function getSlideWithTimer(ref: any) {
-//   let slide: any = _show(ref.showId).get().slide[ref.slideId]
-//   let itemIndex: number | null = null
-
-//   Object.entries(slides).forEach(([id, slide]: any) => {
-//     if (itemIndex === null) {
-//       console.log(slide)
-//       let index = slide.items.findIndex((a: any) => a.timer?.id === ref.id)
-//       if (index > -1) {
-//         slideId = id
-//         itemIndex = index
-//       }
-//     }
-//   })
-
-//   return { id: slideId, itemIndex }
-// }
-
-// get all timers in project
-// export function loadProjectTimers(projectShows = get(projects)[get(activeProject)!]?.shows || []) {
-//     let list: any[] = []
-
-//     projectShows.map((a) => {
-//         const timerItems: any[] = getShowTimers(a)
-//         if (timerItems) list.push(...timerItems)
-//     })
-
-//     // remove duplicates
-//     list = removeDuplicates(list)
-//     return list
-// }
-
 const ONE_HOUR = 3600000 // 60 * 60 * 1000
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime = 0
@@ -169,8 +124,8 @@ function getClosestUpcommingEvent(eventGroup: string) {
 
     const today = Date.now()
 
-    let closestTime: number = 0
-    let closestId: string = ""
+    let closestTime = 0
+    let closestId = ""
     eventsList.forEach(a => {
         const currentTime = (new Date(a?.from)?.getTime() || 0)
         if (currentTime > today && (!closestTime || currentTime < closestTime)) {

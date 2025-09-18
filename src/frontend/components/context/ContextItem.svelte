@@ -232,7 +232,7 @@
             disabled = !!$outputs[outputId]?.invisible
         },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput) //  && !a.invisible
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false

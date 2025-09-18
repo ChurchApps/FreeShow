@@ -48,7 +48,7 @@
     const smallItems = ["timer", "clock", "slide_tracker"]
 
     let timeout: NodeJS.Timeout | null = null
-    function addItem(itemType: string, textValue: string = "") {
+    function addItem(itemType: string, textValue = "") {
         if (!stageId) return
 
         let itemId = uid(5)

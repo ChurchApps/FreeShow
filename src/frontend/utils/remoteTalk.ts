@@ -281,7 +281,7 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
     if (!show?.media) return {}
 
     show = clone(show)
-    let mediaIds: string[] = []
+    const mediaIds: string[] = []
     show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
         if (a.background) mediaIds.push(a.background)
         Object.values(a.children || {}).forEach((child) => {

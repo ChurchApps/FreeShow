@@ -7,8 +7,8 @@ import { sendToMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
-import { Media } from "../../types/Main"
-import { Project } from "../../types/Projects"
+import type { Media } from "../../types/Main"
+import type { Project } from "../../types/Projects"
 
 const PCO_API_version = 2
 
@@ -140,8 +140,6 @@ export async function pcoLoadServices(dataPath: string) {
 
     const results = await processAllServiceTypes(serviceTypes, dataPath)
 
-    console.debug("PCO shows count:", results.shows.length)
-
     if (results.downloadableMedia.length > 0) {
         downloadLessonsMedia(results.downloadableMedia)
     }
@@ -211,7 +209,7 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return date < today + ONE_WEEK_MS
     })
 
-    console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
+    // console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
     return filteredPlans
 }
 

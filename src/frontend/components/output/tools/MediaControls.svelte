@@ -59,9 +59,6 @@
         let dataValues: any = {}
         activeOutputIds.forEach((id) => {
             dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted }
-
-            let keyOutput = $outputs[id].keyOutput
-            if (keyOutput) dataValues[keyOutput] = videoData
         })
 
         send(OUTPUT, ["DATA"], dataValues)

@@ -25,7 +25,6 @@
     export let preview = false
     export let transition: any = {}
     export let transitionEnabled = false
-    export let isKeyOutput = false
     export let styleIdOverride = ""
 
     onMount(() => {
@@ -171,7 +170,6 @@
                 <!-- backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""} -->
                 <Textbox
                     backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                    key={isKeyOutput}
                     disableListTransition={mirror}
                     chords={customItem.chords?.enabled}
                     animationStyle={animationData.style || {}}

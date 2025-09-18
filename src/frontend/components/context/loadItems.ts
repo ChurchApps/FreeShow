@@ -284,10 +284,10 @@ const loadActions = {
         return items
     },
     bind_slide: (_items, isItem = false) => {
-        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
+        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.stageOutput))
 
         let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
-        let isOverlay = get(activeEdit).type === "overlay"
+        const isOverlay = get(activeEdit).type === "overlay"
         // overlay items does not show up in stage view anyway
         if (isItem && !isOverlay) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
 

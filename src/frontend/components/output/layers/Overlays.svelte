@@ -9,7 +9,6 @@
     export let activeOverlays: string[]
     export let transition: Transition
 
-    export let isKeyOutput = false
     export let mirror = false
     export let preview = false
 
@@ -65,14 +64,8 @@
 
 {#each actualOutputtedOverlays as id (id)}
     {#if overlays?.[id]}
-        <div class:key={isKeyOutput}>
+        <div>
             <Overlay {id} {outputId} isClearing={isClearing.includes(id)} {overlays} {mirror} {transition} {preview} />
         </div>
     {/if}
 {/each}
-
-<style>
-    .key {
-        filter: grayscale(1) brightness(1000) contrast(100);
-    }
-</style>

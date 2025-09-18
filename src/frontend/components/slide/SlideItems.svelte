@@ -31,7 +31,7 @@
     export let disableListTransition = false
     export let smallFontSize = false
     export let fontSize = 0
-    export let outputId: string = ""
+    export let outputId = ""
 
     export let ratio = 1
     export let ref: {

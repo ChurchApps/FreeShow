@@ -2,11 +2,10 @@
     import { createEventDispatcher } from "svelte"
     import { emitters } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { clone } from "../helpers/array"
+    import { clone, keysToID, sortByName } from "../helpers/array"
     import T from "../helpers/T.svelte"
     import DynamicList from "../input/DynamicList.svelte"
     import InputRow from "../input/InputRow.svelte"
-    import { initDropdownOptions } from "../input/inputs"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import { API_emitter } from "./api"
@@ -15,7 +14,12 @@
 
     export let value: API_emitter
 
-    $: emittersList = initDropdownOptions($emitters)
+    $: emittersList = clone(
+        sortByName(
+            keysToID($emitters).map((a) => ({ value: a.id, label: a.name })),
+            "label"
+        )
+    )
 
     $: emitter = $emitters[value.emitter]
 
@@ -66,7 +70,15 @@
     }
 
     $: activeTemplate = value.template || "custom"
-    $: templatesList = [{ value: "custom", label: translateText("actions.custom_key") }, ...initDropdownOptions(emitter?.templates || {})]
+    $: templatesList = [
+        { value: "custom", label: translateText("actions.custom_key") },
+        ...clone(
+            sortByName(
+                keysToID(emitter?.templates || {}).map((a) => ({ value: a.id, label: a.name })),
+                "label"
+            )
+        )
+    ]
     $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => emitter?.type === "midi" || a.name)
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))

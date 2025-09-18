@@ -103,16 +103,16 @@ const receiveOUTPUTasMAIN: any = {
     OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {
 
         outputState.update(a => {
-            newStates.forEach(state => {
-                const stateIndex = a.findIndex(a => a.id === state.id)
-                if (stateIndex < 0) a.push(state)
-                else a[stateIndex] = state
+            newStates.forEach(newState => {
+                const stateIndex = a.findIndex(state => state.id === newState.id)
+                if (stateIndex < 0) a.push(newState)
+                else a[stateIndex] = newState
             })
 
             // only enabled ones & not invisible
-            a = a.filter(a => get(outputs)[a.id]?.enabled && !get(outputs)[a.id]?.invisible)
+            a = a.filter(state => get(outputs)[state.id]?.enabled && !get(outputs)[state.id]?.invisible)
 
-            const getVisibleState = [...new Set((a.filter(a => typeof a.active === "boolean").map((a) => a.active) as boolean[]))]
+            const getVisibleState = [...new Set((a.filter(state => typeof state.active === "boolean").map((state) => state.active) as boolean[]))]
             if (getVisibleState.length === 1) outputDisplay.set(getVisibleState[0])
 
             return a

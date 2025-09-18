@@ -884,7 +884,7 @@ export function breakLongLines(showId: string, breakPoint: number) {
 }
 
 export const VIRTUAL_BREAK_CHAR = "[_VB]"
-export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
+export function createVirtualBreaks(lines: Line[], skip = false) {
     if (!lines?.length) return []
 
     const replaceWith = skip ? "" : "<br>"
@@ -896,7 +896,7 @@ export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
 
     return lines
 }
-export function replaceVirtualBreaks(line: string, replaceWith: string = "<br>") {
+export function replaceVirtualBreaks(line: string, replaceWith = "<br>") {
     // replace & remove spaces
     return line.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith).replace(/\s*<br>\s*/g, "<br>")
 }

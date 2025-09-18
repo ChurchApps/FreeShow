@@ -12,7 +12,7 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
     let outputsList: Output[] = []
-    $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
+    $: outputsList = sortObject(sortByName(keysToID($outputs)), "stageOutput")
 
     $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
 

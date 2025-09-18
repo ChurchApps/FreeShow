@@ -180,7 +180,7 @@ export class LyricSearch {
             const response = await searchSong(title, artist, CHORDS)
 
             if (!response || !response.responses || !Array.isArray(response.responses)) {
-                console.log("No valid response from Ultimate Guitar")
+                console.error("No valid response from Ultimate Guitar")
                 return []
             }
 

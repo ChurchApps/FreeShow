@@ -87,7 +87,7 @@
 
     // UPDATE
 
-    function updateValue(conditionType: string = "showItem", values: Condition) {
+    function updateValue(conditionType = "showItem", values: Condition) {
         conditions[conditionType] = values
         updateItem()
     }
@@ -132,7 +132,7 @@
     let showItemValues: Condition = []
     $: showItemValues = Array.isArray(conditions.showItem) ? conditions.showItem : conditions.showItem?.values?.length ? [[[conditions.showItem.values]]] : []
 
-    function addContent(fromClipboard: boolean = false, a: number | null = null, b: number | null = null, c: number | null = null, d: number | null = null) {
+    function addContent(fromClipboard = false, a: number | null = null, b: number | null = null, c: number | null = null, d: number | null = null) {
         if (!showItemValues) showItemValues = []
         if (a !== null && !showItemValues[a]) showItemValues[a] = []
         if (b !== null && !showItemValues[a!][b]) showItemValues[a!][b] = []

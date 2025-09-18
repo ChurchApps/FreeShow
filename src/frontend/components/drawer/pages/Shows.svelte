@@ -178,7 +178,7 @@
 
     $: sortType = $sorted.shows?.type || "name"
 
-    function createShow(e: any, border: boolean = false) {
+    function createShow(e: any, border = false) {
         if (border && e.target?.closest("button")) return
 
         const { ctrl } = e.detail

@@ -9,17 +9,6 @@ import { captionLanguages } from "./captionLanguages"
 dayjs.extend(localizedFormat)
 dayjs.extend(extendedFormat)
 
-export type Box = {
-    [key in ItemType]?: BoxContent
-}
-type BoxContent = {
-    name?: string
-    icon: string
-    edit: {
-        [key: string]: EditInput[]
-    }
-}
-
 export type EditInput = {
     name?: string
     id?: string
@@ -41,20 +30,7 @@ export type EditInput = {
     placeholder?: string
 }
 
-export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] }, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
-    const newBox = (box.edit ? box : { edit: box, icon: "" }) as BoxContent
-
-    if (!sectionId) sectionId = "default"
-    if (!newBox?.edit?.[sectionId]) return
-
-    const section = newBox.edit[sectionId]
-    const keyIndex = section.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
-    if (keyIndex < 0) return
-
-    section[keyIndex][key] = value
-}
-
-export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
+export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
     const newBox = (box.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
     if (!sectionId) sectionId = "default"

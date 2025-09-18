@@ -173,7 +173,6 @@ export const receiveSTAGE = {
     REQUEST_STREAM: (data: any) => {
         let id = data.outputId
         if (!id) id = getActiveOutputs(get(outputs), false, true, true)[0]
-        if (data.alpha && get(outputs)[id].keyOutput) id = get(outputs)[id].keyOutput
 
         if (!id) return
 

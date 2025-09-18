@@ -69,7 +69,7 @@
     let searchValue = ""
     // let previousSearchValue = ""
     let resetInput = false
-    function search(value: string = "") {
+    function search(value = "") {
         searchValue = formatSearch(value.replaceAll(" ", "_"))
 
         if (searchValue.length < 2) {

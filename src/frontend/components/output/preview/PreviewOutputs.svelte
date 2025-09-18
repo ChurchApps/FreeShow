@@ -11,7 +11,7 @@
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
     // })
 
-    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)), "stageOutput")
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
 
     function toggleOutput(e: any, id: string) {
         if (outs.length <= 1) return

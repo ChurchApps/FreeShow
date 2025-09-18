@@ -7,7 +7,7 @@
 
     export let value: string
     export let defaultValue: string | null = null
-    export let autofill: string = ""
+    export let autofill = ""
     export let label: string
 
     export let id = ""

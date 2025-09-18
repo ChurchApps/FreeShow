@@ -38,7 +38,7 @@ export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], 
 
     return outputIds.find(id => {
         const output = get(outputs)[id]
-        if (!output || output.isKeyOutput || output.stageOutput) return false
+        if (!output || output.stageOutput) return false
 
         const style = get(styles)[output.style || ""]
         let layers = style?.layers

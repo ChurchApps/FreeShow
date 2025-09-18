@@ -10,18 +10,18 @@ export async function pptToShow(filePath: string, dataPath: string) {
     const fileName = path.basename(filePath, path.extname(filePath))
     const contentFolder = createFolder(path.join(dataPath, dataFolderNames.imports, "PowerPoint", fileName))
 
-    let contentPaths: { [key: string]: string } = {}
+    const contentPaths: { [key: string]: string } = {}
 
     // save images / fonts
     Object.keys(json).forEach(key => {
         // get actual image title?
         if (key.includes("ppt/media/image") || key.includes("ppt/fonts/")) {
-            const fileName = key.slice(key.lastIndexOf("/") + 1)
+            const mediaName = key.slice(key.lastIndexOf("/") + 1)
             const binary: Buffer = json[key]
-            const filePath = path.join(contentFolder, fileName)
-            writeFile(filePath, binary)
+            const mediaPath = path.join(contentFolder, mediaName)
+            writeFile(mediaPath, binary)
             delete json[key]
-            contentPaths[key] = filePath
+            contentPaths[key] = mediaPath
         }
     })
 

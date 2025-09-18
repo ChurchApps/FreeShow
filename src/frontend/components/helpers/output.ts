@@ -66,14 +66,14 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     if (!outputsList.length) return
 
     // sort so display order can be changed! (needs app restart)
-    const sortedOutputs = sortObject(sortByName(outputsList), "stageOutput")
+    const sortedOutputList = sortObject(sortByName(outputsList), "stageOutput")
 
     const currentOutputState = !!get(outputState).find(a => a.id === outputIds[0])?.active
     const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
 
-    const autoPosition = sortedOutputs.length === 1 && !sortedOutputs[0].forcedResolution?.width
+    const autoPosition = sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
-    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputs, state, force: options.force, autoStartup: options.autoStartup, autoPosition })
+    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputList, state, force: options.force, autoStartup: options.autoStartup, autoPosition })
 }
 
 export function toggleOutput(id: string) {
@@ -338,13 +338,14 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 
 let sortedOutputs: (Output & { id: string })[] = []
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
+    // keyOutput is not in use anymore
     // WIP cache outputs
     // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
     //     sortedOutputs = sortByName(keysToID(updater || {}))
     // }
     sortedOutputs = sortByName(keysToID(updater || {}))
 
-    let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
+    let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !(a as any).isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
 
     if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
 
@@ -616,30 +617,6 @@ export const defaultOutput: Output = {
     screen: null
 }
 
-export function keyOutput(keyId: string, delOutput = false) {
-    if (!keyId) return
-
-    if (delOutput) {
-        deleteOutput(keyId)
-        return
-    }
-
-    // create new "key" output
-    outputs.update((a) => {
-        const currentOutput = clone(defaultOutput)
-        currentOutput.name = "Key"
-        currentOutput.isKeyOutput = true
-        a[keyId] = currentOutput
-
-        // show
-        // , rate: get(special).previewRate || "auto"
-        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
-        if (get(outputDisplay)) toggleOutput(keyId)
-
-        return a
-    })
-}
-
 // WIP history
 export function addOutput(onlyFirst = false, styleId = "") {
     if (onlyFirst && get(outputs).length) return
@@ -694,17 +671,6 @@ export function enableStageOutput(options: any = {}) {
     return id
 }
 
-export function removeStageOutput(outputId: string) {
-    outputs.update((a) => {
-        if (!a[outputId]) return a
-
-        delete a[outputId]
-        send(OUTPUT, ["REMOVE"], { id: outputId })
-
-        return a
-    })
-}
-
 export function changeStageOutputLayout(data: API_stage_output_layout) {
     const outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
 
@@ -722,12 +688,10 @@ export function deleteOutput(outputId: string) {
     if (Object.keys(get(outputs)).length <= 1) return
 
     outputs.update((a) => {
-        const isKeyOutput = a[outputId].isKeyOutput
-
         send(OUTPUT, ["REMOVE"], { id: outputId })
         delete a[outputId]
 
-        if (!isKeyOutput) currentOutputSettings.set(Object.keys(a)[0])
+        currentOutputSettings.set(Object.keys(a)[0])
         return a
     })
 }

@@ -24,20 +24,20 @@ export function createKeydownHandler(callback: (event: KeyboardEvent) => void) {
     }
 }
 
-export function clickable(node: HTMLElement) {
-    function handleKeydown(event: KeyboardEvent) {
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            event.stopPropagation()
-            node.click()
-        }
-    }
+// export function clickable(node: HTMLElement) {
+//     function handleKeydown(event: KeyboardEvent) {
+//         if (event.key === "Enter" || event.key === " ") {
+//             event.preventDefault()
+//             event.stopPropagation()
+//             node.click()
+//         }
+//     }
 
-    node.addEventListener("keydown", handleKeydown)
+//     node.addEventListener("keydown", handleKeydown)
 
-    return {
-        destroy() {
-            node.removeEventListener("keydown", handleKeydown)
-        }
-    }
-}
+//     return {
+//         destroy() {
+//             node.removeEventListener("keydown", handleKeydown)
+//         }
+//     }
+// }

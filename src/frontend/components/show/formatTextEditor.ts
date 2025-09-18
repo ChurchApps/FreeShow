@@ -232,8 +232,8 @@ export function formatText(text: string, showId = "") {
             slide.items.forEach((item) => {
                 item.lines?.forEach((line) => {
                     line.align = parentAlign[slideId]
-                    line.text?.forEach((text) => {
-                        text.style = parentStyles[slideId]
+                    line.text?.forEach((txt) => {
+                        txt.style = parentStyles[slideId]
                     })
                 })
             })
@@ -288,7 +288,7 @@ export function formatText(text: string, showId = "") {
 
     // order slides object based on current layout order
     // this is to ensure correct "Verse 1", "Verse 2" order with multiple layouts
-    let newSlidesOrdered: typeof newSlides = {}
+    const newSlidesOrdered: typeof newSlides = {}
     allUsedSlidesIds.forEach(id => {
         newSlidesOrdered[id] = newSlides[id]
     })

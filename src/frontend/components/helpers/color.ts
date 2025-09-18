@@ -79,8 +79,8 @@ export function rgbToHex(rgb: string) {
     return "#" + componentToHex(splitted.r) + componentToHex(splitted.g) + componentToHex(splitted.b)
 }
 function componentToHex(c) {
-    var hex = c.toString(16)
-    return hex.length == 1 ? "0" + hex : hex
+    const hex = c.toString(16)
+    return hex.length === 1 ? "0" + hex : hex
 }
 
 // CONTRAST
@@ -95,7 +95,7 @@ export function getContrast(hex: string) {
 
 export function generateRandomHexColor() {
     // random number between 0 and 16777215 (FFFFFF in hex)
-    let randomColor = Math.floor(Math.random() * 16777215).toString(16)
+    const randomColor = Math.floor(Math.random() * 16777215).toString(16)
 
     // pad with leading zeros to ensure 6 characters
     return `#${randomColor.padStart(6, "0")}`
@@ -104,9 +104,9 @@ export function generateRandomHexColor() {
 // generate lighter color that has high contrast to dark background
 export function generateLightRandomColor() {
     const minBrightness = 150
-    let r = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
-    let g = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
-    let b = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+    const r = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+    const g = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
+    const b = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
 
     // RGB to hex
     const toHex = (c) => {
@@ -217,26 +217,26 @@ export function splitGradientValue(gradientStr: string) {
 
 export function hexToHSL(H: string) {
     // Convert hex to HSL (returns {h, s, l})
-    let r = 0, g = 0, b = 0
-    if (H.length == 4) {
+    let r = 0; let g = 0; let b = 0
+    if (H.length === 4) {
         r = parseInt(H[1] + H[1], 16)
         g = parseInt(H[2] + H[2], 16)
         b = parseInt(H[3] + H[3], 16)
-    } else if (H.length == 7) {
+    } else if (H.length === 7) {
         r = parseInt(H.substring(1, 3), 16)
         g = parseInt(H.substring(3, 5), 16)
         b = parseInt(H.substring(5, 7), 16)
     }
     r /= 255; g /= 255; b /= 255
-    const cmin = Math.min(r, g, b), cmax = Math.max(r, g, b), delta = cmax - cmin
-    let h = 0, s = 0, l = (cmax + cmin) / 2
-    if (delta == 0) h = 0
-    else if (cmax == r) h = ((g - b) / delta) % 6
-    else if (cmax == g) h = (b - r) / delta + 2
+    const cmin = Math.min(r, g, b); const cmax = Math.max(r, g, b); const delta = cmax - cmin
+    let h = 0; let s = 0; let l = (cmax + cmin) / 2
+    if (delta === 0) h = 0
+    else if (cmax === r) h = ((g - b) / delta) % 6
+    else if (cmax === g) h = (b - r) / delta + 2
     else h = (r - g) / delta + 4
     h = Math.round(h * 60)
     if (h < 0) h += 360
-    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1))
+    s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1))
     s = +(s * 100).toFixed(1)
     l = +(l * 100).toFixed(1)
     return { h, s, l }
@@ -244,10 +244,10 @@ export function hexToHSL(H: string) {
 
 export function hslToHex(h: number, s: number, l: number) {
     s /= 100; l /= 100
-    let c = (1 - Math.abs(2 * l - 1)) * s
-    let x = c * (1 - Math.abs((h / 60) % 2 - 1))
-    let m = l - c / 2
-    let r = 0, g = 0, b = 0
+    const c = (1 - Math.abs(2 * l - 1)) * s
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1))
+    const m = l - c / 2
+    let r = 0; let g = 0; let b = 0
 
     if (h >= 0 && h < 60) { r = c; g = x; b = 0 }
     else if (h >= 60 && h < 120) { r = x; g = c; b = 0 }
@@ -258,7 +258,7 @@ export function hslToHex(h: number, s: number, l: number) {
 
     const toHex = (v: number) => {
         const hex = Math.round((v + m) * 255).toString(16)
-        return hex.length == 1 ? "0" + hex : hex
+        return hex.length === 1 ? "0" + hex : hex
     }
 
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`

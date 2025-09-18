@@ -6,10 +6,10 @@
     import Icon from "../helpers/Icon.svelte"
 
     export let label: string
-    export let icon: string = ""
+    export let icon = ""
     export let value: string
     export let options: { value: string; label: string; icon?: string; disabled?: string }[]
-    export let noLabels: boolean = false
+    export let noLabels = false
 
     const dispatch = createEventDispatcher()
     function click(id: string) {

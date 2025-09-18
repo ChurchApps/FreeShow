@@ -266,20 +266,11 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
-                    {#if id.includes("_alpha") && currentOutput.keyOutput}
-                        <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
-                        {#if $currentWindow === "output" || preview}
-                            <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
-                        {:else}
-                            <Output outputId={currentOutput.keyOutput} mirror preview={preview} style="width: 100%; height: 100%;" />
-                        {/if}
+                    <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
+                    {#if $currentWindow === "output" || preview}
+                        <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                     {:else}
-                        <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
-                        {#if $currentWindow === "output" || preview}
-                            <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
-                        {:else}
-                            <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
-                        {/if}
+                        <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
                     {/if}
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}

@@ -145,8 +145,7 @@ class CameraManager {
 
             await videoElement.play()
 
-            const activeCamera = this.activeCameras.get(camera.id)
-            if (!activeCamera) return
+            if (!this.activeCameras.has(camera.id)) return
 
             activeCamera.stream = stream
             activeCamera.videoElement = videoElement
@@ -191,7 +190,7 @@ class CameraManager {
         }, delay)
     }
 
-    private async retryCameraWarming(camera: CameraData, retryCount: number = 0, lastError: string = '') {
+    private async retryCameraWarming(camera: CameraData, retryCount = 0, lastError = '') {
         if (!this.activeCameras.has(camera.id)) return
 
         this.cleanupCamera(camera.id)
@@ -208,7 +207,7 @@ class CameraManager {
             video: {
                 ...DEFAULT_CAMERA_CONSTRAINTS,
                 deviceId: { exact: cameraId },
-                groupId: groupId
+                groupId
             }
         }
 

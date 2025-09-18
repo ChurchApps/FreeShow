@@ -211,8 +211,8 @@ export function isDarkTheme() {
     return contrastColor === "#FFFFFF"
 }
 
-let throttled: { [key: string]: any } = {}
-export function throttle(id: string, value: any, callback: (value: any) => void, maxUpdatesPerSecond: number) {
+const throttled: { [key: string]: any } = {}
+export function throttle(id: string, value: any, callback: (v: any) => void, maxUpdatesPerSecond: number) {
     // value = clone(value)
 
     if (throttled[id] !== undefined) {
@@ -229,8 +229,8 @@ export function throttle(id: string, value: any, callback: (value: any) => void,
     }, 1000 / maxUpdatesPerSecond)
 }
 
-let limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
-export function hasNewerUpdate(id: string, maxUpdatesMs: number = 0): Promise<boolean> {
+const limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
+export function hasNewerUpdate(id: string, maxUpdatesMs = 0): Promise<boolean> {
     // resolve any existing updates as false as there is a newer one
     if (limited[id]) {
         clearTimeout(limited[id].timeout)

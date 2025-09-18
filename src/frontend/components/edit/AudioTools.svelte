@@ -7,7 +7,7 @@
     import { removeStore, updateStore } from "../helpers/update"
     import Button from "../inputs/Button.svelte"
     import EditValues from "./tools/EditValues.svelte"
-    import { setBoxInputValue2 } from "./values/boxes"
+    import { setBoxInputValue } from "./values/boxes"
     import { audioSections } from "./values/media"
 
     // update values
@@ -20,10 +20,10 @@
     async function getAudioDuration() {
         const duration = await AudioPlayer.getDuration(audioId)
 
-        setBoxInputValue2(currentAudioSections, "default", "toTime", "value", currentMedia?.toTime || duration)
-        setBoxInputValue2(currentAudioSections, "default", "toTime", "default", duration)
-        setBoxInputValue2(currentAudioSections, "default", "fromTime", "values", { max: duration })
-        setBoxInputValue2(currentAudioSections, "default", "toTime", "values", { max: duration })
+        setBoxInputValue(currentAudioSections, "default", "toTime", "value", currentMedia?.toTime || duration)
+        setBoxInputValue(currentAudioSections, "default", "toTime", "default", duration)
+        setBoxInputValue(currentAudioSections, "default", "fromTime", "values", { max: duration })
+        setBoxInputValue(currentAudioSections, "default", "toTime", "values", { max: duration })
         currentAudioSections = currentAudioSections
 
         // WIP set min/max based on each other

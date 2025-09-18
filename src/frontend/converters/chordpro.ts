@@ -183,7 +183,7 @@ export function convertChordPro(data: any) {
             }
 
             // repeat repeated slides
-            let newSlides: Slide[] = []
+            const newSlides: Slide[] = []
             slides.forEach((slide) => {
                 const repeat: number = (slide as any).repeat ?? 1
                 delete (slide as any).repeat

@@ -205,7 +205,6 @@ export const mainResponses: MainResponses = {
 
 // IMPORT
 export function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
-    console.log(data.format)
     const files: string[] = selectFilesDialog("", data.format)
 
     const needsFileAndNoFileSelected = data.format.extensions && !files.length

@@ -115,7 +115,6 @@
         let alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
 
         let bounds = e.detail.bounds
-        let keyOutput = currentScreen.keyOutput
         outputs.update((a) => {
             if (!a[screenId]) return a
 
@@ -123,10 +122,6 @@
             a[screenId].screen = e.detail.id.toString()
             // a[screenId].kiosk = true
 
-            if (keyOutput && a[keyOutput]) {
-                a[keyOutput].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
-                a[keyOutput].screen = e.detail.id.toString()
-            }
             return a
         })
 
@@ -136,11 +131,6 @@
             // setTimeout(() => {
             send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...currentScreen })
             // }, 100)
-
-            if (keyOutput) {
-                toggleOutputs([keyOutput], { state: true })
-                send(OUTPUT, ["UPDATE_BOUNDS"], { id: keyOutput, ...currentScreen })
-            }
         }, 100)
 
         if (activateOutput || alreadySelected) {

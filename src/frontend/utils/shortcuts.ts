@@ -440,8 +440,6 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
             const videoData = get(videosData)[outputId] || {}
             activeOutputIds.forEach((id) => {
                 dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted, paused: !videoData.paused }
-                const keyOutput = get(outputs)[id].keyOutput
-                if (keyOutput) dataValues[keyOutput] = videoData
             })
 
             send(OUTPUT, ["DATA"], dataValues)
