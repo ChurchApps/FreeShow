@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actions, timers } from "../../../stores"
+    import { actions, activeEdit, timers } from "../../../stores"
     import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
@@ -244,7 +244,7 @@
 
     const optionsLists = {
         timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
-        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
+        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" }))
     }
     function getOptions(options: string | any[]): any[] {
         if (typeof options === "string") return optionsLists[options] || []
@@ -323,7 +323,14 @@
                                 {:else if input.type === "textarea"}
                                     <MaterialTextarea label={values.label} {value} on:change={(e) => changed(e, input, id)} />
                                 {:else if input.type === "media"}
-                                    <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                    <MaterialFilePicker
+                                        label={(value ? values.label : "") || "edit.choose_media"}
+                                        {value}
+                                        filter={{ name: "Media files", extensions: mediaExtensions }}
+                                        on:change={(e) => changed(e, input, id)}
+                                        autoTrigger={$activeEdit.type !== "template"}
+                                        allowEmpty
+                                    />
                                 {:else if input.type === "popup"}
                                     <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty />
                                 {:else if input.type === "tip"}

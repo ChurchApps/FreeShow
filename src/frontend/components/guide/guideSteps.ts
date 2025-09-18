@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, focusMode, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, drawer, focusMode, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { DEFAULT_DRAWER_HEIGHT } from "../../utils/common"
 import { createDefaultShow } from "../../utils/createData"
+import { translateText } from "../../utils/language"
+import { keysToID, removeDeleted } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { nextSlide } from "../helpers/showActions"
 import { clearAll } from "../output/clear"
-import { keysToID, removeDeleted } from "../helpers/array"
 
 export const guideSteps = [
     {
@@ -53,7 +54,7 @@ export const guideSteps = [
                 else {
                     projects.update((a) => {
                         a.default = {
-                            name: get(dictionary).example?.example || "Example",
+                            name: translateText("example.example") || "Example",
                             created: Date.now(),
                             parent: "/",
                             shows: [],

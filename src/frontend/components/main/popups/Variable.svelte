@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { drawerTabsData, selected, variables } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { clone, moveToPos } from "../../helpers/array"
     import { createStore, updateStore } from "../../helpers/historyStores"
     import T from "../../helpers/T.svelte"
@@ -15,10 +15,10 @@
 
     let chosenType = ""
     const types = [
-        { id: "number", name: translate("variables.number"), icon: "number" },
-        { id: "random_number", name: translate("variables.random_number"), icon: "unknown" },
-        { id: "text", name: translate("variables.text"), icon: "text" },
-        { id: "text_set", name: translate("variables.text_set"), icon: "increase_text" }
+        { id: "number", name: translateText("variables.number"), icon: "number" },
+        { id: "random_number", name: translateText("variables.random_number"), icon: "unknown" },
+        { id: "text", name: translateText("variables.text"), icon: "text" },
+        { id: "text_set", name: translateText("variables.text_set"), icon: "increase_text" }
     ]
 
     const DEFAULT_VARIABLE = {

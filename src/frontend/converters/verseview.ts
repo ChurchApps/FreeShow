@@ -1,11 +1,11 @@
-import { activePopup, alertMessage, dictionary } from "../stores"
-import { xml2json } from "./xml"
 import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
-import { createCategory, setTempShows } from "./importHelpers"
-import { checkName, initializeMetadata } from "../components/helpers/show"
-import { get } from "svelte/store"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
+import { checkName, initializeMetadata } from "../components/helpers/show"
+import { activePopup, alertMessage } from "../stores"
+import { translateText } from "../utils/language"
+import { createCategory, setTempShows } from "./importHelpers"
+import { xml2json } from "./xml"
 
 function cdataString(data: any): string {
     if (typeof data === "string") {
@@ -103,7 +103,7 @@ export function convertVerseVIEW(data: any) {
                 show.slides = slides
                 show.layouts = {
                     [layoutID]: {
-                        name: get(dictionary).example?.default || "",
+                        name: translateText("example.default"),
                         notes: "",
                         slides: layout
                     }

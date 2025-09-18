@@ -82,7 +82,7 @@
 
     {#if openButton}
         <div class="button">
-            <MaterialButton on:click={() => sendMain(Main.SYSTEM_OPEN, value)} title="main.system_open" white>
+            <MaterialButton on:click={() => sendMain(Main.OPEN_FOLDER_PATH, value)} title="main.system_open" white>
                 <Icon id="launch" white />
             </MaterialButton>
         </div>

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { popupData } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
 
     const styleTypes = [
-        { id: "normal", name: translate("settings.normal"), icon: "styles" },
-        { id: "live", name: translate("tabs.live"), icon: "camera" }
+        { id: "normal", name: translateText("settings.normal"), icon: "styles" },
+        { id: "live", name: translateText("tabs.live"), icon: "camera" }
     ]
 
     function selectStyle(id) {

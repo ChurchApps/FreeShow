@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
     import { dictionary, events, timers } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { getDateString } from "../../drawer/calendar/calendar"
     import { getTimer } from "../../drawer/timers/timers"
     import T from "../../helpers/T.svelte"
@@ -34,9 +34,9 @@
 
     let chosenType = ""
     const timerTypes: any = [
-        { id: "counter", name: translate("timer.from_to"), translate: true, icon: "timer" },
-        { id: "clock", name: translate("timer.to_time"), translate: true, icon: "clock" },
-        { id: "event", name: translate("timer.to_event"), translate: true, icon: "calendar" }
+        { id: "counter", name: translateText("timer.from_to"), translate: true, icon: "timer" },
+        { id: "clock", name: translateText("timer.to_time"), translate: true, icon: "clock" },
+        { id: "event", name: translateText("timer.to_event"), translate: true, icon: "calendar" }
     ]
 
     // counter

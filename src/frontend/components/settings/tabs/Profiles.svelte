@@ -2,7 +2,7 @@
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
     import { activeProfile, categories, dictionary, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -56,7 +56,7 @@
 
     function getInputs(globalAccess: AccessType | undefined, id: string) {
         const inputs = clone(accessInputs).map((a: any) => {
-            a.title = translate(a.name)
+            a.title = translateText(a.name)
             delete a.name
             return a
         })

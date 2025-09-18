@@ -185,7 +185,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            rename()
+            setTimeout(rename)
         }
     }
 </script>

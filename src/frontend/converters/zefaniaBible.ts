@@ -43,7 +43,7 @@ function XMLtoObject(xml: string): Bible {
             const verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
-            chapter.VERS.forEach((verse: { ["@vnumber"]: string; ["#text"]?: string; STYLE?: string[] }) => {
+            chapter.VERS.forEach((verse: { ["@vnumber"]: string;["#text"]?: string; STYLE?: string[] }) => {
                 if (!verse) return
                 let text = verse["#text"] || ""
 
@@ -58,7 +58,7 @@ function XMLtoObject(xml: string): Bible {
                 text += styledVerses.map((a) => a?.["#text"] || "").join(" ")
 
                 // remove extra styling
-                text = text.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")
+                text = text.replaceAll("\n", " ").replaceAll('<BR art="x-p"/>', "")
 
                 verses.push({ number: verse["@vnumber"], text })
             })

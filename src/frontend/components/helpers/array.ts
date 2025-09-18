@@ -1,5 +1,5 @@
 import type { Option } from "../../../types/Main"
-import { translate } from "../../utils/language"
+import { translateText } from "../../utils/language"
 
 // check if array has any data
 export function arrayHasData<T>(array: T, data: any): boolean {
@@ -78,8 +78,8 @@ export function sortObject<T extends Record<string, any>>(object: T[], key: keyo
     return object.sort((a, b) => {
         let textA: string = a[key] || ""
         let textB: string = b[key] || ""
-        if (a.default === true) textA = translate(textA) || textA.slice(textA.indexOf("."))
-        if (b.default === true) textB = translate(textB) || textB.slice(textB.indexOf("."))
+        if (a.default === true) textA = translateText(textA) || textA.slice(textA.indexOf("."))
+        if (b.default === true) textB = translateText(textB) || textB.slice(textB.indexOf("."))
 
         return textA.localeCompare(textB)
     })

@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { getSlidesText } from "../components/edit/scripts/textStyle"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { newToast } from "../utils/common"
+import { translateText } from "../utils/language"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
-import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { trimNameFromString } from "./txt"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface Song {
     administrator: string
@@ -47,7 +48,7 @@ export function convertEasyWorship(data: any) {
     }
 
     let i = 0
-    const importingText = get(dictionary).popup?.importing || "Importing"
+    const importingText = translateText("popup.importing")
 
     const tempShows: any[] = []
 
@@ -90,7 +91,7 @@ export function convertEasyWorship(data: any) {
         const showId = song?.song_uid || uid()
 
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
+        show.layouts = { [layoutID]: { name: translateText("example.default"), notes: song?.description || "", slides: layout } }
         const allText = trimNameFromString(getSlidesText(slides))
         show.name = checkName(song?.title || allText || showId, showId)
         show.settings.template = "default"

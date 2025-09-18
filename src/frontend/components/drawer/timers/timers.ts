@@ -17,9 +17,9 @@ export function getSortedTimers(updater = get(timers), options: { showHours?: bo
         .map((a) => {
             const currentTime = getCurrentTimerValue(a, { id: a.id }, today)
             const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, options.showHours)
-            return { id: a.id, name: a.name || a.id, extraInfo: timeValue }
+            return { id: a.id, name: a.name, extraInfo: timeValue }
         })
-    if (options.firstActive) timersList = [{ id: "", name: "$:stage.first_active_timer:$", extraInfo: "" }, ...timersList]
+    if (options.firstActive) timersList = [{ id: "", name: "stage.first_active_timer", extraInfo: "" }, ...timersList]
 
     return timersList
 }

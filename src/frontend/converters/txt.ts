@@ -9,13 +9,14 @@ import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
+import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
 
 export function getQuickExample() {
-    const tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
-    const line = get(dictionary).create_show?.quick_lyrics_example_text || "Line"
-    const verse = get(dictionary).groups?.verse || "Verse"
-    const chorus = get(dictionary).groups?.chorus || "Chorus"
+    const tip = translateText("create_show.quick_lyrics_example_tip")
+    const line = translateText("create_show.quick_lyrics_example_text")
+    const verse = translateText("groups.verse")
+    const chorus = translateText("groups.chorus")
 
     // [Verse]\nLine 1\nLine 2\n\nLine 3\nLine 4\n\n[Chorus]\nLine 1\nLine 2\nx2
     return `${tip}...\n\n[${verse}]\n${line} 1\n${line} 2\n\n${line} 3\n${line} 4\n\n[${chorus}]\n${line} 1\n${line} 2\nx2`
@@ -76,7 +77,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
                 return
             }
 
-            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "") === metaKey || get(dictionary).meta?.[key]?.toLowerCase() === metaKey)
+            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "") === metaKey || translateText("meta." + key).toLowerCase() === metaKey)
             if (!metadataKey) {
                 // create slide with unknown metadata
                 // newLines.push(line)

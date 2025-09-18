@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../../../types/Calendar"
 import { events } from "../../../stores"
-import { translate } from "../../../utils/language"
+import { translateText } from "../../../utils/language"
 import { actionData } from "../../actions/actionData"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
@@ -141,7 +141,7 @@ export function updateEventData(editEvent: any, stored: any, { type, action }: a
 
 // action
 export function getActionEventData(event: any, action: any) {
-    const actionName = translate(actionData[action.id]?.name)
+    const actionName = translateText(actionData[action.id]?.name)
 
     event.action = action
     event.name = actionName

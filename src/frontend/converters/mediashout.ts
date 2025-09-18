@@ -1,10 +1,10 @@
-import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { checkName, initializeMetadata, newSlide } from "../components/helpers/show"
-import { activePopup, alertMessage, dictionary } from "../stores"
+import { activePopup, alertMessage } from "../stores"
+import { translateText } from "../utils/language"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
 
@@ -144,7 +144,7 @@ function convertToShow(song: MediaShout5Song, { name, categoryId }) {
 
 function convertToSlides(song: MediaShout5Song) {
     const slides: { [key: string]: Slide } = {}
-    const layout: Layout = { name: get(dictionary).example?.default || "", slides: [], notes: "" }
+    const layout: Layout = { name: translateText("example.default"), slides: [], notes: "" }
     const media: any = {}
 
     let elements = song.Content?.Element
@@ -259,7 +259,7 @@ function getSong(song: MDBSong, content: MDBContents, categoryId: string) {
 
 function convertToSlidesMDB(verses: MDBVerse[]) {
     const slides: { [key: string]: Slide } = {}
-    const layout: Layout = { name: get(dictionary).example?.default || "", slides: [], notes: "" }
+    const layout: Layout = { name: translateText("example.default"), slides: [], notes: "" }
     const media: any = {}
 
     verses.forEach((verse) => {

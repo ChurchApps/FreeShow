@@ -7,7 +7,7 @@ import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
-import { getDynamicValue, _getVariableValue } from "../components/edit/scripts/itemHelpers"
+import { _getVariableValue, getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { getSlidesText } from "../components/edit/scripts/textStyle"
 import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
@@ -51,7 +51,6 @@ import {
     chumsConnected,
     currentOutputSettings,
     dataPath,
-    dictionary,
     driveKeys,
     events,
     folders,
@@ -180,7 +179,7 @@ export const mainResponses: MainResponses = {
         if (!finished) return activePopup.set(null)
 
         console.info("Backed up to:", path)
-        newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
+        newToast("settings.backup_finished") // + ": " + path)
     },
     [ToMain.RESTORE2]: ({ finished, starting }) => {
         if (!finished) {

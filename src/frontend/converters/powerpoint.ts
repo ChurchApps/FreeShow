@@ -4,7 +4,8 @@ import type { Item, Line, Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { checkName } from "../components/helpers/show"
-import { activePopup, alertMessage, dictionary, drawerTabsData } from "../stores"
+import { activePopup, alertMessage, drawerTabsData } from "../stores"
+import { translateText } from "../utils/language"
 import { createCategory, setTempShows } from "./importHelpers"
 import { getCustomShapePath, getPresetShapePath } from "./powerpointShapes"
 
@@ -66,7 +67,7 @@ export function convertPowerpoint(files: any[]) {
 
             const { slidesObj, layouts } = createSlides(slides)
             show.slides = slidesObj
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
+            show.layouts = { [layoutID]: { name: translateText("example.default"), notes: "", slides: layouts } }
 
             tempShows.push({ id: uid(), show })
         })

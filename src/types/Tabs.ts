@@ -25,7 +25,7 @@ export interface BibleCategories extends Category {
     attributionString?: string // API needs custom attribution
     books2?: any[] // api cache
     cacheUpdate?: Date
-    favorite: boolean // marked as favorite
+    favorite?: boolean // marked as favorite
     biblePreviewIndex?: number
     collection?: {
         versions: string[]

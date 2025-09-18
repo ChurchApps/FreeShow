@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { actions, activeFocus, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
@@ -94,6 +94,29 @@
             splittedProjectsList.at(-1)!.items.push(a)
         })
     }
+
+    onMount(() => {
+        // convert section times in title to actual times
+        projects.update((a) => {
+            if (!a[$activeProject || ""]?.shows) return a
+
+            a[$activeProject!].shows = a[$activeProject!].shows.map((item) => {
+                if (item.type !== "section") return item
+
+                // prefixed clock time, like "12:00 Title"
+                const regex = /^(\d{1,2}:\d{2})\s+(.*)$/
+                const match = (item.name || "").match(regex)
+                if (match) {
+                    item.data = { ...(item.data || {}), time: match[1] }
+                    item.name = match[2]
+                }
+
+                return item
+            })
+
+            return a
+        })
+    })
 
     // update today
     let today = new Date()
