@@ -11,6 +11,7 @@
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
+    import Output from "../output/Output.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import SlideItems from "../slide/SlideItems.svelte"
     import Textbox from "../slide/Textbox.svelte"
@@ -265,7 +266,12 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
-                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                    <!-- Use PreviewCanvas only in output window (stage projection) -->
+                    {#if $currentWindow === "output"}
+                        <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                    {:else}
+                        <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
+                    {/if}
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}

@@ -26,24 +26,44 @@
     function updateResolution() {
         if (!canvas) return
 
-        canvas.width = fullscreen ? width * 1.2 : width * 2.8
-        canvas.height = fullscreen ? height * 1.2 : height * 2.8
+        // Reduce canvas resolution for better performance in stage layouts
+        const multiplier = fullscreen ? 1.2 : 2.0 // Reduced from 2.8 to 2.0
+        canvas.width = width * multiplier
+        canvas.height = height * multiplier
         // send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
 
         if (capture) updateCanvas()
     }
 
+    // Add frame rate limiting to reduce performance impact
+    let lastUpdate = 0
+    const frameRateLimit = 1000 / 30 // Limit to 30 FPS
+
     // TODO: render in real time this...
-    $: if (capture) updateCanvas()
+    $: if (capture) throttledUpdateCanvas()
+    function throttledUpdateCanvas() {
+        const now = Date.now()
+        if (now - lastUpdate < frameRateLimit) return
+        lastUpdate = now
+        updateCanvas()
+    }
+    
     async function updateCanvas() {
-        if (!canvas) return
+        if (!canvas || !capture) return
 
-        const arr = new Uint8ClampedArray(capture.buffer)
-        const pixels = new ImageData(arr, capture.size.width, capture.size.height)
-        const bitmap = await createImageBitmap(pixels)
+        try {
+            const arr = new Uint8ClampedArray(capture.buffer)
+            const pixels = new ImageData(arr, capture.size.width, capture.size.height)
+            const bitmap = await createImageBitmap(pixels)
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+            
+            // Clean up bitmap to prevent memory leaks
+            bitmap.close()
+        } catch (error) {
+            console.warn("PreviewCanvas update failed:", error)
+        }
     }
 </script>
 
