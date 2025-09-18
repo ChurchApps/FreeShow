@@ -193,9 +193,11 @@ export function selectFolderDialog(title = "", defaultPath = ""): string {
 
 // DATA FOLDERS
 
-export function openInSystem(path: string) {
-    if (!doesPathExist(path)) return sendToMain(ToMain.ALERT, "This does not exist!")
-    shell.showItemInFolder(path)
+export function openInSystem(filePath: string, openFolder: boolean = false) {
+    if (!doesPathExist(filePath)) return sendToMain(ToMain.ALERT, "This does not exist!")
+
+    if (openFolder) shell.openPath(filePath).catch((err) => console.error("Could not open system folder: " + String(err)))
+    else shell.showItemInFolder(filePath)
 }
 
 const appFolderName = "FreeShow"

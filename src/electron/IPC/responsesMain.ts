@@ -107,9 +107,9 @@ export const mainResponses: MainResponses = {
     [Main.DATA_PATH]: () => getDocumentsFolder(null, ""),
     [Main.LOG_ERROR]: (data) => logError(data),
     [Main.OPEN_LOG]: () => openInSystem(error_log.path),
-    [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath()),
-    [Main.OPEN_APPDATA]: () => openInSystem(path.dirname(config.path)),
-    [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath),
+    [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),
+    [Main.OPEN_APPDATA]: () => openInSystem(path.dirname(config.path), true),
+    [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath, true),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS

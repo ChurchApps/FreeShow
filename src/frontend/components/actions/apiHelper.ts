@@ -756,10 +756,17 @@ export async function getPDFThumbnails({ path }: API_media) {
 // DRAW
 
 export function changeDrawZoom(data: API_draw_zoom) {
+    const size = data.size || 100
     drawSettings.update((a) => {
-        a.zoom.size = data.size || 100
+        a.zoom.size = size
         return a
     })
+
+    if (size === 100) {
+        draw.set(null)
+        drawTool.set("focus")
+        return
+    }
 
     // 0-100 %
     draw.set({ x: 1920 * ((data.x ?? 50) / 100), y: 1080 * ((data.y ?? 50) / 100) })

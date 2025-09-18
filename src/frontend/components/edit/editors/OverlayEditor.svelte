@@ -20,6 +20,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { addItem } from "../scripts/itemHelpers"
     import { translateText } from "../../../utils/language"
+    import DropArea from "../../system/DropArea.svelte"
 
     const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
@@ -103,12 +104,14 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         <!--  && !Slide.isDefault -->
         {#if Slide}
-            <Zoomed background="transparent" checkered border {resolution} style={widthOrHeight} bind:ratio hideOverflow={false} center={zoom >= 1}>
-                <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-                {#each Slide.items as item, index}
-                    <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
-                {/each}
-            </Zoomed>
+            <DropArea id="edit" file>
+                <Zoomed background="transparent" checkered border {resolution} style={widthOrHeight} bind:ratio hideOverflow={false} center={zoom >= 1}>
+                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    {#each Slide.items as item, index}
+                        <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
+                    {/each}
+                </Zoomed>
+            </DropArea>
         {:else}
             <Center size={2} faded>
                 <T id="empty.slide" />

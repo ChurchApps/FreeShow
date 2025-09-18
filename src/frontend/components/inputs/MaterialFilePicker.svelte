@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
@@ -17,7 +17,12 @@
     export let multiple: boolean = false
 
     export let disabled = false
+    export let autoTrigger = false
     export let allowEmpty = false
+
+    onMount(() => {
+        if (autoTrigger && !value) pickMedia()
+    })
 
     function pickMedia() {
         if (disabled) return

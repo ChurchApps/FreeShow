@@ -793,6 +793,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
+    // it's the wrong way around when a template is converted to a slide/output, but it breaks more than it fixes at this time.
+    // should be reversed, but people have to invert the order of their template items order.
     templateItems = clone(templateItems) // .reverse()
 
     const sorted = sortItemsByType(templateItems)

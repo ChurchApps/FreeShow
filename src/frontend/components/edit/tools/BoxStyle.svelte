@@ -459,7 +459,7 @@
         if (input.id === "textFit") updateValue({ detail: { id: "auto", value: input.value !== "none" } })
         // unset transparent color
         if (input.key === "text-shadow" && input.value.includes("rgb(0 0 0 / 0)") && input.value.includes("px")) {
-            input.value = input.value.replace("rgb(0 0 0 / 0)", "rgb(0 0 0 / 1)")
+            input.value = input.value.replace("rgb(0 0 0 / 0)", "rgb(0 0 0 / 0.4)")
         }
 
         updateValue({ detail: input })

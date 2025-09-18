@@ -304,7 +304,7 @@
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
-            <DropArea id="edit">
+            <DropArea id="edit" file>
                 <Zoomed
                     background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
                     {checkered}
