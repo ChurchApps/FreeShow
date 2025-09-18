@@ -80,7 +80,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         <div
             id={output.id}
             class="outputPreview output_button context #output_preview"
-            style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : ""}
+            style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}
         >
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
         </div>
