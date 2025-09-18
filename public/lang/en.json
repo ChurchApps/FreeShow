@@ -665,7 +665,6 @@
         "forward": "Move forward",
         "backward": "Move backward",
         "to_back": "Move to back",
-        "toggle_direct_render": "Direct rendering (performance mode)",
         "click_reveal": "Reveal on click",
         "line_reveal": "Reveal line by line",
         "show_timer": "Time until show",

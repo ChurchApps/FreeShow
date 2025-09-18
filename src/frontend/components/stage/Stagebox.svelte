@@ -242,14 +242,6 @@
 
         <!-- ACTIONS -->
         <div class="actions">
-            <!-- direct render indicator -->
-            {#if item.type === "current_output" && item.useDirectRender === true}
-                <div data-title="Direct rendering enabled (performance mode)" class="actionButton" style="zoom: {1 / ratio};right: 0;top: 0;">
-                    <span style="padding: 5px;z-index: 3;font-size: 0;background: rgba(145, 213, 255, 0.8);border-radius: 3px;">
-                        <Icon id="speed" white />
-                    </span>
-                </div>
-            {/if}
             <!-- button -->
             {#if item?.button?.press || item?.button?.release}
                 <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
@@ -275,18 +267,18 @@
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
                     {#if id.includes("_alpha") && currentOutput.keyOutput}
-                        <!-- Use optimized direct output rendering for better performance -->
-                        {#if item.useDirectRender === true}
-                            <Output outputId={currentOutput.keyOutput} mirror preview={preview} style="width: 100%; height: 100%;" />
-                        {:else}
+                        <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
+                        {#if $currentWindow === "output" || preview}
                             <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
+                        {:else}
+                            <Output outputId={currentOutput.keyOutput} mirror preview={preview} style="width: 100%; height: 100%;" />
                         {/if}
                     {:else}
-                        <!-- Use optimized direct output rendering for better performance -->
-                        {#if item.useDirectRender === true}
-                            <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
-                        {:else}
+                        <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
+                        {#if $currentWindow === "output" || preview}
                             <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                        {:else}
+                            <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
                         {/if}
                     {/if}
                 {/if}

@@ -40,7 +40,6 @@ export interface StageItem {
 
     // special
     conditions?: { [key: string]: Condition }
-    useDirectRender?: boolean // performance optimization for current_output type
 
     // style
     style: string
