@@ -134,6 +134,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     format: { label: "actions.format", icon: "format", iconColor: "#93f190", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", iconColor: "#93f190", items: ["to_front", "forward", "backward", "to_back"] },
     rearrange_stage: { label: "actions.rearrange", icon: "rearrange", iconColor: "#93f190", items: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"] },
+    toggle_direct_render: { label: "actions.toggle_direct_render", icon: "speed", iconColor: "#91d5ff" },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
@@ -329,7 +330,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
     stage_slide_readonly: ["move_connections"],
     stage_item: ["conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
-    stage_item_output: ["rearrange_stage", "SEPERATOR", "delete"],
+    stage_item_output: ["toggle_direct_render", "SEPERATOR", "rearrange_stage", "SEPERATOR", "delete"],
     stage_text_item: ["dynamic_values", "conditions", "SEPERATOR", "rearrange_stage", "SEPERATOR", "duplicate", "delete"],
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 

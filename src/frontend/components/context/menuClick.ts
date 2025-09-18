@@ -1469,6 +1469,23 @@ const clickActions = {
     forward_stage: () => rearrangeStageItems("forward"),
     backward_stage: () => rearrangeStageItems("backward"),
     to_back_stage: () => rearrangeStageItems("to_back"),
+    toggle_direct_render: () => {
+        const stageId = get(activeStage).id
+        const selectedItems = get(activeStage).items
+        
+        if (!stageId || !selectedItems.length) return
+        
+        stageShows.update((stages) => {
+            selectedItems.forEach((itemId) => {
+                const item = stages[stageId]?.items[itemId]
+                if (item && item.type === "current_output") {
+                    item.useDirectRender = !item.useDirectRender
+                }
+            })
+            
+            return stages
+        })
+    },
 
     // formats
     find_replace: (obj: ObjData) => {
