@@ -100,7 +100,7 @@
 
     $: customActionId = currentShow?.settings?.customAction
     $: customAction = customActionId && $actions[customActionId] ? customActionId : ""
-    function runCustomAction(edit: boolean = false) {
+    function runCustomAction(edit = false) {
         if (edit || !customAction) {
             activePopup.set("custom_action")
             return

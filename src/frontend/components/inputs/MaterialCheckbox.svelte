@@ -2,10 +2,10 @@
     import { createEventDispatcher } from "svelte"
     import { translateText } from "../../utils/language"
 
-    export let checked: boolean = false
+    export let checked = false
     export let defaultValue: boolean | null = null
     export let label: string
-    export let title: string = ""
+    export let title = ""
     export let data: any = null
     export let id = ""
     export let disabled = false

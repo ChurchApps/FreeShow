@@ -68,7 +68,7 @@
     function sortFolders(parent = "/", index = 0, path = "") {
         let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
-            const rootParentId = path.split("/")[0] || folder.id!
+            const rootParentId = path.split("/")[0] || folder.id
             if (profile[rootParentId] === "none") return
 
             const isReadOnly = profile[rootParentId] === "read"
@@ -83,7 +83,7 @@
 
     $: projectActive = !$projectView && $activeProject !== null
 
-    function createProject(folder: boolean = false) {
+    function createProject(folder = false) {
         let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
         if (profile[parent] === "none" || tree.find((a) => a.id === parent)?.readOnly) parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
@@ -165,7 +165,7 @@
         setTimeout(() => activeRename.set("project_" + projectId))
     }
 
-    let editActive: boolean = false
+    let editActive = false
     function rename(value: string, id: string) {
         if (editActive) return
 

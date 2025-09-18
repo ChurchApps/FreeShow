@@ -244,7 +244,7 @@ export function updateSortedStageItems() {
     })
 }
 
-export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview: boolean = false) {
+export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview = false) {
     // check bindings
     if (!preview && item.bindings?.length && !item.bindings.includes(outputId)) return false
 

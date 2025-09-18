@@ -7,8 +7,8 @@
     export let value: string
     export let style: string
     export let conditions: any = {}
-    export let isClearing: boolean = false
-    export let outputId: string = ""
+    export let isClearing = false
+    export let outputId = ""
     export let transition: Transition
     export let isKeyOutput = false
 

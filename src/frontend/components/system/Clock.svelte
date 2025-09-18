@@ -10,7 +10,7 @@
 
     export let item: any = {}
     export let style = true
-    export let fontStyle: string = ""
+    export let fontStyle = ""
     export let type: "digital" | "analog" | "custom" = "digital"
     export let dateFormat = "none"
     export let customFormat = "hh:mm a"

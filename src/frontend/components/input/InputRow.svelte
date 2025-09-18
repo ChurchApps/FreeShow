@@ -2,7 +2,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
-    export let arrow: boolean = false
+    export let arrow = false
 
     export let open = false
 </script>

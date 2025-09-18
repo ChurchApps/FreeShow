@@ -89,7 +89,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 export async function loadShows(s: string[], deleting = false) {
     const savedBeforeLoading: boolean = !deleting && get(saved)
 
-    let notLoaded: string[] = []
+    const notLoaded: string[] = []
     s.forEach((id) => {
         if (!get(shows)[id]) {
             notFound.update((a) => {

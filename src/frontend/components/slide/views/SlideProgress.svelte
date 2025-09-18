@@ -5,7 +5,7 @@
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
-    export let outputId: string = ""
+    export let outputId = ""
     export let item: any = {}
     export let autoSize = 0
 

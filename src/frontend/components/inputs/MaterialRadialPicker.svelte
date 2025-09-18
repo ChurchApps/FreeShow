@@ -2,7 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { translateText } from "../../utils/language"
 
-    export let value: number = 0
+    export let value = 0
     export let label: string
     export let id = ""
     export let placeholder = ""

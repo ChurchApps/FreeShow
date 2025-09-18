@@ -20,7 +20,7 @@
     $: count = category.count || 0
     $: readOnly = category.readOnly || false
 
-    export let parentId: string = ""
+    export let parentId = ""
     export let isSubmenu = false
     $: submenu = category.submenu || {}
 

@@ -10,7 +10,7 @@
     export let id: SelectIds
     export let tabs: any[]
     export let value: string
-    export let newLabel: string = "settings.add"
+    export let newLabel = "settings.add"
 
     let tabsElem: HTMLDivElement | undefined
     let isScrollable = false

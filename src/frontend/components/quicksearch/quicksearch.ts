@@ -343,7 +343,7 @@ const triggerActions = {
 
             // add to project
             if (control) {
-                let newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
+                const newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
                 history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id } }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_ref" } })
                 activeShow.set({ ...newShow, index: newIndex })
             }
@@ -393,7 +393,7 @@ function enableConnection(id: string) {
     disabledServers.set({ ...get(disabledServers), [id]: false })
 }
 
-/////
+/// //
 
 const top = ["show", "edit", "stage", "draw", "settings"]
 const mainPages = [

@@ -23,7 +23,7 @@
     }
 
     // Pingback after 30 playing seconds on videos where tracking is required
-    let pingbackTime: number = 0
+    let pingbackTime = 0
     let pingbackInterval: NodeJS.Timeout | null = null
     $: if (path && !mirror) setupPingback()
     function setupPingback() {
@@ -44,7 +44,7 @@
         const pingbackUrl = $media[path]?.pingbackUrl
         if (!pingbackUrl) return
 
-        fetch(pingbackUrl, { method: "GET", mode: "no-cors" }).catch(() => {})
+        fetch(pingbackUrl, { method: "GET", mode: "no-cors" }).catch(console.error)
     }
 
     onDestroy(() => {

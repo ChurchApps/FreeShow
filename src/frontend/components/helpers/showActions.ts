@@ -1432,7 +1432,7 @@ export function getNumberVariables(variableUpdater = get(variables), _dynamicUpd
 
 // PROJECT SECTION DATA
 
-function getActiveProjectSection(data: any = {}, next: boolean = false): ProjectShowRef | null {
+function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef | null {
     const project = get(projects)[get(activeProject) || ""]
     if (!project?.shows) return null
 

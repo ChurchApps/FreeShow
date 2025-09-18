@@ -169,8 +169,8 @@ function getClosestUpcommingEvent(eventGroup: string) {
 
     const today = Date.now()
 
-    let closestTime: number = 0
-    let closestId: string = ""
+    let closestTime = 0
+    let closestId = ""
     eventsList.forEach(a => {
         const currentTime = (new Date(a?.from)?.getTime() || 0)
         if (currentTime > today && (!closestTime || currentTime < closestTime)) {

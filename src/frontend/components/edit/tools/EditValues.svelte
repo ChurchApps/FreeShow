@@ -24,7 +24,7 @@
     export let styles: { [key: string]: string } = {}
     export let customValues: { [key: string]: string } = {}
     export let item: any = {}
-    export let isStage: boolean = false
+    export let isStage = false
 
     function getValue(input: EditInput2, _updater: any = null) {
         if (input.type === "toggle") return styles[input.key || ""] || ""
@@ -106,7 +106,7 @@
     }
 
     const dispatch = createEventDispatcher()
-    function changed(e: any, input: any, sectionId: string = "") {
+    function changed(e: any, input: any, sectionId = "") {
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier

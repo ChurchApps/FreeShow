@@ -3,7 +3,6 @@
     import type { Show } from "../../../types/Show"
     import { currentWindow } from "../../stores"
     import { send } from "../../utils/request"
-    import T from "../helpers/T.svelte"
     import Media from "../output/layers/Media.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"

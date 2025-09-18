@@ -79,13 +79,13 @@
 
     $: ref = getLayoutRef("active", $showsCache)
 
-    $: if (editSlideSelected && activeIsShow && ref.length <= activeSlide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
+    $: if (editSlideSelected && activeIsShow && ref.length <= activeSlide && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
     let allSlideItems: Item[] = []
     $: {
-        if ($activeEdit.type === "overlay") allSlideItems = clone($overlays[activeId!]?.items || [])
-        else if ($activeEdit.type === "template") allSlideItems = clone($templates[activeId!]?.items || [])
-        else allSlideItems = editSlideSelected && activeIsShow && ref.length > activeSlide! ? clone(_show().slides([ref[activeSlide!]?.id]).get("items")[0] || []) : []
+        if ($activeEdit.type === "overlay") allSlideItems = clone($overlays[activeId]?.items || [])
+        else if ($activeEdit.type === "template") allSlideItems = clone($templates[activeId]?.items || [])
+        else allSlideItems = editSlideSelected && activeIsShow && ref.length > activeSlide ? clone(_show().slides([ref[activeSlide]?.id]).get("items")[0] || []) : []
     }
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
@@ -130,8 +130,8 @@
 
         // get selected slide(s)
         let slides: any[] = []
-        if ($activeEdit.type === "overlay") slides = [$overlays[activeId!]]
-        else if ($activeEdit.type === "template") slides = [$templates[activeId!]]
+        if ($activeEdit.type === "overlay") slides = [$overlays[activeId]]
+        else if ($activeEdit.type === "template") slides = [$templates[activeId]]
         else {
             let activeSlides: string[] = []
             // all slides
@@ -139,7 +139,7 @@
             // selected slides
             else if ($selected.id === "slide" && $selected.data.length) activeSlides = $selected.data.map(({ index }) => ref[index]?.id)
             // active slide
-            else activeSlides = [ref[activeSlide!]?.id]
+            else activeSlides = [ref[activeSlide]?.id]
 
             slides = _show().slides(activeSlides).get()
         }
@@ -153,9 +153,9 @@
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
                 let indexes: number[] = []
-                if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= activeSlide!)
+                if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= activeSlide)
                 else if (applyToAll) indexes = ref.map((_, i) => i)
-                else indexes = [activeSlide!]
+                else indexes = [activeSlide]
 
                 return setFilterStyle(styles[0], indexes)
             }
@@ -176,7 +176,7 @@
         }
 
         let ref = getLayoutRef()
-        let slide = ref[activeSlide!].id
+        let slide = ref[activeSlide].id
         if (!slide) return
 
         storedEditMenuState.set({})

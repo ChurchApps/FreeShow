@@ -6,7 +6,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let id: string = ""
+    export let id = ""
     export let label: string
     export let value: any
     export let defaultValue: any = null
@@ -14,7 +14,7 @@
     export let icon = ""
     export let data: any | null = null
     export let popupId: Popups
-    export let openEvent: (() => {}) | null = null
+    export let openEvent: (() => void) | null = null
 
     export let disabled = false
     export let allowEmpty = false

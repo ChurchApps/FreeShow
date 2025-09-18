@@ -11,10 +11,10 @@
 
     export let label: string
     export let value: string | undefined
-    export let title: string = ""
+    export let title = ""
     export let filter: { name: string; extensions: string[] }
-    export let icon: string = ""
-    export let multiple: boolean = false
+    export let icon = ""
+    export let multiple = false
 
     export let disabled = false
     export let autoTrigger = false
