@@ -1,11 +1,11 @@
-import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
-import { activePopup, alertMessage, dictionary } from "../stores"
+import { activePopup, alertMessage } from "../stores"
+import { translateText } from "../utils/language"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 type Song = {
     Contents: string
@@ -46,7 +46,7 @@ export function convertEasyslides(data: any) {
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+        show.layouts = { [layoutID]: { name: translateText("example.default"), notes: "", slides: layout } }
 
         tempShows.push({ id: uid(), show })
     }

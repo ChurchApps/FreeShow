@@ -16,6 +16,7 @@
     import { translateText } from "../../../utils/language"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import { getResolution } from "../../helpers/output"
+    import DropArea from "../../system/DropArea.svelte"
 
     const update = () => (Slide = clone($templates[currentId]))
     $: currentId = $activeEdit.id!
@@ -98,7 +99,9 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         <!--  && (!Slide.isDefault || ignoreDefault.includes(currentId)) -->
         {#if Slide}
-            <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
+            <DropArea id="edit" file>
+                <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
+            </DropArea>
         {:else}
             <Center size={2} faded>
                 <T id="empty.slide" />

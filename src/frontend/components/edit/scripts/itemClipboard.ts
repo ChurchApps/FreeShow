@@ -79,7 +79,7 @@ export function mergeWithStyle(newStyle: string, oldStyle: string, isItem: boole
 export function getSlideStyle(): StyleClipboard {
     const ref = getLayoutRef()
     const settings = _show()
-        .slides([ref[get(activeEdit).slide!].id])
+        .slides([ref[get(activeEdit).slide!]?.id])
         .get("settings")[0]
 
     return { keys: { settings: clone(settings) }, style: {} }

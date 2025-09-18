@@ -4,7 +4,7 @@
     import type { BibleCategories } from "../../../../types/Tabs"
     import { sendMain } from "../../../IPC/main"
     import { labelsDisabled, language, scriptures } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
     import { customBibleData } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
@@ -127,7 +127,7 @@
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
-        { id: "local", name: translate("cloud.local"), icon: "scripture" }
+        { id: "local", name: translateText("cloud.local"), icon: "scripture" }
     ]
 
     function goBack() {

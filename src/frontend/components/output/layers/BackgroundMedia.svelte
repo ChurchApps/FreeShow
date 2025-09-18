@@ -66,7 +66,7 @@
     function setPreviewVideoTime() {
         // timeout in case video is going to fade out
         setTimeout(() => {
-            if (fadingOut) return
+            if (fadingOut || (!videoData.paused && videoTime < 2)) return
 
             const diff = Math.abs($videosTime[outputId] - videoTime)
             if (diff > 0.5) {

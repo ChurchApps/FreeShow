@@ -1,11 +1,11 @@
 <script lang="ts">
     import { popupData } from "../../../stores"
-    import { translate } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
 
     const outputTypes = [
-        { id: "normal", name: translate("settings.normal"), icon: "display_settings" },
-        { id: "stage", name: translate("menu.stage"), icon: "stage" }
+        { id: "normal", name: translateText("settings.normal"), icon: "display_settings" },
+        { id: "stage", name: translateText("menu.stage"), icon: "stage" }
     ]
 
     function selectOutput(id) {

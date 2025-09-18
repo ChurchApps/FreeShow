@@ -41,6 +41,11 @@
         let elem = listElem.querySelector("#" + id)
         let elemTop = (elem as HTMLElement)?.offsetTop || 0
 
+        // don't scroll if already visible
+        const currentScrollPos = listElem.closest(".center")?.scrollTop || 0
+        const currentViewHeight = listElem.closest(".center")?.clientHeight || 0
+        if (elemTop - currentScrollPos > -250 && elemTop - currentScrollPos < currentViewHeight) return
+
         // smooth scrolling time
         if (scrollingToActive) clearTimeout(scrollingToActive)
         scrollingToActive = setTimeout(() => {

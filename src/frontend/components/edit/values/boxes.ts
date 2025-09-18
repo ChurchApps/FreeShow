@@ -75,32 +75,7 @@ export function setBoxInputValue2(box: BoxContent2 | { [key: string]: EditBoxSec
     }
 }
 
-export const trackerEdits = [
-    {
-        name: "clock.type",
-        input: "dropdown",
-        id: "tracker.type",
-        value: "number",
-        values: {
-            options: [
-                { id: "number", name: "$:variables.number:$" },
-                { id: "bar", name: "$:edit.progress_bar:$" },
-                { id: "group", name: "$:tools.groups:$" }
-            ]
-        }
-    },
-    {
-        name: "edit.accent_color",
-        input: "color",
-        id: "tracker.accent",
-        value: "#F0008C"
-    },
-    { name: "edit.sub_indexes", input: "checkbox", id: "tracker.childProgress", value: false },
-    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false }
-]
-
 const now = new Date(2025, 0, 10)
-
 
 type Box2 = {
     [key in ItemType]?: BoxContent2
@@ -588,9 +563,9 @@ export const itemBoxes: Box2 = {
                         values: {
                             label: "clock.type",
                             options: [
-                                { value: "number", label: "$:variables.number:$" },
-                                { value: "bar", label: "$:edit.progress_bar:$" },
-                                { value: "group", label: "$:tools.groups:$" }
+                                { value: "number", label: "variables.number" },
+                                { value: "bar", label: "edit.progress_bar" },
+                                { value: "group", label: "tools.groups" }
                             ],
                             style: "flex: 4;"
                         }

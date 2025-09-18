@@ -11,7 +11,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { downloadOnlineMedia, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
     import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -184,6 +184,12 @@
         altKeyPressed = false
     }
 
+    // paste any images in clipboard
+    async function paste(e: ClipboardEvent) {
+        const mediaData = await getMediaFileFromClipboard(e)
+        if (mediaData) addItem("media", null, { src: mediaData })
+    }
+
     // ZOOM
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
@@ -299,12 +305,12 @@
     $: hasTextContent = getSlideText(Slide)?.length
 </script>
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
-            <DropArea id="edit">
+            <DropArea id="edit" file>
                 <Zoomed
                     background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
                     {checkered}

@@ -4,7 +4,7 @@
     import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
-    import { translate, translateText } from "../../../../utils/language"
+    import { translateText } from "../../../../utils/language"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import { checkName } from "../../../helpers/show"
@@ -45,7 +45,7 @@
             "name"
         ).map((cat) => ({
             id: cat.id,
-            name: cat.default ? `$:${cat.name}:$` : cat.name
+            name: cat.name
         }))
     ]
 
@@ -62,10 +62,10 @@
     // OPTIONS
 
     const createOptions = [
-        { id: "text", name: translate("create_show.quick_lyrics"), title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
+        { id: "text", name: translateText("create_show.quick_lyrics"), title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
-        { id: "web", name: translate("create_show.web"), title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
-        { id: "empty", name: translate("create_show.empty"), title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
+        { id: "web", name: translateText("create_show.web"), title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
+        { id: "empty", name: translateText("create_show.empty"), title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
     ]
     $: resolvedCreateOptions = clone(createOptions).map((a: any) => {
         if (a.id === "text") a.colored = values.text.length

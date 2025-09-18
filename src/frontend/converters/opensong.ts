@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { checkName, formatToFileName } from "../components/helpers/show"
-import type { Bible } from "./../../types/Bible"
-import { ShowObj } from "./../classes/Show"
-import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
-import { setActiveScripture } from "./bible"
-import { createCategory, setTempShows } from "./importHelpers"
-import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import type { Chords } from "../../types/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import { checkName, formatToFileName } from "../components/helpers/show"
+import { translateText } from "../utils/language"
+import type { Bible } from "./../../types/Bible"
+import { ShowObj } from "./../classes/Show"
+import { activePopup, alertMessage, groups, scriptures, scripturesCache } from "./../stores"
+import { setActiveScripture } from "./bible"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface Song {
     title: string
@@ -66,7 +67,7 @@ export function convertOpenSong(data: any) {
 
             show.slides = slides
             show.media = media
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.aka || "", slides: layout } }
+            show.layouts = { [layoutID]: { name: translateText("example.default"), notes: song.aka || "", slides: layout } }
 
             tempShows.push({ id: uid(), show })
         })
@@ -127,7 +128,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             const items = [
                 {
                     style: DEFAULT_ITEM_STYLE,
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords }))
+                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "").trim() }], chords }))
                 }
             ]
 

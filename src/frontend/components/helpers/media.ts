@@ -578,3 +578,57 @@ export async function downloadOnlineMedia(url: string) {
     sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
     return url
 }
+
+export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<string | null> {
+    const items = e.clipboardData?.items
+    if (!items) return null
+
+    return new Promise((resolve) => {
+        for (const item of items) {
+            if (!item.type.startsWith("image/")) continue
+
+            const file = item.getAsFile()
+            if (!file) return resolve(null)
+
+            const reader = new FileReader()
+            reader.onload = async (event) => {
+                // base64 image data
+                const dataUrl = event.target?.result as string
+                const compressed = await compressImage(dataUrl)
+                resolve(compressed)
+            }
+            reader.readAsDataURL(file)
+        }
+    })
+}
+
+function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<string> {
+    return new Promise((resolve) => {
+        const img = new Image()
+
+        img.onload = () => {
+            let { width, height } = img
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height)
+                width = Math.round(width * ratio)
+                height = Math.round(height * ratio)
+            }
+
+            const canvas = document.createElement("canvas")
+            canvas.width = width
+            canvas.height = height
+
+            const ctx = canvas.getContext("2d")
+            ctx?.drawImage(img, 0, 0, width, height)
+
+            // use png if image has transparency
+            const imageData = ctx?.getImageData(0, 0, width, height)
+            const hasTransparency = imageData?.data.some((_, i) => i % 4 === 3 && imageData.data[i] < 255)
+
+            if (hasTransparency) resolve(canvas.toDataURL("image/png"))
+            else resolve(canvas.toDataURL("image/jpeg", quality))
+        }
+
+        img.src = dataUrl
+    })
+}

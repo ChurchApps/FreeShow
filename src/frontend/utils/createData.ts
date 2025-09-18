@@ -2,8 +2,9 @@ import { get } from "svelte/store"
 import type { MainFilePaths } from "../../types/Main"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, effects, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
+import { audioFolders, effects, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
+import { translateText } from "./language"
 import { save } from "./save"
 
 export function createData(paths: MainFilePaths) {
@@ -13,7 +14,7 @@ export function createData(paths: MainFilePaths) {
 
     stageShows.set({
         default: {
-            name: get(dictionary).example?.default || "Stage",
+            name: translateText("example.default"),
             disabled: false,
             password: "",
             settings: {},
@@ -39,15 +40,15 @@ export function createData(paths: MainFilePaths) {
     setExampleOverlays()
 
     folders.update((a) => {
-        a.default = { name: get(dictionary).example?.meetings || "Meetings", parent: "/" }
+        a.default = { name: translateText("example.meetings"), parent: "/" }
         return a
     })
     projects.update((a) => {
         a.default = {
-            name: get(dictionary).example?.example || "Example",
+            name: translateText("example.example"),
             created: new Date("2022-01-01").getTime(),
             parent: "default",
-            shows: [{ id: "default" }, { id: "section", type: "section", name: get(dictionary).example?.example || "Example", notes: get(dictionary).example?.example_note || "Write notes here" }]
+            shows: [{ id: "default" }, { id: "section", type: "section", name: translateText("example.example"), notes: translateText("example.example_note") }]
         }
         return a
     })
@@ -69,13 +70,13 @@ export function createData(paths: MainFilePaths) {
     // translate names set in defaults.ts
     if (get(outputs).default?.name === "Primary") {
         outputs.update((a) => {
-            a.default.name = get(dictionary).theme?.primary || "Primary"
+            a.default.name = translateText("theme.primary")
             return a
         })
     }
     if (get(variables).default?.name === "Counter") {
         variables.update((a) => {
-            a.default.name = get(dictionary).variables?.number || "Counter"
+            a.default.name = translateText("variables.number")
             return a
         })
     }
@@ -144,7 +145,7 @@ export function setExampleOverlays() {
     overlays.update((a) => {
         a.watermark = {
             isDefault: true,
-            name: get(dictionary).example?.watermark || "Watermark",
+            name: translateText("example.watermark"),
             color: "#F0008C",
             category: "notice",
             items: [
@@ -157,7 +158,7 @@ export function setExampleOverlays() {
         }
         a.visual = {
             isDefault: true,
-            name: get(dictionary).example?.recording || "Recording",
+            name: translateText("example.recording"),
             color: "red",
             category: "visuals",
             // TODO: create box
@@ -169,7 +170,7 @@ export function setExampleOverlays() {
         }
         a.clock = {
             isDefault: true,
-            name: get(dictionary).example?.clock || "Clock",
+            name: translateText("example.clock"),
             color: "dodgerblue",
             category: "visuals",
             items: [{ style: "top:70px;left:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }]
@@ -189,7 +190,7 @@ export function setExampleOverlays() {
         }
         a.name = {
             isDefault: true,
-            name: get(dictionary).inputs?.name || "Name",
+            name: translateText("inputs.name"),
             color: "#0b57a2",
             category: "visuals",
             displayDuration: 4,
@@ -217,7 +218,7 @@ export function setExampleOverlays() {
         }
         a.rounded = {
             isDefault: true,
-            name: get(dictionary).example?.rounded || "Rounded",
+            name: translateText("example.rounded"),
             color: null,
             category: "visuals",
             locked: true,
@@ -257,60 +258,60 @@ export function setExampleTemplates() {
         // metadata
         a.metadata = {
             isDefault: true,
-            name: get(dictionary).tools?.metadata || "Metadata",
+            name: translateText("tools.metadata"),
             color: null,
             category: "song", // "metadata"
             items: [
                 {
                     style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("tools.metadata"), style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
                 }
             ]
         }
         // message
         a.message = {
             isDefault: true,
-            name: get(dictionary).meta?.message || "Message",
+            name: translateText("meta.message"),
             color: null,
             category: "song", // "metadata"
             items: [
                 {
                     style: "top: 50px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("meta.message"), style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
                 }
             ]
         }
         // presentation
         a.header = {
             isDefault: true,
-            name: get(dictionary).example?.header || "Header",
+            name: translateText("example.header"),
             color: null,
             category: "presentation",
             items: [
                 {
                     style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 180px;font-weight: bold;" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("example.header"), style: "font-size: 180px;font-weight: bold;" }] }]
                 }
             ]
         }
         a.text = {
             isDefault: true,
-            name: get(dictionary).example?.text || "Text",
+            name: translateText("example.text"),
             color: null,
             category: "presentation",
             items: [
                 {
                     style: "top:35px;left:50.5px;height:220px;width:1820px;",
                     align: "",
-                    lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 120px;font-weight: bold;" }] }]
+                    lines: [{ align: "text-align: left;", text: [{ value: translateText("example.header"), style: "font-size: 120px;font-weight: bold;" }] }]
                 },
                 {
                     style: "top:290px;left:50.5px;height:750px;width:1820px;",
                     align: "",
-                    lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.text || "Text", style: "font-size: 80px;" }] }]
+                    lines: [{ align: "text-align: left;", text: [{ value: translateText("example.text"), style: "font-size: 80px;" }] }]
                 }
             ]
         }
@@ -318,46 +319,46 @@ export function setExampleTemplates() {
         // lyrics
         a.big = {
             isDefault: true,
-            name: get(dictionary).example?.big || "Big",
+            name: translateText("example.big"),
             color: null,
             category: "song",
             items: [
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "Big", style: "font-size: 120px;" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("example.big"), style: "font-size: 120px;" }] }]
                 }
             ]
         }
         a.default = {
             isDefault: true,
-            name: get(dictionary).example?.default || "Default",
+            name: translateText("example.default"),
             color: null,
             category: "song",
             items: [
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "Default", style: "font-size: 100px;" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("example.default"), style: "font-size: 100px;" }] }]
                 }
             ]
         }
         a.small = {
             isDefault: true,
-            name: get(dictionary).example?.small || "Small",
+            name: translateText("example.small"),
             color: null,
             category: "song",
             items: [
                 {
                     style: DEFAULT_ITEM_STYLE,
                     align: "",
-                    lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "Small", style: "font-size: 80px;" }] }]
+                    lines: [{ align: "", text: [{ value: translateText("example.small"), style: "font-size: 80px;" }] }]
                 }
             ]
         }
         a.bigBold = {
             isDefault: true,
-            name: mergeTranslations("big", "bold", "Big Bold"),
+            name: translateText("example.big example.bold"),
             color: null,
             category: "song",
             items: [
@@ -369,7 +370,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: mergeTranslations("big", "bold", "Big Bold"),
+                                    value: translateText("example.big example.bold"),
                                     style: "font-size: 120px;font-weight: bold;"
                                 }
                             ]
@@ -380,7 +381,7 @@ export function setExampleTemplates() {
         }
         a.defaultBold = {
             isDefault: true,
-            name: mergeTranslations("default", "bold", "Default Bold"),
+            name: translateText("example.default example.bold"),
             color: null,
             category: "song",
             items: [
@@ -392,7 +393,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: mergeTranslations("default", "bold", "Default Bold"),
+                                    value: translateText("example.default example.bold"),
                                     style: "font-size: 100px;font-weight: bold;"
                                 }
                             ]
@@ -403,7 +404,7 @@ export function setExampleTemplates() {
         }
         a.smallBold = {
             isDefault: true,
-            name: mergeTranslations("small", "bold", "Small Bold"),
+            name: translateText("example.small example.bold"),
             color: null,
             category: "song",
             items: [
@@ -415,7 +416,7 @@ export function setExampleTemplates() {
                             align: "",
                             text: [
                                 {
-                                    value: mergeTranslations("small", "bold", "Small Bold"),
+                                    value: translateText("example.small example.bold"),
                                     style: "font-size: 80px;font-weight: bold;"
                                 }
                             ]
@@ -615,7 +616,7 @@ export function setExampleTemplates() {
         // scripture
         a.scripture = {
             isDefault: true,
-            name: get(dictionary).category?.scripture || "Scripture",
+            name: translateText("category.scripture"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -634,7 +635,7 @@ export function setExampleTemplates() {
         }
         a.scripture_2 = {
             isDefault: true,
-            name: (get(dictionary).category?.scripture || "Scripture") + " 2",
+            name: translateText("category.scripture 2"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -659,7 +660,7 @@ export function setExampleTemplates() {
         }
         a.scripture_3 = {
             isDefault: true,
-            name: (get(dictionary).category?.scripture || "Scripture") + " 3",
+            name: translateText("category.scripture 3"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -690,7 +691,7 @@ export function setExampleTemplates() {
         }
         a.scripture_4 = {
             isDefault: true,
-            name: (get(dictionary).category?.scripture || "Scripture") + " 4",
+            name: translateText("category.scripture 4"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -727,7 +728,7 @@ export function setExampleTemplates() {
         }
         a.scriptureLT = {
             isDefault: true,
-            name: (get(dictionary).category?.scripture || "Scripture") + " Lower Third",
+            name: translateText("category.scripture Lower Third"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -747,7 +748,7 @@ export function setExampleTemplates() {
         }
         a.scriptureLT_2 = {
             isDefault: true,
-            name: (get(dictionary).category?.scripture || "Scripture") + " Lower Third 2",
+            name: translateText("category.scripture Lower Third 2"),
             color: "#876543",
             category: "scripture",
             items: [
@@ -851,7 +852,7 @@ export function setExampleTemplates() {
 
 export function createDefaultShow() {
     setShow("default", {
-        name: get(dictionary).example?.welcome || "Welcome",
+        name: translateText("example.welcome"),
         category: "presentation",
         settings: {
             activeLayout: "default",
@@ -874,14 +875,14 @@ export function createDefaultShow() {
                     {
                         style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
                         align: "",
-                        lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }]
+                        lines: [{ align: "", text: [{ value: translateText("example.welcome!"), style: "font-size: 180px;font-weight: bold;" }] }]
                     }
                 ]
             }
         },
         layouts: {
             default: {
-                name: get(dictionary).example?.default || "",
+                name: translateText("example.default"),
                 notes: "",
                 slides: [{ id: "one" }]
             }
@@ -913,11 +914,4 @@ export function createDoubleTemplate() {
 
         return a
     })
-}
-
-// HELPERS
-
-function mergeTranslations(firstKey: string, secondKey: string, defaultValue: string) {
-    if (!get(dictionary).example) return defaultValue
-    return get(dictionary).example![firstKey] + " " + get(dictionary).example![secondKey]
 }

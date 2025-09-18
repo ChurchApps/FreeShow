@@ -1,13 +1,13 @@
 import { get } from "svelte/store"
 import type { Item, LayoutRef } from "../../../types/Show"
 import type { StageItem, StageLayout } from "../../../types/Stage"
-import { translate } from "../../utils/language"
+import { translateText } from "../../utils/language"
 import { arrayToObject, filterObjectArray } from "../../utils/sendData"
 import { getItemText } from "../edit/scripts/textStyle"
+import { getActiveOutputs } from "../helpers/output"
+import { getLayoutRef } from "../helpers/show"
 import { STAGE } from "./../../../types/Channels"
 import { activeStage, allOutputs, connections, currentWindow, outputs, outputSlideCache, showsCache, stageShows, timers, variables } from "./../../stores"
-import { getLayoutRef } from "../helpers/show"
-import { getActiveOutputs } from "../helpers/output"
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
@@ -24,11 +24,11 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
         else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
         else if (itemId === "text") name = dynamicValueString(getItemText(item as Item))
 
-        name = name || translate(`items.${itemId}`)
+        name = name || translateText(`items.${itemId}`)
 
         const slideOffset = Number(item.slideOffset || 0)
-        if (itemId === "slide_text" && slideOffset === 0) name = translate("stage.current_slide_text") || name
-        else if (itemId === "slide_text" && slideOffset === 1) name = translate("stage.next_slide_text") || name + " +1"
+        if (itemId === "slide_text" && slideOffset === 0) name = translateText("stage.current_slide_text") || name
+        else if (itemId === "slide_text" && slideOffset === 1) name = translateText("stage.next_slide_text") || name + " +1"
         else if ((itemId === "slide_text" || itemId === "slide_notes") && slideOffset) name += ` ${slideOffset > 0 ? "+" : ""}${slideOffset}`
 
         return name
@@ -38,7 +38,7 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
     if (itemId.includes("global_timers") && !itemId.includes("first_active_timer")) return get(timers)[getStageItemId(itemId)]?.name || ""
     if (itemId.includes("variables")) return get(variables)[getStageItemId(itemId)]?.name || ""
 
-    return translate(`stage.${itemId.split("#")[1]}`)
+    return translateText(`stage.${itemId.split("#")[1]}`)
 }
 
 function dynamicValueString(text: string) {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activePopup, activeStyle, outputs, popupData, scriptures, styles, templates } from "../../../stores"
-    import { translate, translateText } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Card from "../../drawer/Card.svelte"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
@@ -127,7 +127,7 @@
     {:else if searchedTemplates.length}
         <div class="grid">
             {#if allowEmpty || (customTypes && selectedType !== types[0]?.value)}
-                <Card active={!value} label={translate(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
+                <Card active={!value} label={translateText(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
                     <!--  -->
                 </Card>
             {/if}

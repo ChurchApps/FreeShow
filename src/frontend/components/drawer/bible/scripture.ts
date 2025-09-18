@@ -494,7 +494,7 @@ export function getSlides({ bibles, sorted }, onlyOne = false, disableReference 
 
 export function formatBibleText(text: string | undefined) {
     if (!text) return ""
-    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "")
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", '&')
 }
 
 function removeTags(text) {

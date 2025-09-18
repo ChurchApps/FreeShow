@@ -63,7 +63,7 @@
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
-            offset = ((scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5
+            offset = ((scrollElem?.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5
         }
     }
 

@@ -1,5 +1,5 @@
-import { app, ipcMain } from "electron"
-import { mainWindow, resetMainWindow } from ".."
+import { app, ipcMain, powerSaveBlocker } from "electron"
+import { mainWindow, powerSaveBlockerId, resetMainWindow } from ".."
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendMain, sendToMain } from "../IPC/main"
@@ -46,6 +46,10 @@ export async function exitApp() {
     // }
 
     resetMainWindow()
+
+    if (powerSaveBlockerId !== null) {
+        powerSaveBlocker.stop(powerSaveBlockerId)
+    }
 
     try {
         app.quit()

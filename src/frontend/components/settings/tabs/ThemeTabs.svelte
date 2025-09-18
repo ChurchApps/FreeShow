@@ -14,7 +14,7 @@
     function getThemesArray(themes: { [key: string]: Themes }) {
         let names: any[] = []
         Object.entries(themes).forEach(([id, obj]) => {
-            names.push({ name: obj.default ? `$:themes.${obj.name}:$` : obj.name, id, default: obj.default })
+            names.push({ name: obj.default ? `themes.${obj.name}` : obj.name, id, default: obj.default })
         })
         return names.sort((a, b) =>
             a.id === "default" || b.id === "default"

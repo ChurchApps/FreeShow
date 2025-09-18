@@ -210,7 +210,7 @@
                 </MaterialButton>
             {/if}
 
-            {#if !referenceType && currentShow?.settings?.template && $templates[currentShow.settings.template]}
+            {#if (!referenceType || referenceType === "scripture" || open) && currentShow?.settings?.template && $templates[currentShow.settings.template]}
                 {#if open}
                     <div class="divider"></div>
                 {/if}

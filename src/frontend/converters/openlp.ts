@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Chords, Line } from "../../types/Show"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
+import { translateText } from "../utils/language"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, alertMessage, dictionary, groups } from "./../stores"
+import { activePopup, alertMessage, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 interface Song {
     title: string
@@ -77,7 +78,7 @@ export function convertOpenLP(data: any) {
         const { slides, layout }: any = createSlides(song)
 
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.notes || "", slides: layout } }
+        show.layouts = { [layoutID]: { name: translateText("example.default"), notes: song.notes || "", slides: layout } }
 
         tempShows.push({ id: uid(), show })
     }

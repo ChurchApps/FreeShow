@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { actions, activePopup, activeShow, drawerTabsData, groups, popupData, showsCache, templates, timers } from "../../../stores"
-    import { translate, translateText } from "../../../utils/language"
+    import { translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
@@ -195,7 +195,7 @@
 
         // auto name (if empty or not changed by user)
         if ((action.name || "") === autoActionName && action.triggers.length === 1) {
-            autoActionName = translate(actionData[e.detail.id]?.name || "") || e.detail.id
+            autoActionName = translateText(actionData[e.detail.id]?.name || "") || e.detail.id
             if (autoActionName) action.name = autoActionName
         }
 

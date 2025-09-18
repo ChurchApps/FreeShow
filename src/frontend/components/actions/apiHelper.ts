@@ -12,7 +12,6 @@ import {
     activeProject,
     activeTimers,
     audioPlaylists,
-    dictionary,
     draw,
     drawSettings,
     drawTool,
@@ -110,7 +109,7 @@ export function selectProjectByIndex(index: number) {
     // select project
     const selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
     if (!selectedProject) {
-        newToast(get(dictionary).toast?.midi_no_project + " " + index)
+        newToast("toast.midi_no_project " + index)
         return
     }
 
@@ -137,7 +136,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
     if (!showRef) return newToast("toast.midi_no_show")
 
     const slideRef = showRef[data.index]
-    if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + data.index)
+    if (!slideRef) return newToast("toast.midi_no_slide " + data.index)
 
     outputSlide(showRef, data)
 }
@@ -756,10 +755,17 @@ export async function getPDFThumbnails({ path }: API_media) {
 // DRAW
 
 export function changeDrawZoom(data: API_draw_zoom) {
+    const size = data.size || 100
     drawSettings.update((a) => {
-        a.zoom.size = data.size || 100
+        a.zoom.size = size
         return a
     })
+
+    if (size === 100) {
+        draw.set(null)
+        drawTool.set("focus")
+        return
+    }
 
     // 0-100 %
     draw.set({ x: 1920 * ((data.x ?? 50) / 100), y: 1080 * ((data.y ?? 50) / 100) })

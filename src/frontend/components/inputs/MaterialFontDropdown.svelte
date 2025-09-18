@@ -41,7 +41,7 @@
 </script>
 
 <InputRow style={$$props.style || ""}>
-    <MaterialDropdown {label} options={systemFontsList} {value} style={fontStylesVisible ? "max-width: 80%;" : ""} on:change={change} {allowEmpty} />
+    <MaterialDropdown {label} options={systemFontsList} {value} style={fontStylesVisible ? "max-width: 85%;" : ""} on:change={change} {allowEmpty} />
     {#if fontStylesVisible}
         <MaterialDropdown label="settings.font_style" disabled={fontsStylesList.length < 2} options={fontsStylesList} value={fontStyleValue || defaultFontStyleValue} on:change={styleChange} onlyArrow />
     {/if}

@@ -239,7 +239,7 @@ async function processPlan(plan: Plan, serviceType: ServiceType, dataPath: strin
     const plansEndpoint = `${typesEndpoint}/${serviceType.id}/plans`
     const itemsEndpoint = `${plansEndpoint}/${plan.id}/items`
 
-    const planItems = await pcoRequest({ scope: "services", endpoint: itemsEndpoint })
+    const planItems = await pcoRequest({ scope: "services", endpoint: itemsEndpoint, params: { per_page: "100" } })
     if (!planItems[0]?.id) return null
 
     const projectItems = []
@@ -280,7 +280,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     if (!songData?.id) return null
 
     const arrangementEndpoint = `/songs/${songData.id}/arrangements/${item.relationships.arrangement.data?.id}`
-    const songArrangement = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))[0];
+    const songArrangement = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))[0]
     if (!songArrangement?.id) return null
 
     const song = songArrangement.attributes

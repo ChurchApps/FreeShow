@@ -14,7 +14,6 @@ import {
     categories,
     companion,
     currentOutputSettings,
-    dictionary,
     disabledServers,
     focusMode,
     folders,
@@ -38,7 +37,8 @@ import {
     textEditActive
 } from "../../stores"
 import { triggerFunction } from "../../utils/common"
-import { translate } from "../../utils/language"
+import { translateText } from "../../utils/language"
+import { getAccess } from "../../utils/profile"
 import { showSearch } from "../../utils/search"
 import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
@@ -48,7 +48,6 @@ import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
 import { Main } from "./../../../types/IPC/Main"
-import { getAccess } from "../../utils/profile"
 
 interface QuickSearchValue {
     type: keyof typeof triggerActions
@@ -366,10 +365,10 @@ export function selectQuicksearchValue(value: QuickSearchValue, control: boolean
 
 // HELPERS
 
-const translateNames = (array: any[]) => array.map((a) => ({ ...a, name: translate(a.name) })).map(translateAliases)
+const translateNames = (array: any[]) => array.map((a) => ({ ...a, name: translateText(a.name) })).map(translateAliases)
 
 function translateAliases(options: any) {
-    options.aliases = (options.aliases || []).map((a) => (a.includes(".") ? translate(a) : a))
+    options.aliases = (options.aliases || []).map(translateText)
     return options
 }
 
@@ -575,6 +574,9 @@ const faq = [
     { id: "https://freeshow.app/docs/faq#how-to-transfer-the-files-between-computers", name: "Transfer Files Between Computers", icon: "help" },
     { id: "https://freeshow.app/docs/faq#the-app-is-slow", name: "The App is Slow", icon: "help", aliases: ["-Lagging", "-Performance"] },
     { id: "https://freeshow.app/docs/faq#freeshow-keeps-freezing", name: "FreeShow Freezed Suddenly", icon: "help", aliases: ["-Freezing", "-Crash"] },
+    { id: "https://freeshow.app/docs/items#line-by-line-reveal", name: "Line by line reveal", icon: "help" },
+    { id: "https://freeshow.app/docs/items#click-reveal", name: "Click reveal", icon: "help" },
+    { id: "https://freeshow.app/docs/editing#virtual-line-breaks-virtual-breaks", name: "Virtual breaks", icon: "help", aliases: ["-Line breaks"] },
     // GitHub
     { id: "https://github.com/ChurchApps/FreeShow/issues/693#issuecomment-2255167635", name: "Delete Slide vs Remove Group", icon: "help", aliases: ["-Delete group vs remove slide"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/1175#issuecomment-2581935274", name: "Custom Bible Version", icon: "help", aliases: ["-Missing scripture", "-Missing Bible"] },
@@ -582,6 +584,11 @@ const faq = [
     { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
     { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
+    { id: "https://youtu.be/1A4GUMu-pdA", name: "Silent Communication for Media Leaders", icon: "youtube" },
+    { id: "https://youtu.be/L_e_bZzu7ec", name: "Bold Color Labels with High Contrast Mode", icon: "youtube" },
+    { id: "https://youtu.be/EzaXKRkOG30", name: "Build and Master Shows Like a Pro", icon: "youtube" },
+    { id: "https://youtu.be/hHZ67O5Axh0", name: "Why Choose FreeShow for Your Church?", icon: "youtube" },
+    { id: "https://youtu.be/-PopxVxhj_A", name: "Best Video Types (Codecs)", icon: "youtube" },
     { id: "https://youtu.be/7E5nlsslC0k", name: "Deep Dive Into Templates", icon: "youtube" },
     { id: "https://youtu.be/G8ia0h6HiGA", name: "Advanced Level Game Show", icon: "youtube" },
     { id: "https://youtu.be/nTsVXk8FcmU", name: "Activate Focus Mode in FreeShow for a Distraction-Free Service", icon: "youtube" },
@@ -709,7 +716,7 @@ const showActions = [
 function getShowActions() {
     const globalGroups = Object.entries(get(groups)).map(([id, group]) => {
         let name = group.name
-        if (group.default) name = get(dictionary).groups?.[group.name] || ""
+        if (group.default) name = translateText("groups." + group.name)
         const globalGroup = { group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
         return { id, name, color: group.color || null, icon: "groups", data: { globalGroup }, aliases: ["-Group"] }
     })

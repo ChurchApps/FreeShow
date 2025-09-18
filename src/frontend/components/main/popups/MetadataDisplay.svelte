@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePopup, popupData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { metadataDisplayValues } from "../../helpers/show"
-    import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     // VALUES
@@ -41,7 +41,7 @@
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
                 {@html icons[data.id]}
             </svg>
-            <T id={data.name} />
+            {translateText(data.name)}
         </MaterialButton>
     {/each}
 </div>
