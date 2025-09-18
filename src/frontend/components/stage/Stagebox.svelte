@@ -266,8 +266,8 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
-                    <!-- Use PreviewCanvas when in output window (stage projection) or preview mode -->
-                    {#if $currentWindow === "output" || preview}
+                    <!-- Use PreviewCanvas only in output window (stage projection) -->
+                    {#if $currentWindow === "output"}
                         <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                     {:else}
                         <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
