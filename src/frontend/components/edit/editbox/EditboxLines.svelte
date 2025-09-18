@@ -2,6 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
+    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -11,11 +12,9 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import autosize from "../scripts/autosize"
-    import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
-    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
 
     export let item: Item
     export let ref: {
@@ -660,11 +659,6 @@
             {/if}
             <div
                 bind:this={textElem}
-                on:mousemove={(e) => {
-                    if (!textElem) return
-                    let newLines = chordMove(e, { textElem, item })
-                    if (newLines) item.lines = newLines
-                }}
                 on:mouseup={() => storeCurrentCaretPos()}
                 class="edit"
                 class:hidden={chordsMode}

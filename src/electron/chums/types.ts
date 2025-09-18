@@ -33,14 +33,14 @@ export const CONTENT_API_URL = "https://contentapi.staging.churchapps.org"
 export const CHUMS_API_URL = "https://app.staging.chums.org"
 */
 
-export const DEFAULT_CHUMS_DATA: ChumsAuthData = {
-    access_token: "",
-    refresh_token: "",
-    token_type: "Bearer",
-    created_at: 0,
-    expires_in: 0,
-    scope: "plans",
-}
+// export const DEFAULT_CHUMS_DATA: ChumsAuthData = {
+//     access_token: "",
+//     refresh_token: "",
+//     token_type: "Bearer",
+//     created_at: 0,
+//     expires_in: 0,
+//     scope: "plans",
+// }
 
 export interface ChumsSongData {
     freeShowId: string

@@ -19,7 +19,7 @@
         { value: "all", label: translateText("actions.all_outputs") },
         { value: "specific", label: translateText("actions.specific_outputs") }
     ]
-    let outputsList = getList($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput)
+    let outputsList = getList($outputs).filter((a) => !a.stageOutput)
     let stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
 
     function getList(list) {

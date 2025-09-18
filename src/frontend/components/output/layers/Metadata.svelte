@@ -10,7 +10,6 @@
     export let isClearing = false
     export let outputId = ""
     export let transition: Transition
-    export let isKeyOutput = false
 
     $: noTransition = transition.type === "none" || transition.duration === 0
 
@@ -32,11 +31,11 @@
 
 {#if shouldShow}
     {#if noTransition}
-        <div class="meta" {style} class:key={isKeyOutput}>
+        <div class="meta" {style}>
             {@html value}
         </div>
     {:else}
-        <div class="meta" transition:custom={transition} {style} class:key={isKeyOutput}>
+        <div class="meta" transition:custom={transition} {style}>
             {@html value}
         </div>
     {/if}

@@ -11,7 +11,7 @@
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
-    import { itemBoxes, setBoxInputValue2 } from "../values/boxes"
+    import { itemBoxes, setBoxInputValue } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
     export let id: ItemType
@@ -109,60 +109,60 @@
     }
 
     $: if (box?.sections.CSS && id !== "captions") {
-        setBoxInputValue2(box, "CSS", "CSS_text", "value", style)
+        setBoxInputValue(box, "CSS", "CSS_text", "value", style)
     }
 
     $: if (box?.sections.font) {
-        setBoxInputValue2(box, "font", "font-size", "disabled", item?.textFit !== "none")
-        setBoxInputValue2(box, "font", "textFit", "value", item?.textFit || "growToFit")
-        // setBoxInputValue2(box2, "font", "auto", "value", item.auto ?? true)
+        setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
+        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit")
+        // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
     $: if (id === "text") {
-        setBoxInputValue2(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
-        // setBoxInputValue2(box2, "default", "textFit", "hidden", !item?.auto)
-        setBoxInputValue2(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
-        setBoxInputValue2(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
+        setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
+        // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
+        setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
+        setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
     }
 
     $: if (id === "media" && item) {
         const extension = getExtension(item.src || "")
         const isVideo = getMediaType(extension) === "video"
-        setBoxInputValue2(box, "default", "muted", "hidden", !isVideo)
-        setBoxInputValue2(box, "default", "loop", "hidden", !isVideo)
-        setBoxInputValue2(box, "default", "speed", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "muted", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "loop", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "speed", "hidden", !isVideo)
     }
 
     $: if (id === "timer" && item) {
-        setBoxInputValue2(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
+        setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
         const timer = $timers[item.timer?.id || ""]
         const timerLength = Math.abs((timer?.start || 0) - (timer?.end || 0))
-        setBoxInputValue2(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
-        setBoxInputValue2(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time" || timerLength < 3600)
+        setBoxInputValue(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
+        setBoxInputValue(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time" || timerLength < 3600)
     }
     $: if (id === "clock" && item) {
         const clockType = item.clock?.type || "digital"
         const dateFormat = item.clock?.dateFormat || "none"
 
-        setBoxInputValue2(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
-        setBoxInputValue2(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
-        setBoxInputValue2(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
-        setBoxInputValue2(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
-        setBoxInputValue2(box, "default", "tip", "hidden", clockType !== "custom")
+        setBoxInputValue(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
+        setBoxInputValue(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
+        setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
+        setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
+        setBoxInputValue(box, "default", "tip", "hidden", clockType !== "custom")
     }
     $: if (id === "camera" && item) {
-        if (item.device?.name) setBoxInputValue2(box, "default", "device", "name", item.device.name)
+        if (item.device?.name) setBoxInputValue(box, "default", "device", "name", item.device.name)
     }
     $: if (id === "slide_tracker" && item) {
-        setBoxInputValue2(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
+        setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
 
-        setBoxInputValue2(box, "default", "tracker.childProgress", "hidden", item.tracker?.type !== "group")
-        setBoxInputValue2(box, "default", "tracker.oneLetter", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "tracker.childProgress", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "tracker.oneLetter", "hidden", item.tracker?.type !== "group")
     }
     $: if (id === "events" && item) {
-        setBoxInputValue2(box, "default", "events.startDaysFromToday", "disabled", !!item.events?.enableStartDate)
-        setBoxInputValue2(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
-        setBoxInputValue2(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
+        setBoxInputValue(box, "default", "events.startDaysFromToday", "disabled", !!item.events?.enableStartDate)
+        setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
+        setBoxInputValue(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
     }
 
     ///

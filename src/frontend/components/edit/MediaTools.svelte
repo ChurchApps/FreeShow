@@ -11,7 +11,7 @@
     import Tabs from "../main/Tabs.svelte"
     import { addFilterString } from "./scripts/textStyle"
     import EditValues from "./tools/EditValues.svelte"
-    import { setBoxInputValue2 } from "./values/boxes"
+    import { setBoxInputValue } from "./values/boxes"
     import { filterSections, mediaBoxes } from "./values/media"
 
     let tabs: TabsObj = {
@@ -42,10 +42,10 @@
             let videoDuration = video?.duration || 0
             if (!videoDuration) return
 
-            setBoxInputValue2(mediaSections, "video", "toTime", "value", currentMedia?.toTime || videoDuration)
-            setBoxInputValue2(mediaSections, "video", "toTime", "default", videoDuration)
-            setBoxInputValue2(mediaSections, "video", "fromTime", "values", { max: videoDuration })
-            setBoxInputValue2(mediaSections, "video", "toTime", "values", { max: videoDuration })
+            setBoxInputValue(mediaSections, "video", "toTime", "value", currentMedia?.toTime || videoDuration)
+            setBoxInputValue(mediaSections, "video", "toTime", "default", videoDuration)
+            setBoxInputValue(mediaSections, "video", "fromTime", "values", { max: videoDuration })
+            setBoxInputValue(mediaSections, "video", "toTime", "values", { max: videoDuration })
             mediaSections = mediaSections
         }
     }

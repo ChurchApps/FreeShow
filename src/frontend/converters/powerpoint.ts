@@ -117,21 +117,6 @@ function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
     return { slidesObj, layouts }
 }
 
-// extract number from ppt/slides/slide1.xml
-export function sortByNameNumber(array: string[]) {
-    return array.sort((a, b) => {
-        // get numbers in name
-        const matchA = a.match(/\d+/)
-        const matchB = b.match(/\d+/)
-        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
-        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
-
-        if (numA !== numB) return numA - numB
-
-        return a.localeCompare(b)
-    })
-}
-
 type PlaceholderItem = (Item & { placeholder?: { type: string; idx?: string } })
 
 function convertSlide(key: string, content: any) {

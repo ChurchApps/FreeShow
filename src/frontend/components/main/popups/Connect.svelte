@@ -77,7 +77,7 @@
     // output
     $: outputsList = getList(clone($outputs))
     function getList(outputs) {
-        let list = keysToID(outputs).filter((a) => !a.isKeyOutput && a.enabled === true)
+        let list = keysToID(outputs).filter((a) => a.enabled === true)
         return sortByName(list).map((a) => ({ label: a.name, value: a.id }))
     }
 

@@ -1,4 +1,3 @@
-import type { Option } from "../../../types/Main"
 import { translateText } from "../../utils/language"
 
 // check if array has any data
@@ -195,19 +194,19 @@ export function clone<T>(object: T): T {
 }
 
 // not currently in use, but could be handy
-export function slowLoop(array, interval, returnFunc) {
-    loopFunction(0)
+// export function slowLoop(array, interval, returnFunc) {
+//     loopFunction(0)
 
-    function loopFunction(index) {
-        returnFunc(array[index])
+//     function loopFunction(index) {
+//         returnFunc(array[index])
 
-        if (index < array.length - 1) {
-            setTimeout(() => {
-                loopFunction(index + 1)
-            }, interval)
-        }
-    }
-}
+//         if (index < array.length - 1) {
+//             setTimeout(() => {
+//                 loopFunction(index + 1)
+//             }, interval)
+//         }
+//     }
+// }
 
 // randomize array items
 export function shuffleArray(array) {
@@ -217,12 +216,6 @@ export function shuffleArray(array) {
     }
 
     return array
-}
-
-// convert object to dropdown options
-export function convertToOptions(object) {
-    const options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
-    return sortByName(options)
 }
 
 // find the keys either added or changed in any object in an array

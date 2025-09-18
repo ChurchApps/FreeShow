@@ -2,7 +2,7 @@
     import { activeStage, stageShows } from "../../../stores"
     import { addFilterString, addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
-    import { setBoxInputValue2 } from "../../edit/values/boxes"
+    import { setBoxInputValue } from "../../edit/values/boxes"
     import { itemSections } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -36,7 +36,7 @@
 
         const transform = data["transform"] || ""
         const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
-        setBoxInputValue2(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
+        setBoxInputValue(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
 
         data = stylePosToPercentage(data)
     }

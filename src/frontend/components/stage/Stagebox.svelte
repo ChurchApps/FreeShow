@@ -265,11 +265,7 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 {#if !$special.optimizedMode}
-                    {#if id.includes("_alpha") && currentOutput.keyOutput}
-                        <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
-                    {:else}
-                        <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
-                    {/if}
+                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}

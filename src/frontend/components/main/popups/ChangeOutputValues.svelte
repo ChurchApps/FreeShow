@@ -54,12 +54,6 @@
         <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
         <MaterialToggleSwitch label="settings.allow_main_screen" checked={currentOutput?.allowMainScreen} defaultValue={false} on:change={(e) => updateOutput("allowMainScreen", e.detail)} />
     {/if}
-
-    {#if currentOutput?.keyOutput}
-        <MaterialButton variant="outlined" style="width: 100%;" icon="display" on:click={() => getCurrentOutput(currentOutput?.keyOutput || "")}>
-            <p><T id="settings.change_key_output_position" /></p>
-        </MaterialButton>
-    {/if}
 </div>
 
 {#if currentOutput?.allowMainScreen === true || currentOutput?.invisible}
