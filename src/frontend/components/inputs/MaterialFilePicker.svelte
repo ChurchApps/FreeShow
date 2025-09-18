@@ -67,7 +67,11 @@
         on:keydown={handleKeydown}
     >
         <span class="selected-text">
-            {#if value}{getFileName(value)}{/if}
+            {#if value?.includes("data:")}
+                Embeded data
+            {:else if value}
+                {getFileName(value)}
+            {/if}
         </span>
 
         <div class="arrow">
