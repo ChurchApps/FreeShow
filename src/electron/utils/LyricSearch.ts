@@ -100,7 +100,7 @@ export class LyricSearch {
         const response = await axios.get(url)
         const html = await response.data
         if (typeof html !== "string") return ""
-        return this.getLyricFromHtml(html, /<div property=\"text\">([\s\S]*?)<\/div>/g)
+        return this.getLyricFromHtml(html, /<div property=['"]text['"]>([\s\S]*?)<\/div>/g)
     }
 
     private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
