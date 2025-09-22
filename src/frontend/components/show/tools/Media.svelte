@@ -200,7 +200,6 @@
                                     if (background.type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
-                            title={$dictionary.media?.play}
                         >
                             <MediaLoader name={background.name} path={background.path || ""} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
                         </HoverButton>
@@ -248,7 +247,6 @@
                                         if (type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: true, loop: true } })
                                     }
                                 }}
-                                title={$dictionary.media?.play}
                             >
                                 <MediaLoader name={background.name} path={background.path} {type} {mediaStyle} />
                             </HoverButton>

@@ -169,7 +169,7 @@
 <!-- <InputRow arrow={$alertUpdates}> -->
 <MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
 <!-- <div slot="menu"> -->
-<MaterialToggleSwitch label="Alert when a new beta version is available" checked={$special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
+<MaterialToggleSwitch label="settings.alert_updates_beta" checked={$special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
 <!-- </div> -->
 <!-- </InputRow> -->
 

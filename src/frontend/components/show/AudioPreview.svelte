@@ -8,6 +8,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Slider from "../inputs/Slider.svelte"
 
     export let active: any
@@ -158,131 +159,86 @@
 
 <div class="main media context #media_preview" bind:this={mediaElem}>
     <div class="buttons">
-        <Button
-            style="flex: 0"
+        <MaterialButton
             disabled={$outLocked || isMic}
-            center
-            title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
+            title={paused ? "media.play" : "media.pause"}
             on:click={() => {
                 if ($outLocked) return
                 AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
             }}
         >
             <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
-        </Button>
-        {#if sliderValue !== null}
-            <span>
-                {joinTime(secondsToTime(sliderValue))}
+        </MaterialButton>
+        <MaterialButton
+            disabled={!playing.audio}
+            title="media.stop"
+            on:click={() => {
+                clearAudio(path)
+                currentTime = 0
+            }}
+        >
+            <Icon id={"stop"} white size={1.2} />
+        </MaterialButton>
+
+        <div style="display: flex;align-items: center;gap: 10px;flex: 1;margin: 0 10px;">
+            {#if sliderValue !== null}
+                <span>
+                    {joinTime(secondsToTime(sliderValue))}
+                </span>
+            {:else}
+                <span style="color: var(--secondary)">
+                    {joinTime(secondsToTime(currentTime))}
+                </span>
+            {/if}
+
+            <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
+
+            <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
+                {#if !isMic && fullLength}
+                    {joinTime(secondsToTime(duration))}
+                {:else}
+                    {joinTime(secondsToTime(duration - Math.floor(currentTime)))}
+                {/if}
             </span>
-        {:else}
-            <span style="color: var(--secondary)">
-                {joinTime(secondsToTime(currentTime))}
-            </span>
+        </div>
+
+        <MaterialButton
+            title="media.back10"
+            on:click={() => {
+                setTime(null, Math.max(currentTime - 10, 0.01))
+            }}
+        >
+            <Icon id="back_10" white size={1.3} />
+        </MaterialButton>
+        <MaterialButton
+            title="media.forward10"
+            on:click={() => {
+                setTime(null, Math.min(currentTime + 10, duration - 0.1))
+            }}
+        >
+            <Icon id="forward_10" white size={1.3} />
+        </MaterialButton>
+
+        {#if !isMic}
+            <MaterialButton
+                title="media._loop"
+                on:click={() => {
+                    let loop = !$media[path]?.loop
+                    media.update((a) => {
+                        if (!a[path]) a[path] = {}
+                        a[path].loop = loop
+
+                        return a
+                    })
+                }}
+            >
+                <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
+            </MaterialButton>
         {/if}
 
-        <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
-
-        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
-            {#if !isMic && fullLength}
-                {joinTime(secondsToTime(duration))}
-            {:else}
-                {joinTime(secondsToTime(duration - Math.floor(currentTime)))}
-            {/if}
-        </span>
-
-        <div style="display: flex;">
-            <!-- +/- 10 seconds -->
-            <Button
-                center
-                title={$dictionary.media?.back10}
-                on:click={() => {
-                    setTime(null, Math.max(currentTime - 10, 0.01))
-                }}
-            >
-                <Icon id="back_10" white size={1.4} />
-            </Button>
-            <Button
-                center
-                title={$dictionary.media?.forward10}
-                on:click={() => {
-                    setTime(null, Math.min(currentTime + 10, duration - 0.1))
-                }}
-            >
-                <Icon id="forward_10" white size={1.4} />
-            </Button>
-
-            <Button
-                disabled={!playing.audio}
-                style="flex: 0"
-                center
-                title={$dictionary.media?.stop}
-                on:click={() => {
-                    clearAudio(path)
-                    currentTime = 0
-                }}
-            >
-                <Icon id={"stop"} white size={1.2} />
-            </Button>
-            <!-- LOOP -->
-            {#if !isMic}
-                <Button
-                    center
-                    title={$dictionary.media?._loop}
-                    on:click={() => {
-                        let loop = !$media[path]?.loop
-                        media.update((a) => {
-                            if (!a[path]) a[path] = {}
-                            a[path].loop = loop
-
-                            return a
-                        })
-                    }}
-                >
-                    <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
-                </Button>
-            {/if}
-
-            <!-- VOLUME (moved to editor) -->
-            <!-- <Button
-                center
-                title={$dictionary.actions?.decrease_volume}
-                disabled={($media[path]?.volume || 1) < 0.06}
-                on:click={() => {
-                    let volume = $media[path]?.volume || 1
-                    media.update((a) => {
-                        if (!a[path]) a[path] = {}
-                        a[path].volume = Math.max(0.05, (volume * 100 - 5) / 100)
-
-                        return a
-                    })
-
-                    AudioPlayer.updateVolume(path)
-                }}
-            >
-                <Icon id="volume_down" white size={1.2} />
-            </Button>
-            <Button
-                center
-                title={$dictionary.actions?.increase_volume}
-                disabled={($media[path]?.volume || 1) >= 1}
-                on:click={() => {
-                    let volume = $media[path]?.volume || 1
-                    media.update((a) => {
-                        if (!a[path]) a[path] = {}
-                        a[path].volume = Math.min(1, (volume * 100 + 5) / 100)
-
-                        return a
-                    })
-
-                    AudioPlayer.updateVolume(path)
-                }}
-            >
-                <Icon id="volume" white size={1.2} />
-            </Button> -->
-            {#if $media[path]?.volume !== undefined && $media[path]?.volume < 1}
-                <p style="align-self: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
-            {/if}
-        </div>
+        {#if $media[path]?.volume !== undefined && $media[path]?.volume < 1}
+            <p style="align-self: center;text-align: center;min-width: 50px;padding: 0 5px;opacity: 0.7;font-size: 0.9em;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
+        {/if}
     </div>
 </div>
 
@@ -296,18 +252,33 @@
     }
 
     .buttons {
+        --size: 40px;
+
         display: flex;
         width: 100%;
         /* height: fit-content; */
-        gap: 10px;
+        /* gap: 10px; */
         align-items: center;
 
         background-color: var(--primary-darker);
         z-index: 1;
 
+        border: 1px solid var(--primary-lighter);
+        border-radius: 10px;
+        margin: 10px;
+        min-height: var(--size);
+        overflow: hidden;
+
         /* position: absolute;
     bottom: 0;
     width: 100%; */
+    }
+
+    .buttons :global(button) {
+        background-color: transparent !important;
+        height: calc(var(--size) - 2px);
+        padding: 0 12px !important;
+        border-radius: 0;
     }
 
     div :global(input) {

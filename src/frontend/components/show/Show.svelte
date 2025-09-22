@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, dictionary, outLocked, projects } from "../../stores"
+    import { activeProject, activeShow, outLocked, projects } from "../../stores"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
@@ -51,7 +51,6 @@
                 on:click={() => {
                     if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
                 }}
-                title={$dictionary.media?.play}
             >
                 <Camera id={show.id} groupId={show.data?.groupId} class="media" />
             </HoverButton>
@@ -62,7 +61,6 @@
                 on:click={() => {
                     if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
                 }}
-                title={$dictionary.media?.play}
             >
                 <Capture screen={{ id: show.id, name: show.name || "" }} streams={[]} background />
             </HoverButton>
@@ -73,7 +71,6 @@
                 on:click={() => {
                     if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
                 }}
-                title={$dictionary.media?.play}
             >
                 <NdiStream screen={{ id: show.id, name: show.name || "" }} background />
             </HoverButton>

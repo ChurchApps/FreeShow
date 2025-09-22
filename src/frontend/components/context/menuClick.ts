@@ -731,7 +731,26 @@ const clickActions = {
         activePopup.set("create_collection")
     },
     create_show: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("chapters")) {
+        if (obj.contextElem?.classList.contains("#media_preview")) {
+            const path = obj.contextElem.id
+            const name = removeExtension(getFileName(path))
+            const mediaType = getMediaType(getExtension(path))
+
+            const layoutId = uid()
+            const show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
+            show.name = checkName(name)
+
+            const slideId = uid()
+            show.slides[slideId] = { group: name, color: null, settings: {}, notes: "", items: [] }
+
+            const mediaId = uid(5)
+            show.media[mediaId] = { path, name, ...(mediaType === "video" ? { muted: false, loop: false } : {}) }
+
+            const layoutSlides: SlideData[] = [{ id: slideId, background: mediaId }]
+            show.layouts[layoutId].slides = layoutSlides
+
+            history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+        } else if (obj.contextElem?.classList.contains("chapters")) {
             triggerFunction("scripture_selectAll")
             setTimeout(() => triggerFunction("scripture_newShow"))
         } else if (obj.sel?.id === "scripture") {

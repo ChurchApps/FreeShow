@@ -1046,7 +1046,9 @@
         "longitude": "Longitude",
         "altitude": "Altitude",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Long range"
+        "longRange": "Long range",
+        "media_item_tip": "Are you trying to use the media as a background?",
+        "convert_to_background": "Convert to background"
     },
     "items": {
         "text": "Textbox",
@@ -1253,6 +1255,7 @@
         "window": "Window",
         "active_style": "Use style",
         "alert_updates": "Alert when a new update is available",
+        "alert_updates_beta": "Alert when a new beta version is available",
         "auto_updates": "Auto updates",
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",

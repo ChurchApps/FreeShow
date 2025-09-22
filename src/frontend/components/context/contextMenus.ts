@@ -228,7 +228,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
-    media_preview: ["close"],
+    media_preview: ["create_show", "SEPERATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["edit", "preview", "SEPERATOR", "play_no_filters", "SEPERATOR", "system_open"], // "play_no_audio"

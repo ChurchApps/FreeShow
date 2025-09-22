@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outLocked, outputs, overlays } from "../../../stores"
+    import { outLocked, outputs, overlays } from "../../../stores"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
 
@@ -20,7 +20,6 @@
         on:click={() => {
             if (!$outLocked) setOutput("overlays", show.id, true)
         }}
-        title={$dictionary.media?.play}
     >
         <Zoomed background="transparent" checkered center mirror>
             <Overlay id={show.id} {outputId} overlays={$overlays} mirror transition={{ type: "none", duration: 0, easing: "" }} />
