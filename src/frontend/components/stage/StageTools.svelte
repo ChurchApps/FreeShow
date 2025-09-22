@@ -6,11 +6,10 @@
     import { addStyleString } from "../edit/scripts/textStyle"
     import { itemBoxes } from "../edit/values/boxes"
     import { history } from "../helpers/history"
-    import Icon from "../helpers/Icon.svelte"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
-    import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
     import BoxStyle from "./tools/BoxStyle.svelte"
     import Items from "./tools/Items.svelte"
@@ -196,14 +195,11 @@
             </div>
         {/if}
 
-        <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
-            {#if active !== "items"}
-                <Button style="flex: 1;" on:click={resetStageStyle} dark center>
-                    <Icon id="reset" right />
-                    <T id={"actions.reset"} />
-                </Button>
-            {/if}
-        </span>
+        {#if active !== "items"}
+            <FloatingInputs>
+                <MaterialButton icon="reset" title="actions.reset" on:click={resetStageStyle} />
+            </FloatingInputs>
+        {/if}
     {/if}
 </div>
 
@@ -219,6 +215,8 @@
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
+
+        padding-bottom: 50px;
     }
     .content :global(section) {
         padding: 10px;

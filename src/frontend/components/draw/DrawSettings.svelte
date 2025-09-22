@@ -3,7 +3,8 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
-    import Button from "../inputs/Button.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
@@ -89,6 +90,13 @@
     }
 </script>
 
+<!-- {#if tool === "paint"}
+    <MaterialButton style="background-color: {$paintCache?.length ? 'rgb(255 0 0 / 0.25)' : 'var(--primary-darker)'} !important;" disabled={!$paintCache?.length} on:click={clearDrawing}>
+        <Icon id="clear" size={1.2} white />
+        <T id="clear.drawing" />
+    </MaterialButton>
+{/if} -->
+
 <Tabs tabs={{ tool: { name: "draw." + tool, icon: tool } }} active="tool" />
 
 <div class="main">
@@ -104,26 +112,25 @@
                 <MaterialNumberInput label="draw.radius" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
             {:else if key === "size"}
                 <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} defaultValue={tool === "zoom" ? 100 : null} on:change={(e) => update(e.detail, key)} />
-            {:else}
+            {:else if key !== "clear"}
                 <MaterialCheckbox label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
             {/if}
         {/if}
     {/each}
 </div>
 
-<div class="bottom">
+<FloatingInputs>
     {#if tool === "paint"}
-        <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
-            <Icon id="clear" size={2} right white={!!$paintCache?.length} />
+        <MaterialButton style={$paintCache?.length ? "background-color: rgb(255 0 0 / 0.25) !important;" : ""} disabled={!$paintCache?.length} on:click={clearDrawing}>
+            <Icon id="clear" size={1.2} white />
             <T id="clear.drawing" />
-        </Button>
+        </MaterialButton>
+
+        <div class="divider" />
     {/if}
 
-    <Button style="flex: 1;" on:click={reset} dark center>
-        <Icon id="reset" right />
-        <T id="actions.reset" />
-    </Button>
-</div>
+    <MaterialButton icon="reset" title="actions.reset" on:click={reset} />
+</FloatingInputs>
 
 <style>
     .main {
@@ -133,10 +140,5 @@
         height: 100%;
 
         padding: 10px;
-    }
-
-    .bottom {
-        display: flex;
-        flex-direction: column;
     }
 </style>

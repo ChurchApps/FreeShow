@@ -2,10 +2,9 @@
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeShow, media } from "../../stores"
     import { clone } from "../helpers/array"
-    import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
     import { removeStore, updateStore } from "../helpers/update"
-    import Button from "../inputs/Button.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue } from "./values/boxes"
     import { audioSections } from "./values/media"
@@ -30,16 +29,24 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["audioType", "volume"]
+        let deleteKeys: string[] = ["audioType", "volume", "fromTime", "toTime"]
 
         if (currentMedia.volume) setTimeout(() => AudioPlayer.updateVolume(audioId))
 
         // reset
         deleteKeys.forEach((key) => removeStore("media", { keys: [audioId, key] }))
+
+        currentAudioSections = clone(audioSections)
+        getAudioDuration()
     }
 
-    export function valueChanged(input: any) {
+    export function valueChanged(e: any) {
         if (!audioId) return
+
+        const input = e.detail
+
+        input.value = input.values.value
+        input.input = input.type
 
         let value = input.value
         if (value?.id !== undefined) value = value.id
@@ -50,28 +57,16 @@
 
         updateStore("media", { keys: [audioId, input.id], value })
     }
-
-    function valueChanged2(e: any) {
-        const input = e.detail
-
-        input.value = input.values.value
-        input.input = input.type
-
-        valueChanged(input)
-    }
 </script>
 
 <div class="main border editTools">
     <div class="content">
-        <EditValues sections={currentAudioSections} item={currentMedia} on:change={valueChanged2} />
+        <EditValues sections={currentAudioSections} item={currentMedia} on:change={valueChanged} />
     </div>
 
-    <span style="display: flex;">
-        <Button style="flex: 1;" on:click={reset} dark center>
-            <Icon id="reset" right />
-            <T id={"actions.reset"} />
-        </Button>
-    </span>
+    <FloatingInputs>
+        <MaterialButton icon="reset" title="actions.reset" on:click={reset} />
+    </FloatingInputs>
 </div>
 
 <style>
@@ -86,5 +81,7 @@
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
+
+        padding-bottom: 50px;
     }
 </style>
