@@ -1178,7 +1178,8 @@ const duplicateActions = {
         timers.update((a) => {
             data.forEach(({ id }) => {
                 const newTimer = clone(a[id])
-                newTimer.name = data.length === 1 ? "" : newTimer.name + " 2"
+                // newTimer.name = data.length === 1 ? "" : newTimer.name + " 2"
+                newTimer.name = newTimer.name + " 2"
 
                 const newId = uid()
                 a[newId] = newTimer

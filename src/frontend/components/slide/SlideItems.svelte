@@ -26,6 +26,7 @@
 
     export let slideIndex = 0
     export let preview = false
+    export let isTemplatePreview = false
     export let mirror = true
     export let isMirrorItem = false
     export let disableListTransition = false
@@ -89,7 +90,7 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} />
+        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} />
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />

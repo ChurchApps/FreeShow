@@ -72,7 +72,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        max-height: 50px;
+        max-height: 60px;
         overflow-y: auto;
     }
 

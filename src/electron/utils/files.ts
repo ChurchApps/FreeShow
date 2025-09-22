@@ -755,7 +755,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
     })
 
     // open folder
-    openInSystem(outputPath)
+    openInSystem(outputPath, true)
     currentlyBundling = false
 }
 
@@ -881,7 +881,7 @@ const FIXES = {
     },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
-        openInSystem(stores.SETTINGS.path)
+        openInSystem(stores.SETTINGS.path, true)
     }
 }
 function specialCaseFixer() {

@@ -83,7 +83,7 @@
         <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
     </main>
 {:else}
-    <Tabs {tabs} bind:active style="flex: 1;" />
+    <Tabs {tabs} bind:active />
 
     {#if active === "metronome"}
         <Metronome {audioOutputs} />
