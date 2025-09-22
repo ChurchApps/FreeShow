@@ -15,7 +15,7 @@
     export let active: string
 
     $: if (sections.length && !active) {
-        const flat = sections.flat().filter((a) => a && a !== "SEPERATOR" && a.id !== "SEPERATOR" && a.id !== "TITLE")
+        const flat = sections.flat().filter((a) => a && a !== "SEPARATOR" && a.id !== "SEPARATOR" && a.id !== "TITLE")
         if (flat.length) setSubTab(flat[0].id)
     }
 
@@ -32,8 +32,8 @@
     }
 
     function notATab(tab: any) {
-        if (tab === "SEPERATOR") return true
-        if (tab?.id === "SEPERATOR") return true
+        if (tab === "SEPARATOR") return true
+        if (tab?.id === "SEPARATOR") return true
         if (tab?.id === "TITLE") return true
         return false
     }
@@ -88,7 +88,7 @@
                                     {/if}
                                 </div>
                             {/if}
-                        {:else if category === "SEPERATOR" || category?.id === "SEPERATOR"}
+                        {:else if category === "SEPARATOR" || category?.id === "SEPARATOR"}
                             <div class="separator">
                                 {#if category?.label}<div class="sepLabel">{translateText(category.label)}</div>{/if}
                                 <hr />

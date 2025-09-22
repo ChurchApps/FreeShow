@@ -31,7 +31,7 @@ import {
     effects,
     effectsLibrary,
     emitters,
-    errorHasOccured,
+    errorHasOccurred,
     events,
     folders,
     formatNewShow,
@@ -152,7 +152,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         chumsSyncCategories: get(chumsSyncCategories)
     }
 
-    // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
+    // settings exclusive to the local machine (path names that shouldn't be synced with cloud)
     const syncedSettings: { [key in SaveListSyncedSettings]: any } = {
         categories: get(categories),
         drawSettings: get(drawSettings),
@@ -243,7 +243,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
 
 export function initializeClosing(skipPopup = false) {
     // don't save automatically if an error has happened in case it breaks something
-    if (!skipPopup && (get(special).showClosePopup || get(errorHasOccured))) activePopup.set("unsaved")
+    if (!skipPopup && (get(special).showClosePopup || get(errorHasOccurred))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })
     else save(true)

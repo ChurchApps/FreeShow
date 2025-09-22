@@ -15,7 +15,7 @@
     export let showTime: boolean = true
     export let seconds: boolean = true
 
-    $: twelwe = $timeFormat === "12"
+    $: twelve = $timeFormat === "12"
 
     let d: Date = new Date()
     const clockInterval = setInterval(() => (d = new Date()), 250)
@@ -29,7 +29,7 @@
         h = d.getHours()
         m = d.getMinutes()
         s = d.getSeconds()
-        if (twelwe) {
+        if (twelve) {
             if (h === 0) h = 12
             else if (h > 12) h -= 12
         }
