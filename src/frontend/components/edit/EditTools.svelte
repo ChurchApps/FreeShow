@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item, ItemType, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import { newToast } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
@@ -11,7 +11,8 @@
     import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
-    import Button from "../inputs/Button.svelte"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
     import Center from "../system/Center.svelte"
     import { getBoxStyle, getFilterStyle, getItemStyle, getSlideStyle, setBoxStyle, setFilterStyle, setItemStyle, setSlideStyle } from "./scripts/itemClipboard"
@@ -36,8 +37,8 @@
     $: tabs.text.icon = item?.type && itemBoxes[item.type] ? itemBoxes[item.type]!.icon : "text"
     $: tabs.text.name = "items." + (item?.type || "text")
 
-    $: activeId = $activeEdit.id
-    $: activeSlide = $activeEdit.slide
+    $: activeId = $activeEdit.id || ""
+    $: activeSlide = $activeEdit.slide ?? -1
 
     // is not template or overlay
     $: isShow = !activeId
@@ -46,7 +47,7 @@
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
-    $: editSlideSelected = activeSlide !== null && activeSlide !== undefined
+    $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
     $: activeIsShow = $activeShow && ($activeShow.type || "show") === "show"
 
     $: if ($activeTriggerFunction === "slide_notes") active = "slide"
@@ -107,6 +108,13 @@
         })
 
         console.log("COPIED STYLE", $copyPasteEdit)
+    }
+
+    function clearClipboard() {
+        copyPasteEdit.update((a) => {
+            delete a[type]
+            return a
+        })
     }
 
     function getItemsStyle(_updater: any = null) {
@@ -195,7 +203,7 @@
             if (typeof indexes[0] !== "number") return
 
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } }) // pre 1.4.4
-            history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } }) // pre 1.5.0
             history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: undefined, indexes } })
             return
         }
@@ -385,52 +393,57 @@
             </div>
         {/if}
 
-        <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
-            {#if active !== "items"}
-                {#if isShow}
-                    <!-- WIP copy/paste style for overlay/templates! -->
+        {#if active !== "items"}
+            <FloatingInputs>
+                {#if copiedStyleDifferent}
+                    <MaterialButton icon="paste" title="actions.paste" on:click={() => pasteStyle()}>
+                        <T id="actions.paste" />
+                    </MaterialButton>
 
-                    {#if currentCopied && !copiedStyleDifferent}
-                        {#if isShow}
-                            {#if active === "filters"}
-                                <Button title={$dictionary.actions?.to_following} on:click={() => pasteStyle(false, true)} dark center>
-                                    <Icon id="down" />
-                                    <!-- <T id="actions.to_following" /> -->
-                                </Button>
-                            {/if}
-                            <Button style="flex: 1;" title={$dictionary.actions?.to_all} on:click={() => pasteStyle(true)} dark center>
-                                <Icon id="paste" right />
-                                <T id="actions.to_all" />
-                            </Button>
+                    <div class="divider"></div>
+                {/if}
+                {#if currentCopied && !copiedStyleDifferent}
+                    {#if isShow}
+                        {#if active === "filters"}
+                            <MaterialButton icon="down" title="actions.to_following" on:click={() => pasteStyle(false, true)}>
+                                <!-- <T id="actions.to_following" /> -->
+                            </MaterialButton>
+
+                            <div class="divider"></div>
                         {/if}
-                    {:else}
-                        <Button disabled={!currentItemStyle?.length} style={copiedStyleDifferent ? "" : "flex: 1;"} title={$dictionary.actions?.copy} on:click={copyStyle} dark center>
-                            <Icon id="copy" right={!copiedStyleDifferent} white />
-                            {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
-                        </Button>
+                        <MaterialButton icon="paste" title="actions.to_all" on:click={() => pasteStyle(true)}>
+                            <T id="actions.to_all" />
+                        </MaterialButton>
                     {/if}
-                    {#if copiedStyleDifferent}
-                        <Button style="flex: 1;" title={$dictionary.actions?.paste} on:click={() => pasteStyle()} dark center>
-                            <Icon id="paste" right />
-                            <T id="actions.paste" />
-                        </Button>
-                    {/if}
+                {:else}
+                    <MaterialButton disabled={!currentItemStyle?.length} title="actions.copy" on:click={copyStyle}>
+                        <Icon id="copy" white={copiedStyleDifferent} />
+                        {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
+                    </MaterialButton>
                 {/if}
 
-                <!-- TODO: reset template/overlay -->
-                <Button style={isShow ? "" : "flex: 1;"} title={$dictionary.actions?.reset} on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
-                    <Icon id="reset" right={!isShow} white={isShow} />
-                    {#if !isShow}<T id="actions.reset" />{/if}
+                <div class="divider"></div>
+
+                <!-- && !copiedStyleDifferent -->
+                {#if currentCopied}
+                    <MaterialButton icon="clear" title="clear.general: formats.clipboard" on:click={clearClipboard}></MaterialButton>
+                {:else}
+                    <!-- TODO: reset template/overlay -->
+                    <MaterialButton icon="reset" title="actions.reset" disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} on:click={reset}>
+                        <!-- {#if !isShow}<T id="actions.reset" />{/if} -->
+                    </MaterialButton>
+                {/if}
+            </FloatingInputs>
+        {/if}
+
+        <!-- <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
+            {#if $activeEdit.type === "template" || $activeEdit.type === "overlay"}
+                <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
+                    <Icon id="copy" right />
+                    DEV: Copy to "createData"
                 </Button>
-
-                {#if false && ($activeEdit.type === "template" || $activeEdit.type === "overlay")}
-                    <Button style="flex: 1;" title={$dictionary.actions?.copy} on:click={copyToCreateData} dark center>
-                        <Icon id="copy" right />
-                        DEV: Copy to "createData"
-                    </Button>
-                {/if}
             {/if}
-        </span>
+        </span> -->
     {:else if !isLocked}
         <Center faded>
             <T id="empty.slides" />
@@ -450,6 +463,8 @@
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
+
+        padding-bottom: 50px;
     }
     .content :global(section) {
         padding: 10px;

@@ -28,6 +28,7 @@ import {
     effects,
     events,
     gain,
+    livePrepare,
     media,
     ndiData,
     outputDisplay,
@@ -313,7 +314,8 @@ export const receiveOUTPUTasOUTPUT: any = {
     AUDIO_DATA: (a: any) => audioData.set(a),
     DYNAMIC_VALUE_DATA: (a: any) => dynamicValueData.set(a),
 
-    COLORBARS: (a: any) => colorbars.set(a)
+    COLORBARS: (a: any) => colorbars.set(a),
+    LIVE_PREPARE: (a: any) => livePrepare.set(a)
 }
 
 // NDI

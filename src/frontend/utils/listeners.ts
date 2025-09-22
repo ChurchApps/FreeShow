@@ -25,6 +25,7 @@ import {
     folders,
     gain,
     groups,
+    livePrepare,
     media,
     openedFolders,
     outputs,
@@ -303,6 +304,9 @@ export function storeSubscriber() {
 
     colorbars.subscribe((a) => {
         send(OUTPUT, ["COLORBARS"], a)
+    })
+    livePrepare.subscribe((a) => {
+        send(OUTPUT, ["LIVE_PREPARE"], a)
     })
 
     //

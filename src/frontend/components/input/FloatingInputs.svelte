@@ -59,6 +59,8 @@
         overflow: hidden;
         z-index: 199; /* over edit items */
 
+        max-width: calc(100% - 22px);
+
         --background: rgba(25, 25, 35, 0.85);
         background-color: var(--background);
         backdrop-filter: blur(3px);

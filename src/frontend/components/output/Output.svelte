@@ -318,8 +318,8 @@
     {/if}
 
     <!-- colorbars for testing -->
-    {#if $colorbars}
-        <Image path="./assets/{$colorbars}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
+    {#if $colorbars[outputId]}
+        <Image path="./assets/{$colorbars[outputId]}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
     {/if}
 
     <!-- effects -->

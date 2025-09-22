@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { colorbars, dictionary, outputs, toggleOutputEnabled } from "../../../stores"
+    import { dictionary, outputs, toggleOutputEnabled } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
@@ -43,6 +43,26 @@
         resolution = getOutputResolution(fullscreenId, $outputs, true)
     }
 
+    function toFraction(x: number, tolerance: number = 0) {
+        if (x === 0) return "0/1"
+        if (x < 0) x = -x
+        if (!tolerance) tolerance = 0.0001
+        let num = 1
+        let den = 1
+
+        iterate()
+        return `${num}/${den}`
+
+        function iterate() {
+            var R = num / den
+            if (Math.abs((R - x) / x) < tolerance) return
+
+            if (R < x) num++
+            else den++
+            iterate()
+        }
+    }
+
     // function handleKeydown(e: KeyboardEvent) {
     //     if (e.key === "Enter" || e.key === " ") {
     //         e.preventDefault()
@@ -68,11 +88,9 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         <span class="resolution">
             <p><b><T id="screen.width" />:</b> {resolution?.width || 0} <T id="screen.pixels" /></p>
             <p><b><T id="screen.height" />:</b> {resolution?.height || 0} <T id="screen.pixels" /></p>
-
-            <Button style="background-color: var(--primary-darkest);" on:click={() => colorbars.set($colorbars ? "" : "colorbars.png")} outline={!!$colorbars} center>
-                <Icon id="test" white={!$colorbars} right />
-                <T id="preview.test_pattern" />
-            </Button>
+            {#if resolution?.width && resolution?.height}
+                <p><b><T id="settings.aspect_ratio" />:</b> {Number((resolution.width / resolution.height).toFixed(2))} ({toFraction(resolution.width / resolution.height)})</p>
+            {/if}
         </span>
     {/if}
 
@@ -118,12 +136,12 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
 
     .resolution {
         position: absolute;
-        bottom: 0;
-        inset-inline-end: 0;
+        bottom: 10px;
+        inset-inline-end: 10px;
 
         color: var(--text);
-        /* background-color: var(--primary);
-    background-color: black; */
+        font-size: 0.85em;
+        line-height: 1.1em;
         text-align: end;
         display: flex;
         flex-direction: column;
@@ -131,15 +149,19 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         padding: 10px 12px;
         transition: opacity ease-in-out 0.2s;
 
+        border-radius: 6px;
+        border: 2px solid var(--primary-lighter);
+        background-color: var(--primary-darker);
+        opacity: 0.7;
+
         z-index: 30;
     }
-    /* .resolution:hover {
+    .resolution:hover {
         opacity: 0;
-    } */
+    }
     .resolution p {
         display: flex;
         gap: 5px;
         justify-content: space-between;
-        opacity: 0.8;
     }
 </style>

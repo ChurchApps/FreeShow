@@ -28,6 +28,7 @@ import {
     activeVariableTagFilter,
     audioFolders,
     categories,
+    colorbars,
     currentOutputSettings,
     currentWindow,
     dataPath,
@@ -40,6 +41,7 @@ import {
     focusMode,
     forceClock,
     guideActive,
+    livePrepare,
     media,
     mediaFolders,
     outLocked,
@@ -669,6 +671,20 @@ const clickActions = {
                 return output
             })
         }, 100)
+    },
+    test_pattern: (obj: ObjData) => {
+        const id = obj.contextElem?.id || ""
+        const testPattern = get(colorbars)
+        if (testPattern[id]) delete testPattern[id]
+        else testPattern[id] = "colorbars.png"
+        colorbars.set(testPattern)
+    },
+    live_prepare: (obj: ObjData) => {
+        const id = obj.contextElem?.id || ""
+        const prepare = get(livePrepare)
+        if (prepare[id]) delete prepare[id]
+        else prepare[id] = true
+        livePrepare.set(prepare)
     },
 
     // new

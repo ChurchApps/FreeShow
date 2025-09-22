@@ -12,6 +12,8 @@
     import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     export let currentOutput: Output | null
     export let outputId: string
@@ -80,7 +82,63 @@
 </script>
 
 {#if background}
-    {#if !big}
+    {#if big}
+        <!--  -->
+        {#if type === "video" || background?.type === "player"}
+            <FloatingInputs side="center" style="width: 80%;">
+                <MaterialButton title={videoData.paused ? "media.play" : "media.pause"} disabled={$outLocked} on:click={playPause}>
+                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.5} />
+                </MaterialButton>
+
+                <div class="divider" />
+
+                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
+
+                <div class="divider" />
+
+                <MaterialButton
+                    title="media.back10"
+                    on:click={() => {
+                        changeValue = Math.max(videoTime - 10, 0.01)
+                    }}
+                >
+                    <Icon id="back_10" white size={1.3} />
+                </MaterialButton>
+                <MaterialButton
+                    title="media.forward10"
+                    on:click={() => {
+                        changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
+                    }}
+                >
+                    <Icon id="forward_10" white size={1.3} />
+                </MaterialButton>
+
+                <div class="divider" />
+
+                <MaterialButton
+                    title="media._loop"
+                    on:click={() => {
+                        videoData.loop = !videoData.loop
+                        sendToOutput()
+                    }}
+                >
+                    <Icon id="loop" white={!videoData.loop} size={1.3} />
+                </MaterialButton>
+
+                <MaterialButton
+                    title={videoData.muted === false ? "actions.mute" : "actions.unmute"}
+                    disabled={$outLocked}
+                    on:click={() => {
+                        if (videoData.muted === undefined) videoData.muted = true
+                        videoData.muted = !videoData.muted
+                        sendToOutput()
+                    }}
+                >
+                    <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.3} />
+                </MaterialButton>
+            </FloatingInputs>
+        {/if}
+    {:else}
         <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={triggerClickOnEnterSpace}>
             {#if background?.type === "player"}
                 <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
@@ -88,59 +146,48 @@
                 <p>{mediaName}</p>
             {/if}
         </span>
-    {/if}
 
-    {#if type === "video" || background?.type === "player"}
-        <span class="group" class:big>
-            <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
-                <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={big ? 1.7 : 1.2} />
-            </Button>
+        {#if type === "video" || background?.type === "player"}
+            <span class="group">
+                <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
+                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
+                </Button>
 
-            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
+                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput />
 
-            {#if big}
                 <Button
                     center
-                    title={$dictionary.media?.back10}
+                    title={$dictionary.media?.forward10}
                     on:click={() => {
-                        changeValue = Math.max(videoTime - 10, 0.01)
+                        changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
                     }}
                 >
-                    <Icon id="back_10" white size={big ? 1.4 : 1.2} />
+                    <Icon id="forward_10" white size={1.2} />
                 </Button>
-            {/if}
-            <Button
-                center
-                title={$dictionary.media?.forward10}
-                on:click={() => {
-                    changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
-                }}
-            >
-                <Icon id="forward_10" white size={big ? 1.4 : 1.2} />
-            </Button>
-            <Button
-                center
-                title={$dictionary.media?._loop}
-                on:click={() => {
-                    videoData.loop = !videoData.loop
-                    sendToOutput()
-                }}
-            >
-                <Icon id="loop" white={!videoData.loop} size={big ? 1.4 : 1.2} />
-            </Button>
-            <Button
-                center
-                title={videoData.muted === false ? $dictionary.actions?.mute : $dictionary.actions?.unmute}
-                disabled={$outLocked}
-                on:click={() => {
-                    if (videoData.muted === undefined) videoData.muted = true
-                    videoData.muted = !videoData.muted
-                    sendToOutput()
-                }}
-            >
-                <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={big ? 1.4 : 1.2} />
-            </Button>
-        </span>
+                <Button
+                    center
+                    title={$dictionary.media?._loop}
+                    on:click={() => {
+                        videoData.loop = !videoData.loop
+                        sendToOutput()
+                    }}
+                >
+                    <Icon id="loop" white={!videoData.loop} size={1.2} />
+                </Button>
+                <Button
+                    center
+                    title={videoData.muted === false ? $dictionary.actions?.mute : $dictionary.actions?.unmute}
+                    disabled={$outLocked}
+                    on:click={() => {
+                        if (videoData.muted === undefined) videoData.muted = true
+                        videoData.muted = !videoData.muted
+                        sendToOutput()
+                    }}
+                >
+                    <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.2} />
+                </Button>
+            </span>
+        {/if}
     {/if}
 {/if}
 
@@ -152,13 +199,6 @@
     }
     .group :global(button) {
         padding: 0.3em !important;
-    }
-
-    .group.big {
-        background-color: var(--primary-darkest);
-    }
-    .group.big :global(.slider input) {
-        background-color: var(--primary);
     }
 
     .name {

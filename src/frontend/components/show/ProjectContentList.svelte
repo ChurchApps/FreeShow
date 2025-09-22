@@ -183,6 +183,10 @@
                                             {/if}
                                         </p>
 
+                                        {#if show.notes?.length}
+                                            <p style="opacity: 0.5;font-weight: normal;font-size: 0.9em;max-width: 60%;">{show.notes}</p>
+                                        {/if}
+
                                         {#if triggerAction && $actions[triggerAction]}
                                             <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />

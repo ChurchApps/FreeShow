@@ -30,12 +30,13 @@
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
         let seperatorId = ""
-        const seperators = ["$", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "timer_", "rss_"]
+        // the ones that can have a custom name should be first (to prevent it from overwriting a category)
+        const seperators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
             const seperator = seperators.find((a) => value.id.includes(a)) || ""
-            if (seperator && seperatorId !== seperator && seperatorId !== "$") {
+            if (seperator && seperatorId !== seperator && seperatorId !== "$" && !newList[seperator]?.length) {
                 seperatorId = seperator
                 newList[seperatorId] = []
             }

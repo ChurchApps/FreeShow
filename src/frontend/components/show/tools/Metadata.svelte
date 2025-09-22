@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, customMetadata, dictionary, outputs, shows, showsCache, styles, templates } from "../../../stores"
+    import { activePage, activeShow, customMetadata, dictionary, outputs, settingsTab, shows, showsCache, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
@@ -10,6 +10,8 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -94,6 +96,15 @@
 
     $: metadataDisplay = metadata.display || "never"
     // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
+
+    function editMetadataStyle() {
+        activePage.set("settings")
+        settingsTab.set("styles")
+        // scroll to bottom
+        setTimeout(() => {
+            document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
+        }, 50)
+    }
 </script>
 
 <section>
@@ -126,7 +137,12 @@
     <!-- styling -->
     <HRule title="edit.style" />
     <div style="padding: 10px;">
-        <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} on:change={(e) => updateMetadata(e, "override")} />
+        <InputRow>
+            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} on:change={(e) => updateMetadata(e, "override")} />
+            {#if !metadata.override}
+                <MaterialButton icon="edit" title="menu.edit" on:click={editMetadataStyle} />
+            {/if}
+        </InputRow>
 
         {#if metadata.override}
             <MaterialPopupButton
@@ -176,5 +192,9 @@
 
         display: flex;
         flex-direction: column;
+    }
+
+    section :global(.title) {
+        margin: 5px 0;
     }
 </style>

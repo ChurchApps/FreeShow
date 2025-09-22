@@ -137,7 +137,6 @@
         "_hide_preview": "Hide preview",
         "show_preview": "Show preview",
         "restore_output": "Restore output",
-        "enable_controls": "Show media preview controls",
         "background": "Background",
         "foreground": "Foreground",
         "slide": "Slide",
@@ -147,7 +146,8 @@
         "nextTimer": "Next slide timer",
         "lock": "Lock",
         "unlock": "Unlock",
-        "test_pattern": "Test pattern"
+        "test_pattern": "Test pattern",
+        "live_prepare": "Hide output content (Black overlay)"
     },
     "clear": {
         "general": "Clear",

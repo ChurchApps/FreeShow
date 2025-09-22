@@ -7,12 +7,14 @@
         activeRecording,
         activeShow,
         categories,
+        colorbars,
         disabledServers,
         drawerTabsData,
         effects,
         effectsLibrary,
         events,
         forceClock,
+        livePrepare,
         media,
         os,
         outputs,
@@ -257,6 +259,14 @@
 
             enabled = isEnabled
             menu.label = isEnabled ? "context.enable_preview" : "context.hide_from_preview"
+        },
+        test_pattern: () => {
+            const outputId = contextElem?.id || ""
+            enabled = !!$colorbars[outputId]
+        },
+        live_prepare: () => {
+            const outputId = contextElem?.id || ""
+            enabled = !!$livePrepare[outputId]
         },
         place_under_slide: () => {
             let id = $selected.data[0]

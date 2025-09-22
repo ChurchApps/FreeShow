@@ -17,6 +17,8 @@
         outline: none;
         -webkit-transition: 0.2s;
         transition: opacity 0.2s;
+
+        border-radius: 10px;
     }
 
     input.invert {
@@ -39,7 +41,7 @@
         pointer-events: none;
         opacity: 0.8;
 
-        border-radius: var(--border-radius);
+        border-radius: 50%;
 
         -webkit-transition: 0.2s;
         transition:
