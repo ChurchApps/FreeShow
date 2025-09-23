@@ -318,7 +318,12 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
-        if (PRESENTATION_KEYS_NEXT.includes(e?.key)) goToNextProjectItem(e.key)
+        if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
+            goToNextProjectItem(e.key)
+
+            // skip right to next slide without requiring "double" input in focus mode
+            if (get(focusMode)) setTimeout(() => nextSlideIndividual(e), 20)
+        }
         return
     }
 
@@ -409,6 +414,9 @@ export function goToNextProjectItem(key = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
+            // change layout
+            if ((newShow.type || "show") === "show") swichProjectItem(index, newShow.id)
+
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
                 let actionId = newShow.data?.settings?.triggerAction
                 if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
@@ -436,6 +444,9 @@ export function goToPreviousProjectItem(key = "") {
             const newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
+
+            // change layout
+            if ((newShow.type || "show") === "show") swichProjectItem(index, newShow.id)
 
             if (newShow.type === "section" && get(activePage) === "edit") activeEdit.set({ items: [] })
 
@@ -560,7 +571,12 @@ export function previousSlide(e: any, customOutputId?: string) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
-                if (PRESENTATION_KEYS_PREV.includes(e?.key)) goToPreviousProjectItem(e.key)
+                if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
+                    goToPreviousProjectItem(e.key)
+
+                    // skip right to previous slide without requiring "double" input in focus mode
+                    if (get(focusMode)) setTimeout(() => previousSlideIndividual(e), 20)
+                }
             }
             return
         }

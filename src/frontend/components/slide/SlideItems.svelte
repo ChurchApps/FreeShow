@@ -16,8 +16,8 @@
     import Timer from "./views/Timer.svelte"
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
-    import Website from "./views/Website.svelte"
     import Weather from "./views/Weather.svelte"
+    import Website from "./views/Website.svelte"
 
     export let item: Item
 
@@ -81,7 +81,7 @@
 </script>
 
 {#if item.type === "media"}
-    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {preview} {mirror} {edit} />
+    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {mirror} {edit} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}

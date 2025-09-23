@@ -141,6 +141,13 @@
         activeShow.set(null)
         activePage.set("show")
     }
+
+    function updateSpecial(key: string, value: any) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
 </script>
 
 {#each servers as server}
@@ -197,6 +204,9 @@
         </MaterialButton>
     {/if}
 </InputRow>
+{#if $pcoConnected}
+    <MaterialToggleSwitch label="Always use local instance of songs" checked={$special.pcoLocalAlways} defaultValue={false} on:change={(e) => updateSpecial("pcoLocalAlways", e.detail)} />
+{/if}
 
 <!-- Chums -->
 <Title label="Chums" icon="list" />

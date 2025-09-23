@@ -4,17 +4,42 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { Item } from "../../../../types/Show"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { currentWindow, slideVideoData, volume } from "../../../stores"
+    import { currentWindow, outputs, slideVideoData, styles, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Image from "../../drawer/media/Image.svelte"
     import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { defaultLayers } from "../../helpers/output"
+    import { _show } from "../../helpers/shows"
 
     export let id: string
     export let item: Item
+    export let outputId: string = ""
+    export let slideRef: any = {}
 
     export let preview = false
     export let mirror = true
     export let edit = false
+
+    // replace any media items (with unset path) to the set slide background -- if the background layer is turned off
+    function getCustomPath() {
+        if (!outputId || !slideRef.showId) return
+
+        const outputStyle = $styles[$outputs[outputId]?.style || ""]
+        const layers = Array.isArray(outputStyle?.layers) ? outputStyle.layers : defaultLayers
+        if (layers.includes("background")) return
+
+        const layoutRef = _show(slideRef.showId).layouts([slideRef.layoutId]).ref()[0] || []
+        const layoutSlide = layoutRef[slideRef.slideIndex]
+        let backgroundId = layoutSlide?.data?.background || ""
+        if (!backgroundId) {
+            // get from first slide if not on current slide
+            backgroundId = layoutRef[0]?.data?.background || ""
+        }
+
+        const media = _show(slideRef.showId).get().media
+
+        mediaItemPath = media[backgroundId]?.path || ""
+    }
 
     $: shouldAutoUpdate = item.src?.includes("NowPlayingCover")
 
@@ -31,7 +56,7 @@
     $: if (item?.type === "media") getMediaItemPath()
     async function getMediaItemPath() {
         mediaItemPath = ""
-        if (!item.src) return
+        if (!item.src) return getCustomPath()
 
         if (shouldAutoUpdate) {
             mediaItemPath = item.src
