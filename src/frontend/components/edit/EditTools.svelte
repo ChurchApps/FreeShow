@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Item, ItemType, Slide } from "../../../types/Show"
+    import type { Item, ItemType, Line, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import { newToast } from "../../utils/common"
@@ -174,10 +174,41 @@
 
     function reset() {
         if (!isShow) {
-            if ($activeEdit.type === "template" && active === "slide") {
+            if (active === "item") {
+                history({
+                    id: "UPDATE",
+                    oldData: { id: $activeEdit.id },
+                    newData: { key: "items", subkey: "style", data: DEFAULT_ITEM_STYLE, indexes: $activeEdit.items },
+                    location: { page: "edit", id: $activeEdit.type + "_items", override: true }
+                })
+                return
+            }
+
+            if (active === "slide") {
+                if ($activeEdit.type !== "template") return
+
                 let id = $activeEdit?.id || ""
                 history({ id: "UPDATE", newData: { key: "settings", data: {} }, oldData: { id }, location: { page: "edit", id: "template_settings", override: id } })
                 return
+            }
+
+            if (active !== "text") return
+
+            if ($activeEdit.type === "overlay") overlays.update(updateItemValues)
+            else if ($activeEdit.type === "template") templates.update(updateItemValues)
+
+            function updateItemValues(a: any) {
+                $activeEdit.items.forEach((i: number) => {
+                    if (!a[$activeEdit.id!]?.items[i]?.lines) return
+
+                    a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
+                        line.text.forEach((text) => {
+                            text.style = ""
+                        })
+                    })
+                })
+
+                return a
             }
 
             return
@@ -428,8 +459,7 @@
                 {#if currentCopied}
                     <MaterialButton icon="clear" title="clear.general: formats.clipboard" on:click={clearClipboard}></MaterialButton>
                 {:else}
-                    <!-- TODO: reset template/overlay -->
-                    <MaterialButton icon="reset" title="actions.reset" disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} on:click={reset}>
+                    <MaterialButton icon="reset" title="actions.reset" on:click={reset}>
                         <!-- {#if !isShow}<T id="actions.reset" />{/if} -->
                     </MaterialButton>
                 {/if}

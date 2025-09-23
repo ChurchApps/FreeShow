@@ -12,8 +12,14 @@ export function checkName(name = "", showId = "") {
     if (!name || typeof name !== "string") name = translateText("main.unnamed")
     name = formatToFileName(name)
 
+    // if ID exists, check the name if different
+    if (showId && get(shows)[showId]) {
+        if (get(shows)[showId]?.name !== name) return checkName(name)
+        return name
+    }
+
     let number = 1
-    while (Object.entries(get(shows)).find(([id, a]) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.values(get(shows)).find((a) => a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     // add number if existing name, and trim away spaces from the start/end
     return (number > 1 ? name + " " + number : name).trim()

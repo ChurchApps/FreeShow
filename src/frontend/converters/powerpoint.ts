@@ -25,12 +25,17 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
+            console.log("PPT", content)
+
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
             const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
             const slideOrder = presentationData["p:sldIdLst"]?.[0]["p:sldId"]?.map(a => relations.find(r => r.$.Id === a.$?.["r:id"])?.$?.Target)
 
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
+
+            const size = presentationData["p:sldSz"]?.[0]["$"]
+            currentSlideSize = { width: size.cx || EMU_WIDTH, height: size.cy || EMU_HEIGHT }
 
             // load font faces
             const contentPaths = content.contentPaths || {}
@@ -235,7 +240,7 @@ function resolveColor(colorNode, clrSchemes) {
 
 function convertItems(slideContent, relations, content, clrSchemes, layoutItems = [], masterItems = []) {
     const slideTree = slideContent?.["p:cSld"]?.[0]["p:spTree"]?.[0] || {}
-    return extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems)
+    return extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems).reverse()
 }
 
 function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems) {
@@ -298,7 +303,9 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 }
             }
 
-            const item: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes) + "padding: 20px;", align: getItemAlign(body), type: "text", lines }
+            let itemStyle = getItemStyle(textItem, clrSchemes)
+            if (JSON.stringify(lines).includes("text-align:")) itemStyle += "padding: 20px;"
+            const item: PlaceholderItem = { placeholder, style: itemStyle, align: getItemAlign(body), type: "text", lines }
 
             convertedItems.push(item)
         } else {
@@ -460,17 +467,16 @@ function getItemAlign(itemBody: any) {
     return ""
 }
 
+// PowerPoint default slide size in EMUs (10in × 5.625in at 914400 EMU/inch)
+const EMU_WIDTH = 9144000
+const EMU_HEIGHT = 5143500
+let currentSlideSize = { width: EMU_WIDTH, height: EMU_HEIGHT }
 function emuToPixels({ x = 0, y = 0, cx = 0, cy = 0 }, slideWidth = 1920, slideHeight = 1080) {
-    // PowerPoint default slide size in EMUs (10in × 5.625in at 914400 EMU/inch)
-    // ppt/presentation.xml / p:presentation / p:sldSz / cx/cy
-    const EMU_WIDTH = 9144000
-    const EMU_HEIGHT = 5143500
-
     return {
-        left: Math.round((x / EMU_WIDTH) * slideWidth),
-        top: Math.round((y / EMU_HEIGHT) * slideHeight),
-        width: Math.round((cx / EMU_WIDTH) * slideWidth),
-        height: Math.round((cy / EMU_HEIGHT) * slideHeight),
+        left: Math.round((x / currentSlideSize.width) * slideWidth),
+        top: Math.round((y / currentSlideSize.height) * slideHeight),
+        width: Math.round((cx / currentSlideSize.width) * slideWidth),
+        height: Math.round((cy / currentSlideSize.height) * slideHeight),
     }
 }
 
@@ -528,6 +534,7 @@ function toRoman(num: number) {
     return roman
 }
 
+const DEFAULT_FONT = "Arial"
 function normalizePlaceholderType(type?: string): string | undefined {
     if (!type) return undefined
     if (type === "ctrTitle") return "title"
@@ -557,7 +564,7 @@ function getTextStyle(rPr: any, placeholder: any, layoutItems: any[], masterItem
     }
 
     // ---------- Font family ----------
-    const fontFamily = rPr?.$?.latin || getInheritedProperty("latin", placeholder, layoutItems, masterItems)
+    const fontFamily = rPr?.$?.latin || getInheritedProperty("latin", placeholder, layoutItems, masterItems) || DEFAULT_FONT
     if (fontFamily) {
         style += `font-family: '${fontFamily}';`
     }
@@ -639,9 +646,10 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
     const prstGeom = spPr["a:prstGeom"]?.[0].$?.prst
     // if (!prstGeom || prstGeom === "rect") return null
 
-    const xfrm = spPr['a:xfrm'][0]
-    const off = xfrm['a:off'][0].$
-    const ext = xfrm['a:ext'][0].$
+    const xfrm = spPr['a:xfrm']?.[0] || {}
+    const off = xfrm['a:off']?.[0].$
+    const ext = xfrm['a:ext']?.[0].$
+    if (!off || !ext) return null
 
     // Fill color and opacity
     const fill = resolveColor(spPr['a:solidFill']?.[0], clrSchemes) || "none"
