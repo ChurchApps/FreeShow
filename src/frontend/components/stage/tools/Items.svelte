@@ -48,7 +48,7 @@
     const smallItems = ["timer", "clock", "slide_tracker"]
 
     let timeout: NodeJS.Timeout | null = null
-    function addItem(itemType: string, textValue: string = "") {
+    function addItem(itemType: string, textValue = "") {
         if (!stageId) return
 
         let itemId = uid(5)
@@ -118,7 +118,7 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["project_", "time_", "audio_", "meta_"]
+    const excludeValues = ["project_", "time_", "audio_", "meta_", "slide_text_previous", "slide_text_next"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
         .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")

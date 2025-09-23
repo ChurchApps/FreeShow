@@ -84,15 +84,14 @@
         // TODO: request frame on load
     })
 
-    // $: if (capture) updateCanvas()
-    let updating = false
-    $: if (capture?.size && !updating) {
-        updating = true
-        requestAnimationFrame(() => {
-            updateCanvas().then(() => {
-                updating = false
-            })
-        })
+    let lastUpdate = 0
+    const frameRateLimit = 1000 / 30 // Limit to 30 FPS
+    $: if (capture) throttledUpdateCanvas()
+    function throttledUpdateCanvas() {
+        const now = Date.now()
+        if (now - lastUpdate < frameRateLimit) return
+        lastUpdate = now
+        updateCanvas()
     }
 
     async function updateCanvas() {
@@ -104,6 +103,9 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+
+        // Clean up bitmap to prevent memory leaks
+        bitmap.close()
     }
 
     // screen stretch

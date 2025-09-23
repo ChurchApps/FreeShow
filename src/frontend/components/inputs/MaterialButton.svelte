@@ -4,11 +4,11 @@
     import Icon from "../helpers/Icon.svelte"
 
     export let variant: "contained" | "outlined" | "text" = "text"
-    export let title: string = ""
-    export let info: string = ""
-    export let icon: string = ""
-    export let iconSize: number = 1
-    export let white: boolean = false
+    export let title = ""
+    export let info = ""
+    export let icon = ""
+    export let iconSize = 1
+    export let white = false
     export let isActive = false
     export let showOutline = false
     export let disabled = false
@@ -23,7 +23,7 @@
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
     let dispatch = createEventDispatcher()
-    function click(e, double: boolean = false) {
+    function click(e, double = false) {
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
 

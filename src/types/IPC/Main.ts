@@ -254,7 +254,7 @@ export interface MainReturnPayloads {
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
-    [Main.MEDIA_IS_DOWNLOADED]: Promise<string | null>
+    [Main.MEDIA_IS_DOWNLOADED]: string | null
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]

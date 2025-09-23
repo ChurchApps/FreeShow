@@ -16,10 +16,10 @@ let cachedFonts: Family[] = []
 export async function getFontsList() {
     if (cachedFonts.length) return cachedFonts
 
-    const fonts = await window.queryLocalFonts()
+    const localFonts = await window.queryLocalFonts()
 
-    let families: { [key: string]: FontData[] } = {}
-    fonts.forEach((font) => {
+    const families: { [key: string]: FontData[] } = {}
+    localFonts.forEach((font) => {
         if (!families[font.family]) families[font.family] = []
         families[font.family].push(font)
     })
@@ -34,7 +34,7 @@ export async function getFontsList() {
 
         if (!newFamilyFonts.length) newFamilyFonts = [familyFonts[0]]
 
-        let previousStyleNames: string[] = []
+        const previousStyleNames: string[] = []
         const fonts: Font[] = newFamilyFonts.map((a) => {
             let style = a.style
 
@@ -118,7 +118,7 @@ export async function getSystemFontsList() {
         return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
     })
 
-    let loadedFonts = await getFontsList()
+    const loadedFonts = await getFontsList()
     if (!loadedFonts.length) return []
 
     return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
@@ -138,7 +138,7 @@ export function getFontStyleList(font: string) {
 
     const defaultValue = fontStyles[family?.default || 0]?.value || ""
 
-    let existingValues: string[] = [defaultValue]
+    const existingValues: string[] = [defaultValue]
     const filteredFontStyles = fontStyles.filter((a) => {
         if (a.value === defaultValue) return true
         if (existingValues.includes(a.value)) return false

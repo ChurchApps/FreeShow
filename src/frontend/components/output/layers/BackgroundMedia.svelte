@@ -6,7 +6,7 @@
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { allOutputs, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { currentWindow, media, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -98,25 +98,15 @@
         }, timeUpdateTimeout)
     }
 
-    // key output parent
-    let keyParentId = ""
-    if ($outputs[outputId]?.isKeyOutput) getKeyParent()
-    function getKeyParent() {
-        Object.keys($allOutputs).forEach((id) => {
-            if (keyParentId) return
-            if ($allOutputs[id].keyOutput === outputId) keyParentId = id
-        })
-    }
-
     const videoReceiver = {
         TIME: (data: any) => {
-            let outputData = data[keyParentId || outputId]
+            let outputData = data[outputId]
             if (!outputData || fadingOut) return
 
             videoTime = outputData
         },
         DATA: (data: any) => {
-            let outputData = data[keyParentId || outputId]
+            let outputData = data[outputId]
             if (!outputData || fadingOut) return
 
             videoData = { ...outputData, duration: videoData.duration || 0 }

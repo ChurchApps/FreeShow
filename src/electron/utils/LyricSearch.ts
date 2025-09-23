@@ -100,7 +100,7 @@ export class LyricSearch {
         const response = await axios.get(url)
         const html = await response.data
         if (typeof html !== "string") return ""
-        return this.getLyricFromHtml(html, /<div property=\"text\">([\s\S]*?)<\/div>/g)
+        return this.getLyricFromHtml(html, /<div property=['"]text['"]>([\s\S]*?)<\/div>/g)
     }
 
     private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
@@ -180,7 +180,7 @@ export class LyricSearch {
             const response = await searchSong(title, artist, CHORDS)
 
             if (!response || !response.responses || !Array.isArray(response.responses)) {
-                console.log("No valid response from Ultimate Guitar")
+                console.error("No valid response from Ultimate Guitar")
                 return []
             }
 

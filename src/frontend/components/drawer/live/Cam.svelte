@@ -14,6 +14,7 @@
     export let item = false
     export let style = ""
     export let showPlayOnHover = true
+    export let disablePreview = false
 
     let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
@@ -24,6 +25,8 @@
 
     onMount(capture)
     async function capture() {
+        if (disablePreview) return
+
         error = ""
 
         const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group)
@@ -93,7 +96,11 @@
 </script>
 
 {#if item}
-    {#if !error}
+    {#if disablePreview}
+        <div class="iconPreview">
+            <Icon id="camera" size={3} white />
+        </div>
+    {:else if !error}
         <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
             <track kind="captions" />
         </video>
@@ -176,5 +183,19 @@
     .icons .button {
         background-color: rgb(0 0 0 / 0.6);
         pointer-events: all;
+    }
+
+    .iconPreview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 100%;
+        height: 100%;
+
+        border: 2px solid white;
+        background-color: rgb(0 50 100 / 0.3);
+
+        zoom: 8;
     }
 </style>

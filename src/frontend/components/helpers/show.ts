@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
-import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
+import { cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName } from "./array"
 import { GetLayout } from "./get"
@@ -12,8 +12,14 @@ export function checkName(name = "", showId = "") {
     if (!name || typeof name !== "string") name = translateText("main.unnamed")
     name = formatToFileName(name)
 
+    // if ID exists, check the name if different
+    if (showId && get(shows)[showId]) {
+        if (get(shows)[showId]?.name !== name) return checkName(name)
+        return name
+    }
+
     let number = 1
-    while (Object.entries(get(shows)).find(([id, a]) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.values(get(shows)).find((a) => a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     // add number if existing name, and trim away spaces from the start/end
     return (number > 1 ? name + " " + number : name).trim()
@@ -100,18 +106,6 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     if (layoutNumber) name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
 
     return name
-}
-
-// mirror & events
-export function getListOfShows(removeCurrent = false) {
-    let list = Object.entries(get(shows)).map(([id, show]) => ({ id, name: show.name }))
-    if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
-    list = sortByName(list)
-    return list
-}
-
-export function getStageList() {
-    return Object.entries(clone(get(stageShows))).map(([id, stage]) => ({ id, name: stage.name }))
 }
 
 // meta

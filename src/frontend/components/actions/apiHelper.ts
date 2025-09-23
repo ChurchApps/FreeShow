@@ -234,7 +234,7 @@ function toggleOutputLock(outputId: string, value: boolean) {
 
         a[outputId].active = value
 
-        let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
+        const activeList = Object.values(a).filter((o) => !o.stageOutput && o.enabled && o.active === true)
         if (!activeList.length) {
             a[outputId].active = true
             newToast("toast.one_output")
@@ -311,9 +311,8 @@ export function changeVariable(data: API_variable) {
     if (key === "expression") {
         const stringValue = (data.value || "").toString()
         const replacedValues = stringValue.includes("{") ? getDynamicValue(stringValue) : stringValue
-        console.log(replacedValues)
+        // eslint-disable-next-line
         const calculated = new Function(`return ${replacedValues}`)()
-        console.log(calculated)
         value = Number(calculated)
         key = "number"
     } else if (data.variableAction || variable.type === "number") {
@@ -352,7 +351,7 @@ export function resetVariable(id: string) {
     updateVariable([], id, "setLog")
 }
 
-//TIMERS
+// TIMERS
 
 export function getTimersDetailed() {
     const allTimers = get(timers)
@@ -664,6 +663,7 @@ export function sortByClosestMatch(array: any[], value: string, key = "name") {
         }
     })
 
+    // eslint-disable-next-line
     return array.sort((a, b) => b._similarityScore - a._similarityScore).map(({ _similarityScore, ...rest }) => rest)
 }
 

@@ -8,6 +8,7 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { variables } from "../../stores"
 import type { API_id_optional, API_slide } from "./api"
+import { keysToID } from "../helpers/array"
 
 export function getShows() {
     return get(shows) as Shows
@@ -104,7 +105,7 @@ export function getSlide(data: API_slide) {
 
 export function getVariables() {
     const variableStore = get(variables)
-    
+
     // Transform the variables object to an array with the requested fields
     return Object.entries(variableStore || {}).map(([id, variable]) => ({
         id,
@@ -117,36 +118,15 @@ export function getVariables() {
 }
 
 export function getVariable(data: { id?: string; name?: string }) {
-    const variableStore = get(variables)
-    
-    if (!data.id && !data.name) {
-        return null // No lookup criteria provided
+    if (data.id && get(variables)[data.id]) {
+        return { id: data.id, ...get(variables)[data.id] }
     }
-    
-    // Look up by ID first (more efficient)
-    if (data.id && variableStore[data.id]) {
-        return {
-            id: data.id,
-            ...variableStore[data.id]
-        }
-    }
-    
-    // Look up by name if ID not found or not provided
+
     if (data.name) {
-        const foundEntry = Object.entries(variableStore).find(([_, variable]) => 
-            variable.name === data.name
-        )
-        
-        if (foundEntry) {
-            const [id, variable] = foundEntry
-            return {
-                id,
-                ...variable
-            }
-        }
+        return keysToID(get(variables)).find(a => a.name === data.name) || null
     }
-    
-    return null // Variable not found
+
+    return null
 }
 
 

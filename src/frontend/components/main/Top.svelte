@@ -1,6 +1,6 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activeProfile, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, shows } from "../../stores"
+    import { activeEdit, activeProfile, activeShow, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
@@ -75,7 +75,7 @@
     </span>
     <span style="width: var(--navigation-width);justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
-        <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
+        <TopButton id="draw" red={$drawTool === "fill" || ($drawTool === "zoom" && $drawSettings.zoom?.size !== 100) || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         {#if !settingsDisabled}
             <TopButton id="settings" hideLabel />
         {/if}

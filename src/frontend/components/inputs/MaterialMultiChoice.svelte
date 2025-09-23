@@ -4,7 +4,7 @@
     import MaterialButton from "./MaterialButton.svelte"
 
     export let options: { id: string; name: string; title?: string; icon: string; disabled?: boolean; colored?: boolean }[] = []
-    export let hightlightFirst: boolean = true
+    export let hightlightFirst = true
 
     let dispatch = createEventDispatcher()
     function click(id: string) {

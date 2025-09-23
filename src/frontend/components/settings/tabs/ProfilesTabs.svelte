@@ -46,7 +46,7 @@
     // CREATE
 
     $: if ($activeTriggerFunction === "create_profile") setTimeout(createProfile)
-    async function createProfile() {
+    function createProfile() {
         // WIP presets for presenter / creator / manager
 
         if ($activeProfile === null) activeProfile.set("")

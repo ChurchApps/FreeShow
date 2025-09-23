@@ -151,6 +151,7 @@
     }
     .main.big {
         font-size: 1em;
+        margin: 0 10px;
     }
 
     .slider {

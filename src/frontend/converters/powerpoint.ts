@@ -25,17 +25,20 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            console.log(content)
+            console.log("PPT", content)
 
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
-            const relations = content["ppt/_rels/presentation.xml.rels"]?.["Relationships"]?.["Relationship"] || []
+            const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
             const slideOrder = presentationData["p:sldIdLst"]?.[0]["p:sldId"]?.map(a => relations.find(r => r.$.Id === a.$?.["r:id"])?.$?.Target)
 
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
 
+            const size = presentationData["p:sldSz"]?.[0]["$"]
+            currentSlideSize = { width: size.cx || EMU_WIDTH, height: size.cy || EMU_HEIGHT }
+
             // load font faces
-            const contentPaths = content["contentPaths"] || {}
+            const contentPaths = content.contentPaths || {}
             // loadAllFonts(contentPaths)
             const fonts = getAllFontNames(contentPaths)
 
@@ -119,21 +122,6 @@ function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
     return { slidesObj, layouts }
 }
 
-// extract number from ppt/slides/slide1.xml
-export function sortByNameNumber(array: string[]) {
-    return array.sort((a, b) => {
-        // get numbers in name
-        const matchA = a.match(/\d+/)
-        const matchB = b.match(/\d+/)
-        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
-        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
-
-        if (numA !== numB) return numA - numB
-
-        return a.localeCompare(b)
-    })
-}
-
 type PlaceholderItem = (Item & { placeholder?: { type: string; idx?: string } })
 
 function convertSlide(key: string, content: any) {
@@ -145,7 +133,7 @@ function convertSlide(key: string, content: any) {
     let clrSchemes = {}
 
     let layoutItems: PlaceholderItem[] = []
-    let masterItems: PlaceholderItem[] = []
+    const masterItems: PlaceholderItem[] = []
     let layoutItemsRaw: any = []
     let masterItemsRaw: any = []
     let bgColorValue = ""
@@ -252,13 +240,13 @@ function resolveColor(colorNode, clrSchemes) {
 
 function convertItems(slideContent, relations, content, clrSchemes, layoutItems = [], masterItems = []) {
     const slideTree = slideContent?.["p:cSld"]?.[0]["p:spTree"]?.[0] || {}
-    return extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems)
+    return extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems).reverse()
 }
 
 function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems) {
     const convertedItems: PlaceholderItem[] = []
 
-    const contentPaths = content["contentPaths"] || {}
+    const contentPaths = content.contentPaths || {}
 
     const textItems = slideTree["p:sp"] || []
     const imageItems = slideTree["p:pic"] || []
@@ -285,11 +273,11 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
             const paragraphs = body["a:p"] || []
 
             let bulletNumberIndex = 0
-            let lines: Line[] = []
+            const lines: Line[] = []
             for (const paragraph of paragraphs) {
                 // const lstStyle = getListStyles(body["a:lstStyle"]?.[0] || {}, bulletNumberIndex)
-                let paragraphOutput = paragraphToLine(paragraph, placeholder, layoutItems, masterItems, clrSchemes, bulletNumberIndex)
-                let line = paragraphOutput.line
+                const paragraphOutput = paragraphToLine(paragraph, placeholder, layoutItems, masterItems, clrSchemes, bulletNumberIndex)
+                const line = paragraphOutput.line
                 bulletNumberIndex = paragraphOutput.bulletNumberIndex
 
                 // split each text[] into line[] if there are line breaks
@@ -303,26 +291,28 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 lines.push(line)
             }
 
-            if (!lines.filter(a => a.text?.filter(a => a.value.length).length).length) {
+            if (!lines.filter(line => line.text?.filter(a => a.value.length).length).length) {
                 const svg = pptShapeToNormalizedSvg(textItem, clrSchemes)
 
                 if (svg) {
                     // console.log(textItem, svg)
 
-                    let item: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes, true), align: getItemAlign(body), type: "icon", decoration: masterItems.length ? false : true, customSvg: svg }
-                    convertedItems.push(item)
+                    const iconItem: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes, true), align: getItemAlign(body), type: "icon", decoration: masterItems.length ? false : true, customSvg: svg }
+                    convertedItems.push(iconItem)
                     continue
                 }
             }
 
-            let item: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes) + "padding: 20px;", align: getItemAlign(body), type: "text", lines }
+            let itemStyle = getItemStyle(textItem, clrSchemes)
+            if (JSON.stringify(lines).includes("text-align:")) itemStyle += "padding: 20px;"
+            const item: PlaceholderItem = { placeholder, style: itemStyle, align: getItemAlign(body), type: "text", lines }
 
             convertedItems.push(item)
         } else {
             // shape without text → treat as a shape (freeform line shape / boxes without text)
             const svg = pptShapeToNormalizedSvg(textItem, clrSchemes)
             if (svg) {
-                let item: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes, true), type: "icon", decoration: masterItems.length ? false : true, customSvg: svg }
+                const item: PlaceholderItem = { placeholder, style: getItemStyle(textItem, clrSchemes, true), type: "icon", decoration: masterItems.length ? false : true, customSvg: svg }
                 convertedItems.push(item)
                 continue
             }
@@ -405,7 +395,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
 //     return lvlStyle
 // }
 
-function getItemStyle(item: any, clrSchemes: any, svgStyled: boolean = false) {
+function getItemStyle(item: any, clrSchemes: any, svgStyled = false) {
     const spPr = item["p:spPr"]?.[0]
     const pos = spPr["a:xfrm"]?.[0]
     if (!pos) return DEFAULT_ITEM_STYLE
@@ -418,7 +408,7 @@ function getItemStyle(item: any, clrSchemes: any, svgStyled: boolean = false) {
 
     const { left, top, width, height } = emuToPixels({ x: parseFloat(off.x), y: parseFloat(off.y), cx: parseFloat(ext.cx) || 1000, cy: parseFloat(ext.cy) || 1000 })
 
-    let rotate = rot === 0 ? "" : `rotate(${rot}deg)`
+    const rotate = rot === 0 ? "" : `rotate(${rot}deg)`
 
     let transform = ""
     if (flipH || flipV || rotate) transform = `transform: ${flipH} ${flipV} ${rotate};`
@@ -477,17 +467,16 @@ function getItemAlign(itemBody: any) {
     return ""
 }
 
+// PowerPoint default slide size in EMUs (10in × 5.625in at 914400 EMU/inch)
+const EMU_WIDTH = 9144000
+const EMU_HEIGHT = 5143500
+let currentSlideSize = { width: EMU_WIDTH, height: EMU_HEIGHT }
 function emuToPixels({ x = 0, y = 0, cx = 0, cy = 0 }, slideWidth = 1920, slideHeight = 1080) {
-    // PowerPoint default slide size in EMUs (10in × 5.625in at 914400 EMU/inch)
-    // ppt/presentation.xml / p:presentation / p:sldSz / cx/cy
-    const EMU_WIDTH = 9144000
-    const EMU_HEIGHT = 5143500
-
     return {
-        left: Math.round((x / EMU_WIDTH) * slideWidth),
-        top: Math.round((y / EMU_HEIGHT) * slideHeight),
-        width: Math.round((cx / EMU_WIDTH) * slideWidth),
-        height: Math.round((cy / EMU_HEIGHT) * slideHeight),
+        left: Math.round((x / currentSlideSize.width) * slideWidth),
+        top: Math.round((y / currentSlideSize.height) * slideHeight),
+        width: Math.round((cx / currentSlideSize.width) * slideWidth),
+        height: Math.round((cy / currentSlideSize.height) * slideHeight),
     }
 }
 
@@ -503,9 +492,9 @@ function paragraphToLine(paragraph, placeholder, layoutItems, masterItems, clrSc
 
     const textRuns = paragraph["a:r"] || []
     textRuns.forEach((textRun: any) => {
-        let style = textRun["a:rPr"]?.[0] || {}
+        const style = textRun["a:rPr"]?.[0] || {}
         // let listStyle = lstStyle["a:defRPr"]?.[0] || {}
-        let value = (textRun["a:t"]?.[0] || "")
+        const value = (textRun["a:t"]?.[0] || "")
         // if (bulletStyle) value = `${bulletStyle} ${value}`
         const textStyle = getTextStyle(style, placeholder, layoutItems, masterItems, clrSchemes)
         if (bulletChar) line.text.push({ style: `${textStyle}font-size: ${ptToPx(bulletSize)}px;padding-left: 28px;padding-right: 47px;`, value: bulletChar })
@@ -545,6 +534,7 @@ function toRoman(num: number) {
     return roman
 }
 
+const DEFAULT_FONT = "Arial"
 function normalizePlaceholderType(type?: string): string | undefined {
     if (!type) return undefined
     if (type === "ctrTitle") return "title"
@@ -557,31 +547,31 @@ function getTextStyle(rPr: any, placeholder: any, layoutItems: any[], masterItem
     let style = "text-shadow: 0px 0px 0px #000000;line-height: calc(1.08em + 10px);" // 1.36em / 47px
 
     // ---------- Bold / Italic / Underline ----------
-    let bold = (rPr?.$?.b || getInheritedProperty("b", placeholder, layoutItems, masterItems)) === "1"
-    let italic = (rPr?.$?.i || getInheritedProperty("i", placeholder, layoutItems, masterItems)) === "1"
-    let underline = (rPr?.$?.u || getInheritedProperty("u", placeholder, layoutItems, masterItems)) === "sng"
+    const bold = (rPr?.$?.b || getInheritedProperty("b", placeholder, layoutItems, masterItems)) === "1"
+    const italic = (rPr?.$?.i || getInheritedProperty("i", placeholder, layoutItems, masterItems)) === "1"
+    const underline = (rPr?.$?.u || getInheritedProperty("u", placeholder, layoutItems, masterItems)) === "sng"
     if (bold) style += "font-weight: bold;"
     if (italic) style += "font-style: italic;"
     if (underline) style += "text-decoration: underline;"
 
     // ---------- Font size ----------
-    let fontSize = rPr?.$?.sz || getInheritedProperty("sz", placeholder, layoutItems, masterItems)
+    const fontSize = rPr?.$?.sz || getInheritedProperty("sz", placeholder, layoutItems, masterItems)
     if (fontSize) {
-        let fontSizePt = parseInt(fontSize, 10) / 100 // PowerPoint stores sz in 1/100th pt
-        let fontSizePx = ptToPx(fontSizePt)
+        const fontSizePt = parseInt(fontSize, 10) / 100 // PowerPoint stores sz in 1/100th pt
+        const fontSizePx = ptToPx(fontSizePt)
         style += `font-size: ${fontSizePx}px;`
         // style += `font-size: ${parseInt(fontSize, 10) / 100}pt;`
     }
 
     // ---------- Font family ----------
-    let fontFamily = rPr?.$?.latin || getInheritedProperty("latin", placeholder, layoutItems, masterItems)
+    const fontFamily = rPr?.$?.latin || getInheritedProperty("latin", placeholder, layoutItems, masterItems) || DEFAULT_FONT
     if (fontFamily) {
         style += `font-family: '${fontFamily}';`
     }
 
     // ---------- Color ----------
     //  || listStyle?.["a:solidFill"]?.[0]
-    let color = resolveColor(rPr?.["a:solidFill"]?.[0] || getInheritedProperty("color", placeholder, layoutItems, masterItems), clrSchemes)
+    const color = resolveColor(rPr?.["a:solidFill"]?.[0] || getInheritedProperty("color", placeholder, layoutItems, masterItems), clrSchemes)
     if (color) style += `color: ${color};`
 
     return style
@@ -656,12 +646,13 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
     const prstGeom = spPr["a:prstGeom"]?.[0].$?.prst
     // if (!prstGeom || prstGeom === "rect") return null
 
-    const xfrm = spPr['a:xfrm'][0]
-    const off = xfrm['a:off'][0].$
-    const ext = xfrm['a:ext'][0].$
+    const xfrm = spPr['a:xfrm']?.[0] || {}
+    const off = xfrm['a:off']?.[0].$
+    const ext = xfrm['a:ext']?.[0].$
+    if (!off || !ext) return null
 
     // Fill color and opacity
-    let fill = resolveColor(spPr['a:solidFill']?.[0], clrSchemes) || "none"
+    const fill = resolveColor(spPr['a:solidFill']?.[0], clrSchemes) || "none"
     let fillOpacity = 1
     const schemeClr = spPr['a:solidFill']?.[0]?.['a:schemeClr']?.[0]
     if (schemeClr?.['a:alpha']?.[0]?.$?.val) {
@@ -735,9 +726,9 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
 
     if (!prstGeom) {
         // custom shape
-        const path = spPr['a:custGeom']?.[0]?.['a:pathLst']?.[0]?.['a:path']?.[0]
-        if (path) {
-            const customShape = getCustomShapePath(path)
+        const customPath = spPr['a:custGeom']?.[0]?.['a:pathLst']?.[0]?.['a:path']?.[0]
+        if (customPath) {
+            const customShape = getCustomShapePath(customPath)
             if (customShape && customShape.pathData) {
                 return `<svg data-shape="custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${customShape.vbWidth} ${customShape.vbHeight}" style="position: absolute;">
                     <path ${svgAttributes} d="${customShape.pathData}"></path>

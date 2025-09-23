@@ -5,8 +5,8 @@
 
     export let label: string
     export let icon: string
-    export let title: string = ""
-    export let center: boolean = false
+    export let title = ""
+    export let center = false
 </script>
 
 <h3 class:center data-title={translateText(title)}>

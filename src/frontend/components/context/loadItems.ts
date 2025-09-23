@@ -50,9 +50,9 @@ const loadActions = {
     // TAGS
     tag_set: () => {
         const selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
@@ -63,9 +63,9 @@ const loadActions = {
     },
     media_tag_set: () => {
         const selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
@@ -76,9 +76,9 @@ const loadActions = {
     },
     action_tag_set: () => {
         const selectedTags = get(actions)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
@@ -90,9 +90,9 @@ const loadActions = {
     },
     variable_tag_set: () => {
         const selectedTags = get(variables)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
@@ -133,14 +133,14 @@ const loadActions = {
 
         const slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions", iconColor: "#d497ff" },
-            "SEPERATOR",
+            "SEPARATOR",
             { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", iconColor: "#7d81ff", enabled: currentActions?.slide_shortcut || false },
             { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", iconColor: "#7d81ff", enabled: currentActions?.receiveMidi || false },
-            "SEPERATOR",
+            "SEPARATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", iconColor: "#fca4ff", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
             { id: "loop", label: "preview.to_start", icon: "restart", iconColor: "#fca4ff", enabled: slideRef?.data?.end || false },
             { id: "nextAfterMedia", label: "actions.next_after_media", iconColor: "#fca4ff", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
-            "SEPERATOR",
+            "SEPARATOR",
             { id: "animate", label: "popup.animate", icon: "stars", iconColor: "#fff1ad", enabled: currentActions?.animate || false }
         ]
 
@@ -185,7 +185,7 @@ const loadActions = {
         if (!data) return []
 
         const showMedia: { [key: string]: Media } = _show().get().media
-        const mediaList: (ContextMenuItem | "SEPERATOR")[] = []
+        const mediaList: (ContextMenuItem | "SEPARATOR")[] = []
 
         // get background
         const bg = data.background
@@ -201,7 +201,7 @@ const loadActions = {
         // get overlays
         const ol = data.overlays || []
         if (ol.length) {
-            if (mediaList.length) mediaList.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPARATOR")
             mediaList.push(
                 ...sortByName(
                     ol.map((id: string) => ({ id, label: get(overlays)[id]?.name, translate: false, icon: "overlays" })),
@@ -213,7 +213,7 @@ const loadActions = {
         // get audio
         const audio = data.audio || []
         if (audio.length) {
-            if (mediaList.length) mediaList.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPARATOR")
             const audioItems = sortByName(
                 audio.map((id: string) => {
                     const name = showMedia[id]?.name || ""
@@ -232,7 +232,7 @@ const loadActions = {
         // get mics
         const mics = data.mics || []
         if (mics.length) {
-            if (mediaList.length) mediaList.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPARATOR")
             const micItems = sortByName(
                 mics.map((mic) => ({
                     id: mic.id,
@@ -248,7 +248,7 @@ const loadActions = {
         // get slide actions
         const slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
-            if (mediaList.length) mediaList.push("SEPERATOR")
+            if (mediaList.length) mediaList.push("SEPARATOR")
             const actionItems = sortByName(
                 slideActions.map((action) => {
                     const triggerId = getActionTriggerId(action.triggers?.[0])
@@ -284,12 +284,12 @@ const loadActions = {
         return items
     },
     bind_slide: (_items, isItem = false) => {
-        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
+        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.stageOutput))
 
-        let contextOutputList: (ContextMenuItem | "SEPERATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
-        let isOverlay = get(activeEdit).type === "overlay"
+        let contextOutputList: (ContextMenuItem | "SEPARATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
+        const isOverlay = get(activeEdit).type === "overlay"
         // overlay items does not show up in stage view anyway
-        if (isItem && !isOverlay) contextOutputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
+        if (isItem && !isOverlay) contextOutputList.push("SEPARATOR", { id: "stage", label: "menu.stage" })
 
         let currentBindings: string[] = []
         if (isItem) {
@@ -348,11 +348,11 @@ function sortItemsByLabel(items: ContextMenuItem[]) {
     })
 }
 
-export function loadItems(id: string): [string, ContextMenuItem | "SEPERATOR"][] {
+export function loadItems(id: string): [string, ContextMenuItem | "SEPARATOR"][] {
     if (!loadActions[id]) return []
 
-    const items: (ContextMenuItem | "SEPERATOR")[] = loadActions[id]([])
-    const menuItems: [string, ContextMenuItem | "SEPERATOR"][] = items.map((a) => [a === "SEPERATOR" ? a : id, a])
+    const items: (ContextMenuItem | "SEPARATOR")[] = loadActions[id]([])
+    const menuItems: [string, ContextMenuItem | "SEPARATOR"][] = items.map((a) => [a === "SEPARATOR" ? a : id, a])
 
     return menuItems
 }

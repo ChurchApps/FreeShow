@@ -78,7 +78,7 @@ function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string
 
     // open export location in system when completed
     if (!err && !systemOpened) {
-        openInSystem(exportFolder)
+        openInSystem(exportFolder, true)
         systemOpened = true
     } else if (err) msg = err.toString()
 

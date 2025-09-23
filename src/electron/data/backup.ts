@@ -35,7 +35,7 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
-    else if (!isAutoBackup) openInSystem(backupFolder)
+    else if (!isAutoBackup) openInSystem(backupFolder, true)
 
     /// //
 

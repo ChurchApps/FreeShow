@@ -93,7 +93,7 @@
 
     // get list of files & folders
     let prevActive: null | string = null
-    let prevTab: string = ""
+    let prevTab = ""
     $: {
         if (prevActive === "online" && active !== "online") activeView = "all"
         if (active !== "online") prevTab = ""

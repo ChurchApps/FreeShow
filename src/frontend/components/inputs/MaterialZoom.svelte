@@ -7,11 +7,11 @@
     import MaterialButton from "./MaterialButton.svelte"
 
     export let columns: number
-    export let defaultValue: number = 4
-    export let min: number = 2
-    export let max: number = 10
-    export let addValue: number = 1
-    export let hidden: boolean = false
+    export let defaultValue = 4
+    export let min = 2
+    export let max = 10
+    export let addValue = 1
+    export let hidden = false
 
     let zoomOpened = false
     function mousedown(e: any) {

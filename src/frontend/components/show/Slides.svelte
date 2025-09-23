@@ -429,9 +429,11 @@
     let loading = false
     $: if (showId) startLoading()
     $: if ($notFound.show?.includes(showId)) loading = false
+    let loadingTimeout: NodeJS.Timeout | null = null
     function startLoading() {
         loading = true
-        setTimeout(() => {
+        if (loadingTimeout) clearTimeout(loadingTimeout)
+        loadingTimeout = setTimeout(() => {
             loading = false
         }, 8000)
     }

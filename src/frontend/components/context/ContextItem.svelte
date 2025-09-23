@@ -7,12 +7,14 @@
         activeRecording,
         activeShow,
         categories,
+        colorbars,
         disabledServers,
         drawerTabsData,
         effects,
         effectsLibrary,
         events,
         forceClock,
+        livePrepare,
         media,
         os,
         outputs,
@@ -232,7 +234,7 @@
             disabled = !!$outputs[outputId]?.invisible
         },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput) //  && !a.invisible
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
@@ -257,6 +259,14 @@
 
             enabled = isEnabled
             menu.label = isEnabled ? "context.enable_preview" : "context.hide_from_preview"
+        },
+        test_pattern: () => {
+            const outputId = contextElem?.id || ""
+            enabled = !!$colorbars[outputId]
+        },
+        live_prepare: () => {
+            const outputId = contextElem?.id || ""
+            enabled = !!$livePrepare[outputId]
         },
         place_under_slide: () => {
             let id = $selected.data[0]

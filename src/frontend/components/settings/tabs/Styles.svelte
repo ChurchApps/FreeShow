@@ -189,10 +189,12 @@
 <MaterialToggleButtons label="settings.active_layers" value={activeLayers} options={layerOptions} on:change={(e) => updateStyle(e.detail, "layers")} />
 <!-- WIP toggle meta -->
 
+<!-- Background -->
 <Title label="preview.background" icon="background" />
 
 <MaterialNumberInput label="media.volume" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
 
+<!-- Slide -->
 <Title label="preview.slide" icon="slide" />
 
 <MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" data={{ styleId }} on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
@@ -231,8 +233,8 @@
     {/if}
 </InputRow>
 
-<!-- overlays -->
-<Title label="tools.metadata" icon="info" />
+<!-- Overlays -->
+<Title label="preview.overlays (tools.metadata)" icon="overlays" />
 
 <MaterialPopupButton
     label="meta.display_metadata"

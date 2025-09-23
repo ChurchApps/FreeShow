@@ -29,20 +29,21 @@
         const stageHidden = ["slide_text_previous", "slide_text_next"]
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
-        let seperatorId = ""
-        const seperators = ["$", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "meta_", "timer_", "rss_"]
+        let separatorId = ""
+        // the ones that can have a custom name should be first (to prevent it from overwriting a category)
+        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
-            const seperator = seperators.find((a) => value.id.includes(a)) || ""
-            if (seperator && seperatorId !== seperator && seperatorId !== "$") {
-                seperatorId = seperator
-                newList[seperatorId] = []
+            const separator = separators.find((a) => value.id.includes(a)) || ""
+            if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
+                separatorId = separator
+                newList[separatorId] = []
             }
 
-            if (hidden.includes(seperatorId.slice(0, -1))) return
+            if (hidden.includes(separatorId.slice(0, -1))) return
 
-            newList[seperatorId].push(value)
+            newList[separatorId].push(value)
         })
 
         return newList
@@ -69,7 +70,7 @@
     let searchValue = ""
     // let previousSearchValue = ""
     let resetInput = false
-    function search(value: string = "") {
+    function search(value = "") {
         searchValue = formatSearch(value.replaceAll(" ", "_"))
 
         if (searchValue.length < 2) {

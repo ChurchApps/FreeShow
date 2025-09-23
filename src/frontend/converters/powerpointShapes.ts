@@ -1,4 +1,4 @@
-
+/* eslint-disable no-shadow */
 export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
     let path = ""
 
@@ -336,7 +336,7 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
             const cy = y1 + height / 2
             const rOuter = width / 2
             const rInner = rOuter * 0.5
-            let pts: any[] = []
+            const pts: any[] = []
             for (let i = 0; i < 10; i++) {
                 const r = i % 2 === 0 ? rOuter : rInner
                 const angle = (Math.PI / 5) * i - Math.PI / 2
@@ -457,7 +457,7 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
             const cy = y1 + height / 2
             const rOuter = width / 2
             const rInner = rOuter * 0.7
-            let pts: any = []
+            const pts: any = []
             for (let i = 0; i < 12; i++) {
                 const r = i % 2 === 0 ? rOuter : rInner
                 const angle = (Math.PI * 2 / 12) * i - Math.PI / 2
@@ -560,7 +560,7 @@ export function getCustomShapePath(path: any): { pathData: string; vbWidth: numb
             }
         }
     })
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity
     points.forEach(pt => {
         if (pt.x < minX) minX = pt.x
         if (pt.y < minY) minY = pt.y
@@ -570,7 +570,7 @@ export function getCustomShapePath(path: any): { pathData: string; vbWidth: numb
     const boxWidth = maxX - minX || 1
     const boxHeight = maxY - minY || 1
     const aspect = boxWidth / boxHeight
-    let vbWidth = 1, vbHeight = 1
+    let vbWidth = 1; let vbHeight = 1
     if (aspect >= 1) {
         vbWidth = 1
         vbHeight = 1 / aspect

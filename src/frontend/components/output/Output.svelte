@@ -253,8 +253,7 @@
     $: cropping = currentOutput.cropping || currentStyle.cropping
 
     // values
-    $: isKeyOutput = currentOutput.isKeyOutput
-    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
+    $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
@@ -310,17 +309,17 @@
 >
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
-        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />
+        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror styleBackground />
     {/if}
 
     <!-- background -->
     {#if (layers.includes("background") || backgroundData?.ignoreLayer) && backgroundData}
-        <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
+        <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
 
     <!-- colorbars for testing -->
-    {#if $colorbars}
-        <Image path="./assets/{$colorbars}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
+    {#if $colorbars[outputId]}
+        <Image path="./assets/{$colorbars[outputId]}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
     {/if}
 
     <!-- effects -->
@@ -331,7 +330,7 @@
     <!-- "underlays" -->
     {#if overlaysActive}
         <!-- && outUnderlays?.length -->
-        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} {preview} />
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {mirror} {preview} />
     {/if}
 
     <!-- slide -->
@@ -361,7 +360,6 @@
             {preview}
             transition={transitions.text}
             transitionEnabled={!mirror || preview}
-            {isKeyOutput}
             {styleIdOverride}
         />
     {/if}
@@ -373,14 +371,13 @@
                 value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText}
                 style={metadata.messageStyle || ""}
                 transition={metadata.messageTransition || transitions.overlay}
-                {isKeyOutput}
             />
         {/if}
 
         <!-- metadata -->
         {#if metadataValue || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
+            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
 
         <!-- effects -->
@@ -391,7 +388,7 @@
         <!-- overlays -->
         <!-- outOverlays?.length -->
         {#if overlaysActive}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} {preview} />
+            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {mirror} {preview} />
         {/if}
     {/if}
 

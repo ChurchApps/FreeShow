@@ -91,6 +91,15 @@
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 
+    function openRecent(edited) {
+        activeEdit.set(edited.edit)
+        if (edited.edit?.type !== "audio") refreshEditSlide.set(true)
+        if (edited.show) {
+            if ($focusMode) activeEdit.set({ items: [], slide: edited.show.index, type: "show", showId: edited.show.id })
+            else activeShow.set(edited.show)
+        }
+    }
+
     let profile = getAccess("shows")
     $: isLocked = $shows[currentShowId]?.locked || profile.global === "read" || profile[$shows[currentShowId]?.category || ""] === "read"
 </script>
@@ -113,25 +122,10 @@
     {#if $editHistory.length}
         <div class="edited">
             {#each clonedHistory as edited}
-                <div class="item">
-                    <Button
-                        style="width: 100%;"
-                        on:click={() => {
-                            activeEdit.set(edited.edit)
-                            if (edited.edit?.type !== "audio") refreshEditSlide.set(true)
-                            if (edited.show) {
-                                if ($focusMode) activeEdit.set({ items: [], slide: edited.show.index, type: "show", showId: edited.show.id })
-                                else activeShow.set(edited.show)
-                            }
-                        }}
-                        active={$activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id}
-                        bold={false}
-                        border
-                    >
-                        <Icon id={edited.icon} right />
-                        <p style="margin: 3px 5px;">{edited.name || "—"}</p>
-                    </Button>
-                </div>
+                <MaterialButton style="width: 100%;padding: 0.15rem 0.65rem;font-weight: normal;justify-content: left;" on:click={() => openRecent(edited)} isActive={$activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id} tab>
+                    <Icon id={edited.icon} />
+                    <p style="margin: 3px 5px;">{edited.name || "—"}</p>
+                </MaterialButton>
             {/each}
         </div>
     {:else}
@@ -174,9 +168,5 @@
         flex-direction: column;
         height: 100%;
         overflow: auto;
-    }
-
-    .item {
-        display: flex;
     }
 </style>

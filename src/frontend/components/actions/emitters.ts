@@ -93,7 +93,8 @@ export function emitData(data: API_emitter) {
         return customValue || a
     })
     if (!values.length) values = data.templateValues || []
-    if (!values.length) return
+    // don't require value for HTTP as it can be set in the URL itself
+    if (!values.length && (emitter.type !== "http" || !emitter.signal?.url)) return
 
     if (!EMIT_DATA[emitter.type]) {
         console.error("Received unknown data emit type")

@@ -10,7 +10,7 @@ export function mainWindowInitialize() {
     // createVirtualMidi()
 
     // servers are now started earlier in parallel in startApp() - no need to require here
-    //require("../servers")
+    // require("../servers")
 
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
@@ -34,7 +34,7 @@ export function waitForBundle() {
     let tries = 0
 
     return new Promise((resolve) => {
-        const interval = setInterval(async () => {
+        const interval = setInterval(() => {
             // Check if bundle file exists - old Rollup code, only production build for Vite
             if (doesPathExist(BUNDLE_PATH)) {
                 console.info("Main bundle found! Loading interface...")

@@ -1,10 +1,13 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import { activeEdit, activeShow, media, outputs, styles } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle } from "../../helpers/output"
-    import MediaControls from "../../media/MediaControls.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Media from "../../output/layers/Media.svelte"
+    import VideoSlider from "../../output/VideoSlider.svelte"
 
     $: path = $activeEdit.id || $activeShow!.id
 
@@ -28,13 +31,21 @@
         <Media {path} {mediaStyle} bind:videoData bind:videoTime mirror />
 
         {#if type === "video"}
-            <MediaControls bind:videoData bind:videoTime />
+            <FloatingInputs side="center" style="width: 80%;">
+                <MaterialButton title={videoData.paused ? "media.play" : "media.pause"} on:click={() => (videoData.paused = !videoData.paused)}>
+                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.5} />
+                </MaterialButton>
+
+                <div class="divider" />
+
+                <VideoSlider bind:videoData bind:videoTime big />
+
+                <div class="divider" />
+
+                <MaterialButton title="media._loop" disabled>
+                    <Icon id="loop" size={1.3} />
+                </MaterialButton>
+            </FloatingInputs>
         {/if}
     </div>
 </div>
-
-<style>
-    .parent :global(.slider input) {
-        background-color: var(--primary);
-    }
-</style>

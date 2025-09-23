@@ -1,8 +1,6 @@
 <script>
     import { activePopup } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 </script>
 

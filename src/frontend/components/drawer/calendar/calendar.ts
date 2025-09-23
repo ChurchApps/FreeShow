@@ -268,7 +268,7 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
 // https://stackoverflow.com/a/6117889
 export function getWeekNumber(d: Date) {
     d = copyDate(d)
-    d.setDate(getNearestThurday())
+    d.setDate(getNearestThursday())
 
     const firstDayInYear = new Date(d.getFullYear(), 0, 1)
     const daysPassedCurrentYear = (d.getTime() - firstDayInYear.getTime()) / MILLISECONDS_IN_A_DAY + 1
@@ -277,7 +277,7 @@ export function getWeekNumber(d: Date) {
     return weekNumber
 
     // ISO 8601 states that week 1 is the week with the first Thursday of that year
-    function getNearestThurday() {
+    function getNearestThursday() {
         const todaysWeekday = d.getDay() || 7 // change Sunday to 7
         const nearestThursday = d.getDate() + 4 - todaysWeekday
         return nearestThursday

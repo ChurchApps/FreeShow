@@ -124,26 +124,26 @@ async function initDownload() {
 let downloadCount = 0
 let failedDownloads = 0
 let errorCount = 0
-function startDownload(downloading: DownloadFile) {
+function startDownload(data: DownloadFile) {
     // download the media
-    const file = downloading.file
+    const file = data.file
     const url = file.url
 
     if (!url) return next()
 
-    makeDir(path.dirname(downloading.path))
-    const fileStream = fs.createWriteStream(downloading.path)
+    makeDir(path.dirname(data.path))
+    const fileStream = fs.createWriteStream(data.path)
     console.info(`Downloading lessons media: ${file.name}`)
     console.info(url)
     https
         .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(downloading.path, (err) => console.error(err))
+                fs.unlink(data.path, (err) => console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 failedDownloads++
-                sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
+                sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
                 next()
                 return
@@ -159,7 +159,7 @@ function startDownload(downloading: DownloadFile) {
             })
 
             fileStream.on("error", (err1) => {
-                fs.unlink(downloading.path, (err2) => console.error(err2))
+                fs.unlink(data.path, (err2) => console.error(err2))
                 console.error(`File error: ${err1.message}`)
 
                 retry()
@@ -169,7 +169,7 @@ function startDownload(downloading: DownloadFile) {
                 fileStream.close()
                 downloadCount++
                 console.error(`Finished downloading file: ${file.name}`)
-                sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
+                sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
                 next()
             })
@@ -190,14 +190,14 @@ function startDownload(downloading: DownloadFile) {
     function retry() {
         if (errorCount > 5) {
             failedDownloads++
-            sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
+            sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
             next()
             return
         }
         errorCount++
 
-        addToDownloadQueue(downloading)
+        addToDownloadQueue(data)
         next()
     }
 
@@ -211,10 +211,10 @@ function startDownload(downloading: DownloadFile) {
     ) // 8 minutes timeout
 }
 
-/////
+/// //
 
-let downloading: string[] = []
-export async function downloadMedia({ url, dataPath }: { url: string; dataPath: string }) {
+const downloading: string[] = []
+export function downloadMedia({ url, dataPath }: { url: string; dataPath: string }) {
     if (!url?.includes("http")) return
 
     if (downloading.includes(url)) return
@@ -283,7 +283,7 @@ export async function downloadMedia({ url, dataPath }: { url: string; dataPath: 
     // ) // 8 minutes timeout
 }
 
-export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
+export function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
     if (!url?.includes("http")) return null
 
     const extension = path.extname(url)

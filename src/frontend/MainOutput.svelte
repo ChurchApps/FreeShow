@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import { fade } from "svelte/transition"
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import { getResolution } from "./components/helpers/output"
     import Output from "./components/output/Output.svelte"
     import { getStyleResolution } from "./components/slide/getStyleResolution"
     import StageLayout from "./components/stage/StageLayout.svelte"
-    import { currentWindow, outputs, special, styles } from "./stores"
+    import { currentWindow, livePrepare, outputs, special, styles } from "./stores"
     import { hideDisplay } from "./utils/common"
     import { send } from "./utils/request"
 
@@ -62,6 +63,11 @@
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
 
+    <!-- black overlay for live preparation/changes -->
+    {#if $livePrepare[outputId]}
+        <div class="blackOverlay" transition:fade></div>
+    {/if}
+
     <!-- preload CMGSans font -->
     {#if !loaded}<div class="fontPreload">.</div>{/if}
 </div>
@@ -101,5 +107,17 @@
         font-family: "CMGSans";
         position: absolute;
         opacity: 0;
+    }
+
+    .blackOverlay {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        width: 100%;
+        height: 100%;
+
+        background-color: black;
     }
 </style>

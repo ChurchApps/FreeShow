@@ -969,9 +969,6 @@ const deleteActions = {
     },
     output: (data: any) => {
         data.forEach(({ id }) => {
-            // delete key output
-            if (get(outputs)[id]?.keyOutput) history({ id: "UPDATE", newData: { id: get(outputs)[id].keyOutput }, location: { page: "settings", id: "settings_output" } })
-
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_output" } })
         })
 
@@ -1181,7 +1178,8 @@ const duplicateActions = {
         timers.update((a) => {
             data.forEach(({ id }) => {
                 const newTimer = clone(a[id])
-                newTimer.name = data.length === 1 ? "" : newTimer.name + " 2"
+                // newTimer.name = data.length === 1 ? "" : newTimer.name + " 2"
+                newTimer.name = newTimer.name + " 2"
 
                 const newId = uid()
                 a[newId] = newTimer

@@ -56,7 +56,7 @@
 
     // CREATE
 
-    async function createTheme() {
+    function createTheme() {
         history({ id: "UPDATE", newData: { data: clone($themes[$theme]), replace: { default: false, name: themeValue + " 2" } }, location: { page: "settings", id: "settings_theme" } })
     }
 

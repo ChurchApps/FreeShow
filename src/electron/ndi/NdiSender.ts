@@ -53,6 +53,7 @@ export class NdiSender {
             const grandiose = await loadGrandiose()
             if (!grandiose) return
 
+            /* eslint @typescript-eslint/await-thenable: 0 */
             this.NDI[id].sender = await grandiose.send({
                 name: this.NDI[id].name,
                 clockVideo: false,

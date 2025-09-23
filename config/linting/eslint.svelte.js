@@ -26,7 +26,7 @@ module.exports = {
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-misused-promises": "off",
         "@typescript-eslint/no-implied-eval": "off",
-        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
         "--TEMPORARILY-DISABLED": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/no-non-null-assertion": "off",

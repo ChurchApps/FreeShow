@@ -4,7 +4,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let value: number = 0
+    export let value = 0
     export let defaultValue: number | null = null
     export let label: string
     export let id = ""
@@ -12,15 +12,15 @@
     export let center = false
     export let disabled = false
     export let autofocus = false
-    export let hideWhenZero: boolean = false
-    export let showSlider: boolean = false
+    export let hideWhenZero = false
+    export let showSlider = false
     export let sliderValues: { min?: number; max?: number; step?: number } = {}
     export let currentProgress: number | null = null
     export let step = 1
     export let min: number | null = 0
     export let max: number | null = null // 1000
-    export let maxDecimals: number = 2
-    export let padLength: number = 0
+    export let maxDecimals = 2
+    export let padLength = 0
 
     // a string might be passed in
     $: rawInput = padLength ? String(numberValue).padStart(padLength, "0") : String(Number(numberValue.toFixed(maxDecimals)))

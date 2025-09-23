@@ -164,8 +164,8 @@ export function makeDir(folderPath: string) {
     }
 }
 
-export function getValidFileName(path: string) {
-    return path.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim()
+export function getValidFileName(filePath: string) {
+    return filePath.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim()
 }
 
 // SELECT DIALOGS
@@ -193,7 +193,7 @@ export function selectFolderDialog(title = "", defaultPath = ""): string {
 
 // DATA FOLDERS
 
-export function openInSystem(filePath: string, openFolder: boolean = false) {
+export function openInSystem(filePath: string, openFolder = false) {
     if (!doesPathExist(filePath)) return sendToMain(ToMain.ALERT, "This does not exist!")
 
     if (openFolder) shell.openPath(filePath).catch((err) => console.error("Could not open system folder: " + String(err)))
@@ -366,8 +366,8 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
 export async function getFoldersContent(paths: { path: string }[]) {
     const list: { [key: string]: FileData[] } = {}
 
-    for (let i = 0; i < paths.length; i++) {
-        const folderPath = paths[i].path
+    for (const folderData of paths) {
+        const folderPath = folderData.path
         const fileList = await readFolderAsync(folderPath)
 
         const files: FileData[] = []
@@ -755,7 +755,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
     })
 
     // open folder
-    openInSystem(outputPath)
+    openInSystem(outputPath, true)
     currentlyBundling = false
 }
 
@@ -881,7 +881,7 @@ const FIXES = {
     },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
-        openInSystem(stores.SETTINGS.path)
+        openInSystem(stores.SETTINGS.path, true)
     }
 }
 function specialCaseFixer() {

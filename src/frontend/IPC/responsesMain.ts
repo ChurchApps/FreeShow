@@ -68,6 +68,7 @@ import {
     shows,
     showsCache,
     showsPath,
+    special,
     spellcheck,
     stageShows,
     templates,
@@ -252,7 +253,7 @@ export const mainResponses: MainResponses = {
             const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`
             variableData[`timer_${labelId}`] = timeValue
             variableData[`timer_${labelId}_seconds`] = currentTime.toString()
-            const activeTimer = get(activeTimers).find((activeTimer) => activeTimer.id === id)
+            const activeTimer = get(activeTimers).find((timer) => timer.id === id)
             let status = "Stopped"
             if (activeTimer) {
                 status = activeTimer.paused ? "Paused" : "Playing"
@@ -301,7 +302,7 @@ export const mainResponses: MainResponses = {
             const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
             if (existingShow) {
-                const useLocal = await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
+                const useLocal = get(special).pcoLocalAlways ?? await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
 

@@ -1286,7 +1286,7 @@ export class EffectRender {
             // Match either rgb(61,153,112) OR rgb(61 153 112 / 0.6)
             const match = baseColor.match(/rgba?\(([^)]+)\)/)
             if (match) {
-                let parts = match[1].trim()
+                const parts = match[1].trim()
 
                 // modern syntax with spaces
                 if (parts.includes("/")) {

@@ -107,6 +107,8 @@
         background-position: center center;
         background-repeat: no-repeat;
 
+        border-radius: 2px;
+
         /* position: relative; */
     }
     /* .slider :global(input)::-webkit-slider-thumb::after {

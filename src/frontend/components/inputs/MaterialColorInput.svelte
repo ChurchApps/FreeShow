@@ -10,8 +10,8 @@
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialNumberInput from "./MaterialNumberInput.svelte"
 
-    export let value: string = "#000000"
-    export let defaultValue: string = ""
+    export let value = "#000000"
+    export let defaultValue = ""
     export let label: string
     export let noLabel = false
     export let allowGradients = false
@@ -76,7 +76,7 @@
         return actualValue
     }
 
-    function selectColor(c: string, close: boolean = true) {
+    function selectColor(c: string, close = true) {
         let actualValue = colorUpdate(c)
 
         dispatch("change", actualValue)

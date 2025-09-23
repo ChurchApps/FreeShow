@@ -73,7 +73,7 @@
 
         menus.forEach((c2: string, i: number) => {
             if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
-            if (i < menus.length - 1) menu.push("SEPERATOR")
+            if (i < menus.length - 1) menu.push("SEPARATOR")
         })
 
         return menu
@@ -151,7 +151,7 @@
             <SpellCheckMenu />
 
             {#each activeMenu as id}
-                {#if id === "SEPERATOR"}
+                {#if id === "SEPARATOR"}
                     <hr />
                 {:else if contextMenuItems[id]?.items}
                     <!-- conditional menus -->

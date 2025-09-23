@@ -343,7 +343,7 @@ const triggerActions = {
 
             // add to project
             if (control) {
-                let newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
+                const newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
                 history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id } }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_ref" } })
                 activeShow.set({ ...newShow, index: newIndex })
             }
@@ -393,7 +393,7 @@ function enableConnection(id: string) {
     disabledServers.set({ ...get(disabledServers), [id]: false })
 }
 
-/////
+/// //
 
 const top = ["show", "edit", "stage", "draw", "settings"]
 const mainPages = [
@@ -413,7 +413,7 @@ const mainPages = [
     { id: "calendar", name: "tabs.calendar", icon: "calendar", aliases: ["menu._title_calendar"] },
     { id: "functions", name: "tabs.functions", icon: "functions" },
     // other
-    { id: "projects", name: "remote.projects", icon: "project", aliases: ["-Playlists", "-Schedules", "-Agendas", "-Services", "-Sermons"] }
+    { id: "projects", name: "remote.projects", icon: "project", aliases: ["-Playlists", "-Schedules", "-Agendas", "-Services", "-Sermons", "-Events"] }
     // { id: "project", name: "remote.project", icon: "project" },
 ]
 
@@ -485,7 +485,7 @@ const popups = [
     { id: "edit_event", name: "new.event_action", icon: "add", data: { drawerTab: "action" } },
     // custom (no popup)
     { id: "category", name: "new.category", icon: "add", data: { drawerTab: "shows" } },
-    { id: "project", name: "new.project", icon: "add" },
+    { id: "project", name: "new.project", icon: "add", aliases: ["-New Playlist", "-New Schedule", "-New Agenda", "-New Service", "-New Sermon", "-New Event"] },
     { id: "overlay", name: "new.overlay", icon: "add", data: { drawerTab: "overlays" } },
     { id: "effect", name: "new.effect", icon: "add", data: { drawerTab: "effects" } },
     { id: "template", name: "new.template", icon: "add", data: { drawerTab: "templates" } },

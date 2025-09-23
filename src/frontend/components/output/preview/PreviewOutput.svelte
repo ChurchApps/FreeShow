@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { outputs, styles } from "../../../stores"
+    import { livePrepare, outputs, styles } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     //import { currentWindow, outputs, styles } from "../../../stores"
     import { getResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -25,6 +26,12 @@
         <StageLayout {outputId} stageId={stageOutput} preview={!disableTransitions} edit={false} />
     {:else}
         <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+    {/if}
+
+    {#if !fullscreen && $livePrepare[outputId]}
+        <div class="blackOverlay">
+            <Icon id="hide" size={2.5} white />
+        </div>
     {/if}
 </div>
 
@@ -53,5 +60,18 @@
 
         /* disable e.g. YouTube video controls on hover */
         pointer-events: none;
+    }
+
+    .blackOverlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: black;
+        opacity: 0.3;
     }
 </style>

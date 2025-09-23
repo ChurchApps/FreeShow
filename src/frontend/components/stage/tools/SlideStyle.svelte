@@ -22,7 +22,7 @@
     // flash on update
     // password
 
-    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))
+    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))
 </script>
 
 <div class="tools">

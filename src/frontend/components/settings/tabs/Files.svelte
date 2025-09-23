@@ -53,6 +53,7 @@
         { value: "30min", label: translateText("30 settings.minutes") }
     ]
 
+    // NOTE: monthly is misspelled as "mothly"
     const autobackupList = [
         { value: "never", label: translateText("settings.never") },
         { value: "daily", label: translateText("interval.daily") },

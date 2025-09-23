@@ -1,8 +1,6 @@
 import type { Input } from "../../../types/Input"
-import type { Option } from "../../../types/Main"
 import MidiValues from "../actions/MidiValues.svelte"
 import RestValues from "../actions/RestValues.svelte"
-import { clone, sortByName } from "../helpers/array"
 import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
 import MaterialDatePicker from "../inputs/MaterialDatePicker.svelte"
 import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
@@ -22,17 +20,6 @@ export const commonInputs = {
 
     midi: MidiValues,
     rest: RestValues,
-}
-
-// init values
-
-// WIP similar to convertToOptions()
-export function initDropdownOptions(object: Option[] | { [key: string]: { name: string;[key: string]: any } }) {
-    let options: { value: string; label: string }[] = []
-    if (Array.isArray(object)) options = object.map((a) => ({ value: a.id || a.name, label: a.name }))
-    else options = sortByName(Object.keys(object).map((id) => ({ value: id, label: object[id].name })), "label")
-
-    return clone(options)
 }
 
 // get values

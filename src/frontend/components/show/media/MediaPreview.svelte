@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, dictionary, media, outLocked, outputs, styles } from "../../../stores"
+    import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { downloadOnlineMedia, getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
@@ -11,7 +11,7 @@
 
     $: if (show?.id.includes("http")) download()
     async function download() {
-        show!.id = await downloadOnlineMedia(show!.id)
+        show.id = await downloadOnlineMedia(show.id)
     }
 
     $: outputId = getActiveOutputs($outputs)[0]
@@ -38,7 +38,6 @@
                     on:click={() => {
                         if (!$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
                     }}
-                    title={$dictionary.media?.play}
                 >
                     {#if mediaStyle.fit === "blur"}
                         <Image style={mediaStyleBlurString} src={show.id} alt="" />

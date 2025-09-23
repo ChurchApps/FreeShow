@@ -16,8 +16,8 @@
     import Timer from "./views/Timer.svelte"
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
-    import Website from "./views/Website.svelte"
     import Weather from "./views/Weather.svelte"
+    import Website from "./views/Website.svelte"
 
     export let item: Item
 
@@ -26,12 +26,13 @@
 
     export let slideIndex = 0
     export let preview = false
+    export let isTemplatePreview = false
     export let mirror = true
     export let isMirrorItem = false
     export let disableListTransition = false
     export let smallFontSize = false
     export let fontSize = 0
-    export let outputId: string = ""
+    export let outputId = ""
 
     export let ratio = 1
     export let ref: {
@@ -80,7 +81,7 @@
 </script>
 
 {#if item.type === "media"}
-    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {preview} {mirror} {edit} />
+    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {mirror} {edit} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}
@@ -89,7 +90,7 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} />
+        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} />
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />

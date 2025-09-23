@@ -108,26 +108,6 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        const outputsList: (Output & { id: string })[] = keysToID(data.outputs)
-
-        // get active "ghost" key outputs
-        const activeKeyOutputs: string[] = []
-        outputsList.forEach((output) => {
-            if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id)
-        })
-
-        // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
-        const allOutputs = get(outputs)
-        let outputsUpdated = false
-        Object.keys(allOutputs).forEach((outputId) => {
-            const output = allOutputs[outputId]
-            if (!output.isKeyOutput || activeKeyOutputs.includes(outputId)) return
-
-            delete allOutputs[outputId]
-            outputsUpdated = true
-        })
-        if (outputsUpdated) outputs.set(allOutputs)
-
         // wait until content is loaded
         setTimeout(() => {
             restartOutputs()
@@ -179,12 +159,6 @@ export function restartOutputs(specificId = "") {
     outputIds.forEach((id: string) => {
         let output: Output = get(outputs)[id]
         if (!output) return
-
-        // key output styling
-        if (output.isKeyOutput) {
-            const parentOutput = allOutputs.find((a) => a.keyOutput === id)
-            if (parentOutput) output = { ...parentOutput, ...output, id }
-        }
 
         // , rate: get(special).previewRate || "auto"
         send(OUTPUT, ["CREATE"], { ...output, id })

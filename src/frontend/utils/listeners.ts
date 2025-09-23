@@ -25,6 +25,7 @@ import {
     folders,
     gain,
     groups,
+    livePrepare,
     media,
     openedFolders,
     outputs,
@@ -304,6 +305,9 @@ export function storeSubscriber() {
     colorbars.subscribe((a) => {
         send(OUTPUT, ["COLORBARS"], a)
     })
+    livePrepare.subscribe((a) => {
+        send(OUTPUT, ["LIVE_PREPARE"], a)
+    })
 
     //
 
@@ -354,7 +358,7 @@ const initalOutputData = {
     DRAW_TOOL: { data: "drawTool" },
     DRAW_SETTINGS: "drawSettings",
 
-    VIZUALISER_DATA: "visualizerData",
+    VISUALIZER_DATA: "visualizerData",
     MEDIA: "media",
     EFFECTS: "effects",
     TIMERS: "timers",

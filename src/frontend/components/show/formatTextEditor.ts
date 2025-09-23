@@ -21,7 +21,6 @@ export function formatText(text: string, showId = "") {
 
     const slides: Slide[] = newSlidesText.map(getSlide)
     let newSlides: { [key: string]: Slide } = clone(show.slides)
-    // console.log(clone(slides))
 
     // sort oldSlides by their children
     const oldSlideParents: Slide[] = keysToID(show.slides).filter((a) => a.group)
@@ -43,7 +42,6 @@ export function formatText(text: string, showId = "") {
 
     const groupedOldSlides = groupSlides(oldSlides)
     const groupedNewSlides = groupSlides(slides)
-    // console.log(groupedOldSlides, groupedNewSlides)
 
     let newLayoutSlides: SlideData[] = []
 
@@ -133,14 +131,14 @@ export function formatText(text: string, showId = "") {
             const oldSlideChildren: string[] = show.slides[oldLayoutSlide2.id]?.children || []
 
             // find children data
-            if (oldLayoutSlide2.children) {
+            if (oldSlideChildren.length) {
                 const newChildrenData: { [key: string]: any } = {}
                 oldSlideChildren.forEach((oldChildId, childIndex) => {
                     const newChildId = newSlides[id].children?.[childIndex]
                     if (!newChildId) return
 
                     replacedIds[newChildId] = oldChildId
-                    newChildrenData[newChildId] = oldLayoutSlide2.children![oldChildId]
+                    if (oldLayoutSlide2.children?.[oldChildId]) newChildrenData[newChildId] = oldLayoutSlide2.children[oldChildId]
                 })
                 oldLayoutSlide2.children = newChildrenData
             }
@@ -191,6 +189,7 @@ export function formatText(text: string, showId = "") {
         const oldSlide = clone(show.slides[oldSlideId] || {})
         const oldTextboxes = getTextboxes(oldSlide.items || [])
 
+
         if (oldTextboxes.length && oldSlideId !== slideId) {
             slide.items.forEach((item, i) => {
                 const b = oldTextboxes[i]
@@ -232,8 +231,8 @@ export function formatText(text: string, showId = "") {
             slide.items.forEach((item) => {
                 item.lines?.forEach((line) => {
                     line.align = parentAlign[slideId]
-                    line.text?.forEach((text) => {
-                        text.style = parentStyles[slideId]
+                    line.text?.forEach((txt) => {
+                        txt.style = parentStyles[slideId]
                     })
                 })
             })
@@ -265,7 +264,7 @@ export function formatText(text: string, showId = "") {
                 if (newItems.length) {
                     items.push(...newItems)
                     // remove empty items
-                    items = items.filter((item) => getItemText(item).length)
+                    items = items.filter((item) => ((item.type || "text") !== "text") || getItemText(item).length)
                 }
             }
         }
@@ -288,7 +287,7 @@ export function formatText(text: string, showId = "") {
 
     // order slides object based on current layout order
     // this is to ensure correct "Verse 1", "Verse 2" order with multiple layouts
-    let newSlidesOrdered: typeof newSlides = {}
+    const newSlidesOrdered: typeof newSlides = {}
     allUsedSlidesIds.forEach(id => {
         newSlidesOrdered[id] = newSlides[id]
     })

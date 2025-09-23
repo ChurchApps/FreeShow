@@ -21,7 +21,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let outputsList: Output[] = []
-    $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
+    $: outputsList = sortObject(sortByName(keysToID($outputs)), "stageOutput")
 
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = clone({ id: $currentOutputSettings, ...$outputs[$currentOutputSettings] })

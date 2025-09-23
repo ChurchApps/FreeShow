@@ -7,9 +7,9 @@
 
     export let label: string
     export let value: string
-    export let fontStyleValue: string = ""
-    export let enableFontStyles: boolean = false
-    export let allowEmpty: boolean = false
+    export let fontStyleValue = ""
+    export let enableFontStyles = false
+    export let allowEmpty = false
 
     let systemFontsList: DropdownOptions = []
     let fontsStylesList: DropdownOptions = []

@@ -5,11 +5,11 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
     export let side: "right" | "left" | "center" = "right"
-    export let onlyOne: boolean = false
-    export let gradient: boolean = false
-    export let round: boolean = false
-    export let arrow: boolean = false
-    export let bottom: number = 10
+    export let onlyOne = false
+    export let gradient = false
+    export let round = false
+    export let arrow = false
+    export let bottom = 10
 
     let open = false
 
@@ -58,6 +58,8 @@
         /* padding: 0 18px; */
         overflow: hidden;
         z-index: 199; /* over edit items */
+
+        max-width: calc(100% - 22px);
 
         --background: rgba(25, 25, 35, 0.85);
         background-color: var(--background);

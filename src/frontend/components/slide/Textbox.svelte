@@ -18,6 +18,7 @@
     export let itemIndex = -1
     export let slideIndex = 0
     export let preview = false
+    export let isTemplatePreview = false
     export let mirror = true
     export let isMirrorItem = false
     export let ratio = 1
@@ -360,7 +361,7 @@
             on:updateAutoSize={calculateAutosize}
         />
     {:else}
-        <SlideItems {item} {slideIndex} {preview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
+        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
 </div>
 
