@@ -185,11 +185,11 @@ export function updateThemeValues(themeValues: Themes) {
         document.documentElement.style.setProperty("--font-" + key, value)
     })
 
-    // border radius
-    if (!themeValues.border) themeValues.border = {}
-    // set to 0 if nothing is set
-    if (themeValues.border?.radius === undefined) themeValues.border.radius = "0"
-    Object.entries(themeValues.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
+    // // border radius
+    // if (!themeValues.border) themeValues.border = {}
+    // // set to 0 if nothing is set
+    // if (themeValues.border?.radius === undefined) themeValues.border.radius = "0"
+    // Object.entries(themeValues.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {

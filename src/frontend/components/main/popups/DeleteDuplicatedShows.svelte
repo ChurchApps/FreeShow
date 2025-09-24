@@ -191,7 +191,7 @@
                     <MaterialTextarea label="edit.text" rows={5} value={loadedTexts[i]} disabled />
                 {/if}
 
-                <MaterialButton icon="delete" class="red" style="padding: 5px;" on:click={() => deleteAtIndex(i)} white>
+                <MaterialButton icon="delete" style="padding: 5px;" on:click={() => deleteAtIndex(i)} white red>
                     <T id="actions.delete" />
                 </MaterialButton>
             </div>
@@ -224,14 +224,14 @@
 
     <HRule />
 
-    <MaterialButton variant="outlined" class="red" on:click={deleteMatching}>
+    <MaterialButton variant="outlined" on:click={deleteMatching} red>
         <T id="show.delete_match" />
     </MaterialButton>
 
-    <MaterialButton variant="outlined" class="red" on:click={deleteOldest}>
+    <MaterialButton variant="outlined" on:click={deleteOldest} red>
         <T id="show.delete_keep_last_modified" />
     </MaterialButton>
-    <MaterialButton variant="outlined" class="red" on:click={deleteNewest}>
+    <MaterialButton variant="outlined" on:click={deleteNewest} red>
         <T id="show.delete_keep_first_created" />
     </MaterialButton>
 {/if}
@@ -246,17 +246,5 @@
     .show {
         display: flex;
         flex-direction: column;
-    }
-
-    /* red */
-    :global(button.red) {
-        background-color: rgb(255 0 0 / 0.25) !important;
-    }
-    :global(button.red):hover:not(.contained):not(.active) {
-        background-color: rgb(255 0 0 / 0.35) !important;
-    }
-    :global(button.red):active:not(.contained):not(.active),
-    :global(button.red):focus:not(.contained):not(.active) {
-        background-color: rgb(255 0 0 / 0.3) !important;
     }
 </style>

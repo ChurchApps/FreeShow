@@ -65,20 +65,6 @@
 <p><T id="popup.reset_all_confirm" /></p>
 <p style="font-size: 0.9em;opacity: 0.7;"><T id="popup.reset_all_action" /></p>
 
-<MaterialButton variant="outlined" class="red" style="margin-top: 20px;" icon="close" on:click={reset} white>
+<MaterialButton variant="outlined" class="red" style="margin-top: 20px;" icon="close" on:click={reset} white red>
     <T id="popup.continue" />
 </MaterialButton>
-
-<style>
-    /* red */
-    :global(button.red) {
-        background-color: rgb(255 0 0 / 0.25) !important;
-    }
-    :global(button.red):hover:not(.contained):not(.active) {
-        background-color: rgb(255 0 0 / 0.35) !important;
-    }
-    :global(button.red):active:not(.contained):not(.active),
-    :global(button.red):focus:not(.contained):not(.active) {
-        background-color: rgb(255 0 0 / 0.3) !important;
-    }
-</style>

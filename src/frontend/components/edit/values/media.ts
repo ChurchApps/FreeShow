@@ -40,6 +40,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 inputs: defaultMedia
             },
             video: {
+                alwaysOpen: true,
                 inputs: splitIntoRows([
                     { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.1, max: 15, step: 0.1, showSlider: true } },
                     { id: "volume", type: "number", value: 100, values: { label: "media.volume", max: 100, showSlider: true, } },

@@ -258,7 +258,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
     actions_readonly: ["action_tag_filter"],
-    action: ["edit", "SEPARATOR", "disable", "SEPARATOR", "duplicate", "delete", "SEPARATOR", "action_tag_set", "action_tag_filter"],
+    action: ["edit", "disable", "SEPARATOR", "duplicate", "delete", "SEPARATOR", "action_tag_set", "action_tag_filter"],
     action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPARATOR", "selectAll"],
     scripture_chapter: ["create_show"],

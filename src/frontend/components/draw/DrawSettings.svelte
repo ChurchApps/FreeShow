@@ -91,7 +91,7 @@
 </script>
 
 <!-- {#if tool === "paint"}
-    <MaterialButton style="background-color: {$paintCache?.length ? 'rgb(255 0 0 / 0.25)' : 'var(--primary-darker)'} !important;" disabled={!$paintCache?.length} on:click={clearDrawing}>
+    <MaterialButton style="background-color: var(--primary-darker);" disabled={!$paintCache?.length} on:click={clearDrawing} red={!!$paintCache?.length}>
         <Icon id="clear" size={1.2} white />
         <T id="clear.drawing" />
     </MaterialButton>
@@ -121,7 +121,7 @@
 
 <FloatingInputs>
     {#if tool === "paint"}
-        <MaterialButton style={$paintCache?.length ? "background-color: rgb(255 0 0 / 0.25) !important;" : ""} disabled={!$paintCache?.length} on:click={clearDrawing}>
+        <MaterialButton disabled={!$paintCache?.length} on:click={clearDrawing} red={!!$paintCache?.length}>
             <Icon id="clear" size={1.2} white />
             <T id="clear.drawing" />
         </MaterialButton>

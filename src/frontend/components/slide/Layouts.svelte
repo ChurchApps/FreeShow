@@ -283,8 +283,9 @@
 
     .notes {
         background-color: var(--primary-darkest);
-        border-radius: var(--border-radius);
         border-top: 1px solid var(--primary-lighter);
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
         /* position: absolute;bottom: 0;transform: translateY(-100%); */
         padding: 0 8px;
         min-height: 30px;

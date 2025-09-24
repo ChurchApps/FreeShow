@@ -147,6 +147,9 @@
         flex: 1;
         padding: 5px;
         place-content: flex-start;
+
+        padding-bottom: 60px;
+        /* box-shadow: inset 0 -40px 25px -20px rgb(0 0 0 / 0.3); */
     }
 
     .grid :global(.selectElem) {

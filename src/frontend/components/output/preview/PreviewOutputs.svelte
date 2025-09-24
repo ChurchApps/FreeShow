@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
-    import { dictionary, ndiData, outputs, outputState } from "../../../stores"
+    import { ndiData, outputs, outputState } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     // onMount(() => {
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
@@ -59,16 +59,13 @@
 {#if outs.length > 1}
     <div class="outputTitles">
         {#each outs as output}
-            <Button
-                title={$dictionary.actions?.toggle_output_lock}
-                on:click={(e) => toggleOutput(e, output.id)}
+            <MaterialButton
                 id={output.id}
+                title="actions.toggle_output_lock"
                 active={output.active}
-                style="width: 50%;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}"
+                style="width: 50%;font-weight: normal;border-radius: 0;padding: 0.2em 0.8em;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}"
                 class="output_button context #output_active_button"
-                bold={false}
-                center
-                dark
+                on:click={(e) => toggleOutput(e, output.id)}
             >
                 <div
                     class="indicator"
@@ -78,11 +75,11 @@
                     class:active={$outputState.find((a) => a.id === output.id)?.active === true}
                     data-title={translateText(getOutputStateTitle(output, { $outputState, $ndiData }))}
                 ></div>
-                {#if output.stageOutput}<Icon id="stage" size={0.8} right white />{/if}
-                <!-- {#if !allSameState && $outputState.find((a) => a.id === output.id)?.active}<Icon id="check" right />{/if} -->
+                {#if output.stageOutput}<Icon id="stage" size={0.8} white />{/if}
+                <!-- {#if !allSameState && $outputState.find((a) => a.id === output.id)?.active}<Icon id="check" />{/if} -->
 
                 <p style={output.active ? "" : "text-decoration: line-through;"}>{output.name}</p>
-            </Button>
+            </MaterialButton>
         {/each}
     </div>
 {/if}
@@ -110,8 +107,6 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-
-        margin-right: 10px;
 
         transition: 0.3s background-color ease;
         background-color: #ce3535;

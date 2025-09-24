@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Popups } from "../../../../types/Main"
-    import { activePopup, customizedIcons, dictionary, popupData } from "../../../stores"
+    import { activePopup, customizedIcons, popupData } from "../../../stores"
     import { customIcons, customIconsColors } from "../../../values/customIcons"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -60,7 +60,7 @@
     {#each Object.keys(customIcons) as icon}
         {@const color = colors && customIconsColors[icon] ? "color: " + customIconsColors[icon] + ";" : ""}
         {@const disabled = $customizedIcons.disabled.includes(icon)}
-        <MaterialButton style="padding: 8px;" on:click={() => click(icon)} title={disabled ? $dictionary.actions?.enable : $dictionary.actions?.disable}>
+        <MaterialButton style="padding: 8px;" on:click={() => click(icon)} title={disabled ? "actions.enable" : "actions.disable"}>
             <Icon id={icon} size={2} custom white style={disabled ? "opacity: 0.2;" : color} />
         </MaterialButton>
     {/each}
@@ -73,7 +73,7 @@
     {#if $customizedIcons.svg.length}
         <div class="custom grid">
             {#each $customizedIcons.svg as icon}
-                <MaterialButton style="padding: 12px;" on:click={() => deleteCustom(icon.id)} title={$dictionary.actions?.delete}>
+                <MaterialButton style="padding: 12px;" on:click={() => deleteCustom(icon.id)} title="actions.delete">
                     {@html icon.path}
                 </MaterialButton>
             {/each}
@@ -104,7 +104,7 @@
         height: 50px;
     }
 
-    .custom :global(button):hover {
-        background-color: rgb(255 0 0 / 0.25) !important;
+    .custom :global(button:not(.contained):not(.isActive):not(:disabled):hover) {
+        background-color: var(--red) !important;
     }
 </style>

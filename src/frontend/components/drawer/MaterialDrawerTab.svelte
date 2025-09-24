@@ -35,9 +35,10 @@
     const dispatch = createEventDispatcher()
     function click(e: any) {
         const { ctrl, shift } = e.detail
-        if (ctrl || shift) return
+        if (ctrl) return
 
-        if (category.openTrigger) category.openTrigger(id)
+        if (category.openTrigger) category.openTrigger(id, shift)
+        if (shift) return
 
         drawerTabsData.update((a) => {
             a[drawerId].activeSubTab = parentId || id

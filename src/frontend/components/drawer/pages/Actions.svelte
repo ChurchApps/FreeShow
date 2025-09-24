@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activeActionTagFilter, activePopup, dictionary, labelsDisabled, popupData, runningActions } from "../../../stores"
+    import { actions, actionTags, activeActionTagFilter, activePopup, dictionary, labelsDisabled, popupData, runningActions } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
@@ -97,6 +97,21 @@
 
                             <!-- this is probably not in use: -->
                             <p style="opacity: 0.5;font-style: italic;">{action.shows?.length > 1 ? action.shows.length : ""}</p>
+
+                            <!-- tags -->
+                            {#if $activeActionTagFilter.length}
+                                <span class="tags">
+                                    {#each action.tags as tagId}
+                                        {@const tag = $actionTags[tagId]}
+
+                                        {#if !$activeActionTagFilter.includes(tagId)}
+                                            <span class="tag" style="--color: {tag.color || 'white'};">
+                                                <p>{tag.name}</p>
+                                            </span>
+                                        {/if}
+                                    {/each}
+                                </span>
+                            {/if}
                         </Button>
                     </SelectElem>
                 </div>
@@ -119,6 +134,8 @@
     .actions {
         flex: 1;
         overflow: auto;
+
+        padding-bottom: 60px;
     }
     .actions :global(.action:nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
@@ -152,5 +169,26 @@
     .deactivated {
         opacity: 0.5 !important;
         text-decoration: line-through;
+    }
+
+    /* tags */
+
+    .tags {
+        display: flex;
+        gap: 5px;
+        padding-left: 10px;
+    }
+
+    .tag {
+        --color: white;
+
+        display: flex;
+        padding: 0px 5px;
+
+        color: var(--color);
+        font-weight: 600;
+
+        border-radius: 20px;
+        border: 2px solid var(--color);
     }
 </style>

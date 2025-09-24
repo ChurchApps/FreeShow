@@ -18,7 +18,6 @@
         height: 1em;
         font-size: 22px;
         background-color: var(--primary-lighter);
-        border-radius: var(--border-radius);
     }
 
     .switch.disabled {
@@ -39,7 +38,6 @@
         width: 1em;
         height: 1em;
         background-color: var(--text);
-        border-radius: var(--border-radius);
         transition: all 300ms;
     }
     .switch div.on {

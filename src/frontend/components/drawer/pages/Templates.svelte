@@ -173,6 +173,8 @@
         flex: 1;
         padding: 5px;
         place-content: flex-start;
+
+        padding-bottom: 60px;
     }
 
     .grid :global(.selectElem) {

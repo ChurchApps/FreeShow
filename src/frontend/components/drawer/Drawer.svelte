@@ -32,6 +32,7 @@
     import { selectTextOnFocus } from "../helpers/inputActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Resizeable from "../system/Resizeable.svelte"
     import Info from "./info/Info.svelte"
 
@@ -218,19 +219,21 @@
         <span class="tabs">
             {#each tabs as tab, i}
                 {#if $drawerTabsData[tab.id]?.enabled !== false && getAccess(tab.id).global !== "none" && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
-                    <Button
+                    <!-- overflow: unset; -->
+                    <MaterialButton
                         id={tab.id}
+                        style="border-radius: 0;border-bottom: 2px solid var(--primary);padding: 0.2em 0.8em;"
+                        class="context #drawer_top"
+                        title="{tab.name.split('.')[0]}.{tab.name.split('.')[1]} [Ctrl+{i + 1}]"
+                        isActive={$activeDrawerTab === tab.id}
                         on:click={() => openDrawerTab(tab)}
                         on:dblclick={closeDrawer}
-                        active={$activeDrawerTab === tab.id}
-                        class="context #drawer_top"
-                        title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]"
                     >
                         <Icon id={tab.icon} size={1.3} white={$activeDrawerTab === tab.id} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}
-                    </Button>
+                    </MaterialButton>
                 {/if}
             {/each}
         </span>
@@ -307,9 +310,6 @@
         display: flex;
         overflow-x: auto;
         overflow-y: hidden;
-    }
-    .top .tabs span {
-        margin-inline-start: 0.5em;
     }
 
     .search {

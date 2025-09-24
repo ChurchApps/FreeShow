@@ -614,6 +614,6 @@
         overflow-y: auto;
         overflow-x: hidden;
 
-        /* padding-bottom: 60px; */
+        padding-bottom: 60px;
     }
 </style>

@@ -302,6 +302,8 @@
     .variables {
         flex: 1;
         overflow: auto;
+
+        padding-bottom: 60px;
     }
     .variables :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);

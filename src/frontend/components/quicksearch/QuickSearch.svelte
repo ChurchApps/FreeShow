@@ -114,7 +114,6 @@
         gap: 10px;
 
         background-color: var(--primary);
-        /* border-radius: var(--border-radius); */
         border-radius: 10px;
         padding: 10px;
 

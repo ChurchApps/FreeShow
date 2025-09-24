@@ -15,6 +15,7 @@
     export let gradient = false
     export let small = false
     export let tab = false
+    export let red = false
     let button
 
     // automatically do white icon if no content
@@ -84,6 +85,7 @@
     class:white
     class:small
     class:tab
+    class:red
     {disabled}
     style="
     background: {variant === 'contained' ? (gradient ? 'linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 30%, #d100db 50%, #f0008c 100%)' : 'var(--secondary)') : variant === 'outlined' ? 'var(--primary-darkest)' : 'transparent'};
@@ -255,5 +257,20 @@
         font-size: 0.9em;
         margin-inline-start: 2px;
         font-weight: normal;
+    }
+
+    /* red */
+
+    button.red:not(:disabled) {
+        background-color: var(--red) !important;
+    }
+    button.red:not(.contained):not(.isActive):not(:disabled):hover {
+        background: rgba(255, 0, 0, 0.2) !important;
+    }
+    button.red:not(.contained):not(.isActive):not(:disabled):active {
+        background: rgba(255, 0, 0, 0.3) !important;
+    }
+    button.red:not(.contained):not(.isActive):not(:disabled):active:hover {
+        background: rgba(255, 0, 0, 0.35) !important;
     }
 </style>

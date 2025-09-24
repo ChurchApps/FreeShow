@@ -7,7 +7,7 @@
     import { refreshOut, setOutput } from "../helpers/output"
     import { getLayoutRef } from "../helpers/show"
     import { updateOut } from "../helpers/showActions"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
     export let currentOutput: Output
     export let ref: (LayoutRef | { temp: boolean; items: any; id: string })[]
@@ -85,39 +85,37 @@
 </script>
 
 <span class="group">
-    <Button
-        on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
-        title={$dictionary.preview?._previous_slide + " [Arrow Left]"}
+    <MaterialButton
+        title="preview._previous_slide [Arrow Left]"
         disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)))}
-        center
+        on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
     >
         <Icon id="previous" size={1.2} />
-    </Button>
-    <Button
-        on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
-        title={$dictionary.preview?._next_slide + " [Arrow Right]"}
+    </MaterialButton>
+    <MaterialButton
+        title="preview._next_slide [Arrow Right]"
         disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)))}
-        center
+        on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
     >
         <Icon id="next" size={1.2} />
-    </Button>
+    </MaterialButton>
 
     {#if shouldRefresh}
-        <Button on:click={() => refreshOut()} title={$dictionary.preview?._update + " [Ctrl+R]"} disabled={$outLocked} center>
+        <MaterialButton title="preview._update [Ctrl+R]" disabled={$outLocked} on:click={() => refreshOut()}>
             <Icon id="refresh" size={1.1} />
-        </Button>
+        </MaterialButton>
     {:else}
-        <Button on:click={playCurrent} title={$dictionary.preview?._start + " [Space]"} disabled={$outLocked || !shouldPlay || ($activePage === "edit" && ($activeEdit.type === "template" || $activeEdit.type === "effect"))} center>
+        <MaterialButton title="preview._start [Space]" disabled={$outLocked || !shouldPlay || ($activePage === "edit" && ($activeEdit.type === "template" || $activeEdit.type === "effect"))} on:click={playCurrent}>
             <Icon id="play" size={1.2} white />
-        </Button>
+        </MaterialButton>
     {/if}
 
-    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={($outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock) + " [Ctrl+L]"} center>
+    <MaterialButton title={($outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock) + " [Ctrl+L]"} on:click={() => outLocked.set(!$outLocked)} red={$outLocked}>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} white={$outLocked} />
-    </Button>
-    <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition} center>
+    </MaterialButton>
+    <MaterialButton title="popup.transition" on:click={() => activePopup.set("transition")}>
         <Icon size={1.2} id="transition" white={!!customTransition} />
-    </Button>
+    </MaterialButton>
 </span>
 
 <style>

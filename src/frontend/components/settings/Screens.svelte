@@ -295,7 +295,7 @@
                     <!-- Current screen position -->
                     <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
                     {#if !activateOutput}
-                        <MaterialButton class="lock" style={currentScreen.boundsLocked ? "background-color: rgb(255 0 0 / 0.25) !important;" : ""} on:click={lockScreen} title="preview.{currentScreen.boundsLocked ? '_unlock' : '_lock'}">
+                        <MaterialButton class="lock" on:click={lockScreen} title="preview.{currentScreen.boundsLocked ? '_unlock' : '_lock'}" red={currentScreen.boundsLocked}>
                             <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} white={currentScreen.boundsLocked} />
                         </MaterialButton>
                     {/if}

@@ -70,15 +70,14 @@
     <span>
         <TopButton id="show" />
         <TopButton id="edit" disabled={editDisabled} />
-        <!-- <TopButton id="draw" /> -->
         <TopButton id="stage" />
     </span>
     <span style="width: var(--navigation-width);justify-content: flex-end;">
-        <!-- <TopButton id="stage" hideLabel /> -->
         <TopButton id="draw" red={$drawTool === "fill" || ($drawTool === "zoom" && $drawSettings.zoom?.size !== 100) || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         {#if !settingsDisabled}
             <TopButton id="settings" hideLabel />
         {/if}
+
         <Button
             id="output_window_button"
             title={($outputDisplay ? (confirm ? $dictionary.menu?.again_confirm : $dictionary.menu?._title_display_stop) : $dictionary.menu?._title_display) + " [Ctrl+O]"}
@@ -155,7 +154,7 @@
         left: 0;
         height: 100%;
         width: 5px;
-        background-color: rgb(255 0 0 / 0.25);
+        background-color: var(--red);
     }
 
     /* .logo {

@@ -44,14 +44,14 @@
     --connected: #27a827;
     --disconnected: #a82727;
 
+    --red: rgb(255 0 0 / 0.25);
+
     --hover: rgb(255 255 255 / 0.05);
     --focus: rgb(255 255 255 / 0.1);
 
     /* https://css-tricks.com/snippets/css/system-font-stack/ */
     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --font-size: 1em;
-
-    --border-radius: 0;
 
     --navigation-width: 290px;
 }
