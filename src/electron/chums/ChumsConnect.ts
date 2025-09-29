@@ -6,7 +6,7 @@ import { openURL } from "../IPC/responsesMain"
 import { getKey } from "../utils/keys"
 import { httpsRequest } from "../utils/requests"
 import type { ChumsAuthData, ChumsRequestData, ChumsScopes } from "./types"
-import { CONTENT_API_URL, DOING_API_URL, MEMBERSHIP_API_URL, CHUMS_API_URL } from "./types"
+import { CHURCHAPPS_API_URL, CHUMS_APP_URL } from "./types"
 
 /**
  * Handles authentication and API communication with the Chums service.
@@ -74,13 +74,14 @@ export class ChumsConnect {
         }
 
         return new Promise((resolve) => {
-            const apiUrl = data.api === "doing" ? DOING_API_URL : CONTENT_API_URL
+            const apiUrl = CHURCHAPPS_API_URL
+            const pathPrefix = data.api === "doing" ? "/doing" : "/content"
+            const fullEndpoint = `${pathPrefix}${data.endpoint}`
             const headers = data.authenticated ? { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` } : {}
-            // console.log("SENDING REQUEST TO CHUMS", apiUrl, data.endpoint, data.method || "GET", headers, data.data || {})
-            httpsRequest(apiUrl, data.endpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
+            httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
-                    console.error("Could not get data", apiUrl, data.endpoint)
-                    sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + data.endpoint)
+                    console.error("Could not get data", apiUrl, fullEndpoint)
+                    sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
                     return resolve(null)
                 } else resolve(result)
             })
@@ -116,7 +117,7 @@ export class ChumsConnect {
                     redirect_uri,
                 }
 
-                httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+                httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                     if (err) {
                         res.setHeader("Content-Type", "text/html")
                         const errorPage = this.HTML_ERROR.replace("{error_msg}", err.message)
@@ -139,7 +140,7 @@ export class ChumsConnect {
                 })
             })
 
-            const URL = `${CHUMS_API_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
+            const URL = `${CHUMS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
             openURL(URL)
         })
     }
@@ -161,15 +162,13 @@ export class ChumsConnect {
                 refresh_token: access.refresh_token,
             }
 
-            // console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
-            httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+            httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                 if (err || data === null) {
                     this.disconnect()
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
                     resolve(null)
                     return
                 }
-                // console.log("DATA", data)
 
                 this.CHUMS_ACCESS = data
                 stores.ACCESS.set(`chums_${data.scope}`, data)

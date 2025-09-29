@@ -20,17 +20,13 @@ export type ChumsRequestData = {
 }
 
 // Prod URLs
-export const MEMBERSHIP_API_URL = "https://membershipapi.churchapps.org"
-export const DOING_API_URL = "https://doingapi.churchapps.org"
-export const CONTENT_API_URL = "https://contentapi.churchapps.org"
-export const CHUMS_API_URL = "https://app.chums.org"
+export const CHURCHAPPS_API_URL = "https://api.churchapps.org"
+export const CHUMS_APP_URL = "https://app.chums.org"
 
 // Dev URLs
 /*
-export const MEMBERSHIP_API_URL = "https://membershipapi.staging.churchapps.org"
-export const DOING_API_URL = "https://doingapi.staging.churchapps.org"
-export const CONTENT_API_URL = "https://contentapi.staging.churchapps.org"
-export const CHUMS_API_URL = "https://app.staging.chums.org"
+export const CHURCHAPPS_API_URL = "https://api.staging.churchapps.org"
+export const CHUMS_APP_URL = "https://app.staging.chums.org"
 */
 
 // export const DEFAULT_CHUMS_DATA: ChumsAuthData = {
