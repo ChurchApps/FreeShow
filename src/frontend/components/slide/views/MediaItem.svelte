@@ -13,7 +13,7 @@
 
     export let id: string
     export let item: Item
-    export let outputId: string = ""
+    export let outputId = ""
     export let slideRef: any = {}
 
     export let preview = false

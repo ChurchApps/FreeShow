@@ -157,7 +157,7 @@ export function restartOutputs(specificId = "") {
     const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
     outputIds.forEach((id: string) => {
-        let output: Output = get(outputs)[id]
+        const output: Output = get(outputs)[id]
         if (!output) return
 
         // , rate: get(special).previewRate || "auto"

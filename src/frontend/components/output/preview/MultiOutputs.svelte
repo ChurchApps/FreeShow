@@ -43,7 +43,7 @@
         resolution = getOutputResolution(fullscreenId, $outputs, true)
     }
 
-    function toFraction(x: number, tolerance: number = 0) {
+    function toFraction(x: number, tolerance = 0) {
         if (x === 0) return "0/1"
         if (x < 0) x = -x
         if (!tolerance) tolerance = 0.0001

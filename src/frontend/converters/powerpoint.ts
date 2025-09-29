@@ -25,7 +25,7 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            console.log("PPT", content)
+            // console.log("PPT", content)
 
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
             const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
@@ -34,7 +34,7 @@ export function convertPowerpoint(files: any[]) {
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
 
-            const size = presentationData["p:sldSz"]?.[0]["$"]
+            const size = presentationData["p:sldSz"]?.[0].$
             currentSlideSize = { width: size.cx || EMU_WIDTH, height: size.cy || EMU_HEIGHT }
 
             // load font faces
