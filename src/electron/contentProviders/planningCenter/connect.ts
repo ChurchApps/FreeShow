@@ -1,12 +1,12 @@
 import express from "express"
 import { randomFillSync, createHash } from "crypto"
 
-import { ToMain } from "../../types/IPC/ToMain"
-import { getContentProviderAccess, setContentProviderAccess } from "../data/contentProviders"
-import { sendToMain } from "../IPC/main"
-import { openURL } from "../IPC/responsesMain"
-import { getKey } from "../utils/keys"
-import { httpsRequest } from "../utils/requests"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
+import { openURL } from "../../IPC/responsesMain"
+import { getKey } from "../../utils/keys"
+import { httpsRequest } from "../../utils/requests"
 import { pcoLoadServices } from "./request"
 
 export type PCOScopes = "calendar" | "check_ins" | "giving" | "groups" | "people" | "publishing" | "services"

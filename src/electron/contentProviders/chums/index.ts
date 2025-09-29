@@ -1,5 +1,5 @@
-import type { Main, MainSendPayloads } from "../../types/IPC/Main"
-import { getContentProviderAccess } from "../data/contentProviders"
+import type { Main, MainSendPayloads } from "../../../types/IPC/Main"
+import { getContentProviderAccess } from "../../data/contentProviders"
 import { ChumsConnect } from "./ChumsConnect"
 import { ChumsExport } from "./ChumsExport"
 import { ChumsImport } from "./ChumsImport"

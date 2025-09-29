@@ -1,7 +1,7 @@
 import { uid } from "uid"
-import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide, SlideData } from "../../types/Show"
-import { sendToMain } from "../IPC/main"
+import { ToMain } from "../../../types/IPC/ToMain"
+import type { Show, Slide, SlideData } from "../../../types/Show"
+import { sendToMain } from "../../IPC/main"
 import { ChumsConnect } from "./ChumsConnect"
 
 /**

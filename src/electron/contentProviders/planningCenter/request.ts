@@ -1,14 +1,14 @@
 import path from "path"
 import { uid } from "uid"
-import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide, SlideData } from "../../types/Show"
-import { downloadLessonsMedia } from "../data/downloadMedia"
-import { sendToMain } from "../IPC/main"
-import { dataFolderNames, getDataFolder } from "../utils/files"
-import { httpsRequest } from "../utils/requests"
+import { ToMain } from "../../../types/IPC/ToMain"
+import type { Show, Slide, SlideData } from "../../../types/Show"
+import { downloadLessonsMedia } from "../../data/downloadMedia"
+import { sendToMain } from "../../IPC/main"
+import { dataFolderNames, getDataFolder } from "../../utils/files"
+import { httpsRequest } from "../../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
-import type { Media } from "../../types/Main"
-import type { Project } from "../../types/Projects"
+import type { Media } from "../../../types/Main"
+import type { Project } from "../../../types/Projects"
 
 const PCO_API_version = 2
 

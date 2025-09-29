@@ -1,8 +1,8 @@
 import path from "path"
-import type { Main, MainSendPayloads } from "../../types/IPC/Main"
-import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
-import { parseShow, readFile } from "../utils/files"
+import type { Main, MainSendPayloads } from "../../../types/IPC/Main"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { sendToMain } from "../../IPC/main"
+import { parseShow, readFile } from "../../utils/files"
 import { ChumsConnect } from "./ChumsConnect"
 import type { ChumsSongData } from "./types"
 

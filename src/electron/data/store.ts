@@ -12,7 +12,7 @@ import type { ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
-// import { DEFAULT_PCO_DATA } from "../planningcenter/connect" // No longer needed
+// import { DEFAULT_PCO_DATA } from "../contentProviders/planningCenter/connect" // No longer needed
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 import { forceCloseApp } from "../utils/close"

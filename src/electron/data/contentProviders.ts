@@ -21,14 +21,14 @@ export function setContentProviderAccess(provider: string, scope: string, data: 
 
 export function getContentProviderSettings(provider: string, key?: string): any {
     const contentProviders = stores.SETTINGS.get("contentProviders") || {}
-    const providerSettings = (contentProviders as any)[provider] || {}
+    const providerSettings = (contentProviders )[provider] || {}
     return key ? providerSettings[key] : providerSettings
 }
 
 export function setContentProviderSettings(provider: string, key: string, value: any): void {
     const contentProviders = stores.SETTINGS.get("contentProviders") || {}
-    if (!(contentProviders as any)[provider]) (contentProviders as any)[provider] = {}
-        ; (contentProviders as any)[provider][key] = value
+    if (!(contentProviders )[provider]) (contentProviders )[provider] = {}
+        ; (contentProviders )[provider][key] = value
     stores.SETTINGS.set("contentProviders", contentProviders)
 }
 
@@ -60,9 +60,9 @@ export function migrateContentProviderSettings(): void {
 
     // Migrate Chums sync categories
     const chumsSyncCategories = stores.SETTINGS.get("chumsSyncCategories")
-    if (chumsSyncCategories && (!(contentProviders as any).chums || !(contentProviders as any).chums.syncCategories)) {
-        if (!(contentProviders as any).chums) (contentProviders as any).chums = {}
-            ; (contentProviders as any).chums.syncCategories = chumsSyncCategories
+    if (chumsSyncCategories && (!(contentProviders ).chums || !(contentProviders ).chums.syncCategories)) {
+        if (!(contentProviders ).chums) (contentProviders ).chums = {}
+            ; (contentProviders ).chums.syncCategories = chumsSyncCategories
         migrationNeeded = true
         console.info("Migrated chumsSyncCategories -> contentProviders.chums.syncCategories")
         // Note: We keep chumsSyncCategories for now as it's still in the SaveListSettings type
@@ -70,9 +70,9 @@ export function migrateContentProviderSettings(): void {
 
     // Migrate Planning Center local always setting
     const special = stores.SETTINGS.get("special") || {}
-    if (special.pcoLocalAlways !== undefined && (!(contentProviders as any).planningcenter || (contentProviders as any).planningcenter.localAlways === undefined)) {
-        if (!(contentProviders as any).planningcenter) (contentProviders as any).planningcenter = {}
-            ; (contentProviders as any).planningcenter.localAlways = special.pcoLocalAlways
+    if (special.pcoLocalAlways !== undefined && (!(contentProviders ).planningcenter || (contentProviders ).planningcenter.localAlways === undefined)) {
+        if (!(contentProviders ).planningcenter) (contentProviders ).planningcenter = {}
+            ; (contentProviders ).planningcenter.localAlways = special.pcoLocalAlways
         // Remove from special object and update
         delete special.pcoLocalAlways
         stores.SETTINGS.set("special", special)
