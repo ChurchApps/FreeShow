@@ -1,6 +1,6 @@
 import express from "express"
 import { ToMain } from "../../types/IPC/ToMain"
-import { stores } from "../data/store"
+import { getContentProviderAccess, setContentProviderAccess } from "../data/contentProviders"
 import { sendToMain } from "../IPC/main"
 import { openURL } from "../IPC/responsesMain"
 import { getKey } from "../utils/keys"
@@ -40,7 +40,7 @@ export class ChumsConnect {
   `
 
     public static async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
-        const storedAccess: any = this.CHUMS_ACCESS || stores.ACCESS.get(`chums_${scope}`)
+        const storedAccess: any = this.CHUMS_ACCESS || getContentProviderAccess("chums", scope)
 
         if (storedAccess?.created_at) {
             if (this.hasExpired(storedAccess)) {
@@ -58,7 +58,7 @@ export class ChumsConnect {
     }
 
     public static disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
-        stores.ACCESS.set(`chums_${scope}`, null)
+        setContentProviderAccess("chums", scope, null)
         this.CHUMS_ACCESS = null
         return { success: true }
     }
@@ -134,7 +134,7 @@ export class ChumsConnect {
 
                     server.close()
 
-                    stores.ACCESS.set(`chums_${scope}`, data)
+                    setContentProviderAccess("chums", scope, data)
                     sendToMain(ToMain.CHUMS_CONNECT, { success: true, isFirstConnection: true })
                     resolve(data)
                 })
@@ -171,7 +171,7 @@ export class ChumsConnect {
                 }
 
                 this.CHUMS_ACCESS = data
-                stores.ACCESS.set(`chums_${data.scope}`, data)
+                setContentProviderAccess("chums", data.scope, data)
                 sendToMain(ToMain.CHUMS_CONNECT, { success: true })
                 resolve(data)
             })

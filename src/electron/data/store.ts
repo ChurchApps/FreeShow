@@ -12,10 +12,12 @@ import type { ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
-import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
+// import { DEFAULT_PCO_DATA } from "../planningcenter/connect" // No longer needed
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 import { forceCloseApp } from "../utils/close"
+// Import content providers to trigger migration on startup
+import "./contentProviders"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -94,7 +96,12 @@ const DEFAULTS = {
     cache: {} as any,
     history: {} as { undo: History[]; redo: History[] },
     usage: { all: [] } as any,
-    accessKeys: DEFAULT_PCO_DATA!,
+    accessKeys: {
+        contentProviders: {
+            planningcenter: {},
+            chums: {}
+        }
+    },
 }
 
 // ERROR LOG

@@ -78,7 +78,8 @@ export type SaveListSettings =
     | "metronome"
     | "effectsLibrary"
     | "special"
-    | "chumsSyncCategories"
+    | "contentProviders"
+    | "chumsSyncCategories" // DEPRECATED: will be removed after migration
 
 export interface SaveData {
     path: string
@@ -111,3 +112,29 @@ export interface SaveData {
     customTriggers: SaveActions
 }
 export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }
+
+// Content Provider Types
+export interface ContentProviderSettings {
+    planningcenter?: {
+        localAlways?: boolean
+        [key: string]: any
+    }
+    chums?: {
+        syncCategories?: string[]
+        [key: string]: any
+    }
+    [providerName: string]: any
+}
+
+export interface ContentProviderAccess {
+    planningcenter?: {
+        services?: any
+        calendar?: any
+        [scope: string]: any
+    }
+    chums?: {
+        plans?: any
+        [scope: string]: any
+    }
+    [providerName: string]: any
+}

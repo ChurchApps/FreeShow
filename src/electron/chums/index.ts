@@ -1,5 +1,5 @@
 import type { Main, MainSendPayloads } from "../../types/IPC/Main"
-import { stores } from "../data/store"
+import { getContentProviderAccess } from "../data/contentProviders"
 import { ChumsConnect } from "./ChumsConnect"
 import { ChumsExport } from "./ChumsExport"
 import { ChumsImport } from "./ChumsImport"
@@ -14,7 +14,7 @@ export function chumsLoadServices() {
 }
 
 export function chumsStartupLoad(scope: ChumsScopes = "plans", data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]) {
-    if (!stores.ACCESS.get(`chums_${scope}`)) return
+    if (!getContentProviderAccess("chums", scope)) return
     ChumsConnect.connect(scope).then((connected) => {
         if (!connected) return
         ChumsExport.sendSongsToChums(data)
