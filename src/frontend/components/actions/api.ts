@@ -9,7 +9,7 @@ import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
 import { syncDrive } from "../../utils/drive"
 import { togglePlayingMedia } from "../../utils/shortcuts"
-import { pcoSync } from "../../utils/startup"
+import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -308,7 +308,7 @@ export const API_ACTIONS = {
 
     // CONNECTION
     sync_drive: () => syncDrive(true),
-    sync_pco: () => pcoSync(),
+    sync_content_provider: () => contentProviderSync(),
 
     // EMIT
     send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead

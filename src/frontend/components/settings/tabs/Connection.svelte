@@ -3,7 +3,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, dataPath, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
-    import { chumsSync, pcoSync } from "../../../utils/startup"
+    import { contentProviderSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
@@ -125,7 +125,7 @@
     }
 
     function syncPCO() {
-        pcoSync()
+        contentProviderSync()
         activeShow.set(null)
         activePage.set("show")
     }
@@ -145,7 +145,7 @@
     }
 
     function syncChums() {
-        chumsSync()
+        contentProviderSync()
         activeShow.set(null)
         activePage.set("show")
     }

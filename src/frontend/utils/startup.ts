@@ -54,7 +54,7 @@ async function startupMain() {
     checkStartupActions()
     autoBackup()
     startTracking()
-    connect()
+    contentProviderSync()
 
     // custom alert
     if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || "")) && Math.random() < 0.4) {
@@ -90,18 +90,17 @@ function autoBackup() {
     }
 }
 
-function connect() {
-    pcoSync()
-    chumsSync()
+export function contentProviderSync() {
+    const providers = [
+        { provider: "planningCenter", scope: "services", data: { dataPath: get(dataPath) } },
+        { provider: "chums", scope: "plans", data: { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" } }
+    ]
+
+    providers.forEach(({ provider, scope, data }) => {
+        sendMain(Main.PROVIDER_STARTUP_LOAD, { provider, scope, data })
+    })
 }
 
-export function pcoSync() {
-    sendMain(Main.PROVIDER_STARTUP_LOAD, { provider: "planningCenter", scope: "services", data: { dataPath: get(dataPath) } })
-}
-
-export function chumsSync() {
-    sendMain(Main.PROVIDER_STARTUP_LOAD, { provider: "chums", scope: "plans", data: { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" } })
-}
 
 function getMainData() {
     requestMainMultiple({
