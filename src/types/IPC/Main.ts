@@ -126,12 +126,10 @@ export enum Main {
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
-    PCO_LOAD_SERVICES = "PCO_LOAD_SERVICES",
-    PCO_STARTUP_LOAD = "PCO_STARTUP_LOAD",
-    PCO_DISCONNECT = "PCO_DISCONNECT",
-    CHUMS_LOAD_SERVICES = "CHUMS_LOAD_SERVICES",
-    CHUMS_STARTUP_LOAD = "CHUMS_STARTUP_LOAD",
-    CHUMS_DISCONNECT = "CHUMS_DISCONNECT"
+    // Provider-based routing
+    PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
+    PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
+    PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD"
 }
 
 export interface MainSendPayloads {
@@ -200,9 +198,10 @@ export interface MainSendPayloads {
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
-    [Main.PCO_LOAD_SERVICES]: { dataPath: string }
-    [Main.PCO_STARTUP_LOAD]: { dataPath: string }
-    [Main.CHUMS_STARTUP_LOAD]: { shows: TrimmedShows; categories: string[]; showsPath: string }
+    // Provider-based routing
+    [Main.PROVIDER_LOAD_SERVICES]: { provider: string; dataPath?: string }
+    [Main.PROVIDER_DISCONNECT]: { provider: string; scope?: string }
+    [Main.PROVIDER_STARTUP_LOAD]: { provider: string; scope?: string; data?: any }
 }
 
 export interface MainReturnPayloads {
@@ -269,8 +268,8 @@ export interface MainReturnPayloads {
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
     [Main.READ_FILE]: { content: string }
-    [Main.PCO_DISCONNECT]: { success: boolean }
-    [Main.CHUMS_DISCONNECT]: { success: boolean }
+    // Provider-based routing
+    [Main.PROVIDER_DISCONNECT]: { success: boolean }
 }
 
 ///////////

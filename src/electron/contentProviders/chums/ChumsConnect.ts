@@ -1,16 +1,20 @@
 import express from "express"
-import { ToMain } from "../../types/IPC/ToMain"
-import { stores } from "../data/store"
-import { sendToMain } from "../IPC/main"
-import { openURL } from "../IPC/responsesMain"
-import { getKey } from "../utils/keys"
-import { httpsRequest } from "../utils/requests"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
+import { openURL } from "../../IPC/responsesMain"
+import { getKey } from "../../utils/keys"
+import { httpsRequest } from "../../utils/requests"
 import type { ChumsAuthData, ChumsRequestData, ChumsScopes } from "./types"
 import { CHURCHAPPS_API_URL, CHUMS_APP_URL } from "./types"
 
 /**
  * Handles authentication and API communication with the Chums service.
  * Manages OAuth flow, token refresh, and provides methods for making authenticated API requests.
+ *
+ * WARNING: This class should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
  */
 export class ChumsConnect {
     private static app = express()
@@ -40,7 +44,7 @@ export class ChumsConnect {
   `
 
     public static async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
-        const storedAccess: any = this.CHUMS_ACCESS || stores.ACCESS.get(`chums_${scope}`)
+        const storedAccess: any = this.CHUMS_ACCESS || getContentProviderAccess("chums", scope)
 
         if (storedAccess?.created_at) {
             if (this.hasExpired(storedAccess)) {
@@ -48,7 +52,7 @@ export class ChumsConnect {
                 return this.CHUMS_ACCESS
             }
 
-            sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+            sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true })
             if (!this.CHUMS_ACCESS) this.CHUMS_ACCESS = storedAccess
             return storedAccess
         }
@@ -58,7 +62,7 @@ export class ChumsConnect {
     }
 
     public static disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
-        stores.ACCESS.set(`chums_${scope}`, null)
+        setContentProviderAccess("chums", scope, null)
         this.CHUMS_ACCESS = null
         return { success: true }
     }
@@ -134,8 +138,8 @@ export class ChumsConnect {
 
                     server.close()
 
-                    stores.ACCESS.set(`chums_${scope}`, data)
-                    sendToMain(ToMain.CHUMS_CONNECT, { success: true, isFirstConnection: true })
+                    setContentProviderAccess("chums", scope, data)
+                    sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true, isFirstConnection: true })
                     resolve(data)
                 })
             })
@@ -171,8 +175,8 @@ export class ChumsConnect {
                 }
 
                 this.CHUMS_ACCESS = data
-                stores.ACCESS.set(`chums_${data.scope}`, data)
-                sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+                setContentProviderAccess("chums", data.scope, data)
+                sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true })
                 resolve(data)
             })
         })

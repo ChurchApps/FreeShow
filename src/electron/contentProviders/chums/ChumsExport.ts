@@ -1,17 +1,32 @@
+/**
+ * WARNING: This file should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
+ */
+
 import path from "path"
-import type { Main, MainSendPayloads } from "../../types/IPC/Main"
-import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
-import { parseShow, readFile } from "../utils/files"
+import { ToMain } from "../../../types/IPC/ToMain"
+import type { TrimmedShows } from "../../../types/Show"
+import { sendToMain } from "../../IPC/main"
+import { parseShow, readFile } from "../../utils/files"
 import { ChumsConnect } from "./ChumsConnect"
 import type { ChumsSongData } from "./types"
+
+/**
+ * Data structure for Chums startup load
+ */
+export interface ChumsStartupLoadData {
+    shows: TrimmedShows
+    categories: string[]
+    showsPath: string
+}
 
 /**
  * Handles exporting FreeShow songs to Chums.
  * Syncs local songs with Chums by identifying missing songs and sending them in batches.
  */
 export class ChumsExport {
-    public static async sendSongsToChums(data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]): Promise<void> {
+    public static async sendSongsToChums(data: ChumsStartupLoadData): Promise<void> {
         const missingIds = await this.getMissingSongIds(data)
         // console.log("Sending songs to Chums", missingIds.length)
         if (missingIds.length === 0) return
@@ -36,7 +51,7 @@ export class ChumsExport {
         sendToMain(ToMain.TOAST, `Synced ${missingIds.length} new songs to Chums`)
     }
 
-    private static async getMissingSongIds(data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]): Promise<string[]> {
+    private static async getMissingSongIds(data: ChumsStartupLoadData): Promise<string[]> {
         const freeShowIds = this.getAllFreeShowSongIds(data)
 
         const missingSongsResponse = await ChumsConnect.apiRequest({
@@ -51,13 +66,13 @@ export class ChumsExport {
         return missingSongsResponse || []
     }
 
-    private static getAllFreeShowSongIds(data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]): string[] {
+    private static getAllFreeShowSongIds(data: ChumsStartupLoadData): string[] {
         const shows = data.shows
         const selectedCategories = data.categories || ["song"]
         return Object.keys(shows).filter((key) => selectedCategories.includes(shows[key].category || ""))
     }
 
-    private static getChumsSongData(freeShowIds: string[], data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]): ChumsSongData[] {
+    private static getChumsSongData(freeShowIds: string[], data: ChumsStartupLoadData): ChumsSongData[] {
         const songList: ChumsSongData[] = []
         const shows = data.shows
 

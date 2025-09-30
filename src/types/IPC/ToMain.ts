@@ -13,10 +13,9 @@ export enum ToMain {
     REPLACE_MEDIA_PATHS = "REPLACE_MEDIA_PATHS",
     LESSONS_DONE = "LESSONS_DONE",
     IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
-    PCO_CONNECT = "PCO_CONNECT",
-    PCO_PROJECTS = "PCO_PROJECTS",
-    CHUMS_CONNECT = "CHUMS_CONNECT",
-    CHUMS_PROJECTS = "CHUMS_PROJECTS",
+    // Unified provider callbacks
+    PROVIDER_CONNECT = "PROVIDER_CONNECT",
+    PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
     WEBSOCKET = "WEBSOCKET",
     AUDIO_METADATA = "AUDIO_METADATA",
     GET_DYNAMIC_VALUES = "GET_DYNAMIC_VALUES",
@@ -43,10 +42,9 @@ export interface ToMainSendPayloads {
     [ToMain.REPLACE_MEDIA_PATHS]: any[]
     [ToMain.LESSONS_DONE]: { showId: string; status: { finished: number; failed: number } }
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
-    [ToMain.PCO_CONNECT]: { success: boolean; isFirstConnection?: boolean }
-    [ToMain.PCO_PROJECTS]: { shows: any; projects: any }
-    [ToMain.CHUMS_CONNECT]: { success: boolean; isFirstConnection?: boolean }
-    [ToMain.CHUMS_PROJECTS]: { shows: any; projects: any }
+    // Unified provider callbacks
+    [ToMain.PROVIDER_CONNECT]: { provider: string; success: boolean; isFirstConnection?: boolean }
+    [ToMain.PROVIDER_PROJECTS]: { provider: string; shows: any; projects: any }
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]

@@ -2,8 +2,8 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, chumsConnected, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, serverData, special } from "../../../stores"
-    import { chumsSync, pcoSync } from "../../../utils/startup"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, dataPath, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
+    import { contentProviderSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
@@ -110,34 +110,23 @@
     // Camera
     // Answer / Guess / Poll
 
-    function pcoConnect() {
-        if (!$pcoConnected) sendMain(Main.PCO_LOAD_SERVICES, { dataPath: $dataPath })
-        else {
-            requestMain(Main.PCO_DISCONNECT, undefined, (a) => {
+    function contentProviderConnect(provider: "planningCenter" | "chums" | "amazingLife") {
+        if (!$providerConnections[provider]) {
+            const options = provider === "planningCenter" ? { provider, dataPath: $dataPath } : { provider }
+            sendMain(Main.PROVIDER_LOAD_SERVICES, options)
+        } else {
+            requestMain(Main.PROVIDER_DISCONNECT, { provider }, (a) => {
                 if (!a.success) return
-                pcoConnected.set(false)
+                providerConnections.update(c => {
+                    c[provider] = false
+                    return c
+                })
             })
         }
     }
 
-    function syncPCO() {
-        pcoSync()
-        activeShow.set(null)
-        activePage.set("show")
-    }
-
-    function chumsConnect() {
-        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES)
-        else {
-            requestMain(Main.CHUMS_DISCONNECT, undefined, (a) => {
-                if (!a.success) return
-                chumsConnected.set(false)
-            })
-        }
-    }
-
-    function syncChums() {
-        chumsSync()
+    function syncContentProvider() {
+        contentProviderSync()
         activeShow.set(null)
         activePage.set("show")
     }
@@ -191,39 +180,68 @@
     </InputRow>
 {/each}
 
-<!-- Planning Center -->
-<Title label="Planning Center" icon="list" />
+{#if !$providerConnections.planningCenter && !$providerConnections.chums && !$providerConnections.amazingLife}
+    <!-- No provider connected - show connection options -->
+    <Title label="Content Provider" icon="list" />
 
-<InputRow>
-    <MaterialButton on:click={pcoConnect} style="flex: 1;border-bottom: 2px solid var(--{$pcoConnected ? 'connected' : 'disconnected'}) !important;" icon={$pcoConnected ? "logout" : "login"}>
-        <T id="settings.{$pcoConnected ? 'disconnect_from' : 'connect_to'}" replace={["Planning Center"]} />
-    </MaterialButton>
-    {#if $pcoConnected}
-        <MaterialButton icon="cloud_sync" on:click={syncPCO}>
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("planningCenter")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["Planning Center"]} />
+        </MaterialButton>
+    </InputRow>
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("chums")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["Chums"]} />
+        </MaterialButton>
+    </InputRow>
+
+    <!-- <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("amazingLife")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["Amazing Life"]} />
+        </MaterialButton>
+    </InputRow> -->
+{:else if $providerConnections.planningCenter}
+    <!-- Planning Center connected -->
+    <Title label="Content Provider: Planning Center" icon="list" />
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("planningCenter")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["Planning Center"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
-    {/if}
-</InputRow>
-{#if $pcoConnected}
+    </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$special.pcoLocalAlways} defaultValue={false} on:change={(e) => updateSpecial("pcoLocalAlways", e.detail)} />
-{/if}
+{:else if $providerConnections.chums}
+    <!-- Chums connected -->
+    <Title label="Content Provider: Chums" icon="list" />
 
-<!-- Chums -->
-<Title label="Chums" icon="list" />
-
-<InputRow>
-    <MaterialButton on:click={chumsConnect} style="flex: 1;border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'}) !important;" icon={$chumsConnected ? "logout" : "login"}>
-        <T id="settings.{$chumsConnected ? 'disconnect_from' : 'connect_to'}" replace={["Chums"]} />
-    </MaterialButton>
-    {#if $chumsConnected}
-        <MaterialButton icon="cloud_sync" on:click={syncChums}>
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("chums")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["Chums"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
         <MaterialButton title="chums.sync_categories_description" icon="options" on:click={() => activePopup.set("chums_sync_categories")}>
             <T id="chums.sync_categories" />
         </MaterialButton>
-    {/if}
-</InputRow>
+    </InputRow>
+{:else if $providerConnections.amazingLife}
+    <!-- Amazing Life connected -->
+    <Title label="Content Provider: Amazing Life" icon="list" />
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("amazingLife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["Amazing Life"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
+            <T id="cloud.sync" />
+        </MaterialButton>
+    </InputRow>
+{/if}
 
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={restart} center>

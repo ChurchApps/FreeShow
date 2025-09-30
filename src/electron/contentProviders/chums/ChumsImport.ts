@@ -1,7 +1,13 @@
+/**
+ * WARNING: This file should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
+ */
+
 import { uid } from "uid"
-import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide, SlideData } from "../../types/Show"
-import { sendToMain } from "../IPC/main"
+import { ToMain } from "../../../types/IPC/ToMain"
+import type { Show, Slide, SlideData } from "../../../types/Show"
+import { sendToMain } from "../../IPC/main"
 import { ChumsConnect } from "./ChumsConnect"
 
 /**
@@ -33,7 +39,7 @@ export class ChumsImport {
         )
 
         sendToMain(ToMain.TOAST, `Loaded ${this.projects.length} service(s) from Chums`);
-        sendToMain(ToMain.CHUMS_PROJECTS, { shows: this.shows, projects: this.projects })
+        sendToMain(ToMain.PROVIDER_PROJECTS, { provider: "chums", shows: this.shows, projects: this.projects })
     }
 
     private static async loadPlanItems(plan: any): Promise<void> {
