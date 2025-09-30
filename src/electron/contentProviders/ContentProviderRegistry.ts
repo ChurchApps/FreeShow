@@ -8,8 +8,8 @@ import { pcoDisconnect as originalPcoDisconnect, pcoStartupLoad as originalPcoSt
 import { pcoLoadServices as originalPcoLoadServices } from "./planningCenter/request"
 
 // Import simplified providers for demonstration
-import { ChumsProvider } from "./chums/ChumsProviderSimple"
-import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProviderSimple"
+import { ChumsProvider } from "./chums/ChumsProvider"
+import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
 
 /**
  * Registry for all content providers in the application.

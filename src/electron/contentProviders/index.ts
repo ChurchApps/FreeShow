@@ -26,8 +26,8 @@ export {
 } from "./base/types"
 
 // Provider implementations (simplified versions for now)
-export { ChumsProvider, type ChumsScopes, type ChumsAuthData } from "./chums/ChumsProviderSimple"
-export { PlanningCenterProvider, type PCOScopes, type PCOAuthData } from "./planningCenter/PlanningCenterProviderSimple"
+export { ChumsProvider, type ChumsScopes, type ChumsAuthData } from "./chums/ChumsProvider"
+export { PlanningCenterProvider, type PCOScopes, type PCOAuthData } from "./planningCenter/PlanningCenterProvider"
 
 // Registry and legacy functions
 export {
