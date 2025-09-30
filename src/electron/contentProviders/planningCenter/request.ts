@@ -150,7 +150,7 @@ export async function pcoLoadServices(dataPath: string) {
         downloadLessonsMedia(results.downloadableMedia)
     }
 
-    sendToMain(ToMain.PCO_PROJECTS, { shows: results.shows, projects: results.projects })
+    sendToMain(ToMain.PROVIDER_PROJECTS, { provider: "planningCenter", shows: results.shows, projects: results.projects })
 }
 
 async function fetchServiceTypes() {

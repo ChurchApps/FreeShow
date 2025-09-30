@@ -113,7 +113,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 server.close()
 
                 setContentProviderAccess("planningcenter", scope, data)
-                sendToMain(ToMain.PCO_CONNECT, { success: true, isFirstConnection: true })
+                sendToMain(ToMain.PROVIDER_CONNECT, { provider: "planningCenter", success: true, isFirstConnection: true })
                 resolve(data)
             })
         })
@@ -154,7 +154,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
             }
 
             setContentProviderAccess("planningcenter", data.scope, data)
-            sendToMain(ToMain.PCO_CONNECT, { success: true })
+            sendToMain(ToMain.PROVIDER_CONNECT, { provider: "planningCenter", success: true })
 
             return resolve(data)
         })
@@ -191,7 +191,7 @@ export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
             return PCO_ACCESS
         }
 
-        sendToMain(ToMain.PCO_CONNECT, { success: true })
+        sendToMain(ToMain.PROVIDER_CONNECT, { provider: "planningCenter", success: true })
         if (!PCO_ACCESS) PCO_ACCESS = storedAccess
         return storedAccess
     }

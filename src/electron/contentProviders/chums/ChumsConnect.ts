@@ -52,7 +52,7 @@ export class ChumsConnect {
                 return this.CHUMS_ACCESS
             }
 
-            sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+            sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true })
             if (!this.CHUMS_ACCESS) this.CHUMS_ACCESS = storedAccess
             return storedAccess
         }
@@ -139,7 +139,7 @@ export class ChumsConnect {
                     server.close()
 
                     setContentProviderAccess("chums", scope, data)
-                    sendToMain(ToMain.CHUMS_CONNECT, { success: true, isFirstConnection: true })
+                    sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true, isFirstConnection: true })
                     resolve(data)
                 })
             })
@@ -176,7 +176,7 @@ export class ChumsConnect {
 
                 this.CHUMS_ACCESS = data
                 setContentProviderAccess("chums", data.scope, data)
-                sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+                sendToMain(ToMain.PROVIDER_CONNECT, { provider: "chums", success: true })
                 resolve(data)
             })
         })
