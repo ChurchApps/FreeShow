@@ -1,6 +1,8 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
 import { ChumsConnect } from "./ChumsConnect"
+import { ChumsImport } from "./ChumsImport"
+import { ChumsExport } from "./ChumsExport"
 
 // Import and re-export types
 import type { ChumsScopes } from "./types"
@@ -17,7 +19,10 @@ export interface ChumsAuthData {
 }
 
 /**
- * Chums provider that acts as the sole interface to ChumsConnect
+ * Chums provider that acts as the sole interface to Chums functionality.
+ *
+ * This is the ONLY class that should import from ChumsConnect.ts, ChumsImport.ts, and ChumsExport.ts.
+ * All external code should use this provider through ContentProviderRegistry.
  */
 export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
     constructor() {
@@ -47,15 +52,27 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
     }
 
     async loadServices(): Promise<void> {
-        // Delegate to original implementation for now
-        // This will be implemented when we integrate the full ChumsImport functionality
-        throw new Error("Use original chums implementation for now")
+        return ChumsImport.loadServices()
     }
 
-    async startupLoad(_scope: ChumsScopes, _data?: any): Promise<void> {
-        // Delegate to original implementation for now
-        // This will be implemented when we integrate the full startup logic
-        throw new Error("Use original chums implementation for now")
+    async startupLoad(scope: ChumsScopes, data?: any): Promise<void> {
+        const connected = await this.connect(scope)
+        if (!connected) return
+
+        // Export songs to Chums if data provided
+        if (data) {
+            await ChumsExport.sendSongsToChums(data)
+        }
+
+        // Load services from Chums
+        await ChumsImport.loadServices()
+    }
+
+    /**
+     * Export data to Chums (e.g., songs)
+     */
+    async exportData(data: any): Promise<void> {
+        return ChumsExport.sendSongsToChums(data)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

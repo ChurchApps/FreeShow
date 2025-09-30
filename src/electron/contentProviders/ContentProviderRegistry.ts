@@ -1,13 +1,8 @@
 import type { Main, MainSendPayloads } from "../../types/IPC/Main"
 import { getContentProviderAccess } from "../data/contentProviders"
-
 import { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
-// Import original implementations for now
-import { chumsDisconnect as originalChumsDisconnect, chumsLoadServices as originalChumsLoadServices, chumsStartupLoad as originalChumsStartupLoad } from "./chums"
-import { pcoDisconnect as originalPcoDisconnect, pcoStartupLoad as originalPcoStartupLoad } from "./planningCenter/connect"
-import { pcoLoadServices as originalPcoLoadServices } from "./planningCenter/request"
 
-// Import simplified providers for demonstration
+// Import providers
 import { ChumsProvider } from "./chums/ChumsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
 
@@ -197,45 +192,72 @@ export class ContentProviderRegistry {
  * These maintain the same API as the original individual provider functions
  */
 
-// Legacy functions that delegate to original implementations for now
-// In a full migration, these would use the ContentProviderRegistry
+/**
+ * Legacy function exports for backward compatibility.
+ * These now delegate to the ContentProviderRegistry and providers.
+ */
 
 // Chums legacy functions
-export function chumsDisconnect(scope?: any) {
-    return originalChumsDisconnect(scope)
+export function chumsDisconnect(scope?: any): { success: boolean } {
+    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
+    if (provider) {
+        provider.disconnect(scope || "plans")
+        return { success: true }
+    }
+    return { success: false }
 }
 
-export function chumsLoadServices() {
-    return originalChumsLoadServices()
+export async function chumsLoadServices() {
+    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
+    if (provider) {
+        return provider.loadServices()
+    }
 }
 
-export function chumsStartupLoad(scope: any = "plans", data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]) {
-    return originalChumsStartupLoad(scope, data)
+export async function chumsStartupLoad(scope: any = "plans", data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]) {
+    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
+    if (provider) {
+        return provider.startupLoad(scope, data)
+    }
 }
 
 // Planning Center legacy functions
-export function pcoDisconnect(scope: any = "services") {
-    return originalPcoDisconnect(scope)
+export function pcoDisconnect(scope: any = "services"): { success: boolean } {
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    if (provider) {
+        provider.disconnect(scope)
+        return { success: true }
+    }
+    return { success: false }
 }
 
-export function pcoLoadServices(dataPath: string) {
-    return originalPcoLoadServices(dataPath)
+export async function pcoLoadServices(dataPath: string) {
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    if (provider) {
+        return provider.loadServices(dataPath)
+    }
 }
 
-export function pcoStartupLoad(dataPath: string, scope: any = "services") {
-    return originalPcoStartupLoad(dataPath, scope)
+export async function pcoStartupLoad(dataPath: string, scope: any = "services") {
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    if (provider) {
+        return provider.startupLoad(scope, { dataPath })
+    }
 }
 
 export async function pcoConnect(scope: any) {
-    // Import and use original pcoConnect
-    const { pcoConnect: originalPcoConnect } = await import("./planningCenter/connect")
-    return originalPcoConnect(scope)
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    if (provider) {
+        return provider.connect(scope)
+    }
+    return null
 }
 
-export async function pcoRequest(data: any, attempt = 0) {
-    // Import and use original pcoRequest
-    const { pcoRequest: originalPcoRequest } = await import("./planningCenter/request")
-    return originalPcoRequest(data, attempt)
+export async function pcoRequest(data: any, _attempt = 0) {
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    if (provider) {
+        return provider.apiRequest(data)
+    }
 }
 
 // Initialize the registry when this module is imported

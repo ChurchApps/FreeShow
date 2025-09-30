@@ -1,7 +1,7 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
 import { pcoConnect, pcoDisconnect, pcoStartupLoad, type PCOScopes } from "./connect"
-import { pcoRequest } from "./request"
+import { pcoRequest, pcoLoadServices } from "./request"
 
 // Re-export types from connect file
 export type { PCOScopes } from "./connect"
@@ -17,7 +17,10 @@ export interface PCOAuthData {
 }
 
 /**
- * Planning Center provider that acts as the sole interface to connect.ts
+ * Planning Center provider that acts as the sole interface to Planning Center functionality.
+ *
+ * This is the ONLY class that should import from connect.ts and request.ts.
+ * All external code should use this provider through ContentProviderRegistry.
  */
 export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthData> {
     constructor() {
@@ -47,7 +50,6 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
     }
 
     async loadServices(dataPath?: string): Promise<void> {
-        const { pcoLoadServices } = await import("./request")
         return pcoLoadServices(dataPath || "")
     }
 
