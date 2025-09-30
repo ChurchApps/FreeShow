@@ -33,7 +33,8 @@ export function setContentProviderSettings(provider: string, key: string, value:
 }
 
 // ----- CONTENT PROVIDER MIGRATION -----
-// TODO: This is temporary and can be removed after 1.6.0
+// TODO: This entire migration section can be removed after version 1.6.0
+// Migrates legacy content provider settings to the new unified structure
 export function migrateContentProviderSettings(): void {
     let migrationNeeded = false
     const keysToDelete: string[] = []
@@ -85,7 +86,7 @@ export function migrateContentProviderSettings(): void {
 
         // Delete old ACCESS keys
         for (const key of keysToDelete) {
-            stores.ACCESS.set(key as any, undefined)
+            stores.ACCESS.delete(key as any)
             console.info(`Deleted legacy key: ${key}`)
         }
 
@@ -94,6 +95,7 @@ export function migrateContentProviderSettings(): void {
 }
 
 // Initialize migration on module load (after a brief delay to ensure stores are initialized)
+// TODO: This migration initialization can be removed after version 1.6.0
 setTimeout(() => {
     try {
         migrateContentProviderSettings()
