@@ -11,6 +11,10 @@ import { CHURCHAPPS_API_URL, CHUMS_APP_URL } from "./types"
 /**
  * Handles authentication and API communication with the Chums service.
  * Manages OAuth flow, token refresh, and provides methods for making authenticated API requests.
+ *
+ * WARNING: This class should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
  */
 export class ChumsConnect {
     private static app = express()

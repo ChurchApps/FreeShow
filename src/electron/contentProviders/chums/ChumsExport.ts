@@ -1,3 +1,9 @@
+/**
+ * WARNING: This file should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
+ */
+
 import path from "path"
 import type { Main, MainSendPayloads } from "../../../types/IPC/Main"
 import { ToMain } from "../../../types/IPC/ToMain"

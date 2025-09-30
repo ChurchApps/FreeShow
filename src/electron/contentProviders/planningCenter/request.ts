@@ -1,3 +1,9 @@
+/**
+ * WARNING: This file should ONLY be accessed through PlanningCenterProvider.
+ * Do not import or use functions from this file directly in other parts of the application.
+ * Use ContentProviderRegistry or PlanningCenterProvider instead.
+ */
+
 import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"

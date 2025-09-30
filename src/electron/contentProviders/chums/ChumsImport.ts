@@ -1,3 +1,9 @@
+/**
+ * WARNING: This file should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
+ */
+
 import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../../types/Show"
