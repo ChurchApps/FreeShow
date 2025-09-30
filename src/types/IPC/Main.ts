@@ -131,7 +131,11 @@ export enum Main {
     PCO_DISCONNECT = "PCO_DISCONNECT",
     CHUMS_LOAD_SERVICES = "CHUMS_LOAD_SERVICES",
     CHUMS_STARTUP_LOAD = "CHUMS_STARTUP_LOAD",
-    CHUMS_DISCONNECT = "CHUMS_DISCONNECT"
+    CHUMS_DISCONNECT = "CHUMS_DISCONNECT",
+    // Provider-based routing
+    PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
+    PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
+    PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD"
 }
 
 export interface MainSendPayloads {
@@ -203,6 +207,10 @@ export interface MainSendPayloads {
     [Main.PCO_LOAD_SERVICES]: { dataPath: string }
     [Main.PCO_STARTUP_LOAD]: { dataPath: string }
     [Main.CHUMS_STARTUP_LOAD]: { shows: TrimmedShows; categories: string[]; showsPath: string }
+    // Provider-based routing
+    [Main.PROVIDER_LOAD_SERVICES]: { provider: string; dataPath?: string }
+    [Main.PROVIDER_DISCONNECT]: { provider: string; scope?: string }
+    [Main.PROVIDER_STARTUP_LOAD]: { provider: string; scope?: string; data?: any }
 }
 
 export interface MainReturnPayloads {
@@ -271,6 +279,8 @@ export interface MainReturnPayloads {
     [Main.READ_FILE]: { content: string }
     [Main.PCO_DISCONNECT]: { success: boolean }
     [Main.CHUMS_DISCONNECT]: { success: boolean }
+    // Provider-based routing
+    [Main.PROVIDER_DISCONNECT]: { success: boolean }
 }
 
 ///////////

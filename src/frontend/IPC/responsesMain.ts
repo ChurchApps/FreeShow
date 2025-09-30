@@ -49,6 +49,7 @@ import {
     alertMessage,
     audioData,
     chumsConnected,
+    providerConnections,
     currentOutputSettings,
     dataPath,
     driveKeys,
@@ -272,7 +273,11 @@ export const mainResponses: MainResponses = {
     // CONNECTION
     [ToMain.PCO_CONNECT]: (data) => {
         if (!data.success) return
-        pcoConnected.set(true)
+        pcoConnected.set(true) // Keep for backward compatibility
+        providerConnections.update(c => {
+            c.planningCenter = true
+            return c
+        })
         if (data.isFirstConnection) newToast("main.finished")
     },
     [ToMain.PCO_PROJECTS]: async (data) => {
@@ -355,7 +360,11 @@ export const mainResponses: MainResponses = {
     // CHUMS CONNECTION
     [ToMain.CHUMS_CONNECT]: (data) => {
         if (!data.success) return
-        chumsConnected.set(true)
+        chumsConnected.set(true) // Keep for backward compatibility
+        providerConnections.update(c => {
+            c.chums = true
+            return c
+        })
         if (data.isFirstConnection) newToast("main.finished")
     },
     [ToMain.CHUMS_PROJECTS]: async (data) => {

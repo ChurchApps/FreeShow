@@ -72,9 +72,12 @@ export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
+// DEPRECATED: Use providerConnections store instead
 export const pcoConnected: Writable<boolean> = writable(false)
 export const chumsConnected: Writable<boolean> = writable(false)
 export const chumsSyncCategories: Writable<string[]> = writable([])
+// Provider connections - tracks connection state for all content providers
+export const providerConnections: Writable<{ [key: string]: boolean }> = writable({})
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -419,7 +422,8 @@ export const $ = {
     outLocked,
     ports,
     maxConnections,
-    remotePassword
+    remotePassword,
+    providerConnections
 }
 
 // DEBUG STORE UPDATES

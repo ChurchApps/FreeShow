@@ -8,7 +8,7 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
-import { chumsDisconnect, chumsLoadServices, chumsStartupLoad } from "../contentProviders"
+import { chumsDisconnect, chumsLoadServices, chumsStartupLoad, ContentProviderRegistry } from "../contentProviders"
 import { restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
@@ -197,7 +197,18 @@ export const mainResponses: MainResponses = {
     // Chums CONNECTION
     [Main.CHUMS_LOAD_SERVICES]: () => chumsLoadServices(),
     [Main.CHUMS_STARTUP_LOAD]: (data) => chumsStartupLoad("plans", data),
-    [Main.CHUMS_DISCONNECT]: () => chumsDisconnect()
+    [Main.CHUMS_DISCONNECT]: () => chumsDisconnect(),
+    // Provider-based routing
+    [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
+        await ContentProviderRegistry.loadServices(data.provider, data.dataPath)
+    },
+    [Main.PROVIDER_DISCONNECT]: (data) => {
+        ContentProviderRegistry.disconnect(data.provider, data.scope)
+        return { success: true }
+    },
+    [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
+        await ContentProviderRegistry.startupLoad(data.provider, data.scope || "services", data.data)
+    }
 }
 
 /// ///////

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, chumsConnected, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, dataPath, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
     import { chumsSync, pcoSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -111,11 +111,15 @@
     // Answer / Guess / Poll
 
     function pcoConnect() {
-        if (!$pcoConnected) sendMain(Main.PCO_LOAD_SERVICES, { dataPath: $dataPath })
-        else {
-            requestMain(Main.PCO_DISCONNECT, undefined, (a) => {
+        if (!$providerConnections.planningCenter) {
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { provider: "planningCenter", dataPath: $dataPath })
+        } else {
+            requestMain(Main.PROVIDER_DISCONNECT, { provider: "planningCenter" }, (a) => {
                 if (!a.success) return
-                pcoConnected.set(false)
+                providerConnections.update(c => {
+                    c.planningCenter = false
+                    return c
+                })
             })
         }
     }
@@ -127,11 +131,15 @@
     }
 
     function chumsConnect() {
-        if (!$chumsConnected) sendMain(Main.CHUMS_LOAD_SERVICES)
-        else {
-            requestMain(Main.CHUMS_DISCONNECT, undefined, (a) => {
+        if (!$providerConnections.chums) {
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { provider: "chums" })
+        } else {
+            requestMain(Main.PROVIDER_DISCONNECT, { provider: "chums" }, (a) => {
                 if (!a.success) return
-                chumsConnected.set(false)
+                providerConnections.update(c => {
+                    c.chums = false
+                    return c
+                })
             })
         }
     }
@@ -195,16 +203,16 @@
 <Title label="Planning Center" icon="list" />
 
 <InputRow>
-    <MaterialButton on:click={pcoConnect} style="flex: 1;border-bottom: 2px solid var(--{$pcoConnected ? 'connected' : 'disconnected'}) !important;" icon={$pcoConnected ? "logout" : "login"}>
-        <T id="settings.{$pcoConnected ? 'disconnect_from' : 'connect_to'}" replace={["Planning Center"]} />
+    <MaterialButton on:click={pcoConnect} style="flex: 1;border-bottom: 2px solid var(--{$providerConnections.planningCenter ? 'connected' : 'disconnected'}) !important;" icon={$providerConnections.planningCenter ? "logout" : "login"}>
+        <T id="settings.{$providerConnections.planningCenter ? 'disconnect_from' : 'connect_to'}" replace={["Planning Center"]} />
     </MaterialButton>
-    {#if $pcoConnected}
+    {#if $providerConnections.planningCenter}
         <MaterialButton icon="cloud_sync" on:click={syncPCO}>
             <T id="cloud.sync" />
         </MaterialButton>
     {/if}
 </InputRow>
-{#if $pcoConnected}
+{#if $providerConnections.planningCenter}
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$special.pcoLocalAlways} defaultValue={false} on:change={(e) => updateSpecial("pcoLocalAlways", e.detail)} />
 {/if}
 
@@ -212,10 +220,10 @@
 <Title label="Chums" icon="list" />
 
 <InputRow>
-    <MaterialButton on:click={chumsConnect} style="flex: 1;border-bottom: 2px solid var(--{$chumsConnected ? 'connected' : 'disconnected'}) !important;" icon={$chumsConnected ? "logout" : "login"}>
-        <T id="settings.{$chumsConnected ? 'disconnect_from' : 'connect_to'}" replace={["Chums"]} />
+    <MaterialButton on:click={chumsConnect} style="flex: 1;border-bottom: 2px solid var(--{$providerConnections.chums ? 'connected' : 'disconnected'}) !important;" icon={$providerConnections.chums ? "logout" : "login"}>
+        <T id="settings.{$providerConnections.chums ? 'disconnect_from' : 'connect_to'}" replace={["Chums"]} />
     </MaterialButton>
-    {#if $chumsConnected}
+    {#if $providerConnections.chums}
         <MaterialButton icon="cloud_sync" on:click={syncChums}>
             <T id="cloud.sync" />
         </MaterialButton>
