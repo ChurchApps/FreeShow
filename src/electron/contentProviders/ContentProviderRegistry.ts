@@ -188,25 +188,11 @@ export class ContentProviderRegistry {
 }
 
 /**
- * Legacy function exports for backward compatibility
- * These maintain the same API as the original individual provider functions
- */
-
-/**
  * Legacy function exports for backward compatibility.
  * These now delegate to the ContentProviderRegistry and providers.
  */
 
 // Chums legacy functions
-export function chumsDisconnect(scope?: any): { success: boolean } {
-    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
-    if (provider) {
-        provider.disconnect(scope || "plans")
-        return { success: true }
-    }
-    return { success: false }
-}
-
 export async function chumsLoadServices() {
     const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
     if (provider) {
@@ -222,15 +208,6 @@ export async function chumsStartupLoad(scope: any = "plans", data: MainSendPaylo
 }
 
 // Planning Center legacy functions
-export function pcoDisconnect(scope: any = "services"): { success: boolean } {
-    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
-    if (provider) {
-        provider.disconnect(scope)
-        return { success: true }
-    }
-    return { success: false }
-}
-
 export async function pcoLoadServices(dataPath: string) {
     const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
     if (provider) {

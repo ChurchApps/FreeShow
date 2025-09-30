@@ -128,10 +128,8 @@ export enum Main {
     OPEN_FILE = "OPEN_FILE",
     PCO_LOAD_SERVICES = "PCO_LOAD_SERVICES",
     PCO_STARTUP_LOAD = "PCO_STARTUP_LOAD",
-    PCO_DISCONNECT = "PCO_DISCONNECT",
     CHUMS_LOAD_SERVICES = "CHUMS_LOAD_SERVICES",
     CHUMS_STARTUP_LOAD = "CHUMS_STARTUP_LOAD",
-    CHUMS_DISCONNECT = "CHUMS_DISCONNECT",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
@@ -277,8 +275,6 @@ export interface MainReturnPayloads {
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
     [Main.READ_FILE]: { content: string }
-    [Main.PCO_DISCONNECT]: { success: boolean }
-    [Main.CHUMS_DISCONNECT]: { success: boolean }
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
 }

@@ -8,7 +8,7 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
-import { chumsDisconnect, chumsLoadServices, chumsStartupLoad, ContentProviderRegistry } from "../contentProviders"
+import { chumsLoadServices, chumsStartupLoad, ContentProviderRegistry } from "../contentProviders"
 import { restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
@@ -17,7 +17,7 @@ import { config, error_log, getStore, stores, updateDataPath, userDataPath } fro
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
-import { pcoDisconnect, pcoStartupLoad, pcoLoadServices } from "../contentProviders"
+import { pcoStartupLoad, pcoLoadServices } from "../contentProviders"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain, forceCloseApp } from "../utils/close"
@@ -193,11 +193,9 @@ export const mainResponses: MainResponses = {
     // CONNECTION
     [Main.PCO_LOAD_SERVICES]: (data) => pcoLoadServices(data.dataPath),
     [Main.PCO_STARTUP_LOAD]: (data) => pcoStartupLoad(data.dataPath),
-    [Main.PCO_DISCONNECT]: () => pcoDisconnect(),
     // Chums CONNECTION
     [Main.CHUMS_LOAD_SERVICES]: () => chumsLoadServices(),
     [Main.CHUMS_STARTUP_LOAD]: (data) => chumsStartupLoad("plans", data),
-    [Main.CHUMS_DISCONNECT]: () => chumsDisconnect(),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
         await ContentProviderRegistry.loadServices(data.provider, data.dataPath)
