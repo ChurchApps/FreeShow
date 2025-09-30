@@ -48,7 +48,6 @@ import {
     activeTimers,
     alertMessage,
     audioData,
-    chumsConnected,
     providerConnections,
     currentOutputSettings,
     dataPath,
@@ -59,7 +58,6 @@ import {
     media,
     outputs,
     overlays,
-    pcoConnected,
     popupData,
     presentationData,
     projects,
@@ -273,7 +271,6 @@ export const mainResponses: MainResponses = {
     // CONNECTION
     [ToMain.PCO_CONNECT]: (data) => {
         if (!data.success) return
-        pcoConnected.set(true) // Keep for backward compatibility
         providerConnections.update(c => {
             c.planningCenter = true
             return c
@@ -360,7 +357,6 @@ export const mainResponses: MainResponses = {
     // CHUMS CONNECTION
     [ToMain.CHUMS_CONNECT]: (data) => {
         if (!data.success) return
-        chumsConnected.set(true) // Keep for backward compatibility
         providerConnections.update(c => {
             c.chums = true
             return c
