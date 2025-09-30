@@ -96,11 +96,11 @@ function connect() {
 }
 
 export function pcoSync() {
-    sendMain(Main.PCO_STARTUP_LOAD, { dataPath: get(dataPath) })
+    sendMain(Main.PROVIDER_STARTUP_LOAD, { provider: "planningCenter", scope: "services", data: { dataPath: get(dataPath) } })
 }
 
 export function chumsSync() {
-    sendMain(Main.CHUMS_STARTUP_LOAD, { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" })
+    sendMain(Main.PROVIDER_STARTUP_LOAD, { provider: "chums", scope: "plans", data: { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" } })
 }
 
 function getMainData() {

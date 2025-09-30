@@ -32,11 +32,7 @@ export { PlanningCenterProvider, type PCOScopes, type PCOAuthData } from "./plan
 // Registry and legacy functions
 export {
     ContentProviderRegistry,
-    // Legacy exports for backward compatibility
-    chumsLoadServices,
-    chumsStartupLoad,
-    pcoLoadServices,
-    pcoStartupLoad,
+    // Legacy exports for backward compatibility (still used internally)
     pcoConnect,
     pcoRequest
 } from "./ContentProviderRegistry"

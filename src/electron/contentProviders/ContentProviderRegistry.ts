@@ -1,4 +1,3 @@
-import type { Main, MainSendPayloads } from "../../types/IPC/Main"
 import { getContentProviderAccess } from "../data/contentProviders"
 import { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
 
@@ -192,36 +191,7 @@ export class ContentProviderRegistry {
  * These now delegate to the ContentProviderRegistry and providers.
  */
 
-// Chums legacy functions
-export async function chumsLoadServices() {
-    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
-    if (provider) {
-        return provider.loadServices()
-    }
-}
-
-export async function chumsStartupLoad(scope: any = "plans", data: MainSendPayloads[Main.CHUMS_STARTUP_LOAD]) {
-    const provider = ContentProviderRegistry.getProvider<ChumsProvider>("chums")
-    if (provider) {
-        return provider.startupLoad(scope, data)
-    }
-}
-
-// Planning Center legacy functions
-export async function pcoLoadServices(dataPath: string) {
-    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
-    if (provider) {
-        return provider.loadServices(dataPath)
-    }
-}
-
-export async function pcoStartupLoad(dataPath: string, scope: any = "services") {
-    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
-    if (provider) {
-        return provider.startupLoad(scope, { dataPath })
-    }
-}
-
+// Planning Center legacy functions (still used internally)
 export async function pcoConnect(scope: any) {
     const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
     if (provider) {
