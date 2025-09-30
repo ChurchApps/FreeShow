@@ -110,7 +110,7 @@
     // Camera
     // Answer / Guess / Poll
 
-    function contentProviderConnect(provider: "planningCenter" | "chums") {
+    function contentProviderConnect(provider: "planningCenter" | "chums" | "amazingLife") {
         if (!$providerConnections[provider]) {
             const options = provider === "planningCenter" ? { provider, dataPath: $dataPath } : { provider }
             sendMain(Main.PROVIDER_LOAD_SERVICES, options)
@@ -180,7 +180,7 @@
     </InputRow>
 {/each}
 
-{#if !$providerConnections.planningCenter && !$providerConnections.chums}
+{#if !$providerConnections.planningCenter && !$providerConnections.chums && !$providerConnections.amazingLife}
     <!-- No provider connected - show connection options -->
     <Title label="Content Provider" icon="list" />
 
@@ -195,6 +195,12 @@
             <T id="settings.connect_to" replace={["Chums"]} />
         </MaterialButton>
     </InputRow>
+
+    <!-- <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("amazingLife")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["Amazing Life"]} />
+        </MaterialButton>
+    </InputRow> -->
 {:else if $providerConnections.planningCenter}
     <!-- Planning Center connected -->
     <Title label="Content Provider: Planning Center" icon="list" />
@@ -221,6 +227,18 @@
         </MaterialButton>
         <MaterialButton title="chums.sync_categories_description" icon="options" on:click={() => activePopup.set("chums_sync_categories")}>
             <T id="chums.sync_categories" />
+        </MaterialButton>
+    </InputRow>
+{:else if $providerConnections.amazingLife}
+    <!-- Amazing Life connected -->
+    <Title label="Content Provider: Amazing Life" icon="list" />
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("amazingLife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["Amazing Life"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
+            <T id="cloud.sync" />
         </MaterialButton>
     </InputRow>
 {/if}

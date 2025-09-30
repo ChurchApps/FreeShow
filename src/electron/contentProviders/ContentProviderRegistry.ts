@@ -4,6 +4,7 @@ import { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
 // Import providers
 import { ChumsProvider } from "./chums/ChumsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
+import { AmazingLifeProvider } from "./amazingLife/AmazingLifeProvider"
 
 /**
  * Registry for all content providers in the application.
@@ -21,6 +22,7 @@ export class ContentProviderRegistry {
         // Register all available content providers
         ContentProviderFactory.register("chums", ChumsProvider)
         ContentProviderFactory.register("planningCenter", PlanningCenterProvider)
+        ContentProviderFactory.register("amazingLife", AmazingLifeProvider)
 
         this.initialized = true
         console.log("Content provider registry initialized")
@@ -115,7 +117,6 @@ export class ContentProviderRegistry {
         }
 
         if (!getContentProviderAccess(providerName, scope)) {
-            console.log(`No access configured for ${providerName}:${scope}`)
             return
         }
 
