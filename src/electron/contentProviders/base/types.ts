@@ -83,3 +83,24 @@ export interface ContentProviderStatus {
     error?: ContentProviderError
     scope?: string
 }
+
+/**
+ * Category tree structure for content library
+ */
+export interface ContentLibraryCategory {
+    name: string
+    thumbnail?: string
+    children?: ContentLibraryCategory[]
+    key?: string
+}
+
+/**
+ * Content file (image or video) with metadata
+ */
+export interface ContentFile {
+    url: string
+    thumbnail?: string
+    fileSize: number
+    type: "image" | "video"
+    name?: string
+}

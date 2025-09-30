@@ -76,6 +76,21 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     exportData?(data: any): Promise<void>
 
     /**
+     * Indicates if this provider has a content library
+     */
+    hasContentLibrary: boolean = false
+
+    /**
+     * Retrieves the content library category tree (optional - only if hasContentLibrary is true)
+     */
+    getContentLibrary?(): Promise<import("./types").ContentLibraryCategory[]>
+
+    /**
+     * Retrieves content files for a given category key (optional - only if hasContentLibrary is true)
+     */
+    getContent?(key: string): Promise<import("./types").ContentFile[]>
+
+    /**
      * Validates if a scope is supported by this provider
      */
     protected validateScope(scope: string): scope is TScope {
