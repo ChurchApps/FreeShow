@@ -32,7 +32,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
     constructor() {
         super({
             name: "chums",
-            displayName: "Chums",
+            displayName: "ChurchApps",
             port: 5502,
             clientId: getKey("chums_id") || "",
             clientSecret: getKey("chums_secret") || "",
@@ -142,6 +142,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
 
                             files.push({
                                 url,
+                                thumbnail: file.thumbnail,
                                 fileSize: 0,
                                 type: isVideo ? "video" : "image",
                                 name: file.name
