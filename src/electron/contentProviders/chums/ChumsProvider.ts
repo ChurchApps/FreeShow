@@ -4,7 +4,7 @@ import { ChumsConnect } from "./ChumsConnect"
 import { ChumsImport } from "./ChumsImport"
 import { ChumsExport } from "./ChumsExport"
 import { httpsRequest } from "../../utils/requests"
-import type { ContentLibraryCategory } from "../base/types"
+import type { ContentLibraryCategory, ContentFile } from "../base/types"
 
 // Import and re-export types
 import type { ChumsScopes } from "./types"
@@ -100,7 +100,10 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
                             children: study.lessons?.map((lesson: any) => ({
                                 name: lesson.name,
                                 thumbnail: lesson.image,
-                                key: lesson.id
+                                children: lesson.venues?.map((venue: any) => ({
+                                    name: venue.name,
+                                    key: venue.id
+                                }))
                             }))
                         }))
                     }))
@@ -111,6 +114,43 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
                     resolve(categories)
                 } catch (error) {
                     console.error("Failed to convert Chums content library:", error)
+                    reject(error)
+                }
+            })
+        })
+    }
+
+    /**
+     * Retrieves content files for a given venue
+     */
+    async getContent(venueId: string): Promise<ContentFile[]> {
+        return new Promise((resolve, reject) => {
+            httpsRequest("https://api.lessons.church", `/venues/playlist/${venueId}`, "GET", {}, {}, (err, data) => {
+                if (err) {
+                    console.error("Failed to fetch Chums content:", err)
+                    return reject(err)
+                }
+
+                try {
+                    const files: ContentFile[] = []
+
+                    data.messages?.forEach((message: any) => {
+                        message.files?.forEach((file: any) => {
+                            const url = file.url
+                            const isVideo = url.endsWith('.mp4') || url.includes('/file.mp4')
+
+                            files.push({
+                                url,
+                                fileSize: 0,
+                                type: isVideo ? "video" : "image",
+                                name: file.name
+                            })
+                        })
+                    })
+
+                    resolve(files)
+                } catch (error) {
+                    console.error("Failed to convert Chums content:", error)
                     reject(error)
                 }
             })
