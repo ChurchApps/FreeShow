@@ -3,6 +3,8 @@ import { getKey } from "../../utils/keys"
 import { ChumsConnect } from "./ChumsConnect"
 import { ChumsImport } from "./ChumsImport"
 import { ChumsExport } from "./ChumsExport"
+import { httpsRequest } from "../../utils/requests"
+import type { ContentLibraryCategory } from "../base/types"
 
 // Import and re-export types
 import type { ChumsScopes } from "./types"
@@ -25,6 +27,8 @@ export interface ChumsAuthData {
  * All external code should use this provider through ContentProviderRegistry.
  */
 export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
+    hasContentLibrary = true
+
     constructor() {
         super({
             name: "chums",
@@ -73,6 +77,44 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
      */
     async exportData(data: any): Promise<void> {
         return ChumsExport.sendSongsToChums(data)
+    }
+
+    /**
+     * Retrieves the content library category tree from Chums
+     */
+    async getContentLibrary(): Promise<ContentLibraryCategory[]> {
+        return new Promise((resolve, reject) => {
+            httpsRequest("https://api.lessons.church", "/lessons/public/tree", "GET", {}, {}, (err, data) => {
+                if (err) {
+                    console.error("Failed to fetch Chums content library:", err)
+                    return reject(err)
+                }
+
+                const convertToCategories = (programs: any[]): ContentLibraryCategory[] => {
+                    return programs.map(program => ({
+                        name: program.name,
+                        thumbnail: program.image,
+                        children: program.studies?.map((study: any) => ({
+                            name: study.name,
+                            thumbnail: study.image,
+                            children: study.lessons?.map((lesson: any) => ({
+                                name: lesson.name,
+                                thumbnail: lesson.image,
+                                key: lesson.id
+                            }))
+                        }))
+                    }))
+                }
+
+                try {
+                    const categories = convertToCategories(data.programs || [])
+                    resolve(categories)
+                } catch (error) {
+                    console.error("Failed to convert Chums content library:", error)
+                    reject(error)
+                }
+            })
+        })
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {
