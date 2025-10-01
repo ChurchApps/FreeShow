@@ -134,10 +134,16 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
 
                 try {
                     const files: ContentFile[] = []
+                    const seenUrls = new Set<string>()
 
                     data.messages?.forEach((message: any) => {
                         message.files?.forEach((file: any) => {
                             const url = file.url
+
+                            // Skip duplicates
+                            if (seenUrls.has(url)) return
+                            seenUrls.add(url)
+
                             const isVideo = url.endsWith('.mp4') || url.includes('/file.mp4')
 
                             files.push({
