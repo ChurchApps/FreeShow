@@ -22,6 +22,7 @@ export interface BaseRequestData {
 
 export interface ContentProviderConfig {
     name: string
+    displayName: string
     port: number
     clientId: string
     clientSecret: string
@@ -160,6 +161,13 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
      */
     get name(): string {
         return this.config.name
+    }
+
+    /**
+     * Gets provider display name
+     */
+    get displayName(): string {
+        return this.config.displayName
     }
 
     /**

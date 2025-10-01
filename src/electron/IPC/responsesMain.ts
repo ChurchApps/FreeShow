@@ -207,6 +207,7 @@ export const mainResponses: MainResponses = {
             const provider = ContentProviderRegistry.getProvider(name)
             return {
                 name,
+                displayName: provider?.displayName || name,
                 hasContentLibrary: provider?.hasContentLibrary || false
             }
         })

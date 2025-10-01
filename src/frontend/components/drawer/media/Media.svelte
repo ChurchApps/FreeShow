@@ -90,7 +90,7 @@
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
 
     // Content providers with libraries
-    let contentProviders: { name: string; hasContentLibrary: boolean }[] = []
+    let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
     onMount(async () => {
         requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
             contentProviders = data.filter(p => p.hasContentLibrary)
@@ -389,7 +389,7 @@
         {#each contentProviders as provider}
             <MaterialButton style="flex: 1;" isActive={onlineTab === provider.name} on:click={() => setSubSubTab(provider.name)}>
                 <Icon size={1.2} id="media" white />
-                <p>{provider.name}</p>
+                <p>{provider.displayName}</p>
             </MaterialButton>
         {/each}
     </div>

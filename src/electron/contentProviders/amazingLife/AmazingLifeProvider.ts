@@ -25,6 +25,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     constructor() {
         super({
             name: "amazingLife",
+            displayName: "Amazing Life",
             port: 5503,
             clientId: getKey("amazinglife_id") || "",
             clientSecret: getKey("amazinglife_secret") || "",

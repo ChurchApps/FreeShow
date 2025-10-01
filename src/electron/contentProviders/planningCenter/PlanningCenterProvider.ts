@@ -26,6 +26,7 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
     constructor() {
         super({
             name: "planningCenter",
+            displayName: "Planning Center",
             port: 5501,
             clientId: getKey("pco_id") || "",
             clientSecret: getKey("pco_secret") || "",
