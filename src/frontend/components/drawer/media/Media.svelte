@@ -369,6 +369,12 @@
     </div>
 {:else if active === "online"}
     <div class="tabs">
+        {#each contentProviders as provider}
+            <MaterialButton style="flex: 1;" isActive={onlineTab === provider.name} on:click={() => setSubSubTab(provider.name)}>
+                <Icon size={1.2} id="media" white />
+                <p>{provider.displayName}</p>
+            </MaterialButton>
+        {/each}
         <MaterialButton style="flex: 1;" isActive={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")}>
             <Icon style={onlineTab === "youtube" ? "fill: #ff0000" : ""} size={1.2} id="youtube" white />
             <p>YouTube</p>
@@ -386,12 +392,6 @@
             <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
         </MaterialButton>
-        {#each contentProviders as provider}
-            <MaterialButton style="flex: 1;" isActive={onlineTab === provider.name} on:click={() => setSubSubTab(provider.name)}>
-                <Icon size={1.2} id="media" white />
-                <p>{provider.displayName}</p>
-            </MaterialButton>
-        {/each}
     </div>
 {/if}
 
