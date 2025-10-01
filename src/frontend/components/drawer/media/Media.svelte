@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
         activeFocus,
@@ -44,6 +44,7 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
+    import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -88,6 +89,15 @@
     let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
 
+    // Content providers with libraries
+    let contentProviders: { name: string; hasContentLibrary: boolean }[] = []
+    onMount(async () => {
+        requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
+            contentProviders = data.filter(p => p.hasContentLibrary)
+        })
+    })
+
+    $: isProviderTab = contentProviders.some(p => p.name === onlineTab)
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
 
@@ -376,6 +386,12 @@
             <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
         </MaterialButton>
+        {#each contentProviders as provider}
+            <MaterialButton style="flex: 1;" isActive={onlineTab === provider.name} on:click={() => setSubSubTab(provider.name)}>
+                <Icon size={1.2} id="media" white />
+                <p>{provider.name}</p>
+            </MaterialButton>
+        {/each}
     </div>
 {/if}
 
@@ -383,7 +399,9 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-        {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+        {#if active === "online" && isProviderTab}
+            <ContentLibraryBrowser provider={onlineTab} columns={$mediaOptions.columns} />
+        {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
