@@ -139,9 +139,6 @@
                         </div>
                     {/if}
                     <span class="category-name">{category.name}</span>
-                    {#if category.children}
-                        <Icon id="back" size={0.8} white style="transform: rotate(180deg); margin-left: 4px;" />
-                    {/if}
                 </button>
             {/each}
         </div>
@@ -199,24 +196,26 @@
 
     .categories {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(150px, 200px));
+        grid-auto-rows: min-content;
         gap: 12px;
         padding: 12px;
         overflow-y: auto;
         flex: 1;
+        align-content: start;
     }
 
     .category-card {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        padding: 12px;
+        align-items: stretch;
+        padding: 0;
         background-color: var(--primary);
         border: 1px solid var(--primary-lighter);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s;
-        min-height: 120px;
+        overflow: hidden;
     }
 
     .category-card:hover {
@@ -225,22 +224,18 @@
     }
 
     .category-card img {
-        width: 80px;
-        height: 80px;
+        width: 100%;
+        height: 150px;
         object-fit: cover;
-        border-radius: 4px;
-        margin-bottom: 8px;
     }
 
     .placeholder {
-        width: 80px;
-        height: 80px;
+        width: 100%;
+        height: 150px;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: var(--primary-darker);
-        border-radius: 4px;
-        margin-bottom: 8px;
         opacity: 0.5;
     }
 
@@ -249,7 +244,10 @@
         font-size: 0.9em;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 4px;
+        padding: 12px;
+        color: var(--text);
     }
 
     .grid {
