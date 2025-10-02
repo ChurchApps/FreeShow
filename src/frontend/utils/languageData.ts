@@ -25,7 +25,8 @@ export const languages = {
     fi: "Suomi", // Finnish
     ar: "العربية", // Arabic
     lt: "Lietuvių kalba", // Lithuanian
-    pt_PT: "Português" // Portuguese
+    pt_PT: "Português", // Portuguese
+    ja: "日本語" // Japanese
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -59,6 +60,7 @@ export const replace = {
     ar: ["ar"],
     lt: ["lt"],
     pt_PT: ["pt-PT"],
+    ja: ["ja"],
 }
 
 export const languageFlags = {
@@ -88,4 +90,5 @@ export const languageFlags = {
     ar: "🇪🇬",
     lt: "🇱🇹",
     pt_PT: "🇵🇹",
+    ja: "🇯🇵",
 }

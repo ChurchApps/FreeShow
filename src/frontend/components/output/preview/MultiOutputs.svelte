@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { dictionary, outputs, toggleOutputEnabled } from "../../../stores"
+    import { outputs, toggleOutputEnabled } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import { getOutputResolution } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import PreviewOutput from "./PreviewOutput.svelte"
 
     export let disableTransitions = false
@@ -81,9 +81,9 @@ tabindex="0"
 aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"} -->
 <div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"} role="none">
     {#if fullscreen}
-        <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title={$dictionary.actions?.close} center>
-            <Icon id="close" size={1.5} white />
-        </Button>
+        <MaterialButton class="hide" style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title="actions.close" on:click={() => (fullscreen = false)}>
+            <Icon id="close" size={1.2} white />
+        </MaterialButton>
 
         <span class="resolution">
             <p><b><T id="screen.width" />:</b> {resolution?.width || 0} <T id="screen.pixels" /></p>

@@ -307,7 +307,7 @@
         inset-inline-end: 16px;
         z-index: 1;
         background-color: rgb(0 0 0 / 0.3) !important;
-        border: 1px solid rgb(255 255 255 / 0.3);
+        border: 1px solid rgb(255 255 255 / 0.15) !important;
         width: 40px;
         height: 40px;
         opacity: 0;
