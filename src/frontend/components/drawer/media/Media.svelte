@@ -54,7 +54,8 @@
     let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
-    let notFolders = ["all", ...specialTabs]
+    $: isProviderSection = contentProviders.some(p => p.name === active)
+    $: notFolders = ["all", ...specialTabs, ...contentProviders.map(p => p.name)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -86,9 +87,6 @@
         else if (active === "online") onlineTab = id
     }
 
-    let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
-    let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
-
     // Content providers with libraries
     let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
     onMount(async () => {
@@ -97,7 +95,8 @@
         })
     })
 
-    $: isProviderTab = contentProviders.some(p => p.name === onlineTab)
+    let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
+    let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
 
@@ -188,7 +187,7 @@
     $: if (searchValue !== undefined) filterSearch()
 
     function filterFiles() {
-        if (active === "online" || active === "screens" || active === "cameras") return
+        if (active === "online" || active === "screens" || active === "cameras" || isProviderSection) return
 
         // filter files
         if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
@@ -369,12 +368,6 @@
     </div>
 {:else if active === "online"}
     <div class="tabs">
-        {#each contentProviders as provider}
-            <MaterialButton style="flex: 1;" isActive={onlineTab === provider.name} on:click={() => setSubSubTab(provider.name)}>
-                <Icon size={1.2} id="media" white />
-                <p>{provider.displayName}</p>
-            </MaterialButton>
-        {/each}
         <MaterialButton style="flex: 1;" isActive={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")}>
             <Icon style={onlineTab === "youtube" ? "fill: #ff0000" : ""} size={1.2} id="youtube" white />
             <p>YouTube</p>
@@ -399,8 +392,8 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-        {#if active === "online" && isProviderTab}
-            <ContentLibraryBrowser provider={onlineTab} columns={$mediaOptions.columns} />
+        {#if isProviderSection}
+            <ContentLibraryBrowser provider={active} columns={$mediaOptions.columns} />
         {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
@@ -484,7 +477,9 @@
 
 <!-- NAV -->
 
-{#if active === "online"}
+{#if isProviderSection}
+    <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+{:else if active === "online"}
     {#if onlineTab === "youtube" || onlineTab === "vimeo"}
         <FloatingInputs onlyOne>
             <MaterialButton

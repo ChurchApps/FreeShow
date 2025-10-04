@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
@@ -51,13 +51,28 @@
         return count
     }
 
+    // Content providers with libraries
+    let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
+    onMount(async () => {
+        requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
+            contentProviders = data.filter(p => p.hasContentLibrary)
+        })
+    })
+
     let sections: any[] = []
     $: sections = [
         [
             { id: "all", label: "category.all", icon: "all", count: allCount },
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
-        [{ id: "online", label: "media.online", icon: "web" }, "SEPARATOR", { id: "screens", label: "live.screens", icon: "screen" }, { id: "cameras", label: "live.cameras", icon: "camera" }],
+        [
+            ...contentProviders.map(p => ({ id: p.name, label: p.displayName, icon: "media" })),
+            contentProviders.length > 0 ? "SEPARATOR" : null,
+            { id: "online", label: "media.online", icon: "web" },
+            "SEPARATOR",
+            { id: "screens", label: "live.screens", icon: "screen" },
+            { id: "cameras", label: "live.cameras", icon: "camera" }
+        ].filter(Boolean),
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
