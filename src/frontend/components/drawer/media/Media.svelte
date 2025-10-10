@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
         activeFocus,
@@ -44,6 +44,7 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
+    import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -53,7 +54,8 @@
     let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
-    let notFolders = ["all", ...specialTabs]
+    $: isProviderSection = contentProviders.some(p => p.name === active)
+    $: notFolders = ["all", ...specialTabs, ...contentProviders.map(p => p.name)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -85,9 +87,16 @@
         else if (active === "online") onlineTab = id
     }
 
+    // Content providers with libraries
+    let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
+    onMount(async () => {
+        requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
+            contentProviders = data.filter(p => p.hasContentLibrary)
+        })
+    })
+
     let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
-
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
 
@@ -178,7 +187,7 @@
     $: if (searchValue !== undefined) filterSearch()
 
     function filterFiles() {
-        if (active === "online" || active === "screens" || active === "cameras") return
+        if (active === "online" || active === "screens" || active === "cameras" || isProviderSection) return
 
         // filter files
         if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
@@ -383,7 +392,9 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-        {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+        {#if isProviderSection}
+            <ContentLibraryBrowser provider={active} columns={$mediaOptions.columns} />
+        {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
@@ -466,7 +477,9 @@
 
 <!-- NAV -->
 
-{#if active === "online"}
+{#if isProviderSection}
+    <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+{:else if active === "online"}
     {#if onlineTab === "youtube" || onlineTab === "vimeo"}
         <FloatingInputs onlyOne>
             <MaterialButton

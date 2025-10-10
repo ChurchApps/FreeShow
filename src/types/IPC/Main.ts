@@ -14,6 +14,7 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
+import type { ContentLibraryCategory, ContentFile } from "../../electron/contentProviders/base/types"
 
 export const MAIN = "MAIN"
 
@@ -129,7 +130,11 @@ export enum Main {
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
-    PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD"
+    PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD",
+    // Content Library
+    GET_CONTENT_PROVIDERS = "GET_CONTENT_PROVIDERS",
+    GET_CONTENT_LIBRARY = "GET_CONTENT_LIBRARY",
+    GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT"
 }
 
 export interface MainSendPayloads {
@@ -202,6 +207,9 @@ export interface MainSendPayloads {
     [Main.PROVIDER_LOAD_SERVICES]: { provider: string; dataPath?: string }
     [Main.PROVIDER_DISCONNECT]: { provider: string; scope?: string }
     [Main.PROVIDER_STARTUP_LOAD]: { provider: string; scope?: string; data?: any }
+    // Content Library
+    [Main.GET_CONTENT_LIBRARY]: { provider: string }
+    [Main.GET_PROVIDER_CONTENT]: { provider: string; key: string }
 }
 
 export interface MainReturnPayloads {
@@ -270,6 +278,10 @@ export interface MainReturnPayloads {
     [Main.READ_FILE]: { content: string }
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
+    // Content Library
+    [Main.GET_CONTENT_PROVIDERS]: { name: string; hasContentLibrary: boolean }[]
+    [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
+    [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
 }
 
 ///////////

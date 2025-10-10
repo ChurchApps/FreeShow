@@ -198,7 +198,35 @@ export const mainResponses: MainResponses = {
         return { success: true }
     },
     [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
-        await ContentProviderRegistry.startupLoad(data.provider, data.scope || "services", data.data)
+        await ContentProviderRegistry.startupLoad(data.provider, data.scope || "", data.data)
+    },
+    // Content Library
+    [Main.GET_CONTENT_PROVIDERS]: () => {
+        const providers = ContentProviderRegistry.getAvailableProviders()
+        return providers.map(name => {
+            const provider = ContentProviderRegistry.getProvider(name)
+            return {
+                name,
+                displayName: provider?.displayName || name,
+                hasContentLibrary: provider?.hasContentLibrary || false
+            }
+        })
+    },
+    [Main.GET_CONTENT_LIBRARY]: async (data) => {
+        const provider = ContentProviderRegistry.getProvider(data.provider)
+        if (!provider?.getContentLibrary) {
+            console.error(`Provider ${data.provider} does not support content library`)
+            return []
+        }
+        return await provider.getContentLibrary()
+    },
+    [Main.GET_PROVIDER_CONTENT]: async (data) => {
+        const provider = ContentProviderRegistry.getProvider(data.provider)
+        if (!provider?.getContent) {
+            console.error(`Provider ${data.provider} does not support getContent`)
+            return []
+        }
+        return await provider.getContent(data.key)
     }
 }
 

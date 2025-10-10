@@ -22,6 +22,7 @@ export interface BaseRequestData {
 
 export interface ContentProviderConfig {
     name: string
+    displayName: string
     port: number
     clientId: string
     clientSecret: string
@@ -74,6 +75,21 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
      * Exports data to the content provider (optional - not all providers support this)
      */
     exportData?(data: any): Promise<void>
+
+    /**
+     * Indicates if this provider has a content library
+     */
+    hasContentLibrary: boolean = false
+
+    /**
+     * Retrieves the content library category tree (optional - only if hasContentLibrary is true)
+     */
+    getContentLibrary?(): Promise<import("./types").ContentLibraryCategory[]>
+
+    /**
+     * Retrieves content files for a given category key (optional - only if hasContentLibrary is true)
+     */
+    getContent?(key: string): Promise<import("./types").ContentFile[]>
 
     /**
      * Validates if a scope is supported by this provider
@@ -145,6 +161,13 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
      */
     get name(): string {
         return this.config.name
+    }
+
+    /**
+     * Gets provider display name
+     */
+    get displayName(): string {
+        return this.config.displayName
     }
 
     /**

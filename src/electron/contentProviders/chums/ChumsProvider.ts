@@ -3,6 +3,8 @@ import { getKey } from "../../utils/keys"
 import { ChumsConnect } from "./ChumsConnect"
 import { ChumsImport } from "./ChumsImport"
 import { ChumsExport } from "./ChumsExport"
+import { httpsRequest } from "../../utils/requests"
+import type { ContentLibraryCategory, ContentFile } from "../base/types"
 
 // Import and re-export types
 import type { ChumsScopes } from "./types"
@@ -25,9 +27,12 @@ export interface ChumsAuthData {
  * All external code should use this provider through ContentProviderRegistry.
  */
 export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
+    hasContentLibrary = true
+
     constructor() {
         super({
             name: "chums",
+            displayName: "ChurchApps",
             port: 5502,
             clientId: getKey("chums_id") || "",
             clientSecret: getKey("chums_secret") || "",
@@ -73,6 +78,91 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
      */
     async exportData(data: any): Promise<void> {
         return ChumsExport.sendSongsToChums(data)
+    }
+
+    /**
+     * Retrieves the content library category tree from Chums
+     */
+    async getContentLibrary(): Promise<ContentLibraryCategory[]> {
+        return new Promise((resolve, reject) => {
+            httpsRequest("https://api.lessons.church", "/lessons/public/tree", "GET", {}, {}, (err, data) => {
+                if (err) {
+                    console.error("Failed to fetch Chums content library:", err)
+                    return reject(err)
+                }
+
+                const convertToCategories = (programs: any[]): ContentLibraryCategory[] => {
+                    return programs.map(program => ({
+                        name: program.name,
+                        thumbnail: program.image,
+                        children: program.studies?.map((study: any) => ({
+                            name: study.name,
+                            thumbnail: study.image,
+                            children: study.lessons?.map((lesson: any) => ({
+                                name: lesson.name,
+                                thumbnail: lesson.image,
+                                children: lesson.venues?.map((venue: any) => ({
+                                    name: venue.name,
+                                    key: venue.id
+                                }))
+                            }))
+                        }))
+                    }))
+                }
+
+                try {
+                    const categories = convertToCategories(data.programs || [])
+                    resolve(categories)
+                } catch (error) {
+                    console.error("Failed to convert Chums content library:", error)
+                    reject(error)
+                }
+            })
+        })
+    }
+
+    /**
+     * Retrieves content files for a given venue
+     */
+    async getContent(venueId: string): Promise<ContentFile[]> {
+        return new Promise((resolve, reject) => {
+            httpsRequest("https://api.lessons.church", `/venues/playlist/${venueId}`, "GET", {}, {}, (err, data) => {
+                if (err) {
+                    console.error("Failed to fetch Chums content:", err)
+                    return reject(err)
+                }
+
+                try {
+                    const files: ContentFile[] = []
+                    const seenUrls = new Set<string>()
+
+                    data.messages?.forEach((message: any) => {
+                        message.files?.forEach((file: any) => {
+                            const url = file.url
+
+                            // Skip duplicates
+                            if (seenUrls.has(url)) return
+                            seenUrls.add(url)
+
+                            const isVideo = url.endsWith('.mp4') || url.includes('/file.mp4')
+
+                            files.push({
+                                url,
+                                thumbnail: file.thumbnail,
+                                fileSize: 0,
+                                type: isVideo ? "video" : "image",
+                                name: file.name
+                            })
+                        })
+                    })
+
+                    resolve(files)
+                } catch (error) {
+                    console.error("Failed to convert Chums content:", error)
+                    reject(error)
+                }
+            })
+        })
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {
