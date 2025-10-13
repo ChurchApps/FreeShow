@@ -38,8 +38,8 @@ export class ChumsImport {
             })
         )
 
-        sendToMain(ToMain.TOAST, `Loaded ${this.projects.length} service(s) from Chums`);
-        sendToMain(ToMain.PROVIDER_PROJECTS, { provider: "chums", shows: this.shows, projects: this.projects })
+        sendToMain(ToMain.TOAST, `Loaded ${this.projects.length} service(s) from Chums`)
+        sendToMain(ToMain.PROVIDER_PROJECTS, { providerId: "chums", categoryName: "Chums", shows: this.shows, projects: this.projects })
     }
 
     private static async loadPlanItems(plan: any): Promise<void> {

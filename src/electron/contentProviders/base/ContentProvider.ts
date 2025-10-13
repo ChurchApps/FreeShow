@@ -1,4 +1,5 @@
 import express from "express"
+import type { ContentProviderId } from "./types"
 
 /**
  * Base types for content provider authentication and requests
@@ -12,7 +13,7 @@ export interface BaseAuthData {
     scope: string
 }
 
-export interface BaseRequestData {
+interface BaseRequestData {
     endpoint: string
     authenticated: boolean
     params?: Record<string, string>
@@ -20,8 +21,8 @@ export interface BaseRequestData {
     data?: any
 }
 
-export interface ContentProviderConfig {
-    name: string
+interface ContentProviderConfig {
+    providerId: ContentProviderId
     displayName: string
     port: number
     clientId: string
@@ -159,8 +160,8 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     /**
      * Gets provider name
      */
-    get name(): string {
-        return this.config.name
+    get id(): string {
+        return this.config.providerId
     }
 
     /**
@@ -182,53 +183,53 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
  * Interface for content provider factory registration
  */
 export interface ContentProviderConstructor<T extends ContentProvider = ContentProvider> {
-    new (...args: any[]): T
+    new(...args: any[]): T
 }
 
 /**
  * Factory for managing content provider instances
  */
 export class ContentProviderFactory {
-    private static providers = new Map<string, ContentProvider>()
-    private static constructors = new Map<string, ContentProviderConstructor>()
+    private static providers = new Map<ContentProviderId, ContentProvider>()
+    private static constructors = new Map<ContentProviderId, ContentProviderConstructor>()
 
     /**
      * Registers a content provider class
      */
-    static register<T extends ContentProvider>(name: string, constructor: ContentProviderConstructor<T>): void {
-        this.constructors.set(name, constructor)
+    static register<T extends ContentProvider>(providerId: ContentProviderId, constructor: ContentProviderConstructor<T>): void {
+        this.constructors.set(providerId, constructor)
     }
 
     /**
      * Creates or gets an existing content provider instance
      */
-    static getProvider<T extends ContentProvider = ContentProvider>(name: string, ...args: any[]): T | null {
-        if (this.providers.has(name)) {
-            return this.providers.get(name) as T
+    static getProvider<T extends ContentProvider = ContentProvider>(providerId: ContentProviderId, ...args: any[]): T | null {
+        if (this.providers.has(providerId)) {
+            return this.providers.get(providerId) as T
         }
 
-        const Constructor = this.constructors.get(name)
+        const Constructor = this.constructors.get(providerId)
         if (!Constructor) {
-            console.error(`Content provider '${name}' not registered`)
+            console.error(`Content provider '${providerId}' not registered`)
             return null
         }
 
         const instance = new Constructor(...args) as T
-        this.providers.set(name, instance)
+        this.providers.set(providerId, instance)
         return instance
     }
 
     /**
-     * Gets all registered provider names
+     * Gets all registered provider ids
      */
-    static getRegisteredProviders(): string[] {
+    static getRegisteredProviders(): ContentProviderId[] {
         return Array.from(this.constructors.keys())
     }
 
     /**
      * Removes a provider instance
      */
-    static removeProvider(name: string): void {
-        this.providers.delete(name)
+    static removeProvider(providerId: ContentProviderId): void {
+        this.providers.delete(providerId)
     }
 }

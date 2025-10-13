@@ -1,3 +1,5 @@
+export type ContentProviderId = "planningcenter" | "chums" | "amazinglife"
+
 /**
  * Common types and interfaces for content providers
  */

@@ -8,7 +8,7 @@ import { ContentProviderError, ContentProviderErrorType } from "./types"
 /**
  * OAuth2 configuration for different providers
  */
-export interface OAuth2Config {
+interface OAuth2Config {
     clientId: string
     clientSecret: string
     authUrl: string

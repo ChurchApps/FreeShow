@@ -14,7 +14,7 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
-import type { ContentLibraryCategory, ContentFile } from "../../electron/contentProviders/base/types"
+import type { ContentLibraryCategory, ContentFile, ContentProviderId } from "../../electron/contentProviders/base/types"
 
 export const MAIN = "MAIN"
 
@@ -204,12 +204,12 @@ export interface MainSendPayloads {
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: { provider: string; dataPath?: string }
-    [Main.PROVIDER_DISCONNECT]: { provider: string; scope?: string }
-    [Main.PROVIDER_STARTUP_LOAD]: { provider: string; scope?: string; data?: any }
+    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; dataPath?: string }
+    [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
+    [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any }
     // Content Library
-    [Main.GET_CONTENT_LIBRARY]: { provider: string }
-    [Main.GET_PROVIDER_CONTENT]: { provider: string; key: string }
+    [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
+    [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
 }
 
 export interface MainReturnPayloads {
@@ -279,7 +279,7 @@ export interface MainReturnPayloads {
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     // Content Library
-    [Main.GET_CONTENT_PROVIDERS]: { name: string; hasContentLibrary: boolean }[]
+    [Main.GET_CONTENT_PROVIDERS]: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[]
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
 }

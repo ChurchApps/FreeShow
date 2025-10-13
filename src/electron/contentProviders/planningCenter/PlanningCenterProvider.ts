@@ -25,7 +25,7 @@ export interface PCOAuthData {
 export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthData> {
     constructor() {
         super({
-            name: "planningCenter",
+            providerId: "planningcenter",
             displayName: "Planning Center",
             port: 5501,
             clientId: getKey("pco_id") || "",

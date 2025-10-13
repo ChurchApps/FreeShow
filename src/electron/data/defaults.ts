@@ -73,7 +73,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     metronome: {},
     effectsLibrary: [],
     special: {},
-    contentProviders: {
+    contentProviderData: {
         planningcenter: {
             localAlways: false
         },
@@ -81,7 +81,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             syncCategories: ["song"]
         }
     },
-    chumsSyncCategories: ["song"] // DEPRECATED: will be removed after migration
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {

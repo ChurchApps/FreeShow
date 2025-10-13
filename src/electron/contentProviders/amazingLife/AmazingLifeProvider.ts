@@ -24,7 +24,7 @@ export interface AmazingLifeAuthData {
 export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, AmazingLifeAuthData> {
     constructor() {
         super({
-            name: "amazingLife",
+            providerId: "amazinglife",
             displayName: "Amazing Life",
             port: 5503,
             clientId: getKey("amazinglife_id") || "",

@@ -1,4 +1,5 @@
 import type { ICommonTagsResult } from "music-metadata"
+import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -43,8 +44,8 @@ export interface ToMainSendPayloads {
     [ToMain.LESSONS_DONE]: { showId: string; status: { finished: number; failed: number } }
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
     // Unified provider callbacks
-    [ToMain.PROVIDER_CONNECT]: { provider: string; success: boolean; isFirstConnection?: boolean }
-    [ToMain.PROVIDER_PROJECTS]: { provider: string; shows: any; projects: any }
+    [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
+    [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any }
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]

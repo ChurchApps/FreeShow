@@ -17,7 +17,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
-    chumsSyncCategories,
+    contentProviderData,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -149,7 +149,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         metronome: get(metronome),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
-        chumsSyncCategories: get(chumsSyncCategories)
+        contentProviderData: get(contentProviderData),
     }
 
     // settings exclusive to the local machine (path names that shouldn't be synced with cloud)
@@ -388,6 +388,6 @@ const saveList: { [key in SaveList]: any } = {
     companion: null,
     globalTags,
     customMetadata: null,
-    chumsSyncCategories: null,
+    contentProviderData,
     effects
 }

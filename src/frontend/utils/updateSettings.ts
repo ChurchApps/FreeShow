@@ -19,8 +19,8 @@ import {
     autosave,
     calendarAddShow,
     categories,
-    chumsSyncCategories,
     companion,
+    contentProviderData,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -315,8 +315,18 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             showRecentlyUsedProjects.set(false)
         }
 
+        // DEPRECATED (migrate)
+        if (v.pcoLocalAlways) {
+            contentProviderData.update((a) => ({ ...a, planningcenter: { localAlways: true } }))
+            delete v.pcoLocalAlways
+        }
+
         special.set(v)
     },
-    chumsSyncCategories: (v: any) => chumsSyncCategories.set(v),
+    // @ts-ignore - DEPERACTED (migrate)
+    chumsSyncCategories: (v: any) => {
+        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), chums: { syncCategories: v } })
+    },
+    contentProviderData: (v: any) => contentProviderData.set(v),
     effects: (a: any) => effects.set(a)
 }

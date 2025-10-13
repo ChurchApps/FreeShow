@@ -1,19 +1,20 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
+    import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
     import type { FileData } from "../../../../types/Main"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
     import { drawerTabsData, labelsDisabled, media, mediaFolders } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
+    import { mediaExtensions } from "../../../values/extensions"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
-    import { mediaExtensions } from "../../../values/extensions"
-    import Icon from "../../helpers/Icon.svelte"
 
     const profile = getAccess("media")
     $: readOnly = profile.global === "read"
@@ -52,11 +53,9 @@
     }
 
     // Content providers with libraries
-    let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
+    let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
     onMount(async () => {
-        requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
-            contentProviders = data.filter(p => p.hasContentLibrary)
-        })
+        contentProviders = (await requestMain(Main.GET_CONTENT_PROVIDERS)).filter((p) => p.hasContentLibrary)
     })
 
     let sections: any[] = []
@@ -65,14 +64,9 @@
             { id: "all", label: "category.all", icon: "all", count: allCount },
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
-        [
-            ...contentProviders.map(p => ({ id: p.name, label: p.displayName, icon: "media" })),
-            contentProviders.length > 0 ? "SEPARATOR" : null,
-            { id: "online", label: "media.online", icon: "web" },
-            "SEPARATOR",
-            { id: "screens", label: "live.screens", icon: "screen" },
-            { id: "cameras", label: "live.cameras", icon: "camera" }
-        ].filter(Boolean),
+        // WIP Providers
+        ...(contentProviders.length ? [[{ id: "TITLE", label: "Curriculum" }, ...contentProviders.map((p) => ({ id: p.providerId, label: p.displayName, icon: "web" }))]] : []),
+        [{ id: "online", label: "media.online", icon: "web" }, "SEPARATOR", { id: "screens", label: "live.screens", icon: "screen" }, { id: "cameras", label: "live.cameras", icon: "camera" }].filter(Boolean),
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
@@ -103,7 +97,15 @@
 </script>
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
-    <div slot="section_2" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
+    <div slot="section_2" style="{!contentProviders.length ? 'padding: 8px;' : ''}{foldersList.length && !contentProviders.length ? 'padding-top: 12px;' : ''}">
+        {#if !contentProviders.length}
+            <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
+                <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
+            </MaterialButton>
+        {/if}
+    </div>
+    <div slot="section_3" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
         <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
             <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
             {#if !$labelsDisabled}<T id="new.system_folder" />{/if}

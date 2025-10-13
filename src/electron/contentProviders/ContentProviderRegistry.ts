@@ -1,10 +1,11 @@
 import { getContentProviderAccess } from "../data/contentProviders"
 import { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
+import type { ContentProviderId } from "./base/types"
 
 // Import providers
+import { AmazingLifeProvider } from "./amazingLife/AmazingLifeProvider"
 import { ChumsProvider } from "./chums/ChumsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
-import { AmazingLifeProvider } from "./amazingLife/AmazingLifeProvider"
 
 /**
  * Registry for all content providers in the application.
@@ -21,8 +22,8 @@ export class ContentProviderRegistry {
 
         // Register all available content providers
         ContentProviderFactory.register("chums", ChumsProvider)
-        ContentProviderFactory.register("planningCenter", PlanningCenterProvider)
-        ContentProviderFactory.register("amazingLife", AmazingLifeProvider)
+        ContentProviderFactory.register("planningcenter", PlanningCenterProvider)
+        ContentProviderFactory.register("amazinglife", AmazingLifeProvider)
 
         this.initialized = true
         console.log("Content provider registry initialized")
@@ -31,15 +32,15 @@ export class ContentProviderRegistry {
     /**
      * Get a content provider by name
      */
-    static getProvider<T extends ContentProvider = ContentProvider>(name: string): T | null {
+    static getProvider<T extends ContentProvider = ContentProvider>(providerId: ContentProviderId): T | null {
         this.ensureInitialized()
-        return ContentProviderFactory.getProvider<T>(name)
+        return ContentProviderFactory.getProvider<T>(providerId)
     }
 
     /**
      * Get all registered provider names
      */
-    static getAvailableProviders(): string[] {
+    static getAvailableProviders(): ContentProviderId[] {
         this.ensureInitialized()
         return ContentProviderFactory.getRegisteredProviders()
     }
@@ -47,12 +48,12 @@ export class ContentProviderRegistry {
     /**
      * Connect to a content provider
      */
-    static async connect(providerName: string, scope: string): Promise<boolean> {
+    static async connect(providerId: ContentProviderId, scope: string): Promise<boolean> {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
-            console.error(`Content provider '${providerName}' not found`)
+            console.error(`Content provider '${providerId}' not found`)
             return false
         }
 
@@ -60,7 +61,7 @@ export class ContentProviderRegistry {
             const result = await provider.connect(scope as any)
             return !!result
         } catch (error) {
-            console.error(`Failed to connect to ${providerName}:`, error)
+            console.error(`Failed to connect to ${providerId}:`, error)
             return false
         }
     }
@@ -68,38 +69,38 @@ export class ContentProviderRegistry {
     /**
      * Disconnect from a content provider
      */
-    static disconnect(providerName: string, scope?: string): void {
+    static disconnect(providerId: ContentProviderId, scope?: string): void {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
-            console.error(`Content provider '${providerName}' not found`)
+            console.error(`Content provider '${providerId}' not found`)
             return
         }
 
         try {
             provider.disconnect(scope as any)
         } catch (error) {
-            console.error(`Failed to disconnect from ${providerName}:`, error)
+            console.error(`Failed to disconnect from ${providerId}:`, error)
         }
     }
 
     /**
      * Load services from a content provider
      */
-    static async loadServices(providerName: string, dataPath?: string): Promise<void> {
+    static async loadServices(providerId: ContentProviderId, dataPath?: string): Promise<void> {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
-            console.error(`Content provider '${providerName}' not found`)
+            console.error(`Content provider '${providerId}' not found`)
             return
         }
 
         try {
             await provider.loadServices(dataPath)
         } catch (error) {
-            console.error(`Failed to load services from ${providerName}:`, error)
+            console.error(`Failed to load services from ${providerId}:`, error)
             throw error
         }
     }
@@ -107,47 +108,47 @@ export class ContentProviderRegistry {
     /**
      * Perform startup load for a content provider
      */
-    static async startupLoad(providerName: string, scope: string, data?: any): Promise<void> {
+    static async startupLoad(providerId: ContentProviderId, scope: string, data?: any): Promise<void> {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
-            console.error(`Content provider '${providerName}' not found`)
+            console.error(`Content provider '${providerId}' not found`)
             return
         }
 
-        if (!getContentProviderAccess(providerName, scope)) {
+        if (!getContentProviderAccess(providerId, scope)) {
             return
         }
 
         try {
             await provider.startupLoad(scope as any, data)
         } catch (error) {
-            console.error(`Failed to perform startup load for ${providerName}:`, error)
+            console.error(`Failed to perform startup load for ${providerId}:`, error)
         }
     }
 
     /**
      * Export data to a content provider (if supported)
      */
-    static async exportData(providerName: string, data: any): Promise<void> {
+    static async exportData(providerId: ContentProviderId, data: any): Promise<void> {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
-            console.error(`Content provider '${providerName}' not found`)
+            console.error(`Content provider '${providerId}' not found`)
             return
         }
 
         if (!provider.exportData) {
-            console.warn(`Content provider '${providerName}' does not support data export`)
+            console.warn(`Content provider '${providerId}' does not support data export`)
             return
         }
 
         try {
             await provider.exportData(data)
         } catch (error) {
-            console.error(`Failed to export data to ${providerName}:`, error)
+            console.error(`Failed to export data to ${providerId}:`, error)
             throw error
         }
     }
@@ -155,10 +156,10 @@ export class ContentProviderRegistry {
     /**
      * Check if a provider supports a specific scope
      */
-    static supportsScope(providerName: string, scope: string): boolean {
+    static supportsScope(providerId: ContentProviderId, scope: string): boolean {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
             return false
         }
@@ -169,10 +170,10 @@ export class ContentProviderRegistry {
     /**
      * Get supported scopes for a provider
      */
-    static getSupportedScopes(providerName: string): readonly string[] {
+    static getSupportedScopes(providerId: ContentProviderId): readonly string[] {
         this.ensureInitialized()
 
-        const provider = this.getProvider(providerName)
+        const provider = this.getProvider(providerId)
         if (!provider) {
             return []
         }
@@ -194,7 +195,7 @@ export class ContentProviderRegistry {
 
 // Planning Center legacy functions (still used internally)
 export async function pcoConnect(scope: any) {
-    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningcenter")
     if (provider) {
         return provider.connect(scope)
     }
@@ -202,7 +203,7 @@ export async function pcoConnect(scope: any) {
 }
 
 export async function pcoRequest(data: any, _attempt = 0) {
-    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningCenter")
+    const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningcenter")
     if (provider) {
         return provider.apiRequest(data)
     }

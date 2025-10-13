@@ -31,7 +31,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
 
     constructor() {
         super({
-            name: "chums",
+            providerId: "chums",
             displayName: "ChurchApps",
             port: 5502,
             clientId: getKey("chums_id") || "",

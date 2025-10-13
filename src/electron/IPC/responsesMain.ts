@@ -191,39 +191,39 @@ export const mainResponses: MainResponses = {
     [Main.OPEN_FILE]: (data) => selectFiles(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
-        await ContentProviderRegistry.loadServices(data.provider, data.dataPath)
+        await ContentProviderRegistry.loadServices(data.providerId, data.dataPath)
     },
     [Main.PROVIDER_DISCONNECT]: (data) => {
-        ContentProviderRegistry.disconnect(data.provider, data.scope)
+        ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
     },
     [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
-        await ContentProviderRegistry.startupLoad(data.provider, data.scope || "", data.data)
+        await ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data)
     },
     // Content Library
     [Main.GET_CONTENT_PROVIDERS]: () => {
         const providers = ContentProviderRegistry.getAvailableProviders()
-        return providers.map(name => {
-            const provider = ContentProviderRegistry.getProvider(name)
+        return providers.map(providerId => {
+            const provider = ContentProviderRegistry.getProvider(providerId)
             return {
-                name,
-                displayName: provider?.displayName || name,
+                providerId,
+                displayName: provider?.displayName || providerId,
                 hasContentLibrary: provider?.hasContentLibrary || false
             }
         })
     },
     [Main.GET_CONTENT_LIBRARY]: async (data) => {
-        const provider = ContentProviderRegistry.getProvider(data.provider)
+        const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContentLibrary) {
-            console.error(`Provider ${data.provider} does not support content library`)
+            console.error(`Provider ${data.providerId} does not support content library`)
             return []
         }
         return await provider.getContentLibrary()
     },
     [Main.GET_PROVIDER_CONTENT]: async (data) => {
-        const provider = ContentProviderRegistry.getProvider(data.provider)
+        const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContent) {
-            console.error(`Provider ${data.provider} does not support getContent`)
+            console.error(`Provider ${data.providerId} does not support getContent`)
             return []
         }
         return await provider.getContent(data.key)

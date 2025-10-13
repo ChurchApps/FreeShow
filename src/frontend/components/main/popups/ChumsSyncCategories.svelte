@@ -1,7 +1,7 @@
 <script lang="ts">
     import { keysToID, sortByName } from "../../../components/helpers/array"
     import T from "../../../components/helpers/T.svelte"
-    import { categories, chumsSyncCategories, shows } from "../../../stores"
+    import { categories, contentProviderData, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
@@ -15,9 +15,18 @@
 
     const categoryOptions = sortByName(mappedCategories)
 
+    $: currentlySelected = $contentProviderData.chums?.syncCategories || []
+
     function toggleCategory(id: string) {
-        if ($chumsSyncCategories.indexOf(id) === -1) chumsSyncCategories.update(() => [...$chumsSyncCategories, id])
-        else chumsSyncCategories.update(() => $chumsSyncCategories.filter((c) => c !== id))
+        contentProviderData.update((a) => {
+            if (currentlySelected.indexOf(id) === -1) {
+                a.chums = { ...a.chums, syncCategories: [...currentlySelected, id] }
+            } else {
+                a.chums = { ...a.chums, syncCategories: currentlySelected.filter((c) => c !== id) }
+            }
+
+            return a
+        })
     }
 </script>
 
@@ -25,7 +34,7 @@
 
 <div class="categories">
     {#each categoryOptions as { id, name, count }}
-        <MaterialCheckbox label="{name} <span style='opacity: 0.7;font-size: 0.7em;'>({count})</span>" checked={$chumsSyncCategories.includes(id)} on:change={() => toggleCategory(id)} />
+        <MaterialCheckbox label="{name} <span style='opacity: 0.7;font-size: 0.7em;'>({count})</span>" checked={currentlySelected.includes(id)} on:change={() => toggleCategory(id)} />
     {/each}
 </div>
 

@@ -1,16 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
-    import type { ContentLibraryCategory, ContentFile } from "../../../../electron/contentProviders/base/types"
-    import Icon from "../../helpers/Icon.svelte"
-    import Center from "../../system/Center.svelte"
-    import MediaGrid from "./MediaGrid.svelte"
-    import Media from "./MediaCard.svelte"
-    import { getMediaType, removeExtension } from "../../helpers/media"
     import { mediaOptions } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Center from "../../system/Center.svelte"
+    import Media from "./MediaCard.svelte"
+    import MediaGrid from "./MediaGrid.svelte"
 
-    export let provider: string
+    export let providerId: ContentProviderId
     export let columns: number = 5
 
     let library: ContentLibraryCategory[] = []
@@ -28,7 +29,7 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_CONTENT_LIBRARY, { provider }, (data) => {
+            requestMain(Main.GET_CONTENT_LIBRARY, { providerId }, (data) => {
                 library = data
                 loading = false
             })
@@ -64,7 +65,7 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_PROVIDER_CONTENT, { provider, key }, (data) => {
+            requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, (data) => {
                 content = data
                 loading = false
             })
@@ -74,11 +75,11 @@
         }
     }
 
-    function goToRoot() {
-        currentPath = []
-        currentCategory = null
-        content = []
-    }
+    // function goToRoot() {
+    //     currentPath = []
+    //     currentCategory = null
+    //     content = []
+    // }
 
     $: categories = currentCategory?.children || library
     $: showBackButton = currentPath.length > 0 || currentCategory !== null
@@ -86,20 +87,18 @@
 
 <div class="content-library">
     {#if showBackButton}
-        <div class="navigation-bar">
-            <button class="back-button" on:click={navigateBack}>
-                <Icon id="back" size={1.2} white />
-                Back
-            </button>
-            {#if currentPath.length > 0}
-                <button class="home-button" on:click={goToRoot}>
-                    <Icon id="all" size={1.2} white />
-                </button>
-            {/if}
-            {#if currentCategory}
-                <span class="breadcrumb">{currentCategory.name}</span>
-            {/if}
-        </div>
+        <FloatingInputs side="left">
+            <MaterialButton title="actions.back" on:click={navigateBack}>
+                <Icon id="back" white />
+            </MaterialButton>
+
+            <div class="divider"></div>
+
+            <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
+                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{currentPath.length ? "/" : ""}{currentPath.map((a) => a.name)?.join("/")}</span>
+                {currentCategory?.name || ""}
+            </p>
+        </FloatingInputs>
     {/if}
 
     {#if loading}
@@ -114,23 +113,14 @@
         <div class="grid" class:list={$mediaOptions.mode === "list"}>
             <div class="context #media" style="display: contents;">
                 <MediaGrid items={content} {columns} let:item>
-                    <Media
-                        credits={{}}
-                        name={item.name || ""}
-                        path={item.url}
-                        thumbnailPath={item.thumbnail || ""}
-                        type={item.type}
-                        shiftRange={[]}
-                        allFiles={[]}
-                        active="online"
-                    />
+                    <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} allFiles={[]} activeFile={null} active="online" />
                 </MediaGrid>
             </div>
         </div>
     {:else if categories.length > 0}
         <div class="categories">
             {#each categories as category}
-                <button class="category-card" on:click={() => navigateToCategory(category)}>
+                <button class="category-card" style="width: calc({100 / columns}% - 4px);" on:click={() => navigateToCategory(category)}>
                     {#if category.thumbnail}
                         <img src={category.thumbnail} alt={category.name} />
                     {:else}
@@ -156,52 +146,18 @@
         height: 100%;
         width: 100%;
     }
-
-    .navigation-bar {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px;
-        background-color: var(--primary-darkest);
-        border-bottom: 1px solid var(--primary-lighter);
-    }
-
-    .back-button,
-    .home-button {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
-        background-color: var(--primary);
-        color: var(--text);
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .back-button:hover,
-    .home-button:hover {
-        background-color: var(--primary-lighter);
-    }
-
-    .home-button {
-        padding: 6px 8px;
-    }
-
-    .breadcrumb {
-        opacity: 0.7;
-        font-size: 0.9em;
-    }
-
     .categories {
-        display: grid;
+        /* display: grid;
         grid-template-columns: repeat(auto-fill, minmax(150px, 200px));
-        grid-auto-rows: min-content;
-        gap: 12px;
-        padding: 12px;
+        grid-auto-rows: min-content; */
+
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 5px;
+        padding: 10px;
+
         overflow-y: auto;
-        flex: 1;
         align-content: start;
     }
 

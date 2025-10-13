@@ -1,10 +1,12 @@
 import { get } from "svelte/store"
+import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import { OUTPUT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
-import { activePopup, alertMessage, chumsSyncCategories, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, showsPath, special, tempPath, version, windowState } from "../stores"
+import { cameraManager } from "../media/cameraManager"
+import { activePopup, alertMessage, contentProviderData, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, showsPath, special, tempPath, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { setLanguage } from "./language"
@@ -12,7 +14,6 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { cameraManager } from "../media/cameraManager"
 
 let initialized = false
 export function startup() {
@@ -92,12 +93,12 @@ function autoBackup() {
 
 export function contentProviderSync() {
     const providers = [
-        { provider: "planningCenter", scope: "services", data: { dataPath: get(dataPath) } },
-        { provider: "chums", scope: "plans", data: { shows: get(shows), categories: get(chumsSyncCategories), showsPath: get(showsPath) || "" } }
+        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { dataPath: get(dataPath) } },
+        { providerId: "chums" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).chums?.syncCategories || [], showsPath: get(showsPath) || "" } }
     ]
 
-    providers.forEach(({ provider, scope, data }) => {
-        sendMain(Main.PROVIDER_STARTUP_LOAD, { provider, scope, data })
+    providers.forEach(({ providerId, scope, data }) => {
+        sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data })
     })
 }
 
