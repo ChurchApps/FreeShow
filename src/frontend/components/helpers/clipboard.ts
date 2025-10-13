@@ -269,7 +269,7 @@ const selectActions = {
         if (!get(activeEdit).type || get(activeEdit).type === "show") {
             const ref = getLayoutRef()
             const editSlide = ref[get(activeEdit).slide!]
-            const showItems = _show().slides([editSlide.id]).get()[0].items
+            const showItems = _show().slides([editSlide.id]).get()[0]?.items
             itemCount = showItems.length
         } else if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {

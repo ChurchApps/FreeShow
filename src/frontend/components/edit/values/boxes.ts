@@ -31,7 +31,7 @@ export type EditInput = {
 }
 
 export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
-    const newBox = (box.sections ? box.sections : box) as { [key: string]: EditBoxSection }
+    const newBox = (box?.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
     if (!sectionId) sectionId = "default"
     if (!newBox?.[sectionId]) return

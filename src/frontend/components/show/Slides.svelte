@@ -75,7 +75,7 @@
 
         customActionActivation("slide_click")
 
-        let slideRef = _show(showId).layouts([activeLayout]).ref()[0]
+        let slideRef = _show(showId).layouts([activeLayout]).ref()[0] || []
 
         let data = slideRef[index]?.data
         checkActionTrigger(data, index)
@@ -255,7 +255,7 @@
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
-            let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+            let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
             let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()?.[0] : null
 
             // get progress of current line division

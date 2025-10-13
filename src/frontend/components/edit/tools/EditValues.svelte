@@ -238,7 +238,7 @@
         openedSections = openedSections
     }
 
-    $: sectionValues = Object.entries(sections)
+    $: sectionValues = Object.entries(sections || {})
 
     ///
 

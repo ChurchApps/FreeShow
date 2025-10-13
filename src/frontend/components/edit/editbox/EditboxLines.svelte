@@ -59,7 +59,7 @@
         // style hash
         let s = ""
         clone(item?.lines)?.forEach((line) => {
-            let align = line.align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            let align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             console.assert(Array.isArray(line?.text), "Text is not an array!")
             line?.text?.forEach((a) => {

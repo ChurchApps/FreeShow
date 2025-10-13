@@ -1,5 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { ClickEvent } from "../../../types/Main"
     import { changeSlidesView } from "../../show/slides"
     import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, openToolsTab, projects, showsCache, slidesOptions, templates } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
@@ -50,8 +51,8 @@
         )
     }
 
-    function addLayout(e: any) {
-        if (!e.ctrlKey && !e.metaKey) {
+    function addLayout(e: ClickEvent) {
+        if (!e.detail.ctrl) {
             duplicate({ id: "layout" })
             return
         }
@@ -244,7 +245,7 @@
     </FloatingInputs>
 {/if}
 
-{#if $slidesOptions.mode === "grid" || $slidesOptions.mode === "groups"}
+{#if $slidesOptions.mode !== "simple"}
     <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={!reference && !multipleLayouts}>
         {#if reference}
             <Reference show={currentShow} />

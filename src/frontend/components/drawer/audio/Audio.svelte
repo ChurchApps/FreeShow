@@ -2,6 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
+    import type { ClickEvent } from "../../../../types/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activePopup, activeRename, audioFolders, audioPlaylists, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
@@ -148,7 +149,7 @@
     function goBack() {
         const lastSlash = path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")
         const folder = path.slice(0, lastSlash)
-        path = folder.length > rootPath.length ? folder : rootPath
+        path = folder.length > rootPath.length ? folder || rootPath : rootPath
     }
 
     // selected will be cleared when clicked, so store them on mousedown
@@ -158,12 +159,12 @@
         else selectedFiles = []
     }
 
-    function createPlaylist(e) {
+    function createPlaylist(e: ClickEvent) {
         let playlistName = ""
         let files = fullFilteredFiles.filter((a) => !a.folder)
         if (selectedFiles.length) files = selectedFiles
 
-        if (e.ctrlKey || e.metaKey) {
+        if (e.detail.ctrl) {
             files = []
         } else if (!isDefault) {
             playlistName = name

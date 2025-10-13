@@ -677,7 +677,7 @@ export function randomSlide() {
     const layoutId = slide?.layout || _show(showId).get("settings.activeLayout")
     const layout = _show(showId).layouts([layoutId]).ref()[0]
 
-    const slideCount = layout.length || 0
+    const slideCount = layout?.length || 0
     if (slideCount < 2) return
 
     const currentSlideIndex = slide?.index ?? -1
@@ -689,7 +689,7 @@ export function randomSlide() {
     } while (randomIndex === currentSlideIndex)
 
     // play slide
-    const data = layout[randomIndex]?.data
+    const data = layout?.[randomIndex]?.data
     checkActionTrigger(data, randomIndex)
     // allow custom actions to trigger first
     setTimeout(() => {

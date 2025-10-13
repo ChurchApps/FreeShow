@@ -46,6 +46,8 @@
 
     let maxHeight = 350
     function calculateMaxHeight() {
+        if (!dropdownEl) return
+
         const triggerRect = dropdownEl.getBoundingClientRect()
         scrollParent = getScrollParent(dropdownEl)
         if (!scrollParent) return

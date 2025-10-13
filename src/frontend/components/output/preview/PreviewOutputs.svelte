@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { ndiData, outputs, outputState } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -13,11 +14,11 @@
 
     $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
 
-    function toggleOutput(e: any, id: string) {
+    function toggleOutput(e: ClickEvent, id: string) {
         if (outs.length <= 1) return
 
         outputs.update((a) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.detail.ctrl) {
                 let newState = false
                 let getAllActive = Object.values(a).filter((a) => !a.stageOutput && a.active)
                 if ((getAllActive.length === 1 && a[id].active) || a[id].stageOutput) newState = true

@@ -100,6 +100,8 @@ function spaceOnUppercase(str: string) {
 }
 
 function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
+    if (!slides.length) return { slidesObj: {}, layouts: [] }
+
     const slidesObj: { [key: string]: Slide } = {}
     const layouts: any[] = []
 

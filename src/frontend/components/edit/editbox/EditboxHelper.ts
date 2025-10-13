@@ -112,10 +112,10 @@ export class EditboxHelper {
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
         const chordLines = clone(lines.map((a) => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach((line) => {
-            const oldLineChords = chordLines.shift()
-            if (oldLineChords?.length) line.chords = oldLineChords
-        })
+            ;[...firstLines, ...secondLines].forEach((line) => {
+                const oldLineChords = chordLines.shift()
+                if (oldLineChords?.length) line.chords = oldLineChords
+            })
 
         return { firstLines, secondLines }
     }
@@ -129,7 +129,7 @@ export class EditboxHelper {
         const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
         item?.lines?.forEach((line, i) => {
-            const align = line.align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`

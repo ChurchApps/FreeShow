@@ -37,7 +37,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value && key !== "autoUpdates") delete a[key]
+            if (!value) delete a[key]
             else a[key] = value
 
             return a
@@ -164,7 +164,7 @@
     }
 </script>
 
-<MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
+<MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
 
 <!-- <InputRow arrow={$alertUpdates}> -->
 <MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />

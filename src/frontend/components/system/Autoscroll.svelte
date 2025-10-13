@@ -22,21 +22,28 @@
         // set this to make it scroll (because of dropping when scrolled)
         if (elem.querySelector(".droparea")) elem = elem.querySelector(".droparea")
         if (elem?.querySelector(".droparea")) elem = elem.querySelector(".droparea")
-        elem?.setAttribute("style", (elem.getAttribute("style") || "") + behaviour)
+
+        if (!elem) return
+        elem.setAttribute("style", (elem.getAttribute("style") || "") + behaviour)
+
+        // don't scroll if already in view
+        // if (offset > elem.scrollTop && offset < elem.scrollTop + elem.clientHeight) return
 
         t = setTimeout(() => {
             if (!t) return
-            elem?.scrollTo(0, offset)
+            elem.scrollTo(0, offset)
             t = null
         }, timeout)
 
         // make sure its scrolled
-        if (index > 5 || offset === elem?.scrollTop) return
+        if (index > 5 || offset === elem.scrollTop) return
+
         index++
         if (st) return
+
         st = setTimeout(() => {
             if (!st) return
-            if (offset !== elem?.scrollTop) scroll(index)
+            if (offset !== elem.scrollTop) scroll(index)
             st = null
         }, timeout + 400)
     }

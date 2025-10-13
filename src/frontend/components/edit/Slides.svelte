@@ -44,15 +44,19 @@
         }
     }
 
+    let skipScrolling = false
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: {
-        if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) {
-            let index = $activeEdit.slide - 1
-            setTimeout(() => {
-                if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
-            }, 10)
-        }
+    $: if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) updateScroll()
+    function updateScroll() {
+        if (skipScrolling) return
+
+        let index = $activeEdit.slide! - 1
+        setTimeout(() => {
+            if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
+        }, 10)
+
+        // WIP scroll on click if not 100% visible (Intersection Observer?)
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
@@ -132,6 +136,8 @@
                                 on:click={(e) => {
                                     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                                         activeEdit.set({ slide: i, items: [], showId })
+                                        skipScrolling = true
+                                        setTimeout(() => (skipScrolling = false), 10)
                                     }
                                 }}
                             />

@@ -54,8 +54,8 @@
     let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
-    $: isProviderSection = contentProviders.some(p => p.name === active)
-    $: notFolders = ["all", ...specialTabs, ...contentProviders.map(p => p.name)]
+    $: isProviderSection = contentProviders.some((p) => p.name === active)
+    $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.name)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -91,7 +91,7 @@
     let contentProviders: { name: string; displayName: string; hasContentLibrary: boolean }[] = []
     onMount(async () => {
         requestMain(Main.GET_CONTENT_PROVIDERS, undefined, (data) => {
-            contentProviders = data.filter(p => p.hasContentLibrary)
+            contentProviders = data.filter((p) => p.hasContentLibrary)
         })
     })
 
@@ -262,7 +262,7 @@
     function selectMedia() {
         if (activeFile === null) return
 
-        let path = allFiles[activeFile]
+        let path = allFiles[activeFile] || ""
         if (!path) return
 
         activeEdit.set({ id: path, type: "media", items: [] })
@@ -313,7 +313,7 @@
 
         lastPaths.push(path)
 
-        path = folder.length > rootPath.length ? folder : rootPath
+        path = folder.length > rootPath.length ? folder || rootPath : rootPath
     }
 
     const slidesViews: any = { grid: "list", list: "grid" }

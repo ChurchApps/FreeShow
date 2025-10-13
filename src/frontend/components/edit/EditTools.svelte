@@ -372,7 +372,7 @@
                 if (item.auto === false) delete item.auto
 
                 item.lines?.forEach((line, lineIndex) => {
-                    line.align = line.align.replaceAll(";;", ";")
+                    line.align = (line.align || "").replaceAll(";;", ";")
                     if (line.align === ";") line.align = ""
 
                     line.text.forEach((text) => {

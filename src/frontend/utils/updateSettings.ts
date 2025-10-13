@@ -305,7 +305,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
-        if (v.autoUpdates !== false) sendMain(Main.AUTO_UPDATE)
+        if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
         if (v.startupProjectsList) {

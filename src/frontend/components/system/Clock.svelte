@@ -70,7 +70,15 @@
         // }
 
         // .locale($language)
-        return dayjs(date).format(format)
+
+        if (typeof format !== "string" || !format) return dayjs(date)
+
+        try {
+            return dayjs(date).format(format)
+        } catch (err) {
+            console.error(err)
+            return dayjs(date)
+        }
     }
 
     $: formattedDate = dateFormat !== "none" ? formatDateTime(d, dateFormat) : ""
