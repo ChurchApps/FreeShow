@@ -49,7 +49,6 @@
     function openPreview(key: string) {
         if (activeClear === key) {
             autoChange = true
-            activeClear = null
             return
         }
 
