@@ -735,7 +735,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
 
     // find any selected output with no lines
-    const outputAtLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line)
+    const outputAtLine = outputIds.find((id: string) => get(outputs)[id]?.out?.slide?.line)
     // actions will only trigger on index 0 if multiple lines
     if (outputAtLine) {
         // restart any next slide timers

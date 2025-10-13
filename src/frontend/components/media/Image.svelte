@@ -33,5 +33,9 @@
         text-indent: 100%;
         white-space: nowrap;
         overflow: hidden;
+
+        position: absolute;
+        top: 0;
+        left: 0;
     }
 </style>

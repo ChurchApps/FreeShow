@@ -148,6 +148,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         let toggleState = false
         outs.forEach((id: string, i: number) => {
             const output = a[id]
+            if (!output) return
+
             if (!output.out) a[id].out = {}
             if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
