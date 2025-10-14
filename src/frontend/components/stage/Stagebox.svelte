@@ -354,6 +354,9 @@
         border-width: 0;
         border-style: solid;
     }
+    .stage_item :global(.item) {
+        -webkit-text-stroke-color: unset;
+    }
 
     .item.border {
         outline: 3px solid var(--labelColor) !important;

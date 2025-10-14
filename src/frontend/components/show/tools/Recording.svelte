@@ -50,7 +50,7 @@
         started = true
 
         // LISTEN
-        let firstOutputId = getActiveOutputs()[0]
+        let firstOutputId = getActiveOutputs($outputs, false, true, true)[0]
         outputListenerUnsubscribe = outputs.subscribe((a) => {
             let outSlide = a[firstOutputId]?.out?.slide
             // clear output to stop recording

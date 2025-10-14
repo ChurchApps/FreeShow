@@ -4,6 +4,7 @@ import { outputs, styles } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { getActiveOutputs } from "../../helpers/output"
 import { getStyles } from "../../helpers/style"
+import { getItemText } from "../scripts/textStyle"
 
 export class EditboxHelper {
     // Compare text of all the new lines to determine if it's truly a modification or just an index change.
@@ -99,7 +100,7 @@ export class EditboxHelper {
         })
 
         // remove first line if empty
-        if (secondLines?.[0]?.text?.[0]?.value === "") secondLines.shift()
+        if (!getItemText({ lines: secondLines } as any)) secondLines.shift()
 
         const defaultLine = [
             {
