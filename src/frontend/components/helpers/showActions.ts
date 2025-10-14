@@ -116,7 +116,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows) return
+    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows || get(focusMode)) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
 
     // set active layout from project if it exists
@@ -129,11 +129,13 @@ export function swichProjectItem(pos: number, id: string) {
     }
 
     // set project layout
-    projects.update((a) => {
-        if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-        else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
-        return a
-    })
+    if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
+        projects.update((a) => {
+            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
+            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
+            return a
+        })
+    }
 }
 
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
@@ -677,7 +679,7 @@ export function randomSlide() {
     const layoutId = slide?.layout || _show(showId).get("settings.activeLayout")
     const layout = _show(showId).layouts([layoutId]).ref()[0]
 
-    const slideCount = layout.length || 0
+    const slideCount = layout?.length || 0
     if (slideCount < 2) return
 
     const currentSlideIndex = slide?.index ?? -1
@@ -689,7 +691,7 @@ export function randomSlide() {
     } while (randomIndex === currentSlideIndex)
 
     // play slide
-    const data = layout[randomIndex]?.data
+    const data = layout?.[randomIndex]?.data
     checkActionTrigger(data, randomIndex)
     // allow custom actions to trigger first
     setTimeout(() => {
@@ -735,7 +737,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
 
     // find any selected output with no lines
-    const outputAtLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line)
+    const outputAtLine = outputIds.find((id: string) => get(outputs)[id]?.out?.slide?.line)
     // actions will only trigger on index 0 if multiple lines
     if (outputAtLine) {
         // restart any next slide timers

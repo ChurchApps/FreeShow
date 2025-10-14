@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { ShowObj } from "../../../../classes/Show"
     import { convertText, getQuickExample, trimNameFromString } from "../../../../converters/txt"
-    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
+    import { activePopup, activeProject, activeShow, categories, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
     import { clone, sortObject } from "../../../helpers/array"
@@ -62,10 +62,10 @@
     // OPTIONS
 
     const createOptions = [
-        { id: "text", name: translateText("create_show.quick_lyrics"), title: `${$dictionary.create_show?.quick_lyrics_tip} [Enter]`, icon: "text" },
+        { id: "text", name: translateText("create_show.quick_lyrics"), title: translateText("create_show.quick_lyrics_tip [Enter]"), icon: "text" },
         // { id: "clipboard", name: "clipboard", icon: "clipboard" },
-        { id: "web", name: translateText("create_show.web"), title: `${$dictionary.create_show?.search_web} [Ctrl+F]`, icon: "search" },
-        { id: "empty", name: translateText("create_show.empty"), title: `${$dictionary.new?.empty_show} [Ctrl+Enter]`, icon: "add" }
+        { id: "web", name: translateText("create_show.web"), title: translateText("create_show.search_web [Ctrl+F]"), icon: "search" },
+        { id: "empty", name: translateText("create_show.empty"), title: translateText("new.empty_show [Ctrl+Enter]"), icon: "add" }
     ]
     $: resolvedCreateOptions = clone(createOptions).map((a: any) => {
         if (a.id === "text") a.colored = values.text.length
@@ -174,7 +174,7 @@
         if (values.name) return values.name
         // WIP get from "title" metadata
         if (values.text.trim().length) return trimNameFromString(values.text)
-        return $dictionary.main?.unnamed
+        return ""
     }
 
     function addNewCategory(e: any) {
@@ -192,7 +192,7 @@
 
 {#if !selectedOption}
     <List bottom={20}>
-        <MaterialTextInput id="name" label="show.name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} />
+        <MaterialTextInput id="name" label="show.name" autofocus value={values.name} autofill={values.name ? "" : getName(values)} on:input={(e) => changeValue(e, "name")} />
         <MaterialDropdown
             label="show.category"
             value={selectedCategory?.id}
@@ -229,7 +229,7 @@
         variant="contained"
         title="timer.create [Ctrl+Enter]"
         disabled={values.text.trim().length === 0}
-        info={getName(values)}
+        info={getName(values) || translateText("main.unnamed")}
         style="width: 100%;margin-top: 20px;"
         icon="add"
         data-testid="create.show.popup.new.show"

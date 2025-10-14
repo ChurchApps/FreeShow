@@ -14,7 +14,7 @@
     export let sections: any[]
     export let active: string
 
-    $: if (sections.length && !active) {
+    $: if (sections.length && (!active || !sections.flat().find((a) => a.id === active))) {
         const flat = sections.flat().filter((a) => a && a !== "SEPARATOR" && a.id !== "SEPARATOR" && a.id !== "TITLE")
         if (flat.length) setSubTab(flat[0].id)
     }

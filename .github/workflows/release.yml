@@ -89,8 +89,8 @@ jobs:
           sudo gem install --no-document fpm
 
       # wait because this will only publish if the draft exists
-      - name: Sleep for 1 minute
-        run: sleep 60s
+      - name: Sleep for 1.5 minute
+        run: sleep 90s
         shell: bash
 
       - name: Build and release app

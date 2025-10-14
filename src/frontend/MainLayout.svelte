@@ -155,8 +155,8 @@
         min-width: 50%;
     }
 
-    .right.row :global(.color .picker) {
-        inset-inline-end: -1px;
-        inset-inline-start: unset;
+    .right.row :global(.textfield .picker) {
+        left: unset !important;
+        right: 0;
     }
 </style>

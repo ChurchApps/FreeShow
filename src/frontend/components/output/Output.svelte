@@ -268,7 +268,7 @@
     $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
     // CLEARING
-    $: if (slide !== undefined) updateSlide()
+    $: if (slide !== undefined || layers) updateSlide()
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
@@ -276,9 +276,11 @@
     let isSlideClearing = false
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
-        isSlideClearing = !slide
+        const slideActive = layers.includes("slide")
+        isSlideClearing = !slide || !slideActive
+
         setTimeout(() => {
-            actualSlide = clone(slide)
+            actualSlide = slideActive ? clone(slide) : null
             actualSlideData = clone(slideData)
             actualCurrentSlide = clone(currentSlide)
             actualCurrentLineId = clone(currentLineId)
@@ -344,7 +346,7 @@
                 <Window id={actualSlide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
             {/if}
         </span>
-    {:else if actualSlide && actualSlide?.type !== "pdf" && layers.includes("slide")}
+    {:else if actualSlide && actualSlide?.type !== "pdf"}
         <SlideContent
             {outputId}
             outSlide={actualSlide}

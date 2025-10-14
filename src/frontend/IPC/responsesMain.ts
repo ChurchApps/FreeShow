@@ -48,7 +48,7 @@ import {
     activeTimers,
     alertMessage,
     audioData,
-    chumsConnected,
+    contentProviderData,
     currentOutputSettings,
     dataPath,
     driveKeys,
@@ -58,17 +58,16 @@ import {
     media,
     outputs,
     overlays,
-    pcoConnected,
     popupData,
     presentationData,
     projects,
     projectTemplates,
     projectView,
+    providerConnections,
     redoHistory,
     shows,
     showsCache,
     showsPath,
-    special,
     spellcheck,
     stageShows,
     templates,
@@ -270,16 +269,22 @@ export const mainResponses: MainResponses = {
     },
 
     // CONNECTION
-    [ToMain.PCO_CONNECT]: (data) => {
+    // UNIFIED PROVIDER CALLBACKS
+    [ToMain.PROVIDER_CONNECT]: (data) => {
         if (!data.success) return
-        pcoConnected.set(true)
+
+        providerConnections.update(c => {
+            c[data.providerId] = true
+            return c
+        })
+
         if (data.isFirstConnection) newToast("main.finished")
     },
-    [ToMain.PCO_PROJECTS]: async (data) => {
+    [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
-        createCategory("Planning Center")
+        createCategory(data.categoryName)
 
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
@@ -292,125 +297,77 @@ export const mainResponses: MainResponses = {
             // TODO: check if name contains scripture reference (and is empty), and load from active scripture
 
             // first find any shows linked to the id
-            const linkedShow = allShows.find(({ quickAccess }) => quickAccess?.pcoLink === id)
+            const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "chums" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
+            const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
                 continue
             }
 
             // find existing show with same name and ask to replace.
-            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
-            // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
-            if (existingShow) {
-                const useLocal = get(special).pcoLocalAlways ?? await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
-                if (useLocal) {
-                    replaceIds[id] = existingShow.id
+            if (data.providerId === "planningcenter") {
+                const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+                // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
+                if (existingShow) {
+                    const useLocal = get(contentProviderData).planningcenter?.localAlways ?? await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`)
+                    if (useLocal) {
+                        replaceIds[id] = existingShow.id
 
-                    await loadShows([existingShow.id])
-                    showsCache.update((a) => {
-                        if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
-                        a[existingShow.id].quickAccess.pcoLink = id
-                        return a
-                    })
+                        await loadShows([existingShow.id])
+                        showsCache.update((a) => {
+                            if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
+                            if (linkKey) a[existingShow.id].quickAccess[linkKey] = id
+                            return a
+                        })
 
-                    continue
+                        continue
+                    }
                 }
+            } else {
+                // Chums: replace with existing Chums show, that has the same name (but different ID), if it's without content
+                for (const [showId, currentShow] of Object.entries(get(shows))) {
+                    if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
+                    await loadShows([showId])
+
+                    const loadedShow = get(showsCache)[showId]
+                    if (!getSlidesText(loadedShow.slides)) {
+                        replaceIds[show.id] = showId
+                        break
+                    }
+                }
+
+                if (replaceIds[show.id]) continue
             }
 
             // don't add/update if already existing (to not mess up any set styles)
             if (get(shows)[id]) continue
 
             delete show.id
-            tempShows.push({ id, show: { ...show, origin: "pco", name: checkName(show.name, id), quickAccess: { pcoLink: id } } })
+            const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
+            tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id), quickAccess: { [linkKey]: id } } })
         }
         setTempShows(tempShows)
 
-        data.projects.forEach((pcoProject) => {
+        data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
-            const folderId = pcoProject.folderId
+            const folderId = currentProject.folderId
             if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
-                history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+                history({ id: "UPDATE", newData: { replace: { parent: "/", name: currentProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
             }
 
             // CREATE PROJECT
             const project: Project = {
-                name: pcoProject.name,
-                created: pcoProject.created,
+                name: currentProject.name,
+                created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: pcoProject.items || []
+                shows: currentProject.items || []
             }
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
-            const projectId = pcoProject.id
-            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
-        })
-
-        // open closest to today
-        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
-        projectView.set(false)
-    },
-    // CHUMS CONNECTION
-    [ToMain.CHUMS_CONNECT]: (data) => {
-        if (!data.success) return
-        chumsConnected.set(true)
-        if (data.isFirstConnection) newToast("main.finished")
-    },
-    [ToMain.CHUMS_PROJECTS]: async (data) => {
-        if (!data.projects) return
-
-        // CREATE CATEGORY
-        createCategory("Chums")
-
-        // CREATE SHOWS
-        const replaceIds: { [key: string]: string } = {}
-        const tempShows: { id: string; show: Show }[] = []
-        for (const show of data.shows) {
-            const id = show.id
-
-            // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) continue
-
-            // replace with existing Chums show, that has the same name (but different ID), if it's without content
-            for (const [showId, currentShow] of Object.entries(get(shows))) {
-                if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
-                await loadShows([showId])
-
-                const loadedShow = get(showsCache)[showId]
-                if (!getSlidesText(loadedShow.slides)) {
-                    replaceIds[show.id] = showId
-                    break
-                }
-            }
-
-            if (replaceIds[show.id]) continue
-
-            delete show.id
-            tempShows.push({ id, show: { ...show, origin: "chums", name: checkName(show.name, id) } })
-        }
-        setTempShows(tempShows)
-
-        data.projects.forEach((chumsProject) => {
-            // CREATE PROJECT FOLDER
-            const folderId = chumsProject.folderId
-            if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
-                history({ id: "UPDATE", newData: { replace: { parent: "/", name: chumsProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
-            }
-
-            // CREATE PROJECT
-            const project: Project = {
-                name: chumsProject.name,
-                created: chumsProject.created,
-                used: Date.now(), // show on top in last used list
-                parent: folderId || "/",
-                shows: chumsProject.items || []
-            }
-
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
-
-            const projectId = chumsProject.id
+            const projectId = currentProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 

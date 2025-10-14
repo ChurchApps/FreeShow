@@ -19,8 +19,8 @@ import {
     autosave,
     calendarAddShow,
     categories,
-    chumsSyncCategories,
     companion,
+    contentProviderData,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -157,7 +157,7 @@ export function restartOutputs(specificId = "") {
     const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
     outputIds.forEach((id: string) => {
-        let output: Output = get(outputs)[id]
+        const output: Output = get(outputs)[id]
         if (!output) return
 
         // , rate: get(special).previewRate || "auto"
@@ -185,11 +185,11 @@ export function updateThemeValues(themeValues: Themes) {
         document.documentElement.style.setProperty("--font-" + key, value)
     })
 
-    // border radius
-    if (!themeValues.border) themeValues.border = {}
-    // set to 0 if nothing is set
-    if (themeValues.border?.radius === undefined) themeValues.border.radius = "0"
-    Object.entries(themeValues.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
+    // // border radius
+    // if (!themeValues.border) themeValues.border = {}
+    // // set to 0 if nothing is set
+    // if (themeValues.border?.radius === undefined) themeValues.border.radius = "0"
+    // Object.entries(themeValues.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {
@@ -305,7 +305,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
-        if (v.autoUpdates !== false) sendMain(Main.AUTO_UPDATE)
+        if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
         if (v.startupProjectsList) {
@@ -315,8 +315,18 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             showRecentlyUsedProjects.set(false)
         }
 
+        // DEPRECATED (migrate)
+        if (v.pcoLocalAlways) {
+            contentProviderData.update((a) => ({ ...a, planningcenter: { localAlways: true } }))
+            delete v.pcoLocalAlways
+        }
+
         special.set(v)
     },
-    chumsSyncCategories: (v: any) => chumsSyncCategories.set(v),
+    // @ts-ignore - DEPERACTED (migrate)
+    chumsSyncCategories: (v: any) => {
+        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), chums: { syncCategories: v } })
+    },
+    contentProviderData: (v: any) => contentProviderData.set(v),
     effects: (a: any) => effects.set(a)
 }

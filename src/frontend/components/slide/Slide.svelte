@@ -126,7 +126,8 @@
     }
 
     async function locateFile(fileId: string, path: string, folders: string[], mediaObj: Media) {
-        if (!path) return
+        if (typeof path !== "string") return
+        if (path.includes("http") || path.includes("data:")) return
 
         if (checkCloud) {
             let cloudBg = mediaObj.cloud?.[cloudId]

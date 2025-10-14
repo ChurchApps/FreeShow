@@ -14,14 +14,14 @@
         ...a,
         label: a.name,
         icon: "tag",
-        openTrigger: (id) => activeActionTagFilter.set([id]),
+        openTrigger: (id, add) => activeActionTagFilter.set([...(add ? $activeActionTagFilter : []), id]),
         count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
     }))
     $: sortedVariables = sortObject(sortByName(keysToID($variableTags)), "color").map((a) => ({
         ...a,
         label: a.name,
         icon: "tag",
-        openTrigger: (id) => activeVariableTagFilter.set([id]),
+        openTrigger: (id, add) => activeVariableTagFilter.set([...(add ? $activeVariableTagFilter : []), id]),
         count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 

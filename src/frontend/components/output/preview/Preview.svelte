@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, dictionary, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -14,6 +14,7 @@
     import { newSlideTimer } from "../../helpers/tick"
     import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
     import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowActions from "../ShowActions.svelte"
     import Audio from "../tools/Audio.svelte"
     import MediaControls from "../tools/MediaControls.svelte"
@@ -245,9 +246,7 @@
         <PreviewOutputs />
 
         <div class="top">
-            <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
-                <Icon id="hide" white />
-            </Button>
+            <MaterialButton class="hide" icon="hide" style="z-index: 2;" title="preview._hide_preview" on:click={() => (enablePreview = false)} />
             <!-- disable before hiding: disableTransitions={!enablePreview} -->
             <MultiOutputs />
             <AudioMeter />
@@ -302,19 +301,24 @@
     border: none;
   } */
 
-    .top :global(.hide) {
+    .top :global(.hide:not(.contained):not(.isActive):not(:disabled)) {
         position: absolute;
         top: 10px;
         inset-inline-end: 16px;
         z-index: 1;
-        background-color: rgb(0 0 0 / 0.6) !important;
-        border: 1px solid rgb(255 255 255 / 0.3);
+        background-color: rgb(0 0 0 / 0.3) !important;
+        border: 1px solid rgb(255 255 255 / 0.15) !important;
         width: 40px;
         height: 40px;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition:
+            opacity 0.2s,
+            background-color 0.2s;
     }
-    .top:hover > :global(.hide) {
+    .top :global(.hide:not(.contained):not(.isActive):not(:disabled):hover) {
+        background-color: rgb(0 0 0 / 0.7) !important;
+    }
+    .top:hover > :global(.hide:not(.contained):not(.isActive):not(:disabled)) {
         opacity: 1;
     }
 

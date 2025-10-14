@@ -84,7 +84,7 @@ const loadActions = {
     },
     action_tag_filter: () => {
         let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
-        sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        if (get(activeActionTagFilter).length) sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("action_tags", sortedTags.length)
         return sortedTags
     },

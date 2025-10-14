@@ -54,6 +54,7 @@
         })
 
         let target = e.target.closest(".stage_item")
+        if (!target) return
 
         mouse = {
             x: e.clientX,
@@ -270,7 +271,7 @@
                     {#if $currentWindow === "output"}
                         <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                     {:else}
-                        <Output outputId={stageOutputId} mirror preview={preview} style="width: 100%; height: 100%;" />
+                        <Output outputId={stageOutputId} mirror style="width: 100%; height: 100%;" />
                     {/if}
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
@@ -352,6 +353,9 @@
 
         border-width: 0;
         border-style: solid;
+    }
+    .stage_item :global(.item) {
+        -webkit-text-stroke-color: unset;
     }
 
     .item.border {

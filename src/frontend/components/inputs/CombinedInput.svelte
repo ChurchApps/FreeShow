@@ -22,7 +22,6 @@
 
         background-color: var(--primary-darker);
         border-bottom: 2px solid var(--primary-lighter);
-        border-radius: var(--border-radius);
     }
 
     .input :global(*:not(:first-child)) {

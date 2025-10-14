@@ -78,7 +78,7 @@ export type SaveListSettings =
     | "metronome"
     | "effectsLibrary"
     | "special"
-    | "chumsSyncCategories"
+    | "contentProviderData"
 
 export interface SaveData {
     path: string

@@ -31,7 +31,7 @@ export type EditInput = {
 }
 
 export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
-    const newBox = (box.sections ? box.sections : box) as { [key: string]: EditBoxSection }
+    const newBox = (box?.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
     if (!sectionId) sectionId = "default"
     if (!newBox?.[sectionId]) return
@@ -116,20 +116,20 @@ export const filterSection = splitIntoRows([
 
 const alignX =
     [
-        { id: "style", key: "text-align", type: "radio", value: "left", values: { label: "edit.left", icon: "alignLeft" } },
-        { id: "style", key: "text-align", type: "radio", value: "center", values: { label: "edit.center", icon: "alignCenter" } },
-        { id: "style", key: "text-align", type: "radio", value: "right", values: { label: "edit.right", icon: "alignRight" } },
+        { id: "style", key: "text-align", type: "radio", value: "left", values: { label: "edit._title_left", icon: "alignLeft" } },
+        { id: "style", key: "text-align", type: "radio", value: "center", values: { label: "edit._title_center", icon: "alignCenter" } },
+        { id: "style", key: "text-align", type: "radio", value: "right", values: { label: "edit._title_right", icon: "alignRight" } },
     ]
 const alignTextX =
     [
         ...alignX,
-        { id: "style", key: "text-align", type: "radio", value: "justify", values: { label: "edit.justify", icon: "alignJustify" } }
+        { id: "style", key: "text-align", type: "radio", value: "justify", values: { label: "edit._title_justify", icon: "alignJustify" } }
     ]
 const alignY =
     [
-        { id: "style", key: "align-items", type: "radio", value: "flex-start", values: { label: "edit.align_top", icon: "alignTop" } },
-        { id: "style", key: "align-items", type: "radio", value: "center", values: { label: "edit.align_middle", icon: "alignMiddle" } },
-        { id: "style", key: "align-items", type: "radio", value: "flex-end", values: { label: "edit.align_bottom", icon: "alignBottom" } }
+        { id: "style", key: "align-items", type: "radio", value: "flex-start", values: { label: "edit.align_start", icon: "alignTop" } },
+        { id: "style", key: "align-items", type: "radio", value: "center", values: { label: "edit.align_center", icon: "alignMiddle" } },
+        { id: "style", key: "align-items", type: "radio", value: "flex-end", values: { label: "edit.align_end", icon: "alignBottom" } }
     ]
 
 export const textSections: { [key: string]: EditBoxSection } = {

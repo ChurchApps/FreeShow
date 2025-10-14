@@ -69,7 +69,7 @@
         hasLoaded = false
 
         // has custom start time
-        if (Math.max(startAt, mediaStyle.fromTime || 0) || 0 === 0) return
+        if ((Math.max(startAt, mediaStyle.fromTime || 0) || 0) === 0) return
 
         // go to custom start time
         videoData.paused = true

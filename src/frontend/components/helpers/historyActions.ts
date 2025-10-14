@@ -593,7 +593,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
 
                         // set to correct index
-                        const updatedRef = _show(showId).layouts([layout]).ref()[0]
+                        const updatedRef = _show(showId).layouts([layout]).ref()[0] || []
                         index = updatedRef.find((a) => a.id === layoutValue.id)?.layoutIndex ?? index
                     } else if (slide.oldChild) {
                         const parent = ref.find((a) => a.children?.includes(slide.oldChild))
@@ -736,7 +736,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             const previousShow: string = JSON.stringify(show)
             let slides = show.slides || {}
 
-            let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
+            let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
             const slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
 
             const createItems = !!data.data?.createItems

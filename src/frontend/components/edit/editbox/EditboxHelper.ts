@@ -4,6 +4,7 @@ import { outputs, styles } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { getActiveOutputs } from "../../helpers/output"
 import { getStyles } from "../../helpers/style"
+import { getItemText } from "../scripts/textStyle"
 
 export class EditboxHelper {
     // Compare text of all the new lines to determine if it's truly a modification or just an index change.
@@ -99,7 +100,7 @@ export class EditboxHelper {
         })
 
         // remove first line if empty
-        if (secondLines?.[0]?.text?.[0]?.value === "") secondLines.shift()
+        if (!getItemText({ lines: secondLines } as any)) secondLines.shift()
 
         const defaultLine = [
             {
@@ -112,10 +113,10 @@ export class EditboxHelper {
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
         const chordLines = clone(lines.map((a) => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach((line) => {
-            const oldLineChords = chordLines.shift()
-            if (oldLineChords?.length) line.chords = oldLineChords
-        })
+            ;[...firstLines, ...secondLines].forEach((line) => {
+                const oldLineChords = chordLines.shift()
+                if (oldLineChords?.length) line.chords = oldLineChords
+            })
 
         return { firstLines, secondLines }
     }
@@ -129,7 +130,7 @@ export class EditboxHelper {
         const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
         item?.lines?.forEach((line, i) => {
-            const align = line.align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`

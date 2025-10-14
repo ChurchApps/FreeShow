@@ -142,7 +142,6 @@
         text-align: center;
 
         background-color: var(--primary-darker);
-        border-radius: var(--border-radius);
 
         border-radius: 8px;
         padding-bottom: 8px;

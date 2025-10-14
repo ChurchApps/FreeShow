@@ -86,7 +86,7 @@
 </script>
 
 {#if allSlides}
-    <MaterialNumberInput label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
+    <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
 
     <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
     {#if type === "folder" ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}

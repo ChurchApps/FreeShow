@@ -111,7 +111,6 @@
         /* background-color: rgba(41, 44, 54, 0.8);
         backdrop-filter: blur(4px); */
 
-        /* border-radius: var(--border-radius); */
         border-radius: 10px;
 
         /* overflow-y: auto; */

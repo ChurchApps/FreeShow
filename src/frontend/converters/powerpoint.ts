@@ -25,7 +25,7 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            console.log("PPT", content)
+            // console.log("PPT", content)
 
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
             const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
@@ -34,8 +34,8 @@ export function convertPowerpoint(files: any[]) {
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
 
-            const size = presentationData["p:sldSz"]?.[0]["$"]
-            currentSlideSize = { width: size.cx || EMU_WIDTH, height: size.cy || EMU_HEIGHT }
+            const size = presentationData["p:sldSz"]?.[0]?.$ || {}
+            currentSlideSize = { width: Number(size.cx) || EMU_WIDTH, height: Number(size.cy) || EMU_HEIGHT }
 
             // load font faces
             const contentPaths = content.contentPaths || {}
@@ -100,6 +100,8 @@ function spaceOnUppercase(str: string) {
 }
 
 function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
+    if (!slides.length) return { slidesObj: {}, layouts: [] }
+
     const slidesObj: { [key: string]: Slide } = {}
     const layouts: any[] = []
 
@@ -246,6 +248,9 @@ function convertItems(slideContent, relations, content, clrSchemes, layoutItems 
 function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutItems, masterItems) {
     const convertedItems: PlaceholderItem[] = []
 
+    // track image shapes and their bounding boxes so we can remove thumbnails later
+    const imageShapes: { src: string; bbox: { left: number; top: number; width: number; height: number } }[] = []
+
     const contentPaths = content.contentPaths || {}
 
     const textItems = slideTree["p:sp"] || []
@@ -329,7 +334,8 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
     // ---------- IMAGES ----------
     for (const imageItem of imageItems) {
         const relationId: string = imageItem["p:blipFill"]?.[0]["a:blip"]?.[0].$?.["r:embed"] || ""
-        const imageId = relations.find(a => a.$.Id === relationId)?.$?.Target || ""
+        let imageId = relations.find(a => a.$.Id === relationId)?.$?.Target || ""
+        if (!imageId && relationId) imageId = findRelationTargetById(content, relationId) || ""
         const filePath = contentPaths[imageId.replace("..", "ppt")] || ""
 
         // const imageTitle: string = imageItem["p:nvPicPr"]?.[0]["p:cNvPr"]?.[0].$?.title || ""
@@ -337,10 +343,83 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
         const placeholder = imageItem["p:nvSpPr"]?.[0]["p:nvPr"]?.[0]["p:ph"]?.[0]?.$
         convertedItems.push({ placeholder, style: getItemStyle(imageItem, clrSchemes), type: "media", src: filePath })
 
+        // store bbox for this image so we can detect thumbnails for embedded videos
+        const imgBox = getNodeBBox(imageItem)
+        if (filePath && imgBox) imageShapes.push({ src: filePath, bbox: imgBox })
+
         // video/audio
         const videoLinkId = imageItem["p:nvPicPr"]?.[0]["p:cNvPr"]?.[0]?.["a:hlinkClick"]?.[0]?.$?.["r:id"]
         const videoUrl = relations.find(a => a.$.Id === videoLinkId)?.$?.Target
         if (videoUrl) convertedItems.push({ placeholder, style: getItemStyle(imageItem, clrSchemes), type: "web", web: { src: videoUrl, noNavigation: true }, clickReveal: true })
+    }
+
+    // ---------- EMBEDDED MEDIA (videos/audio) ----------
+    // Only treat embedded nodes as media when they point to an actual video/audio file.
+    // Many video shapes contain a thumbnail image (png/jpg) which was previously added
+    // as an image; skip those thumbnails and remove them if they exist so we don't show
+    // duplicate image + video items.
+    const embeddedNodes = findEmbeddedMediaNodes(slideTree)
+    const videoOrAudioExt = /\.(mp4|webm|ogv|m4v|mov|wmv|avi|aac|mp3|m4a|wav)$/i
+    const imageExt = /\.(png|jpe?g|gif|webp|bmp|svg)$/i
+    const addedMedia = new Set<string>()
+
+    for (const node of embeddedNodes) {
+        const relationId: string = node.embedId || ""
+        let mediaTarget = relations.find(a => a.$.Id === relationId)?.$?.Target || ""
+        if (!mediaTarget && relationId) mediaTarget = findRelationTargetById(content, relationId) || ""
+        const filePath = contentPaths[mediaTarget.replace("..", "ppt")] || ""
+        if (!filePath) continue
+
+        // If this embed points to an image (thumbnail), skip it here. The image was already
+        // handled in the imageItems loop; we aim to remove those thumbnail images when the
+        // corresponding video is added below.
+        if (imageExt.test(filePath) && !videoOrAudioExt.test(filePath)) continue
+
+        // Only proceed if filePath looks like a video or audio file or if the mediaTarget filename
+        // contains a media/ path (defensive fallback)
+        if (!videoOrAudioExt.test(filePath) && !/media\//i.test(mediaTarget)) continue
+
+        const placeholder = node.node["p:nvSpPr"]?.[0]["p:nvPr"]?.[0]["p:ph"]?.[0]?.$
+        const styleSource = node.node
+
+        // compute bbox for this embedded media node
+        let mediaBox = getNodeBBox(node.node)
+
+        // If the node is a group (no spPr), try to find a descendant shape/pic and use its bbox
+        if (!mediaBox) {
+            const desc = findDescendantShape(node.node)
+            if (desc) mediaBox = getNodeBBox(desc)
+        }
+
+        // Skip if we've already added this media file (dedupe)
+        if (addedMedia.has(filePath)) continue
+
+        // Remove any previously added thumbnail image items that spatially overlap the media bbox.
+        // Use bbox parsed from each item's style to be robust against differing src formats.
+        for (let i = convertedItems.length - 1; i >= 0; i--) {
+            const it: any = convertedItems[i]
+            if (it.type !== "media") continue
+
+            // if this is already the same media file, skip removal but treat as existing
+            if (it.src && it.src === filePath) {
+                // already present — mark and skip adding another
+                addedMedia.add(filePath)
+                // remove any overlapping image thumbnails (other entries) and then break
+                continue
+            }
+
+            const itBox = parseStyleBox(it.style)
+            if (itBox && mediaBox && boxesOverlap(mediaBox, itBox)) {
+                // remove the overlapping item (likely a thumbnail image)
+                convertedItems.splice(i, 1)
+            }
+        }
+
+        // If not already added, add the embedded media item (mark as embedded so downstream can treat specially)
+        if (!addedMedia.has(filePath)) {
+            convertedItems.push({ placeholder, style: getItemStyle(styleSource, clrSchemes), type: "media", src: filePath })
+            addedMedia.add(filePath)
+        }
     }
 
     // ---------- TABLES ----------
@@ -389,6 +468,60 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
     return convertedItems
 }
 
+// MEDIA (VIDEOS)
+// Walk slide tree to find nodes that contain embedded media references (r:embed)
+function findEmbeddedMediaNodes(slideTree: any) {
+    const nodes: { node: any; embedId?: string }[] = []
+    // Walk with parent tracking so we can return the nearest shape/pic parent
+    function walk(obj: any, parent?: any) {
+        if (!obj || typeof obj !== "object") return
+        // Inspect any attributes on this node for rId-like values (rId<number>)
+        if (obj.$ && typeof obj.$ === "object") {
+            for (const [_k, v] of Object.entries<any>(obj.$)) {
+                if (typeof v === "string" && /^rId\d+/i.test(v)) {
+                    // prefer the parent if it looks like a shape/pic (has p:spPr or p:pic)
+                    const chosen = (parent && (parent["p:spPr"] || parent["p:pic"] || parent["p:nvSpPr"])) ? parent : obj
+                    nodes.push({ node: chosen, embedId: v })
+                    break
+                }
+            }
+        }
+
+        // check for some common nested places too (backwards compatible)
+        const videoFile = obj["p:videoFile"]?.[0]?.$?.["r:embed"]
+        if (videoFile) nodes.push({ node: parent || obj, embedId: videoFile })
+        const blip = obj["p:blipFill"]?.[0]?.["a:blip"]?.[0]?.$?.["r:embed"]
+        if (blip) nodes.push({ node: parent || obj, embedId: blip })
+
+        for (const k of Object.keys(obj)) {
+            const v = obj[k]
+            if (Array.isArray(v)) v.forEach((w: any) => walk(w, obj))
+            else if (typeof v === "object") walk(v, obj)
+        }
+    }
+
+    walk(slideTree)
+    return nodes
+}
+// Find the first descendant that looks like a shape/picture (has p:spPr or p:pic)
+function findDescendantShape(obj: any): any | null {
+    if (!obj || typeof obj !== "object") return null
+    if (obj["p:spPr"] || obj["p:pic"]) return obj
+    for (const k of Object.keys(obj)) {
+        const v = obj[k]
+        if (Array.isArray(v)) {
+            for (const child of v) {
+                const found = findDescendantShape(child)
+                if (found) return found
+            }
+        } else if (typeof v === "object") {
+            const found = findDescendantShape(v)
+            if (found) return found
+        }
+    }
+    return null
+}
+
 // function getListStyles(lstStyle: any, bulletNumberIndex: number) {
 //     const lvl = `a:lvl${bulletNumberIndex + 1}pPr`
 //     const lvlStyle = lstStyle[lvl]?.[0] || {}
@@ -397,16 +530,17 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
 
 function getItemStyle(item: any, clrSchemes: any, svgStyled = false) {
     const spPr = item["p:spPr"]?.[0]
-    const pos = spPr["a:xfrm"]?.[0]
+    const pos = spPr?.["a:xfrm"]?.[0]
     if (!pos) return DEFAULT_ITEM_STYLE
 
-    const ext = pos["a:ext"]?.[0].$
-    const off = pos["a:off"]?.[0].$
+    // Defensive defaults: some PPTX shapes may omit a:ext or a:off
+    const ext = pos["a:ext"]?.[0]?.$ || {}
+    const off = pos["a:off"]?.[0]?.$ || {}
     const rot = parseFloat(pos.$?.rot || "0") / 60000 // convert 60,000ths of a degree to degrees
     const flipH = pos.$?.flipH === "1" ? "scaleX(-1)" : ""
     const flipV = pos.$?.flipV === "1" ? "scaleY(-1)" : ""
 
-    const { left, top, width, height } = emuToPixels({ x: parseFloat(off.x), y: parseFloat(off.y), cx: parseFloat(ext.cx) || 1000, cy: parseFloat(ext.cy) || 1000 })
+    const { left, top, width, height } = emuToPixels({ x: parseFloat(off.x || "0"), y: parseFloat(off.y || "0"), cx: parseFloat(ext.cx || "1000") || 1000, cy: parseFloat(ext.cy || "1000") || 1000 })
 
     const rotate = rot === 0 ? "" : `rotate(${rot}deg)`
 
@@ -642,13 +776,14 @@ function getAlignment(algn: string) {
 // SVG
 
 function pptShapeToNormalizedSvg(shape, clrSchemes) {
-    const spPr = shape['p:spPr'][0]
+    const spPr = shape['p:spPr']?.[0]
+    if (!spPr) return null
     const prstGeom = spPr["a:prstGeom"]?.[0].$?.prst
     // if (!prstGeom || prstGeom === "rect") return null
 
-    const xfrm = spPr['a:xfrm']?.[0] || {}
-    const off = xfrm['a:off']?.[0].$
-    const ext = xfrm['a:ext']?.[0].$
+    const xfrm = spPr['a:xfrm']?.[0]
+    const off = xfrm?.['a:off']?.[0]?.$ || {}
+    const ext = xfrm?.['a:ext']?.[0]?.$ || {}
     if (!off || !ext) return null
 
     // Fill color and opacity
@@ -695,10 +830,10 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
     }
 
     // Bounding box
-    const x1 = parseFloat(off.x)
-    const y1 = parseFloat(off.y)
-    const width = parseFloat(ext.cx) || 1000
-    const height = parseFloat(ext.cy) || 1000
+    const x1 = parseFloat(off.x || "0")
+    const y1 = parseFloat(off.y || "0")
+    const width = parseFloat(ext.cx || "1000") || 1000
+    const height = parseFloat(ext.cy || "1000") || 1000
 
     let svgAttributes = `fill="${fill}"`
     if (fillOpacity < 1) svgAttributes += ` fill-opacity="${fillOpacity}"`
@@ -768,4 +903,58 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
     return `<svg data-shape="${prstGeom}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbWidth} ${vbHeight}" style="position: absolute;">
         <path ${svgAttributes} d="${path}"></path>
     </svg>`
+}
+
+// MEDIA (VIDEOS)
+
+// Get bounding box (left/top/width/height in pixel space) for a shape-like node that has p:spPr
+function getNodeBBox(node: any) {
+    try {
+        const spPr = node["p:spPr"]?.[0]
+        const pos = spPr?.["a:xfrm"]?.[0]
+        if (!pos) return null
+
+        const ext = pos["a:ext"]?.[0].$
+        const off = pos["a:off"]?.[0].$
+        if (!ext || !off) return null
+
+        const { left, top, width, height } = emuToPixels({ x: parseFloat(off.x), y: parseFloat(off.y), cx: parseFloat(ext.cx) || 1000, cy: parseFloat(ext.cy) || 1000 })
+        return { left, top, width, height }
+    } catch (e) {
+        return null
+    }
+}
+
+function boxesOverlap(a: { left: number; top: number; width: number; height: number }, b: { left: number; top: number; width: number; height: number }) {
+    const ax2 = a.left + a.width
+    const ay2 = a.top + a.height
+    const bx2 = b.left + b.width
+    const by2 = b.top + b.height
+
+    return !(ax2 < b.left || bx2 < a.left || ay2 < b.top || by2 < a.top)
+}
+
+// Search all .rels entries in the content object for a relationship with the given Id
+function findRelationTargetById(content: any, relationId: string) {
+    if (!relationId) return null
+    for (const key of Object.keys(content)) {
+        const entry = content[key]
+        if (!entry) continue
+        const rels = entry?.Relationships?.Relationship || []
+        for (const r of rels) {
+            if (r.$?.Id === relationId) return r.$?.Target
+        }
+    }
+    return null
+}
+
+// Parse inline style left/top/width/height into a bbox object, returns null if missing
+function parseStyleBox(style: string | undefined) {
+    if (!style || typeof style !== "string") return null
+    const leftMatch = style.match(/left:\s*([0-9]+)px/)
+    const topMatch = style.match(/top:\s*([0-9]+)px/)
+    const widthMatch = style.match(/width:\s*([0-9]+)px/)
+    const heightMatch = style.match(/height:\s*([0-9]+)px/)
+    if (!leftMatch || !topMatch || !widthMatch || !heightMatch) return null
+    return { left: parseInt(leftMatch[1], 10), top: parseInt(topMatch[1], 10), width: parseInt(widthMatch[1], 10), height: parseInt(heightMatch[1], 10) }
 }

@@ -109,7 +109,8 @@
     .triggers :global(.selectElem) {
         display: flex;
         border: 2px solid rgb(255 255 255 / 0.4);
-        border-radius: var(--border-radius);
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     .triggers :global(.selectElem.pending) {

@@ -104,7 +104,7 @@
                 isEnabled = $stageShows[$selected.data[0]?.id]?.disabled
             } else if ($selected.id === "action") {
                 let action = $actions[$selected.data[0]?.id] || {}
-                if (!action.customActivation) disabled = true
+                if (!action.customActivation) hide = true
                 else isEnabled = action.enabled === false
             }
 

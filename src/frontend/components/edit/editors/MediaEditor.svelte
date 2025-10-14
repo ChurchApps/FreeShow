@@ -31,9 +31,9 @@
         <Media {path} {mediaStyle} bind:videoData bind:videoTime mirror />
 
         {#if type === "video"}
-            <FloatingInputs side="center" style="width: 80%;">
+            <FloatingInputs side="center" style="width: 60%;">
                 <MaterialButton title={videoData.paused ? "media.play" : "media.pause"} on:click={() => (videoData.paused = !videoData.paused)}>
-                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.5} />
+                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.3} />
                 </MaterialButton>
 
                 <div class="divider" />
@@ -43,7 +43,7 @@
                 <div class="divider" />
 
                 <MaterialButton title="media._loop" disabled>
-                    <Icon id="loop" size={1.3} />
+                    <Icon id="loop" size={1.2} />
                 </MaterialButton>
             </FloatingInputs>
         {/if}

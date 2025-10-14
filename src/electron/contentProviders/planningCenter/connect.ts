@@ -1,12 +1,18 @@
+/**
+ * WARNING: This file should ONLY be accessed through PlanningCenterProvider.
+ * Do not import or use functions from this file directly in other parts of the application.
+ * Use ContentProviderRegistry or PlanningCenterProvider instead.
+ */
+
 import express from "express"
 import { randomFillSync, createHash } from "crypto"
 
-import { ToMain } from "../../types/IPC/ToMain"
-import { stores } from "../data/store"
-import { sendToMain } from "../IPC/main"
-import { openURL } from "../IPC/responsesMain"
-import { getKey } from "../utils/keys"
-import { httpsRequest } from "../utils/requests"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
+import { openURL } from "../../IPC/responsesMain"
+import { getKey } from "../../utils/keys"
+import { httpsRequest } from "../../utils/requests"
 import { pcoLoadServices } from "./request"
 
 export type PCOScopes = "calendar" | "check_ins" | "giving" | "groups" | "people" | "publishing" | "services"
@@ -106,8 +112,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 // close when request is completed!
                 server.close()
 
-                stores.ACCESS.set(`pco_${scope}`, data)
-                sendToMain(ToMain.PCO_CONNECT, { success: true, isFirstConnection: true })
+                setContentProviderAccess("planningcenter", scope, data)
+                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true, isFirstConnection: true })
                 resolve(data)
             })
         })
@@ -147,8 +153,8 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
                 return handleRefreshFailure(access.scope)
             }
 
-            stores.ACCESS.set(`pco_${data.scope}`, data)
-            sendToMain(ToMain.PCO_CONNECT, { success: true })
+            setContentProviderAccess("planningcenter", data.scope, data)
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true })
 
             return resolve(data)
         })
@@ -177,7 +183,7 @@ function generateCodeChallenge(verifier: string) {
 }
 
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
-    const storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
+    const storedAccess = PCO_ACCESS || getContentProviderAccess("planningcenter", scope)
 
     if (storedAccess?.created_at) {
         if (hasExpired(storedAccess)) {
@@ -185,7 +191,7 @@ export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
             return PCO_ACCESS
         }
 
-        sendToMain(ToMain.PCO_CONNECT, { success: true })
+        sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true })
         if (!PCO_ACCESS) PCO_ACCESS = storedAccess
         return storedAccess
     }
@@ -196,12 +202,12 @@ export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
 }
 
 export function pcoDisconnect(scope: PCOScopes = "services") {
-    stores.ACCESS.set(`pco_${scope}`, null)
+    setContentProviderAccess("planningcenter", scope, null)
     PCO_ACCESS = null
     return { success: true }
 }
 
 export async function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {
-    if (!stores.ACCESS.get(`pco_${scope}`)) return
+    if (!getContentProviderAccess("planningcenter", scope)) return
     await pcoLoadServices(dataPath)
 }

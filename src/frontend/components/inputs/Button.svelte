@@ -48,8 +48,6 @@
         align-items: center;
         padding: 0.2em 0.8em;
 
-        border-radius: var(--border-radius);
-
         transition:
             background-color 0.2s,
             border 0.2s;

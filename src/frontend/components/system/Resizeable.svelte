@@ -161,12 +161,12 @@ aria-expanded={width > minWidth} -->
 
     :global(.bar_left) {
         padding-inline-end: var(--handle-width);
-        /* border-radius: 0 var(--border-radius) var(--border-radius) 0; */
+        /* border-radius: 0 12px 12px 0; */
         /* box-shadow: 2px 0 14px rgb(0 0 0 / 0.12); */
     }
     :global(.bar_right) {
         padding-inline-start: var(--handle-width);
-        /* border-radius: var(--border-radius) 0 0 var(--border-radius); */
+        /* border-radius: 12px 0 0 12px; */
         /* box-shadow: -2px 0 14px rgb(0 0 0 / 0.12); */
     }
     :global(.bar_top) {

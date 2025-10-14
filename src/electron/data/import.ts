@@ -18,11 +18,12 @@ type FileData = { content: Buffer | string | object; name?: string; extension?: 
 
 const specialImports = {
     powerpoint: async (files: string[], dataPath: string) => {
-        const data: FileData[] = []
+        sendToMain(ToMain.ALERT, "popup.importing")
 
+        const data: FileData[] = []
         for await (const filePath of files) {
             const json = await pptToShow(filePath, dataPath)
-            data.push({ name: getFileName(filePath), content: json })
+            if (json) data.push({ name: getFileName(filePath), content: json })
         }
 
         return data

@@ -22,7 +22,6 @@
 <style>
     input {
         background-color: var(--primary-darker);
-        border-radius: var(--border-radius);
         color: var(--text);
         width: 100%;
         font-family: inherit;

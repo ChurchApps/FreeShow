@@ -5,7 +5,7 @@
 
     export let icon: string
     export let size = 5
-    export let title: string = "media.play"
+    export let title = "media.play"
 
     // fade out (to show itself)
     let reveal = true

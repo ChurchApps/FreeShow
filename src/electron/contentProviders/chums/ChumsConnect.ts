@@ -1,16 +1,20 @@
 import express from "express"
-import { ToMain } from "../../types/IPC/ToMain"
-import { stores } from "../data/store"
-import { sendToMain } from "../IPC/main"
-import { openURL } from "../IPC/responsesMain"
-import { getKey } from "../utils/keys"
-import { httpsRequest } from "../utils/requests"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
+import { openURL } from "../../IPC/responsesMain"
+import { getKey } from "../../utils/keys"
+import { httpsRequest } from "../../utils/requests"
 import type { ChumsAuthData, ChumsRequestData, ChumsScopes } from "./types"
-import { CONTENT_API_URL, DOING_API_URL, MEMBERSHIP_API_URL, CHUMS_API_URL } from "./types"
+import { CHURCHAPPS_API_URL, CHUMS_APP_URL } from "./types"
 
 /**
  * Handles authentication and API communication with the Chums service.
  * Manages OAuth flow, token refresh, and provides methods for making authenticated API requests.
+ *
+ * WARNING: This class should ONLY be accessed through ChumsProvider.
+ * Do not import or use this class directly in other parts of the application.
+ * Use ContentProviderRegistry or ChumsProvider instead.
  */
 export class ChumsConnect {
     private static app = express()
@@ -40,7 +44,7 @@ export class ChumsConnect {
   `
 
     public static async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
-        const storedAccess: any = this.CHUMS_ACCESS || stores.ACCESS.get(`chums_${scope}`)
+        const storedAccess: any = this.CHUMS_ACCESS || getContentProviderAccess("chums", scope)
 
         if (storedAccess?.created_at) {
             if (this.hasExpired(storedAccess)) {
@@ -48,7 +52,7 @@ export class ChumsConnect {
                 return this.CHUMS_ACCESS
             }
 
-            sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true })
             if (!this.CHUMS_ACCESS) this.CHUMS_ACCESS = storedAccess
             return storedAccess
         }
@@ -58,7 +62,7 @@ export class ChumsConnect {
     }
 
     public static disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
-        stores.ACCESS.set(`chums_${scope}`, null)
+        setContentProviderAccess("chums", scope, null)
         this.CHUMS_ACCESS = null
         return { success: true }
     }
@@ -74,13 +78,14 @@ export class ChumsConnect {
         }
 
         return new Promise((resolve) => {
-            const apiUrl = data.api === "doing" ? DOING_API_URL : CONTENT_API_URL
+            const apiUrl = CHURCHAPPS_API_URL
+            const pathPrefix = data.api === "doing" ? "/doing" : "/content"
+            const fullEndpoint = `${pathPrefix}${data.endpoint}`
             const headers = data.authenticated ? { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` } : {}
-            // console.log("SENDING REQUEST TO CHUMS", apiUrl, data.endpoint, data.method || "GET", headers, data.data || {})
-            httpsRequest(apiUrl, data.endpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
+            httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
-                    console.error("Could not get data", apiUrl, data.endpoint)
-                    sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + data.endpoint)
+                    console.error("Could not get data", apiUrl, fullEndpoint)
+                    sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
                     return resolve(null)
                 } else resolve(result)
             })
@@ -116,7 +121,7 @@ export class ChumsConnect {
                     redirect_uri,
                 }
 
-                httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+                httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                     if (err) {
                         res.setHeader("Content-Type", "text/html")
                         const errorPage = this.HTML_ERROR.replace("{error_msg}", err.message)
@@ -133,13 +138,13 @@ export class ChumsConnect {
 
                     server.close()
 
-                    stores.ACCESS.set(`chums_${scope}`, data)
-                    sendToMain(ToMain.CHUMS_CONNECT, { success: true, isFirstConnection: true })
+                    setContentProviderAccess("chums", scope, data)
+                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true, isFirstConnection: true })
                     resolve(data)
                 })
             })
 
-            const URL = `${CHUMS_API_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
+            const URL = `${CHUMS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
             openURL(URL)
         })
     }
@@ -161,19 +166,17 @@ export class ChumsConnect {
                 refresh_token: access.refresh_token,
             }
 
-            // console.log(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params)
-            httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+            httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
                 if (err || data === null) {
                     this.disconnect()
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
                     resolve(null)
                     return
                 }
-                // console.log("DATA", data)
 
                 this.CHUMS_ACCESS = data
-                stores.ACCESS.set(`chums_${data.scope}`, data)
-                sendToMain(ToMain.CHUMS_CONNECT, { success: true })
+                setContentProviderAccess("chums", data.scope, data)
+                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true })
                 resolve(data)
             })
         })

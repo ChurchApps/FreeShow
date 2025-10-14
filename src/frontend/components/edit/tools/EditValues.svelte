@@ -238,7 +238,7 @@
         openedSections = openedSections
     }
 
-    $: sectionValues = Object.entries(sections)
+    $: sectionValues = Object.entries(sections || {})
 
     ///
 
@@ -311,12 +311,12 @@
                                         enableFontStyles
                                     />
                                 {:else if input.type === "toggle"}
-                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => toggle(input)}>
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={values.label} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />
                                         <div class="highlight" class:active={value.includes(input.value)}></div>
                                     </MaterialButton>
                                 {:else if input.type === "radio"}
-                                    <MaterialButton style="min-width: 50px;flex: 1;" title={translateText(values.label)} on:click={() => radio(input)}>
+                                    <MaterialButton style="min-width: 50px;flex: 1;" title={values.label} on:click={() => radio(input)}>
                                         <Icon id={values.icon} size={1.2} white />
                                         <div class="highlight radio" class:active={value === input.value}></div>
                                     </MaterialButton>

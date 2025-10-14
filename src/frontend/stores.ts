@@ -3,6 +3,7 @@
 
 import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
+import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
@@ -72,9 +73,7 @@ export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
-export const pcoConnected: Writable<boolean> = writable(false)
-export const chumsConnected: Writable<boolean> = writable(false)
-export const chumsSyncCategories: Writable<string[]> = writable([])
+export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -317,6 +316,7 @@ export const serverData: Writable<{ [key: string]: ServerData }> = writable({}) 
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 export const companion: Writable<any> = writable({ enabled: false }) // {}
+export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
 
 // CLOUD
 export const driveKeys: Writable<any> = writable({})
@@ -419,7 +419,8 @@ export const $ = {
     outLocked,
     ports,
     maxConnections,
-    remotePassword
+    remotePassword,
+    providerConnections
 }
 
 // DEBUG STORE UPDATES

@@ -38,6 +38,8 @@
     .streams {
         flex: 1;
         overflow: auto;
+
+        padding-bottom: 60px;
     }
     .streams :global(.selectElem) {
         display: flex;

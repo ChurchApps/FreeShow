@@ -15,7 +15,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     // WIP play multiple recordings at the same time in different outputs...
     if (get(activeSlideRecording)) clearTimeout(get(activeSlideRecording).timeout)
 
-    const layoutRef = _show(showId).layouts([layoutId]).ref()[0]
+    const layoutRef = _show(showId).layouts([layoutId]).ref()[0] || []
 
     const layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
     const showMedia = _show(showId).get("media")

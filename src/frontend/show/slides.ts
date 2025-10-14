@@ -235,7 +235,7 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
     return { newParents, groups, newData }
 
     function checkIfSlideExistsMorePlaces(layout, slide, i) {
-        const ref = _show().layouts([layout.layoutId]).ref()[0]
+        const ref = _show().layouts([layout.layoutId]).ref()[0] || []
         return ref.find((lslide) => lslide.id === slide.id && (lslide.index !== slide.index || layout.layoutId !== activeLayout || (i === 0 && slide.type === "child")))
     }
 }
