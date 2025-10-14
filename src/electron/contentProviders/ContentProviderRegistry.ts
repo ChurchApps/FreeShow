@@ -26,7 +26,7 @@ export class ContentProviderRegistry {
         ContentProviderFactory.register("amazinglife", AmazingLifeProvider)
 
         this.initialized = true
-        console.log("Content provider registry initialized")
+        // console.log("Content provider registry initialized")
     }
 
     /**

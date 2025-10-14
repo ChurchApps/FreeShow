@@ -116,7 +116,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows) return
+    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows || get(focusMode)) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
 
     // set active layout from project if it exists
@@ -129,11 +129,13 @@ export function swichProjectItem(pos: number, id: string) {
     }
 
     // set project layout
-    projects.update((a) => {
-        if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-        else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
-        return a
-    })
+    if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
+        projects.update((a) => {
+            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
+            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
+            return a
+        })
+    }
 }
 
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {

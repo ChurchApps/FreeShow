@@ -52,11 +52,11 @@ export const itemSections: { [key: string]: EditBoxSection } = {
     position: {
         noReset: true,
         inputs: [[
-            { id: "style", key: "left", type: "number", value: 2.5, extension: "px", values: { label: "edit.x", min: -200, max: 200 } },
-            { id: "style", key: "top", type: "number", value: 11, extension: "px", values: { label: "edit.y", min: -200, max: 200 } },
+            { id: "style", key: "left", type: "number", value: 2.5, extension: "px", values: { label: "edit.x (%)", min: -200, max: 200 } },
+            { id: "style", key: "top", type: "number", value: 11, extension: "px", values: { label: "edit.y (%)", min: -200, max: 200 } },
         ], [
-            { id: "style", key: "width", type: "number", value: 95, extension: "px", values: { label: "edit.width", min: 2, max: 200 } },
-            { id: "style", key: "height", type: "number", value: 78, extension: "px", values: { label: "edit.height", min: 2, max: 200 } },
+            { id: "style", key: "width", type: "number", value: 95, extension: "px", values: { label: "edit.width (%)", min: 2, max: 200 } },
+            { id: "style", key: "height", type: "number", value: 78, extension: "px", values: { label: "edit.height (%)", min: 2, max: 200 } },
         ]]
     },
     transform: {

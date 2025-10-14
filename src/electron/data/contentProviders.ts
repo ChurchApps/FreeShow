@@ -7,23 +7,25 @@ import { stores } from "./store"
 
 // ----- CONTENT PROVIDER HELPERS -----
 
-export function getContentProviderAccess(providerId: ContentProviderId, scope: string): any {
+export function getContentProviderAccess(providerId: ContentProviderId, scope: string) {
     const contentProviders = stores.ACCESS.get("contentProviders") || {}
-    const providerData = (contentProviders as any)[providerId]
-    return providerData?.[scope] || null
+    const providerData = contentProviders[providerId] || {}
+
+    return providerData[scope] || null
 }
 
-export function setContentProviderAccess(providerId: ContentProviderId, scope: string, data: any): void {
+export function setContentProviderAccess(providerId: ContentProviderId, scope: string, data: any) {
     const contentProviders = stores.ACCESS.get("contentProviders") || {}
-    if (!(contentProviders as any)[providerId]) (contentProviders as any)[providerId] = {};
-    (contentProviders as any)[providerId][scope] = data
+    if (!contentProviders[providerId]) contentProviders[providerId] = {}
+    contentProviders[providerId][scope] = data
+
     stores.ACCESS.set("contentProviders", contentProviders)
 }
 
 // ----- CONTENT PROVIDER MIGRATION -----
 // TODO: This entire migration section can be removed after version 1.6.0
 // Migrates legacy content provider settings to the new unified structure
-export function migrateContentProviderSettings(): void {
+export function migrateContentProviderSettings() {
     const keysToDelete: string[] = []
 
     // Migrate ACCESS store
@@ -40,10 +42,15 @@ export function migrateContentProviderSettings(): void {
             console.info(`Migrated ${old} -> contentProviders.${newProvider}.${newScope}`)
         }
     }
-}
 
+    if (keysToDelete.length) {
+        for (const key of keysToDelete) {
+            stores.ACCESS.delete(key as any)
+            console.info(`Deleted legacy key: ${key}`)
+        }
+    }
+}
 // Initialize migration on module load (after a brief delay to ensure stores are initialized)
-// TODO: This migration initialization can be removed after version 1.6.0
 setTimeout(() => {
     try {
         migrateContentProviderSettings()

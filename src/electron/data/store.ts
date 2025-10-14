@@ -12,10 +12,11 @@ import type { ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
-import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
-import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { ContentProviderId } from "../contentProviders/base/types"
 import { forceCloseApp } from "../utils/close"
+import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import "./contentProviders"
+import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -94,12 +95,7 @@ const DEFAULTS = {
     cache: {} as any,
     history: {} as { undo: History[]; redo: History[] },
     usage: { all: [] } as any,
-    accessKeys: {
-        contentProviders: {
-            planningcenter: {},
-            chums: {}
-        }
-    },
+    accessKeys: { contentProviders: {} as { [key in ContentProviderId]?: any } },
 }
 
 // ERROR LOG
