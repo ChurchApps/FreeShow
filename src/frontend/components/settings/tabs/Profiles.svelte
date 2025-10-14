@@ -15,7 +15,7 @@
     // set id after deletion
     $: if (profileId !== "" && !$profiles[profileId]) profileId = ""
 
-    $: profileId = $selectedProfile ?? Object.keys($profiles)[0] ?? ""
+    $: profileId = $selectedProfile || ""
     $: currentProfile = $profiles[profileId] || clone(defaultProfile)
 
     const defaultProfile: Profile = {

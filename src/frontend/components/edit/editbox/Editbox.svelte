@@ -5,7 +5,7 @@
     import { getAccess } from "../../../utils/profile"
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
-    import { getFileName, getMediaType } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaType } from "../../helpers/media"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
     import { getNumberVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -153,7 +153,7 @@
 
         history({
             id: "showMedia",
-            newData: { name: getFileName(item.src), path: item.src, type: getMediaType(item.src) },
+            newData: { name: getFileName(item.src), path: item.src, type: getMediaType(getExtension(item.src)) },
             location: { page: "show", show: { id: active || "" }, layout: $showsCache[active || ""]?.settings?.activeLayout, layoutSlide: $activeEdit.slide ?? -1 }
         })
 
