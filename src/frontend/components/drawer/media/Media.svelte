@@ -18,6 +18,7 @@
         outLocked,
         outputs,
         popupData,
+        providerConnections,
         selectAllMedia,
         selected,
         sorted
@@ -88,11 +89,18 @@
         else if (active === "online") onlineTab = id
     }
 
-    // Content providers with libraries
+    // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
     onMount(async () => {
-        contentProviders = (await requestMain(Main.GET_CONTENT_PROVIDERS)).filter((p) => p.hasContentLibrary)
+        const allProviders = await requestMain(Main.GET_CONTENT_PROVIDERS)
+        contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
     })
+
+    $: if ($providerConnections) {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
 
     let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
