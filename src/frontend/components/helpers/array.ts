@@ -94,8 +94,8 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
 // sort any object.name by numbers in the front of the string
 export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
     return array.sort((a, b) => {
-        const aNumberStr = a.quickAccess?.number || ""
-        const bNumberStr = b.quickAccess?.number || ""
+        const aNumberStr = a.quickAccess?.number?.toString() || ""
+        const bNumberStr = b.quickAccess?.number?.toString() || ""
 
         // Split into prefix letters + numeric part
         const extractParts = (str: string) => {
