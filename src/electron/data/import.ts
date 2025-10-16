@@ -1,3 +1,4 @@
+import upath from "upath"
 import path, { join } from "path"
 import protobufjs from "protobufjs"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
@@ -262,19 +263,17 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
     // write files
     const replacedMedia: { [key: string]: string } = {}
     dataContent.files?.forEach((rawPath: string) => {
-        const currentPath = path.normalize(rawPath)
-
         // check if path already exists on the system
-        if (doesPathExist(currentPath)) return
+        if (doesPathExist(rawPath)) return
 
-        const fileName = path.basename(currentPath)
+        const fileName = upath.basename(rawPath)
         const file = zipData.find((a) => a.name === fileName)?.content
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten
-        const ext = path.extname(fileName)
-        const pathHash = `${path.basename(currentPath, ext)}_${filePathHashCode(currentPath)}${ext}`
-        const newMediaPath = path.join(importFolder, pathHash)
+        const ext = upath.extname(fileName)
+        const pathHash = `${upath.basename(rawPath, ext)}_${filePathHashCode(upath.toUnix(rawPath))}${ext}`
+        const newMediaPath = upath.join(importFolder, pathHash)
 
         if (!file) return
         replacedMedia[rawPath] = newMediaPath

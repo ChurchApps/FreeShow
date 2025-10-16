@@ -538,7 +538,7 @@
                         {#if slide.notes && icons}
                             <button class="notes" data-title={slide.notes} on:click={openNotes}>
                                 <Icon id="notes" white right />
-                                <span>{slide.notes}</span>
+                                <span>{slide.notes.slice(0, 80)}{slide.notes.length > 80 ? "..." : ""}</span>
                             </button>
                         {/if}
 
