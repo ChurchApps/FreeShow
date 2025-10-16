@@ -320,6 +320,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
+        if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
+
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
             goToNextProjectItem(e.key)
 
@@ -573,6 +575,8 @@ export function previousSlide(e: any, customOutputId?: string) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
+                if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
+
                 if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
                     goToPreviousProjectItem(e.key)
 
