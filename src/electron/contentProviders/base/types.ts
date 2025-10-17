@@ -105,4 +105,5 @@ export interface ContentFile {
     fileSize: number
     type: "image" | "video"
     name?: string
+    decryptionKey?: string
 }

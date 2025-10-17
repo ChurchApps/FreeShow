@@ -219,13 +219,17 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                         const isVideo = item.mediaType?.toLowerCase() === 'video' || url.includes('.m3u8') || url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.mov')
 
-                        return {
+                        const file: ContentFile = {
                             url: url,
                             thumbnail: thumbnail,
                             fileSize: item.fileSize || 0,
                             type: isVideo ? "video" : "image",
                             name: item.title || item.name || item.fileName || ""
                         }
+
+                        if (item.isLicensed) file.decryptionKey = "123456789"
+
+                        return file
                     }).filter((file: ContentFile) => file.url) // Only include items with valid URLs
 
                     resolve(files)
