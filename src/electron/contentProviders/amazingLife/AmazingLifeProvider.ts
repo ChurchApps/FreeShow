@@ -19,14 +19,9 @@ export interface AmazingLifeAuthData {
     scope: AmazingLifeScopes
 }
 
-/**
- * Amazing Life provider that acts as the sole interface to Amazing Life functionality.
- *
- * This is the ONLY class that should interface with Amazing Life services.
- * All external code should use this provider through ContentProviderRegistry.
- */
 export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, AmazingLifeAuthData> {
     hasContentLibrary = true
+    private static contentLibraryCache: ContentLibraryCategory[] | null = null
 
     constructor() {
         super({
@@ -64,11 +59,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     disconnect(scope: AmazingLifeScopes = "services"): void {
         console.log(`Disconnecting from Amazing Life with scope: ${scope}`)
         this.access = null
+        AmazingLifeProvider.contentLibraryCache = null
     }
 
     async apiRequest(data: any): Promise<any> {
-        // TODO: Implement Amazing Life API requests
-        console.log(`Making Amazing Life API request:`, data)
+        console.log(data);
         return null
     }
 
@@ -80,7 +75,6 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
             return
         }
 
-        // TODO: Implement Amazing Life service loading when API endpoint is available
         console.log(`Loading services from Amazing Life${dataPath ? ` at ${dataPath}` : ""}`)
     }
 
@@ -88,13 +82,41 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         const connected = await this.connect(scope)
         if (!connected) return
 
-        // Load services from Amazing Life
         await this.loadServices(data?.dataPath)
     }
 
+    private fetchProductLibraries(productId: string, productTitle: string, productImage: string, headers: any): Promise<ContentLibraryCategory | null> {
+        return new Promise((resolve) => {
+            httpsRequest("https://api-prod.amazingkids.app", `/prod/curriculum/modules/products/${productId}/libraries`, "GET", headers, {}, (err, data) => {
+                if (err) {
+                    console.error(`Failed to fetch libraries for product ${productId}:`, err)
+                    resolve(null)
+                    return
+                }
+
+                const libraries = Array.isArray(data) ? data : (data.data || data.libraries || [])
+                const productCategory: ContentLibraryCategory = {
+                    name: productTitle,
+                    thumbnail: productImage,
+                    children: libraries.map((library: any) => ({
+                        name: library.title || library.name,
+                        thumbnail: library.image,
+                        key: library.libraryId || library.id
+                    }))
+                }
+
+                resolve(productCategory)
+            })
+        })
+    }
 
     // Modules -> Products -> Libraries
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
+        // Return cached data if available
+        if (AmazingLifeProvider.contentLibraryCache) {
+            console.log("Returning cached Amazing Life content library")
+            return AmazingLifeProvider.contentLibraryCache
+        }
         if (!this.access) {
             console.error("Not authenticated with Amazing Life")
             return []
@@ -117,8 +139,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                     const modules = data.data || []
                     console.log(`Found ${modules.length} modules`)
 
-                    const categories: ContentLibraryCategory[] = []
-                    for (const module of modules) {
+                    const modulePromises = modules.map(async (module: any) => {
                         const moduleCategory: ContentLibraryCategory = {
                             name: module.title,
                             thumbnail: module.image,
@@ -127,34 +148,22 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                         // Fetch libraries for each product in the module
                         if (module.products && Array.isArray(module.products)) {
-                            for (const product of module.products) {
-                                await new Promise<void>((resolveProduct) => {
-                                    httpsRequest("https://api-prod.amazingkids.app", `/prod/curriculum/modules/products/${product.productId}/libraries`, "GET", headers, {}, (libErr, libData) => {
-                                        if (libErr) {
-                                            console.error(`Failed to fetch libraries for product ${product.productId}:`, libErr)
-                                            resolveProduct() // Continue even if one product fails
-                                            return
-                                        }
-                                        const libraries = Array.isArray(libData) ? libData : (libData.data || libData.libraries || [])
-                                        const productCategory: ContentLibraryCategory = {
-                                            name: product.title,
-                                            thumbnail: product.image,
-                                            children: libraries.map((library: any) => ({
-                                                name: library.title || library.name,
-                                                thumbnail: library.image,
-                                                key: library.libraryId || library.id
-                                            }))
-                                        }
+                            const productPromises = module.products.map((product: any) =>
+                                this.fetchProductLibraries(product.productId, product.title, product.image, headers)
+                            )
 
-                                        moduleCategory.children!.push(productCategory)
-                                        resolveProduct()
-                                    }
-                                    )
-                                })
-                            }
+                            const productResults = await Promise.all(productPromises)
+                            moduleCategory.children = productResults.filter((p): p is ContentLibraryCategory => p !== null)
                         }
-                        categories.push(moduleCategory)
-                    }
+
+                        return moduleCategory
+                    })
+
+                    const categories = await Promise.all(modulePromises)
+
+                    // Cache the results for future requests
+                    AmazingLifeProvider.contentLibraryCache = categories
+
                     resolve(categories)
                 } catch (error) {
                     console.error("Failed to convert Amazing Life content library:", error)
@@ -164,9 +173,6 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         })
     }
 
-    /**
-     * Retrieves content files for a given library
-     */
     async getContent(libraryId: string): Promise<ContentFile[]> {
         if (!this.access) {
             console.error("Not authenticated with Amazing Life")
@@ -196,7 +202,9 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                         let thumbnail = ""
 
                         if (item.mediaType?.toLowerCase() === 'video' && item.video) {
-                            url = item.video.muxStreamingUrl || item.video.url || ""
+                            // Use MP4 download URL instead of .m3u8 streaming URL
+                            if (item.video.muxPlaybackId) url = `https://stream.mux.com/${item.video.muxPlaybackId}/capped-1080p.mp4`
+                            else url = item.video.muxStreamingUrl || ""
                             thumbnail = item.video.thumbnailUrl || item.thumbnail?.src || ""
                         } else if (item.mediaType?.toLowerCase() === 'image' || item.image) {
                             url = item.image?.src || item.url || ""
@@ -231,16 +239,13 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {
-        // TODO: Implement Amazing Life auth callback handling
     }
 
     protected async refreshToken(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // TODO: Implement Amazing Life token refresh
         return null
     }
 
     protected async authenticate(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // TODO: Implement Amazing Life authentication
         return null
     }
 }
