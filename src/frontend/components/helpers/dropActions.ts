@@ -33,7 +33,7 @@ import { newToast } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { getActionTriggerId } from "../actions/actions"
-import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
+import { getShortBibleName, getScriptureSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -739,7 +739,7 @@ const slideDrop = {
         const bibles = drag.data[0]?.bibles
         if (!bibles?.[0]) return
 
-        let newSlides: any[] = getSlides(drag.data[0])
+        let newSlides: any[] = getScriptureSlides({ biblesContent: bibles, selectedVerses: drag.data[0]?.sorted })
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         newSlides = newSlides.map((items) => {
             const referenceText = getReferenceText(bibles, drag.data[0]?.sorted, items)
@@ -963,7 +963,7 @@ function createScriptureShow(drag, drop) {
     const slides: any = {}
     const layouts: any[] = []
 
-    const newSlides = getSlides(drag.data[0])
+    const newSlides = getScriptureSlides({ biblesContent: bibles, selectedVerses: drag.data[0]?.sorted })
     newSlides.forEach((items) => {
         const id = uid()
         const referenceText = getReferenceText(bibles, drag.data[0]?.sorted, items)

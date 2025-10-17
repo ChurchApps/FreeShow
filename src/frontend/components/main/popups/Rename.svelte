@@ -31,7 +31,7 @@
         } else if ($selected.id === "bible_book") {
             const scriptureId = $drawerTabsData.scripture?.activeSubTab || ""
             const activeBible = $scripturesCache[scriptureId]
-            const bookIndex = $selected.data[0]?.index
+            const bookIndex = $selected.data[0]?.index - 1
             const book = activeBible.books?.[bookIndex] || {}
             groupName = book.customName || book.name || ""
         } else if ($selected.data?.[0]?.name) {
@@ -157,7 +157,7 @@
         },
         bible_book: () => {
             const scriptureId = $drawerTabsData.scripture?.activeSubTab || ""
-            const bookIndex = $selected.data[0]?.index
+            const bookIndex = $selected.data[0]?.index - 1
             scripturesCache.update((a) => {
                 if (!a[scriptureId]?.books?.[bookIndex]) return a
 

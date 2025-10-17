@@ -120,6 +120,7 @@
         "follow-redirects": "^1.15.11",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#a334962",
+        "json-bible": "file:../../ChurchApps/json-bible",
         "jzz": "^1.9.5",
         "libreoffice-convert": "^1.6.1",
         "mdb-reader": "^1.2.1",

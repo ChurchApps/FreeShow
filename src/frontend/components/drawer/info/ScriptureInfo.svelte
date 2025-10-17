@@ -43,9 +43,9 @@
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { getShortBibleName, getSlides, getSplittedVerses, getVersePartLetter, joinRange, textKeys } from "../bible/scripture"
+    import { getShortBibleName, getScriptureSlides, getSplittedVerses, getVersePartLetter, joinRange, textKeys } from "../bible/scripture"
 
-    export let bibles: Bible[]
+    let bibles: Bible[] = []
 
     // WIP sorting does not work with splitted verses
     $: sorted = (bibles[0]?.activeVerses || []).sort((a, b) => Number(a) - Number(b))
@@ -76,7 +76,7 @@
     }
 
     $: {
-        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted }, true)
+        if (sorted.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent: bibles as any, selectedVerses: sorted as any }, true)
         else slides = [[]]
     }
 
@@ -102,7 +102,7 @@
         if (!bibles[0]) return { show: null }
 
         let slides: any[][] = [[]]
-        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted })
+        if (sorted.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent: bibles as any, selectedVerses: sorted as any })
 
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
@@ -257,7 +257,7 @@
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             let verseIndex = lowestIndex - i
-            slides.push(getSlides({ bibles, sorted: [verseIndex] }, true, true)[0])
+            slides.push(getScriptureSlides({ biblesContent: bibles as any, selectedVerses: [verseIndex] }, true, true)[0])
         }
 
         return slides
@@ -268,7 +268,7 @@
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             let verseIndex = highestIndex + i
-            slides.push(getSlides({ bibles, sorted: [verseIndex] }, true, true)[0])
+            slides.push(getScriptureSlides({ biblesContent: bibles as any, selectedVerses: [verseIndex] }, true, true)[0])
         }
 
         return slides

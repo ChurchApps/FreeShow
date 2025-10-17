@@ -1,20 +1,16 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, scriptures } from "../../../stores"
-    import { translateText } from "../../../utils/language"
     import { getShortBibleName } from "../../drawer/bible/scripture"
     import { keysToID } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     $: scripturesList = keysToID($scriptures).filter((a) => !a.collection)
     $: localScripturesList = scripturesList.filter((a) => !a.api)
     $: apiScripturesList = scripturesList.filter((a) => a.api)
-
-    let selectedMode = "api"
-    $: if (localScripturesList.length && !apiScripturesList.length) selectedMode = "local"
 
     let selectedScriptures: string[] = []
 
@@ -58,21 +54,16 @@
     }
 </script>
 
-{#if localScripturesList.length && apiScripturesList.length}
-    <div class="tabs">
-        <MaterialButton disabled={!!selectedScriptures.length} style="flex: 1;" isActive={selectedMode === "api"} on:click={() => (selectedMode = "api")}>
-            <Icon id="scripture_alt" white />
-            <p>API</p>
-        </MaterialButton>
-        <MaterialButton disabled={!!selectedScriptures.length} style="flex: 1;" isActive={selectedMode === "local"} on:click={() => (selectedMode = "local")}>
-            <Icon id="scripture" white />
-            <p>{translateText("cloud.local")}</p>
-        </MaterialButton>
-    </div>
-{/if}
-
 <div class="list">
-    {#each selectedMode === "local" ? localScripturesList : apiScripturesList as scripture}
+    {#each localScripturesList as scripture}
+        <div class="item">
+            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={(e) => toggle(e.detail, scripture.id)} />
+        </div>
+    {/each}
+
+    <HRule title="API" />
+
+    {#each apiScripturesList as scripture}
         <div class="item">
             <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={(e) => toggle(e.detail, scripture.id)} />
         </div>
@@ -85,25 +76,6 @@
 </MaterialButton>
 
 <style>
-    .tabs {
-        display: flex;
-        position: relative;
-        background-color: var(--primary-darkest);
-        align-items: center;
-
-        margin-bottom: 10px;
-    }
-
-    .tabs :global(button) {
-        border-radius: 0;
-        border: none !important;
-        border-bottom: 1px solid var(--primary-lighter) !important;
-        padding: 8px;
-    }
-    .tabs :global(button.isActive) {
-        border-bottom: 1px solid var(--secondary) !important;
-    }
-
     .list {
         display: flex;
         flex-direction: column;

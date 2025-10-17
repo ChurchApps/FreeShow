@@ -1,9 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { Main } from "../../types/IPC/Main"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
-import { fetchBible, loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
@@ -12,10 +10,8 @@ import { getLayoutRef } from "../components/helpers/show"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
-import { destroyMain, receiveMain } from "../IPC/main"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
-import { waitUntilValueIsDefined } from "./common"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
@@ -157,77 +153,79 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        const { id, bookKey, chapterKey, bookIndex, chapterIndex } = msg.data || {}
-        if (!id) return
+        console.log(msg)
 
-        const scriptureEntry: any = get(scriptures)[id]
-        const isApi = scriptureEntry?.api === true
+        // const { id, bookKey, chapterKey, bookIndex, chapterIndex } = msg.data || {}
+        // if (!id) return
 
-        if (isApi) {
-            const apiId = scriptureEntry?.id || id
+        // const scriptureEntry: any = get(scriptures)[id]
+        // const isApi = scriptureEntry?.api === true
 
-            if (bookKey && !chapterKey) {
-                // Fetch chapters only (mirror drawer behavior: some APIs include a 0 entry)
-                let chapters: any[] = await fetchBible("chapters", apiId, {
-                    bookId: bookKey,
-                    versesList: [],
-                    chapterId: `${bookKey}.1`
-                })
-                if (chapters?.[0] && Number.parseInt(chapters[0].number, 10) === 0) {
-                    chapters = chapters.slice(1)
-                }
-                const mapped = (chapters || []).map((c: any, i: number) => ({
-                    number: Number.isFinite(Number.parseInt(c.number, 10)) ? Number.parseInt(c.number, 10) : i + 1,
-                    keyName: c.keyName,
-                }))
-                msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
-                return msg
-            }
+        // if (isApi) {
+        //     const apiId = scriptureEntry?.id || id
 
-            if (bookKey && chapterKey) {
-                // Fetch verses only
-                const versesMeta: any[] = await fetchBible("verses", apiId, {
-                    bookId: bookKey,
-                    chapterId: chapterKey,
-                    versesList: []
-                })
-                const versesTextResp: any[] = await fetchBible("versesText", apiId, {
-                    bookId: bookKey,
-                    chapterId: chapterKey,
-                    versesList: versesMeta
-                })
-                // Build the verses consistent with drawer's convertVerses (index-based mapping)
-                const mappedVerses = (versesTextResp || []).map((d: any, i: number) => ({
-                    number: (versesMeta?.[i]?.number) || i + 1,
-                    text: d?.content || d?.text || "",
-                }))
-                msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
-                return msg
-            }
+        //     if (bookKey && !chapterKey) {
+        //         // Fetch chapters only (mirror drawer behavior: some APIs include a 0 entry)
+        //         let chapters: any[] = await fetchBible("chapters", apiId, {
+        //             bookId: bookKey,
+        //             versesList: [],
+        //             chapterId: `${bookKey}.1`
+        //         })
+        //         if (chapters?.[0] && Number.parseInt(chapters[0].number, 10) === 0) {
+        //             chapters = chapters.slice(1)
+        //         }
+        //         const mapped = (chapters || []).map((c: any, i: number) => ({
+        //             number: Number.isFinite(Number.parseInt(c.number, 10)) ? Number.parseInt(c.number, 10) : i + 1,
+        //             keyName: c.keyName,
+        //         }))
+        //         msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
+        //         return msg
+        //     }
 
-            // Initial: prefer cached books2 from scriptures store; fallback to fetch
-            const objectId = Object.entries(get(scriptures)).find(([_id, a]: any) => a?.id === id)?.[0] || id
-            const cachedBooks: any[] = (get(scriptures) as any)[objectId]?.books2 || []
-            const books: any[] = cachedBooks.length
-                ? cachedBooks
-                : await fetchBible("books", apiId, { versesList: [], bookId: "GEN", chapterId: "GEN.1" })
-            const mappedBooks = (books || []).map((b: any, i: number) => ({
-                name: b.name,
-                number: b.number || i + 1,
-                keyName: b.keyName,
-                chapters: [],
-            }))
-            msg.data.bible = { books: mappedBooks }
-            return msg
-        }
+        //     if (bookKey && chapterKey) {
+        //         // Fetch verses only
+        //         const versesMeta: any[] = await fetchBible("verses", apiId, {
+        //             bookId: bookKey,
+        //             chapterId: chapterKey,
+        //             versesList: []
+        //         })
+        //         const versesTextResp: any[] = await fetchBible("versesText", apiId, {
+        //             bookId: bookKey,
+        //             chapterId: chapterKey,
+        //             versesList: versesMeta
+        //         })
+        //         // Build the verses consistent with drawer's convertVerses (index-based mapping)
+        //         const mappedVerses = (versesTextResp || []).map((d: any, i: number) => ({
+        //             number: (versesMeta?.[i]?.number) || i + 1,
+        //             text: d?.content || d?.text || "",
+        //         }))
+        //         msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
+        //         return msg
+        //     }
 
-        const listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
-        loadBible(id, 0, clone(get(scriptures)[id] || {}))
-        const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
-        destroyMain(listenerId)
+        //     // Initial: prefer cached books2 from scriptures store; fallback to fetch
+        //     const objectId = Object.entries(get(scriptures)).find(([_id, a]: any) => a?.id === id)?.[0] || id
+        //     const cachedBooks: any[] = (get(scriptures) as any)[objectId]?.books2 || []
+        //     const books: any[] = cachedBooks.length
+        //         ? cachedBooks
+        //         : await fetchBible("books", apiId, { versesList: [], bookId: "GEN", chapterId: "GEN.1" })
+        //     const mappedBooks = (books || []).map((b: any, i: number) => ({
+        //         name: b.name,
+        //         number: b.number || i + 1,
+        //         keyName: b.keyName,
+        //         chapters: [],
+        //     }))
+        //     msg.data.bible = { books: mappedBooks }
+        //     return msg
+        // }
 
-        msg.data.bible = bible
-        return msg
+        // const listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
+        // loadBible(id, 0, clone(get(scriptures)[id] || {}))
+        // const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
+        // destroyMain(listenerId)
+
+        // msg.data.bible = bible
+        // return msg
     }
 }
 
