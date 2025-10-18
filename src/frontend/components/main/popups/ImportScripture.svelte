@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { ApiBiblesList } from "json-bible/lib/api"
+    import type { CustomBibleListContent } from "json-bible/lib/api/ApiBibleTypes"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
@@ -15,25 +17,9 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import { ApiBiblesList } from "json-bible/lib/api"
 
-    // CustomBibleListContent
-    type ChurchAppsApiBible = {
-        id: string // not needed
-        abbreviation: string
-        name: string
-        nameLocal: string
-        description: string | null
-        source: string // "api.bible"
-        sourceKey: string // api bible id
-        language: string // "eng"
-        copyright: string
-        attributionRequired: boolean
-        attributionString?: string
-    }
-
-    let bibles: ChurchAppsApiBible[] = []
-    let recommended: ChurchAppsApiBible[] = []
+    let bibles: CustomBibleListContent[] = []
+    let recommended: CustomBibleListContent[] = []
     let error: null | string = null
 
     $: if (importType === "api") loadApiBibles()
@@ -73,12 +59,12 @@
         }
     }
 
-    let searchedBibles: ChurchAppsApiBible[] = []
-    let searchedRecommendedBibles: ChurchAppsApiBible[] = []
+    let searchedBibles: CustomBibleListContent[] = []
+    let searchedRecommendedBibles: CustomBibleListContent[] = []
     $: searchedBibles = bibles
     $: searchedRecommendedBibles = recommended.map((a) => ({ ...a, name: a.nameLocal || a.name }))
 
-    function toggleScripture(bible: ChurchAppsApiBible) {
+    function toggleScripture(bible: CustomBibleListContent) {
         scriptures.update((a) => {
             const id = bible.sourceKey
             const existingId = Object.entries(a).find(([_key, value]: any) => value.id === id)?.[0]

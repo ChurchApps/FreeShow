@@ -5,7 +5,7 @@ import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, formatToFileName } from "../components/helpers/show"
 import { translateText } from "../utils/language"
-import type { Bible } from "./../../types/Bible"
+import type { Bible, Book, Chapter, Verse } from "json-bible/lib/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, groups, scriptures, scripturesCache } from "./../stores"
 import { setActiveScripture } from "./bible"
@@ -207,7 +207,7 @@ function XMLtoObject(xml: string) {
 
 export function convertOpenSongBible(data: any[]) {
     data.forEach((bible) => {
-        const obj: Bible = XMLtoBible(bible.content)
+        const obj = XMLtoBible(bible.content)
         obj.name = bible.name || ""
         obj.name = formatToFileName(obj.name)
 
@@ -227,23 +227,25 @@ export function convertOpenSongBible(data: any[]) {
     })
 }
 
-function XMLtoBible(xml: string): Bible {
+function XMLtoBible(xml: string) {
     const parser = new DOMParser()
     // remove first line (standalone attribute): <?xml version="1.0"?>
     xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
     const xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 
     const booksObj = getChildren(xmlDoc, "b")
-    const books: any[] = []
+    const books: Book[] = []
 
         ;[...booksObj].forEach((book: any, i: number) => {
             let length = 0
             const name = book.getAttribute("n")
             const number = i + 1
-            const chapters: any[] = []
+            const chapters: Chapter[] = []
+
                 ;[...getChildren(book, "c")].forEach((chapter: any) => {
                     const chapterNumber = chapter.getAttribute("n")
-                    const verses: any[] = []
+                    const verses: Verse[] = []
+
                         ;[...getChildren(chapter, "v")].forEach((verse: any) => {
                             const text = verse.innerHTML
                                 .toString()
@@ -252,12 +254,14 @@ function XMLtoBible(xml: string): Bible {
                             length += text.length
                             if (text.length) verses.push({ number: verse.getAttribute("n"), text })
                         })
+
                     chapters.push({ number: chapterNumber, verses })
                 })
+
             if (length) books.push({ name, number, chapters })
         })
 
-    return { name: "", metadata: { copyright: "" }, books }
+    return { name: "", metadata: { copyright: "" }, books } as Bible
 }
 
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)

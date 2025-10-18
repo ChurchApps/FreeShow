@@ -1,36 +1,15 @@
 <script lang="ts">
     import { uid } from "uid"
-    import type { Bible } from "../../../../types/Scripture"
+    import type { BibleContent } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { createCategory } from "../../../converters/importHelpers"
-    import {
-        activeDrawerTab,
-        activeEdit,
-        activePage,
-        activePopup,
-        activeProject,
-        activeTriggerFunction,
-        drawerTabsData,
-        media,
-        outLocked,
-        outputs,
-        playScripture,
-        popupData,
-        scriptureHistory,
-        scriptures,
-        scriptureSettings,
-        styles,
-        templates
-    } from "../../../stores"
-    import { trackScriptureUsage } from "../../../utils/analytics"
-    import { customActionActivation } from "../../actions/actions"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeScripture, activeTriggerFunction, drawerTabsData, outputs, popupData, scriptures, scriptureSettings, styles, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getMediaStyle } from "../../helpers/media"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { getActiveOutputs } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -43,9 +22,53 @@
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { getShortBibleName, getScriptureSlides, getSplittedVerses, getVersePartLetter, joinRange, textKeys } from "../bible/scripture"
+    import { getScriptureSlides, getShortBibleName, joinRange, loadJsonBible, textKeys } from "../bible/scripture"
 
-    let bibles: Bible[] = []
+    // WIP temp (similar to playScripture)
+    let bibles: BibleContent[] = []
+    $: if ($activeScripture.reference) loadScriptureData()
+    async function loadScriptureData() {
+        const tabId = $drawerTabsData.scripture?.activeSubTab || ""
+        const selectedScriptureData = $scriptures[tabId]
+        if (!selectedScriptureData) return
+
+        const active = $activeScripture.reference
+        const selectedVerses = active?.verses?.map(Number).sort((a, b) => a - b) || []
+        if (selectedVerses.length === 0) return
+
+        const currentScriptures = selectedScriptureData.collection?.versions || [tabId]
+
+        bibles = await Promise.all(
+            currentScriptures.map(async (id) => {
+                const BibleData = await loadJsonBible(id)
+                const Book = await BibleData.getBook(active?.book)
+
+                const scriptureData = $scriptures[id]
+                const version = scriptureData?.customName || scriptureData?.name || ""
+                const attributionString = scriptureData?.attributionString || ""
+                const attributionRequired = !!scriptureData?.attributionRequired
+
+                const bookName = Book.name
+                const selectedChapter = Number(active?.chapters[0])
+                const Chapter = await Book.getChapter(selectedChapter)
+
+                // is this needed??
+                const metadata = scriptureData?.metadata || {}
+                if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
+
+                // WIP custom verse number offset per scripture
+
+                let versesText: { [key: string]: string } = {}
+                selectedVerses.forEach((v) => {
+                    versesText[v] = Chapter.getVerse(v).getText()
+                })
+
+                // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
+
+                return { id, version, metadata, book: bookName, bookId: active?.book || "", chapter: selectedChapter, verses: versesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
+            })
+        )
+    }
 
     // WIP sorting does not work with splitted verses
     $: sorted = (bibles[0]?.activeVerses || []).sort((a, b) => Number(a) - Number(b))
@@ -156,7 +179,7 @@
             if (key.startsWith("@")) return
             if (typeof bibles[0].metadata?.[key] === "string") show.meta[key] = bibles[0].metadata[key]
         })
-        if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
+        // if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
 
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
         show.name = checkName(bibleShowName)
@@ -171,7 +194,7 @@
                 collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "",
                 translations: bibles.length,
                 version: versions,
-                api: bibles[0].api,
+                api: false, // bibles[0].api,
                 book: bibles[0].bookId ?? bibles[0].book,
                 chapter: bibles[0].chapter,
                 verses: bibles[0].activeVerses,
@@ -196,105 +219,6 @@
         else if (id === "verseNumbers") verseMenuOpened = value
         else if (id === "redJesus") redMenuOpened = value
         else if (id === "showVerse" || id === "showVersion") referenceMenuOpened = showVersion || $scriptureSettings.showVerse ? (value ? true : referenceMenuOpened) : false
-    }
-
-    function showVerse() {
-        if ($outLocked || !bibles[0] || !sorted[0]) return
-
-        let splitted = sorted[0].toString().split("_")
-        const id = splitted[0]
-        const subverse = Number(splitted[1] || 0)
-        const value = id + (subverse ? getVersePartLetter(subverse) : "") + " "
-
-        // add to scripture history
-        scriptureHistory.update((a) => {
-            let newItem = {
-                id: bibles[0].id,
-                book: bibles[0].bookId,
-                chapter: Number(bibles[0].chapter) - 1,
-                verse: sorted[0],
-                reference: `${bibles[0].book} ${bibles[0].chapter}:${value}`,
-                text: getSplittedVerses(bibles[0].verses)[sorted[0]] || bibles[0].verses[sorted[0]] || ""
-            }
-            // WIP multiple verses, play from another version
-
-            let existingIndex = a.findIndex((a) => JSON.stringify(a) === JSON.stringify(newItem))
-            if (existingIndex > -1) a.splice(existingIndex, 1)
-            a.push(newItem)
-
-            return a
-        })
-
-        let outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
-        if (!outputIsScripture) customActionActivation("scripture_start")
-
-        let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: bibles.length })
-
-        // track
-        let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`
-        bibles.forEach((translation) => {
-            let name = translation.version || ""
-            let apiId = translation.api ? $scriptures[translation.id!]?.id || translation.id || "" : null
-            if (name || apiId) trackScriptureUsage(name, apiId, reference)
-        })
-
-        // play template background
-        if (!templateBackground) return
-
-        // get style (for media "fit")
-        let currentOutput = $outputs[getActiveOutputs()[0]]
-        let currentStyle = $styles[currentOutput?.style || ""] || {}
-
-        let mediaStyle = getMediaStyle($media[templateBackground], currentStyle)
-        setOutput("background", { path: templateBackground, loop: true, muted: true, ...mediaStyle })
-    }
-
-    const includeCount = 3
-    function getPreviousSlides() {
-        let lowestIndex = getVerseId(sorted.sort((a, b) => getVerseId(a) - getVerseId(b))[0])
-
-        let slides: any[] = []
-        for (let i = 1; i <= includeCount; i++) {
-            let verseIndex = lowestIndex - i
-            slides.push(getScriptureSlides({ biblesContent: bibles as any, selectedVerses: [verseIndex] }, true, true)[0])
-        }
-
-        return slides
-    }
-    function getNextSlides() {
-        let highestIndex = getVerseId(sorted.sort((a, b) => getVerseId(b) - getVerseId(a))[0])
-
-        let slides: any[] = []
-        for (let i = 1; i <= includeCount; i++) {
-            let verseIndex = highestIndex + i
-            slides.push(getScriptureSlides({ biblesContent: bibles as any, selectedVerses: [verseIndex] }, true, true)[0])
-        }
-
-        return slides
-    }
-
-    function getVerseId(verseRef: string) {
-        return Number(verseRef.toString().split("_")[0])
-    }
-
-    $: if ($playScripture) {
-        showVerse()
-        playScripture.set(false)
-    }
-
-    // show on enter
-    function keydown(e: KeyboardEvent) {
-        if (e.key !== "Enter") return
-        if (e.target?.closest(".search")) {
-            showVerse()
-            return
-        }
-
-        if (!e.ctrlKey && !e.metaKey) return
-        if (e.target?.closest("input") || e.target?.closest(".edit")) return
-
-        showVerse()
     }
 
     // custom text
@@ -363,8 +287,6 @@
     let redMenuOpened = false
     let referenceMenuOpened = false
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 <div class="scroll split">
     <Zoomed style="width: 100%;" {background}>

@@ -1,9 +1,11 @@
 import JsonBible from "json-bible"
 import { ApiBible as JsonBibleApi } from "json-bible/lib/api"
+import type { CustomBibleListContent } from "json-bible/lib/api/ApiBibleTypes"
+import { Book } from "json-bible/lib/Bible"
 import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
+import type { BibleContent } from "../../../../types/Scripture"
 import type { Item } from "../../../../types/Show"
-import type { BibleCategories } from "../../../../types/Tabs"
 import { requestMain } from "../../../IPC/main"
 import { activeScripture, dataPath, drawerTabsData, media, notFound, outLocked, outputs, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { getKey } from "../../../values/keys"
@@ -11,84 +13,65 @@ import { customActionActivation } from "../../actions/actions"
 import { clone, removeDuplicates } from "../../helpers/array"
 import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
-import { Book } from "json-bible/lib/Bible"
 
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
 export async function loadJsonBible(id: string) {
-    const bibleCategory = get(scriptures)[id]
-    const isApi = bibleCategory?.api
+    const scriptureData = get(scriptures)[id]
+    const isApi = !!scriptureData?.api
 
     if (isApi) {
         const key = getKey("bibleapi")
-        const apiId = bibleCategory?.id || id
+        const apiId = scriptureData?.id || id
         return await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
     }
 
-    const bibleContent = await loadBibleNew(id)
-    if (!bibleContent) throw new Error("Local Bible not found")
+    if (scriptureData?.collection) throw new Error("Collections must load one at a time")
 
-    return await JsonBible(bibleContent)
+    const localBible = await getLocalBible(id)
+    if (!localBible) throw new Error("Local Bible not found")
+
+    // if (scriptureData.customName) bibleContent.name = scriptureData.customName
+    localBible.books.map(a => ({ ...a, name: (a as any).customName || a.name }))
+
+    return await JsonBible(localBible)
 }
 
-export async function loadBibleNew(scriptureId: string) {
-    if (!get(scriptures)[scriptureId]) scriptureId = Object.entries(get(scriptures)).find(([_id, a]) => a.id === scriptureId)?.[0] || ""
+async function getLocalBible(id: string) {
+    // if (!get(scriptures)[id]) id = Object.entries(get(scriptures)).find(([_id, a]) => a.id === id)?.[0] || ""
 
-    const scriptureData = get(scriptures)[scriptureId]
+    if (get(scripturesCache)[id]) return get(scripturesCache)[id]
+
+    const scriptureData = get(scriptures)[id]
     if (!scriptureData) return null
 
-    const localBible = await getLocalBible(scriptureId, scriptureData)
-    if (!localBible) return null
+    // id: scriptureData.id || id
+    const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id, path: get(dataPath) })
+    const localBible = localBibleResponse.content?.[1]
 
-    const customName = scriptureData.customName || scriptureData.name
-    const metadataLocal = localBible.metadata || {}
-    if (localBible.copyright) metadataLocal.copyright = localBible.copyright
-
-    return {
-        ...localBible,
-        api: false,
-        version: customName,
-        metadata: metadataLocal,
-        id: scriptureId,
-        books: (localBible.books || []).map(a => ({ ...a, name: a.customName || a.name }))
-    }
-}
-
-async function getLocalBible(scriptureId: string, scriptureData: BibleCategories) {
-    if (get(scripturesCache)[scriptureId]) return get(scripturesCache)[scriptureId]
-
-    const localBible = await requestMain(Main.BIBLE, { name: scriptureData.name, id: scriptureData.id || scriptureId, data: { index: 0 }, path: get(dataPath) })
-    const content = localBible.content?.[1] || null
-
-    if (localBible.error === "not_found" || !content) {
+    if (localBibleResponse.error === "not_found" || !localBible) {
         notFound.update((a) => {
-            a.bible.push({ id: scriptureId })
+            a.bible.push(id)
             return a
         })
         return null
     }
 
+    // update
+    const metadata = localBible.metadata || {}
+    if ((localBible as any).copyright) metadata.copyright = (localBible as any).copyright
+    if (Object.keys(metadata).length) localBible.metadata = metadata
+    if (!localBible.name) localBible.name = scriptureData.name || ""
+
     scripturesCache.update((a) => {
-        a[scriptureId] = content
+        a[id] = localBible
         return a
     })
 
-    return content
+    return localBible
 }
 
 // OUTPUT
-
-type BibleContentType = {
-    id: string
-    version: string
-    book: string
-    bookId: string
-    chapter: number
-    verses: { [key: string]: string }
-    activeVerses: number[]
-    attributionString: string
-    attributionRequired: boolean
-}
 
 export async function playScripture() {
     if (get(outLocked)) return
@@ -127,7 +110,7 @@ export async function playScripture() {
 
         // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-        return { id, version, book: bookName, bookId: active?.book || "", chapter: selectedChapter, verses: versesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContentType
+        return { id, version, metadata: {}, book: bookName, bookId: active?.book || "", chapter: selectedChapter, verses: versesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
     }))
 
     const slides = getScriptureSlides({ biblesContent, selectedVerses }, true)
@@ -215,6 +198,11 @@ export async function playScripture() {
     }
 }
 
+export function outputIsScripture(updater = get(outputs)) {
+    const outputId = getActiveOutputs(updater, true, true, true)[0]
+    return updater[outputId]?.out?.slide?.id === "temp"
+}
+
 function getVerseId(verseRef: number | string) {
     return Number(verseRef.toString().split("_")[0])
 }
@@ -279,7 +267,7 @@ export function joinRange(array: (number | string)[]) {
     return range
 }
 
-export function getScriptureSlides({ biblesContent, selectedVerses }: { biblesContent: BibleContentType[], selectedVerses: number[] }, onlyOne = false, disableReference = false) {
+export function getScriptureSlides({ biblesContent, selectedVerses }: { biblesContent: BibleContent[], selectedVerses: number[] }, onlyOne = false, disableReference = false) {
     const slides: Item[][] = [[]]
 
     const template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
@@ -672,7 +660,7 @@ export function getShortBibleName(name: string) {
 
 let usedNames: { [key: string]: string[] } = {}
 export function getShortBookName(key: string, book: Book, i: number) {
-    if ((book as any).abbreviation) return (book as any).abbreviation
+    if (book.abbreviation) return book.abbreviation
     if (book.id?.length === 3) return book.id[0].toUpperCase() + book.id.slice(1, 3).toLowerCase()
 
     const name = book.name
@@ -692,7 +680,20 @@ const bibleData = {
         nameLocal: "Bibel 2011 Bokmål" // med gammeltestamentlige apokryfer
     }
 }
-// ChurchAppsApiBible
-export function customBibleData(data: any) {
-    return { ...data, ...(bibleData[data.sourceKey] || {}) }
+export function customBibleData(data: CustomBibleListContent) {
+    return { ...data, ...(bibleData[data.sourceKey] || {}) } as CustomBibleListContent
+}
+
+export function swapPreviewBible(collectionId: string) {
+    const collection = get(scriptures)[collectionId]?.collection
+    const versions = collection?.versions || []
+    const currentPreviewIndex = collection?.previewIndex || 0
+
+    if (versions.length <= 1) return
+
+    scriptures.update((a) => {
+        const newIndex = (currentPreviewIndex + 1) % versions.length
+        a[collectionId].collection!.previewIndex = newIndex
+        return a
+    })
 }

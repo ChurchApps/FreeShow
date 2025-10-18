@@ -33,7 +33,7 @@
             const activeBible = $scripturesCache[scriptureId]
             const bookIndex = $selected.data[0]?.index - 1
             const book = activeBible.books?.[bookIndex] || {}
-            groupName = book.customName || book.name || ""
+            groupName = (book as any).customName || book.name || ""
         } else if ($selected.data?.[0]?.name) {
             groupName = $selected.data[0].name
         }
@@ -158,7 +158,7 @@
         bible_book: () => {
             const scriptureId = $drawerTabsData.scripture?.activeSubTab || ""
             const bookIndex = $selected.data[0]?.index - 1
-            scripturesCache.update((a) => {
+            scripturesCache.update((a: any) => {
                 if (!a[scriptureId]?.books?.[bookIndex]) return a
 
                 a[scriptureId].books[bookIndex].customName = groupName

@@ -1,10 +1,10 @@
 // ----- FreeShow -----
 // Here are all the global app variables
 
+import type { Bible } from "json-bible/lib/Bible"
 import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
-import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
@@ -154,7 +154,7 @@ export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 
 // OTHER
-export const notFound: Writable<any> = writable({ show: [], bible: [] })
+export const notFound: Writable<{ show: string[]; bible: string[] }> = writable({ show: [], bible: [] })
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
@@ -162,7 +162,6 @@ export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
-export const playScripture: Writable<boolean> = writable(false)
 export const openScripture: Writable<any> = writable(null)
 export const deletedShows: Writable<{ name: string; id: string }[]> = writable([])
 export const renamedShows: Writable<{ id: string; name: string; oldName: string }[]> = writable([])

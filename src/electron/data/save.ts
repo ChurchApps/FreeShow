@@ -1,6 +1,6 @@
 import path from "path"
-import type { Bible } from "../../types/Bible"
 import type { Main } from "../../types/IPC/Main"
+import type { Bible } from "json-bible/lib/Bible"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
