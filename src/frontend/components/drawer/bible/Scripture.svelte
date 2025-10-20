@@ -4,7 +4,23 @@
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
-    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
+    import {
+        activeEdit,
+        activeScripture,
+        activeTriggerFunction,
+        customScriptureBooks,
+        notFound,
+        openScripture,
+        outLocked,
+        outputs,
+        resized,
+        scriptureHistory,
+        scriptureHistoryUsed,
+        scriptureMode,
+        scriptures,
+        scriptureSettings,
+        selected
+    } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, rangeSelect } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -193,6 +209,19 @@
         })
     }
 
+    // WIP move this?
+    // select book & chapter when opening bible show reference
+    $: if ($openScripture) setTimeout(openReference, 200)
+    function openReference() {
+        if ($openScripture?.book === undefined) {
+            openScripture.set(null)
+            return
+        }
+
+        if ($openScripture.play) playWhenLoaded = true
+        openBook(Number($openScripture.book) + 1, [$openScripture.chapter], $openScripture.verses)
+    }
+
     /// HISTORY ///
 
     let historyOpened = false
@@ -209,7 +238,7 @@
     function scrollToActive(scrollElem) {
         if (!scrollElem || isSelected) return
 
-        let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
+        let selectedElemTop = scrollElem.querySelector(".isActive")?.offsetTop || 0
 
         // don't scroll if elem is in view
         let visibleElemPos = selectedElemTop - scrollElem.scrollTop
@@ -221,11 +250,11 @@
     /// SELECTION ///
 
     let isSelected = false
-    function getVersesSelection(e: any, verseNumber: string) {
+    function updateVersesSelection(e: any, verseNumber: string) {
         isSelected = true
         setTimeout(() => (isSelected = false), 20)
 
-        const selectedVerses = rangeSelect(e, activeReference.verses.map(Number), Number(verseNumber))
+        const selectedVerses = rangeSelect(e, activeReference.verses, verseNumber)
 
         // drop action (create slide/show from drag&drop)
         selected.set({ id: "scripture", data: [] })
@@ -438,7 +467,7 @@
                             }}
                             data-title={formatBibleText(match.verse.text)}
                         >
-                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.verse.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.verse.text, true)}
                         </span>
                     {/each}
                 </div>
@@ -460,7 +489,7 @@
                             }}
                             data-title={formatBibleText(verse.text)}
                         >
-                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text, true)}
                         </span>
                     {/each}
                 </div>
@@ -478,7 +507,7 @@
                             {#each books as book, i}
                                 {@const id = book.number?.toString()}
                                 {@const color = booksData[i]?.category?.color || ""}
-                                {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[id] || book.name}
+                                {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[i] || book.name}
                                 {@const isActive = activeReference.book?.toString() === id}
 
                                 <span
@@ -504,7 +533,16 @@
                                 {@const id = chapter.number.toString()}
                                 {@const isActive = activeReference.chapters.find((cid) => cid.toString() === id)}
 
-                                <span {id} class:isActive on:click={() => openChapter([id])} role="none">
+                                <span
+                                    {id}
+                                    class:isActive
+                                    on:click={() => openChapter([id])}
+                                    on:contextmenu={() => {
+                                        openChapter([id])
+                                        setTimeout(selectAllVerses)
+                                    }}
+                                    role="none"
+                                >
                                     {chapter.number}
                                 </span>
                             {/each}
@@ -518,25 +556,25 @@
                                 {@const splitted = content.id.toString().split("_")}
                                 {@const id = splitted[0]}
                                 {@const subverse = Number(splitted[1] || 0)}
-                                {@const isActive = activeReference.verses.find((vid) => vid.toString() === id)}
-                                {@const text = formatBibleText(content.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                                {@const isActive = activeReference.verses.find((vid) => vid.toString() === content.id)}
+                                {@const text = formatBibleText(content.text, true)}
 
                                 <!-- custom drag -->
                                 <span
-                                    {id}
+                                    id={content.id.toString()}
                                     class="verse"
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
                                     class:isActive
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
                                     on:click={(e) => {
-                                        openVerse(getVersesSelection(e, id))
+                                        openVerse(updateVersesSelection(e, content.id))
                                     }}
                                     on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     on:click={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
                                     role="none"
                                 >
-                                    <!-- on:mouseup={(e) => selectVerse(e, id)}
+                                    <!-- on:mouseup={(e) => updateVersesSelection(e, id)}
                                     on:mousedown={(e) => {
                                         if (e.ctrlKey || e.metaKey || e.shiftKey) return
                                         openVerse(id)
@@ -589,7 +627,10 @@
                 {/if}
 
                 {#key data}
-                    {currentBibleData?.verseData?.getReference() || "..."}
+                    <!-- temp solution to split long verses -->
+                    {#if !currentBibleData?.verseData?.getReference()?.includes("NaN")}
+                        {currentBibleData?.verseData?.getReference() || "..."}
+                    {/if}
                 {/key}
             {/if}
         </span>
@@ -757,6 +798,7 @@
     .list {
         display: flex !important;
         flex-direction: row !important;
+        width: 100%;
     }
     .list .content {
         display: flex;

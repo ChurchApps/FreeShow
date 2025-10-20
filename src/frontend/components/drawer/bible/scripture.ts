@@ -17,6 +17,8 @@ import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
+import { stripMarkdown } from "json-bible/lib/markdown"
+import { trackScriptureUsage } from "../../../utils/analytics"
 
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
@@ -39,21 +41,18 @@ export async function loadJsonBible(id: string) {
     const localBible = await getLocalBible(id)
     if (!localBible) throw new Error("Local Bible not found")
 
-    // if (scriptureData.customName) bibleContent.name = scriptureData.customName
-    localBible.books.map(a => ({ ...a, name: (a as any).customName || a.name }))
+    // load custom book names for local bibles (as many xml names are missing or in English)
+    localBible.books = localBible.books.map(a => ({ ...a, name: (a as any).customName || a.name }))
 
     return await JsonBible(localBible)
 }
 
 async function getLocalBible(id: string) {
-    // if (!get(scriptures)[id]) id = Object.entries(get(scriptures)).find(([_id, a]) => a.id === id)?.[0] || ""
-
-    if (get(scripturesCache)[id]) return get(scripturesCache)[id]
+    if (get(scripturesCache)[id]) return clone(get(scripturesCache)[id])
 
     const scriptureData = get(scriptures)[id]
     if (!scriptureData) return null
 
-    // id: scriptureData.id || id
     const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id, path: get(dataPath) })
     const localBible = localBibleResponse.content?.[1]
 
@@ -72,7 +71,7 @@ async function getLocalBible(id: string) {
     if (!localBible.name) localBible.name = scriptureData.name || ""
 
     scripturesCache.update((a) => {
-        a[id] = localBible
+        a[id] = clone(localBible)
         return a
     })
 
@@ -88,7 +87,7 @@ export async function getActiveScripturesContent() {
 
     const active = get(activeScripture).reference
     // WIP sorting does not work with splitted verses
-    const selectedVerses = active?.verses?.map(Number).sort((a, b) => a - b) || []
+    const selectedVerses = active?.verses.sort((a, b) => Number(a) - Number(b)) || []
     if (selectedVerses.length === 0) return null
 
     const currentScriptures = selectedScriptureData.collection?.versions || [tabId]
@@ -110,16 +109,25 @@ export async function getActiveScripturesContent() {
         const metadata = scriptureData?.metadata || {}
         if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
 
-        // WIP custom verse number offset per scripture
+        // WIP custom verse number offset per scripture (for collections)
 
+        const splitLongVerses = get(scriptureSettings).splitLongVerses
         let versesText: { [key: string]: string } = {}
         selectedVerses.forEach(v => {
-            versesText[v] = Chapter.getVerse(v).getText()
+            const splitted = v.toString().split("_")
+            const id = Number(splitted[0])
+            // const subverse = Number(splitted[1] || 0)
+
+            const text = Chapter.getVerse(id).getText()
+            const splittedVerses = getSplittedVerses({ [id]: text })
+
+            if (splitLongVerses) versesText[v] = splittedVerses[v]
+            else versesText[v] = text
         })
 
         // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-        return { id, version, metadata: {}, book: bookName, bookId: active?.book || "", chapter: selectedChapter, verses: versesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
+        return { id, isApi: scriptureData.api, version, metadata: {}, book: bookName, bookId: active?.book || "", chapter: selectedChapter, verses: versesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
     }))
 }
 
@@ -127,9 +135,6 @@ export async function getActiveScripturesContent() {
 
 export async function playScripture() {
     if (get(outLocked)) return
-
-    // TODO: check api bibles
-    // TODO: check collections + if deleting some collection bibles
 
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
@@ -170,15 +175,14 @@ export async function playScripture() {
     let tempItems: Item[] = slides[0] || []
     setOutput("slide", { id: "temp", tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
 
-    // const verseRange = joinRange(sorted)
-
-    // TODO: track
-    // let reference = `${biblesContent[0].book} ${biblesContent[0].chapter}:${verseRange}`
-    // biblesContent.forEach((translation) => {
-    //     let name = translation.version || ""
-    //     let apiId = translation.api ? get(scriptures)[translation.id!]?.id || translation.id || "" : null
-    //     if (name || apiId) trackScriptureUsage(name, apiId, reference)
-    // })
+    // track
+    const verseRange = joinRange(selectedVerses)
+    let reference = `${biblesContent[0].book} ${biblesContent[0].chapter}:${verseRange}`
+    biblesContent.forEach((translation) => {
+        let name = translation.version || ""
+        let apiId = translation.isApi ? get(scriptures)[translation.id!]?.id || translation.id || "" : null
+        if (name || apiId) trackScriptureUsage(name, apiId, reference)
+    })
 
     const templateId = get(scriptureSettings).template || "scripture" // $styles[styleId]?.templateScripture || ""
     const template = get(templates)[templateId] || {}
@@ -572,34 +576,14 @@ export function splitText(value: string, maxLength: number) {
     return splitted
 }
 
-export function formatBibleText(text: string | undefined) {
-    if (!text) return ""
-    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", '&')
-}
-
 function removeTags(text) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
-export function removeTagsAndContent(input) {
-    const regex = /<[^>]*>[^<]*<\/[^>]*>/g
-    return input.replace(regex, "")
-}
-
-function stripMarkdown(input: string) {
-    input = input.replace(/#\s*(.*?)\s*#/g, "")
-    input = input.replace(/\*\{(.*?)\}\*/g, "")
-    input = input.replace(/!\{(.*?)\}!/g, "$1")
-    // input = input.replace(/\[(.*?)\]/g, "[$1]")
-    input = input.replace(/(\*\*|__)(.*?)\1/g, "$2")
-    input = input.replace(/(\*|_)(.*?)\1/g, "$2")
-    input = input.replace(/\+\+(.*?)\+\+/g, "$1")
-    input = input.replace(/~~(.*?)~~/g, "$1")
-    input = input.replace(/"([^"]*?)"/g, "$1")
-    input = input.replace(/\n/g, "")
-    input = input.replace(/¶/g, "")
-
-    return input
+export function formatBibleText(text: string | undefined, redJesus: boolean = false) {
+    if (!text) return ""
+    if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", '&')
 }
 
 // CREATE SHOW/SLIDES
@@ -693,7 +677,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
             collection: get(drawerTabsData).scripture?.activeSubTab || biblesContent[0].id || "",
             translations: biblesContent.length,
             version: versions,
-            api: false, // TODO: biblesContent[0].api,
+            api: biblesContent[0].isApi,
             book: biblesContent[0].bookId ?? biblesContent[0].book,
             chapter: biblesContent[0].chapter,
             verses: biblesContent[0].activeVerses,

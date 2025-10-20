@@ -237,7 +237,7 @@ export function getChangedKeys(current: any[], previous: any[]) {
 }
 
 
-export function rangeSelect(e: any, currentlySelected: number[], newSelection: number): number[] {
+export function rangeSelect(e: any, currentlySelected: (number | string)[], newSelection: (number | string)): (number | string)[] {
     if (!e.ctrlKey && !e.shiftKey) return [newSelection]
 
     if (e.ctrlKey) {
@@ -248,9 +248,9 @@ export function rangeSelect(e: any, currentlySelected: number[], newSelection: n
         }
     }
 
-    if (e.shiftKey && !currentlySelected.includes(newSelection)) {
+    if (e.shiftKey && !currentlySelected.includes(newSelection) && typeof newSelection === "number") {
         // add range between last selected and new selection
-        let lastSelected = currentlySelected[currentlySelected.length - 1]
+        let lastSelected = Number(currentlySelected[currentlySelected.length - 1])
         let first: number = newSelection + 1
         let last: number = lastSelected
         if (newSelection < lastSelected) {

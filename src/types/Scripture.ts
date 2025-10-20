@@ -1,5 +1,6 @@
 export interface BibleContent {
     id: string
+    isApi: boolean
     version: string
     metadata: { [key: string]: string }
     book: string
