@@ -841,6 +841,11 @@ export function mergeTextboxes(customSlideIndex = -1) {
     history({ id: "UPDATE", newData: { data: slide, key: "slides", keys: [slideRef.id] }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
 }
 
+export function removeTagsAndContent(input) {
+    const regex = /<[^>]*>[^<]*<\/[^>]*>/g
+    return input.replace(regex, "")
+}
+
 // BREAK LONG LINES
 
 export function breakLongLines(showId: string, breakPoint: number) {

@@ -460,7 +460,7 @@ export async function rearrangeGroups(data: API_rearrange) {
     const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
     const drop: DropData = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos, center: false } // , trigger, center: false
 
-    const h = dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
+    const h = await dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
     if (h && h.id) history(h)
 }
 

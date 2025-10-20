@@ -93,7 +93,15 @@ export function focusArea(e: any) {
     if (get(quickSearchActive) && !e.target.closest(".quicksearch")) quickSearchActive.set(false)
 
     if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
-    focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
+
+    const id = e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id
+    if (id) focusedArea.set(id)
+
+    // custom area without select elems
+    if (!id) {
+        const scriptureArea = e.target.closest(".scripture")
+        if (scriptureArea) focusedArea.set("scripture")
+    }
 }
 
 // auto save

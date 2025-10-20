@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { Bible } from "../../../types/Scripture"
     import { drawerTabsData } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -17,7 +16,6 @@
     import Timers from "./timers/Timers.svelte"
 
     export let id: string
-    export let bibles: Bible[]
     export let searchValue: string
     export let firstMatch: null | string
     $: active = $drawerTabsData[id]?.activeSubTab || null
@@ -64,7 +62,7 @@
     {:else if id === "templates"}
         <Templates {active} {searchValue} />
     {:else if id === "scripture"}
-        <Scripture {active} bind:searchValue bind:bibles />
+        <Scripture {active} bind:searchValue />
     {:else if id === "calendar"}
         <Calendar {active} {searchValue} />
     {:else if id === "functions"}
