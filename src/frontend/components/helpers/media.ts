@@ -65,7 +65,7 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
-    if (path.includes("http") || path.includes("data:")) return path
+    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return path
 
     // already encoded
     if (path.match(/%\d+/g)) {
@@ -215,7 +215,7 @@ export async function doesMediaExist(path: string, noCache = false) {
 export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mimeType: string; mimeCodec: string } | null> {
     let info: { path?: string; codecs: string[]; mimeType: string; mimeCodec: string } | null = null
     if (typeof path !== "string") return info
-    if (path.includes("http") || path.includes("data:")) return info
+    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return info
 
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
@@ -320,7 +320,7 @@ export async function loadThumbnail(input: string, size: number) {
     if (typeof input !== "string") return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http") || input.includes("data:")) return input
+    if (input.includes("http") || input.includes("data:") || input.includes("blob:")) return input
 
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache")) return input
@@ -339,7 +339,7 @@ export function getThumbnailPath(input: string, size: number) {
     if (!input) return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http") || input.includes("data:")) return input
+    if (input.includes("http") || input.includes("data:") || input.includes("blob:")) return input
 
     // already encoded
     if (input.includes("freeshow-cache")) return input
@@ -386,7 +386,7 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     if (typeof path !== "string" || !mediaExtensions.includes(getExtension(path))) return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (path.includes("http") || path.includes("data:")) return path
+    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return path
 
     const thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
@@ -572,9 +572,21 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
 }
 
 export async function downloadOnlineMedia(url: string) {
-    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, dataPath: get(dataPath) })
-    if (downloadedPath) return downloadedPath
+    if (!url?.startsWith("http")) return url
 
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, dataPath: get(dataPath) })
+
+    if (downloadedPath?.buffer) {
+        const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
+        const url = URL.createObjectURL(blob)
+        return url
+    }
+
+    if (downloadedPath) {
+        return downloadedPath.path
+    }
+
+    // not downloaded yet
     sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
     return url
 }
