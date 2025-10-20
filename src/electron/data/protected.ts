@@ -7,6 +7,7 @@ import path from 'path'
 import { createFolder } from "../utils/files"
 import { filePathHashCode } from "./thumbnails"
 import { getKey } from "../utils/keys"
+import { getMachineId } from "../IPC/responsesMain"
 
 const protectedProviders = ["stream.mux.com"]
 
@@ -25,7 +26,7 @@ const keyLength = 32 // 32 bytes for AES-256
 const ivLength = 16  // 16 bytes for CBC
 
 export function getProviderKey(url: string) {
-    if (url.includes("stream.mux.com")) return "TEMP_KEY" // getKey("amazinglife_secret")
+    if (url.includes("stream.mux.com")) return getMachineId()
     return getKey("enc_general")
 }
 

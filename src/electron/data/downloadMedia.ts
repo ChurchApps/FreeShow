@@ -294,8 +294,15 @@ export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; d
     if (!doesPathExist(outputPath)) return null
 
     if (isProtectedProvider(url)) {
-        const decryptedData = await decryptFile(outputPath, getProviderKey(url))
-        return { path: outputPath, buffer: decryptedData }
+        try {
+            const decryptedData = await decryptFile(outputPath, getProviderKey(url))
+            return { path: outputPath, buffer: decryptedData }
+        } catch (err) {
+            console.error(`Failed to decrypt file: ${url}`, err)
+            // this response will request a re-download, and replace the file
+            // important in case the key has changed or file is corrupted
+            return null
+        }
     }
 
     return { path: outputPath, buffer: null }

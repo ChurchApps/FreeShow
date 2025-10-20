@@ -16,6 +16,7 @@ import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
+import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
@@ -51,7 +52,6 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
-import { libreConvert } from "../output/ppt/libreConverter"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -61,7 +61,7 @@ export const mainResponses: MainResponses = {
     // APP
     [Main.VERSION]: () => getVersion(),
     [Main.GET_OS]: () => getOS(),
-    [Main.DEVICE_ID]: () => machineIdSync(),
+    [Main.DEVICE_ID]: () => getMachineId(),
     [Main.IP]: () => os.networkInterfaces(),
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
@@ -264,6 +264,10 @@ export function loadShow(msg: { id: string; path: string | null; name: string })
     const show = loadFile(filePath, msg.id)
 
     return show
+}
+
+export function getMachineId() {
+    return machineIdSync() as string
 }
 
 function getVersion() {
