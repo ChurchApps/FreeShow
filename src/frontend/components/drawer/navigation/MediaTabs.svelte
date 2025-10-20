@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
@@ -54,12 +54,8 @@
 
     // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
-    onMount(async () => {
-        const allProviders = await requestMain(Main.GET_CONTENT_PROVIDERS)
-        contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
-    })
-
-    $: if ($providerConnections) {
+    $: if ($providerConnections) getProviders()
+    function getProviders() {
         requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
             contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
         })

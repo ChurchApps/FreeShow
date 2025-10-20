@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
@@ -91,12 +91,8 @@
 
     // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
-    onMount(async () => {
-        const allProviders = await requestMain(Main.GET_CONTENT_PROVIDERS)
-        contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
-    })
-
-    $: if ($providerConnections) {
+    $: if ($providerConnections) getProviders()
+    function getProviders() {
         requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
             contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
         })
@@ -436,7 +432,7 @@
                     {#if $mediaOptions.mode === "grid"}
                         <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
                             {#if item.folder}
-                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} />
+                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={item.credits || {}}
@@ -454,7 +450,7 @@
                     {:else}
                         <VirtualList items={sortedFiles} let:item={file}>
                             {#if file.folder}
-                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                                <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={file.credits || {}}
