@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ApiBiblesList } from "json-bible/lib/api"
     import type { CustomBibleListContent } from "json-bible/lib/api/ApiBibleTypes"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
@@ -7,7 +6,7 @@
     import { labelsDisabled, language, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
-    import { customBibleData } from "../../drawer/bible/scripture"
+    import { customBibleData, getApiBiblesList } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -25,7 +24,7 @@
     $: if (importType === "api") loadApiBibles()
     async function loadApiBibles() {
         try {
-            let bibleList = await ApiBiblesList("*", "https://contentapi.churchapps.org/bibles")
+            let bibleList = await getApiBiblesList()
             bibleList = bibleList.map((a) => {
                 const bible = customBibleData(a)
                 if (bible.description && (bible.description.toLowerCase() === "common" || bible.name.includes(bible.description))) bible.description = ""

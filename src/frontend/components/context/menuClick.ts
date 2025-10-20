@@ -82,6 +82,7 @@ import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
+import { createScriptureShow } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -752,9 +753,9 @@ const clickActions = {
             history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
         } else if (obj.contextElem?.classList.contains("chapters")) {
             triggerFunction("scripture_selectAll")
-            setTimeout(() => triggerFunction("scripture_newShow"))
+            setTimeout(createScriptureShow)
         } else if (obj.sel?.id === "scripture") {
-            triggerFunction("scripture_newShow")
+            createScriptureShow()
         }
     },
 

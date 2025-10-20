@@ -4,7 +4,7 @@
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
-    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, rangeSelect } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getShortBookName, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -70,11 +70,13 @@
     $: chapters = currentBibleData?.bookData?.data?.chapters || null
     $: verses = currentBibleData?.chapterData?.data?.verses || null
 
+    // category color / abbreviation data
+    $: booksData = currentBibleData?.bibleData?.getBooksData() || []
+
     let splittedVerses: (Verse & { id: string })[] = []
     $: splittedVerses = updateSplitted(verses, $scriptureSettings)
 
     let apiError = false
-    let bookColors: string[] = []
 
     async function loadScripture(id: string) {
         apiError = false
@@ -87,12 +89,7 @@
 
         try {
             const jsonBible = await loadJsonBible(id)
-
             data[id] = { bibleData: jsonBible }
-
-            // book colors
-            if (jsonBible.data.books.length === 66) bookColors = jsonBible.getDefaultBooks().colors
-            else bookColors = []
         } catch (err) {
             console.error(err)
             if (isApi) apiError = true
@@ -230,7 +227,9 @@
 
         const selectedVerses = rangeSelect(e, activeReference.verses.map(Number), Number(verseNumber))
 
-        // selected.set({ id: "scripture", data: [{ bibles, sorted: selectedVerses.sort((a, b) => a - b) }] })
+        // drop action (create slide/show from drag&drop)
+        selected.set({ id: "scripture", data: [] })
+
         return selectedVerses
     }
 
@@ -478,10 +477,8 @@
                         {#key books}
                             {#each books as book, i}
                                 {@const id = book.number?.toString()}
-                                <!-- {@const color = getColorCode(books, book.id)} -->
-                                <!-- {@const color = data[displayBibleId]?.bookData?.getCategory()?.color} -->
-                                {@const color = bookColors?.[i] || ""}
-                                {@const name = $scriptureMode === "grid" ? getShortBookName(previewBibleId, book, i) : $customScriptureBooks[previewBibleId]?.[id] || book.name}
+                                {@const color = booksData[i]?.category?.color || ""}
+                                {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[id] || book.name}
                                 {@const isActive = activeReference.book?.toString() === id}
 
                                 <span
@@ -583,6 +580,7 @@
                         title={$scriptures[activeScriptures[(previewBibleIndex + 1) % activeScriptures.length]]?.name || ""}
                         style="padding-right: 0.2em;font-weight: normal;"
                     >
+                        {#if isApi}<Icon id="web" style="margin: 0 5px;" size={0.8} white />{/if}
                         {previewBibleData.name}:
                     </MaterialButton>
                 {:else}
