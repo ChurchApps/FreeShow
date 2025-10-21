@@ -1,12 +1,15 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { drawer, gain, special, volume } from "../../../stores"
+    import { drawer, gain, outputs, special, volume } from "../../../stores"
+    import { getActiveOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
-    import AudioMeter from "../../output/preview/AudioMeter.svelte"
+    import AudioMeter2 from "../../output/preview/AudioMeter.svelte"
+    import AudioMeter from "./AudioMeter.svelte"
 
     function setVolume(e: any) {
-        let value = e.target.value
+        let value = e.target?.value || e
 
         // "snap" to 100%
         // && !e.altKey
@@ -29,11 +32,36 @@
     $: volumeValue = $special.allowGaining ? Number($volume ?? 1) + gainValue : Number($volume ?? 1)
 
     $: drawerHeight = $drawer.height - 40 - 180
+
+    const outputIds = getActiveOutputs($outputs, true, true, true)
 </script>
+
+<section>
+    <div class="output">
+        <MaterialNumberInput label="media.volume (Main)" value={volumeValue * 100} min={0} max={100} on:change={(e) => setVolume(e.detail / 100)} showSlider />
+        <Slider value={volumeValue} step={0.01} max={$special.allowGaining ? 1.25 : 1} on:input={setVolume} />
+    </div>
+
+    <AudioMeter channelId="main" />
+</section>
+
+{#each outputIds as outputId}
+    <section>
+        <div class="output">
+            <MaterialNumberInput label={`media.volume (Output: ${$outputs[outputId]?.name})`} value={volumeValue * 100} min={0} max={100} on:change={(e) => setVolume(e.detail / 100)} showSlider />
+        </div>
+
+        <AudioMeter channelId={outputId} />
+    </section>
+{/each}
+
+<br />
+<br />
+<br />
 
 <main style="--height: {drawerHeight || 150}px;">
     <div class="meter">
-        <AudioMeter advanced />
+        <AudioMeter2 advanced />
     </div>
 
     <div class="volume" style="inset-inline-start: calc(50% + (48px / 2));">
@@ -46,6 +74,14 @@
 </main>
 
 <style>
+    section {
+        margin: 10px;
+        padding: 10px;
+
+        border: 2px solid RED;
+        border-radius: 8px;
+    }
+
     main {
         height: 100%;
         display: flex;
@@ -65,7 +101,7 @@
     .volume {
         position: absolute;
         left: 50%;
-        top: 50%;
+        top: 80%;
         transform: translate(-50%, -45%);
         pointer-events: none;
     }

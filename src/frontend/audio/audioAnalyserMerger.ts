@@ -6,6 +6,7 @@ import { send } from "../utils/request"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
+import { clone } from "../components/helpers/array"
 
 export class AudioAnalyserMerger {
     static dBmin = -80
@@ -20,6 +21,28 @@ export class AudioAnalyserMerger {
     static addChannels(id: string, channels: AudioChannel[]) {
         this.channels[id] = channels
         AudioAnalyserMerger.init()
+    }
+
+    static getChannels() {
+        const channels = clone(this.channels)
+
+        // // smooth channel values
+        // Object.entries(channels).forEach(([id, channelArray]) => {
+        //     channelArray.forEach((channel, _channelIndex) => {
+        //         if (isNaN((channel as any).dB)) return
+
+        //         // already smoothed
+        //         if (id === "main") {
+        //             channel.dB = { value: (channel as any).dB }
+        //             return
+        //         }
+
+        //         // channel.dB = { value: this.getExponentiallySmoothedVolume(channelIndex, (channel as any).dB) }
+        //         channel.dB = { value: (channel as any).dB }
+        //     })
+        // })
+
+        return channels
     }
 
     static stop() {

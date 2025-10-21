@@ -49,7 +49,7 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 setGlobalMenu()
 
 // hardware acceleration
-let disableHWA = config.get("disableHardwareAcceleration")
+const disableHWA = config.get("disableHardwareAcceleration")
 if (disableHWA === true) {
     // Video did flicker sometime with HWA, especially on ARM Mac.
     // CPU usage is often lower with HWA enabled.
@@ -63,7 +63,7 @@ if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", startApp)
 
 export let powerSaveBlockerId: number | null = null
-async function startApp() {
+function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
     // WIDEVINE
