@@ -21,7 +21,9 @@
     let biblesContent: BibleContent[] = []
     let selectedVerses: number[] = []
 
-    $: if ($activeScripture.reference) loadScriptureData()
+    $: activeScriptureId = $drawerTabsData.scripture?.activeSubTab || ""
+
+    $: if (activeScriptureId || $activeScripture.reference) loadScriptureData()
     async function loadScriptureData() {
         const content = await getActiveScripturesContent()
         if (content?.length) {
@@ -38,7 +40,7 @@
     $: templateBackground = template.settings?.backgroundPath
 
     // auto change template based on number of bibles (if default)
-    $: if ($drawerTabsData || templateId) setTimeout(checkTemplate, 100)
+    $: if (activeScriptureId || templateId) setTimeout(checkTemplate, 100)
     $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
     function checkTemplate() {
         if (!isDefault) return

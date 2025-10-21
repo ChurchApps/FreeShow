@@ -48,17 +48,14 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 // set application menu
 setGlobalMenu()
 
-// disable hardware acceleration by default (on mac)
+// hardware acceleration
 let disableHWA = config.get("disableHardwareAcceleration")
-if (disableHWA === null) disableHWA = isMac
-if (disableHWA !== false) {
-    // Video flickers, especially on ARM mac otherwise. Performance is actually better without on macOS (most of the time).
-    // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
+if (disableHWA === true) {
+    // Video did flicker sometime with HWA, especially on ARM Mac.
+    // CPU usage is often lower with HWA enabled.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
-    // on Windows it's often better with hardware acceleration
     app.disableHardwareAcceleration()
-} else {
-    console.info("Starting with Hardware Acceleration")
+    console.info("Hardware Acceleration Disabled")
 }
 
 // start when ready

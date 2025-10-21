@@ -2,15 +2,15 @@
     import { uid } from "uid"
     import { activePopup, scriptures } from "../../../stores"
     import { getShortBibleName } from "../../drawer/bible/scripture"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     $: scripturesList = keysToID($scriptures).filter((a) => !a.collection)
-    $: localScripturesList = scripturesList.filter((a) => !a.api)
-    $: apiScripturesList = scripturesList.filter((a) => a.api)
+    $: localScripturesList = sortByName(scripturesList.filter((a) => !a.api))
+    $: apiScripturesList = sortByName(scripturesList.filter((a) => a.api))
 
     let selectedScriptures: string[] = []
 
@@ -61,7 +61,9 @@
         </div>
     {/each}
 
-    <HRule title="API" />
+    {#if localScripturesList.length && apiScripturesList.length}
+        <HRule title="API" />
+    {/if}
 
     {#each apiScripturesList as scripture}
         <div class="item">

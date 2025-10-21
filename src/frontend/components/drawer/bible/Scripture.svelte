@@ -450,7 +450,7 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
     <div class="main scripture">
-        {#if !previewBibleId || $notFound.bible?.includes(previewBibleId) || apiError}
+        {#if !previewBibleId || $notFound.bible?.includes(previewBibleId) || !$scriptures[previewBibleId] || apiError}
             <Center faded>
                 <T id="error.bible{apiError ? '_api' : ''}" />
             </Center>

@@ -1,6 +1,6 @@
 import JsonBible from "json-bible"
 import { ApiBiblesList, ApiBible as JsonBibleApi } from "json-bible/lib/api"
-import type { CustomBibleListContent } from "json-bible/lib/api/ApiBibleTypes"
+import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { Main } from "../../../../types/IPC/Main"

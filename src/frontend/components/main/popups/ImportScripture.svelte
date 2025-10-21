@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CustomBibleListContent } from "json-bible/lib/api/ApiBibleTypes"
+    import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
