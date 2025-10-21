@@ -11,7 +11,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles, outputDisplay } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
@@ -243,6 +243,9 @@ export async function initializeRemote(id: string) {
     // Use sendData so the proper OUT payload is constructed (handles scripture 'temp' etc.)
     sendData(REMOTE, { id, channel: "OUT" })
     sendData(REMOTE, { id, channel: "OUT_DATA" })
+
+    // Also send current consolidated output windows visibility state (authoritative boolean)
+    window.api.send(REMOTE, { id, channel: "OUTPUT_DISPLAY", data: get(outputDisplay) })
 
     // Send additional data
     send(REMOTE, ["OVERLAYS"], get(overlays))

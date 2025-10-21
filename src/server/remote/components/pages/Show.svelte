@@ -6,7 +6,7 @@
     import { translate } from "../../util/helpers"
     import { GetLayout } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
+    import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache, outputDisplay } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
     import AddGroups from "./AddGroups.svelte"
@@ -128,10 +128,16 @@
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
-            <div class="buttons">
-                {#key slideNum}
-                    <Clear outSlide={slideNum} />
-                {/key}
+            <div class="buttons" style="display: flex; align-items: stretch; width: 100%; gap: 0;">
+                <Button on:click={() => send("API:toggle_output_windows")} style="flex: 0 0 44px; margin: 0;" center dark red={$outputDisplay}>
+                    <Icon id={$outputDisplay ? "cancelDisplay" : "display"} size={1.3} white />
+                </Button>
+
+                <div style="flex: 1 1 auto; margin: 0;">
+                    {#key slideNum}
+                        <Clear outSlide={slideNum} />
+                    {/key}
+                </div>
             </div>
 
             {#if $activeShow.id === $outShow?.id}

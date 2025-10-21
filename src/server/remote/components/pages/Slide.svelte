@@ -5,7 +5,7 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, nextSlide } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, dictionary, outLayout, outputMode, outShow, outSlide } from "../../util/stores"
+    import { _set, dictionary, outLayout, outputMode, outShow, outSlide, outputDisplay } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slide from "../show/Slide.svelte"
     import Lyrics from "./Lyrics.svelte"
@@ -27,6 +27,14 @@
         if (e.clientX < window.innerWidth / 3) send("API:previous_slide")
         else send("API:next_slide")
     }
+
+    function keyNav(e: KeyboardEvent) {
+        if (e.key === "ArrowLeft" || e.key === "PageUp") {
+            send("API:previous_slide")
+        } else if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) {
+            send("API:next_slide")
+        }
+    }
 </script>
 
 {#if $outShow}
@@ -35,7 +43,7 @@
     {#if $outputMode === "lyrics"}
         <Lyrics />
     {:else}
-        <div on:click={click} class="outSlides">
+        <div on:click={click} on:keydown={keyNav} role="button" tabindex="0" aria-label="Slide navigation area" class="outSlides">
             <Slide outSlide={slideNum} {transition} />
             {#if $outLayout && nextSlide(layout, slideNum) && getNextSlide($outShow, slideNum, $outLayout)}
                 <Slide outSlide={nextSlide(layout, slideNum) || 0} {transition} />
@@ -49,8 +57,14 @@
         <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.6em;padding: 6px;">{slideNum + 1}/{totalSlides}</span>
     </div>
 
-    <div class="buttons">
-        <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
+    <div class="buttons" style="display: flex; width: 100%;">
+        <Button on:click={() => send("API:toggle_output_windows")} style="flex: 0 0 44px; margin: 0;" center dark red={$outputDisplay}>
+            <Icon id={$outputDisplay ? "cancelDisplay" : "display"} size={1.3} white />
+        </Button>
+
+        <div style="flex: 1 1 auto; margin: 0;">
+            <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
+        </div>
     </div>
 
     <div class="modes">

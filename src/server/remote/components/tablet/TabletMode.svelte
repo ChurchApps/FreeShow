@@ -9,7 +9,7 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, nextSlide } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
+    import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, outputDisplay, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
     import AddGroups from "../pages/AddGroups.svelte"
     import GroupsEdit from "../pages/GroupsEdit.svelte"
     import Project from "../pages/Project.svelte"
@@ -423,6 +423,12 @@
 
 {#if !isFullscreen}
     <div class="right" style={`justify-content: space-between; width:${rightWidth}px`}>
+        <div class="buttons" style="display: flex;width: 100%;flex-direction: column;">
+            <Button style="width: 100%;" on:click={() => send("API:toggle_output_windows")} center dark red={$outputDisplay}>
+                <Icon id={$outputDisplay ? "cancelDisplay" : "display"} size={1.3} right white />
+                {translate($outputDisplay ? "menu._title_display_stop" : "menu._title_display", $dictionary)}
+            </Button>
+        </div>
         {#if !$isCleared.all}
             <div class="top flex">
                 {#if $outShow && layout}

@@ -118,6 +118,7 @@ const receiveOUTPUTasMAIN: any = {
 
             return a
         })
+        window.api.send(REMOTE, { channel: "OUTPUT_DISPLAY", data: get(outputDisplay) })
     },
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
     AUDIO_MAIN: (data: any) => {

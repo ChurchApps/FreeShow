@@ -25,6 +25,7 @@ export let createShow = writable(false)
 export let showSearchValue = writable("")
 export let activeTab = writable("shows")
 export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
+export let outputDisplay = writable(false)
 
 export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
 export let activeShow: Writable<Show | null> = writable(null)
@@ -83,6 +84,7 @@ export const _ = {
     quickPlay,
     activeTab,
     outputMode,
+    outputDisplay,
     active,
     activeShow,
     shows,
