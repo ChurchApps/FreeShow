@@ -2,8 +2,10 @@ appId: app.freeshow
 productName: FreeShow
 artifactName: FreeShow-${version}-${arch}.${ext}
 
-electronDownload:
-    mirror: https://github.com/castlabs/electron-releases/releases/download/
+# WIDEVINE
+# Use castlabs electron builds to get widevine support
+# electronDownload:
+#     mirror: https://github.com/castlabs/electron-releases/releases/download/
 
 files:
     - build/electron/**
