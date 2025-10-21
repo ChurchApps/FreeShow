@@ -11,7 +11,7 @@
 
     $: if (show?.id.includes("http")) download()
     async function download() {
-        show.id = await downloadOnlineMedia(show.id)
+        show!.id = await downloadOnlineMedia(show!.id)
     }
 
     $: outputId = getActiveOutputs($outputs)[0]
@@ -31,7 +31,7 @@
         {#if show.type === "video" || show.type === "player"}
             <VideoShow {show} {mediaStyle} />
         {:else}
-            <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
+            <div id={show.id} class="media context #media_preview" style="flex: 1;overflow: hidden;">
                 <HoverButton
                     icon="play"
                     size={10}

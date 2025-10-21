@@ -211,15 +211,15 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
-    <div class="grid" style="height: 100%;">
+    <div class="grid" style={active !== "audio_streams" && (playlist ? playlist.songs.length : fullFilteredFiles.length) ? "" : "height: 100%;"}>
         {#if active === "microphones"}
             <Microphones />
         {:else if active === "audio_streams"}
             <AudioStreams />
         {:else if playlist && playlistSettings}
             <div class="settings">
-                <MaterialNumberInput label="settings.audio_crossfade" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
-                <MaterialNumberInput label="settings.playlist_volume" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
+                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
+                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
             </div>
 
             <!-- <CombinedInput>
@@ -249,7 +249,7 @@
                 {#key path}
                     {#each fullFilteredFiles as file}
                         {#if file.folder}
-                            <Folder bind:rootPath={path} name={file.name} path={file.path} mode="list" />
+                            <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
                         {:else}
                             <AudioFile path={file.path} name={file.name} {active} />
                         {/if}
@@ -349,6 +349,10 @@
 {/if}
 
 <style>
+    .scroll {
+        padding-bottom: 60px;
+    }
+
     .grid {
         display: flex;
         flex-direction: column;

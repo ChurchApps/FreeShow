@@ -745,6 +745,7 @@ const clickActions = {
             show.slides[slideId] = { group: name, color: null, settings: {}, notes: "", items: [] }
 
             const mediaId = uid(5)
+            console.log(path, name, mediaType)
             show.media[mediaId] = { path, name, ...(mediaType === "video" ? { muted: false, loop: false } : {}) }
 
             const layoutSlides: SlideData[] = [{ id: slideId, background: mediaId }]
