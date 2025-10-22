@@ -33,7 +33,6 @@
     import { newToast, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
-    import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
@@ -50,6 +49,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { removeTagsAndContent } from "../../show/slides"
 
     export let showId: string
     export let slide: Slide
@@ -538,7 +538,7 @@
                         {#if slide.notes && icons}
                             <button class="notes" data-title={slide.notes} on:click={openNotes}>
                                 <Icon id="notes" white right />
-                                <span>{slide.notes}</span>
+                                <span>{slide.notes.slice(0, 80)}{slide.notes.length > 80 ? "..." : ""}</span>
                             </button>
                         {/if}
 

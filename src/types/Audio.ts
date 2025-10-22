@@ -7,6 +7,11 @@ export interface Playlist {
     volume?: number // playlist specific volume
 }
 
+export interface AudioChannelData {
+    volume?: number
+    isMuted?: boolean
+}
+
 export interface AudioChannel {
     dB: {
         value: number

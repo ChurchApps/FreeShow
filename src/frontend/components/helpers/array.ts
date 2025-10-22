@@ -94,8 +94,8 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
 // sort any object.name by numbers in the front of the string
 export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
     return array.sort((a, b) => {
-        const aNumberStr = a.quickAccess?.number || ""
-        const bNumberStr = b.quickAccess?.number || ""
+        const aNumberStr = a.quickAccess?.number?.toString() || ""
+        const bNumberStr = b.quickAccess?.number?.toString() || ""
 
         // Split into prefix letters + numeric part
         const extractParts = (str: string) => {
@@ -234,4 +234,39 @@ export function getChangedKeys(current: any[], previous: any[]) {
     })
 
     return changedKeys
+}
+
+
+export function rangeSelect(e: any, currentlySelected: (number | string)[], newSelection: (number | string)): (number | string)[] {
+    if (!e.ctrlKey && !e.shiftKey) return [newSelection]
+
+    if (e.ctrlKey) {
+        if (currentlySelected.includes(newSelection)) {
+            return currentlySelected.filter((id) => id !== newSelection)
+        } else {
+            return [...currentlySelected, newSelection]
+        }
+    }
+
+    if (e.shiftKey && !currentlySelected.includes(newSelection) && typeof newSelection === "number") {
+        // add range between last selected and new selection
+        let lastSelected = Number(currentlySelected[currentlySelected.length - 1])
+        let first: number = newSelection + 1
+        let last: number = lastSelected
+        if (newSelection < lastSelected) {
+            first = lastSelected
+            last = newSelection - 1
+        }
+
+        for (let i = last + 1; i < first; i++) {
+            if (!currentlySelected.includes(i)) currentlySelected.push(i)
+        }
+
+        // remove duplicates
+        currentlySelected = [...new Set(currentlySelected)]
+        // sort by value (shift key last selected relies on unsorted order)
+        // currentlySelected.sort((a, b) => a - b)
+    }
+
+    return currentlySelected
 }

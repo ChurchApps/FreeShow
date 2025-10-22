@@ -193,6 +193,8 @@ export function formatText(text: string, showId = "") {
         if (oldTextboxes.length && oldSlideId !== slideId) {
             slide.items.forEach((item, i) => {
                 const b = oldTextboxes[i]
+                if (!b) return
+
                 if (b.style) item.style = b.style
                     ; (item.lines || []).forEach((line, j) => {
                         const c = b.lines?.[j] || b.lines?.[0]

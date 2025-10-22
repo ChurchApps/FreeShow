@@ -1,4 +1,4 @@
-import type { Bible } from "./Bible"
+import type { Bible } from "json-bible/lib/Bible"
 import type { Event } from "./Calendar"
 import type { History, HistoryNew } from "./History"
 import type { Media } from "./Main"
@@ -73,6 +73,7 @@ export type SaveListSettings =
     | "transitionData"
     | "volume"
     | "gain"
+    | "audioChannelsData"
     | "driveData"
     | "calendarAddShow"
     | "metronome"

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
     import type { FileData } from "../../../../types/Main"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { drawerTabsData, labelsDisabled, media, mediaFolders } from "../../../stores"
+    import { drawerTabsData, labelsDisabled, media, mediaFolders, providerConnections } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { mediaExtensions } from "../../../values/extensions"
     import { keysToID, sortObject } from "../../helpers/array"
@@ -52,11 +52,14 @@
         return count
     }
 
-    // Content providers with libraries
+    // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
-    onMount(async () => {
-        contentProviders = (await requestMain(Main.GET_CONTENT_PROVIDERS)).filter((p) => p.hasContentLibrary)
-    })
+    $: if ($providerConnections) getProviders()
+    function getProviders() {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
 
     let sections: any[] = []
     $: sections = [

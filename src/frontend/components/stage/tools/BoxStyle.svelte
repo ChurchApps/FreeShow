@@ -28,9 +28,9 @@
 
     $: isSlideText = item?.type === "slide_text" // || activeItemId?.includes("slide_text")
     $: isTextItem = item?.type === "slide_text" || item?.type === "text"
-    $: stageSections = item ? clone(isSlideText ? slideTextSections : itemBoxes[item.type || ""]?.sections) : {}
+    $: stageSections = item ? clone(isSlideText ? slideTextSections : itemBoxes[item.type || ""]?.sections) || {} : {}
 
-    $: if (item?.type === "text") {
+    $: if (item?.type === "text" && stageSections) {
         delete stageSections.chords
         delete stageSections.scrolling
     }
@@ -67,7 +67,7 @@
     }
 
     $: if (item && type === "text") {
-        let sectionId = stageSections.font ? "font" : "default"
+        let sectionId = stageSections?.font ? "font" : "default"
         setBoxInputValue(stageSections, sectionId, "font-family", "default", "Arial")
         setBoxInputValue(stageSections, sectionId, "font-family", "styleValue", styles["font"] || "")
         // setBoxInputValue(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)

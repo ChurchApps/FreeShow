@@ -20,7 +20,7 @@
 
     function click(e: any) {
         if (e.target.closest(".website")) {
-            sendMain(Main.URL, "https://freeshow.app/?download")
+            sendMain(Main.URL, msg.includes("-beta.") ? "https://github.com/ChurchApps/FreeShow/releases" : "https://freeshow.app/?download")
         } else if (e.target.closest("a#bible-converter")) {
             sendMain(Main.URL, "https://github.com/vassbo/bible-converter")
         }

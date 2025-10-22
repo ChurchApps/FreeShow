@@ -1,6 +1,8 @@
-import path from 'path'
 import AdmZip from 'adm-zip'
+import path from 'path'
 import { parseStringPromise } from 'xml2js'
+import { toApp } from "../.."
+import { MAIN } from "../../../types/Channels"
 import { createFolder, dataFolderNames, writeFile } from '../../utils/files'
 
 // Extract .pptx contents directly from the ZIP using adm-zip and convert XML files to JSON
@@ -78,6 +80,11 @@ export async function pptToShow(filePath: string, dataPath: string) {
         return json
     } catch (err) {
         console.error('PPT convertion failed for', filePath, err)
+
+        if (err.message.includes('Invalid or unsupported zip format')) {
+            toApp(MAIN, { channel: "ALERT", data: "Invalid format" })
+        }
+
         return null
     }
 }

@@ -12,6 +12,7 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
+    audioChannelsData,
     audioData,
     cachedShowsData,
     colorbars,
@@ -27,6 +28,8 @@ import {
     groups,
     livePrepare,
     media,
+    metronome,
+    metronomeTimer,
     openedFolders,
     outputs,
     outputSlideCache,
@@ -68,9 +71,12 @@ export function storeSubscriber() {
     })
 
     showsCache.subscribe(async (data) => {
-        if (await hasNewerUpdate("LISTENER_SHOWSCACHE", 50)) return
+        if (await hasNewerUpdate("LISTENER_SHOWSCACHE")) return
 
+        // needs to be sent before output data
         send(OUTPUT, ["SHOWS"], data)
+
+        if (await hasNewerUpdate("LISTENER_SHOWSCACHE_LONGER", 50)) return
 
         // STAGE
         // sendData(STAGE, { channel: "SLIDES" })
@@ -146,7 +152,7 @@ export function storeSubscriber() {
 
     outputs.subscribe(async (data) => {
         // wait in case multiple slide layers get activated right after each other - to reduce the amount of updates
-        if (await hasNewerUpdate("LISTENER_OUTPUTS")) return
+        if (await hasNewerUpdate("LISTENER_OUTPUTS", 1)) return
 
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
@@ -269,6 +275,17 @@ export function storeSubscriber() {
     })
     gain.subscribe((data) => {
         send(OUTPUT, ["GAIN"], data)
+    })
+    audioChannelsData.subscribe((data) => {
+        send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    })
+
+    metronome.subscribe((data) => {
+        send(OUTPUT, ["METRONOME"], data)
+    })
+    metronomeTimer.subscribe((data) => {
+        send(OUTPUT, ["METRONOME_TIMER"], data)
+        // WIP send to stage
     })
 
     timeFormat.subscribe((a) => {

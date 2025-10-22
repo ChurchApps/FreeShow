@@ -1,13 +1,13 @@
-import { scriptures, scripturesCache } from "./../stores"
-import type { Bible } from "../../types/Bible"
+import type { Bible, Book, Chapter, Verse } from "json-bible/lib/Bible"
 import { uid } from "uid"
-import { xml2json } from "./xml"
 import { formatToFileName } from "../components/helpers/show"
+import { scriptures, scripturesCache } from "./../stores"
 import { setActiveScripture } from "./bible"
+import { xml2json } from "./xml"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
-        const obj: Bible = convertToBible(xml2json(bible.content))
+        const obj = convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
@@ -27,7 +27,7 @@ export function convertBebliaBible(data: any[]) {
     })
 }
 
-function convertToBible(content: any): Bible {
+function convertToBible(content: any) {
     const bible: Bible = {
         name: content.bible["@name"] || content.bible["@translation"] || "",
         metadata: { copyright: content.bible["@info"] || "" },
@@ -38,7 +38,7 @@ function convertToBible(content: any): Bible {
     // some files might be missing <testament>
     if (testaments === undefined) testaments = [{ book: content.bible.book }]
     else if (!Array.isArray(testaments)) testaments = [testaments]
-    const books: any[] = []
+    const books: Book[] = []
 
     testaments.forEach((a) => {
         books.push(...getBooks(a.book))
@@ -49,7 +49,7 @@ function convertToBible(content: any): Bible {
 }
 
 function getBooks(oldBooks: any[]) {
-    const books: any[] = []
+    const books: Book[] = []
 
     if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
     // console.log("Books:", oldBooks)
@@ -67,7 +67,7 @@ function getBooks(oldBooks: any[]) {
 }
 
 function getChapters(oldChapters: any[]) {
-    const chapters: any[] = []
+    const chapters: Chapter[] = []
 
     if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
     // console.log("Chapters:", oldChapters)
@@ -84,7 +84,7 @@ function getChapters(oldChapters: any[]) {
 }
 
 function getVerses(oldVerses: any[]) {
-    const verses: any[] = []
+    const verses: Verse[] = []
 
     if (!Array.isArray(oldVerses)) oldVerses = [oldVerses]
     // console.log("Verses:", oldVerses)

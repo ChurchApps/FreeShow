@@ -31,7 +31,8 @@
         { id: "camera" },
         { id: "timer" },
         { id: "clock" },
-        { id: "slide_tracker", icon: "percentage" }
+        { id: "slide_tracker", icon: "percentage" },
+        { id: "metronome", maxAmount: 1 }
     ]
 
     $: stageId = $activeStage.id || ""
@@ -149,7 +150,7 @@
                 {#if !$labelsDisabled}{translateText("items.text")}{/if}
             </MaterialButton>
 
-            <MaterialDropdown label="" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} title="actions.dynamic_values" onlyArrow />
+            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
         </InputRow>
     </div>
 

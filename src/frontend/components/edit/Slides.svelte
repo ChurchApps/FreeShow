@@ -143,6 +143,8 @@
                             />
                         {/if}
                     {/each}
+
+                    <div class="padding" style="height: 60px;width: 1px;"></div>
                 </div>
             {:else}
                 <Center faded>

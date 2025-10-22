@@ -14,6 +14,7 @@
     import NavigationSections from "./NavigationSections.svelte"
     import { audioExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
 
     const profile = getAccess("audio")
     $: readOnly = profile.global === "read"
@@ -66,7 +67,9 @@
         ],
         [
             { id: "microphones", label: "live.microphones", icon: "microphone" },
-            { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength }
+            { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength },
+            "SEPARATOR",
+            { id: "metronome", label: "audio.metronome", icon: "metronome" }
         ],
         [{ id: "effects_library", label: "category.sound_effects", icon: "effect", count: effectsLength, hidden: !effectsLength && activeSubTab !== "effects_library" }],
         [{ id: "TITLE", label: "audio.playlists" }, ...getAudioPlaylists($audioPlaylists)],
@@ -79,7 +82,7 @@
         let playlists = sortObject(keysToID(playlistUpdater), "name")
         playlists = playlists.map((a) => {
             const count = a.songs?.length
-            return { id: a.id, label: a.name, icon: "playlist", count }
+            return { id: a.id, label: a.name, icon: "playlist", count, onDoubleClick: () => AudioPlaylist.start(a.id) }
         })
         if (!playlists.length) return []
 

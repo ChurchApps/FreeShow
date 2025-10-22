@@ -3,7 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { activeRename, focusMode, media, outLocked, outputs, playingVideos, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -185,7 +185,7 @@
 
         let loop = shouldLoop
         let muted = shouldBeMuted
-        if (videoType === "foreground") clearSlide()
+        if (videoType === "foreground" || (videoType !== "background" && !shouldLoop)) clearSlide()
         let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         if (type === "player") bg.id = showId
@@ -199,8 +199,6 @@
 
         // TODO: playing in multiple outputs will create unclearable "ghost" video
 
-        // clear slide text
-        if ($activeProject && $projects[$activeProject]?.shows?.find((a) => a.id === bg.path)) setOutput("slide", null)
         setOutput("background", bg)
     }
 

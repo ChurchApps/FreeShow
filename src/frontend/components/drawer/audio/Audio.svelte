@@ -22,6 +22,7 @@
     import Folder from "../media/Folder.svelte"
     import AudioEffect from "./AudioEffect.svelte"
     import AudioFile from "./AudioFile.svelte"
+    import Metronome from "./Metronome.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -35,7 +36,7 @@
 
     $: playlist = active && $audioPlaylists[active]
 
-    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
+    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams", "metronome"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
@@ -46,7 +47,7 @@
               : active === "effects_library"
                 ? "category.sound_effects"
                 : rootPath === path
-                  ? active !== "microphones" && active !== "audio_streams" && active !== null
+                  ? active !== "microphones" && active !== "audio_streams" && active !== "metronome" && active !== null
                       ? $audioFolders[active]?.name || ""
                       : ""
                   : splitPath(path).name
@@ -84,7 +85,7 @@
                 sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
-            // microphones & audio_streams
+            // microphones & audio_streams & metronome
             prevActive = active
         }
     }
@@ -211,15 +212,17 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
-    <div class="grid" style="height: 100%;">
+    <div class="grid" style={active !== "audio_streams" && (playlist ? playlist.songs.length : fullFilteredFiles.length) ? "" : "height: 100%;"}>
         {#if active === "microphones"}
             <Microphones />
         {:else if active === "audio_streams"}
             <AudioStreams />
+        {:else if active === "metronome"}
+            <Metronome />
         {:else if playlist && playlistSettings}
             <div class="settings">
-                <MaterialNumberInput label="settings.audio_crossfade" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
-                <MaterialNumberInput label="settings.playlist_volume" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
+                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
+                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
             </div>
 
             <!-- <CombinedInput>
@@ -249,7 +252,7 @@
                 {#key path}
                     {#each fullFilteredFiles as file}
                         {#if file.folder}
-                            <Folder bind:rootPath={path} name={file.name} path={file.path} mode="list" />
+                            <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
                         {:else}
                             <AudioFile path={file.path} name={file.name} {active} />
                         {/if}
@@ -264,7 +267,7 @@
     </div>
 </div>
 
-{#if active === "microphones" || active === "effects_library"}
+{#if active === "microphones" || active === "effects_library" || active === "metronome"}
     <!-- nothing -->
 {:else if active === "audio_streams"}
     <FloatingInputs onlyOne>
@@ -349,6 +352,10 @@
 {/if}
 
 <style>
+    .scroll {
+        padding-bottom: 60px;
+    }
+
     .grid {
         display: flex;
         flex-direction: column;

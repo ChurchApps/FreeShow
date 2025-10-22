@@ -16,9 +16,7 @@
         if ($showsPath) sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
             if (a.key === "disableHardwareAcceleration") {
-                let value = a.value
-                if (a.value === null) value = $os.platform === "darwin"
-                disableHardwareAcceleration = !!value
+                disableHardwareAcceleration = !!a.value
             }
         })
         if ($showsPath)
@@ -177,7 +175,7 @@
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 
-<MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} on:change={toggleHardwareAcceleration} />
+<MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} defaultValue={false} on:change={toggleHardwareAcceleration} />
 <!-- "optimized_mode": "Optimized mode", -->
 <!-- <MaterialToggleSwitch label="settings.optimized_mode" checked={$special.optimizedMode} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "optimizedMode")} /> -->
 

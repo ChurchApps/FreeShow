@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { Bible } from "../../../types/Scripture"
     import type { DrawerTabIds } from "../../../types/Tabs"
     import {
         activeDrawerTab,
@@ -143,8 +142,6 @@
         // }
     }
 
-    let bibles: Bible[] = []
-
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
     function keydown(e: KeyboardEvent) {
@@ -264,10 +261,10 @@
         <Resizeable id="leftPanelDrawer">
             <Navigation id={$activeDrawerTab} />
         </Resizeable>
-        <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bibles />
+        <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch />
         <Resizeable id="rightPanelDrawer" let:width side="right">
             <div class="right" class:row={width > DEFAULT_WIDTH * 1.8}>
-                <Info id={$activeDrawerTab} {bibles} />
+                <Info id={$activeDrawerTab} />
             </div>
         </Resizeable>
     </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, drawerTabsData, labelsDisabled, scriptures } from "../../../stores"
+    import { activePopup, activeScripture, drawerTabsData, labelsDisabled, openScripture, scriptures } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -33,8 +33,12 @@
             .map((a: any) => {
                 const icon = a.api ? "scripture_alt" : a.collection ? "collection" : "scripture"
                 const count = a.collection?.versions?.length || 0
-                return { id: a.id, label: a.customName || a.name, icon, count }
+                return { id: a.id, label: a.customName || a.name, icon, count, onDoubleClick: () => startScripture() }
             })
+    }
+
+    function startScripture() {
+        openScripture.set({ play: true, book: Number($activeScripture.reference?.book || 1) - 1, chapter: $activeScripture.reference?.chapters[0], verses: $activeScripture.reference?.verses })
     }
 
     function newScripture() {
@@ -55,7 +59,7 @@
 </script>
 
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
-    <div slot="section_0" style="padding: 8px;{collections.length ? 'padding-top: 12px;' : ''}">
+    <div slot="section_0" style={favoritesList.length ? "" : "padding: 8px;{collections.length ? 'padding-top: 12px;' : ''}"}>
         {#if !favoritesList.length}
             <MaterialButton disabled={readOnly || (!apiBibles.length && !localBibles.length)} style="width: 100%;" title="popup.import_scripture" variant="outlined" on:click={createCollection} small>
                 <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />

@@ -192,7 +192,7 @@
 <!-- Background -->
 <Title label="preview.background" icon="background" />
 
-<MaterialNumberInput label="media.volume" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
+<MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
 
 <!-- Slide -->
 <Title label="preview.slide" icon="slide" />

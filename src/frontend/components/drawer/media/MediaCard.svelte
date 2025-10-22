@@ -25,7 +25,8 @@
     // Memoized name computation
     let displayName = ""
     $: {
-        const newName = name.slice(0, name.lastIndexOf("."))
+        const dotIndex = name.lastIndexOf(".")
+        const newName = dotIndex > 0 ? name.slice(0, dotIndex) : name
         if (displayName !== newName) {
             displayName = newName
         }

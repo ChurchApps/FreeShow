@@ -6,7 +6,7 @@ import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces = false) {
-    if (typeof value !== "string") return value
+    if (typeof value !== "string") return ""
     let newValue = value
         .toLowerCase()
         .replace(specialChars, "")
@@ -50,6 +50,8 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
 }
 
 export function showSearchFilter(searchValue: string, show: ShowList) {
+    if (!show.name) return 0
+
     // WIP tag search?
 
     // Priority 0: Number Exact Match

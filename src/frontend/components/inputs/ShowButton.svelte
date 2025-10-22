@@ -12,7 +12,7 @@
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { clearBackground } from "../output/clear"
+    import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
@@ -134,11 +134,17 @@
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
             let outputStyle = $styles[currentOutput.style || ""]
-            let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)
-            let out = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
+            const mediaData = $media[id] || {}
+            let mediaStyle: MediaStyle = getMediaStyle(mediaData, outputStyle)
 
-            // remove active slide
-            if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
+            const videoType = mediaData.videoType
+            const shouldLoop = videoType === "background" ? show.loop || true : false
+            const shouldBeMuted = videoType === "background" ? show.muted || true : false
+
+            let out = { path: id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: type, ...mediaStyle }
+
+            // clear slide
+            if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
 
             setOutput("background", out)
         } else if (type === "pdf") {

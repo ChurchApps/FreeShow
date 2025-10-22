@@ -108,11 +108,11 @@
         delete box.sections.chords
     }
 
-    $: if (box?.sections.CSS && id !== "captions") {
+    $: if (box?.sections?.CSS && id !== "captions") {
         setBoxInputValue(box, "CSS", "CSS_text", "value", style)
     }
 
-    $: if (box?.sections.font) {
+    $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
         setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit")
         // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)

@@ -3,7 +3,7 @@
 import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
 import { stopMetronome } from "../components/drawer/audio/metronome"
-import { activePlaylist, isFadingOut, playingAudio, special } from "../stores"
+import { activePlaylist, audioPlaylists, isFadingOut, playingAudio, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 
@@ -185,6 +185,12 @@ export function fadeinAllPlayingAudio() {
     isFadingOut.set(false)
     stopFading()
 
+    let fadeToVolume = 1
+    if (get(activePlaylist)?.id) {
+        const playlist = get(audioPlaylists)[get(activePlaylist).id]
+        fadeToVolume = playlist?.volume ?? 1
+    }
+
     Object.values(get(playingAudio)).forEach(({ audio }) => {
         fadeinAudio(audio)
     })
@@ -193,7 +199,7 @@ export function fadeinAllPlayingAudio() {
 
     async function fadeinAudio(audio) {
         audio.play()
-        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true)
+        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true, fadeToVolume)
         // if (faded) analyseAudio()
     }
 }

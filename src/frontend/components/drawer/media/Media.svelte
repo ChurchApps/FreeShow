@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
@@ -18,6 +18,7 @@
         outLocked,
         outputs,
         popupData,
+        providerConnections,
         selectAllMedia,
         selected,
         sorted
@@ -88,11 +89,14 @@
         else if (active === "online") onlineTab = id
     }
 
-    // Content providers with libraries
+    // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
-    onMount(async () => {
-        contentProviders = (await requestMain(Main.GET_CONTENT_PROVIDERS)).filter((p) => p.hasContentLibrary)
-    })
+    $: if ($providerConnections) getProviders()
+    function getProviders() {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
 
     let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
@@ -428,7 +432,7 @@
                     {#if $mediaOptions.mode === "grid"}
                         <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
                             {#if item.folder}
-                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} />
+                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={item.credits || {}}
@@ -446,7 +450,7 @@
                     {:else}
                         <VirtualList items={sortedFiles} let:item={file}>
                             {#if file.folder}
-                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                                <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={file.credits || {}}

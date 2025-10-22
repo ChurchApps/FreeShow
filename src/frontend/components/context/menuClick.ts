@@ -82,6 +82,7 @@ import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
+import { createScriptureShow } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -97,6 +98,7 @@ import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
@@ -752,9 +754,9 @@ const clickActions = {
             history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
         } else if (obj.contextElem?.classList.contains("chapters")) {
             triggerFunction("scripture_selectAll")
-            setTimeout(() => triggerFunction("scripture_newShow"))
+            setTimeout(createScriptureShow)
         } else if (obj.sel?.id === "scripture") {
-            triggerFunction("scripture_newShow")
+            createScriptureShow()
         }
     },
 
@@ -1257,7 +1259,9 @@ const clickActions = {
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
         // clear slide text
-        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
+        // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
+        if (get(media)[path]?.videoType === "foreground") clearSlide()
+
         setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {

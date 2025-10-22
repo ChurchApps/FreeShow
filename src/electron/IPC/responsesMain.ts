@@ -243,7 +243,7 @@ export function startImport(data: { channel: string; format: { name: string; ext
 }
 
 // BIBLE
-export function loadScripture(msg: { id: string; path: string; name: string; data: any }) {
+export function loadScripture(msg: { id: string; path: string; name: string }) {
     const bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
     let filePath: string = path.join(bibleFolder, msg.name + ".fsb")
 
@@ -253,7 +253,6 @@ export function loadScripture(msg: { id: string; path: string; name: string; dat
     if (bible.error) filePath = path.join(app.getPath("documents"), "Bibles", msg.name + ".fsb")
     bible = loadFile(filePath, msg.id)
 
-    if (msg.data) return { ...bible, data: msg.data }
     return bible
 }
 

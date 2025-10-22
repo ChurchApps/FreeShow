@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeSlideRecording, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
+    import { activeSlideRecording, isFadingOut, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
@@ -63,6 +63,8 @@
     $: outputStyle = $styles[output.style || ""] || {}
     $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
     $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG
+    $: backgroundData = $media[output.out?.background?.path || ""] || {}
+    $: isScripture = outputContent?.id === "temp"
 
     $: slideCleared = isOutCleared("slide", $outputs)
 
@@ -138,20 +140,22 @@
             </div>
         {/if}
 
-        <div class="combinedButton">
-            <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
-                <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
-                <!-- display recording icon here if a slide recoring is playing -->
-                <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
-            </MaterialButton>
-            {#if !allCleared}
-                <MaterialButton style="padding: {activeClear === 'slide' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
-                    {#if activeClear === "slide"}
-                        <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
-                    {/if}
+        {#if backgroundData.videoType !== "foreground"}
+            <div class="combinedButton">
+                <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
+                    <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
+                    <!-- display recording icon here if a slide recoring is playing -->
+                    <Icon id={isScripture ? "scripture" : outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
                 </MaterialButton>
-            {/if}
-        </div>
+                {#if !allCleared}
+                    <MaterialButton style="padding: {activeClear === 'slide' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
+                        {#if activeClear === "slide"}
+                            <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
+                        {/if}
+                    </MaterialButton>
+                {/if}
+            </div>
+        {/if}
 
         <div class="combinedButton">
             <MaterialButton

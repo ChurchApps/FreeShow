@@ -447,8 +447,17 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
         }
 
         const outputStyle = get(styles)[currentOutput.style || ""]
-        const mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
-        setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
+        const mediaData = get(media)[item.id] || {}
+        const mediaStyle = getMediaStyle(mediaData, outputStyle)
+
+        const videoType = mediaData.videoType
+        const shouldLoop = videoType === "background" ? true : false
+        const shouldBeMuted = videoType === "background" ? true : false
+
+        // clear slide
+        if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
+
+        setOutput("background", { type, path: item.id, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {
