@@ -264,7 +264,7 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
 
     if (id === videoOutputId) {
         const muteAudio = get(special).muteAudioWhenVideoPlays
-        const isVideo = videoExtensions.includes(getExtension(data.path))
+        const isVideo = data.type === "player" || data.type === "video" || videoExtensions.includes(getExtension(data.path))
         if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
         else fadeinAllPlayingAudio()
 

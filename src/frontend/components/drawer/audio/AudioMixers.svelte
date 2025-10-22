@@ -24,6 +24,7 @@
     {/each}
 
     <!-- WIP microphones / audio streams / metronome / playing playlists -->
+    <!-- music / sound effects -->
 </div>
 
 <style>

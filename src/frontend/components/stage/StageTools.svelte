@@ -41,7 +41,7 @@
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
-        if (item?.type === "current_output") {
+        if (item?.type === "current_output" || item?.type === "metronome") {
             tabs.text.disabled = true
             if (active === "text") active = "items"
             return

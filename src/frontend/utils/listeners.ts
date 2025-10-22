@@ -28,6 +28,8 @@ import {
     groups,
     livePrepare,
     media,
+    metronome,
+    metronomeTimer,
     openedFolders,
     outputs,
     outputSlideCache,
@@ -276,6 +278,14 @@ export function storeSubscriber() {
     })
     audioChannelsData.subscribe((data) => {
         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    })
+
+    metronome.subscribe((data) => {
+        send(OUTPUT, ["METRONOME"], data)
+    })
+    metronomeTimer.subscribe((data) => {
+        send(OUTPUT, ["METRONOME_TIMER"], data)
+        // WIP send to stage
     })
 
     timeFormat.subscribe((a) => {

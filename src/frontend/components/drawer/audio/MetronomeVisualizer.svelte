@@ -1,6 +1,8 @@
 <script lang="ts">
     import { metronome, metronomeTimer } from "../../../stores"
 
+    export let isItem: boolean = false
+
     $: data = $metronome
     $: values = $metronomeTimer
 
@@ -14,23 +16,37 @@
     const preScheduleTime = 0.1
 </script>
 
-<div class="beats">
-    {#each Array.from({ length: beats }) as _, currentBeat}
-        <div class="bar" class:active={beat === currentBeat + 1}>
-            {currentBeat + 1}
-        </div>
-    {/each}
-</div>
+<section class:isItem>
+    <div class="beats">
+        {#each Array.from({ length: beats }) as _, currentBeat}
+            <div class="bar" class:active={beat === currentBeat + 1}>
+                {currentBeat + 1}
+            </div>
+        {/each}
+    </div>
 
-<div style="height: 20px;overflow: hidden;">
-    <div class="bar" style="margin-top: 5px;">
-        <div class="indicator" style="transition-duration: {nextTime}s; transform: translateX({(beat % 2 === 1 ? -1 : 1) * 50}%);">
-            <div class="dot" class:big={beat === 1}></div>
+    <div class="overflow">
+        <div class="bar" style="margin-top: 5px;">
+            <div class="indicator" style="transition-duration: {nextTime}s; transform: translateX({(beat % 2 === 1 ? -1 : 1) * 50}%);">
+                <div class="dot" class:big={beat === 1}></div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 <style>
+    section.isItem {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        width: 100%;
+        height: 100%;
+
+        text-shadow: none;
+    }
+
     .beats {
         display: flex;
         gap: 5px;
@@ -66,7 +82,18 @@
         color: var(--secondary-text); */
     }
 
+    section.isItem .beats .bar {
+        height: 80px;
+        font-size: 0.7em;
+    }
+
     /* BAR */
+
+    .overflow {
+        height: 20px;
+        overflow: hidden;
+        width: 100%;
+    }
 
     .bar {
         width: 100%;
@@ -103,5 +130,20 @@
         height: 18px;
 
         background-color: var(--secondary);
+    }
+
+    section.isItem .overflow {
+        height: 28px;
+    }
+    section.isItem .bar {
+        height: 20px;
+    }
+    section.isItem .indicator .dot {
+        width: 20px;
+        height: 20px;
+    }
+    section.isItem .indicator .dot.big {
+        width: 28px;
+        height: 28px;
     }
 </style>

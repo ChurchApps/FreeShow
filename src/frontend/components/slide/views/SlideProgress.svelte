@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { allOutputs, dictionary, groups, outputs } from "../../../stores"
+    import { allOutputs, dictionary, groups, outputs, showsCache } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -18,7 +18,7 @@
     $: currentSlideOut = currentOutput?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
-    $: currentLayoutRef = getLayoutRef(currentShowId)
+    $: currentLayoutRef = getLayoutRef(currentShowId, $showsCache)
     $: currentShowSlides = _show(currentShowId).get("slides") || {}
     $: slidesLength = currentLayoutRef.length || 0
 

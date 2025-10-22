@@ -173,7 +173,8 @@ export async function playScripture() {
     const includeCount = 3
 
     let tempItems: Item[] = slides[0] || []
-    setOutput("slide", { id: "temp", tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
+    let categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
+    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
 
     // track
     const verseRange = joinRange(selectedVerses)

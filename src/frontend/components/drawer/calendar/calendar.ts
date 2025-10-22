@@ -54,7 +54,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
     currentEvents.forEach(createEventSlide)
     function createEventSlide(day: any) {
         const id = uid()
-        let textDay = new Date(day.date).getDate() + ". " + translateText("month." + new Date(day.date).getMonth() + 1)
+        let textDay = new Date(day.date).getDate() + ". " + translateText("month." + (new Date(day.date).getMonth() + 1))
         let group: string = textDay
 
         const from = new Date(day.events[0].from)

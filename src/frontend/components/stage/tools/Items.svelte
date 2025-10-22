@@ -31,7 +31,8 @@
         { id: "camera" },
         { id: "timer" },
         { id: "clock" },
-        { id: "slide_tracker", icon: "percentage" }
+        { id: "slide_tracker", icon: "percentage" },
+        { id: "metronome", maxAmount: 1 }
     ]
 
     $: stageId = $activeStage.id || ""

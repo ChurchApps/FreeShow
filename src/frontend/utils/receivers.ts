@@ -31,6 +31,8 @@ import {
     gain,
     livePrepare,
     media,
+    metronome,
+    metronomeTimer,
     ndiData,
     outputDisplay,
     outputs,
@@ -310,6 +312,9 @@ export const receiveOUTPUTasOUTPUT: any = {
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
     AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
+
+    METRONOME: (a: any) => metronome.set(a),
+    METRONOME_TIMER: (a: any) => metronomeTimer.set(a),
 
     // dynamic values
     PLAYING_AUDIO: (a: any) => playingAudioPaths.set(a),
