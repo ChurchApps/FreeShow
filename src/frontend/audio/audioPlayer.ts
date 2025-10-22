@@ -351,6 +351,23 @@ export class AudioPlayer {
         return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
     }
 
+    static getOutputs(): Promise<{ value: string; label: string }[]> {
+        return new Promise(resolve => {
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices) => {
+                    // only get audio outputs & not "default" becuase that does not work
+                    const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
+                    const audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
+                    resolve(audioOutputs)
+                })
+                .catch((err) => {
+                    console.log(`${err.name}: ${err.message}`)
+                    resolve([])
+                })
+        })
+    }
+
     // STATE
 
     static audioExists(id: string) {

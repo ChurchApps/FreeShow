@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -10,11 +11,10 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
     import AudioMixers from "../audio/AudioMixers.svelte"
-    import Metronome from "../audio/Metronome.svelte"
 
     let tabs: TabsObj = {
-        mixer: { name: "audio.mixer", icon: "equalizer" },
-        metronome: { name: "audio.metronome", icon: "metronome" }
+        mixer: { name: "audio.mixer", icon: "equalizer" }
+        // equalizer: { name: "audio.equalizer", icon: "equalizer" }
         // effects: { name: "items.effect", icon: "image" },
     }
     let active = Object.keys(tabs)[0]
@@ -48,17 +48,8 @@
 
     // audio outputs
     let audioOutputs: { value: string; label: string }[] = []
-    onMount(() => {
-        navigator.mediaDevices
-            .enumerateDevices()
-            .then((devices) => {
-                // only get audio outputs & not "default" becuase that does not work
-                const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
-                audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
-            })
-            .catch((err) => {
-                console.log(`${err.name}: ${err.message}`)
-            })
+    onMount(async () => {
+        audioOutputs = await AudioPlayer.getOutputs()
     })
 </script>
 
@@ -84,8 +75,8 @@
 {:else}
     <Tabs {tabs} bind:active />
 
-    {#if active === "metronome"}
-        <Metronome {audioOutputs} />
+    {#if active === "equalizer"}
+        <!--  -->
     {:else}
         <AudioMixers />
     {/if}

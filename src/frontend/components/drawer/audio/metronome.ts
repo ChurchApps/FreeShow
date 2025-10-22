@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { AudioPlayer } from "../../../audio/audioPlayer"
-import { customMetadata, metronome, playingMetronome, volume } from "../../../stores"
+import { customMetadata, metronome, metronomeTimer, playingMetronome, volume } from "../../../stores"
 import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
@@ -69,6 +69,7 @@ export function stopMetronome() {
     if (scheduleTimeout) clearTimeout(scheduleTimeout)
     scheduleTimeout = null
     playingMetronome.set(false)
+    metronomeTimer.set({ beat: 0, timeToNext: 0 })
 
     startTime = 0
     beatsPlayed = 0
@@ -135,6 +136,8 @@ let beatsPlayed = 0
 function scheduleNote(beat: number) {
     beatsPlayed++
     const timeUntilNextNote = getTimeToNextNote()
+
+    metronomeTimer.set({ beat, timeToNext: timeUntilNextNote })
 
     playNote(timeUntilNextNote, beat === 1)
     scheduleNextNote(timeUntilNextNote, beat + 1)
