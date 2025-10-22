@@ -98,6 +98,7 @@ import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
@@ -1259,7 +1260,9 @@ const clickActions = {
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
         // clear slide text
-        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
+        // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
+        if (get(media)[path]?.videoType === "foreground") clearSlide()
+
         setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: ObjData) => {

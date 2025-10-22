@@ -597,9 +597,10 @@ export function _show(id = "active") {
                                     if (key) {
                                         prev[layoutId].layouts.push(a[id].layouts[layoutId].slides[index][key])
                                         delete a[id].layouts[layoutId].slides[index][key]
+                                    } else {
+                                        prev[layoutId].layouts.push(a[id].layouts[layoutId].slides[index])
+                                        a[id].layouts[layoutId].slides.splice(index, 1)
                                     }
-                                    prev[layoutId].layouts.push(a[id].layouts[layoutId].slides[index])
-                                    a[id].layouts[layoutId].slides.splice(index, 1)
                                 })
                         })
 
