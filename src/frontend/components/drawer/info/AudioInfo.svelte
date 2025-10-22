@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
-    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -10,7 +9,7 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
-    import AudioMix from "../audio/AudioMix.svelte"
+    import AudioMixers from "../audio/AudioMixers.svelte"
     import Metronome from "../audio/Metronome.svelte"
 
     let tabs: TabsObj = {
@@ -28,7 +27,7 @@
             return a
         })
 
-        if (!value && key === "allowGaining") AudioPlayer.updateVolume()
+        // if (!value && key === "allowGaining") AudioPlayer.updateVolume()
     }
 
     // WIP add once electron is updated to >24
@@ -71,7 +70,7 @@
 
         <!-- defaultValue={false}  -->
         <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
-        <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} />
+        <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
 
         <!-- <CombinedInput textWidth={70}>
             <p data-title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
@@ -88,7 +87,7 @@
     {#if active === "metronome"}
         <Metronome {audioOutputs} />
     {:else}
-        <AudioMix />
+        <AudioMixers />
     {/if}
 {/if}
 

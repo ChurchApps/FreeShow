@@ -1,32 +1,40 @@
 <script lang="ts">
     import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
-    import { audioChannels } from "../../../stores"
+    import { audioChannels, audioChannelsData } from "../../../stores"
 
     export let channelId: string = ""
 
-    // const numbers: number[] = [0, -3, -6, -9, -12, -15, -21, -36, -51, -63, -80]
+    $: isMuted = !!$audioChannelsData[channelId]?.isMuted
+
     const numbers: number[] = [-80, -64, -50, -35, -20, -15, -12, -9, -6, -3, 0]
 
-    // $: if ($audioChannels[0]) console.log(AudioAnalyserMerger.getChannels()[channelId]) // DEBUG
-    // $: leftChannel = channelId === "main" ? $audioChannels[0]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[0]?.dB?.value
-    // $: rightChannel = channelId === "main" ? $audioChannels[1]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[1]?.dB?.value
-    $: leftChannel = channelId === "main" ? $audioChannels[0]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[0]?.dB
-    $: rightChannel = channelId === "main" ? $audioChannels[1]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[1]?.dB
+    let highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
 
-    function getDBValue(dB: any) {
+    function getDBValue(channelIndex: number, _updater: any) {
+        const dB = channelId === "main" ? $audioChannels[channelIndex]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[channelIndex]?.dB
         if (!dB) return AudioAnalyserMerger.dBmax
 
         let value: number = dB.value
-        const max: number = dB.max || AudioAnalyserMerger.dBmax
-        const min: number = dB.min || AudioAnalyserMerger.dBmin
+        // const max: number = dB.max || AudioAnalyserMerger.dBmax
+        // const min: number = dB.min || AudioAnalyserMerger.dBmin
 
         if (value > max) value = max
         if (value < min) value = min
 
-        let percentage = (value - min) / (max - min)
+        let percentage = (value - min) / range // (max - min)
         percentage = 1 - transformRange(1 - percentage)
 
-        return percentage * 100
+        const dBPercentage = percentage * 100
+
+        if (dBPercentage > (highestDB[channelIndex]?.value || 0)) {
+            if (highestDB[channelIndex]?.timeout) clearTimeout(highestDB[channelIndex].timeout)
+            highestDB[channelIndex] = {
+                timeout: setTimeout(() => (highestDB[channelIndex].value = 0), 1000),
+                value: dBPercentage
+            }
+        }
+
+        return dBPercentage
     }
 
     const newRange = 1 - 0.4 // %
@@ -42,56 +50,65 @@
         }
     }
 
-    function getPercentageFromDB(dB: number) {
-        const max: number = $audioChannels[0]?.dB?.max ?? AudioAnalyserMerger.dBmax
-        const min: number = $audioChannels[0]?.dB?.min ?? AudioAnalyserMerger.dBmin
+    const max: number = $audioChannels[0]?.dB?.max ?? AudioAnalyserMerger.dBmax
+    const min: number = $audioChannels[0]?.dB?.min ?? AudioAnalyserMerger.dBmin
+    const range: number = max - min
 
+    function getPercentageFromDB(dB: number) {
         // invert
-        let percentage = (dB - min) / (max - min)
+        let percentage = (dB - min) / range
         percentage = 1 - percentage
 
         return transformRange(percentage) * 100
     }
 </script>
 
-<div class="main">
-    <!-- WIP volume dots!!! instead of transition.. -->
-    <!-- <span class="left" style="height: 20px;">
-        <div style="right: 0;position: absolute;height: 20px;width: {20}%" />
-    </span>
-    <span class="right" style="height: 20px;">
-        <div style="right: 0;position: absolute;height: 20px;width: {10}%" />
-    </span> -->
-    <span class="left" style="height: 10px;">
-        <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(leftChannel)}%" />
-    </span>
-    <span class="right" style="height: 10px;">
-        <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(rightChannel)}%" />
-    </span>
+<div class="background">
+    <div class="main">
+        <!-- WIP volume dots!!! instead of transition.. -->
+        <span class="meter left" class:isMuted style="height: 6px;">
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(0, $audioChannels)}%" />
+            <span class="meter left" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
+            <div class="highest" style="right: {100 - (highestDB[0]?.value || 0)}%;" />
+        </span>
+        <div style="height: 1px;width: 100%;"></div>
+        <span class="meter right" class:isMuted style="height: 6px;">
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(1, $audioChannels)}%" />
+            <span class="meter right" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
+            <div class="highest" style="right: {100 - (highestDB[1]?.value || 0)}%;" />
+        </span>
 
-    <!-- <div class="lines">
-        {#each { length: numbers } as _, i}
-            {@const hide = i === 0 || i + 1 === numbers}
-            <p class="line" class:hide>-</p>
-        {/each}
-    </div> -->
-    <!-- <div class="lines" style="padding: 0 5px;">
-        {#each { length: numbers } as _, i}
-            {@const hide = i === 0 || i + 1 === numbers}
-            <p class:hide class:start={i === 0} class:end={i + 1 === numbers}>{i + 1 === numbers ? "-∞" : Math.round(getDBFromPercentage(i / (numbers - 1)))}</p>
-        {/each}
-    </div> -->
-    <div class="lines" style="padding: 6px 0;">
-        {#each numbers as i}
-            <p class="absolute" style="left: {100 - getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -80 ? "-∞" : i}</p>
-        {/each}
+        <div class="lines" style="padding: 3px 0;">
+            {#each Array.from({ length: range + 1 }) as _, i}
+                {@const dB = min + i}
+
+                <!-- <span class="line" style="left: {((i + 1) / range) * 100}%;"></span> -->
+                {#if dB > -20 || dB % 3 === 0 || numbers.includes(dB)}
+                    <span class="line" class:bigger={numbers.includes(dB)} style="left: {100 - getPercentageFromDB(dB)}%;"></span>
+                {/if}
+            {/each}
+        </div>
+
+        <div class="lines" style="padding: 4px 0;">
+            <p class="absolute" style="position: initial;opacity: 0;">.</p>
+
+            {#each numbers as i}
+                <!-- "-" + (i * -1).toString().padStart(2, "0") -->
+                <p class="absolute" style="left: {100 - getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -80 ? "-∞" : i}</p>
+            {/each}
+        </div>
     </div>
 </div>
 
 <style>
+    .background {
+        background-color: var(--primary-darkest);
+        border-radius: 5px;
+        padding: 5px;
+    }
+
     .main {
         width: 100%;
-        /* height: 48px; */
         display: flex;
         flex-direction: column;
 
@@ -100,24 +117,22 @@
 
     .lines {
         position: relative;
-
-        display: flex;
-        /* justify-content: space-between; */
-
-        text-align: center;
         opacity: 0.8;
-
-        background: var(--primary-lighter);
     }
-    /* .lines .line {
-        opacity: 0.4;
-        margin: 0 3px;
-    } */
 
-    /* .lines .hide {
-        opacity: 0;
-        / * line-height: 0; * /
-    } */
+    .line {
+        position: absolute;
+        width: 1px;
+        height: 5px;
+
+        background-color: var(--text);
+        opacity: 0.5;
+    }
+    .line.bigger {
+        height: 8px;
+        width: 2px;
+        opacity: 0.7;
+    }
 
     .lines p {
         display: flex;
@@ -126,47 +141,45 @@
 
         font-size: 0.7em;
     }
-    /* .lines p.hide {
-        flex: 1;
-    } */
 
     .absolute {
         position: absolute;
         top: 0;
         inset-inline-start: 5px;
-        transform: translateY(50%);
+        transform: translate(-50%, 50%);
     }
 
-    /* .lines p.end */
-    .lines p.start {
-        position: initial;
-        transform: none;
+    .highest {
+        position: absolute;
+        height: inherit;
+        width: 2px;
+
+        background-color: white !important;
+        opacity: 0.2;
+
+        transition: 0.2s right;
     }
 
     .lines p.start {
-        align-items: start;
-        padding-left: 2px;
+        transform: translate(-3px, 50%);
     }
     .lines p.end {
-        align-items: end;
-        padding-right: 2px;
-
-        transform: translateX(-10px);
+        transform: translate(-4px, 50%);
     }
 
-    span {
-        /* background-image: linear-gradient(rgb(200, 0, 0) 1%, rgb(255, 220, 0) 16%, rgb(0, 220, 0) 45%, rgb(0, 120, 0) 100%); */
-        /* background-image: linear-gradient(rgb(200, 0, 0) 1%, rgb(200, 100, 0) 16%, rgb(0, 255, 120) 45%, rgb(0, 120, 200) 100%); */
-        /* background-image: linear-gradient(rgb(200, 0, 0) 1%, rgb(255, 200, 0) 16%, rgb(0, 255, 50) 45%, rgb(0, 200, 150) 100%); */
-        /* background-image: linear-gradient(90deg, rgb(200, 0, 0) 1%, rgb(255, 200, 0) 16%, rgb(0, 255, 50) 45%, rgb(0, 200, 200) 100%); */
+    span.meter {
         background-image: linear-gradient(90deg, rgb(0, 200, 200) 0%, rgb(0, 255, 50) 55%, rgb(255, 200, 0) 84%, rgb(200, 0, 0) 100%);
         height: 50%;
+
+        position: relative;
+        border-radius: 1px;
+    }
+    span.meter.isMuted {
+        filter: grayscale(1) brightness(0.7);
     }
 
-    span div {
-        /* transition: height 0.05s ease 0s; */
+    span.meter div {
         transition: width 0.05s ease 0s;
-        /* background-color: transparent; */
         background-color: var(--primary-darker);
         height: 100%;
     }

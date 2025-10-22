@@ -16,7 +16,7 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { AudioChannel, AudioStream, Playlist } from "./../types/Audio"
+import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -233,6 +233,7 @@ export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
+export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
 export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 
