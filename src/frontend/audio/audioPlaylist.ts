@@ -44,6 +44,8 @@ export class AudioPlaylist {
             a[id][key] = value
             return a
         })
+
+        if (key === "volume") AudioPlayer.updateVolume()
     }
 
     static next() {

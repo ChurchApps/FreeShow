@@ -66,7 +66,9 @@
         ],
         [
             { id: "microphones", label: "live.microphones", icon: "microphone" },
-            { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength }
+            { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength },
+            "SEPARATOR",
+            { id: "metronome", label: "audio.metronome", icon: "metronome" }
         ],
         [{ id: "effects_library", label: "category.sound_effects", icon: "effect", count: effectsLength, hidden: !effectsLength && activeSubTab !== "effects_library" }],
         [{ id: "TITLE", label: "audio.playlists" }, ...getAudioPlaylists($audioPlaylists)],

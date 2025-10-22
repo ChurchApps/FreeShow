@@ -10,12 +10,11 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
-    import AudioMix from "../audio/AudioMix.svelte"
-    import Metronome from "../audio/Metronome.svelte"
+    import AudioMixers from "../audio/AudioMixers.svelte"
 
     let tabs: TabsObj = {
-        mixer: { name: "audio.mixer", icon: "equalizer" },
-        metronome: { name: "audio.metronome", icon: "metronome" }
+        mixer: { name: "audio.mixer", icon: "equalizer" }
+        // equalizer: { name: "audio.equalizer", icon: "equalizer" }
         // effects: { name: "items.effect", icon: "image" },
     }
     let active = Object.keys(tabs)[0]
@@ -28,7 +27,7 @@
             return a
         })
 
-        if (!value && key === "allowGaining") AudioPlayer.updateVolume()
+        // if (!value && key === "allowGaining") AudioPlayer.updateVolume()
     }
 
     // WIP add once electron is updated to >24
@@ -49,17 +48,8 @@
 
     // audio outputs
     let audioOutputs: { value: string; label: string }[] = []
-    onMount(() => {
-        navigator.mediaDevices
-            .enumerateDevices()
-            .then((devices) => {
-                // only get audio outputs & not "default" becuase that does not work
-                const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
-                audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
-            })
-            .catch((err) => {
-                console.log(`${err.name}: ${err.message}`)
-            })
+    onMount(async () => {
+        audioOutputs = await AudioPlayer.getOutputs()
     })
 </script>
 
@@ -71,7 +61,7 @@
 
         <!-- defaultValue={false}  -->
         <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
-        <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} />
+        <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
 
         <!-- <CombinedInput textWidth={70}>
             <p data-title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
@@ -85,10 +75,10 @@
 {:else}
     <Tabs {tabs} bind:active />
 
-    {#if active === "metronome"}
-        <Metronome {audioOutputs} />
+    {#if active === "equalizer"}
+        <!--  -->
     {:else}
-        <AudioMix />
+        <AudioMixers />
     {/if}
 {/if}
 

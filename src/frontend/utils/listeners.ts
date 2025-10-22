@@ -12,6 +12,7 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
+    audioChannelsData,
     audioData,
     cachedShowsData,
     colorbars,
@@ -272,6 +273,9 @@ export function storeSubscriber() {
     })
     gain.subscribe((data) => {
         send(OUTPUT, ["GAIN"], data)
+    })
+    audioChannelsData.subscribe((data) => {
+        send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
     })
 
     timeFormat.subscribe((a) => {

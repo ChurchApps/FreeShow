@@ -219,6 +219,7 @@
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
         "mixer": "Mixer",
+        "main": "Main",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "use_metadata_bpm": "Use BPM from metadata",

@@ -73,6 +73,7 @@ export type SaveListSettings =
     | "transitionData"
     | "volume"
     | "gain"
+    | "audioChannelsData"
     | "driveData"
     | "calendarAddShow"
     | "metronome"

@@ -22,6 +22,7 @@
     import Folder from "../media/Folder.svelte"
     import AudioEffect from "./AudioEffect.svelte"
     import AudioFile from "./AudioFile.svelte"
+    import Metronome from "./Metronome.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -35,7 +36,7 @@
 
     $: playlist = active && $audioPlaylists[active]
 
-    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
+    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams", "metronome"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
@@ -46,7 +47,7 @@
               : active === "effects_library"
                 ? "category.sound_effects"
                 : rootPath === path
-                  ? active !== "microphones" && active !== "audio_streams" && active !== null
+                  ? active !== "microphones" && active !== "audio_streams" && active !== "metronome" && active !== null
                       ? $audioFolders[active]?.name || ""
                       : ""
                   : splitPath(path).name
@@ -84,7 +85,7 @@
                 sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
-            // microphones & audio_streams
+            // microphones & audio_streams & metronome
             prevActive = active
         }
     }
@@ -216,6 +217,8 @@
             <Microphones />
         {:else if active === "audio_streams"}
             <AudioStreams />
+        {:else if active === "metronome"}
+            <Metronome />
         {:else if playlist && playlistSettings}
             <div class="settings">
                 <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
@@ -264,7 +267,7 @@
     </div>
 </div>
 
-{#if active === "microphones" || active === "effects_library"}
+{#if active === "microphones" || active === "effects_library" || active === "metronome"}
     <!-- nothing -->
 {:else if active === "audio_streams"}
     <FloatingInputs onlyOne>
