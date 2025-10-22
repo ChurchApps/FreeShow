@@ -216,7 +216,7 @@
 
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
-            <T id="settings.connect_to" replace={["Amazing Life"]} />
+            <T id="settings.connect_to" replace={["APlay"]} />
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.planningcenter}
@@ -248,12 +248,12 @@
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.amazinglife}
-    <!-- Amazing Life connected -->
-    <Title label="Content Provider: Amazing Life" icon="list" />
+    <!-- APlay connected -->
+    <Title label="Content Provider: APlay" icon="list" />
 
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
-            <T id="settings.disconnect_from" replace={["Amazing Life"]} />
+            <T id="settings.disconnect_from" replace={["APlay"]} />
         </MaterialButton>
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />

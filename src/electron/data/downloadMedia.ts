@@ -312,7 +312,8 @@ function getMediaThumbnailPath(url: string, dataPath: string) {
     const isProtected = isProtectedProvider(url)
     if (isProtected) return getProtectedPath(url)
 
-    const extension = path.extname(url)
+    const urlWithoutQuery = url.split('?')[0]
+    const extension = path.extname(urlWithoutQuery)
     const fileName = `${filePathHashCode(url)}${extension}`
     const outputFolder = getDataFolder(dataPath, dataFolderNames.onlineMedia)
     createFolder(outputFolder)

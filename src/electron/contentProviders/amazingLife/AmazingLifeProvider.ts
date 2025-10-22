@@ -26,7 +26,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     constructor() {
         super({
             providerId: "amazinglife",
-            displayName: "Amazing Life",
+            displayName: "APlay",
             port: 5503,
             clientId: getKey("amazinglife_id") || "",
             clientSecret: getKey("amazinglife_secret") || "",
@@ -57,7 +57,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     disconnect(scope: AmazingLifeScopes = "services"): void {
-        console.log(`Disconnecting from Amazing Life with scope: ${scope}`)
+        console.log(`Disconnecting from APlay with scope: ${scope}`)
         this.access = null
         AmazingLifeProvider.contentLibraryCache = null
     }
@@ -71,11 +71,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         // Connect first to ensure we have authentication
         const connected = await this.connect("services")
         if (!connected) {
-            console.error("Failed to connect to Amazing Life")
+            console.error("Failed to connect to APlay")
             return
         }
 
-        console.log(`Loading services from Amazing Life${dataPath ? ` at ${dataPath}` : ""}`)
+        console.log(`Loading services from APlay${dataPath ? ` at ${dataPath}` : ""}`)
     }
 
     async startupLoad(scope: AmazingLifeScopes, data?: any): Promise<void> {
@@ -114,11 +114,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
         // Return cached data if available
         if (AmazingLifeProvider.contentLibraryCache) {
-            console.log("Returning cached Amazing Life content library")
+            console.log("Returning cached APlay content library")
             return AmazingLifeProvider.contentLibraryCache
         }
         if (!this.access) {
-            console.error("Not authenticated with Amazing Life")
+            console.error("Not authenticated with APlay")
             return []
         }
 
@@ -130,11 +130,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
             // First, fetch the modules
             httpsRequest("https://api-prod.amazingkids.app", "/prod/curriculum/modules", "GET", headers, {}, async (err, data) => {
                 if (err) {
-                    console.error("Failed to fetch Amazing Life modules:", err)
+                    console.error("Failed to fetch APlay modules:", err)
                     return reject(err)
                 }
 
-                console.log("Amazing Life API response:", JSON.stringify(data, null, 2))
+                console.log("APlay API response:", JSON.stringify(data, null, 2))
                 try {
                     const modules = data.data || []
                     console.log(`Found ${modules.length} modules`)
@@ -166,7 +166,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                     resolve(categories)
                 } catch (error) {
-                    console.error("Failed to convert Amazing Life content library:", error)
+                    console.error("Failed to convert APlay content library:", error)
                     reject(error)
                 }
             })
@@ -175,7 +175,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
     async getContent(libraryId: string): Promise<ContentFile[]> {
         if (!this.access) {
-            console.error("Not authenticated with Amazing Life")
+            console.error("Not authenticated with APlay")
             return []
         }
 
@@ -234,7 +234,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                     resolve(files)
                 } catch (error) {
-                    console.error("Failed to convert Amazing Life media:", error)
+                    console.error("Failed to convert APlay media:", error)
                     reject(error)
                 }
             }
