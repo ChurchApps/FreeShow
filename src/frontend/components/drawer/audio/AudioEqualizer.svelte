@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { AudioEqualizer, type EQBand, EqualizerCalculations, equalizerConfig, initializeEqualizer, setEqualizerEnabled, updateEqualizerBands } from "../../../audio/audioEqualizer"
+    import { SpectrumAnalyzer } from "../../../audio/spectrumAnalyzer"
     import { eqPresets } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, keysToID } from "../../helpers/array"
@@ -26,6 +27,11 @@
     let equalizerConfigUnsubscribe: (() => void) | null = null
     let windowResizeCleanup: (() => void) | null = null
     let resizeObserver: ResizeObserver | null = null
+
+    // Spectrum analyzer instance
+    let spectrumAnalyzer: SpectrumAnalyzer
+    let showSpectrum = true // Toggle for showing live frequency spectrum
+    let spectrumUpdateTrigger = 0 // Reactive trigger for spectrum updates
 
     // Update canvas width based on container size
     let widthChange = 0
@@ -94,6 +100,10 @@
         windowResizeCleanup = () => {
             window.removeEventListener("resize", handleWindowResize)
         }
+
+        // Initialize spectrum analyzer
+        spectrumAnalyzer = new SpectrumAnalyzer()
+        startSpectrumAnalysis()
     })
 
     onDestroy(() => {
@@ -105,6 +115,11 @@
         }
         if (resizeObserver) {
             resizeObserver.disconnect()
+        }
+
+        // Cleanup spectrum analyzer
+        if (spectrumAnalyzer) {
+            spectrumAnalyzer.dispose()
         }
     })
 
@@ -119,6 +134,26 @@
     // Container element for dynamic width calculation
     let containerElement: HTMLElement
 
+    // Spectrum analysis functions using SpectrumAnalyzer class
+    function startSpectrumAnalysis() {
+        if (spectrumAnalyzer && !spectrumAnalyzer.isRunning()) {
+            spectrumAnalyzer.start(() => {
+                spectrumUpdateTrigger++
+            })
+        }
+    }
+
+    // Generate spectrum bars using the analyzer
+    function generateSpectrumBars() {
+        if (!spectrumAnalyzer) return []
+        return spectrumAnalyzer.generateSpectrumBars(canvasWidth, canvasHeight)
+    }
+
+    // Get spectrum color using the analyzer
+    function getSpectrumColor(amplitude: number): string {
+        return SpectrumAnalyzer.getSpectrumColor(amplitude)
+    }
+
     // Reactive statement to ensure UI updates when canvas width changes
     $: if (canvasWidth) {
         // This ensures all calculations dependent on canvasWidth are updated
@@ -127,6 +162,9 @@
             draggedBandX = getFreqX(bands[draggedBandIndex].frequency)
         }
     }
+
+    // Reactive statement to trigger UI updates for frequency visualization
+    $: spectrumBars = enabled && showSpectrum && spectrumAnalyzer?.isRunning() && spectrumUpdateTrigger >= 0 ? generateSpectrumBars() : []
 
     // Convert frequency to X position (logarithmic scale)
     function getFreqX(frequency: number, _updater: any = null): number {
@@ -495,6 +533,44 @@
     <div class="eq-visual" class:eq-disabled={!enabled} bind:this={eqVisualElement} style="height: {canvasHeight}px;" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} on:mousemove={handleMouseHover}>
         <!-- Background grid -->
         <svg class="eq-grid" width={canvasWidth} height={canvasHeight}>
+            <!-- Spectrum Analyzer -->
+
+            <!-- SVG Definitions for gradients -->
+            <defs>
+                <linearGradient id="spectrumGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="hsl(160, 100%, 50%)" stop-opacity="0.4" />
+                    <stop offset="20%" stop-color="hsl(120, 100%, 60%)" stop-opacity="0.5" />
+                    <stop offset="40%" stop-color="hsl(60, 100%, 65%)" stop-opacity="0.6" />
+                    <stop offset="60%" stop-color="hsl(30, 100%, 60%)" stop-opacity="0.7" />
+                    <stop offset="80%" stop-color="hsl(15, 100%, 55%)" stop-opacity="0.8" />
+                    <stop offset="100%" stop-color="hsl(0, 100%, 50%)" stop-opacity="0.9" />
+                </linearGradient>
+
+                <!-- Glow filter for high amplitude bars -->
+                <filter id="barGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- Live frequency spectrum bars (behind everything else) -->
+            {#each spectrumBars as bar}
+                <rect x={bar.x} y={canvasHeight - bar.height} width={bar.width} height={bar.height} fill={getSpectrumColor(bar.amplitude)} opacity={0.02 + bar.amplitude * 0.08} rx="1" filter={bar.amplitude > 0.7 ? "url(#barGlow)" : "none"} />
+            {/each}
+
+            <!-- EQ -->
+
+            <!-- EQ Band frequency markers -->
+            {#each bands as band, index}
+                <line x1={getFreqX(band.frequency, widthChange)} y1="0" x2={getFreqX(band.frequency, widthChange)} y2={canvasHeight} stroke={bandColors[index]} stroke-width="1" opacity="0.2" stroke-dasharray="4,4" />
+                <!-- <text x={getFreqX(band.frequency, widthChange) + 2} y="15" fill={bandColors[index]} font-size="9" font-weight="bold" opacity="0.8">
+                    Band {index + 1}
+                </text> -->
+            {/each}
+
             <!-- Horizontal grid lines for dB levels -->
             {#each [24, 18, 12, 6, 0, -6, -12, -18, -24] as db}
                 <line x1="0" y1={getGainY(db)} x2={canvasWidth} y2={getGainY(db)} stroke="var(--primary-lighter)" stroke-width={db === 0 ? "2" : "1"} opacity={db === 0 ? "0.8" : "0.3"} />
