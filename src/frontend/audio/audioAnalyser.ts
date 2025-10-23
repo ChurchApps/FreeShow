@@ -5,6 +5,7 @@ import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, s
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioPlayer } from "./audioPlayer"
+import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer } from "./audioEqualizer"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -15,12 +16,17 @@ export class AudioAnalyser {
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
     private static splitter = this.ac.createChannelSplitter(this.channels)
     private static analysers: AnalyserNode[] = []
-    private static sources: { [key: string]: MediaElementAudioSourceNode | MediaStreamAudioSourceNode } = {}
+    private static sources: { [key: string]: AudioNode } = {}
+
+    // Expose the AudioContext for other audio systems to use the same context
+    static getAudioContext(): AudioContext {
+        return this.ac
+    }
 
     static attach(id: string, audio: HTMLMediaElement | MediaStream) {
         if (this.sources[id]) return
 
-        let source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode
+        let source: AudioNode
         try {
             if (audio instanceof MediaStream) source = this.ac.createMediaStreamSource(audio)
             else source = this.ac.createMediaElementSource(audio)
@@ -34,9 +40,15 @@ export class AudioAnalyser {
         this.initRecorder()
         this.customOutput(get(special).audioOutput)
 
-        source.connect(this.splitter)
-        this.connectGain(source)
-        this.connectDestination(source)
+        // Connect through equalizer first, then to analysis chain
+        const eqOutputNode = connectAudioSourceToEqualizer(id, source)
+
+        // Connect the equalizer output (or original source if EQ bypassed) to analysis chain
+        if (eqOutputNode) {
+            eqOutputNode.connect(this.splitter)
+            this.connectGain(eqOutputNode)
+            this.connectDestination(eqOutputNode)
+        }
     }
 
     static detach(id: string) {
@@ -46,6 +58,10 @@ export class AudioAnalyser {
         this.recorderDeactivate()
         this.disconnectGain(source)
         this.disconnectDestination(source)
+
+        // Disconnect from equalizer
+        disconnectAudioSourceFromEqualizer(id)
+
         delete this.sources[id]
 
         if (get(currentWindow) !== "output") return
@@ -81,14 +97,14 @@ export class AudioAnalyser {
 
         const MERGER = this.ac.createChannelMerger(this.channels)
 
-        // analyse left/right channels individually
-        ;[...Array(this.channels)].forEach((_, channel) => {
-            const analyser = (this.analysers[channel] = this.ac.createAnalyser())
-            analyser.smoothingTimeConstant = 0.9
-            analyser.fftSize = 256
-            this.splitter.connect(analyser, channel)
-            this.splitter.connect(MERGER, channel, channel)
-        })
+            // analyse left/right channels individually
+            ;[...Array(this.channels)].forEach((_, channel) => {
+                const analyser = (this.analysers[channel] = this.ac.createAnalyser())
+                analyser.smoothingTimeConstant = 0.9
+                analyser.fftSize = 256
+                this.splitter.connect(analyser, channel)
+                this.splitter.connect(MERGER, channel, channel)
+            })
 
         AudioAnalyserMerger.init()
     }
@@ -107,13 +123,19 @@ export class AudioAnalyser {
         this.gainNode!.gain.value = Math.max(1, value)
     }
 
-    private static connectGain(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
+    private static connectGain(source: AudioNode) {
         this.initGain()
         source.connect(this.gainNode!)
     }
-    private static disconnectGain(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
+
+    private static disconnectGain(source: AudioNode) {
         if (!this.gainNode) return
-        source.disconnect(this.gainNode)
+
+        try {
+            source.disconnect(this.gainNode)
+        } catch (err) {
+            // Node was already disconnected, ignore the error
+        }
     }
 
     private static destNode: MediaStreamAudioDestinationNode | null = null
@@ -126,13 +148,19 @@ export class AudioAnalyser {
         this.destNode.channelInterpretation = "speakers"
     }
 
-    private static connectDestination(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
+    private static connectDestination(source: AudioNode) {
         this.initDestination()
         source.connect(this.destNode!)
     }
-    private static disconnectDestination(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
+
+    private static disconnectDestination(source: AudioNode) {
         if (!this.destNode) return
-        source.disconnect(this.destNode)
+
+        try {
+            source.disconnect(this.destNode)
+        } catch (err) {
+            // Node was already disconnected, ignore the error
+        }
     }
 
     // RECORDER
@@ -231,7 +259,7 @@ export class AudioAnalyser {
         return { dB: { value: dB } }
     }
 
-    static getSource(id: string): MediaElementAudioSourceNode | MediaStreamAudioSourceNode | null {
+    static getSource(id: string): AudioNode | null {
         return this.sources[id] || null
     }
 

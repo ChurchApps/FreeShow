@@ -14,6 +14,8 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
+import { initializeEqualizer } from "../audio/audioEqualizer"
+import { AudioAnalyser } from "../audio/audioAnalyser"
 
 let initialized = false
 export function startup() {
@@ -45,6 +47,9 @@ async function startupMain() {
     setLanguage("", true)
     setupMainReceivers()
     getMainData()
+
+    // Initialize audio equalizer with AudioAnalyser's context
+    initializeEqualizer(AudioAnalyser.getAudioContext()).catch(console.error)
 
     await wait(100)
     getStoredData()
