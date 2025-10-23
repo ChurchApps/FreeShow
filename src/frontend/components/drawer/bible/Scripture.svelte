@@ -41,7 +41,7 @@
 
     $: previewBibleIndex = $scriptures[activeScriptureId]?.collection?.previewIndex || 0
     $: previewBibleId = activeScriptures[previewBibleIndex] || activeScriptures[0]
-    $: previewBibleData = $scriptures[previewBibleId] || null
+    $: previewBibleData = clone($scriptures[previewBibleId] || null)
 
     $: isApi = !!previewBibleData?.api
     $: isCollection = activeScriptures.length > 1
