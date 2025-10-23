@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy, onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { AudioEqualizer, type EQBand, EqualizerCalculations, equalizerConfig, initializeEqualizer, setEqualizerEnabled, updateEqualizerBands } from "../../../audio/audioEqualizer"
-    import { SpectrumAnalyzer } from "../../../audio/spectrumAnalyzer"
-    import { eqPresets } from "../../../stores"
+
+    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../audio/audioEqualizer"
+    import { eqPresets, equalizerConfig, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, keysToID } from "../../helpers/array"
     import InputRow from "../../input/InputRow.svelte"
@@ -12,8 +11,6 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-
-    const dispatch = createEventDispatcher()
 
     export let disabled: boolean = false
 
@@ -29,9 +26,9 @@
     let resizeObserver: ResizeObserver | null = null
 
     // Spectrum analyzer instance
-    let spectrumAnalyzer: SpectrumAnalyzer
-    let showSpectrum = true // Toggle for showing live frequency spectrum
-    let spectrumUpdateTrigger = 0 // Reactive trigger for spectrum updates
+    // let spectrumAnalyzer: SpectrumAnalyzer
+    // let showSpectrum = true // Toggle for showing live frequency spectrum
+    // let spectrumUpdateTrigger = 0 // Reactive trigger for spectrum updates
 
     // Update canvas width based on container size
     let widthChange = 0
@@ -62,8 +59,8 @@
     }
 
     onMount(async () => {
-        // Initialize the equalizer system with AudioAnalyser's context
-        await initializeEqualizer(AudioAnalyser.getAudioContext())
+        // Equalizer will auto-initialize when first audio source connects
+        // No need to initialize here to avoid audio interruption
 
         // Subscribe to config changes
         equalizerConfigUnsubscribe = equalizerConfig.subscribe((config) => {
@@ -102,8 +99,8 @@
         }
 
         // Initialize spectrum analyzer
-        spectrumAnalyzer = new SpectrumAnalyzer()
-        startSpectrumAnalysis()
+        // spectrumAnalyzer = new SpectrumAnalyzer()
+        // startSpectrumAnalysis()
     })
 
     onDestroy(() => {
@@ -118,9 +115,7 @@
         }
 
         // Cleanup spectrum analyzer
-        if (spectrumAnalyzer) {
-            spectrumAnalyzer.dispose()
-        }
+        // if (spectrumAnalyzer) spectrumAnalyzer.dispose()
     })
 
     // Visual settings
@@ -134,25 +129,32 @@
     // Container element for dynamic width calculation
     let containerElement: HTMLElement
 
-    // Spectrum analysis functions using SpectrumAnalyzer class
-    function startSpectrumAnalysis() {
-        if (spectrumAnalyzer && !spectrumAnalyzer.isRunning()) {
-            spectrumAnalyzer.start(() => {
-                spectrumUpdateTrigger++
-            })
-        }
-    }
+    // SPECTRUM ANALYSIS
 
-    // Generate spectrum bars using the analyzer
-    function generateSpectrumBars() {
-        if (!spectrumAnalyzer) return []
-        return spectrumAnalyzer.generateSpectrumBars(canvasWidth, canvasHeight)
-    }
+    // // Spectrum analysis functions using SpectrumAnalyzer class
+    // function startSpectrumAnalysis() {
+    //     if (spectrumAnalyzer && !spectrumAnalyzer.isRunning()) {
+    //         spectrumAnalyzer.start(() => {
+    //             spectrumUpdateTrigger++
+    //         })
+    //     }
+    // }
 
-    // Get spectrum color using the analyzer
-    function getSpectrumColor(amplitude: number): string {
-        return SpectrumAnalyzer.getSpectrumColor(amplitude)
-    }
+    // // Generate spectrum bars using the analyzer
+    // function generateSpectrumBars() {
+    //     if (!spectrumAnalyzer) return []
+    //     return spectrumAnalyzer.generateSpectrumBars(canvasWidth, canvasHeight)
+    // }
+
+    // // Get spectrum color using the analyzer
+    // function getSpectrumColor(amplitude: number): string {
+    //     return SpectrumAnalyzer.getSpectrumColor(amplitude)
+    // }
+
+    // // Reactive statement to trigger UI updates for frequency visualization
+    // $: spectrumBars = enabled && showSpectrum && spectrumAnalyzer?.isRunning() && spectrumUpdateTrigger >= 0 ? generateSpectrumBars() : []
+
+    // EQ
 
     // Reactive statement to ensure UI updates when canvas width changes
     $: if (canvasWidth) {
@@ -162,9 +164,6 @@
             draggedBandX = getFreqX(bands[draggedBandIndex].frequency)
         }
     }
-
-    // Reactive statement to trigger UI updates for frequency visualization
-    $: spectrumBars = enabled && showSpectrum && spectrumAnalyzer?.isRunning() && spectrumUpdateTrigger >= 0 ? generateSpectrumBars() : []
 
     // Convert frequency to X position (logarithmic scale)
     function getFreqX(frequency: number, _updater: any = null): number {
@@ -282,7 +281,7 @@
         draggedBandFrequency = bands[draggedBandIndex].frequency
 
         bands = [...bands] // Trigger reactivity
-        dispatchChange()
+        updateBands()
 
         // update preset
         selectedPreset = "custom"
@@ -341,7 +340,7 @@
         bands[bandIndex].q = Math.max(0.1, Math.min(30, bands[bandIndex].q + delta))
         bands = [...bands] // Trigger reactivity
 
-        dispatchChange()
+        updateBands()
     }
 
     function handleBandReset(bandIndex: number) {
@@ -351,15 +350,12 @@
         bands[bandIndex] = { ...originalBands[bandIndex] }
         bands = [...bands] // Trigger reactivity
 
-        dispatchChange()
+        updateBands()
     }
 
-    function dispatchChange() {
+    function updateBands() {
         // Update the audio equalizer system
         updateEqualizerBands(bands)
-
-        // Dispatch to parent component
-        dispatch("change", { bands: [...bands] })
     }
 
     function getGainY(gain: number): number {
@@ -456,10 +452,9 @@
     function handleEnableChange(e: any) {
         enabled = e.detail
         setEqualizerEnabled(enabled)
-        dispatch("enableChange", { enabled })
     }
 
-    let selectedPreset = "default"
+    let selectedPreset = $special.selectedEQPreset || "default"
     $: presets = {
         ...$eqPresets,
         default: {
@@ -481,8 +476,13 @@
         const preset = presets[value]
         if (!preset) return
 
+        special.update((a) => {
+            a.selectedEQPreset = selectedPreset
+            return a
+        })
+
         bands = clone(preset.bands.map((band) => ({ ...band })))
-        dispatchChange()
+        updateBands()
     }
 
     let customName = ""
@@ -503,7 +503,7 @@
             return a
         })
 
-        selectedPreset = id
+        selectPreset(id)
     }
 
     function deletePreset() {
@@ -528,6 +528,8 @@
             <MaterialButton icon="delete" title="actions.delete" on:click={deletePreset} white />
         {/if}
     </InputRow>
+
+    <div style="height: 5px;width: 100%;"></div>
 
     <!-- EQ Visual Display -->
     <div class="eq-visual" class:eq-disabled={!enabled} bind:this={eqVisualElement} style="height: {canvasHeight}px;" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} on:mousemove={handleMouseHover}>
@@ -557,9 +559,10 @@
             </defs>
 
             <!-- Live frequency spectrum bars (behind everything else) -->
-            {#each spectrumBars as bar}
-                <rect x={bar.x} y={canvasHeight - bar.height} width={bar.width} height={bar.height} fill={getSpectrumColor(bar.amplitude)} opacity={0.02 + bar.amplitude * 0.08} rx="1" filter={bar.amplitude > 0.7 ? "url(#barGlow)" : "none"} />
-            {/each}
+            <!-- frequencies below 500 Hz are not split up into many individual frequency bands -->
+            <!-- {#each spectrumBars as bar}
+                    <rect x={bar.x} y={canvasHeight - bar.height} width={bar.width} height={bar.height} fill={getSpectrumColor(bar.amplitude)} opacity={0.02 + bar.amplitude * 0.08} rx="1" filter={bar.amplitude > 0.7 ? "url(#barGlow)" : "none"} />
+            {/each} -->
 
             <!-- EQ -->
 

@@ -20,7 +20,7 @@ export class SpectrumAnalyzer {
     private readonly updateInterval = 50 // Update every 50ms (20 FPS) for better performance
 
     // Configuration
-    private readonly smoothingFactor = 0.1 // Reduced since AudioAnalyser already has smoothing
+    private readonly smoothingFactor = 0.15 // Slightly increased for smoother visualization
     private readonly numBars = 100 // Number of frequency bars to display
 
     // Frequency range
@@ -190,7 +190,58 @@ export class SpectrumAnalyzer {
     }
 
     /**
-     * Generate spectrum bars data for visualization
+     * Get averaged frequency amplitude over a frequency range for better resolution
+     */
+    private getAveragedFrequencyAmplitude(startFreq: number, endFreq: number, frequencyResolution: number, totalBins: number): number {
+        // Convert frequency range to bin indices
+        const startBinFloat = startFreq / frequencyResolution
+        const endBinFloat = endFreq / frequencyResolution
+
+        const startBin = Math.max(0, Math.floor(startBinFloat))
+        const endBin = Math.min(totalBins - 1, Math.ceil(endBinFloat))
+
+        if (startBin === endBin) {
+            // Single bin case - use interpolation if we're between bins
+            if (startBin < totalBins - 1) {
+                const fraction = startBinFloat - startBin
+                const currentValue = this.smoothedFrequencyData[startBin] || 0
+                const nextValue = this.smoothedFrequencyData[startBin + 1] || 0
+                return currentValue + (nextValue - currentValue) * fraction
+            } else {
+                return this.smoothedFrequencyData[startBin] || 0
+            }
+        }
+
+        let weightedSum = 0
+        let totalWeight = 0
+
+        // For frequency ranges spanning multiple bins, use weighted averaging
+        for (let bin = startBin; bin <= endBin; bin++) {
+            if (bin >= totalBins) break
+
+            const binStartFreq = bin * frequencyResolution
+            const binEndFreq = (bin + 1) * frequencyResolution
+
+            // Calculate overlap between this bin and our target frequency range
+            const overlapStart = Math.max(startFreq, binStartFreq)
+            const overlapEnd = Math.min(endFreq, binEndFreq)
+            const overlapAmount = Math.max(0, overlapEnd - overlapStart)
+
+            if (overlapAmount > 0) {
+                // Weight based on how much of the bin overlaps with our target range
+                const weight = overlapAmount / frequencyResolution
+                const binValue = this.smoothedFrequencyData[bin] || 0
+
+                weightedSum += binValue * weight
+                totalWeight += weight
+            }
+        }
+
+        return totalWeight > 0 ? weightedSum / totalWeight : 0
+    }
+
+    /**
+     * Generate spectrum bars data for visualization - aligned with frequency grid
      */
     public generateSpectrumBars(canvasWidth: number, canvasHeight: number): SpectrumBar[] {
         const bars: SpectrumBar[] = []
@@ -199,24 +250,42 @@ export class SpectrumAnalyzer {
         // Get current analyser for accurate frequency range
         const analysers = AudioAnalyser.getAnalysers()
         let maxDisplayFreq = this.maxFreq
+        let sampleRate = this.actualSampleRate
+        let fftSize = this.actualFFTSize
 
         if (analysers && analysers.length > 0) {
             const analyser = analysers[0]
+            sampleRate = analyser.context.sampleRate
+            fftSize = analyser.fftSize
             // Limit max frequency to Nyquist frequency (half of sample rate)
-            maxDisplayFreq = Math.min(this.maxFreq, analyser.context.sampleRate / 2)
+            maxDisplayFreq = Math.min(this.maxFreq, sampleRate / 2)
         }
+
+        // Calculate frequency resolution per bin
+        const frequencyResolution = sampleRate / fftSize
+        const totalBins = this.smoothedFrequencyData.length
+
+        // Use SAME logarithmic frequency distribution as AudioEqualizer component
+        // This ensures perfect alignment with the frequency grid
+        const logMin = Math.log10(this.minFreq)
+        const logMax = Math.log10(maxDisplayFreq)
 
         for (let i = 0; i < this.numBars; i++) {
             const x = i * barWidth
 
-            // Logarithmic frequency distribution
-            const logMin = Math.log10(this.minFreq)
-            const logMax = Math.log10(maxDisplayFreq)
-            const logFreq = logMin + (i / this.numBars) * (logMax - logMin)
+            // Calculate frequency for this bar using pure logarithmic scale
+            // (matching AudioEqualizer's getFreqX/getXFreq functions)
+            const logProgress = i / this.numBars
+            const logFreq = logMin + logProgress * (logMax - logMin)
             const frequency = Math.pow(10, logFreq)
 
-            // Get amplitude for this frequency
-            const amplitude = this.getFrequencyAmplitude(frequency)
+            // Calculate frequency range for this bar
+            const nextLogProgress = (i + 1) / this.numBars
+            const nextLogFreq = logMin + nextLogProgress * (logMax - logMin)
+            const nextFrequency = i === this.numBars - 1 ? maxDisplayFreq : Math.pow(10, nextLogFreq)
+
+            // Get amplitude by averaging the frequency range for this bar
+            const amplitude = this.getAveragedFrequencyAmplitude(frequency, nextFrequency, frequencyResolution, totalBins)
             const normalizedAmplitude = amplitude / 255 // Normalize to 0-1
 
             // Apply logarithmic scaling for better visual representation
@@ -276,6 +345,26 @@ export class SpectrumAnalyzer {
      */
     public getNormalizedAmplitude(frequency: number): number {
         return this.getFrequencyAmplitude(frequency) / 255
+    }
+
+    /**
+     * Convert frequency to X position using logarithmic scale (matches AudioEqualizer)
+     */
+    public frequencyToX(frequency: number, canvasWidth: number): number {
+        const logMin = Math.log10(this.minFreq)
+        const logMax = Math.log10(this.maxFreq)
+        const logFreq = Math.log10(frequency)
+        return ((logFreq - logMin) / (logMax - logMin)) * canvasWidth
+    }
+
+    /**
+     * Convert X position to frequency using logarithmic scale (matches AudioEqualizer)
+     */
+    public xToFrequency(x: number, canvasWidth: number): number {
+        const logMin = Math.log10(this.minFreq)
+        const logMax = Math.log10(this.maxFreq)
+        const logFreq = logMin + (x / canvasWidth) * (logMax - logMin)
+        return Math.pow(10, logFreq)
     }
 
     /**

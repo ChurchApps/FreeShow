@@ -14,7 +14,7 @@
     import AudioEqualizer from "../audio/AudioEqualizer.svelte"
 
     let tabs: TabsObj = {
-        mixer: { name: "audio.mixer", icon: "equalizer" },
+        mixer: { name: "audio.mixer", icon: "volume" },
         equalizer: { name: "audio.equalizer", icon: "equalizer" }
         // effects: { name: "items.effect", icon: "image" },
     }

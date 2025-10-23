@@ -77,6 +77,7 @@ export type SaveListSettings =
     | "driveData"
     | "calendarAddShow"
     | "metronome"
+    | "equalizerConfig"
     | "eqPresets"
     | "effectsLibrary"
     | "special"

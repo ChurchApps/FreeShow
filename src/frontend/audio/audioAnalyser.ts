@@ -5,7 +5,7 @@ import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, s
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioPlayer } from "./audioPlayer"
-import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer } from "./audioEqualizer"
+import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -23,7 +23,16 @@ export class AudioAnalyser {
         return this.ac
     }
 
-    static attach(id: string, audio: HTMLMediaElement | MediaStream) {
+    // Set up auto-initialization for equalizer when first audio source connects
+    static {
+        setAutoInitializeCallback(async () => {
+            await initializeEqualizer(this.getAudioContext(), async () => {
+                await this.refreshEqualizerConnections()
+            })
+        })
+    }
+
+    static async attach(id: string, audio: HTMLMediaElement | MediaStream) {
         if (this.sources[id]) return
 
         let source: AudioNode
@@ -41,13 +50,16 @@ export class AudioAnalyser {
         this.customOutput(get(special).audioOutput)
 
         // Connect through equalizer first, then to analysis chain
-        const eqOutputNode = connectAudioSourceToEqualizer(id, source)
+        const eqOutputNode = await connectAudioSourceToEqualizer(id, source)
 
         // Connect the equalizer output (or original source if EQ bypassed) to analysis chain
         if (eqOutputNode) {
             eqOutputNode.connect(this.splitter)
             this.connectGain(eqOutputNode)
             this.connectDestination(eqOutputNode)
+            console.log(`Audio source "${id}" connected to equalizer and analysis chain`)
+        } else {
+            console.warn(`Failed to connect audio source "${id}" to equalizer`)
         }
     }
 
@@ -100,7 +112,7 @@ export class AudioAnalyser {
             // analyse left/right channels individually
             ;[...Array(this.channels)].forEach((_, channel) => {
                 const analyser = (this.analysers[channel] = this.ac.createAnalyser())
-                analyser.smoothingTimeConstant = 0.9
+                analyser.smoothingTimeConstant = 0.85
                 analyser.fftSize = 256
                 this.splitter.connect(analyser, channel)
                 this.splitter.connect(MERGER, channel, channel)
@@ -265,5 +277,57 @@ export class AudioAnalyser {
 
     static getAnalysers() {
         return this.analysers
+    }
+
+    // Refresh all audio connections through equalizer (called when equalizer is re-initialized)
+    static async refreshEqualizerConnections() {
+        console.log("Refreshing all audio connections through new equalizer instance")
+
+        // Get all current source IDs
+        const sourceIds = Object.keys(this.sources)
+
+        if (sourceIds.length === 0) {
+            console.log("No audio sources to refresh")
+            return
+        }
+
+        // For each source, seamlessly switch to new equalizer without audio interruption
+        for (const id of sourceIds) {
+            const source = this.sources[id]
+            if (source) {
+                try {
+                    // Get the old equalizer output node before disconnecting
+                    const oldConnection = getConnectedSourceOutput(id)
+
+                    // Disconnect from old equalizer (but keep analysis connections alive)
+                    disconnectAudioSourceFromEqualizer(id)
+
+                    // Immediately connect to new equalizer to minimize audio gap
+                    const newEqOutputNode = await connectAudioSourceToEqualizer(id, source)
+
+                    if (newEqOutputNode) {
+                        // Disconnect old analysis connections if they exist
+                        if (oldConnection) {
+                            try {
+                                oldConnection.disconnect(this.splitter)
+                                this.disconnectGain(oldConnection)
+                                this.disconnectDestination(oldConnection)
+                            } catch (err) {
+                                // Old connections might not exist, that's fine
+                            }
+                        }
+
+                        // Connect new equalizer output to analysis chain
+                        newEqOutputNode.connect(this.splitter)
+                        this.connectGain(newEqOutputNode)
+                        this.connectDestination(newEqOutputNode)
+
+                        console.log(`Seamlessly switched equalizer connection for audio source: ${id}`)
+                    }
+                } catch (err) {
+                    console.error(`Failed to refresh equalizer connection for ${id}:`, err)
+                }
+            }
+        }
     }
 }
