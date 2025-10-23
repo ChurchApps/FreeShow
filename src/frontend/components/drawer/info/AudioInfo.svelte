@@ -11,10 +11,11 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
     import AudioMixers from "../audio/AudioMixers.svelte"
+    import AudioEqualizer from "../audio/AudioEqualizer.svelte"
 
     let tabs: TabsObj = {
-        mixer: { name: "audio.mixer", icon: "equalizer" }
-        // equalizer: { name: "audio.equalizer", icon: "equalizer" }
+        mixer: { name: "audio.mixer", icon: "volume" },
+        equalizer: { name: "audio.equalizer", icon: "equalizer" }
         // effects: { name: "items.effect", icon: "image" },
     }
     let active = Object.keys(tabs)[0]
@@ -76,7 +77,7 @@
     <Tabs {tabs} bind:active />
 
     {#if active === "equalizer"}
-        <!--  -->
+        <AudioEqualizer />
     {:else}
         <AudioMixers />
     {/if}

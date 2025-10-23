@@ -22,6 +22,7 @@ import {
     drawTool,
     driveKeys,
     effects,
+    equalizerConfig,
     events,
     folders,
     gain,
@@ -278,6 +279,10 @@ export function storeSubscriber() {
     })
     audioChannelsData.subscribe((data) => {
         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    })
+
+    equalizerConfig.subscribe((data) => {
+        send(OUTPUT, ["EQUALIZER_CONFIG"], data)
     })
 
     metronome.subscribe((data) => {
