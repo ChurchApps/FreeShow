@@ -12,6 +12,7 @@ import {
     actions,
     activeProject,
     activeRename,
+    activeTimers,
     allOutputs,
     categories,
     currentOutputSettings,
@@ -435,6 +436,8 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
     if (cleared && key === "transition") {
         // check overlay timers
         cleared = !outputIds.find((outputId) => Object.values(get(overlayTimers)).find((a) => a.outputId === outputId))
+        // check actual timers
+        if (cleared) cleared = !Object.keys(get(activeTimers)).length
     }
 
     return cleared

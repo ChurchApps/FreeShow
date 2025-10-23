@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, activeTimers, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -21,6 +21,7 @@
     import NextTimer from "../tools/NextTimer.svelte"
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
+    import TimerControls from "../tools/TimerControls.svelte"
     import AudioMeter from "./AudioMeter.svelte"
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
@@ -159,7 +160,7 @@
     let activeClear: string | null = null
     let autoChange = true
     $: if (outputId) autoChange = true
-    $: if (autoChange && ($outputs || $overlayTimers || $playingMetronome)) {
+    $: if (autoChange && ($outputs || $overlayTimers || $activeTimers || $playingMetronome)) {
         let active = getActiveClear(
             !isOutCleared("transition"),
             Object.keys($playingAudio).length || $playingMetronome,
@@ -170,7 +171,7 @@
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value
-    $: if (!autoChange && ($outputs || $playingAudio || $playingMetronome || $overlayTimers)) checkStillActive()
+    $: if (!autoChange && ($outputs || $playingAudio || $playingMetronome || $overlayTimers || $activeTimers)) checkStillActive()
     function checkStillActive() {
         if (activeClear === "nextTimer" && isOutCleared("transition")) autoChange = true
         else if (activeClear === "audio" && !Object.keys($playingAudio).length && !$playingMetronome) autoChange = true
@@ -277,8 +278,13 @@
             {:else if updatedActiveClear === "audio"}
                 <Audio />
             {:else if updatedActiveClear === "nextTimer"}
-                <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />
-                <!-- WIP display overlay timer time -->
+                {#if Object.keys($overlayTimers).length}
+                    <!-- WIP display overlay timer time -->
+                {:else if timer?.timer}
+                    <NextTimer {currentOutput} timer={timer?.timer ? timer : { time: 0, paused: true, timer: {} }} />
+                {:else if $activeTimers}
+                    <TimerControls />
+                {/if}
             {/if}
         </div>
     {/if}

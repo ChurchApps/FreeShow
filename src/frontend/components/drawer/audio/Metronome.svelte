@@ -53,7 +53,7 @@
         <SelectElem id="metronome" data={{ tempo: values.tempo || 120, beats: values.beats || 4 }} draggable>
             <!-- title={paused ? $dictionary.media?.play : $dictionary.media?.pause} -->
             <Button style="width: 100%;height: 100%;justify-content: center;border-radius: 6px;" disabled={$outLocked} center title={$dictionary.audio?.toggle_metronome} on:click={playPause}>
-                <Icon id={paused ? "play" : "pause"} white={paused} size={5} />
+                <Icon id={paused ? "play" : "stop"} white={paused} size={5} />
             </Button>
         </SelectElem>
 

@@ -12,6 +12,7 @@ type AudioClearOptions = {
     playlistCrossfade?: boolean
     commonClear?: boolean
     clearTime?: number // effects
+    isPlayingNew?: boolean
 }
 
 export const clearing: string[] = []
@@ -21,7 +22,7 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (options.clearPlaylist !== false && !audioPath) stopMetronome()
+    if (!options.isPlayingNew && options.clearPlaylist !== false && !audioPath) stopMetronome()
 
     if (clearing.includes(audioPath)) {
         if (!options.commonClear) return
