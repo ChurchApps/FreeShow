@@ -63,11 +63,8 @@
 
     let activeReference: Reference = {
         book: $activeScripture.reference?.book || null,
-        chapters: $activeScripture.reference?.chapters || [1, 2],
-        verses: $activeScripture.reference?.verses || [
-            [1, 2],
-            [7, 8]
-        ]
+        chapters: $activeScripture.reference?.chapters || [],
+        verses: $activeScripture.reference?.verses || []
     }
 
     type BibleReturn = Awaited<ReturnType<typeof JSONBible>> | Awaited<ReturnType<typeof ApiBible>>
