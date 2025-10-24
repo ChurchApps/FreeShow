@@ -19,9 +19,8 @@
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
-        { id: "slide_text", icon: "text" },
+        { id: "slide_text", icon: "text" }
         // { id: "slide_notes", icon: "notes" }, // added as dynamic value in textbox
-        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen", maxAmount: 1 }])
     ]
 
     const normalItems: ItemRef[] = [
@@ -32,7 +31,8 @@
         { id: "timer" },
         { id: "clock" },
         { id: "slide_tracker", icon: "percentage" },
-        { id: "metronome", maxAmount: 1 }
+        { id: "metronome", maxAmount: 1 },
+        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen" }])
     ]
 
     $: stageId = $activeStage.id || ""
@@ -156,7 +156,7 @@
 
     <div class="section">
         {#each normalItems as item}
-            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style="justify-content: left;width: 50%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style={item.id === "current_output" ? "width: 100%;" : "justify-content: left;width: 50%;padding: 12px 14px;"} on:click={() => addItem(item.id)}>
                 <Icon id={item.icon || item.id} size={0.9} />
                 {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
             </MaterialButton>

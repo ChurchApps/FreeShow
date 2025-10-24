@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actions, activeEdit, timers } from "../../../stores"
+    import { actions, activeEdit, activeStage, outputs, timers } from "../../../stores"
     import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
@@ -27,6 +27,8 @@
     export let isStage = false
 
     function getValue(input: EditInput2, _updater: any = null) {
+        if (!item) return ""
+
         if (input.type === "toggle") return styles[input.key || ""] || ""
         if (input.type === "radio") return customValues[input.key || ""] || ""
         if (input.id.includes("CSS")) return getStyleString(input)
@@ -244,7 +246,8 @@
 
     const optionsLists = {
         timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
-        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" }))
+        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" })),
+        outputWindows: sortByName(keysToID($outputs).filter((a) => a.stageOutput !== $activeStage.id)).map((a) => ({ value: a.id, label: a.name || "" }))
     }
     function getOptions(options: string | any[]): any[] {
         if (typeof options === "string") return optionsLists[options] || []

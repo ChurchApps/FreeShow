@@ -15,6 +15,7 @@ import {
     activeTimers,
     allOutputs,
     categories,
+    connections,
     currentOutputSettings,
     currentWindow,
     disabledServers,
@@ -593,7 +594,7 @@ export function shouldBeCaptured(outputId: string, startup = false) {
     const captures = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
-        stage: stageHasOutput(outputId)
+        stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId)
     }
 
     // alert user that screen recording starts
@@ -611,7 +612,7 @@ function stageHasOutput(outputId: string) {
             if (!outputItem) return false
         }
 
-        return (stageLayout.settings?.output || outputId) === outputId
+        return (outputItem?.currentOutput?.source || stageLayout.settings?.output || outputId) === outputId
 
         // WIP check that this stage layout is not disabled & used in a output or (web enabled (disabledServers) + has connection)!
     })
