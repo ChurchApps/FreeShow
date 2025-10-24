@@ -119,8 +119,10 @@ export async function getActiveScripturesContent() {
         const selectedChapters = active?.chapters.map(c => Number(c)) || []
         const Chapters = await Promise.all(selectedChapters.map(c => Book.getChapter(c)))
 
-        // is this needed??
-        const metadata = scriptureData?.metadata || {}
+        const metadata = BibleData.data.metadata || {}
+        Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
+            metadata[key] = value
+        })
         if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
 
         // WIP custom verse number offset per scripture (for collections)
@@ -148,7 +150,7 @@ export async function getActiveScripturesContent() {
 
         // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-        return { id, isApi: scriptureData.api, version, metadata: {}, book: bookName, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
+        return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
     }))
 }
 
@@ -517,7 +519,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             // get chapter number based on first verse in current range
             const currentChapterNumber = (() => {
                 if (selectedChapters.length === 1) return selectedChapters[0]
-                const firstVerse = range[0]
+                const firstVerse = range[0] || ""
                 const chapterMatch = firstVerse.toString().match(/^(\d+):/)
                 if (chapterMatch) return Number(chapterMatch[1])
                 return selectedChapters[0]
