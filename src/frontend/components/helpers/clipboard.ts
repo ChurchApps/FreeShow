@@ -453,7 +453,7 @@ const copyActions = {
         })
 
         const layoutMedia = layouts.filter((a) => a.background || a.audio?.length)
-        const showMedia = _show().get().media
+        const showMedia = _show().get()?.media || {}
         layoutMedia.forEach((layoutData) => {
             const mediaIds: string[] = []
             if (layoutData.background) mediaIds.push(layoutData.background)
@@ -625,7 +625,7 @@ const pasteActions = {
 
         // media
         if (data.media) {
-            const showMedia = _show().get().media
+            const showMedia = _show().get()?.media || {}
             _show().set({ key: "media", value: { ...showMedia, ...data.media } })
         }
 

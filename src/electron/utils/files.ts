@@ -341,7 +341,7 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     const folderFiles: { [key: string]: FileData[] } = {}
     if (data.listFilesInFolders) {
         const folders: FileData[] = files.filter((a) => a.folder)
-        folders.forEach(getFilesInFolder)
+        if (folders.length < 15) folders.forEach(getFilesInFolder)
     }
 
     function getFilesInFolder(folder: FileData) {

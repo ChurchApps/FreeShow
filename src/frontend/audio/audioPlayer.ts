@@ -271,7 +271,7 @@ export class AudioPlayer {
             return
         }
 
-        if (get(special).clearMediaOnFinish === false) this.pause(id)
+        if (get(special).clearMediaOnFinish === false && AudioPlayer.getAudioType(id, audio.duration) === "music") this.pause(id)
         else this.stop(id)
 
         const stillPlaying = this.getAllPlaying()

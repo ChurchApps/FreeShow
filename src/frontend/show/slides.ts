@@ -599,7 +599,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
 
     const defaultLine = [
         {
-            align: lines[0].align || "",
+            align: lines[0]?.align || "",
             text: [{ style: (lines[0].text[1] || lines[0].text[0])?.style || "", value: "" }]
         }
     ]
