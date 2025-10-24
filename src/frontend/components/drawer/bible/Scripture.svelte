@@ -298,6 +298,8 @@
             return
         }
 
+        // WIP multiple chapters search with ; or / divider ??
+
         const result = currentBibleData?.bibleData?.bookSearch(searchValue)
         if (!result) return
 
