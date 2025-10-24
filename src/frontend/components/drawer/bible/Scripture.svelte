@@ -58,13 +58,16 @@
     type Reference = {
         book: number | string | null
         chapters: (number | string)[] // can have multiple chapters open
-        verses: (number | string)[] // can have multiple verses open
+        verses: (number | string)[][] // can have multiple verses open per chapter
     }
 
     let activeReference: Reference = {
         book: $activeScripture.reference?.book || null,
-        chapters: $activeScripture.reference?.chapters || [],
-        verses: $activeScripture.reference?.verses || []
+        chapters: $activeScripture.reference?.chapters || [1, 2],
+        verses: $activeScripture.reference?.verses || [
+            [1, 2],
+            [7, 8]
+        ]
     }
 
     type BibleReturn = Awaited<ReturnType<typeof JSONBible>> | Awaited<ReturnType<typeof ApiBible>>
@@ -134,7 +137,21 @@
         return newVerses
     }
 
-    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[]) {
+    function toggleChapter(e: any, id: string) {
+        if (e.ctrlKey || e.metaKey) {
+            if (activeReference.chapters.find((cid) => cid.toString() === id)) {
+                // remove chapter
+                const newChapters = activeReference.chapters.filter((cid) => cid.toString() !== id)
+                const newVerses = activeReference.verses.filter((_, i) => i < newChapters.length)
+                openChapter(newChapters, newVerses)
+            } else {
+                // add chapter
+                openChapter([...activeReference.chapters, id], [...activeReference.verses, []])
+            }
+        } else openChapter([id])
+    }
+
+    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][]) {
         // reset chapter and verse when changing book
         if (bookNumber && !chapterNumbers) activeReference.chapters = []
         if (bookNumber && !verseNumbers) activeReference.verses = []
@@ -157,8 +174,7 @@
         openChapter(chapterNumbers, verseNumbers)
     }
 
-    // TODO: support multiple chapters
-    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[]) {
+    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][]) {
         // reset verse when changing chapter
         if (chapterNumbers && !verseNumbers) activeReference.verses = []
 
@@ -174,7 +190,7 @@
         data = data
 
         // load new data
-        data[previewBibleId].chapterData = await currentData.getChapter(Number(chapterNumbers[0]))
+        data[previewBibleId].chapterData = await currentData.getChapter(Number(chapterNumbers[chapterNumbers.length - 1]))
 
         // newToast(translateText("toast.chapter_undefined").replace("{}", chapter))
 
@@ -182,8 +198,8 @@
     }
 
     let playWhenLoaded = false
-    async function openVerse(verseNumbers?: (number | string)[]) {
-        verseNumbers = verseNumbers?.length ? verseNumbers : activeReference.verses.length ? activeReference.verses : [1]
+    async function openVerse(verseNumbers?: (number | string)[][]) {
+        verseNumbers = verseNumbers?.length ? verseNumbers : activeReference.verses.length ? activeReference.verses : [[1]]
         activeReference.verses = verseNumbers
 
         const currentData = data[previewBibleId]?.chapterData
@@ -199,7 +215,7 @@
     }
 
     // update active reference
-    $: if (activeReference.verses.length && activeReference.book !== null) {
+    $: if (activeReference.verses[0]?.length && activeReference.book !== null) {
         activeScripture.set({
             id: previewBibleId,
             reference: {
@@ -220,7 +236,8 @@
         }
 
         if ($openScripture.play) playWhenLoaded = true
-        openBook(Number($openScripture.book) + 1, [$openScripture.chapter], $openScripture.verses)
+        openBook(Number($openScripture.book), [$openScripture.chapter], $openScripture.verses)
+        openScripture.set(null)
     }
 
     /// HISTORY ///
@@ -235,7 +252,7 @@
     let versesScrollElem: HTMLElement | undefined
     $: if (activeScriptureId && activeReference.book) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (activeScriptureId && activeReference.chapters.length) setTimeout(() => scrollToActive(chaptersScrollElem))
-    $: if (activeScriptureId && activeReference.verses.length) setTimeout(() => scrollToActive(versesScrollElem))
+    $: if (activeScriptureId && activeReference.verses[0]?.length) setTimeout(() => scrollToActive(versesScrollElem))
     function scrollToActive(scrollElem) {
         if (!scrollElem || isSelected) return
 
@@ -255,7 +272,8 @@
         isSelected = true
         setTimeout(() => (isSelected = false), 20)
 
-        const selectedVerses = rangeSelect(e, activeReference.verses, verseNumber)
+        const selectedVerses = clone(activeReference.verses)
+        selectedVerses[selectedVerses.length - 1] = rangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber)
 
         // drop action (create slide/show from drag&drop)
         selected.set({ id: "scripture", data: [] })
@@ -265,7 +283,8 @@
 
     $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
     function selectAllVerses() {
-        openVerse(verses?.map((a) => a.number))
+        if (!verses) return
+        openVerse([verses.map((a) => a.number)])
     }
 
     /// SEARCH ///
@@ -300,7 +319,7 @@
             openChapter([result.chapter])
 
             // VERSES
-            if (result.verses.length) openVerse(result.verses)
+            if (result.verses.length) openVerse([result.verses])
             else setTimeout(selectAllVerses)
         }
     }
@@ -427,21 +446,14 @@
 
         const selection = {
             book: Number(activeReference.book),
-            chapters: activeReference.chapters.map(Number),
-            verses: activeReference.verses.map(Number)
+            chapters: [Number(activeReference.chapters[0])],
+            verses: activeReference.verses[0] || []
         }
 
         const newSelection = moveSelection(lengths, selection, moveLeft)
-        // TODO: splitted subverses
-        newSelection.verses = newSelection.verses // .map((v) => splittedVerses[v].number)
+        newSelection.verses = newSelection.verses
 
-        // const newVerseSelection = activeReference.verses.map((v) => {
-        //     const index = splittedVerses.findIndex((sv) => sv.number.toString() === v.toString())
-        //     return splittedVerses[moveLeft ? index - 1 : index + 1]?.number
-        // })
-
-        openBook(newSelection.book, newSelection.chapters, newSelection.verses)
-        // openVerse(newVerseSelection.filter((v) => v !== undefined))
+        openBook(newSelection.book, newSelection.chapters, [newSelection.verses])
 
         if (isActiveInOutput) setTimeout(playScripture)
     }
@@ -463,7 +475,7 @@
                             class="verse"
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
-                                openBook(match.book, [match.chapter], [match.verse.number])
+                                openBook(match.book, [match.chapter], [[match.verse.number]])
                                 playWhenLoaded = true
                             }}
                             data-title={formatBibleText(match.verse.text)}
@@ -537,7 +549,7 @@
                                 <span
                                     {id}
                                     class:isActive
-                                    on:click={() => openChapter([id])}
+                                    on:click={(e) => toggleChapter(e, id)}
                                     on:contextmenu={() => {
                                         openChapter([id])
                                         setTimeout(selectAllVerses)
@@ -555,7 +567,7 @@
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
-                                {@const isActive = activeReference.verses.find((vid) => vid.toString() === content.id)}
+                                {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find((vid) => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
 
                                 <!-- custom drag -->
@@ -644,14 +656,14 @@
     <FloatingInputs arrow let:open>
         {#if open || isActiveInOutput}
             <MaterialButton
-                disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters.find((a) => a.toString() === "1") && !!activeReference.verses.find((a) => a.toString() === "1")}
+                disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")}
                 title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]"
                 on:click={() => _moveSelection(true)}
             >
                 <Icon size={1.3} id="previous" white={!isActiveInOutput} />
             </MaterialButton>
             <MaterialButton
-                disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters.includes(chapters ? chapters.length : 1) && activeReference.verses.includes(verses ? verses.length : 1)}
+                disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)}
                 title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]"
                 on:click={() => _moveSelection(false)}
             >

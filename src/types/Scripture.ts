@@ -5,9 +5,9 @@ export interface BibleContent {
     metadata: { [key: string]: string }
     book: string
     bookId: string
-    chapter: number
-    verses: { [key: string]: string }
-    activeVerses: number[]
+    chapters: number[]
+    verses: { [key: string]: string }[]
+    activeVerses: (number | string)[][]
     attributionString: string
     attributionRequired: boolean
 }

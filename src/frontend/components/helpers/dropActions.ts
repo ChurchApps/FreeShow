@@ -745,9 +745,10 @@ const slideDrop = {
         const biblesContent = await getActiveScripturesContent()
         if (!biblesContent?.length) return
 
+        const selectedChapters = biblesContent[0].chapters
         const selectedVerses = biblesContent[0].activeVerses
 
-        let newSlides: any[] = getScriptureSlides({ biblesContent, selectedVerses })
+        let newSlides: any[] = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses })
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         newSlides = newSlides.map((items) => {
             const referenceText = getReferenceText(biblesContent)
