@@ -184,7 +184,7 @@ const loadActions = {
         const data = layoutSlide.data
         if (!data) return []
 
-        const showMedia: { [key: string]: Media } = _show().get().media
+        const showMedia: { [key: string]: Media } = _show().get()?.media || {}
         const mediaList: (ContextMenuItem | "SEPARATOR")[] = []
 
         // get background

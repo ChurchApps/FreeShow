@@ -242,6 +242,11 @@
                 {#if !$labelsDisabled && !$focusMode}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
         {:else}
+            {#if $activeDrawerTab === "scripture"}
+                <div class="clearSearch autocomplete">
+                    <Icon id="autofill" white />
+                </div>
+            {/if}
             <div class="clearSearch">
                 <Button
                     style="height: 100%;"
@@ -320,6 +325,7 @@
         padding: 0 8px;
         padding-right: 40px;
         border: none;
+        border-radius: 4px;
         border-inline-start: 4px solid var(--primary-darker);
     }
     .search:active,
@@ -337,6 +343,13 @@
         right: 0;
         height: calc(100% - 4px);
         z-index: 1;
+    }
+    .clearSearch.autocomplete {
+        right: 45px;
+        display: flex;
+        align-items: center;
+        opacity: 0.3;
+        pointer-events: none;
     }
 
     .hidden {

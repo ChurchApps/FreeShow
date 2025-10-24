@@ -36,7 +36,7 @@
             backgroundId = layoutRef[0]?.data?.background || ""
         }
 
-        const media = _show(slideRef.showId).get().media
+        const media = _show(slideRef.showId).get()?.media || {}
 
         mediaItemPath = media[backgroundId]?.path || ""
     }

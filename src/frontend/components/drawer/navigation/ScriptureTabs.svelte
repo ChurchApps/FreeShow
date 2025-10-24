@@ -38,7 +38,7 @@
     }
 
     function startScripture() {
-        openScripture.set({ play: true, book: Number($activeScripture.reference?.book || 1) - 1, chapter: $activeScripture.reference?.chapters[0], verses: $activeScripture.reference?.verses })
+        openScripture.set({ play: true, book: Number($activeScripture.reference?.book || 1), chapter: $activeScripture.reference?.chapters[0], verses: $activeScripture.reference?.verses })
     }
 
     function newScripture() {

@@ -114,7 +114,7 @@
         })
     }
 
-    $: currentOutput = $outputs[outputId] || {}
+    $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
     $: backgroundColor = currentOutput.transparent ? "transparent" : layout.settings?.color || "#000000"
 
     $: stageItems = getSortedStageItems(stageLayoutId, $stageShows)

@@ -26,7 +26,7 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
         const data = get(slideTimers)[id].data || ""
 
         outputs.update((a) => {
-            if (a[id].out) a[id].out!.transition = null
+            if (a[id]?.out) a[id].out.transition = null
             return a
         })
 

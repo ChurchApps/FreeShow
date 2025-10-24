@@ -104,7 +104,7 @@ export class EditboxHelper {
 
         const defaultLine = [
             {
-                align: lines[0].align || "",
+                align: lines[0]?.align || "",
                 text: [{ style: lines[0].text[0]?.style || "", value: "" }]
             }
         ]

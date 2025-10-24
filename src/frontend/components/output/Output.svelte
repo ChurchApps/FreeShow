@@ -8,7 +8,7 @@
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
-    import { colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { allOutputs, colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
@@ -35,7 +35,7 @@
     export let styleIdOverride = ""
     export let outOverride: OutData | null = null
 
-    $: currentOutput = $outputs[outputId] || {}
+    $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
 
     // output styling
     $: currentStyling = getCurrentStyle($styles, styleIdOverride || currentOutput.style)

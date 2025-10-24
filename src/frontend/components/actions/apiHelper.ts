@@ -56,6 +56,7 @@ import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
 import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
+import { clearAudio } from "../../audio/audioFading"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -505,7 +506,7 @@ export function getClearedState() {
 // "1.1.1" = "Gen 1:1"
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
+    const ref = { book: Number(split[0]), chapter: Number(split[1]), verses: [split[2]] }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
@@ -561,7 +562,7 @@ export function pauseAudio(data: API_media) {
 }
 export function stopAudio(data: API_media) {
     if (get(outLocked)) return
-    AudioPlayer.stop(data.path)
+    clearAudio(data.path, { clearPlaylist: true, commonClear: true })
 }
 export function audioSeekTo(data: API_seek) {
     if (get(outLocked)) return

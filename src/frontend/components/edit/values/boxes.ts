@@ -633,6 +633,17 @@ export const itemBoxes: Box2 = {
             }
         }
     },
+    current_output: {
+        icon: "screen",
+        sections: {
+            default: {
+                inputs: splitIntoRows([
+                    { id: "currentOutput.source", type: "dropdown", value: "", values: { label: "show.source", options: "outputWindows", allowEmpty: true } },
+                    { id: "currentOutput.showLabel", type: "checkbox", value: false, values: { label: "stage.labels" } }
+                ])
+            }
+        }
+    },
     icon: {
         icon: "star",
         sections: {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeSlideRecording, isFadingOut, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
+    import { activeSlideRecording, activeTimers, isFadingOut, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
@@ -59,12 +59,17 @@
     $: outputContent = getOutputContent("", $outputs)
 
     $: backgroundCleared = isOutCleared("background", $outputs)
-    $: output = $outputs[getActiveOutputs($outputs, true, true, true)[0]] || {}
+    $: outputId = getActiveOutputs($outputs, true, true, true)[0] || ""
+    $: output = $outputs[outputId] || {}
     $: outputStyle = $styles[output.style || ""] || {}
     $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
     $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG
-    $: backgroundData = $media[output.out?.background?.path || ""] || {}
+    $: outBackground = output.out?.background || {}
+    $: backgroundData = $media[outBackground.path || ""] || {}
+
     $: isScripture = outputContent?.id === "temp"
+    $: isMetronome = $playingMetronome && !Object.keys($playingAudio).length
+    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find((a) => a.outputId === outputId) && Object.keys($activeTimers).length
 
     $: slideCleared = isOutCleared("slide", $outputs)
 
@@ -72,12 +77,12 @@
     $: overlayCleared = isOutCleared("overlays", $outputs, true)
     $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
 
-    $: slideTimerCleared = isOutCleared("transition", $outputs)
+    $: slideTimerCleared = [isOutCleared("transition", $outputs), !!$overlayTimers, !!$activeTimers][0]
 
     // audio fade out
     let audioIcon = "audio"
     $: if ($isFadingOut) startAudioIcon()
-    else audioIcon = "audio"
+    else audioIcon = isMetronome ? "metronome" : "audio"
     function startAudioIcon() {
         audioIcon = "volume"
         setTimeout(() => {
@@ -192,13 +197,13 @@
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
                 <MaterialButton
-                    style="padding: 0.3em 0.6em;"
+                    style="padding: 0.3em 0.6em;{isTimer ? 'opacity: 0.9;' : ''}"
                     disabled={$outLocked || (slideTimerCleared && activeClear !== "nextTimer")}
-                    title="clear.{Object.keys($overlayTimers).length ? 'timer' : 'nextTimer'}{presentationControllersKeysDisabled() ? ' [F5]' : ''}"
-                    on:click={() => clear("nextTimer")}
+                    title="{isTimer ? 'actions.stop_timers' : `clear.${Object.keys($overlayTimers).length ? 'timer' : 'nextTimer'}`}{presentationControllersKeysDisabled() ? ' [F5]' : ''}"
+                    on:click={() => (isTimer ? activeTimers.set([]) : clear("nextTimer"))}
                     red
                 >
-                    <Icon id="clock" size={1.2} white />
+                    <Icon id={isTimer ? "timer" : "clock"} size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
                     <MaterialButton

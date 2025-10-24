@@ -219,6 +219,8 @@
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
         "mixer": "Mixer",
+        "equalizer": "Equalizer",
+        "preset": "Preset",
         "main": "Main",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
@@ -1075,7 +1077,7 @@
         "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
-        "current_output": "Current output"
+        "current_output": "Output window"
     },
     "borders": {
         "solid": "Solid",
@@ -1264,7 +1266,7 @@
         "auto_group_numbers": "Auto assign group numbers",
         "transparent_slides": "Transparent slide preview",
         "full_colors": "High contrast group colors",
-        "next_item_on_last_slide": "Arrow right/left changes project item on last/first slide",
+        "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
         "startup_projects_list": "Show the projects list on startup",

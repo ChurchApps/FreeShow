@@ -19,7 +19,8 @@
     import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlides, textKeys } from "../bible/scripture"
 
     let biblesContent: BibleContent[] = []
-    let selectedVerses: number[] = []
+    let selectedChapters: number[] = []
+    let selectedVerses: (number | string)[][] = []
 
     $: activeScriptureId = $drawerTabsData.scripture?.activeSubTab || ""
 
@@ -28,6 +29,7 @@
         const content = await getActiveScripturesContent()
         if (content?.length) {
             biblesContent = content
+            selectedChapters = biblesContent[0]?.chapters || []
             selectedVerses = biblesContent[0]?.activeVerses || []
         }
     }
@@ -53,7 +55,7 @@
     }
 
     $: {
-        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedVerses }, true)
+        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
         else slides = [[]]
     }
 
@@ -120,7 +122,7 @@
         activePage.set("edit")
     }
 
-    $: containsJesusWords = Object.values(biblesContent?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("!{"))
+    $: containsJesusWords = Object.values(biblesContent?.[0]?.verses?.[0] || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("!{"))
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []

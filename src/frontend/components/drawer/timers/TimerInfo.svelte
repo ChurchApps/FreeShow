@@ -5,7 +5,7 @@
     import Button from "../../inputs/Button.svelte"
 
     let allPaused = false
-    $: if ($activeTimers?.length > 0) checkPaused()
+    $: if ($activeTimers?.length > 1) checkPaused()
     function checkPaused() {
         let playing = $activeTimers.filter((timer) => !timer.paused)
         if (playing.length === 0) allPaused = true
@@ -23,18 +23,15 @@
 </script>
 
 <main>
-    <Button on:click={() => actionOnAllTimers("paused", !allPaused)} center dark>
-        <Icon id={allPaused ? "play" : "pause"} white={allPaused} size={1.2} right />
-        {#key allPaused}
-            <T id={allPaused ? "media.play" : "actions.pause_timers"} />
-            <!-- <T id="media.{allPaused ? 'play' : 'pause'}" /> -->
-        {/key}
-    </Button>
-
-    <Button on:click={() => activeTimers.set([])} center dark>
-        <Icon id="stop" right />
-        <T id="actions.stop_timers" />
-    </Button>
+    {#if $activeTimers?.length > 1}
+        <Button on:click={() => actionOnAllTimers("paused", !allPaused)} center dark>
+            <Icon id={allPaused ? "play" : "pause"} white={allPaused} size={1.2} right />
+            {#key allPaused}
+                <T id={allPaused ? "media.play" : "actions.pause_timers"} />
+                <!-- <T id="media.{allPaused ? 'play' : 'pause'}" /> -->
+            {/key}
+        </Button>
+    {/if}
 </main>
 
 <style>

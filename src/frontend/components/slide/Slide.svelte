@@ -4,6 +4,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { sendMain } from "../../IPC/main"
+    import { removeTagsAndContent } from "../../show/slides"
     import {
         activeEdit,
         activePage,
@@ -25,6 +26,7 @@
         refreshSlideThumbnails,
         showsCache,
         slidesOptions,
+        slideTimers,
         special,
         styles,
         textEditActive
@@ -49,7 +51,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { removeTagsAndContent } from "../../show/slides"
 
     export let showId: string
     export let slide: Slide
@@ -347,6 +348,11 @@
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
     // || styleTemplate.settings?.backgroundColor
 
+    $: outputId = getActiveOutputs($outputs, false, true)[0]
+
+    // slide timer
+    $: slideTimer = active && $slideTimers[outputId] ? $slideTimers[outputId] : null
+
     function handleOpenInBrowserClick() {
         // The props showId and layoutSlide are available in this component's scope.
         if (!showId || !layoutSlide || !layoutSlide.id) {
@@ -358,8 +364,6 @@
         console.log(`Requesting to open URL: ${url}`) // For debugging
         sendMain(Main.URL, url)
     }
-
-    $: outputId = getActiveOutputs($outputs, false, true)
 
     let updater = 0
     const updaterInterval = setInterval(() => {
@@ -535,6 +539,11 @@
                                 <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
                             </div>
                         {/if}
+                        {#if slideTimer && output}
+                            <div class="slideTimer" style={output.maxLines ? "top: -3px;" : ""}>
+                                <div class="fill" style="width: {(slideTimer.time / slideTimer.max) * 100}%;background-color: {getOutputColor(output.color)};"></div>
+                            </div>
+                        {/if}
                         {#if slide.notes && icons}
                             <button class="notes" data-title={slide.notes} on:click={openNotes}>
                                 <Icon id="notes" white right />
@@ -544,7 +553,7 @@
 
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
-                        <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
+                        <span style="color: {$fullColors ? getContrast(color || '') : 'var(--text)'};opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
                         <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name === "." ? "" : name || "—"}</span>
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
@@ -716,7 +725,8 @@
         height: 24px;
     }
 
-    .lineProgress {
+    .lineProgress,
+    .slideTimer {
         position: absolute;
         top: 0;
         left: 0;
@@ -726,7 +736,8 @@
         z-index: 2;
         background-color: var(--primary-darkest);
     }
-    .lineProgress .fill {
+    .lineProgress .fill,
+    .slideTimer .fill {
         width: 0;
         height: 100%;
         background-color: var(--secondary);

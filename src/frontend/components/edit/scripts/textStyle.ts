@@ -210,7 +210,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 
 // get item align at selected pos
 export function getLastLineAlign(item: Item, selection: any): string {
-    if (!selection?.length) return item?.lines?.[0].align || ""
+    if (!selection?.length) return item?.lines?.[0]?.align || ""
 
     let last = ""
     item?.lines?.forEach((line, i) => {

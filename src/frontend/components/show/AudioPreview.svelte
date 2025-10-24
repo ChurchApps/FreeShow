@@ -3,11 +3,10 @@
     import { AudioAnalyser } from "../../audio/audioAnalyser"
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
+    import { focusMode, media, outLocked, playingAudio } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import Button from "../inputs/Button.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Slider from "../inputs/Slider.svelte"
 
@@ -177,7 +176,7 @@
                 currentTime = 0
             }}
         >
-            <Icon id={"stop"} white size={1.2} />
+            <Icon id={"stop"} white={paused} size={1.2} />
         </MaterialButton>
 
         <div style="display: flex;align-items: center;gap: 10px;flex: 1;margin: 0 10px;">

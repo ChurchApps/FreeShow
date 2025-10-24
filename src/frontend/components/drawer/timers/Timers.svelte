@@ -13,15 +13,19 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
+    import { joinTime, secondsToTime } from "../../helpers/time"
 
     export let searchValue
+    export let onlyPlaying: boolean = false
 
     const profile = getAccess("functions")
     const readOnly = profile.timers === "read"
 
     // $: sortedTimers = getSortedTimers($timers)
     const typeOrder = { counter: 1, clock: 2, event: 3 }
-    $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true)
+        .filter((a) => (onlyPlaying ? a.type === "counter" && $activeTimers.some((at) => a.id === at.id) : true))
+        .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
@@ -67,7 +71,7 @@
 <svelte:window on:mouseup={() => disableDragging.set(false)} />
 
 {#if filteredTimers.length}
-    <div class="timers">
+    <div class="timers" style={onlyPlaying ? "" : "padding-bottom: 60px;"}>
         {#each filteredTimers as timer, i}
             {@const title = timer.type === filteredTimers[i - 1]?.type ? "" : timer.type}
             {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
@@ -79,21 +83,28 @@
             {/if}
 
             <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
-            <SelectElem id="global_timer" data={timer} draggable>
-                <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer{readOnly ? '_readonly' : ''}" style="display: flex;justify-content: space-between;padding: 3px;">
-                    <div style="display: flex;width: 50%;">
+            <SelectElem id="global_timer" data={timer} draggable={!onlyPlaying} selectable={!onlyPlaying}>
+                <div
+                    class:outline={!onlyPlaying && $activeTimers.find((a) => a.id === timer.id)}
+                    class:project={list.includes(timer.id)}
+                    class={onlyPlaying ? "" : `context #global_timer${readOnly ? "_readonly" : ""}`}
+                    style="display: flex;justify-content: space-between;padding: 3px;"
+                >
+                    <div style="display: flex;{onlyPlaying ? '' : 'width: 50%;'}">
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
                             <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
-                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" data-title={timer.name}>
-                            {#if timer.name}
-                                {timer.name}
-                            {:else}
-                                <span style="opacity: 0.5;">
-                                    <T id="main.unnamed" />
-                                </span>
-                            {/if}
-                        </p>
+                        {#if !onlyPlaying}
+                            <p style="align-self: center;padding: 0 5px;{onlyPlaying ? '' : 'min-width: 100px;'}" data-title={timer.name}>
+                                {#if timer.name}
+                                    {timer.name}
+                                {:else}
+                                    <span style="opacity: 0.5;">
+                                        <T id="main.unnamed" />
+                                    </span>
+                                {/if}
+                            </p>
+                        {/if}
                     </div>
 
                     {#if timer.type === "counter"}
@@ -108,10 +119,16 @@
                         />
                     {/if}
 
-                    <div style="display: flex;min-width: 125px;justify-content: end;">
+                    <div style="display: flex;justify-content: end;{onlyPlaying ? '' : 'min-width: 125px;'}">
                         <span style="display: flex;align-self: center;padding: 0 5px;">
                             <Timer id={timer.id} {today} />
                             <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
+
+                            {#if timer.type === "counter" && timer.end && timer.end !== 0}
+                                <span class="end" style="opacity: 0.6;font-size: 0.8em;align-self: center;margin-left: 5px;">
+                                    {joinTime(secondsToTime(timer.end || 0))}
+                                </span>
+                            {/if}
                         </span>
                         <!-- <Button
         on:click={() => {
@@ -141,18 +158,18 @@
     </Center>
 {/if}
 
-<FloatingInputs onlyOne>
-    <MaterialButton disabled={readOnly} icon="add" title="new.timer" on:click={() => activePopup.set("timer")}>
-        {#if !$labelsDisabled}<T id="new.timer" />{/if}
-    </MaterialButton>
-</FloatingInputs>
+{#if !onlyPlaying}
+    <FloatingInputs onlyOne>
+        <MaterialButton disabled={readOnly} icon="add" title="new.timer" on:click={() => activePopup.set("timer")}>
+            {#if !$labelsDisabled}<T id="new.timer" />{/if}
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <style>
     .timers {
         flex: 1;
         overflow: auto;
-
-        padding-bottom: 60px;
     }
     .timers :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
