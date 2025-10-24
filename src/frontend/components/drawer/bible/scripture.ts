@@ -114,15 +114,17 @@ export async function getActiveScripturesContent() {
         const splitLongVerses = get(scriptureSettings).splitLongVerses
         let versesText: { [key: string]: string } = {}
         selectedVerses.forEach(v => {
-            const splitted = v.toString().split("_")
-            const id = Number(splitted[0])
-            // const subverse = Number(splitted[1] || 0)
+            const { id, subverse } = getVerseIdParts(v)
 
             const text = Chapter.getVerse(id).getText()
             const splittedVerses = getSplittedVerses({ [id]: text })
 
-            if (splitLongVerses) versesText[v] = splittedVerses[v]
-            else versesText[v] = text
+            if (splitLongVerses) {
+                const newVerseId = id + (subverse ? `_${subverse}` : "")
+                versesText[v] = splittedVerses[newVerseId]
+            } else {
+                versesText[v] = text
+            }
         })
 
         // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
@@ -142,9 +144,7 @@ export async function playScripture() {
 
     const slides = getScriptureSlides({ biblesContent, selectedVerses }, true)
 
-    let splitted = selectedVerses[0].toString().split("_")
-    const id = splitted[0]
-    const subverse = Number(splitted[1] || 0)
+    const { id, subverse } = getVerseIdParts(selectedVerses[0])
     const value = id + (subverse ? getVersePartLetter(subverse) : "")
 
     // scripture usage history
@@ -275,10 +275,8 @@ export function joinRange(array: (number | string)[]) {
     })
 
     array.forEach((a, i) => {
-        const splitted = a.toString().split("_")
-        const id = splitted[0]
-        const subverse = Number(splitted[1] || 0)
-        const v = id + (subverse ? getVersePartLetter(subverse) : "")
+        const { id, subverse, endNumber } = getVerseIdParts(a)
+        const v = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
 
         if (Number(id) === prev) return
 
@@ -319,14 +317,12 @@ export function getScriptureSlides({ biblesContent, selectedVerses }: { biblesCo
         let slideIndex = 0
         slides[slideIndex].push(clone(emptyItem))
 
-        const verses = getSplittedVerses(bible.verses)
-
         let verseLine = 0
         selectedVerses.forEach((s, rangeIndex) => {
             const slideArr = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines?.[0]?.text) return
 
-            let text: string = verses[s] || bible.verses[s] || ""
+            let text: string = bible.verses[s.toString()] || ""
             if (!text) return
 
             let lineIndex = 0
@@ -343,10 +339,8 @@ export function getScriptureSlides({ biblesContent, selectedVerses }: { biblesCo
                 if (rangeIndex === 0) size *= 1.2
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
-                const splitted = s.toString().split("_")
-                const id = splitted[0]
-                const subverse = Number(splitted[1] || 0)
-                const value = id + (subverse ? getVersePartLetter(subverse) : "") + " "
+                const { id, subverse, endNumber } = getVerseIdParts(s)
+                const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
 
                 slideArr.lines![lineIndex].text.push({
                     value,
@@ -524,6 +518,16 @@ export function getScriptureSlides({ biblesContent, selectedVerses }: { biblesCo
     }
 }
 
+// regex split (id_subverse-endNumber) or just (id) or just (id_subverse) or (id-endNumber)
+export function getVerseIdParts(verseId: string | number) {
+    const regex = /(\d+)(?:_(\d+))?(?:-(\d+))?/
+    const match = verseId.toString().match(regex)
+    if (!match) return { id: 0, subverse: 0, endNumber: 0 }
+
+    const [_, id, subverse, endNumber] = match
+    return { id: Number(id), subverse: Number(subverse) || 0, endNumber: Number(endNumber) || 0 }
+}
+
 export function getSplittedVerses(verses: { [key: string]: string }) {
     if (!get(scriptureSettings).splitLongVerses) return verses || {}
 
@@ -543,6 +547,8 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 }
 
 export function splitText(value: string, maxLength: number) {
+    if (!value) return []
+
     const splitted: string[] = []
 
     // for (let i = 0; i < value.length; i += maxLength) {

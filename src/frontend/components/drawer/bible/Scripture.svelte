@@ -30,7 +30,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -117,16 +117,17 @@
 
     function updateSplitted(verses: Verse[] | null, _updater: any) {
         if (!verses) return []
-        if (!$scriptureSettings.splitLongVerses) return verses.map((verse) => ({ ...verse, id: verse.number.toString() }))
+        if (!$scriptureSettings.splitLongVerses) return verses.map((verse) => ({ ...verse, id: verse.number.toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
         verses.forEach((verse) => {
             let newVerseStrings = splitText(verse.text, chars)
+            const end = verse.endNumber ? `-${verse.endNumber}` : ""
 
             for (let i = 0; i < newVerseStrings.length; i++) {
                 const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
-                newVerses.push({ ...verse, id: verse.number + key, text: newVerseStrings[i] })
+                newVerses.push({ ...verse, id: verse.number + key + end, text: newVerseStrings[i] })
             }
         })
 
@@ -553,9 +554,7 @@
                     <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!splittedVerses.length}>
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
-                                {@const splitted = content.id.toString().split("_")}
-                                {@const id = splitted[0]}
-                                {@const subverse = Number(splitted[1] || 0)}
+                                {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
                                 {@const isActive = activeReference.verses.find((vid) => vid.toString() === content.id)}
                                 {@const text = formatBibleText(content.text, true)}
 
@@ -579,8 +578,8 @@
                                         if (e.ctrlKey || e.metaKey || e.shiftKey) return
                                         openVerse(id)
                                     }} -->
-                                    <span class="v">
-                                        {id}
+                                    <span class="v" style={endNumber && subverse ? "width: 60px;" : ""}>
+                                        {id}{#if endNumber}-{endNumber}{/if}
                                         <!-- WIP style position not very good -->
                                         {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                                     </span>
