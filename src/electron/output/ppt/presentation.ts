@@ -94,6 +94,10 @@ async function initPresentation(path: string, program = "powerpoint") {
 
     try {
         currentSlideshow = new Slideshow(program, isProd)
+
+            // Fix encoding to allow non-English characters.
+            ; (currentSlideshow as any).connector.c.stdin.setEncoding('latin1')
+            ; (currentSlideshow as any).connector.c.stdout.setEncoding('latin1')
     } catch (err) {
         if ((err as Error).message.includes("unsupported platform")) {
             sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")

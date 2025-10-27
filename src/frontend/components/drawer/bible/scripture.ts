@@ -693,7 +693,7 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (!noPopup && (showPopup || selectedVerses.length > 3)) {
+    if (!noPopup && (showPopup || selectedVerses[0]?.length > 3)) {
         const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
 
         popupData.set({ showVersion })

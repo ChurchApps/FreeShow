@@ -25,6 +25,8 @@
 
     $: hexValue = getHexValue(value)
     function getHexValue(value: string) {
+        if (typeof value !== "string") return "#000000"
+
         if (value.includes("gradient")) {
             if (!pickerOpen) opacity = getGradientOpacity(value) * 100
             return value
