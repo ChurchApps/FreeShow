@@ -79,7 +79,7 @@
 
     $: projectItemsList = $projects[$activeProject || ""]?.shows || []
 
-    $: lessVisibleSection = projectItemsList.length > 10 || !!projectItemsList.find((a) => a.type === "section")
+    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.some((a) => a.type === "section")
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
