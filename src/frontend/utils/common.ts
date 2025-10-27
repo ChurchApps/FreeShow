@@ -202,13 +202,14 @@ export function togglePanels() {
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-const triggerTimeout: NodeJS.Timeout | null = null
+let triggerTimeout: NodeJS.Timeout | null = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 
     if (triggerTimeout) clearTimeout(triggerTimeout)
-    setTimeout(() => {
+    triggerTimeout = setTimeout(() => {
         activeTriggerFunction.set("")
+        triggerTimeout = null
     }, 100)
 }
 

@@ -79,6 +79,8 @@
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
+        if (loopStop) clearTimeout(loopStop)
+        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
