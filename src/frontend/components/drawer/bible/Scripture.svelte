@@ -31,6 +31,7 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { formatBibleText, getVerseIdParts, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
+    import { onMount } from "svelte"
 
     export let active: string | null
     export let searchValue: string
@@ -187,7 +188,11 @@
         data = data
 
         // load new data
-        data[previewBibleId].chapterData = await currentData.getChapter(Number(chapterNumbers[chapterNumbers.length - 1]))
+        // NOTE: if chapter is not a number it does not work
+        const chapterNumber = Number(chapterNumbers[chapterNumbers.length - 1])
+        // const chapterId = chapterNumbers[chapterNumbers.length - 1]?.toString()
+        // const chapterIndex = (chapters || []).findIndex((a) => a.number?.toString() === chapterId)
+        data[previewBibleId].chapterData = await currentData.getChapter(chapterNumber)
 
         // newToast(translateText("toast.chapter_undefined").replace("{}", chapter))
 
@@ -263,6 +268,8 @@
     }
 
     /// SELECTION ///
+
+    onMount(() => selected.set({ id: "scripture", data: [] }))
 
     let isSelected = false
     function updateVersesSelection(e: any, verseNumber: string) {

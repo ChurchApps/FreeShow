@@ -609,7 +609,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
 
 // regex split (id_subverse-endNumber) or just (id) or just (id_subverse) or (id-endNumber)
 export function getVerseIdParts(verseId: string | number) {
-    const regex = /(\d+)(?:_(\d+))?(?:-(\d+))?/
+    const regex = /(\d+(?:\.\d+)?)(?:_(\d+))?(?:-(\d+))?/
     const match = verseId?.toString().match(regex)
     if (!match) return { id: 0, subverse: 0, endNumber: 0 }
 

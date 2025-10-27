@@ -201,18 +201,18 @@
         "#DDA0DD" // Purple - Very high frequencies
     ]
 
-    function handleMouseDown(event: MouseEvent, bandIndex: number) {
+    function handleMouseDown(e: MouseEvent, bandIndex: number) {
         if (disabled) return
 
         // Check for middle mouse button (wheel button) click to reset
-        if (event.button === 1) {
-            event.preventDefault()
+        if (e.button === 1) {
+            e.preventDefault()
             handleBandReset(bandIndex)
             return
         }
 
         // Only handle left mouse button for dragging
-        if (event.button !== 0) return
+        if (e.button !== 0) return
 
         draggedBandIndex = bandIndex
         isDragging = true
@@ -222,25 +222,25 @@
         draggedBandFrequency = bands[bandIndex].frequency
 
         // Prevent text selection while dragging
-        event.preventDefault()
+        e.preventDefault()
 
         // Add global mouse listeners
         document.addEventListener("mousemove", handleMouseMove)
         document.addEventListener("mouseup", handleMouseUp)
     }
 
-    function handleMouseMove(event: MouseEvent) {
+    function handleMouseMove(e: MouseEvent) {
         if (!isDragging || draggedBandIndex === null || !eqVisualElement) return
 
         const rect = eqVisualElement.getBoundingClientRect()
 
         // Calculate Y position (gain)
-        const y = event.clientY - rect.top
+        const y = e.clientY - rect.top
         const gainPercentage = Math.max(0, Math.min(1, (canvasHeight - y) / canvasHeight))
         const newGain = minGain + gainPercentage * (maxGain - minGain)
 
         // Calculate X position (frequency)
-        const x = Math.max(0, Math.min(canvasWidth, event.clientX - rect.left))
+        const x = Math.max(0, Math.min(canvasWidth, e.clientX - rect.left))
         const newFreq = getXFreq(x)
 
         // Update gain
@@ -312,11 +312,11 @@
         isHovering = false
     }
 
-    function handleMouseHover(event: MouseEvent) {
+    function handleMouseHover(e: MouseEvent) {
         if (!isHovering || !eqVisualElement || disabled || isDragging) return
 
         const rect = eqVisualElement.getBoundingClientRect()
-        const x = Math.max(0, Math.min(canvasWidth, event.clientX - rect.left))
+        const x = Math.max(0, Math.min(canvasWidth, e.clientX - rect.left))
 
         hoverX = x
         hoverFrequency = getXFreq(x)
@@ -331,13 +331,22 @@
         document.removeEventListener("mouseup", handleMouseUp)
     }
 
-    function handleWheel(event: WheelEvent, bandIndex: number) {
+    function handleWheel(e: WheelEvent, bandIndex: number) {
         if (disabled) return
 
-        event.preventDefault()
+        e.preventDefault()
 
-        const delta = event.deltaY > 0 ? 0.2 : -0.2 // Increased step size for more noticeable changes
-        bands[bandIndex].q = Math.max(0.1, Math.min(30, bands[bandIndex].q + delta))
+        // 0 = pixels, 1 = lines, 2 = pages. Trackpads often deliver small pixel deltas.
+        let raw = e.deltaY
+        if ((e as any).deltaMode === 1) raw = raw * 16
+        else if ((e as any).deltaMode === 2) raw = raw * canvasHeight
+
+        // Convert the raw delta into a sensible step for Q.
+        const baseSensitivity = 0.02
+        let step = Math.sign(raw) * Math.max(0.01, Math.min(0.5, Math.abs(raw) * baseSensitivity))
+
+        // Apply and clamp Q between sensible bounds
+        bands[bandIndex].q = Math.max(0.1, Math.min(30, +(bands[bandIndex].q + step).toFixed(2)))
         bands = [...bands] // Trigger reactivity
 
         updateBands()

@@ -81,7 +81,8 @@
     let isFirstGhost = false
     // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
     // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < 60 && !$special.optimizedMode) {
+    $: if (!background && index < 60 && !$special.optimizedMode && layoutSlides.length) checkGhostBackground()
+    function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -91,7 +92,9 @@
                 ghostBackground = show.media[a.background]
                 bgIndex = i
             }
-            if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
+
+            const mediaData = a.background && show.media[a.background]
+            if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) ghostBackground = null
 
             if (ghostBackground && i === index && bgIndex === i - 1) isFirstGhost = true
         })

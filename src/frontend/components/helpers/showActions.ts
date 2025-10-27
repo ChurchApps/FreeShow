@@ -57,7 +57,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { defaultLayers, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -159,6 +159,8 @@ export function getFewestOutputLines(updater = get(outputs)) {
 
         const style = get(styles)[output.style]
         if (!style) return
+        const styleLines = (style.layers || defaultLayers)
+        if (Array.isArray(styleLines) && !styleLines.includes("slide")) return
         const lines = Number(style.lines || 0)
         if (!lines) return
 
@@ -760,7 +762,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 if (i <= index && !a.data.disabled) {
                     if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
-                    if (a.data.background && _show(showId).get("media")?.[a.data.background]?.loop === false) background = null
+
+                    const mediaData = _show(showId).get("media")?.[a.data.background || ""]
+                    if (mediaData && (mediaData?.loop === false || get(media)[mediaData?.path || ""]?.videoType === "foreground")) background = null
                 }
             })
         }
