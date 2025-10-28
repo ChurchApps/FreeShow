@@ -137,7 +137,6 @@
         "_hide_preview": "Hide preview",
         "show_preview": "Show preview",
         "restore_output": "Restore output",
-        "enable_controls": "Show media preview controls",
         "background": "Background",
         "foreground": "Foreground",
         "slide": "Slide",
@@ -147,7 +146,8 @@
         "nextTimer": "Next slide timer",
         "lock": "Lock",
         "unlock": "Unlock",
-        "test_pattern": "Test pattern"
+        "test_pattern": "Test pattern",
+        "live_prepare": "Hide output content (Black overlay)"
     },
     "clear": {
         "general": "Clear",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
         "mixer": "Mixer",
+        "equalizer": "Equaliser",
+        "preset": "Preset",
+        "main": "Main",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "use_metadata_bpm": "Use BPM from metadata",
@@ -1046,7 +1049,9 @@
         "longitude": "Longitude",
         "altitude": "Altitude",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Long range"
+        "longRange": "Long range",
+        "media_item_tip": "Are you trying to use the media as a background?",
+        "convert_to_background": "Convert to background"
     },
     "items": {
         "text": "Textbox",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Progress",
         "visualizer": "Visualiser",
         "captions": "Captions",
+        "metronome": "Metronome",
         "icon": "Icon",
         "effect": "Effect",
         "slide_text": "Slide text",
         "slide_notes": "Slide notes",
-        "current_output": "Current output"
+        "current_output": "Output window"
     },
     "borders": {
         "solid": "Solid",
@@ -1253,12 +1259,14 @@
         "window": "Window",
         "active_style": "Use style",
         "alert_updates": "Alert when a new update is available",
+        "alert_updates_beta": "Alert when a new beta version is available",
         "auto_updates": "Auto updates",
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",
         "auto_group_numbers": "Auto assign group numbers",
         "transparent_slides": "Transparent slide preview",
         "full_colors": "High contrast group colours",
+        "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
         "startup_projects_list": "Show the projects list on startup",

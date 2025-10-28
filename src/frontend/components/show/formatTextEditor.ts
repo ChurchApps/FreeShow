@@ -180,6 +180,7 @@ export function formatText(text: string, showId = "") {
     })
 
     const parentStyles: { [key: string]: string } = {}
+    const parentItemAlign: { [key: string]: string } = {}
     const parentAlign: { [key: string]: string } = {}
     Object.keys(newSlides).forEach((slideId) => {
         let slide = newSlides[slideId]
@@ -195,6 +196,7 @@ export function formatText(text: string, showId = "") {
                 const b = oldTextboxes[i]
                 if (!b) return
 
+                if (b.align) item.align = b.align
                 if (b.style) item.style = b.style
                     ; (item.lines || []).forEach((line, j) => {
                         const c = b.lines?.[j] || b.lines?.[0]
@@ -208,6 +210,7 @@ export function formatText(text: string, showId = "") {
                             // store style for new children
                             if (i === 0 && j === 0) {
                                 slide.children?.forEach((id) => {
+                                    parentItemAlign[id] = b.align || ""
                                     parentStyles[id] = filteredText[0].style
                                     parentAlign[id] = line.align
                                 })
@@ -231,6 +234,7 @@ export function formatText(text: string, showId = "") {
             // newly split and created slide
             // add same style as parent
             slide.items.forEach((item) => {
+                item.align = parentItemAlign[slideId]
                 item.lines?.forEach((line) => {
                     line.align = parentAlign[slideId]
                     line.text?.forEach((txt) => {

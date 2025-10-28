@@ -61,7 +61,9 @@
             if (i <= $activeEdit.slide! && !a.data.disabled) {
                 if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
-                if (a.data.background && currentShowId && currentShow?.media[a.data.background]?.loop === false) bgId = null
+
+                const mediaData = a.data.background && currentShow?.media[a.data.background]
+                if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) bgId = null
             }
         })
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
     import { media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
@@ -15,6 +15,20 @@
     export let mirror = false
 
     let dispatch = createEventDispatcher()
+
+    // values for deciding whether we need the blurred video overlay
+    let container: HTMLDivElement | null = null
+    let containerAspect: number | null = null
+    let videoAspect: number | null = null
+    let perfectFit = false
+
+    onMount(() => {
+        if (!container) return
+
+        const w = container.clientWidth
+        const h = container.clientHeight
+        containerAspect = w && h ? w / h : null
+    })
 
     let hasLoaded = false
     function loaded() {
@@ -106,12 +120,17 @@
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
 
+    // update computed aspects and determine whether the blurred video is necessary
+    $: videoAspect = video && video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : null
+    // 1% tolerance
+    $: perfectFit = containerAspect && videoAspect ? Math.abs(containerAspect - videoAspect) <= 0.01 : false
+
     // some videos don't like high playback speed (above 5.9)
     // https://issues.chromium.org/issues/40167938
 </script>
 
-<div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
-    {#if mediaStyle.fit === "blur"}
+<div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
+    {#if mediaStyle.fit === "blur" && !perfectFit}
         <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
     {/if}
     <video

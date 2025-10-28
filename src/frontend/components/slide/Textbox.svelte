@@ -79,6 +79,8 @@
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
+        if (loopStop) clearTimeout(loopStop)
+        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
@@ -269,6 +271,7 @@
     }
 
     // WIP padding can be checked by auto size if style is added to parent
+    let paddingCorrTimeout: NodeJS.Timeout | null = null
     function getPaddingCorrection(stageItem: any) {
         let result = ""
         if (typeof stageItem?.style !== "string") return ""
@@ -281,7 +284,10 @@
                 }
             })
         }
-        setTimeout(calculateAutosize, 150)
+
+        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
+        paddingCorrTimeout = setTimeout(calculateAutosize, 150)
+
         return result
     }
 

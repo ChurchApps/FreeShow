@@ -48,7 +48,7 @@
     },
     "about": {
         "check_updates": "Zkontrolovat aktualizace",
-        "made": "Vytvořeno v Norsku",
+        "made": "V Norsku vytvořil",
         "more": "Zkuste další z našich aplikací na",
         "report": "Pro nahlášení problému nebo zažádání nové funkce, jděte na",
         "translate": "Chcete pomoci s překladem? Jděte na",
@@ -137,7 +137,6 @@
         "_hide_preview": "Skrýt náhled",
         "show_preview": "Zobrazit náhled",
         "restore_output": "Obnovit výstup",
-        "enable_controls": "Zobrazit ovládání náhledu médií",
         "background": "Pozadí",
         "foreground": "Popředí",
         "slide": "Snímek",
@@ -147,7 +146,8 @@
         "nextTimer": "Odpočet do dalšího snímku",
         "lock": "Uzamknout",
         "unlock": "Odemknout",
-        "test_pattern": "Otestovat vzor"
+        "test_pattern": "Otestovat vzor",
+        "live_prepare": "Schovat obsah výstupu (Černá obrazovka)"
     },
     "clear": {
         "general": "Obnovit",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Povolit zvýšení hlasitosti nad 100 % (může způsobit zkreslení)",
         "pre_fader_volume_meter": "Pre-fader ukazatel hlasitosti",
         "mixer": "Mixer",
+        "equalizer": "Ekvalizér",
+        "preset": "Presety",
+        "main": "Hlavní",
         "metronome": "Metronom",
         "toggle_metronome": "Zapnout/vypnout metronom",
         "use_metadata_bpm": "Použít BPM z metadat ",
@@ -465,7 +468,7 @@
         "about": "Popis",
         "history": "Historie",
         "action_history": "Historie aktivity",
-        "manage_emitters": "Spravovat emitery",
+        "manage_emitters": "Spravovat emittery",
         "action": "Akce",
         "category_action": "Akce kategorie",
         "category_template": "Šablona kategorie",
@@ -1046,7 +1049,9 @@
         "longitude": "Zeměpisná délka",
         "altitude": "Nadmořská výška",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Dlouhý dosah"
+        "longRange": "Dlouhý dosah",
+        "media_item_tip": "Chcete využít média jako na pozadí?",
+        "convert_to_background": "Převést na pozadí "
     },
     "items": {
         "text": "Textové pole",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Postup",
         "visualizer": "Visualizér",
         "captions": "Titulky",
+        "metronome": "Metronome",
         "icon": "Ikona",
         "effect": "Efekt",
         "slide_text": "Text snímku",
         "slide_notes": "Poznámky snímku",
-        "current_output": "Současný výstup"
+        "current_output": "Okno výstupu"
     },
     "borders": {
         "solid": "Pevný",
@@ -1163,7 +1169,7 @@
         "tip_index_by_velocity": "Rejstřík je určen obrženou velocitou začínající na 0."
     },
     "emitters": {
-        "emitter": "Emiter",
+        "emitter": "Emitter",
         "tip": "Vytvořit šablony emitoru pro zasílání určitých zpráv.",
         "signal": "Signál ",
         "message_template": "Šablona zprávy",
@@ -1253,12 +1259,14 @@
         "window": "Okno",
         "active_style": "Použít styl",
         "alert_updates": "Upozornit na dostupné aktualizace",
+        "alert_updates_beta": "Upozornit, když je dostupná nová beta verze.",
         "auto_updates": "Automatické aktualizace",
         "disable_labels": "Vypnout štítky",
         "group_numbers": "Skupinová čísla",
         "auto_group_numbers": "Automaticky přiřadit skupinám číslo",
         "transparent_slides": "Průhledný náhled snímku",
         "full_colors": "Vysoký kontrast skupinových barev",
+        "next_item_on_last_slide": "Šipky vlevo/vpravo upravují předmět na prvním/posledním snímku.",
         "slide_number_keys": "Přehrát snímky s klávesami čísel",
         "auto_shortcut_first_letter": "Automatická zkratka k prvnímu písmenu textu",
         "startup_projects_list": "Zobrazit seznam projektů na spuštění aplikace",

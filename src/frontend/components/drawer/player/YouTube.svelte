@@ -21,12 +21,14 @@
 
     // https://developers.google.com/youtube/player_parameters
     const options = {
+        host: "https://www.youtube-nocookie.com", // only working with one at a time
         playerVars: {
             autoplay: 1,
             loop: videoData.loop,
             fs: 0,
             rel: 0,
-            controls: $special.hideCursor ? 0 : 1
+            controls: $special.hideCursor ? 0 : 1,
+            origin: window.location.origin
             // cc_load_policy: true
         }
     }
@@ -170,7 +172,13 @@
 
 <div class="main" class:hide={!id}>
     {#if id}
+        <!-- {#if $currentWindow === "output"} -->
         <YouTubePlayer class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
+        <!-- {:else}
+            <div style="width: 100%;height: 100%;display: flex;align-items: center;justify-content: center;">
+                <Icon id="youtube" size={6} white />
+            </div>
+        {/if} -->
     {/if}
 </div>
 

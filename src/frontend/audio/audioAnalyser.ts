@@ -4,17 +4,19 @@ import { AUDIO, OUTPUT } from "../../types/Channels"
 import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { AudioPlayer } from "./audioPlayer"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
+import { AudioMultichannel } from "./audioMultichannel"
+import { AudioPlayer } from "./audioPlayer"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
-    static channels = 2 // left/right
+    static channels = AudioMultichannel.DEFAULT_CHANNELS // default left/right, will be updated dynamically
+    static maxChannels = AudioMultichannel.MAX_CHANNELS // support up to 8 channels (7.1 surround)
     static recorderFrameRate = 24 // fps
     // WIP set recorder send time delay?
 
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
-    private static splitter = this.ac.createChannelSplitter(this.channels)
+    private static splitter: ChannelSplitterNode | null = null
     private static analysers: AnalyserNode[] = []
     private static sources: { [key: string]: AudioNode } = {}
 
@@ -39,6 +41,11 @@ export class AudioAnalyser {
         try {
             if (audio instanceof MediaStream) source = this.ac.createMediaStreamSource(audio)
             else source = this.ac.createMediaElementSource(audio)
+
+            // detect number of channels in audio source
+            const detectedChannels = AudioMultichannel.detectChannelCount(source, audio, this.maxChannels)
+            if (detectedChannels > this.channels) this.updateChannelCount(detectedChannels)
+
             this.sources[id] = source
         } catch (err) {
             console.error("Could not create media source:", err)
@@ -53,7 +60,7 @@ export class AudioAnalyser {
         const eqOutputNode = await connectAudioSourceToEqualizer(id, source)
 
         // Connect the equalizer output (or original source if EQ bypassed) to analysis chain
-        if (eqOutputNode) {
+        if (eqOutputNode && this.splitter) {
             eqOutputNode.connect(this.splitter)
             this.connectGain(eqOutputNode)
             this.connectDestination(eqOutputNode)
@@ -107,25 +114,92 @@ export class AudioAnalyser {
             return
         }
 
-        const MERGER = this.ac.createChannelMerger(this.channels)
+        if (!this.splitter) {
+            this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
+        }
+
+        const MERGER = AudioMultichannel.createChannelMerger(this.ac, this.channels)
 
             // analyse left/right channels individually
             ;[...Array(this.channels)].forEach((_, channel) => {
                 const analyser = (this.analysers[channel] = this.ac.createAnalyser())
                 analyser.smoothingTimeConstant = 0.85
                 analyser.fftSize = 256
-                this.splitter.connect(analyser, channel)
-                this.splitter.connect(MERGER, channel, channel)
+                this.splitter!.connect(analyser, channel)
+                this.splitter!.connect(MERGER, channel, channel)
             })
 
         AudioAnalyserMerger.init()
+    }
+
+    // MULTI CHANNEL
+
+    // static detectActiveChannelCount(sourceId: string): number {
+    //     const source = this.sources[sourceId]
+    //     return AudioMultichannel.detectActiveChannelCount(this.ac, source, sourceId, this.maxChannels)
+    // }
+
+    // static getChannelInfo(): MultichannelInfo {
+    //     return AudioMultichannel.getChannelInfo(this.ac, this.channels, this.maxChannels)
+    // }
+
+    static supportsMultichannel(): boolean {
+        return AudioMultichannel.supportsMultichannel(this.ac)
+    }
+
+    static getMaxSupportedChannels(): number {
+        return AudioMultichannel.getMaxSupportedChannels(this.ac, this.maxChannels)
+    }
+
+    // update channel count and reinitialize audio nodes
+    static updateChannelCount(newChannelCount: number) {
+        const validatedChannelCount = AudioMultichannel.validateChannelCount(newChannelCount)
+        if (!AudioMultichannel.shouldUpdateChannelCount(this.channels, validatedChannelCount)) return
+
+        // disconnect existing connections
+        if (this.splitter) {
+            try {
+                this.splitter.disconnect()
+            } catch (err) {
+                // already disconnected
+            }
+        }
+
+        this.analysers = []
+        this.channels = validatedChannelCount
+        this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
+
+        if (this.destNode) AudioMultichannel.configureNodeForMultichannel(this.destNode, this.channels)
+        if (this.gainNode) AudioMultichannel.configureNodeForMultichannel(this.gainNode, this.channels)
+
+        this.reconnectAllSources()
+    }
+
+    private static reconnectAllSources() {
+        Object.keys(this.sources).forEach(async (id) => {
+            try {
+                const source = this.sources[id]
+                if (!source) return
+
+                const eqOutputNode = getConnectedSourceOutput(id)
+                if (!eqOutputNode || !this.splitter) return
+
+                eqOutputNode.connect(this.splitter)
+                this.connectGain(eqOutputNode)
+                this.connectDestination(eqOutputNode)
+            } catch (err) {
+                console.error(`Failed to reconnect source ${id}:`, err)
+            }
+        })
+
+        this.initAnalysers()
     }
 
     private static gainNode: GainNode | null = null
     private static initGain() {
         if (this.gainNode) return
 
-        this.gainNode = this.ac.createGain()
+        this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
         this.gainNode.connect(this.ac.destination)
         this.gainNode.gain.value = AudioPlayer.getGain()
     }
@@ -154,14 +228,14 @@ export class AudioAnalyser {
     private static initDestination() {
         if (this.destNode) return
 
-        this.destNode = this.ac.createMediaStreamDestination()
-        this.destNode.channelCount = this.channels
-        this.destNode.channelCountMode = "explicit"
-        this.destNode.channelInterpretation = "speakers"
+        this.destNode = AudioMultichannel.createMultichannelDestination(this.ac, this.channels)
     }
 
     private static connectDestination(source: AudioNode) {
         this.initDestination()
+
+        AudioMultichannel.configureNodeForMultichannel(source, this.channels)
+
         source.connect(this.destNode!)
     }
 
@@ -307,7 +381,7 @@ export class AudioAnalyser {
 
                     if (newEqOutputNode) {
                         // Disconnect old analysis connections if they exist
-                        if (oldConnection) {
+                        if (oldConnection && this.splitter) {
                             try {
                                 oldConnection.disconnect(this.splitter)
                                 this.disconnectGain(oldConnection)
@@ -318,9 +392,11 @@ export class AudioAnalyser {
                         }
 
                         // Connect new equalizer output to analysis chain
-                        newEqOutputNode.connect(this.splitter)
-                        this.connectGain(newEqOutputNode)
-                        this.connectDestination(newEqOutputNode)
+                        if (this.splitter) {
+                            newEqOutputNode.connect(this.splitter)
+                            this.connectGain(newEqOutputNode)
+                            this.connectDestination(newEqOutputNode)
+                        }
 
                         console.log(`Seamlessly switched equalizer connection for audio source: ${id}`)
                     }

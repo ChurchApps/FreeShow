@@ -137,7 +137,6 @@
         "_hide_preview": "Esconder preview",
         "show_preview": "Mostrar preview",
         "restore_output": "Restaurar saída",
-        "enable_controls": "Mostrar controles de mídia",
         "background": "Plano de fundo",
         "foreground": "Primeiro plano",
         "slide": "Slide",
@@ -147,7 +146,8 @@
         "nextTimer": "Temporizador do próximo slide",
         "lock": "Bloquear",
         "unlock": "Desbloquear",
-        "test_pattern": "Testar padrão"
+        "test_pattern": "Testar padrão",
+        "live_prepare": "Esconder conteúdo da saída (Sobreposição Escura)"
     },
     "clear": {
         "general": "Limpar",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Permitir configurar volume acima de 100% (Pode causar distorção)",
         "pre_fader_volume_meter": "Exibir volume antes do fader",
         "mixer": "Mixer",
+        "equalizer": "Equalizador",
+        "preset": "Predefinição",
+        "main": "Principal",
         "metronome": "Metrônomo",
         "toggle_metronome": "Metrônomo",
         "use_metadata_bpm": "Usar BPM dos metadados",
@@ -1046,7 +1049,9 @@
         "longitude": "Longitude",
         "altitude": "Altitude",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Longo alcance"
+        "longRange": "Longo alcance",
+        "media_item_tip": "Você está tentando usar a mídia como plano de fundo?",
+        "convert_to_background": "Converter para plano de fundo"
     },
     "items": {
         "text": "Caixa de texto",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Progresso",
         "visualizer": "Visualizador",
         "captions": "Legendas",
+        "metronome": "Metrônomo",
         "icon": "Ícone",
         "effect": "Efeito",
         "slide_text": "Texto do slide",
         "slide_notes": "Notas do slide",
-        "current_output": "Saída atual"
+        "current_output": "Janela de saída"
     },
     "borders": {
         "solid": "Sólida",
@@ -1253,16 +1259,18 @@
         "window": "Janela",
         "active_style": "Usar estilo",
         "alert_updates": "Alertar quando uma nova atualização estiver disponível",
+        "alert_updates_beta": "Alertar quando uma nova versão beta estiver disponível",
         "auto_updates": "Atualização automática",
         "disable_labels": "Desativar etiquetas",
         "group_numbers": "Números do grupo",
         "auto_group_numbers": "Assinalar automaticamente números aos grupos",
         "transparent_slides": "Slide transparente no preview",
         "full_colors": "Ativar alto contraste entre grupos",
+        "next_item_on_last_slide": "Setas esquerda/direita mudam para o anterior/próximo item do projeto no início/fim do show",
         "slide_number_keys": "Usar teclas de números para controlar slides",
         "auto_shortcut_first_letter": "Usar a primeira letra como atalho",
         "startup_projects_list": "Mostrar lista de projetos ao iniciar",
-        "auto_output": "Mostrar tela de saída na inicialização",
+        "auto_output": "Mostrar tela de saída ao iniciar",
         "hide_cursor_in_output": "Esconder cursor na saída",
         "clear_media_when_finished": "Limpar mídia ao terminar",
         "disable_presenter_controller_keys": "Desativar teclas do controle do apresentador",

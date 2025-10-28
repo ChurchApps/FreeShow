@@ -52,13 +52,25 @@ export function importShow(files: { content: string; name?: string; extension?: 
         let show
 
         try {
-            ;[id, show] = JSON.parse(content)
+            const showData = JSON.parse(content)
+            if (Array.isArray(showData)) {
+                [id, show] = showData
+            } else {
+                id = uid()
+                show = showData
+            }
         } catch (e: any) {
             // try to fix broken show files
             content = content.slice(0, content.indexOf("}}]") + 3)
 
             try {
-                ;[id, show] = JSON.parse(content)
+                const showData = JSON.parse(content)
+                if (Array.isArray(showData)) {
+                    [id, show] = showData
+                } else {
+                    id = uid()
+                    show = showData
+                }
             } catch (err: any) {
                 console.error(name, err)
                 const pos = Number(err.toString().replace(/\D+/g, "") || 100)

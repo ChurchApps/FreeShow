@@ -19,7 +19,7 @@
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
 
-    $: if (Object.keys(timer).length) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
+    $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     else currentTime = 0
 
     $: min = Math.min(timer.start || 0, timer.end || 0)

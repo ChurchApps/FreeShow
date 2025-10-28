@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
@@ -38,7 +38,6 @@
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { shouldItemBeShown } from "../edit/scripts/itemHelpers"
-    import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
@@ -81,7 +80,8 @@
     let isFirstGhost = false
     // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
     // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < 60 && !$special.optimizedMode) {
+    $: if (!background && index < 60 && !$special.optimizedMode && layoutSlides.length) setTimeout(checkGhostBackground)
+    function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -91,19 +91,21 @@
                 ghostBackground = show.media[a.background]
                 bgIndex = i
             }
-            if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
+
+            const mediaData = a.background && show.media[a.background]
+            if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) ghostBackground = null
 
             if (ghostBackground && i === index && bgIndex === i - 1) isFirstGhost = true
         })
     }
 
-    // show loop icon if many backgruounds
+    // show loop icon if many backgrounds
     $: backgroundCount = layoutSlides.reduce((count, layoutRef) => (count += layoutRef.background ? 1 : 0), 0)
 
     // auto find media
     $: bg = clone(background || ghostBackground)
     $: cloudId = $driveData.mediaId
-    $: if (bg) locateBackground()
+    $: if (bg) setTimeout(locateBackground)
     function locateBackground() {
         if (!background || !bg?.path) return
 
@@ -114,7 +116,7 @@
 
     // auto find audio
     $: audioIds = clone(layoutSlide.audio || [])
-    $: if (audioIds.length) locateAudio()
+    $: if (audioIds.length) setTimeout(locateAudio)
     function locateAudio() {
         let showMedia = $showsCache[showId]?.media
         let folders = Object.values($audioFolders).map((a) => a.path!)
@@ -172,7 +174,7 @@
 
     // LOAD BACKGROUND
     $: bgPath = cloudBg || bg?.path || bg?.id || ""
-    $: if (bgPath && !disableThumbnails) loadBackground()
+    $: if (bgPath && !disableThumbnails) setTimeout(loadBackground)
     let thumbnailPath = ""
     async function loadBackground() {
         if (bgPath.includes("http")) return download()
@@ -223,63 +225,6 @@
     }
 
     $: name = getGroupName({ show, showId }, layoutSlide.id, group, index, true)
-
-    // quick edit
-    let html = ""
-    let previousHTML = ""
-    let longest: number | null = null
-
-    onMount(() => {
-        let texts = slide.items?.map((item) => getItemText(item))
-        if (!texts) return
-        let prev: number | null = null
-        texts.forEach((a, i) => {
-            if (!prev || a.length > prev) {
-                prev = a.length
-                longest = i
-            }
-        })
-        update()
-    })
-
-    function update() {
-        if (longest === null) return
-
-        // html = `<div class="align" style="${item.align}">`
-        html = ""
-        slide.items[longest]?.lines?.forEach((line) => {
-            line.text?.forEach((a) => {
-                html += a.value
-            })
-        })
-        previousHTML = html
-    }
-
-    // || $showsCache[active].slides
-    let textElem: HTMLElement | undefined
-    $: if (textElem && html !== previousHTML) {
-        previousHTML = html
-        setTimeout(() => {
-            showsCache.update((a) => {
-                let lines = a[showId].slides[layoutSlide.id].items[longest ?? -1]?.lines || []
-                let textItems = getItems(textElem.children)
-                if (textItems.length) {
-                    lines.forEach((line) => {
-                        line.text?.forEach((a, i) => (a.value = textItems[i]))
-                    })
-                }
-                return a
-            })
-        }, 10)
-    }
-
-    function getItems(children: HTMLCollection) {
-        let textItems: string[] = []
-        new Array(...children).forEach((child) => {
-            if (child.innerHTML) textItems.push(child.innerHTML)
-        })
-        return textItems
-    }
 
     let timer: number[] = []
     $: if ($activeTimers) {
@@ -353,23 +298,28 @@
     // slide timer
     $: slideTimer = active && $slideTimers[outputId] ? $slideTimers[outputId] : null
 
-    function handleOpenInBrowserClick() {
-        // The props showId and layoutSlide are available in this component's scope.
-        if (!showId || !layoutSlide || !layoutSlide.id) {
-            console.error("Missing showId or slideId for opening in browser")
-            return
-        }
-        const slideId = layoutSlide.id
-        const url = `http://localhost:5511/show/${showId}/${slideId}`
-        console.log(`Requesting to open URL: ${url}`) // For debugging
-        sendMain(Main.URL, url)
-    }
+    // function handleOpenInBrowserClick() {
+    //     // The props showId and layoutSlide are available in this component's scope.
+    //     if (!showId || !layoutSlide || !layoutSlide.id) {
+    //         console.error("Missing showId or slideId for opening in browser")
+    //         return
+    //     }
+    //     const slideId = layoutSlide.id
+    //     const url = `http://localhost:5511/show/${showId}/${slideId}`
+    //     console.log(`Requesting to open URL: ${url}`) // For debugging
+    //     sendMain(Main.URL, url)
+    // }
 
     let updater = 0
-    const updaterInterval = setInterval(() => {
-        if (itemsList.find((a) => a.conditions)) updater++
-    }, 3000)
-    onDestroy(() => clearInterval(updaterInterval))
+    onMount(() => {
+        const interval = setInterval(() => {
+            if (itemsList.find((a) => a.conditions)) updater++
+        }, 3000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    })
 </script>
 
 <div
@@ -568,9 +518,6 @@
     </div>
     {#if viewMode === "list" && !noQuickEdit}
         <hr />
-        <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
-      {@html html}
-    </div> -->
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}

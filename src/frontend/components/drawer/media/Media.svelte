@@ -133,7 +133,10 @@
                 prevActive = active
                 files = []
                 fullFilteredFiles = []
-                Object.values($mediaFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" }))
+
+                for (const data of Object.values($mediaFolders)) {
+                    sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" })
+                }
             }
         } else if (path?.length) {
             if (path !== prevActive) {

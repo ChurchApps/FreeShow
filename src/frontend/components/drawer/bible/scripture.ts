@@ -124,6 +124,7 @@ export async function getActiveScripturesContent() {
             metadata[key] = value
         })
         if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
+        if (scriptureData?.name && !metadata.title) metadata.title = scriptureData.name
 
         // WIP custom verse number offset per scripture (for collections)
 
@@ -609,7 +610,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
 
 // regex split (id_subverse-endNumber) or just (id) or just (id_subverse) or (id-endNumber)
 export function getVerseIdParts(verseId: string | number) {
-    const regex = /(\d+)(?:_(\d+))?(?:-(\d+))?/
+    const regex = /(\d+(?:\.\d+)?)(?:_(\d+))?(?:-(\d+))?/
     const match = verseId?.toString().match(regex)
     if (!match) return { id: 0, subverse: 0, endNumber: 0 }
 
@@ -693,7 +694,7 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (!noPopup && (showPopup || selectedVerses.length > 3)) {
+    if (!noPopup && (showPopup || selectedVerses[0]?.length > 3)) {
         const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
 
         popupData.set({ showVersion })

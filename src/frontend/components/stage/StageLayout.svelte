@@ -72,7 +72,7 @@
     $: layout = $stageShows[stageLayoutId || ""] || {}
 
     // get video time (pre 1.4.0)
-    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).find((id) => id.includes("video"))) requestVideoData()
+    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).some((id) => id.includes("video"))) requestVideoData()
     let interval: NodeJS.Timeout | null = null
     function requestVideoData() {
         if (interval) return
@@ -123,7 +123,7 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let updater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.find((a) => a.conditions)) updater++
+        if (stageItems.some((a) => a.conditions)) updater++
     }, 100)
     onDestroy(() => clearInterval(updaterInterval))
 

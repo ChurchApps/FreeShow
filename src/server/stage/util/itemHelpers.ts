@@ -99,9 +99,9 @@ function isConditionMet(condition: Condition | undefined, itemsText: string) {
     }
 
     // outerOr
-    const conditionMet = !!condition.find(outerAnd => {
+    const conditionMet = condition.some(outerAnd => {
         return outerAnd.every(innerOr => {
-            return !!innerOr.find(innerAnd => {
+            return innerOr.some(innerAnd => {
                 return innerAnd.every(content => {
                     return checkConditionValue(content, itemsText)
                 })
@@ -171,7 +171,7 @@ function isTimerRunning(timerId: string) {
         return value > 0
     }
 
-    return !!get(activeTimers).find((a) => a.id === timerId)
+    return get(activeTimers).some((a) => a.id === timerId)
 }
 
 export function _getVariableValue(dynamicId: string) {

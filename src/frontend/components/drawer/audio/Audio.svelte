@@ -211,7 +211,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "effects_library"} bind:this={scrollElem}>
+<div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "audio_streams" || active === "effects_library"} bind:this={scrollElem}>
     <div class="grid" style={active !== "audio_streams" && active !== "effects_library" && (playlist ? playlist.songs.length : fullFilteredFiles.length) ? "" : "height: 100%;"}>
         {#if active === "microphones"}
             <Microphones />
@@ -285,7 +285,7 @@
                 $activePlaylist?.id === active ? AudioPlaylist.stop() : AudioPlaylist.start(active || "")
             }}
         >
-            <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id === active} />
+            <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id !== active} />
         </MaterialButton>
 
         <div class="divider" />

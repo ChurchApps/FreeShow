@@ -14,7 +14,7 @@
     <div class="streams">
         {#each streamsList as stream}
             <SelectElem id="audio_stream" data={{ id: stream.id, type: "audio_stream" }} draggable>
-                <Button class="context #audio_stream" style="flex: 1;" outline={Object.keys($playingAudio).includes(stream.value)} on:click={() => AudioPlayer.start(stream.value, { name: stream.name })}>
+                <Button class="context #audio_stream" style="flex: 1;" outline={Object.keys($playingAudio).includes(stream.value)} on:click={() => AudioPlayer.start(stream.value, { name: stream.name })} bold={false}>
                     <div class="stream">
                         <span style="padding-inline-start: 5px;">
                             <p>{stream.name}</p>
@@ -49,7 +49,6 @@
     }
 
     .stream {
-        padding: 3px 5px;
         display: flex;
         align-items: center;
         justify-content: space-between;

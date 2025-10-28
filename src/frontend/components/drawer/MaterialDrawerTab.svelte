@@ -66,6 +66,9 @@
     $: noEdit = !tabsWithCategories.includes(drawerId) || defaultFolders.includes(id)
     $: className = noEdit ? "" : $audioPlaylists[id] ? "context #playlist" : `context #category_${drawerId}_button${readOnly ? "_readonly" : ""}`
 
+    // drag and drop audio playlists
+    $: draggable = !!(drawerId === "audio" && $audioPlaylists[id])
+
     // SUB MENU
 
     $: openedSubmenus = $drawerTabsData[drawerId]?.openedSubmenus || []
@@ -90,7 +93,7 @@
     }
 </script>
 
-<SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} borders="center" trigger="column" data={id}>
+<SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} {draggable} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} {showOutline} on:click={click} on:dblclick={dblclick} tab>
         <div style="max-width: 85%;" data-title={translateText(label)}>
             <Icon style={isSubmenu ? `color: ${category.color};` : ""} id={icon} size={isSubmenu ? 0.8 : 1} white={isActive || isSubmenu} />

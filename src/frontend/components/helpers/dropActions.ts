@@ -31,8 +31,8 @@ import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
-import { getActionTriggerId } from "../actions/actions"
-import { getScriptureShow, getActiveScripturesContent, getReferenceText, getScriptureSlides } from "../drawer/bible/scripture"
+import { addSlideAction, getActionTriggerId } from "../actions/actions"
+import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlides } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -582,6 +582,13 @@ const slideDrop = {
             h.newData = { name: audio.name || audio.path || audio.id, path: audio.path || audio.id, type: "audio" }
             history(h)
         })
+    },
+    category_audio: ({ drag, drop }: Data) => {
+        // drop playlist to create action
+        const playlistId = drag.data[0]
+        if (!playlistId || !get(audioPlaylists)[playlistId]) return
+
+        addSlideAction(drop.index ?? -1, "start_playlist", { id: playlistId })
     },
     audio_effect: ({ drag, drop }: Data, h: History) => slideDrop.audio({ drag, drop }, h),
     microphone: ({ drag, drop }: Data, h: History) => {

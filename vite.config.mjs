@@ -22,8 +22,8 @@ export default defineConfig({
             }
         })
     ],
-    root: ".",
-    publicDir: "public",
+    root: production ? "." : "public",
+    publicDir: false,
     build: production
         ? {
               lib: {
@@ -46,7 +46,7 @@ export default defineConfig({
               }
           }
         : {
-              outDir: "dist",
+              outDir: "../dist",
               rollupOptions: {
                   input: "index.html"
               }
@@ -58,6 +58,7 @@ export default defineConfig({
         middlewareMode: false
     },
     resolve: {
-        dedupe: ["svelte"]
+        dedupe: ["svelte"],
+        ...(!production && { alias: { "/src": "../src" } })
     }
 })
