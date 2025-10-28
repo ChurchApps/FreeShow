@@ -139,7 +139,7 @@
 
         // don't auto scroll if clicking with mouse!
         disableAutoScroll = true
-        if (nextScrollTimeout) clearTimeout(nextScrollTimeout)
+        if (nextScrollTimeout) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
             disableAutoScroll = false
@@ -164,7 +164,7 @@
 
         let showTemplate = currentShow?.settings?.template || ""
         // get category template if no show template
-        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow.category || ""]?.template || ""
+        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow?.category || ""]?.template || ""
 
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
@@ -466,7 +466,7 @@
                 <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
+                            {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}

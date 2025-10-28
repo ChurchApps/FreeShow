@@ -21,6 +21,7 @@
 
     // https://developers.google.com/youtube/player_parameters
     const options = {
+        // host: "https://www.youtube-nocookie.com",
         playerVars: {
             autoplay: 1,
             loop: videoData.loop,

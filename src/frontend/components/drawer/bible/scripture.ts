@@ -124,6 +124,7 @@ export async function getActiveScripturesContent() {
             metadata[key] = value
         })
         if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
+        if (scriptureData?.name && !metadata.title) metadata.title = scriptureData.name
 
         // WIP custom verse number offset per scripture (for collections)
 
