@@ -506,7 +506,7 @@ export function getClearedState() {
 // "1.1.1" = "Gen 1:1"
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-    const ref = { book: Number(split[0]), chapter: Number(split[1]), verses: [split[2]] }
+    const ref = { book: Number(split[0]), chapter: Number(split[1]), verses: [[split[2]]] }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID

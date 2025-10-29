@@ -89,18 +89,22 @@ export async function getActiveScripturesContent() {
 
     // Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
     // values like ["2_1","2_0", 1] end up ordered by base id then subverse.
-    const selectedVerses = active?.verses.map(v => (v || []).sort((a, b) => {
-        // strip optional chapter prefix (e.g. "2:1") before parsing
-        const sa = String(a).replace(/^\d+:/, "")
-        const sb = String(b).replace(/^\d+:/, "")
+    const selectedVerses = active?.verses.map(v => {
+        if (!Array.isArray(v)) return []
 
-        const pa = getVerseIdParts(sa)
-        const pb = getVerseIdParts(sb)
+        return v.sort((a, b) => {
+            // strip optional chapter prefix (e.g. "2:1") before parsing
+            const sa = String(a).replace(/^\d+:/, "")
+            const sb = String(b).replace(/^\d+:/, "")
 
-        if (pa.id !== pb.id) return pa.id - pb.id
-        if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
-        return 0
-    })) || []
+            const pa = getVerseIdParts(sa)
+            const pb = getVerseIdParts(sb)
+
+            if (pa.id !== pb.id) return pa.id - pb.id
+            if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
+            return 0
+        })
+    }) || []
 
     if (!selectedVerses[0]?.length) return null
 
