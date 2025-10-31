@@ -90,7 +90,7 @@
 
     let timerNames: any = {
         counter: translateText("timer.counter"),
-        clock: translateText("timer.clock"),
+        clock: translateText("timer.time"),
         event: translateText("timer.event")
     }
     $: if (timer.event && eventList.length) updateEventName()

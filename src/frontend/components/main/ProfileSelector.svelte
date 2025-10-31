@@ -7,10 +7,10 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") || "Admin" }, ...sortByName(keysToID($profiles))]
+    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles))]
 
     async function selectProfile(id: string) {
-        if (id === "" && !(await confirmCustom(translateText("profile.choose_admin") || "Choose admin profile?"))) return
+        if (id === "" && !(await confirmCustom(translateText("profile.choose_admin")))) return
 
         activeProfile.set(id)
     }
