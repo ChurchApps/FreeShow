@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, dictionary, popupData } from "../../../stores"
+    import { activePopup, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { splitGradientValue } from "../../helpers/color"
     import Icon from "../../helpers/Icon.svelte"
@@ -84,7 +84,7 @@
                 <MaterialButton icon="up" on:click={() => moveUp(i)} />
             {/if}
             {#if parsedValue.colors.length > 2}
-                <MaterialButton title={$dictionary.actions?.delete} on:click={() => deleteColor(i)}>
+                <MaterialButton title={translateText("actions.delete")} on:click={() => deleteColor(i)}>
                     <Icon id="delete" white />
                 </MaterialButton>
             {/if}

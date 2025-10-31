@@ -2,7 +2,8 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import { type CameraData, cameraManager } from "../../../media/cameraManager"
-    import { dictionary, media, os, outputs, special } from "../../../stores"
+    import { media, os, outputs, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut } from "../../helpers/output"
@@ -113,7 +114,7 @@
                 {#if startupCameras.includes(cam.id)}
                     <div style="max-width: 100%;">
                         <div class="button">
-                            <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeFromStartup(cam.id)}>
+                            <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeFromStartup(cam.id)}>
                                 <Icon id="startup" size={0.9} white />
                             </Button>
                         </div>
@@ -123,7 +124,7 @@
                 {#if !!mediaStyle.filter?.length || $media[cam.id]?.fit || mediaStyle.flipped || mediaStyle.flippedY || Object.keys(mediaStyle.cropping || {}).length}
                     <div style="max-width: 100%;">
                         <div class="button">
-                            <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("filters")}>
+                            <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("filters")}>
                                 <Icon id="filter" size={0.9} white />
                             </Button>
                         </div>

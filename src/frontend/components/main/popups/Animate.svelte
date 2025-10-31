@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Animation, AnimationAction } from "../../../../types/Output"
-    import { activeAnimate, dictionary, popupData } from "../../../stores"
+    import { activeAnimate, popupData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -14,7 +15,6 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import { translateText } from "../../../utils/language"
 
     const easings = [
         { value: "linear", label: translateText("easings.linear") },
@@ -216,10 +216,10 @@
                 <Button on:click={() => moveItem(i, true)} disabled={i + 1 >= animation.actions.length}>
                     <Icon id="down" />
                 </Button>
-                <Button title={$dictionary.actions?.duplicate} on:click={() => duplicate(i)}>
+                <Button title={translateText("actions.duplicate")} on:click={() => duplicate(i)}>
                     <Icon id="duplicate" />
                 </Button>
-                <Button title={$dictionary.settings?.remove} on:click={() => removeItem(i)}>
+                <Button title={translateText("settings.remove")} on:click={() => removeItem(i)}>
                     <Icon id="delete" />
                 </Button>
             </span>

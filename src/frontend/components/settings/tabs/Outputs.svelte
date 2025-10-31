@@ -5,8 +5,9 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activeStage, activeStyle, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStage, activeStyle, currentOutputSettings, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
@@ -38,11 +39,11 @@
 
         // auto revert special values
         if (autoRevert.includes(key) && value && !reverted.includes(key)) {
-            newToast($dictionary.toast?.reverting_setting?.replace("{}", revertTime.toString()) || "")
+            newToast(translateText("toast.reverting_setting").replace("{}", revertTime.toString()))
             reverted.push(key)
             setTimeout(() => {
                 updateOutput(key, false, outputId)
-                newToast("toast.reverted")
+                newToast(translateText("toast.reverted"))
             }, revertTime * 1000)
         }
 

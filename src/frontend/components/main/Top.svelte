@@ -6,6 +6,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
+    import { translateText } from "../../utils/language"
 
     export let isWindows = false
 
@@ -80,7 +81,7 @@
 
         <Button
             id="output_window_button"
-            title={($outputDisplay ? (confirm ? $dictionary.menu?.again_confirm : $dictionary.menu?._title_display_stop) : $dictionary.menu?._title_display) + " [Ctrl+O]"}
+            title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)}
             style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"}
             on:click={toggleOutput}
             class="context #output display {$outputDisplay ? 'on' : 'off'}"

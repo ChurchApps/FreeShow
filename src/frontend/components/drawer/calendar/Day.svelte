@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events } from "../../../stores"
+    import { activeDays, activePopup, eventEdit, events } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { getActionName } from "../../actions/actions"
     import { sortByTime } from "../../helpers/array"
@@ -39,7 +40,7 @@
 {#if $activeDays.length}
     <div class="main">
         <span class="date">
-            {current.getDate()}. {$dictionary.month?.[current.getMonth() + 1]}
+            {current.getDate()}. {translateText("month." + (current.getMonth() + 1))}
             {current.getFullYear()}
         </span>
 

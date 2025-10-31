@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { dictionary, overlays } from "../../../stores"
+    import { overlays } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
 
@@ -20,9 +21,9 @@
     }
 
     const actionsList = [
-        { id: "locked", title: $dictionary.context?.lock_to_output, icon: "locked" },
-        { id: "placeUnderSlide", title: $dictionary.context?.place_under_slide, icon: "under" },
-        { id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" }
+        { id: "locked", title: translateText("context.lock_to_output"), icon: "locked" },
+        { id: "placeUnderSlide", title: translateText("context.place_under_slide"), icon: "under" },
+        { id: "displayDuration", title: translateText("popup.display_duration"), icon: "clock" }
     ]
 
     $: zoom = 5 / columns
@@ -33,7 +34,7 @@
         {#if overlay[action.id]}
             <div>
                 <div class="button white">
-                    <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
+                    <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
                         <Icon id={action.icon} size={0.9} white />
                     </Button>
                 </div>

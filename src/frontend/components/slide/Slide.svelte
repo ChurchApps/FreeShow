@@ -12,7 +12,6 @@
         activeTriggerFunction,
         audioFolders,
         checkedFiles,
-        dictionary,
         driveData,
         effects,
         focusMode,
@@ -33,6 +32,7 @@
     } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { newToast, wait } from "../../utils/common"
+    import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -218,7 +218,7 @@
 
     $: group = slide.group
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
-        group = slide.globalGroup === "none" ? "." : $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] || "" : $groups[slide.globalGroup].name
+        group = slide.globalGroup === "none" ? "." : $groups[slide.globalGroup].default ? translateText(`groups.${$groups[slide.globalGroup].name}`) : $groups[slide.globalGroup].name
         color = $groups[slide.globalGroup].color
         // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -387,7 +387,17 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || layers.includes("background"))}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={$dictionary.error?.load} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
+                                <MediaLoader
+                                    name={translateText("error.load")}
+                                    ghost={!background}
+                                    path={bgPath}
+                                    {thumbnailPath}
+                                    cameraGroup={bg.cameraGroup || ""}
+                                    type={bg.type !== "player" ? bg.type : null}
+                                    {mediaStyle}
+                                    bind:duration
+                                    getDuration
+                                />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
+    import { activeDays, activePopup, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -76,7 +77,7 @@
         weekdays = []
         for (let i = 0; i < 7; i++) {
             let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
-            weekdays.push($dictionary.weekday?.[index] || "")
+            weekdays.push(translateText("weekday." + index))
         }
     }
 
@@ -197,7 +198,7 @@
                     activeDays.set([copyDate(today).getTime()])
                 }}
                 active={!!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()}
-                title={$dictionary.calendar?.today}
+                title={translateText("calendar.today")}
                 style="width: 100%;height: 100%;padding: 0;"
                 center
             >
@@ -264,7 +265,7 @@
     <div class="divider"></div>
 
     <span style="opacity: 0.8;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
-        {$dictionary.month?.[current.getMonth() + 1]}
+        {translateText("month." + (current.getMonth() + 1))}
         {current.getFullYear()}
     </span>
 </FloatingInputs>

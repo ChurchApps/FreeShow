@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Themes } from "../../../../types/Settings"
-    import { dictionary, selected, theme, themes } from "../../../stores"
+    import { selected, theme, themes } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
@@ -16,11 +16,13 @@
         Object.entries(themes).forEach(([id, obj]) => {
             names.push({ name: obj.default ? `themes.${obj.name}` : obj.name, id, default: obj.default })
         })
-        return names.sort((a, b) =>
-            a.id === "default" || b.id === "default"
-                ? 1
-                : (a.default ? $dictionary.themes?.[a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)] || "" : a.name).localeCompare(b.default ? $dictionary.themes?.[b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)] || "" : b.name)
-        )
+
+        return names.sort((a, b) => {
+            if (a.id === "default" || b.id === "default") return 1
+            let nameA = a.default ? translateText(`themes.${a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)}`) : a.name
+            let nameB = b.default ? translateText(`themes.${b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)}`) : b.name
+            return nameA.localeCompare(nameB)
+        })
     }
 
     function updateTheme(e: any, id: null | string, key = "colors") {
@@ -52,7 +54,7 @@
     }
 
     let themeValue: any
-    $: themeValue = $themes[$theme]?.default ? $dictionary.themes?.[$themes[$theme].name] || "" : $themes[$theme]?.name || ""
+    $: themeValue = $themes[$theme]?.default ? translateText(`themes.${$themes[$theme].name}`) : $themes[$theme]?.name || ""
 
     // CREATE
 

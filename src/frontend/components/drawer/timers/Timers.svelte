@@ -1,10 +1,12 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { activePopup, activeTimers, dictionary, disableDragging, labelsDisabled, timers } from "../../../stores"
+    import { activePopup, activeTimers, disableDragging, labelsDisabled, timers } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { joinTime, secondsToTime } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -13,7 +15,6 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
-    import { joinTime, secondsToTime } from "../../helpers/time"
 
     export let searchValue
     export let onlyPlaying: boolean = false
@@ -91,7 +92,7 @@
                     style="display: flex;justify-content: space-between;padding: 3px;"
                 >
                     <div style="display: flex;{onlyPlaying ? '' : 'width: 50%;'}">
-                        <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
+                        <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={translateText($activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "media.pause" : "media.play")}>
                             <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
                         {#if !onlyPlaying}
@@ -135,17 +136,17 @@
             select("timer", { id })
             activePopup.set("timer")
         }}
-        title={$dictionary.menu?.edit}
+        title={translateText("menu.edit")}
         >
         <Icon id="edit" />
         </Button> -->
                         {#if timer.type === "counter"}
-                            <Button on:click={() => resetTimer(timer.id)} title={$dictionary.media?.stop} disabled={!$activeTimers.find((a) => a.id === timer.id)}>
+                            <Button on:click={() => resetTimer(timer.id)} title={translateText("media.stop")} disabled={!$activeTimers.find((a) => a.id === timer.id)}>
                                 <Icon id="stop" white={!isPlaying} />
                             </Button>
                         {/if}
                         <!-- <Button on:click={() => deleteTimer(id)}>
-        <Icon id="delete" title={$dictionary.actions?.delete} />
+        <Icon id="delete" title={translateText("actions.delete")} />
         </Button> -->
                     </div>
                 </div>

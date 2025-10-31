@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { allOutputs, dictionary, groups, outputs, showsCache } from "../../../stores"
+    import { allOutputs, groups, outputs, showsCache } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getActiveOutputs } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -32,7 +33,7 @@
 
         let group = slide.group || "—"
         if (slide.globalGroup && $groups[slide.globalGroup]) {
-            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+            group = $groups[slide.globalGroup].default ? translateText(`groups.${$groups[slide.globalGroup].name}`) : $groups[slide.globalGroup].name
         }
 
         if (typeof group !== "string") group = ""

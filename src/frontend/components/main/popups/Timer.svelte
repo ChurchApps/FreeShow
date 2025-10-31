@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
-    import { dictionary, events, timers } from "../../../stores"
+    import { events, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getDateString } from "../../drawer/calendar/calendar"
     import { getTimer } from "../../drawer/timers/timers"
@@ -89,9 +89,9 @@
     }
 
     let timerNames: any = {
-        counter: $dictionary.timer?.counter || "Counter",
-        clock: $dictionary.timer?.time || "Time",
-        event: $dictionary.timer?.event || "Event"
+        counter: translateText("timer.counter"),
+        clock: translateText("timer.clock"),
+        event: translateText("timer.event")
     }
     $: if (timer.event && eventList.length) updateEventName()
     const updateEventName = () => (timerNames.event = eventList.find((a) => a.id === timer.event)?.name)

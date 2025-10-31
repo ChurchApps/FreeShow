@@ -3,17 +3,18 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import { translateText } from "../../../utils/language"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
     import { getActiveOutputs } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
-    import VideoSlider from "../VideoSlider.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import VideoSlider from "../VideoSlider.svelte"
 
     export let currentOutput: Output | null
     export let outputId: string
@@ -149,7 +150,7 @@
 
         {#if type === "video" || background?.type === "player"}
             <span class="group">
-                <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
+                <Button center title={translateText(videoData.paused ? "media.play" : "media.pause")} disabled={$outLocked} on:click={playPause}>
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
                 </Button>
 
@@ -157,7 +158,7 @@
 
                 <Button
                     center
-                    title={$dictionary.media?.forward10}
+                    title={translateText("media.forward10")}
                     on:click={() => {
                         changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
                     }}
@@ -166,7 +167,7 @@
                 </Button>
                 <Button
                     center
-                    title={$dictionary.media?._loop}
+                    title={translateText("media._loop")}
                     on:click={() => {
                         videoData.loop = !videoData.loop
                         sendToOutput()
@@ -176,7 +177,7 @@
                 </Button>
                 <Button
                     center
-                    title={videoData.muted === false ? $dictionary.actions?.mute : $dictionary.actions?.unmute}
+                    title={translateText(videoData.muted === false ? "actions.mute" : "actions.unmute")}
                     disabled={$outLocked}
                     on:click={() => {
                         if (videoData.muted === undefined) videoData.muted = true

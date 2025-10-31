@@ -1,18 +1,19 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, dictionary, outputs, overlays, templates, activeShow } from "../../../stores"
-    import Button from "../../inputs/Button.svelte"
-    import Movebox from "../../system/Movebox.svelte"
+    import { activeEdit, activeShow, outputs, overlays, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { menuClick } from "../../context/menuClick"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { _show } from "../../helpers/shows"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { isoLanguages } from "../../main/popups/localization/isoLanguages"
-    import { getStyles } from "../../helpers/style"
     import { getLayoutRef } from "../../helpers/show"
-    import { onDestroy } from "svelte"
+    import { _show } from "../../helpers/shows"
+    import { getStyles } from "../../helpers/style"
+    import Button from "../../inputs/Button.svelte"
+    import { isoLanguages } from "../../main/popups/localization/isoLanguages"
+    import Movebox from "../../system/Movebox.svelte"
     import { isConditionMet } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
 
@@ -131,7 +132,7 @@
 
     <!-- text transform -->
     {#if textTransform}
-        <div data-title={$dictionary.edit?.text_transform} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("edit.text_transform")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="capitalize" white />
             </span>
@@ -140,7 +141,7 @@
 
     <!-- list mode -->
     {#if item?.list?.enabled}
-        <div data-title={$dictionary.edit?.list} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("edit.list")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="list" white />
             </span>
@@ -149,7 +150,7 @@
 
     <!-- scrolling -->
     {#if item?.scrolling?.type && item.scrolling.type !== "none"}
-        <div data-title={$dictionary.edit?.scrolling} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("edit.scrolling")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="scrolling" white />
             </span>
@@ -158,7 +159,7 @@
 
     <!-- button -->
     {#if item?.button?.press || item?.button?.release}
-        <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("dictionary.popup.action")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="button" white />
             </span>
@@ -167,7 +168,7 @@
 
     <!-- bindings -->
     {#if item?.bindings?.length}
-        <div data-title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("actions.remove_binding")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <Button on:click={removeBindings} redHover>
                 <Icon id="bind" white />
             </Button>
@@ -187,7 +188,7 @@
 
     <!-- conditions -->
     {#if Object.values(item?.conditions || {}).length}
-        <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
+        <div data-title={translateText("actions.conditions")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
             <Button on:click={() => removeItemValue("conditions")} redHover>
                 <Icon id="light" white />
             </Button>
@@ -198,7 +199,7 @@
     {#each actions as action}
         {@const actionValue = action.direct ? item[action.id] : item.actions?.[action.id]}
         {#if actionValue}
-            <div data-title={action ? $dictionary[action.label.split(".")[0]]?.[action.label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+            <div data-title={action ? translateText(action.label) : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                 <Button on:click={() => (action.direct ? removeItemValue(action.id) : removeAction(action.id))} redHover>
                     <Icon id={action?.icon} white />
                 </Button>
@@ -211,7 +212,7 @@
 
     <!-- gradient -->
     {#if item?.lines?.find((a) => a.text?.find((a) => a.style?.includes("-gradient")))}
-        <div data-title={$dictionary.popup?.color_gradient} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={translateText("dictionary.popup.color_gradient")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="color" white />
             </span>

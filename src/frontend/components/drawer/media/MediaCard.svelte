@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { derived } from "svelte/store"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
-    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
-    import { derived } from "svelte/store"
+    import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -216,7 +217,7 @@
             {#if isFavourite && active !== "favourites"}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("favourite")}>
+                        <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("favourite")}>
                             <Icon id="star" size={0.9} white />
                         </Button>
                     </div>
@@ -225,7 +226,7 @@
             {#if mediaStyle.videoType}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("videoType")}>
+                        <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("videoType")}>
                             <Icon id={mediaStyle.videoType === "background" ? "muted" : mediaStyle.videoType === "foreground" ? "volume" : ""} size={0.9} white />
                         </Button>
                     </div>
@@ -234,7 +235,7 @@
             {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY || Object.keys(mediaStyle.cropping || {}).length}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("filters")}>
+                        <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("filters")}>
                             <Icon id="filter" size={0.9} white />
                         </Button>
                     </div>
@@ -243,7 +244,7 @@
             {#if tags.length}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("tags")}>
+                        <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("tags")}>
                             <Icon id="tag" size={0.9} white />
                         </Button>
                     </div>

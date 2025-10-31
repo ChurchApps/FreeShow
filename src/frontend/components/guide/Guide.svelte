@@ -1,7 +1,8 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { dictionary, guideActive, os } from "../../stores"
+    import { guideActive, os } from "../../stores"
     import { wait } from "../../utils/common"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -94,11 +95,11 @@
                         <T id="guide.skip" />
                     </Button>
                 {:else if steps[stepIndex + 1]}
-                    <Button on:click={() => stepIndex--} title={$dictionary.media?.previous}>
+                    <Button on:click={() => stepIndex--} title={translateText("media.previous")}>
                         <Icon id="back" size={1.5} white />
                     </Button>
                 {/if}
-                <Button on:click={() => (steps[stepIndex + 1] ? stepIndex++ : guideActive.set(false))} title={steps[stepIndex + 1] ? $dictionary.media?.next : $dictionary.actions?.done}>
+                <Button on:click={() => (steps[stepIndex + 1] ? stepIndex++ : guideActive.set(false))} title={translateText(steps[stepIndex + 1] ? "media.next" : "actions.done")}>
                     <Icon id={steps[stepIndex + 1] ? "arrow_forward" : "check"} size={1.5} white={!!steps[stepIndex + 1]} />
                 </Button>
             </div>

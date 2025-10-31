@@ -2,6 +2,7 @@
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, special, stageShows, timers, variables } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
@@ -247,7 +248,7 @@
         <div class="actions">
             <!-- button -->
             {#if item?.button?.press || item?.button?.release}
-                <div data-title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+                <div data-title={translateText("popup.action")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                     <span style="padding: 5px;z-index: 3;font-size: 0;">
                         <Icon id="button" white />
                     </span>
@@ -256,7 +257,7 @@
 
             <!-- conditions -->
             {#if Object.values(item?.conditions || {}).length}
-                <div data-title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
+                <div data-title={translateText("actions.conditions")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;background-color: var(--{showItemState ? '' : 'dis'}connected);">
                     <Button on:click={removeConditions} redHover>
                         <Icon id="light" white />
                     </Button>

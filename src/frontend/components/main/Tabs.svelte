@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activePage, dictionary, labelsDisabled, openToolsTab } from "../../stores"
+    import { activePage, labelsDisabled, openToolsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -49,7 +49,7 @@
                 }}
                 isActive={active === id}
                 disabled={tab.disabled}
-                title={tab.tooltip || $dictionary.tooltip?.[id]}
+                title={tab.tooltip || translateText(`tooltip.${id}`)}
             >
                 <Icon id={tab.icon} white={active === id} />
                 {#if labels}
@@ -67,7 +67,7 @@
                 active = Object.keys(tabs)[firstOverflowIndex]
                 setTimeout(() => (overflowHidden = false))
             }}
-            title={$dictionary.tooltip?.options?.replace(".", "")}
+            title={translateText("tooltip.options").replace(".", "")}
             style="flex: 0;padding: 0 1em;"
         >
             <Icon id="arrow_right" style="opacity: 0.8;" size={1.2} white />
