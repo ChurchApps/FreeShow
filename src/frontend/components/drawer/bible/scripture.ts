@@ -645,27 +645,39 @@ export function splitText(value: string, maxLength: number) {
 
     const splitted: string[] = []
 
-    // for (let i = 0; i < value.length; i += maxLength) {
-    //     let string = value.substring(i, i + maxLength)
-    //     // merge short strings
-    //     if (string.length < 10) splitted[splitted.length - 1] += string
-    //     else splitted.push(string)
-    // }
-
     let start = 0
     while (start < value.length) {
         // find the next possible break point
-        let end = start + maxLength
+        let end = Math.min(start + maxLength, value.length)
+
         if (end < value.length) {
-            const spaceIndex = value.lastIndexOf(" ", end)
-            if (spaceIndex > start) {
-                end = spaceIndex // adjust to the last space within range
+            // prefer punctuation within 10 chars before the split point
+            const windowStart = Math.max(start + 1, end - 10)
+            let punctIndex = -1
+            // search backwards from end (inclusive) to windowStart
+            const searchStart = Math.min(end, value.length - 1)
+            for (let i = searchStart; i >= windowStart; i--) {
+                const ch = value.charAt(i)
+                if (/[.,;:!?]/.test(ch)) {
+                    punctIndex = i
+                    break
+                }
+            }
+
+            if (punctIndex > start) {
+                // split after the punctuation
+                end = punctIndex + 1
+            } else {
+                // or fallback: split at last space within range
+                const spaceIndex = value.lastIndexOf(" ", end)
+                if (spaceIndex > start) end = spaceIndex
             }
         }
 
         const trimmedValue = value.substring(start, end).trim()
-        splitted.push(trimmedValue)
+        if (trimmedValue.length) splitted.push(trimmedValue)
 
+        // continue search
         start = end + 1
     }
 

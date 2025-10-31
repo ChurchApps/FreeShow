@@ -123,7 +123,7 @@
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
         verses.forEach((verse) => {
-            let newVerseStrings = splitText(verse.text, chars)
+            const newVerseStrings = splitText(verse.text, chars)
             const end = verse.endNumber ? `-${verse.endNumber}` : ""
 
             for (let i = 0; i < newVerseStrings.length; i++) {
