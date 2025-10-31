@@ -124,7 +124,7 @@
     let updater = 0
     const updaterInterval = setInterval(() => {
         if (stageItems.some((a) => a.conditions)) updater++
-    }, 100)
+    }, 500)
     onDestroy(() => clearInterval(updaterInterval))
 
     function checkVisibility(itemIndex: number, _updater: any) {

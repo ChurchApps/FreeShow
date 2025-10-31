@@ -19,8 +19,7 @@ export async function translate(text: string, language: string, source = "auto")
         fetch(query)
             .then((a) => a.json())
             .then((json) => {
-                const txt = json?.[0]?.[0]?.[0]
-                if (!txt) reject("Could not get translation!")
+                const txt: string = json?.[0]?.[0]?.[0] || ""
                 return resolve(txt)
             })
             .catch(reject)
