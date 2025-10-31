@@ -39,21 +39,21 @@ export async function translateShow(showId: string, languageCode: string) {
 
     await Promise.all(
         Object.keys(slides).map(async (slideId) => {
-            const newItems: Item[] = []
+            const items = slides[slideId].items
+            const untranslatedItems = items.filter((a) => !a.language)
+            if (onlyOneTextbox && (untranslatedItems.length > 1 || (untranslatedItems[0]?.type || "text") !== "text")) onlyOneTextbox = false
 
-            const items = slides[slideId].items.filter((a) => !a.language)
-            if (onlyOneTextbox && (items.length > 1 || (items[0]?.type || "text") !== "text")) onlyOneTextbox = false
-
-            await Promise.all(
-                slides[slideId].items.map(async (item, i) => {
+            const toRemove = new Set<number>()
+            const translations = await Promise.all(
+                items.map(async (item, i) => {
                     if (item.language) {
-                        // remove if same as new
-                        if (item.language === languageCode) slides[slideId].items.splice(i, 1)
-                        return
+                        // mark for removal if same language already exists on slide
+                        if (item.language === languageCode) toRemove.add(i)
+                        return null
                     }
 
                     const text = getItemTextArray(item)
-                    if (!text.length) return
+                    if (!text.length) return null
 
                     let translatedText = ""
                     try {
@@ -63,7 +63,7 @@ export async function translateShow(showId: string, languageCode: string) {
                         const tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
                         newToast("Error when translating: " + String(err) + tip)
                     }
-                    if (!translatedText.length) return
+                    if (!translatedText.length) return null
 
                     const translatedLines = translatedText.split("[-]")
 
@@ -75,12 +75,21 @@ export async function translateShow(showId: string, languageCode: string) {
                         newLines.push({ align: alignStyle, text: [{ style: textStyle, value: lineText.trim() }] })
                     })
 
-                    newItems.push({ ...item, language: languageCode, lines: newLines })
                     changed = true
+                    return { ...item, language: languageCode, lines: newLines } as Item
                 })
             )
 
-            if (newItems.length) slides[slideId].items = [...newItems, ...slides[slideId].items]
+            // place translated items at correct index
+            if (translations.some((t) => t !== null) || toRemove.size) {
+                const rebuilt: Item[] = []
+                for (let i = 0; i < items.length; i++) {
+                    const t = translations[i]
+                    if (t) rebuilt.push(t)
+                    if (!toRemove.has(i)) rebuilt.push(items[i])
+                }
+                slides[slideId].items = rebuilt
+            }
         })
     )
 
