@@ -35,7 +35,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value) delete a[key]
+            if (!value && key !== "autoLocateMedia") delete a[key]
             else a[key] = value
 
             return a
