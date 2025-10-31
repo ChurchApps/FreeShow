@@ -199,12 +199,14 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     // blur to remove tab highlight from slide after clicked, and using arrows
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
+    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
     }
 
     // PPT
@@ -214,16 +216,16 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     }
 
     // PDF
-    if (((!slide || start) && get(activeShow)?.type === "pdf") || (!start && slide?.type === "pdf")) {
-        if (start && slide?.id !== get(activeShow)?.id) slide = null
+    if (((!slide || start) && currentShow?.type === "pdf") || (!start && slide?.type === "pdf")) {
+        if (start && slide?.id !== currentShow?.id) slide = null
         const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
         playPdf(slide, nextPage)
         return
     }
 
     // Folder
-    if (((!slide || start) && get(activeShow)?.type === "folder") || (!start && slide?.type === "folder")) {
-        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+    if (((!slide || start) && currentShow?.type === "folder") || (!start && slide?.type === "folder")) {
+        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
         playFolder(path)
         return
     }
@@ -238,7 +240,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     // open next project item if previous has been opened and next is still active when going forward
     const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
     const isFirstLine = (slide?.line || 0) === 0
-    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) + 1]?.id
+    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
     const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
     if (isPreviousProjectItem && e?.key !== " ") {
         goToNextProjectItem()
@@ -281,9 +283,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
+        if (currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
 
         const id = loop ? slide?.id : currentShow.id
         if (!id) return
@@ -478,12 +479,14 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
+    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
     let slide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
     }
 
     // PPT
@@ -493,15 +496,15 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     // PDF
-    if ((!slide && get(activeShow)?.type === "pdf") || slide?.type === "pdf") {
+    if ((!slide && currentShow?.type === "pdf") || slide?.type === "pdf") {
         const nextPage = slide?.page ? slide.page - 1 : 0
         playPdf(slide, nextPage)
         return
     }
 
     // Folder
-    if ((!slide && get(activeShow)?.type === "folder") || slide?.type === "folder") {
-        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+    if ((!slide && currentShow?.type === "folder") || slide?.type === "folder") {
+        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
         playFolder(path, true)
         return
     }
@@ -511,10 +514,9 @@ export function previousSlide(e: any, customOutputId?: string) {
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
     if (index === null) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
+        if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
     }
 
@@ -556,7 +558,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     const revealEnded = !shouldLinesReveal || currentReveal === 0
     if (isFirstSlide && !revealEnded) isLastSlide = false
 
-    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) - 1]?.id
+    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) - 1]?.id
     const isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
     if (isNextProjectItem) {
         goToPreviousProjectItem()
@@ -576,7 +578,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (hasLinesEnded && revealEnded && clickRevealEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
-            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
+            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
                 if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
 
                 if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
