@@ -194,7 +194,16 @@
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} style={borderRadiusStyle} icon />
+                                  <div class="show-item-wrapper" class:played={show.played}>
+                                      <ShowButton 
+                                          id={show.id} 
+                                          {show} 
+                                          {index} 
+                                          class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} 
+                                          style={borderRadiusStyle} 
+                                          icon 
+                                      />
+                                    </div>
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -271,4 +280,18 @@
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
     } */
+
+    .show-item-wrapper {
+        position: relative;
+        display: flex;
+        width: 100%;
+    }
+
+    .show-item-wrapper.played :global(button) {
+        border-left: 4px double var(--secondary) !important;
+    }
+
+    .show-item-wrapper :global(button) {
+        flex: 1;
+    }
 </style>

@@ -874,6 +874,26 @@ const clickActions = {
         const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
+    mark_played: (obj: ObjData) => {
+        if (!obj.sel?.data?.[0] || obj.sel.data[0].index === undefined) return
+        
+        const projectId = get(activeProject)
+        if (!projectId) return
+
+        const index = obj.sel.data[0].index
+        
+        projects.update((p) => {
+            if (!p[projectId]?.shows?.[index]) return p
+            
+            const currentState = p[projectId].shows[index].played || false
+            p[projectId].shows[index] = {
+                ...p[projectId].shows[index],
+                played: !currentState
+            }
+            
+            return p
+        })
+    },
     copy_to_template: (obj: ObjData) => {
         let project = clone(get(projects)[obj.sel?.data?.[0]?.id])
         if (!project) return
