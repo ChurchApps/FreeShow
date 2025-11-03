@@ -114,6 +114,10 @@
             resizeObserver.disconnect()
         }
 
+        // remove global event listeners
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+
         // Cleanup spectrum analyzer
         // if (spectrumAnalyzer) spectrumAnalyzer.dispose()
     })
@@ -213,6 +217,10 @@
 
         // Only handle left mouse button for dragging
         if (e.button !== 0) return
+
+        // Remove existing listeners first to prevent duplicates
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
 
         draggedBandIndex = bandIndex
         isDragging = true

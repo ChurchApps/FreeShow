@@ -360,6 +360,7 @@ export function getTimersDetailed() {
 
     return keysToID(allTimers).map((timer) => ({
         ...timer,
+        name: timer.name || "",
         isActive: activeTimersList.some((activeTimer) => activeTimer.id === timer.id),
         currentTime: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.currentTime,
         paused: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.paused
