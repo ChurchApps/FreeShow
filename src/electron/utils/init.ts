@@ -4,6 +4,20 @@ import { isProd, isWindows } from ".."
 import { catchErrors } from "../IPC/responsesMain"
 import { doesPathExist } from "./files"
 
+export function parseCommandLineArgs() {
+    const result: { profile?: string } = {}
+    if (!isProd) return result
+
+    const args = process.argv.slice(1)
+    for (const arg of args) {
+        // support --profile=Name & -p=Name
+        if (arg.startsWith('--profile=')) result.profile = arg.substring('--profile='.length)
+        else if (arg.startsWith('-p=')) result.profile = arg.substring('-p='.length)
+    }
+
+    return result
+}
+
 // get LOADED message from frontend
 export function mainWindowInitialize() {
     // midi

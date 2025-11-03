@@ -11,11 +11,14 @@ import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
+import { openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
+let startupProfile: string = ""
+
 export function startup() {
     window.api.receive(
         STARTUP,
@@ -35,6 +38,8 @@ export function startup() {
                 return
             }
 
+            startupProfile = msg.autoProfile
+
             startupMain()
         },
         "startup"
@@ -50,6 +55,9 @@ async function startupMain() {
     getStoredData()
 
     await waitUntilValueIsDefined(() => get(loaded), 100, 8000)
+
+    if (startupProfile) openProfileByName(startupProfile)
+
     storeSubscriber()
     remoteListen()
     checkStartupActions()
