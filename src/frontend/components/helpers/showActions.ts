@@ -433,6 +433,15 @@ export function goToNextProjectItem(key = "") {
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
+
+            // mark as played
+            if (newShow.type !== "section") {
+                projects.update((a) => {
+                    if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
+                    a[get(activeProject)!].shows[index - 1].played = true
+                    return a
+                })
+            }
         }
     })
 }
@@ -466,6 +475,15 @@ export function goToPreviousProjectItem(key = "") {
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
+
+            // mark as not played
+            if (newShow.type !== "section") {
+                projects.update((a) => {
+                    if (!a[get(activeProject)!]?.shows?.[index]) return a
+                    a[get(activeProject)!].shows[index].played = false
+                    return a
+                })
+            }
         }
     })
 }

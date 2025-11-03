@@ -875,23 +875,21 @@ const clickActions = {
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
     mark_played: (obj: ObjData) => {
-        if (!obj.sel?.data?.[0] || obj.sel.data[0].index === undefined) return
-        
         const projectId = get(activeProject)
-        if (!projectId) return
+        const indexes = (obj.sel?.data || []).map(item => Number(item.index))
+        if (!projectId || !indexes.length) return
 
-        const index = obj.sel.data[0].index
-        
-        projects.update((p) => {
-            if (!p[projectId]?.shows?.[index]) return p
-            
-            const currentState = p[projectId].shows[index].played || false
-            p[projectId].shows[index] = {
-                ...p[projectId].shows[index],
-                played: !currentState
-            }
-            
-            return p
+        projects.update((a) => {
+            if (!a[projectId].shows) return a
+
+            const newState = !a[projectId].shows[indexes[0]]?.played
+
+            indexes.forEach(index => {
+                if (!a[projectId].shows[index]) return
+                a[projectId].shows[index].played = newState
+            })
+
+            return a
         })
     },
     copy_to_template: (obj: ObjData) => {

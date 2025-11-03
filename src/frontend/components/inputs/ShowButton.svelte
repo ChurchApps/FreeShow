@@ -186,7 +186,7 @@
     $: outline = activeOutput !== null || !!$playingAudio[id]
 </script>
 
-<div id="show_{id}" class="main">
+<div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton
         on:click={click}
         on:dblclick={doubleClick}
@@ -198,7 +198,7 @@
     >
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon || show.locked}
-                <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
+                <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
             {/if}
 
             {#if active === "number" && show.quickAccess?.number}
@@ -227,6 +227,10 @@
 </div>
 
 <style>
+    .main {
+        width: 100%;
+    }
+
     .main :global(button) {
         width: 100%;
         justify-content: space-between;
@@ -234,6 +238,10 @@
     }
     .main :global(button p) {
         margin: 3px 5px;
+    }
+
+    .main.played :global(button:not(.isActive)) {
+        border-left: 4px double rgb(255 255 255 / 0.2) !important;
     }
 
     .layout {

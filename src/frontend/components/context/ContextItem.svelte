@@ -288,21 +288,15 @@
         mark_played: () => {
             const projectId = $activeProject
             const index = $selected.data[0]?.index
-            
-            if (projectId && index !== undefined) {
-                const show = $projects[projectId]?.shows?.[index]
-                const isPlayed = show?.played || false
-                
-                if (isPlayed) {
-                    menu.label = "actions.mark_not_played"
-                    menu.icon = "circle"
-                    menu.iconColor = "var(--secondary)"
-                } else {
-                    menu.label = "actions.mark_played"
-                    menu.icon = "circle_outline"
-                    menu.iconColor = "var(--text)"
-                }
-            }
+            if (!projectId || index === undefined) return
+
+            const show = $projects[projectId]?.shows?.[index]
+            const isPlayed = !!show?.played
+
+            menu.label = `actions.mark_${isPlayed ? "not_" : ""}played`
+            menu.icon = isPlayed ? "remove" : "check"
+            menu.iconColor = isPlayed ? "var(--secondary)" : "var(--text)"
+            enabled = isPlayed
         }
         // bind_item: () => {
         //     if (item is bound) enabled = true
