@@ -1276,13 +1276,18 @@ const clickActions = {
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
+        const videoType = get(media)[path]?.videoType || ""
+
         // clear slide text
         // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
-        if (get(media)[path]?.videoType === "foreground") clearSlide()
+        if (videoType === "foreground") clearSlide()
 
-        setOutput("background", { path, ...mediaStyle })
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false })
     },
     play_no_audio: (obj: ObjData) => {
+        if (get(outLocked)) return
+
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
 
@@ -1292,12 +1297,21 @@ const clickActions = {
 
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
 
-        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle, type: getMediaType(getExtension(path)), muted: true })
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, ...mediaStyle, type, loop: true, muted: true })
     },
     play_no_filters: (obj: ObjData) => {
+        if (get(outLocked)) return
+
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
-        if (!get(outLocked)) setOutput("background", { path, type: getMediaType(getExtension(path)) })
+
+        const videoType = get(media)[path]?.videoType || ""
+        const loop = videoType === "foreground" ? false : true
+        const muted = videoType === "foreground" ? false : true
+
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, type, loop, muted })
     },
     favourite: (obj: ObjData) => {
         if (!obj.sel) return
