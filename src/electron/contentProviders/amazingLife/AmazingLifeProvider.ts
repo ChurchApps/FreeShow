@@ -1,10 +1,13 @@
 import { ContentProvider } from "../base/ContentProvider"
-import { getKey } from "../../utils/keys"
+import { OAuth2Helper } from "../base/OAuth2Helper"
 import { httpsRequest } from "../../utils/requests"
 import { sendToMain } from "../../IPC/main"
 import { ToMain } from "../../../types/IPC/ToMain"
-import { AMAZING_LIFE_API_URL } from "./types"
+import { AMAZING_LIFE_API_URL, AMAZING_LIFE_OAUTH_BASE } from "./types"
 import type { ContentLibraryCategory, ContentFile } from "../base/types"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { getKey } from "../../utils/keys"
+import express from "express"
 
 // Import and re-export types
 import type { AmazingLifeScopes } from "./types"
@@ -22,41 +25,68 @@ export interface AmazingLifeAuthData {
 export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, AmazingLifeAuthData> {
     hasContentLibrary = true
     private static contentLibraryCache: ContentLibraryCategory[] | null = null
+    private oauthHelper: OAuth2Helper<AmazingLifeAuthData>
 
     constructor() {
+        const port = 5502
+        const clientId = getKey("amazinglife_id") || ""
+        const redirectUri = `http://localhost:${port}/auth/complete`
+
         super({
             providerId: "amazinglife",
             displayName: "APlay",
-            port: 5503,
-            clientId: getKey("amazinglife_id") || "",
-            clientSecret: getKey("amazinglife_secret") || "",
+            port,
+            clientId,
+            clientSecret: "",
             apiUrl: AMAZING_LIFE_API_URL,
-            scopes: ["services"] as const
+            scopes: ["openid profile email"] as const
+        })
+
+        this.oauthHelper = new OAuth2Helper<AmazingLifeAuthData>({
+            clientId,
+            clientSecret: "", // Not needed for PKCE flow
+            authUrl: `${AMAZING_LIFE_OAUTH_BASE}/authorize`,
+            tokenUrl: `${AMAZING_LIFE_OAUTH_BASE}/token`,
+            redirectUri,
+            scopes: ["openid", "profile", "email"],
+            usePKCE: true,
+            additionalParams: { state: "xyz" }
         })
     }
 
     async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // If already connected, just notify and return existing access
-        if (this.access) {
-            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
-            return this.access
+        const storedAccess = getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null
+
+        if (storedAccess) {
+            this.access = storedAccess
+
+            if (this.isTokenExpired()) {
+                console.info("APlay token expired, refreshing...")
+                const refreshed = await this.refreshToken(scope)
+                if (refreshed) {
+                    this.access = refreshed
+                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
+                    return refreshed
+                }
+            } else {
+                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
+                return storedAccess
+            }
         }
 
-        const manualToken = "redacted"
-        this.access = {
-            access_token: manualToken,
-            refresh_token: "",
-            token_type: "Bearer",
-            created_at: Date.now(),
-            expires_in: 7775000,
-            scope: scope
-        }
+        console.info("Starting APlay OAuth flow...")
+        const authData = await this.authenticate(scope)
 
-        sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection: true })
-        return this.access
+        if (authData) {
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection: true })
+            return authData
+        } else {
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: false })
+            return null
+        }
     }
 
-    disconnect(scope: AmazingLifeScopes = "services"): void {
+    disconnect(scope: AmazingLifeScopes = "openid profile email"): void {
         console.log(`Disconnecting from APlay with scope: ${scope}`)
         this.access = null
         AmazingLifeProvider.contentLibraryCache = null
@@ -68,8 +98,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     async loadServices(dataPath?: string): Promise<void> {
-        // Connect first to ensure we have authentication
-        const connected = await this.connect("services")
+        const connected = await this.connect("openid profile email")
         if (!connected) {
             console.error("Failed to connect to APlay")
             return
@@ -242,14 +271,40 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         })
     }
 
-    protected handleAuthCallback(_req: any, _res: any): void {
+    protected handleAuthCallback(req: express.Request, res: express.Response): void {
+        this.oauthHelper.handleCallback(req, res)
     }
 
-    protected async refreshToken(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        return null
+    protected async refreshToken(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
+        if (!this.access?.refresh_token) {
+            console.warn("No refresh token available for APlay")
+            return null
+        }
+
+        try {
+            const refreshed = await this.oauthHelper.refreshAccessToken(this.access.refresh_token, scope)
+            if (refreshed) {
+                this.access = refreshed
+                setContentProviderAccess("amazinglife", scope, refreshed)
+            }
+            return refreshed
+        } catch (error) {
+            console.error("Failed to refresh APlay token:", error)
+            return null
+        }
     }
 
-    protected async authenticate(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        return null
+    protected async authenticate(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
+        try {
+            const authData = await this.oauthHelper.authorize(scope)
+            if (authData) {
+                this.access = authData
+                setContentProviderAccess("amazinglife", scope, authData)
+            }
+            return authData
+        } catch (error) {
+            console.error("APlay authentication failed:", error)
+            return null
+        }
     }
 }

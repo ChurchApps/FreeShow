@@ -1,4 +1,4 @@
-export type AmazingLifeScopes = "services"
+export type AmazingLifeScopes = "openid profile email"
 
 export type AmazingLifeAuthData = {
     access_token: string
@@ -18,6 +18,6 @@ export type AmazingLifeRequestData = {
     data?: any
 }
 
-// Prod URLs
-export const AMAZING_LIFE_API_URL = "https://api.amazinglife.church"
-export const AMAZING_LIFE_APP_URL = "https://app.amazinglife.church"
+export const AMAZING_LIFE_API_URL = "https://api.joinamazing.dev"
+export const AMAZING_LIFE_APP_URL = "https://app.joinamazing.dev"
+export const AMAZING_LIFE_OAUTH_BASE = "https://api.joinamazing.dev/dev/aims/oauth"
