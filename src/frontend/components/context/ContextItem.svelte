@@ -284,6 +284,25 @@
                 menu.label = "actions.start_recording"
                 menu.icon = "record"
             }
+        },
+        mark_played: () => {
+            const projectId = $activeProject
+            const index = $selected.data[0]?.index
+            
+            if (projectId && index !== undefined) {
+                const show = $projects[projectId]?.shows?.[index]
+                const isPlayed = show?.played || false
+                
+                if (isPlayed) {
+                    menu.label = "actions.mark_not_played"
+                    menu.icon = "circle"
+                    menu.iconColor = "var(--secondary)"
+                } else {
+                    menu.label = "actions.mark_played"
+                    menu.icon = "circle_outline"
+                    menu.iconColor = "var(--text)"
+                }
+            }
         }
         // bind_item: () => {
         //     if (item is bound) enabled = true
