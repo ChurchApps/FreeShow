@@ -18,6 +18,7 @@
     import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { confirmCustom } from "../../../utils/popup"
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -28,10 +29,18 @@
         })
     }
 
+    let refreshInput = 0
     async function toggle(checked: boolean, key: string) {
         if (key === "customUserDataLocation") {
             let existingData = false
             if (checked) {
+                // Are you sure?
+                if (!(await confirmCustom(translateText("settings.user_data_location_confirm")))) {
+                    // revert toggle switch
+                    refreshInput++
+                    return
+                }
+
                 existingData = (await requestMain(Main.DOES_PATH_EXIST, { path: "data_config", dataPath: $dataPath }))?.exists
                 if (existingData) activePopup.set("user_data_overwrite")
             }
@@ -39,9 +48,11 @@
                 updateSpecial(checked, key)
                 save(false, { backup: true, isAutoBackup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
             }
-        } else {
-            updateSpecial(checked, key)
+
+            return
         }
+
+        updateSpecial(checked, key)
     }
 
     const autosaveList = [
@@ -171,7 +182,9 @@
 <MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} />
 <!-- {/if} -->
 
-<MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
+{#key refreshInput}
+    <MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
+{/key}
 
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />

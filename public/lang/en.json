@@ -1300,6 +1300,7 @@
         "show_location": "Show location",
         "data_location": "Data location",
         "user_data_location": "Save user settings at 'Data location'",
+        "user_data_location_confirm": "Only continue if you know what you are doing. Change user data location?",
         "user_data_exists": "Found existing data at custom location, would you like to overwrite it?",
         "user_data_yes": "Yes, keep current data",
         "user_data_no": "No, import existing data",
