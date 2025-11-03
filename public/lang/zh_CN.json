@@ -137,7 +137,6 @@
         "_hide_preview": "隐藏预览窗口",
         "show_preview": "显示预览窗口",
         "restore_output": "恢复输出",
-        "enable_controls": "显示媒体预览控件",
         "background": "背景",
         "foreground": "前景",
         "slide": "幻灯片",
@@ -147,7 +146,8 @@
         "nextTimer": "下一张幻灯片计时器",
         "lock": "锁上",
         "unlock": "解锁",
-        "test_pattern": "测试模式"
+        "test_pattern": "测试模式",
+        "live_prepare": "隐藏输出内容（黑色蒙层）"
     },
     "clear": {
         "general": "清除",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "允许将音量设置超过100%（可能导致失真）",
         "pre_fader_volume_meter": "推子前音量表",
         "mixer": "调音台",
+        "equalizer": "均衡器",
+        "preset": "预设",
+        "main": "主输出",
         "metronome": "节拍器",
         "toggle_metronome": "显示/隐藏节拍器",
         "use_metadata_bpm": "使用元数据中的 BPM",
@@ -1046,7 +1049,9 @@
         "longitude": "经度",
         "altitude": "高度",
         "fahrenheit": "华氏度",
-        "longRange": "长距离"
+        "longRange": "长距离",
+        "media_item_tip": "您想将该媒体用作背景吗？",
+        "convert_to_background": "转化为背景"
     },
     "items": {
         "text": "文本框",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "进度",
         "visualizer": "可视化",
         "captions": "字幕",
+        "metronome": "节拍器",
         "icon": "图标",
         "effect": "效果",
         "slide_text": "幻灯片文本",
         "slide_notes": "幻灯片备注",
-        "current_output": "当前输出"
+        "current_output": "输出窗口"
     },
     "borders": {
         "solid": "实线",
@@ -1253,12 +1259,14 @@
         "window": "窗口",
         "active_style": "使用样式",
         "alert_updates": "有新版本时提醒我",
+        "alert_updates_beta": "有新的测试版时提醒我",
         "auto_updates": "自动更新",
         "disable_labels": "禁用标签",
         "group_numbers": "分组编号",
         "auto_group_numbers": "自动分配分组编号",
         "transparent_slides": "透明幻灯片预览",
         "full_colors": "高对比度分组颜色",
+        "next_item_on_last_slide": "左/右箭头可在首张/末张幻灯片上切换项目项",
         "slide_number_keys": "使用数字键播放幻灯片",
         "auto_shortcut_first_letter": "文本中首字母的自动快捷键",
         "startup_projects_list": "启动时显示项目列表",

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { activePopup, activeVariableTagFilter, dictionary, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
+    import { activePopup, activeVariableTagFilter, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -72,14 +73,14 @@
                 <SelectElem style="width: calc(25% - 5px);" id="variable" data={variable} draggable>
                     <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
-                            <Button title={$dictionary.actions?.reset} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
+                            <Button title={translateText("actions.reset")} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
                                 <Icon id="reset" white />
                             </Button>
                         </div>
 
                         <div class="bigNumber">
                             <NumberInput
-                                title={$dictionary.variables?.value}
+                                title={translateText("variables.value")}
                                 style="width: 100%;"
                                 value={number}
                                 {min}
@@ -104,17 +105,17 @@
                         </span>
 
                         <div class="buttons">
-                            <Button id="decrement" title={$dictionary.actions?.decrement} on:click={() => updateVariable(Math.max(min, number - 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number <= min} dark>
+                            <Button id="decrement" title={translateText("actions.decrement")} on:click={() => updateVariable(Math.max(min, number - 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number <= min} dark>
                                 <Icon id="remove" size={2.8} white />
                             </Button>
-                            <Button id="increment" title={$dictionary.actions?.increment} on:click={() => updateVariable(Math.min(max, number + 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number >= max} dark>
+                            <Button id="increment" title={translateText("actions.increment")} on:click={() => updateVariable(Math.min(max, number + 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number >= max} dark>
                                 <Icon id="add" size={2.8} white />
                             </Button>
                         </div>
 
                         <div class="inputs">
                             <NumberInput
-                                title={$dictionary.variables?.step}
+                                title={translateText("variables.step")}
                                 style="flex: 1;"
                                 value={stepSize}
                                 min={0.1}
@@ -125,7 +126,7 @@
                                 buttons={false}
                             />
                             <!-- <NumberInput
-                                title={$dictionary.variables?.default_value}
+                                title={translateText("variables.default_value")}
                                 style="flex: 1;"
                                 value={defaultValue}
                                 {min}
@@ -153,7 +154,7 @@
                 <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
                     <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
-                            <Button disabled={$randomNumberVariable[variable.id]} title={$dictionary.actions?.reset} on:click={() => resetVariable(variable.id)}>
+                            <Button disabled={$randomNumberVariable[variable.id]} title={translateText("actions.reset")} on:click={() => resetVariable(variable.id)}>
                                 <Icon id="reset" white />
                             </Button>
                         </div>
@@ -180,7 +181,7 @@
                         </span>
 
                         <div class="buttons">
-                            <Button disabled={$randomNumberVariable[variable.id]} id="randomize" title={$dictionary.variables?.randomize} on:click={() => setRandomValue(variable.id)} center style="flex: 1;" dark>
+                            <Button disabled={$randomNumberVariable[variable.id]} id="randomize" title={translateText("variables.randomize")} on:click={() => setRandomValue(variable.id)} center style="flex: 1;" dark>
                                 <Icon id="shuffle_play" size={2.8} white />
                             </Button>
                         </div>
@@ -215,7 +216,7 @@
 
                         <span style="gap: 5px;width: 70%;">
                             {#if variable.type === "text"}
-                                <TextInput placeholder={$dictionary.variables?.value || ""} value={variable.text || ""} on:change={(e) => updateVariable(e, variable.id, "text")} />
+                                <TextInput placeholder={translateText("variables.value") || ""} value={variable.text || ""} on:change={(e) => updateVariable(e, variable.id, "text")} />
                                 <MaterialToggleSwitch label="" checked={variable.enabled ?? true} style="padding: 8px;height: 35px;" on:change={(e) => updateVariable(e, variable.id, "enabled")} />
                             {/if}
                         </span>
@@ -253,7 +254,7 @@
                             <p style="display: flex;flex: 1;">
                                 <span style="color: var(--secondary);">#</span>
                                 <NumberInput
-                                    title={$dictionary.variables?.set_number}
+                                    title={translateText("variables.set_number")}
                                     style="width: 40px;"
                                     value={activeSet + 1}
                                     min={1}

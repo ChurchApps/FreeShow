@@ -2,8 +2,9 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
-    import { activeFocus, activeShow, dictionary, focusMode, outLocked, presentationData, showsCache, slideVideoData } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, presentationData, showsCache, slideVideoData } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
+    import { translateText } from "../../../utils/language"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -76,7 +77,7 @@
                 <p>{removeExtension(getFileName(path))}</p>
 
                 <span class="group">
-                    <Button center title={data.isPaused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={() => playPause(path, data.isPaused)}>
+                    <Button center title={translateText(data.isPaused ? "media.play" : "media.pause")} disabled={$outLocked} on:click={() => playPause(path, data.isPaused)}>
                         <Icon id={data.isPaused ? "play" : "pause"} white={data.isPaused} />
                     </Button>
 
@@ -103,7 +104,7 @@
 
                     <!-- WIP change loop/mute state -->
                     <!-- NOTE: mute state can be changed in the media item edit currently -->
-                    <Button center title={$dictionary.media?._loop} on:click={() => toggleLoop(path, !!data.loop)}>
+                    <Button center title={translateText("media._loop")} on:click={() => toggleLoop(path, !!data.loop)}>
                         <Icon id="loop" white={!data.loop} />
                     </Button>
                     <!-- <Button

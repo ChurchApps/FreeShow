@@ -66,8 +66,8 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
         const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
         const outSlide = get(outputs)[outputId]?.out?.slide
-        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
-            const slideIndex = sequence.slideRef.index
+        const slideIndex = sequence.slideRef.index
+        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== slideIndex) {
             updateOut("active", slideIndex, layoutRef)
             // WIP check that slide is the correct ID ??
             setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })

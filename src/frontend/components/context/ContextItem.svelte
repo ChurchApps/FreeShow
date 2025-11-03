@@ -284,6 +284,19 @@
                 menu.label = "actions.start_recording"
                 menu.icon = "record"
             }
+        },
+        mark_played: () => {
+            const projectId = $activeProject
+            const index = $selected.data[0]?.index
+            if (!projectId || index === undefined) return
+
+            const show = $projects[projectId]?.shows?.[index]
+            const isPlayed = !!show?.played
+
+            menu.label = `actions.mark_${isPlayed ? "not_" : ""}played`
+            menu.icon = isPlayed ? "remove" : "check"
+            menu.iconColor = isPlayed ? "var(--secondary)" : "var(--text)"
+            enabled = isPlayed
         }
         // bind_item: () => {
         //     if (item is bound) enabled = true

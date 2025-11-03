@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, dictionary, drawerTabsData, events, language, nextActionEventPaused, nextActionEventStart, special } from "../../../stores"
+    import { activeDays, drawerTabsData, events, language, nextActionEventPaused, nextActionEventStart, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -57,7 +57,7 @@
     <Day {type} />
 
     {#if $nextActionEventStart.timeLeft}
-        <Button on:click={() => nextActionEventPaused.set(!$nextActionEventPaused)} title={$nextActionEventPaused ? $dictionary.actions?.start_timer : $dictionary.media?.pause} dark>
+        <Button on:click={() => nextActionEventPaused.set(!$nextActionEventPaused)} title={translateText($nextActionEventPaused ? "actions.start_timer" : "media.pause")} dark>
             <Icon id={$nextActionEventPaused ? "play" : "pause"} white={$nextActionEventPaused} right />
             {#if $nextActionEventPaused}
                 <T id="actions.start_timer" />

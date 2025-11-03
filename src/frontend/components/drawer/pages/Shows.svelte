@@ -2,7 +2,7 @@
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import T from "../../helpers/T.svelte"
@@ -214,14 +214,7 @@
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton
-                                {active}
-                                id={show.id}
-                                {show}
-                                data={dateToString(show.timestamps?.[sortType] || show.timestamps?.modified || show.timestamps?.created || "", true, $dictionary)}
-                                class="#drawer_show_button"
-                                match={show.match || null}
-                            />
+                            <ShowButton {active} id={show.id} {show} data={dateToString(show.timestamps?.[sortType] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} />
                         {/if}
                     </SelectElem>
                 </VirtualList>

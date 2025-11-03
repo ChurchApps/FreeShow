@@ -123,7 +123,7 @@
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
         verses.forEach((verse) => {
-            let newVerseStrings = splitText(verse.text, chars)
+            const newVerseStrings = splitText(verse.text, chars)
             const end = verse.endNumber ? `-${verse.endNumber}` : ""
 
             for (let i = 0; i < newVerseStrings.length; i++) {
@@ -238,7 +238,13 @@
         }
 
         if ($openScripture.play) playWhenLoaded = true
-        openBook(Number($openScripture.book), [$openScripture.chapter], $openScripture.verses)
+
+        let verses = $openScripture.verses
+        if (!Array.isArray(verses)) verses = [[1]]
+        if (!Array.isArray(verses[0])) verses = [verses]
+
+        openBook(Number($openScripture.book), [$openScripture.chapter], verses)
+
         openScripture.set(null)
     }
 
@@ -503,7 +509,7 @@
                             class="verse"
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
-                                openBook(verse.book, [verse.chapter], [verse.verse])
+                                openBook(verse.book, [verse.chapter], [[verse.verse]])
                                 playWhenLoaded = true
                             }}
                             data-title={formatBibleText(verse.text)}

@@ -172,6 +172,9 @@ export class EditboxHelper {
     static getCustomTextStyle(style: string) {
         if (!style) return ""
 
+        // fix quotes (for font family names with spaces)
+        style = style.replaceAll('"', "'")
+
         // text gradient
 
         if (style.includes("-gradient")) {

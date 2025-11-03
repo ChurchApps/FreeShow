@@ -1,8 +1,9 @@
 <script lang="ts">
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { dictionary, spellcheck } from "../../stores"
+    import { spellcheck } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -23,7 +24,7 @@
 
 {#if misspelled && suggestions.length}
     {#each suggestions as suggestion}
-        <div on:click={() => fixSpelling(suggestion)} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" data-title={$dictionary.context?.correct}>
+        <div on:click={() => fixSpelling(suggestion)} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" data-title={translateText("context.correct")}>
             <span style="display: flex;align-items: center;gap: 10px;">
                 <Icon id="fix_misspelling" />
                 <p style="display: flex;align-items: center;gap: 5px;font-weight: bold;">

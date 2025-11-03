@@ -35,8 +35,8 @@
 
     $: projectName = $special.default_project_name ?? DEFAULT_PROJECT_NAME
 
-    $: groupsString = updateGroups($groups)
-    function updateGroups(groups: any) {
+    $: groupsString = updateGroups($groups, $dictionary)
+    function updateGroups(groups: any, _updater: any) {
         const groupsList: { label: string; color: string }[] = []
         Object.values(groups).forEach((a: any) => {
             groupsList.push({ label: a.default ? translateText(`groups.${a.name}`) || a.name : a.name, color: a.color })

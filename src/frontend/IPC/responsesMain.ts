@@ -242,11 +242,13 @@ export const mainResponses: MainResponses = {
 
         // get "actual" variables
         Object.entries(get(variables)).forEach(([id, a]) => {
+            if (!a.name) return
             variableData[`variable_${getLabelId(a.name, false)}`] = _getVariableValue(id)
         })
 
         // get timers
         Object.entries(get(timers)).forEach(([id, a]) => {
+            if (!a.name) return
             const labelId = getLabelId(a.name, false)
             const currentTime = getCurrentTimerValue(a, { id }, new Date())
             const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`

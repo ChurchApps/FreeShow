@@ -1,7 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Profile } from "../../../../types/Main"
-    import { activeProfile, activeTriggerFunction, dictionary, profiles, selectedProfile } from "../../../stores"
+    import { activeProfile, activeTriggerFunction, profiles, selectedProfile } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { generateLightRandomColor } from "../../helpers/color"
@@ -9,7 +10,7 @@
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
-    $: profilesList = [{ id: "", color: "", name: $dictionary.profile?.admin || "Admin" }, ...sortByName(keysToID($profiles))]
+    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles))]
 
     // set id after deletion
     $: if (profileId !== "" && !$profiles[profileId]) profileId = ""
@@ -18,7 +19,7 @@
     $: currentProfile = $profiles[profileId] || clone(defaultProfile)
 
     const defaultProfile: Profile = {
-        name: $dictionary.example?.default || "Default",
+        name: translateText("example.default"),
         color: "",
         image: "",
         access: {}

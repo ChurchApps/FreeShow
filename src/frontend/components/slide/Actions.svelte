@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, shows, templates } from "../../stores"
+    import { activeShow, shows, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { getActionName, getActionTriggerId } from "../actions/actions"
@@ -51,9 +51,9 @@
     }
 
     const actionsList = [
-        { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward" },
-        { id: "animate", title: $dictionary.popup?.animate, icon: "stars" },
-        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" }
+        { id: "nextAfterMedia", title: translateText("actions.next_after_media"), icon: "forward" },
+        { id: "animate", title: translateText("popup.animate"), icon: "stars" },
+        { id: "receiveMidi", title: translateText("actions.play_on_midi"), icon: "play" }
     ]
 
     // WIP MIDI convert into new
@@ -71,7 +71,7 @@
 <div class="icons" style="zoom: {zoom};">
     {#if actions.slide_shortcut?.key}
         <div class="button white" style="border: 1px solid var(--secondary);">
-            <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {$dictionary.actions?.play_with_shortcut}" {zoom} on:click={() => changeAction("slide_shortcut")}>
+            <Button style="padding: 3px;" redHover title={translateText("actions.remove: actions.play_with_shortcut")} {zoom} on:click={() => changeAction("slide_shortcut")}>
                 <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{actions.slide_shortcut.key}</p>
             </Button>
         </div>
@@ -80,7 +80,7 @@
     {#each actionsList as action}
         {#if actions[action.id]}
             <div class="button white">
-                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
+                <Button style="padding: 3px;" redHover title={translateText(`actions.remove: ${action.title}`)} {zoom} on:click={() => changeAction(action.id)}>
                     <Icon id={action.icon} size={0.9} white />
                 </Button>
             </div>
@@ -101,7 +101,7 @@
                 <Button
                     style="padding: 3px;{getCustomStyle(specialData)}"
                     redHover
-                    title="{$dictionary.actions?.remove}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}"
+                    title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}"
                     {zoom}
                     on:click={(e) => deleteSlideAction(e, action.id || actionId)}
                 >

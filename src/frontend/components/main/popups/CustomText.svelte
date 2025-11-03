@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { dictionary, special } from "../../../stores"
+    import { special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
 
     let id = "splash"
@@ -28,4 +29,4 @@
     }
 </script>
 
-<MaterialTextarea label="edit.text" rows={5} placeholder="{$dictionary.empty?.text}..." value={text} on:change={changeValue} autofocus />
+<MaterialTextarea label="edit.text" rows={5} placeholder={translateText("empty.text...")} value={text} on:change={changeValue} autofocus />

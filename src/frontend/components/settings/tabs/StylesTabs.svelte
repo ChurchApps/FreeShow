@@ -1,7 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Styles } from "../../../../types/Settings"
-    import { activeStyle, activeTriggerFunction, dictionary, outputs, styles } from "../../../stores"
+    import { activeStyle, activeTriggerFunction, outputs, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { waitForPopupData } from "../../../utils/popup"
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -15,7 +16,7 @@
     $: if (Object.keys($styles)?.length && !$styles[$activeStyle]) activeStyle.set($styles.default ? "default" : Object.keys($styles)[0])
 
     const defaultStyle: Styles = {
-        name: $dictionary.example?.default || "Default"
+        name: translateText("example.default")
     }
 
     $: styleId = $activeStyle || ""
@@ -64,7 +65,8 @@
                 templateScripture: "scriptureLT",
                 templateScripture_2: "scriptureLT_2"
             }
-            history({ id: "UPDATE", newData: { data: liveStyle, replace: { name: $dictionary.tabs?.live || currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+            const name = translateText("tabs.live") // || currentStyle.name + " 2"
+            history({ id: "UPDATE", newData: { data: liveStyle, replace: { name } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
         } else if (type === "normal") {
             history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
         }

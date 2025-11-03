@@ -217,7 +217,6 @@
         "mute_when_video_plays": "Mute when video plays",
         "allow_gaining": "Allow gaining",
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
-        "pre_fader_volume_meter": "Pre fader volume meter",
         "mixer": "Mixer",
         "equalizer": "Equalizer",
         "preset": "Preset",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "Activate when background is cleared",
         "activate_show_created": "Activate when show is created",
         "activate_show_opened": "Activate when show is opened",
-        "activate_audio_playlist_ended": "Activate when audio playlist has ended"
+        "activate_audio_playlist_ended": "Activate when audio playlist has ended",
+        "mark_played": "Mark as played",
+        "mark_not_played": "Mark as not played"
     },
     "conditions": {
         "show_item": "Show item if",
@@ -1299,6 +1300,7 @@
         "show_location": "Show location",
         "data_location": "Data location",
         "user_data_location": "Save user settings at 'Data location'",
+        "user_data_location_confirm": "Only continue if you know what you are doing. Change user data location?",
         "user_data_exists": "Found existing data at custom location, would you like to overwrite it?",
         "user_data_yes": "Yes, keep current data",
         "user_data_no": "No, import existing data",

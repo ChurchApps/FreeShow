@@ -15,7 +15,7 @@ import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
+import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -36,6 +36,9 @@ const RECORD_STARTUP_TIME = false
 export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
+
+// parse command line arguments
+const commandLineArgs = parseCommandLineArgs()
 
 // check if store works
 config.set("loaded", true)
@@ -183,7 +186,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 
     window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type })
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile: commandLineArgs.profile || "" })
     })
 
     function loadingFailed(err: Error) {

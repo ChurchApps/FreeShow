@@ -38,7 +38,7 @@ export function joinTimeBig(time: number, showHours = true) {
     return timeValue
 }
 
-export function dateToString(date: string | number | Date, full = false, d: any = {}): string {
+export function dateToString(date: string | number | Date, full = false, d = get(dictionary)): string {
     if (!date) return ""
 
     date = new Date(date)

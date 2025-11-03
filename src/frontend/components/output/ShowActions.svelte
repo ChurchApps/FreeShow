@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Output } from "../../../types/Output"
     import type { LayoutRef } from "../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, activeSlideRecording, dictionary, outLocked, showsCache } from "../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeSlideRecording, outLocked, showsCache } from "../../stores"
     import { previewShortcuts } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
@@ -110,7 +110,7 @@
         </MaterialButton>
     {/if}
 
-    <MaterialButton title={($outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock) + " [Ctrl+L]"} on:click={() => outLocked.set(!$outLocked)} red={$outLocked}>
+    <MaterialButton title={($outLocked ? "preview._unlock" : "preview._lock") + " [Ctrl+L]"} on:click={() => outLocked.set(!$outLocked)} red={$outLocked}>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} white={$outLocked} />
     </MaterialButton>
     <MaterialButton title="popup.transition" on:click={() => activePopup.set("transition")}>

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { dictionary, metronome, outLocked, playingMetronome } from "../../../stores"
+    import { metronome, outLocked, playingMetronome } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import type { API_metronome } from "../../actions/api"
     import Icon from "../../helpers/Icon.svelte"
     import { clone } from "../../helpers/array"
@@ -12,8 +13,8 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import MetronomeInputs from "./MetronomeInputs.svelte"
-    import { toggleMetronome, updateMetronome } from "./metronome"
     import MetronomeVisualizer from "./MetronomeVisualizer.svelte"
+    import { toggleMetronome, updateMetronome } from "./metronome"
 
     // audio outputs
     let audioOutputs: { value: string; label: string }[] = []
@@ -51,8 +52,7 @@
 {:else}
     <div class="settings" style="display: flex;gap: 10px;">
         <SelectElem id="metronome" data={{ tempo: values.tempo || 120, beats: values.beats || 4 }} draggable>
-            <!-- title={paused ? $dictionary.media?.play : $dictionary.media?.pause} -->
-            <Button style="width: 100%;height: 100%;justify-content: center;border-radius: 6px;" disabled={$outLocked} center title={$dictionary.audio?.toggle_metronome} on:click={playPause}>
+            <Button style="width: 100%;height: 100%;justify-content: center;border-radius: 6px;" disabled={$outLocked} center title={translateText("audio.toggle_metronome")} on:click={playPause}>
                 <Icon id={paused ? "play" : "stop"} white={paused} size={5} />
             </Button>
         </SelectElem>

@@ -1,25 +1,8 @@
 <script lang="ts">
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import {
-        activeDrawerTab,
-        activeEdit,
-        activePage,
-        activePopup,
-        activeProject,
-        activeShow,
-        dictionary,
-        drawer,
-        drawerOpenedInEdit,
-        drawerTabsData,
-        focusMode,
-        labelsDisabled,
-        os,
-        previousShow,
-        projects,
-        quickTextCache,
-        selected
-    } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { shouldOpenReplace } from "../../utils/shortcuts"
     import { drawerTabs } from "../../values/tabs"
@@ -235,9 +218,9 @@
             {/each}
         </span>
 
-        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={translateText("main.search...")} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
-            <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} title="{$dictionary.tabs?.search_tip} [Ctrl+F]" bold={false}>
+            <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} title={translateText("tabs.search_tip [Ctrl+F]")} bold={false}>
                 <Icon id="search" size={1.4} white right={!$labelsDisabled && !$focusMode} />
                 {#if !$labelsDisabled && !$focusMode}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
@@ -250,7 +233,7 @@
             <div class="clearSearch">
                 <Button
                     style="height: 100%;"
-                    title={$dictionary.clear?.search}
+                    title={translateText("clear.search")}
                     on:click={() => {
                         searchValue = ""
                         searchElem?.focus()

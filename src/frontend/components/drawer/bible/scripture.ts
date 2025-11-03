@@ -89,18 +89,22 @@ export async function getActiveScripturesContent() {
 
     // Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
     // values like ["2_1","2_0", 1] end up ordered by base id then subverse.
-    const selectedVerses = active?.verses.map(v => (v || []).sort((a, b) => {
-        // strip optional chapter prefix (e.g. "2:1") before parsing
-        const sa = String(a).replace(/^\d+:/, "")
-        const sb = String(b).replace(/^\d+:/, "")
+    const selectedVerses = active?.verses.map(v => {
+        if (!Array.isArray(v)) return []
 
-        const pa = getVerseIdParts(sa)
-        const pb = getVerseIdParts(sb)
+        return v.sort((a, b) => {
+            // strip optional chapter prefix (e.g. "2:1") before parsing
+            const sa = String(a).replace(/^\d+:/, "")
+            const sb = String(b).replace(/^\d+:/, "")
 
-        if (pa.id !== pb.id) return pa.id - pb.id
-        if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
-        return 0
-    })) || []
+            const pa = getVerseIdParts(sa)
+            const pb = getVerseIdParts(sb)
+
+            if (pa.id !== pb.id) return pa.id - pb.id
+            if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
+            return 0
+        })
+    }) || []
 
     if (!selectedVerses[0]?.length) return null
 
@@ -641,27 +645,39 @@ export function splitText(value: string, maxLength: number) {
 
     const splitted: string[] = []
 
-    // for (let i = 0; i < value.length; i += maxLength) {
-    //     let string = value.substring(i, i + maxLength)
-    //     // merge short strings
-    //     if (string.length < 10) splitted[splitted.length - 1] += string
-    //     else splitted.push(string)
-    // }
-
     let start = 0
     while (start < value.length) {
         // find the next possible break point
-        let end = start + maxLength
+        let end = Math.min(start + maxLength, value.length)
+
         if (end < value.length) {
-            const spaceIndex = value.lastIndexOf(" ", end)
-            if (spaceIndex > start) {
-                end = spaceIndex // adjust to the last space within range
+            // prefer punctuation within 10 chars before the split point
+            const windowStart = Math.max(start + 1, end - 10)
+            let punctIndex = -1
+            // search backwards from end (inclusive) to windowStart
+            const searchStart = Math.min(end, value.length - 1)
+            for (let i = searchStart; i >= windowStart; i--) {
+                const ch = value.charAt(i)
+                if (/[.,;:!?]/.test(ch)) {
+                    punctIndex = i
+                    break
+                }
+            }
+
+            if (punctIndex > start) {
+                // split after the punctuation
+                end = punctIndex + 1
+            } else {
+                // or fallback: split at last space within range
+                const spaceIndex = value.lastIndexOf(" ", end)
+                if (spaceIndex > start) end = spaceIndex
             }
         }
 
         const trimmedValue = value.substring(start, end).trim()
-        splitted.push(trimmedValue)
+        if (trimmedValue.length) splitted.push(trimmedValue)
 
+        // continue search
         start = end + 1
     }
 
@@ -719,20 +735,22 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
-    if (get(scriptureSettings).firstSlideReference && slides[0]?.[0]?.lines?.[0]?.text?.[0]) {
-        const slideClone = clone(slides[0])
+    const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
+    if (get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
+        const textboxesClone = clone(textboxes)
+
         // remove reference item
         // slides.forEach((a) => a.splice(a.length - 1, 1))
         // get verse text for correct styling
-        let metaStyle = get(scriptureSettings)?.invertItems ? slideClone.at(-1) : slideClone.at(-2)
-        if (!metaStyle) metaStyle = clone(slideClone[0])
+        let metaStyle = get(scriptureSettings)?.invertItems ? textboxesClone.at(-1) : textboxesClone.at(-2)
+        if (!metaStyle) metaStyle = clone(textboxesClone[0])
 
         if (metaStyle) slides = [[metaStyle], ...slides]
         // only keep one line/text item (not verse number)
         slides[0][0].lines = [slides[0][0].lines![0]]
         slides[0][0].lines![0].text = [slides[0][0].lines[0].text[1] || slides[0][0].lines[0].text[0]]
         // set verse text to reference
-        let refValue = (get(scriptureSettings)?.invertItems ? slideClone.at(-2) : slideClone.at(-1))?.lines?.at(get(scriptureSettings)?.referenceAtBottom ? -1 : 0)?.text?.[0].value || ""
+        let refValue = (get(scriptureSettings)?.invertItems ? textboxesClone.at(-2) : textboxesClone.at(-1))?.lines?.at(get(scriptureSettings)?.referenceAtBottom ? -1 : 0)?.text?.[0].value || ""
         slides[0][0].lines![0].text[0].value = refValue
     }
 
