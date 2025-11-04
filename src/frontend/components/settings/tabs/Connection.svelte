@@ -243,8 +243,8 @@
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
-        <MaterialButton title="churchApps.sync_categories_description" icon="options" on:click={() => activePopup.set("churchApps_sync_categories")}>
-            <T id="churchApps.sync_categories" />
+        <MaterialButton title="settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("churchApps_sync_categories")}>
+            <T id="settings.sync_categories" />
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.amazinglife}

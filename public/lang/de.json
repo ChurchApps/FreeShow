@@ -1615,9 +1615,5 @@
         "translation_description_multiline": "Fügt alle Sprachen in eine einzelne Textbox in abwechselnden Zeilen ein. (Wie in Songbeamer)",
         "translation_description_textboxes": "Fügt jede Sprache in eine separate Textbox auf der Folie ein.",
         "translation_description_layouts": "Erstellt für jede Sprache eigene Folien und ein eigenes Layout nur für diese Sprache."
-    },
-    "churchApps": {
-        "sync_categories": "Kategorien synchronisieren",
-        "sync_categories_description": "Auswählen, welche Kategorien als Lieder mit ChurchApps synchronisiert werden"
     }
 }

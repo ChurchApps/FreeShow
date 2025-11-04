@@ -1586,9 +1586,5 @@
         "translation_description_multiline": "Adiciona todos os idiomas numa única caixa de texto em linhas alternadas. (Como no Songbeamer)",
         "translation_description_textboxes": "Adiciona cada idioma como uma caixa de texto separada no slide",
         "translation_description_layouts": "Cria um conjunto único de slides e um layout para cada idioma."
-    },
-    "churchApps": {
-        "sync_categories": "Sincronizar categorias",
-        "sync_categories_description": "Selecione quais as categorias que devem ser sincronizadas como músicas para o ChurchApps"
     }
 }

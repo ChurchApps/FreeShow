@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Ajoute toutes les langues dans une seule zone de texte, en alternance de lignes. (Comme dans Songbeamer)",
         "translation_description_textboxes": "Ajoute chaque langue dans une zone de texte distincte à la diapositive.",
         "translation_description_layouts": "Crée un ensemble unique de diapos et une mise en page pour chaque langue."
-    },
-    "churchApps": {
-        "sync_categories": "Synchroniser les catégories",
-        "sync_categories_description": "Sélectionnez les catégories à synchroniser avec ChurchApps"
     }
 }

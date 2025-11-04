@@ -1615,9 +1615,5 @@
         "translation_description_multiline": "Voegt alle talen afwisselend in één tekstvak toe. (Zoals in Songbeamer)",
         "translation_description_textboxes": "Voegt elke taal als apart tekstvak toe aan de dia.",
         "translation_description_layouts": "Creëert een unieke set van dia's en een lay-out voor elke taal."
-    },
-    "churchApps": {
-        "sync_categories": "Categorieën synchroniseren",
-        "sync_categories_description": "Selecteer welke categorieën je wilt synchroniseren als nummers met ChurchApps"
     }
 }

@@ -1615,9 +1615,5 @@
         "translation_description_multiline": "모든 언어를 하나의 글상자에 여러줄로 입력합니다. (Songbeamer 방식)",
         "translation_description_textboxes": "각 언어별로 글상자를 구분하여 슬라이드에 추가합니다.",
         "translation_description_layouts": "각 언어별로 별도의 레이아웃과 슬라이드 집합을 만듭니다."
-    },
-    "churchApps": {
-        "sync_categories": "분류 동기화",
-        "sync_categories_description": "CHURCHAPPS와 동기화 할 곡 분류 선택"
     }
 }

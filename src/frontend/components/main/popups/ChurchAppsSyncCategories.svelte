@@ -30,7 +30,7 @@
     }
 </script>
 
-<p class="tip"><T id="churchApps.sync_categories_description" /></p>
+<p class="tip"><T id="settings.sync_categories_tip" /></p>
 
 <div class="categories">
     {#each categoryOptions as { id, name, count }}

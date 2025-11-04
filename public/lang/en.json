@@ -1329,6 +1329,8 @@
         "restart": "Restart servers",
         "connect_to": "Connect to $1",
         "disconnect_from": "Disconnect from $1",
+        "sync_categories": "Sync categories",
+        "sync_categories_tip": "Select which categories to upload as songs",
         "reset_all": "Reset everything",
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
@@ -1625,9 +1627,5 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
-    },
-    "churchApps": {
-        "sync_categories": "Sync categories",
-        "sync_categories_description": "Select which categories to sync as songs with ChurchApps"
     }
 }

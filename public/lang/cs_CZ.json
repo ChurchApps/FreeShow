@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Přidá všechny jazyky do jednoho textového pole na střídající se řádky. (Podobně jako v SongBeameru)",
         "translation_description_textboxes": "Přidá každý jazyk jako samostatné textové pole na snímek.",
         "translation_description_layouts": "Vytvoří jedinečnou sadu snímků a rozvržení pro každý jazyk."
-    },
-    "churchApps": {
-        "sync_categories": "Synchronizovat kategorie",
-        "sync_categories_description": "Zvolit kategorie k synchronizaci jako písně s ChurchApps"
     }
 }

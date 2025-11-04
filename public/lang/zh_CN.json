@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "在同一个文本框内交替显示所有语言（类似 Songbeamer）。",
         "translation_description_textboxes": "将每种语言作为单独的文本框添加到幻灯片中。",
         "translation_description_layouts": "为每种语言创建一组独特的幻灯片和布局。"
-    },
-    "churchApps": {
-        "sync_categories": "同步分类",
-        "sync_categories_description": "选择要与 ChurchApps 同步为歌曲的类别"
     }
 }

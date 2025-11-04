@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Lägger till alla språk i en enda textruta i alternerande rader. (Som i Songbeamer)",
         "translation_description_textboxes": "Lägg till varje språk som ett separat \ntextbox i bilden",
         "translation_description_layouts": "Skapa ett unik sett av bilder och en\nlayout för varje såpråk"
-    },
-    "churchApps": {
-        "sync_categories": "Synka kategorier",
-        "sync_categories_description": "Välj vilken kategori att synka som\n sånger med ChurchApps"
     }
 }

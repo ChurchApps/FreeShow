@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Agregar todos los idiomas en un único cuadro de texto en líneas alternas. (Como en Songbeamer)",
         "translation_description_textboxes": "Agregar cada idioma como un cuadro de texto separado a la diapositiva.",
         "translation_description_layouts": "Crear un conjunto único de diapositivas y un diseño para cada idioma."
-    },
-    "churchApps": {
-        "sync_categories": "Sincronizar categorías",
-        "sync_categories_description": "Seleccionar qué categorías sincronizar como canciones con ChurchApps"
     }
 }
