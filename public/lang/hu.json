@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Dinamikus értékek kezelése",
         "choose_camera": "Kamera kiválasztása",
         "manage_tags": "Címkék kezelése",
-        "chums_sync_categories": "Szinkronizálandó kategóriák kijelölése",
+        "churchApps_sync_categories": "Szinkronizálandó kategóriák kijelölése",
         "effect_items": "Effektus elemek",
         "initialize": "Üdvözöljük a FreeShow-ban",
         "unsaved": "Biztosan ki szeretne léptni?",
@@ -1624,8 +1624,8 @@
         "translation_description_textboxes": "Minden nyelvet külön szövegdobozként ad hozzá a diához.",
         "translation_description_layouts": "Minden nyelvhez egyedi diakészletet és elrendezést hoz létre."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Kategóriák szinkronizálása",
-        "sync_categories_description": "Jelölje ki, mely kategóriákat szeretné dalként szinkronizálni a Chums alkalmazással."
+        "sync_categories_description": "Jelölje ki, mely kategóriákat szeretné dalként szinkronizálni a ChurchApps alkalmazással."
     }
 }

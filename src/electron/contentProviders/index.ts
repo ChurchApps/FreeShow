@@ -2,7 +2,7 @@
  * Content Providers Module
  *
  * This module provides a unified interface for managing different content providers
- * like Chums and Planning Center. It includes:
+ * like ChurchApps and Planning Center. It includes:
  *
  * - Base classes and interfaces for creating new content providers
  * - Common authentication flows (OAuth2, PKCE)
@@ -26,7 +26,7 @@ export {
 } from "./base/types"
 
 // Provider implementations (simplified versions for now)
-export { ChumsProvider, type ChumsScopes, type ChumsAuthData } from "./chums/ChumsProvider"
+export { ChurchAppsProvider, type ChurchAppsScopes, type ChurchAppsAuthData } from "./churchApps/ChurchAppsProvider"
 export { PlanningCenterProvider, type PCOScopes, type PCOAuthData } from "./planningCenter/PlanningCenterProvider"
 
 // Registry and legacy functions

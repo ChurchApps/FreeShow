@@ -537,7 +537,7 @@ const settings = [
             "meta.display_metadata"
         ]
     },
-    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "Chums", "-Network", "-LAN"] },
+    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "ChurchApps", "-Network", "-LAN"] },
     {
         id: "files",
         name: "settings.files",

@@ -472,7 +472,7 @@
         "manage_metadata": "Tvarkyti metaduomenis",
         "choose_camera": "Pasirinkti kamerą",
         "manage_tags": "Manage tags",
-        "chums_sync_categories": "Select categories to sync",
+        "churchApps_sync_categories": "Select categories to sync",
         "effect_items": "Effect items",
         "initialize": "Jus sveikina FreeShow",
         "unsaved": "Ar tikrai norite išeiti?",
@@ -1555,8 +1555,8 @@
         "translation_description_textboxes": "Prideda į skaidrę visas kalbas kaip atskirus teksto langelius.",
         "translation_description_layouts": "Sukuria kiekvienai kalbai išskirtinį skaidrių rinkinį bei išdėstymą."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Sync categories",
-        "sync_categories_description": "Select which categories to sync as songs with Chums"
+        "sync_categories_description": "Select which categories to sync as songs with ChurchApps"
     }
 }

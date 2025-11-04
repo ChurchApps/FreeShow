@@ -4,7 +4,7 @@ import type { ContentProviderId } from "./base/types"
 
 // Import providers
 import { AmazingLifeProvider } from "./amazingLife/AmazingLifeProvider"
-import { ChumsProvider } from "./chums/ChumsProvider"
+import { ChurchAppsProvider } from "./churchApps/ChurchAppsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
 
 /**
@@ -21,7 +21,7 @@ export class ContentProviderRegistry {
         if (this.initialized) return
 
         // Register all available content providers
-        ContentProviderFactory.register("chums", ChumsProvider)
+        ContentProviderFactory.register("churchApps", ChurchAppsProvider)
         ContentProviderFactory.register("planningcenter", PlanningCenterProvider)
         ContentProviderFactory.register("amazinglife", AmazingLifeProvider)
 

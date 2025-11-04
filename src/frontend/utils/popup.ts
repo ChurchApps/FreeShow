@@ -16,7 +16,7 @@ import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
-import ChumsSyncCategories from "../components/main/popups/ChumsSyncCategories.svelte"
+import ChurchAppsSyncCategories from "../components/main/popups/ChurchAppsSyncCategories.svelte"
 import CloudMethod from "../components/main/popups/CloudMethod.svelte"
 import CloudUpdate from "../components/main/popups/CloudUpdate.svelte"
 import Color from "../components/main/popups/Color.svelte"
@@ -142,7 +142,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     connect: Connect,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
-    chums_sync_categories: ChumsSyncCategories,
+    churchApps_sync_categories: ChurchAppsSyncCategories,
     effect_items: EffectItems
 }
 
