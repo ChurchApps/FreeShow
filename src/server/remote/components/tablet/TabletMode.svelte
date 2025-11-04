@@ -482,6 +482,8 @@
     .left,
     .right {
         width: 290px;
+        max-width: 35vw; /* prevent side panels from forcing horizontal scroll on tablets */
+        overflow: hidden;
     }
 
     .left {
@@ -493,6 +495,8 @@
 
     .center {
         flex: 1;
+        min-width: 0; /* allow flexbox to shrink center to available width */
+        overflow: hidden; /* prevent inner content from creating page-wide overflow */
     }
 
     /* Resizers */
@@ -595,6 +599,14 @@
     .outSlides {
         display: flex;
         width: 100%;
+    }
+
+    /* Tablet/iPad specific safeguards */
+    @media (max-width: 1180px) {
+        .left,
+        .right {
+            max-width: 32vw;
+        }
     }
 
     /* fullscreen */
