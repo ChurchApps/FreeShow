@@ -210,9 +210,9 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
     // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
     const projectItems = get(projects)[get(activeProject) || ""]?.shows
     // this does not work with multiple of the same folder
-    const projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const projectItemIndex = projectItems.findIndex((a) => (a.type === "folder" || a.type === "pdf") && a.id === folderPath)
     const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
-    if (!timer || file.type !== "image") return
+    if (!timer || (file.type !== "image" && file.type !== "pdf")) return
 
     // newSlideTimer played from Preview.svelte
     setOutput("transition", { duration: timer, folderPath })

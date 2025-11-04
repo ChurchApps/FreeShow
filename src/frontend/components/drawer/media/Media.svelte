@@ -2,6 +2,7 @@
     import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
+    import type { ClickEvent } from "../../../../types/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
@@ -313,7 +314,13 @@
         }
     }
 
-    function goBack() {
+    function goBack(e?: ClickEvent) {
+        if (e?.detail.ctrl) {
+            lastPaths.push(path)
+            path = rootPath
+            return
+        }
+
         const lastSlash = path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")
         const folder = path.slice(0, lastSlash)
 

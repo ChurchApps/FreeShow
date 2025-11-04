@@ -142,6 +142,7 @@ export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult 
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
+export const groupsMoreOptionsEnabled: Writable<boolean> = writable(false)
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)

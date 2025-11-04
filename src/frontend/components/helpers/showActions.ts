@@ -219,7 +219,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (((!slide || start) && currentShow?.type === "pdf") || (!start && slide?.type === "pdf")) {
         if (start && slide?.id !== currentShow?.id) slide = null
         const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
-        playPdf(slide, nextPage)
+        playPdf(slide, nextPage, nextAfterMedia)
         return
     }
 
@@ -647,7 +647,7 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-async function playPdf(slide: null | OutSlide, nextPage: number) {
+async function playPdf(slide: null | OutSlide, nextPage: number, loop: boolean = false) {
     const data = slide || get(activeShow)
     if (!data?.id) return
 
@@ -656,7 +656,10 @@ async function playPdf(slide: null | OutSlide, nextPage: number) {
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
-    if (nextPage > pages - 1) return
+    if (nextPage > pages - 1) {
+        if (!loop) return
+        nextPage = 0
+    }
 
     const name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
 

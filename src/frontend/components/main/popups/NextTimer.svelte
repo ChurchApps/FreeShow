@@ -18,10 +18,14 @@
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
     let allSlides = !$popupData.indexes?.length
 
+    let isProjectItem = type === "folder" || type === "pdf"
+
+    let count = isProjectItem ? $popupData.count || 0 : allActiveSlides.length
+
     onMount(() => {
         popupData.set({})
 
-        if (type === "folder") totalTime = $popupData.totalTime
+        if (isProjectItem) totalTime = $popupData.totalTime
         else if (allSlides) getTotalTime()
     })
 
@@ -29,7 +33,7 @@
         value = e?.detail ?? e
         if (value) value = value
 
-        if (type === "folder") {
+        if (isProjectItem) {
             projects.update((a) => {
                 const index = $activeShow?.index ?? -1
                 const projectId = $activeProject
@@ -78,9 +82,9 @@
         appliedToSlides = [...new Set(allValues)].length === 1 && allValues[0] === allTime ? allTime : 0
     }
 
-    let allTime: number = type === "folder" ? value || 10 : allActiveSlides[0]?.data?.nextTimer || 10
+    let allTime: number = isProjectItem ? value || 10 : allActiveSlides[0]?.data?.nextTimer || 10
 
-    $: newTime = allTime * allActiveSlides.length
+    $: newTime = allTime * count
 
     const getTime = (time: number) => (time > 59 ? joinTime(secondsToTime(time)) : time + "s")
 </script>
@@ -89,7 +93,7 @@
     <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
 
     <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
-    {#if type === "folder" ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
+    {#if isProjectItem ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
         <MaterialButton variant="outlined" icon="reset" on:click={() => updateValue(undefined)}>
             <T id="actions.reset" />
         </MaterialButton>
