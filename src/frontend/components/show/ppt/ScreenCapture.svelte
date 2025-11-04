@@ -31,7 +31,7 @@
     function receiveWindows(a: any) {
         chosenWindow = null
 
-        let savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName
+        let savedScreen = $projects[$activeProject || ""]?.shows?.find((a) => a.id === path)?.data?.screenName
         if (savedScreen) {
             let window = a.find((a) => a.name === savedScreen)
             if (window) {
@@ -71,7 +71,7 @@
         // save chosen screen in project item
         if (save) {
             projects.update((a) => {
-                let projectIndex = a[$activeProject || ""]?.shows?.findIndex((a) => a.id === path)
+                let projectIndex = a[$activeProject || ""]?.shows?.findIndex((a) => a.id === path) ?? -1
                 if (projectIndex < 0) return a
 
                 a[$activeProject!].shows[projectIndex].data = { screenName: chosenWindow.name }

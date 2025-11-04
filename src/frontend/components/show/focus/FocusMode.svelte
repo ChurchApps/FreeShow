@@ -13,7 +13,7 @@
     $: project = $projects[projectId]
 
     let projectUpdating: any = null
-    $: if (project) initScroll()
+    $: if (project?.shows) initScroll()
     function initScroll() {
         if (projectUpdating) clearTimeout(projectUpdating)
         projectUpdating = setTimeout(() => {
@@ -70,7 +70,7 @@
 
     let isScrolling: any = null
     function scrolling(e: any) {
-        if (scrollingToActive || !listElem || !project || projectUpdating) return
+        if (scrollingToActive || !listElem || !project?.shows || projectUpdating) return
 
         if (isScrolling) clearTimeout(isScrolling)
         isScrolling = setTimeout(() => {

@@ -37,7 +37,7 @@
             projects.update((a) => {
                 const index = $activeShow?.index ?? -1
                 const projectId = $activeProject
-                if (!projectId || !a[projectId] || index < 0) return a
+                if (!projectId || !a[projectId]?.shows?.[index] || index < 0) return a
 
                 if (!a[projectId].shows[index].data) a[projectId].shows[index].data = {}
                 a[projectId].shows[index].data.timer = value || 0

@@ -122,6 +122,8 @@ function startBackgroundListener() {
 }
 
 function checkTimeDifference(currentTime: number) {
+    if (!get(activeSlideRecording)?.sequence) return
+
     // find closest sequence
     let addedTime = 0
     const sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {

@@ -19,13 +19,14 @@
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
-        note = $projects[$activeProject || ""]?.shows[section.index]?.notes || ""
+        note = $projects[$activeProject || ""]?.shows?.[section.index]?.notes || ""
     }
 
     function edit(e: any) {
         if (section.notes === e.detail || !$activeProject) return
 
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index].notes = e.detail
             return a
@@ -40,6 +41,7 @@
         if (!$activeProject) return
 
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index][key] = value
             return a
@@ -67,6 +69,7 @@
 
     function updateSectionData(key: string, value: any) {
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows?.[section.index]) return a
             const currentData = a[$activeProject!].shows[section.index].data || {}
             a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
             return a
@@ -75,7 +78,7 @@
 
     let settingsOpened = false
 
-    $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
+    $: sectionUpdated = $projects[$activeProject || ""]?.shows?.[section.index] || {}
     $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
 
     $: currentActionId = localAction || $special.sectionTriggerAction

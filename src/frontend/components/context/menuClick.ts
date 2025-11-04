@@ -511,7 +511,7 @@ const clickActions = {
             }))
 
         projects.update((a) => {
-            if (!a[get(activeProject)!]) return a
+            if (!a[get(activeProject)!]?.shows) return a
 
             a[get(activeProject)!].shows.push(...obj.sel!.data)
             return a
@@ -880,7 +880,7 @@ const clickActions = {
         if (!projectId || !indexes.length) return
 
         projects.update((a) => {
-            if (!a[projectId].shows) return a
+            if (!a[projectId]?.shows) return a
 
             const newState = !a[projectId].shows[indexes[0]]?.played
 

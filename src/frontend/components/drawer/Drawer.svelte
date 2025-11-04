@@ -155,7 +155,7 @@
             }
 
             searchElem.select()
-            let newIndex = ($activeShow?.index ?? $projects[$activeProject].shows.length - 1) + 1
+            let newIndex = ($activeShow?.index ?? $projects[$activeProject]?.shows?.length - 1) + 1
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...match, index: newIndex })
             searchValue = ""

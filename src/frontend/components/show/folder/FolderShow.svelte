@@ -25,7 +25,7 @@
     export let index: number
 
     let data: { timer?: number } | undefined
-    $: data = $projects[$activeProject || ""]?.shows[index]?.data
+    $: data = $projects[$activeProject || ""]?.shows?.[index]?.data
 
     type TFile = { path: string; name: string; type: ShowType; thumbnail?: string }
     let folderFiles: TFile[] = []

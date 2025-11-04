@@ -21,7 +21,7 @@
     export let index: number
 
     let data: { timer?: number } | undefined
-    $: data = $projects[$activeProject || ""]?.shows[index]?.data
+    $: data = $projects[$activeProject || ""]?.shows?.[index]?.data
 
     $: path = show.id
 

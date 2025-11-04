@@ -208,7 +208,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
 export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {
     // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
-    const projectItems = get(projects)[get(activeProject) || ""]?.shows
+    const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
     // this does not work with multiple of the same folder
     const projectItemIndex = projectItems.findIndex((a) => (a.type === "folder" || a.type === "pdf") && a.id === folderPath)
     const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
