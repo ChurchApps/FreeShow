@@ -132,9 +132,23 @@ export async function getActiveScripturesContent() {
 
         // WIP custom verse number offset per scripture (for collections)
 
+        // add the three prior and next verse numbers to selected for the stage display next slide
+        const selected = clone(selectedVerses)
+        const includeCount = 3
+        selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
+        selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
+        // remove selected not in range of min to max verse number
+        const minVerseNumber = 1
+        const maxVerseNumber = Chapters[0].data.verses.length
+        selected[0] = selected[0].filter(v => {
+            const id = getVerseId(v)
+            if (isNaN(id)) return true
+            return id >= minVerseNumber && id <= maxVerseNumber
+        })
+
         const splitLongVerses = get(scriptureSettings).splitLongVerses
         let allVersesText: { [key: string]: string }[] = []
-        selectedVerses.forEach((verses, i) => {
+        selected.forEach((verses, i) => {
             let versesText: { [key: string]: string } = {}
 
             // WIP if 1_1, 1_2, 1_3 all add up to over the splitted verse length combined, then merge into "1"
