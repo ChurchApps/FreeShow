@@ -484,7 +484,7 @@
         "manage_dynamic_values": "Dynamische waarden beheren",
         "choose_camera": "Kies camera",
         "manage_tags": "Labels beheren",
-        "chums_sync_categories": "Selecteer categorieën om te synchroniseren",
+        "churchApps_sync_categories": "Selecteer categorieën om te synchroniseren",
         "effect_items": "Effecten",
         "initialize": "Welkom bij FreeShow",
         "unsaved": "Weet je zeker dat je wilt afsluiten?",
@@ -1616,8 +1616,8 @@
         "translation_description_textboxes": "Voegt elke taal als apart tekstvak toe aan de dia.",
         "translation_description_layouts": "Creëert een unieke set van dia's en een lay-out voor elke taal."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Categorieën synchroniseren",
-        "sync_categories_description": "Selecteer welke categorieën je wilt synchroniseren als nummers met Chums"
+        "sync_categories_description": "Selecteer welke categorieën je wilt synchroniseren als nummers met ChurchApps"
     }
 }

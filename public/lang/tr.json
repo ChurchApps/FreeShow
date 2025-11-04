@@ -482,7 +482,7 @@
         "manage_dynamic_values": "Dinamik değerleri yönetin",
         "choose_camera": "Kamera seç",
         "manage_tags": "Etiketleri yönet",
-        "chums_sync_categories": "Senkronize edilecek kategorileri seçin",
+        "churchApps_sync_categories": "Senkronize edilecek kategorileri seçin",
         "effect_items": "Efekt öğeleri",
         "initialize": "FreeShow'a Hoşgeldiniz",
         "unsaved": "Bırakmak istediğine emin misin?",
@@ -1614,8 +1614,8 @@
         "translation_description_textboxes": "Her dili ayrı bir metin kutusu olarak slayta ekler.",
         "translation_description_layouts": "Her dil için benzersiz bir slayt seti ve bir düzen oluşturur."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Kategorileri senkronize et",
-        "sync_categories_description": "Chums ile şarkı olarak hangi kategorilerin senkronize edileceğini seçin"
+        "sync_categories_description": "ChurchApps ile şarkı olarak hangi kategorilerin senkronize edileceğini seçin"
     }
 }

@@ -330,8 +330,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         special.set(v)
     },
     // @ts-ignore - DEPERACTED (migrate)
-    chumsSyncCategories: (v: any) => {
-        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), chums: { syncCategories: v } })
+    churchAppsSyncCategories: (v: any) => {
+        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), churchApps: { syncCategories: v } })
     },
     contentProviderData: (v: any) => contentProviderData.set(v),
     effects: (a: any) => effects.set(a)

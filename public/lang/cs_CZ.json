@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Spravovat dynamické hodnoty",
         "choose_camera": "Vybrat kameru",
         "manage_tags": "Spravovat štítky",
-        "chums_sync_categories": "Vybrat kategorie k synchronizaci",
+        "churchApps_sync_categories": "Vybrat kategorie k synchronizaci",
         "effect_items": "Efektové předměty",
         "initialize": "Vítejte ve FreeShow",
         "unsaved": "Opustit FreeShow?",
@@ -1624,8 +1624,8 @@
         "translation_description_textboxes": "Přidá každý jazyk jako samostatné textové pole na snímek.",
         "translation_description_layouts": "Vytvoří jedinečnou sadu snímků a rozvržení pro každý jazyk."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Synchronizovat kategorie",
-        "sync_categories_description": "Zvolit kategorie k synchronizaci jako písně s Chums"
+        "sync_categories_description": "Zvolit kategorie k synchronizaci jako písně s ChurchApps"
     }
 }

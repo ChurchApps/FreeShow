@@ -479,7 +479,7 @@
         "manage_dynamic_values": "Gerir valores dinâmicos",
         "choose_camera": "Escolher a câmera",
         "manage_tags": "Gerir etiquetas",
-        "chums_sync_categories": "Selecione categorias para sincronizar",
+        "churchApps_sync_categories": "Selecione categorias para sincronizar",
         "effect_items": "Efeitos",
         "initialize": "Bem-Vindo ao FreeShow",
         "unsaved": "Tem certeza que deseja sair?",
@@ -1587,8 +1587,8 @@
         "translation_description_textboxes": "Adiciona cada idioma como uma caixa de texto separada no slide",
         "translation_description_layouts": "Cria um conjunto único de slides e um layout para cada idioma."
     },
-    "chums": {
+    "churchApps": {
         "sync_categories": "Sincronizar categorias",
-        "sync_categories_description": "Selecione quais as categorias que devem ser sincronizadas como músicas para o Chums"
+        "sync_categories_description": "Selecione quais as categorias que devem ser sincronizadas como músicas para o ChurchApps"
     }
 }

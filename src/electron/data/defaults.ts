@@ -80,7 +80,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         planningcenter: {
             localAlways: false
         },
-        chums: {
+        churchApps: {
             syncCategories: ["song"]
         }
     },
