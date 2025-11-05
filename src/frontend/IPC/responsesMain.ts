@@ -110,7 +110,16 @@ export const mainResponses: MainResponses = {
     },
     [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
-        projects.set(a.projects || {})
+        const projectsList = a.projects || {}
+
+        // remove "Mark as played" on startup
+        Object.values(projectsList).forEach((project) => {
+            project?.shows?.forEach((item) => {
+                delete item.played
+            })
+        })
+
+        projects.set(projectsList)
         folders.set(a.folders || {})
         projectTemplates.set(a.projectTemplates || {})
     },

@@ -359,7 +359,7 @@ export type Popups =
     | "connect"
     | "cloud_update"
     | "cloud_method"
-    | "churchApps_sync_categories"
+    | "sync_categories"
     | "effect_items"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"

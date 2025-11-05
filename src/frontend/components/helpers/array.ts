@@ -271,3 +271,8 @@ export function rangeSelect(e: any, currentlySelected: (number | string)[], newS
 
     return currentlySelected
 }
+
+// compare two objects, check that they are identical, regardless of key order
+export function areObjectsEqual(a: Record<string, any>, b: Record<string, any>): boolean {
+    return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
+}

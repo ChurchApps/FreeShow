@@ -98,7 +98,7 @@
             <T id="actions.reset" />
         </MaterialButton>
     {:else}
-        <MaterialButton variant="outlined" icon="clock" disabled={allTime === 0} info={getTime(newTime)} on:click={() => updateValue(allTime)}>
+        <MaterialButton variant="contained" icon="clock" disabled={allTime === 0} info={getTime(newTime)} on:click={() => updateValue(allTime)}>
             <T id="actions.to_all" />
         </MaterialButton>
     {/if}

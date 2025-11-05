@@ -131,7 +131,7 @@ export interface Item {
     web?: any
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
-    actions?: any // showTime | hideTime
+    actions?: any // showTime | hideTime | transition
     clickReveal?: boolean
     lineReveal?: boolean
     chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }

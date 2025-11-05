@@ -487,7 +487,7 @@
         "manage_dynamic_values": "管理动态值",
         "choose_camera": "选择相机",
         "manage_tags": "管理标签",
-        "churchApps_sync_categories": "选择要同步的分类",
+        "sync_categories": "选择要同步的分类",
         "effect_items": "效果元素",
         "initialize": "欢迎使用 FreeShow",
         "unsaved": "您确定要退出吗？",

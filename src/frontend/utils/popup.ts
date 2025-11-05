@@ -142,7 +142,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     connect: Connect,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
-    churchApps_sync_categories: ChurchAppsSyncCategories,
+    sync_categories: ChurchAppsSyncCategories,
     effect_items: EffectItems
 }
 

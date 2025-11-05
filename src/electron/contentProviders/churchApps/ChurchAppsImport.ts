@@ -183,7 +183,7 @@ export class ChurchAppsImport {
         const layoutId = uid()
         const show: Show = {
             name: title || "",
-            category: "churchApps",
+            category: "churchapps",
             timestamps: {
                 created: new Date(SONG.dateAdded).getTime() || Date.now(),
                 modified: new Date(SONG.dateAdded).getTime() || null,
@@ -225,7 +225,7 @@ export class ChurchAppsImport {
         const layoutId = uid()
         const show: Show = {
             name: title || "",
-            category: "churchApps",
+            category: "churchapps",
             timestamps: { created: Date.now(), modified: null, used: null },
             meta: metadata,
             settings: { activeLayout: layoutId, template: null },

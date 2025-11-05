@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Manage dynamic values",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
-        "churchApps_sync_categories": "Select categories to sync",
+        "sync_categories": "Select categories to sync",
         "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",

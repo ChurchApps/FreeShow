@@ -484,7 +484,7 @@
         "manage_dynamic_values": "動的変数を管理",
         "choose_camera": "カメラを選択",
         "manage_tags": "タグを管理",
-        "churchApps_sync_categories": "同期するカテゴリを選択",
+        "sync_categories": "同期するカテゴリを選択",
         "effect_items": "効果項目",
         "initialize": "FreeShowへようこそ",
         "unsaved": "本当に終了しますか？",

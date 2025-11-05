@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Behandle dynamiske verdier",
         "choose_camera": "Velg kamera",
         "manage_tags": "Behandle etiketter",
-        "churchApps_sync_categories": "Velg kategorier for synkronisering",
+        "sync_categories": "Velg kategorier for synkronisering",
         "effect_items": "Effekt elementer",
         "initialize": "Velkommen til FreeShow",
         "unsaved": "Er du sikkert på at du vil avslutte?",

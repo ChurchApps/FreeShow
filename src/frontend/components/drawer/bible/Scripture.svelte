@@ -52,7 +52,8 @@
     $: if (previewBibleData?.customName) previewBibleData.name = previewBibleData.customName
 
     // auto load scriptures when changed
-    $: loadScripture(previewBibleId)
+    // timeout is to load drawer tab "instantly", before loading scripture
+    $: setTimeout(() => loadScripture(previewBibleId), 10)
 
     $: isActiveInOutput = outputIsScripture($outputs)
 
