@@ -451,10 +451,48 @@
     function _moveSelection(moveLeft: boolean) {
         if (!activeReference.book) return
 
+        // Check if we're dealing with split verses
+        const currentVerses = activeReference.verses[0] || []
+        const currentVerseId = currentVerses[0]?.toString()
+        const selectionCount = currentVerses.length
+        if (currentVerseId && splittedVerses.length) {
+            const currentIndex = splittedVerses.findIndex((v) => v.id === currentVerseId)
+            if (currentIndex !== -1) {
+                // Navigate within split verses, maintaining selection count
+                const newIndex = moveLeft ? currentIndex - selectionCount : currentIndex + selectionCount
+
+                if (newIndex >= 0 && newIndex + selectionCount - 1 < splittedVerses.length) {
+                    // Stay within current split verses range, select the same count
+                    const newSelection: string[] = []
+                    for (let i = 0; i < selectionCount; i++) {
+                        newSelection.push(splittedVerses[newIndex + i].id)
+                    }
+                    openVerse([newSelection])
+                    if (isActiveInOutput) setTimeout(playScripture)
+                    return
+                } else if (newIndex < 0 || newIndex + selectionCount - 1 >= splittedVerses.length) {
+                    // Need to move to next/previous chapter or book
+                    // Fall through to the regular moveSelection logic below
+                }
+            }
+        }
+
+        let versesCount = splittedVerses.length
+
+        // WIP get length from previous chapter when moving left from verse 1
+        // const normalizedVerses = (verses || []).map((v) => getVerseIdParts(String(v)).id)
+        // const firstVerse = normalizedVerses[0]
+        // if (moveLeft && firstVerse === 1) {
+        //     // get verses count from previous chapter
+        //     const prevChapterIndex = (chapters || []).findIndex((c) => c.number?.toString() === activeReference.chapters[0]?.toString()) - 1
+        //     const prevChapter = chapters?.[prevChapterIndex]
+        //     versesCount = prevChapter ? prevChapter.verses.length : 0
+        // }
+
         const lengths = {
             book: books?.length || 0,
             chapters: chapters?.length || 0,
-            verses: splittedVerses.length || 0
+            verses: versesCount
         }
 
         const selection = {
@@ -464,7 +502,6 @@
         }
 
         const newSelection = moveSelection(lengths, selection, moveLeft)
-        newSelection.verses = newSelection.verses
 
         openBook(newSelection.book, newSelection.chapters, [newSelection.verses])
 

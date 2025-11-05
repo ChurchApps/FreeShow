@@ -621,6 +621,9 @@
     .grid :global(.selectElem) {
         outline-offset: -3px;
     }
+    .grid :global(.isSelected) {
+        border-radius: 0 !important;
+    }
     /* .grid :global(#media.isSelected .main) {
         z-index: -1;
     } */

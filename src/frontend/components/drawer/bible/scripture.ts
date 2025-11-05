@@ -350,9 +350,12 @@ export function joinRange(array: (number | string)[]) {
         const { id, subverse, endNumber } = getVerseIdParts(noChapter)
         const v = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
 
-        if (Number(id) === prev) return
+        // For subverses of the same base verse (e.g., 2_1, 2_2), don't skip them
+        if (Number(id) === prev && !subverse) return
 
-        if (Number(id) - 1 === prev) {
+        // Check if this verse is consecutive to the previous one
+        const isConsecutive = Number(id) - 1 === prev || (Number(id) === prev && subverse && array[i - 1] && getVerseIdParts(String(array[i - 1]).replace(/^\d+:/, "")).subverse === subverse - 1)
+        if (isConsecutive) {
             if (i + 1 === array.length) {
                 // If the last added token has a chapter prefix and the current token
                 // has the same prefix, append only the verse part to the range end
@@ -377,7 +380,8 @@ export function joinRange(array: (number | string)[]) {
             range += v
         }
 
-        prev = Number(id)
+        // Only update prev for the base verse number, not for subverses
+        if (!subverse || Number(id) !== prev) prev = Number(id)
     })
 
     // console.log("OUTPUT", range)
