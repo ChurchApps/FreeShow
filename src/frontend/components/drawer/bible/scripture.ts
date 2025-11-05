@@ -156,7 +156,7 @@ export async function getActiveScripturesContent() {
             verses.forEach(v => {
                 const { id, subverse } = getVerseIdParts(v)
 
-                const text = Chapters[i].getVerse(id).getText()
+                const text = Chapters[i].getVerse(id).getHTML()
                 const splittedVerses = getSplittedVerses({ [id]: text })
 
                 const newVerseId = id + (subverse ? `_${subverse}` : "")
