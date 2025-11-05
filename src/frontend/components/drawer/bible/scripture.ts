@@ -139,7 +139,7 @@ export async function getActiveScripturesContent() {
         selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
         // remove selected not in range of min to max verse number
         const minVerseNumber = 1
-        const maxVerseNumber = Chapters[0].data.verses.length
+        const maxVerseNumber = Chapters[0].data.verses[Chapters[0].data.verses.length - 1].number ?? Chapters[0].data.verses.length
         selected[0] = selected[0].filter(v => {
             const id = getVerseId(v)
             if (isNaN(id)) return true
@@ -768,14 +768,24 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         slides[0][0].lines![0].text[0].value = refValue
     }
 
+    // template data
+    const template = clone(get(templates)[get(scriptureSettings).template])
+    const backgroundPath = template?.settings?.backgroundPath
+    const media = {}
+    let backgroundId = uid(5)
+    if (backgroundPath) media[backgroundId] = { path: backgroundPath, loop: true, muted: true }
+
     let slides2: any = {}
     let layouts: any[] = []
-    slides.forEach((items: any) => {
+    slides.forEach((items: any, i) => {
         let id = uid()
         const referenceText = getReferenceText(biblesContent)
 
         slides2[id] = { group: referenceText, color: null, settings: {}, notes: "", items }
         let l: any = { id }
+
+        if (backgroundId && i === 0) l.background = backgroundId
+
         layouts.push(l)
     })
 
@@ -784,9 +794,9 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     let layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
-    let template = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
+    let templateId = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-    let show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : template)
+    let show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : templateId)
 
     Object.keys(biblesContent[0].metadata || {}).forEach((key) => {
         if (key.startsWith("@")) return
@@ -800,6 +810,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(biblesContent[0].version || "")}`)
     show.slides = slides2
     show.layouts = { [layoutID]: { name: biblesContent[0].version || "", notes: "", slides: layouts } }
+    show.media = media
 
     let versions = biblesContent.map((a) => a.version).join(" + ")
     show.reference = {

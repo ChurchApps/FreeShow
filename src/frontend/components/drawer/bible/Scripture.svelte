@@ -3,6 +3,7 @@
     import { ApiBible } from "json-bible/lib/api"
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
+    import { onMount } from "svelte"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import {
         activeEdit,
@@ -30,8 +31,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
-    import { onMount } from "svelte"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -470,6 +470,15 @@
 
         if (isActiveInOutput) setTimeout(playScripture)
     }
+
+    $: reference = getReference({ data, activeReference })
+    function getReference(_updater: any) {
+        const book = data[previewBibleId]?.bookData?.name || ""
+        const referenceDivider = $scriptureSettings.referenceDivider || ":"
+        const range = joinRange(activeReference.verses[0] || [])
+        const reference = `${book} ${activeReference.chapters}${referenceDivider}${range}`
+        return reference
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -651,10 +660,13 @@
                 {/if}
 
                 {#key data}
-                    <!-- temp solution to split long verses -->
-                    {#if !currentBibleData?.verseData?.getReference()?.includes("NaN")}
+                    {reference}
+
+                    <!-- WIP had some issues with selecting multiple verses -->
+                    <!-- !NaN = temp solution to split long verses -->
+                    <!-- {#if !currentBibleData?.verseData?.getReference()?.includes("NaN")}
                         {currentBibleData?.verseData?.getReference() || "..."}
-                    {/if}
+                    {/if} -->
                 {/key}
             {/if}
         </span>
