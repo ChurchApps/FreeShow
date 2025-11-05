@@ -18,6 +18,6 @@ export type AmazingLifeRequestData = {
     data?: any
 }
 
-export const AMAZING_LIFE_API_URL = "https://api.joinamazing.dev"
-export const AMAZING_LIFE_APP_URL = "https://app.joinamazing.dev"
-export const AMAZING_LIFE_OAUTH_BASE = "https://api.joinamazing.dev/dev/aims/oauth"
+export const AMAZING_LIFE_API_URL = "https://api.joinamazing.com"
+export const AMAZING_LIFE_APP_URL = "https://app.joinamazing.com"
+export const AMAZING_LIFE_OAUTH_BASE = "https://api.joinamazing.com/prod/aims/oauth"

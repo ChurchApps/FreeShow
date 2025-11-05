@@ -3,7 +3,14 @@ import { createLog, logError } from "../IPC/responsesMain"
 import type { ErrorLog } from "../../types/Main"
 
 export function httpsRequest(hostname: string, path: string, method: "POST" | "GET", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void) {
-    const dataString = Object.keys(content).length ? JSON.stringify(content) : ""
+    const headersObj = headers as Record<string, string>
+    const isFormEncoded = headersObj['Content-Type'] === 'application/x-www-form-urlencoded'
+    let dataString = ""
+    if (Object.keys(content).length) {
+        if (isFormEncoded) dataString = new URLSearchParams(content as Record<string, string>).toString()
+        else dataString = JSON.stringify(content)
+    }
+
     const options = {
         hostname: hostname.replace(/^https?:\/\//, ""),
         port: 443,
@@ -12,7 +19,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         headers: {
             ...(dataString.length
                 ? {
-                    "Content-Type": "application/json",
+                    "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
                     "User-Agent": "Node.js",
                     "Content-Length": Buffer.byteLength(dataString),
                 }

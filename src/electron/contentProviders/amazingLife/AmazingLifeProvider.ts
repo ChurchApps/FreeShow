@@ -295,15 +295,25 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     protected async authenticate(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
+        const server = this.app.listen(this.config.port, () => {
+            console.info(`Listening for APlay OAuth response at port ${this.config.port}`)
+        })
+
+        server.once("error", (err: Error) => {
+            if ((err as any).code === "EADDRINUSE") server.close()
+        })
+
         try {
             const authData = await this.oauthHelper.authorize(scope)
             if (authData) {
                 this.access = authData
                 setContentProviderAccess("amazinglife", scope, authData)
             }
+            server.close()
             return authData
         } catch (error) {
             console.error("APlay authentication failed:", error)
+            server.close()
             return null
         }
     }
