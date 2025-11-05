@@ -22,6 +22,7 @@
     export let shiftRange: any[] = []
     export let thumbnailPath = ""
     export let thumbnail = true
+    export let contentProvider = false
 
     // Memoized name computation
     let displayName = ""
@@ -113,7 +114,7 @@
         }
 
         let videoType = mediaStyle.videoType || ""
-        let loop = videoType === "foreground" ? false : true
+        let loop = contentProvider || videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
 
