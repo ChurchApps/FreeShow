@@ -15,7 +15,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas = {
     all_slides: ["template"],
-    slides: ["media", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
+    slides: ["media", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
@@ -37,7 +37,7 @@ export function validateDrop(id: string, selectedId: SelectIds | null, children 
     return areas[id]?.includes(selectedId) || (children && areaChildren[id]?.includes(selectedId))
 }
 
-export function ondrop(e: any, id: string) {
+export async function ondrop(e: any, id: string) {
     // let data: string = e.dataTransfer.getData("text")
     const h = { id: null, location: { page: get(activePage) } }
     const sel = get(selected)
@@ -66,7 +66,7 @@ export function ondrop(e: any, id: string) {
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }
 
-        const hist = dropActions[id](dropData, h, keys) as History | undefined
+        const hist = await dropActions[id](dropData, h, keys) as History | undefined
         if (hist && hist.id) history(hist)
         deselect()
         return

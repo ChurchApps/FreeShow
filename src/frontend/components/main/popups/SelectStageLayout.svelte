@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, popupData, stageShows } from "../../../stores"
+    import { activePopup, currentOutputSettings, popupData, stageShows } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import T from "../../helpers/T.svelte"
     import StageSlide from "../../stage/StageSlide.svelte"
@@ -9,7 +9,7 @@
 
     const profile = getAccess("stage")
 
-    let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
+    let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none" && Object.values($stageShows[a.id]?.items).some((a) => a.currentOutput?.source !== $currentOutputSettings))
 
     let active = $popupData.active || ""
 

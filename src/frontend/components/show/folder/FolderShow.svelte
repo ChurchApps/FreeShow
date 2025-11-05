@@ -5,7 +5,8 @@
     import { clearAudio } from "../../../audio/audioFading"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, activeProject, dictionary, focusMode, media, outLocked, outputs, playingAudio, popupData, projects, styles } from "../../../stores"
+    import { activePopup, activeProject, focusMode, media, outLocked, outputs, playingAudio, popupData, projects, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { audioExtensions, imageExtensions, videoExtensions } from "../../../values/extensions"
     import Card from "../../drawer/Card.svelte"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -24,7 +25,7 @@
     export let index: number
 
     let data: { timer?: number } | undefined
-    $: data = $projects[$activeProject || ""]?.shows[index]?.data
+    $: data = $projects[$activeProject || ""]?.shows?.[index]?.data
 
     type TFile = { path: string; name: string; type: ShowType; thumbnail?: string }
     let folderFiles: TFile[] = []
@@ -98,7 +99,7 @@
                     {#if file.type === "image" && timer}
                         <div>
                             <div class="button">
-                                <div style="padding: 3px;" data-title={$dictionary.preview?.nextTimer}>
+                                <div style="padding: 3px;" data-title={translateText("preview.nextTimer")}>
                                     <Icon id="clock" size={0.9} white />
                                 </div>
                             </div>
@@ -110,7 +111,7 @@
                     {#if file.type === "video"}
                         <div>
                             <div class="button">
-                                <div style="padding: 3px;" data-title={$dictionary.actions?.next_after_media}>
+                                <div style="padding: 3px;" data-title={translateText("actions.next_after_media")}>
                                     <Icon id="forward" size={0.9} white />
                                 </div>
                             </div>
@@ -143,7 +144,7 @@
         <MaterialButton
             disabled={!folderFiles.length}
             on:click={() => {
-                popupData.set({ type: "folder", value: timer, totalTime })
+                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter((a) => a.type === "image").length })
                 activePopup.set("next_timer")
             }}
             title="popup.next_timer{totalTime !== 0 ? `: ${totalTime}s` : ''}"

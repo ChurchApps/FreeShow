@@ -1,27 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import {
-        actionRevealUsed,
-        actions,
-        activePopup,
-        audioPlaylists,
-        audioStreams,
-        categories,
-        dictionary,
-        effects,
-        emitters,
-        outputs,
-        overlays,
-        popupData,
-        projects,
-        shows,
-        stageShows,
-        styles,
-        templates,
-        timers,
-        triggers,
-        variables
-    } from "../../stores"
+    import { actionRevealUsed, actions, activePopup, audioPlaylists, audioStreams, categories, effects, emitters, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
@@ -127,7 +106,7 @@
                 return true
             }),
         // custom special
-        ...((list && !full) || mode ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: true, section: "popup.action" }])
+        ...((list && !full) || mode ? [] : [{ id: "wait", name: translateText("animate.wait"), icon: "time_in", common: true, section: "popup.action" }])
     ].map((a, i) => {
         if (i === 0) usedSections = []
 

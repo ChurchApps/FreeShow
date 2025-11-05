@@ -68,16 +68,19 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     },
     volume: 1,
     gain: 1,
+    audioChannelsData: {},
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
     calendarAddShow: "",
     metronome: {},
+    equalizerConfig: { enabled: false, bands: [] },
+    eqPresets: {},
     effectsLibrary: [],
     special: {},
     contentProviderData: {
         planningcenter: {
             localAlways: false
         },
-        chums: {
+        churchApps: {
             syncCategories: ["song"]
         }
     },

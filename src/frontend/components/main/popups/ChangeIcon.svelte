@@ -49,7 +49,7 @@
     {/each}
 </div>
 
-{#if $selected.id === "slide_icon"}
+{#if $selected.id === "slide_icon" && $customizedIcons.svg.length}
     <HRule />
 
     <div class="custom grid">

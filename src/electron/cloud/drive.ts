@@ -43,6 +43,8 @@ export async function listFolders(pageSize = 20, sort = "modified") {
             pageSize,
             q: "mimeType='application/vnd.google-apps.folder'",
             fields: "nextPageToken, files(id, name, modifiedTime)",
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
         })
     } catch (err) {
         console.error(err)
@@ -71,6 +73,8 @@ export async function listFiles(pageSize = 50, query = "") {
             pageSize,
             q: query,
             fields: "nextPageToken, files(id, name, mimeType)",
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
         })
     } catch (err) {
         console.error(err)
@@ -106,7 +110,7 @@ export async function getFile(id: string) {
     if (!id || !driveClient) return null
 
     // fileId: id
-    const data: drive_v3.Params$Resource$Files$Get = { fields: "id,modifiedTime" }
+    const data: drive_v3.Params$Resource$Files$Get = { fields: "id,modifiedTime", supportsAllDrives: true }
     if (id) data.fileId = id
     // if (q) data.q = q
 
@@ -132,9 +136,9 @@ export async function uploadFile(data: any, updateId = "") {
     try {
         if (updateId) {
             delete data.resource.parents
-            response = await driveClient.files.update({ fileId: updateId, ...data, fields: "id" })
+            response = await driveClient.files.update({ fileId: updateId, ...data, fields: "id", supportsAllDrives: true })
         } else {
-            response = await driveClient.files.create({ ...data, fields: "id" })
+            response = await driveClient.files.create({ ...data, fields: "id", supportsAllDrives: true })
         }
     } catch (err: any) {
         response = null
@@ -167,7 +171,7 @@ export async function downloadFile(fileId: string): Promise<any> {
     // https://developers.google.com/drive/api/guides/manage-downloads#node.js
 
     return new Promise((resolve) => {
-        driveClient!.files.get({ fileId, alt: "media" }, (err, res) => {
+        driveClient!.files.get({ fileId, alt: "media", supportsAllDrives: true }, (err, res) => {
             if (err) {
                 console.error("The API returned an error:", err)
                 resolve(null)

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import type { FileData } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
@@ -7,7 +8,6 @@
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
 
-    export let rootPath: string
     export let name: string
     export let path: string
     export let mode: "grid" | "list"
@@ -31,10 +31,15 @@
         })
     }
 
+    const dispatch = createEventDispatcher()
+    function openFolder() {
+        dispatch("open", path)
+    }
+
     const removeBrokenImg = (e: any) => (e.target.style.display = "none")
 </script>
 
-<Card resolution={{ width: 16, height: 9 }} on:click={() => (rootPath = path)} width={100} title={name} label={name} count={fileCount} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
+<Card resolution={{ width: 16, height: 9 }} on:click={openFolder} width={100} title={name} label={name} count={fileCount} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
     <div class="flex" style="width: 100%;height: 100%;">
         <div class="grid">
             {#key path}

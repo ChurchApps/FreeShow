@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { activePopup, activeProject, calendarAddShow, dictionary, popupData, shows } from "../../../stores"
+    import { activePopup, activeProject, calendarAddShow, popupData, shows } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -26,7 +27,7 @@
     <div class="main" style="padding: 10px;">
         {#if currentEvents.length}
             {#each currentEvents as day}
-                <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {$dictionary.month?.[new Date(day.date).getMonth() + 1]}</b>
+                <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {translateText("month." + (new Date(day.date).getMonth() + 1))}</b>
                 <ul style="list-style-position: inside;">
                     {#each day.events as event}
                         <li class="event">

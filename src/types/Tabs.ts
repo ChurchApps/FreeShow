@@ -20,15 +20,14 @@ export interface Category {
 export interface BibleCategories extends Category {
     customName?: string
     api?: boolean
-    copyright?: string // API copyright information
+    metadata?: { [key: string]: string } // metadata information
+    copyright?: string // API copyright information (should move to metadata)
     attributionRequired?: boolean // API needs attribution
     attributionString?: string // API needs custom attribution
-    books2?: any[] // api cache
-    cacheUpdate?: Date
     favorite?: boolean // marked as favorite
-    biblePreviewIndex?: number
     collection?: {
         versions: string[]
+        previewIndex?: number
     }
 }
 

@@ -1,5 +1,5 @@
+import type { Bible, Book, Chapter, Verse } from "json-bible/lib/Bible"
 import { uid } from "uid"
-import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "./../stores"
 import { setActiveScripture } from "./bible"
@@ -7,7 +7,7 @@ import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
     data.forEach((bible) => {
-        const obj: Bible = XMLtoObject(bible.content)
+        const obj = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
@@ -27,20 +27,20 @@ export function convertZefaniaBible(data: any[]) {
     })
 }
 
-function XMLtoObject(xml: string): Bible {
+function XMLtoObject(xml: string) {
     const bible = xml2json(xml, true)?.XMLBIBLE || {}
-    const books: any[] = []
+    const books: Book[] = []
 
     bible.BIBLEBOOK.forEach((book: any) => {
         const name = book["@bname"]
         const abbreviation = book["@babbr"]
         const bookNumber = book["@bnumber"]
-        const chapters: any[] = []
+        const chapters: Chapter[] = []
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
         book.CHAPTER.forEach((chapter: any) => {
             const chapterNumber = chapter["@cnumber"]
-            const verses: any[] = []
+            const verses: Verse[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
             chapter.VERS.forEach((verse: { ["@vnumber"]: string;["#text"]?: string; STYLE?: string[] }) => {
@@ -60,7 +60,7 @@ function XMLtoObject(xml: string): Bible {
                 // remove extra styling
                 text = text.replaceAll("\n", " ").replaceAll('<BR art="x-p"/>', "")
 
-                verses.push({ number: verse["@vnumber"], text })
+                verses.push({ number: Number(verse["@vnumber"]), text })
             })
 
             chapters.push({ number: chapterNumber, verses })
@@ -74,5 +74,5 @@ function XMLtoObject(xml: string): Bible {
     // INFORMATION: contributors, coverage, creator, date, description, format, identifier, language, publisher, rights, source, subject, title, type
     const info = bible.INFORMATION || {}
 
-    return { name: info.title || bible["@biblename"] || "", metadata: { ...info, copyright: info.publisher || "" }, books }
+    return { name: info.title || bible["@biblename"] || "", metadata: { ...info, copyright: info.publisher || "" }, books } as Bible
 }

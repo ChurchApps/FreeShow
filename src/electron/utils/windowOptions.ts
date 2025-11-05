@@ -33,7 +33,8 @@ export const mainOptions: BrowserWindowConstructorOptions = {
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
-        webviewTag: true // website item
+        webviewTag: true, // website item
+        backgroundThrottling: false // allow "timers" to run in background
     }
 }
 
@@ -92,7 +93,6 @@ export const exportOptions: BrowserWindowConstructorOptions = {
         nodeIntegration: !isProd,
         // contextIsolation: true,
         // enableRemoteModule: false,
-        backgroundThrottling: false,
         autoplayPolicy: "no-user-gesture-required"
     }
 }

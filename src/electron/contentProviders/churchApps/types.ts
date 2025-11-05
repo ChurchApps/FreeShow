@@ -1,17 +1,17 @@
-export type ChumsScopes = "plans"
+export type ChurchAppsScopes = "plans"
 
-export type ChumsAuthData = {
+export type ChurchAppsAuthData = {
     access_token: string
     refresh_token: string
     token_type: "Bearer"
     created_at: number
     expires_in: number
-    scope: ChumsScopes
+    scope: ChurchAppsScopes
 } | null
 
-export type ChumsRequestData = {
+export type ChurchAppsRequestData = {
     api: "doing" | "content"
-    scope: ChumsScopes
+    scope: ChurchAppsScopes
     endpoint: string
     authenticated: boolean
     params?: Record<string, string>
@@ -21,15 +21,10 @@ export type ChumsRequestData = {
 
 // Prod URLs
 export const CHURCHAPPS_API_URL = "https://api.churchapps.org"
-export const CHUMS_APP_URL = "https://app.chums.org"
+export const CHURCHAPPS_APP_URL = "https://admin.b1.church"
 
-// Dev URLs
-/*
-export const CHURCHAPPS_API_URL = "https://api.staging.churchapps.org"
-export const CHUMS_APP_URL = "https://app.staging.chums.org"
-*/
 
-// export const DEFAULT_CHUMS_DATA: ChumsAuthData = {
+// export const DEFAULT_CHURCHAPPS_DATA: ChurchAppsAuthData = {
 //     access_token: "",
 //     refresh_token: "",
 //     token_type: "Bearer",
@@ -38,7 +33,7 @@ export const CHUMS_APP_URL = "https://app.staging.chums.org"
 //     scope: "plans",
 // }
 
-export interface ChumsSongData {
+export interface ChurchAppsSongData {
     freeShowId: string
     title: string
     artist: string

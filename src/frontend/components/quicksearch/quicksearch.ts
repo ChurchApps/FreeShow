@@ -343,7 +343,7 @@ const triggerActions = {
 
             // add to project
             if (control) {
-                const newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""].shows.length - 1) + 1
+                const newIndex = (currentIndex ?? get(projects)[get(activeProject) || ""]?.shows?.length - 1) + 1
                 history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id } }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_ref" } })
                 activeShow.set({ ...newShow, index: newIndex })
             }
@@ -537,7 +537,7 @@ const settings = [
             "meta.display_metadata"
         ]
     },
-    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "Chums", "-Network", "-LAN"] },
+    { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "ChurchApps", "-Network", "-LAN"] },
     {
         id: "files",
         name: "settings.files",

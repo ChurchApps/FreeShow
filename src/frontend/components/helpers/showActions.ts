@@ -57,7 +57,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { defaultLayers, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -159,6 +159,8 @@ export function getFewestOutputLines(updater = get(outputs)) {
 
         const style = get(styles)[output.style]
         if (!style) return
+        const styleLines = (style.layers || defaultLayers)
+        if (Array.isArray(styleLines) && !styleLines.includes("slide")) return
         const lines = Number(style.lines || 0)
         if (!lines) return
 
@@ -197,12 +199,14 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     // blur to remove tab highlight from slide after clicked, and using arrows
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
+    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
     }
 
     // PPT
@@ -212,16 +216,16 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     }
 
     // PDF
-    if (((!slide || start) && get(activeShow)?.type === "pdf") || (!start && slide?.type === "pdf")) {
-        if (start && slide?.id !== get(activeShow)?.id) slide = null
+    if (((!slide || start) && currentShow?.type === "pdf") || (!start && slide?.type === "pdf")) {
+        if (start && slide?.id !== currentShow?.id) slide = null
         const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
-        playPdf(slide, nextPage)
+        playPdf(slide, nextPage, nextAfterMedia)
         return
     }
 
     // Folder
-    if (((!slide || start) && get(activeShow)?.type === "folder") || (!start && slide?.type === "folder")) {
-        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+    if (((!slide || start) && currentShow?.type === "folder") || (!start && slide?.type === "folder")) {
+        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
         playFolder(path)
         return
     }
@@ -236,7 +240,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     // open next project item if previous has been opened and next is still active when going forward
     const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
     const isFirstLine = (slide?.line || 0) === 0
-    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) + 1]?.id
+    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
     const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
     if (isPreviousProjectItem && e?.key !== " ") {
         goToNextProjectItem()
@@ -279,9 +283,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
+        if (currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
 
         const id = loop ? slide?.id : currentShow.id
         if (!id) return
@@ -320,6 +323,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
+        if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
+
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
             goToNextProjectItem(e.key)
 
@@ -362,7 +367,7 @@ async function goToNextShowInProject(slide, customOutputId) {
     // get current project show
     const currentProject = get(projects)[get(activeProject)!]
     // this will get the first show in the project with this id, so it won't work properly with multiple of the same shows in a project
-    const projectIndex = currentProject.shows.findIndex((a) => a.id === slide.id)
+    const projectIndex = currentProject?.shows?.findIndex((a) => a.id === slide.id) ?? -1
     if (projectIndex < 0) return
 
     const currentOutputProjectShowIndex = currentProject.shows[projectIndex]
@@ -411,7 +416,7 @@ export function goToNextProjectItem(key = "") {
 
         let index: number = currentShow.index ?? -1
         if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
-        if (index > -1 && index !== currentShow.index) {
+        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
             const newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
@@ -428,6 +433,15 @@ export function goToNextProjectItem(key = "") {
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
+
+            // mark as played
+            if (newShow.type !== "section") {
+                projects.update((a) => {
+                    if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
+                    a[get(activeProject)!].shows[index - 1].played = true
+                    return a
+                })
+            }
         }
     })
 }
@@ -442,7 +456,7 @@ export function goToPreviousProjectItem(key = "") {
 
         let index: number = currentShow.index ?? get(projects)[get(activeProject)!]?.shows?.length
         if (index - 1 >= 0) index--
-        if (index > -1 && index !== currentShow.index) {
+        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
             const newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
@@ -461,6 +475,15 @@ export function goToPreviousProjectItem(key = "") {
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
+
+            // mark as not played
+            if (newShow.type !== "section") {
+                projects.update((a) => {
+                    if (!a[get(activeProject)!]?.shows?.[index]) return a
+                    a[get(activeProject)!].shows[index].played = false
+                    return a
+                })
+            }
         }
     })
 }
@@ -474,12 +497,14 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
 
+    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+
     const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     const currentOutput = get(outputs)[outputId] || {}
     let slide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
     }
 
     // PPT
@@ -489,15 +514,15 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     // PDF
-    if ((!slide && get(activeShow)?.type === "pdf") || slide?.type === "pdf") {
+    if ((!slide && currentShow?.type === "pdf") || slide?.type === "pdf") {
         const nextPage = slide?.page ? slide.page - 1 : 0
         playPdf(slide, nextPage)
         return
     }
 
     // Folder
-    if ((!slide && get(activeShow)?.type === "folder") || slide?.type === "folder") {
-        const path = slide?.type === "folder" ? slide.id : get(activeShow)?.id || ""
+    if ((!slide && currentShow?.type === "folder") || slide?.type === "folder") {
+        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
         playFolder(path, true)
         return
     }
@@ -507,10 +532,9 @@ export function previousSlide(e: any, customOutputId?: string) {
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
     if (index === null) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
+        if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
     }
 
@@ -552,7 +576,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     const revealEnded = !shouldLinesReveal || currentReveal === 0
     if (isFirstSlide && !revealEnded) isLastSlide = false
 
-    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) - 1]?.id
+    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) - 1]?.id
     const isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
     if (isNextProjectItem) {
         goToPreviousProjectItem()
@@ -572,7 +596,9 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (hasLinesEnded && revealEnded && clickRevealEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
-            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
+            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
+                if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
+
                 if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
                     goToPreviousProjectItem(e.key)
 
@@ -621,7 +647,7 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-async function playPdf(slide: null | OutSlide, nextPage: number) {
+async function playPdf(slide: null | OutSlide, nextPage: number, loop: boolean = false) {
     const data = slide || get(activeShow)
     if (!data?.id) return
 
@@ -630,9 +656,12 @@ async function playPdf(slide: null | OutSlide, nextPage: number) {
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
-    if (nextPage > pages - 1) return
+    if (nextPage > pages - 1) {
+        if (!loop) return
+        nextPage = 0
+    }
 
-    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
+    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]?.name
 
     setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
     clearBackground()
@@ -756,7 +785,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 if (i <= index && !a.data.disabled) {
                     if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
-                    if (a.data.background && _show(showId).get("media")?.[a.data.background]?.loop === false) background = null
+
+                    const mediaData = _show(showId).get("media")?.[a.data.background || ""]
+                    if (mediaData && (mediaData?.loop === false || get(media)[mediaData?.path || ""]?.videoType === "foreground")) background = null
                 }
             })
         }
@@ -1154,9 +1185,9 @@ export function getDynamicIds(noVariables = false) {
     const mergedValues = [...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
-    const timersList = sortByName(Object.values(get(timers))).map(({ name }) => `timer_${getVariableNameId(name)}`)
+    const timersList = sortByName(Object.values(get(timers))).filter(a => a.name).map(({ name }) => `timer_${getVariableNameId(name)}`)
 
-    const rssValues = sortByName(get(special).dynamicRSS || []).map(({ name }) => `rss_${getVariableNameId(name)}`)
+    const rssValues = sortByName(get(special).dynamicRSS || []).filter(a => a.name).map(({ name }) => `rss_${getVariableNameId(name)}`)
 
     if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)
@@ -1316,7 +1347,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const audioTime = (isOutputWindow ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
         const audioDuration = (isOutputWindow ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
-        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId)
+        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 

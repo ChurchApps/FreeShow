@@ -12,7 +12,7 @@
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { clearBackground } from "../output/clear"
+    import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
@@ -80,14 +80,14 @@
         // set active show
         let pos = index
         if (index === null && $activeProject !== null) {
-            let i = $projects[$activeProject].shows.findIndex((p) => p.id === id)
+            let i = $projects[$activeProject]?.shows?.findIndex((p) => p.id === id) ?? -1
             if (i > -1) pos = i
         }
 
         let newShow: any = { id, type }
 
         if ($focusMode) {
-            let inProject = $projects[$activeProject || ""]?.shows.find((p) => p.id === id)
+            let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
                 activeFocus.set({ id, index: pos ?? undefined })
                 return
@@ -125,7 +125,7 @@
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             let layoutRef = getLayoutRef()
-            let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
+            let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
             updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)
 
             let slide = currentOutput.out?.slide || null
@@ -134,11 +134,17 @@
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
             let outputStyle = $styles[currentOutput.style || ""]
-            let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)
-            let out = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
+            const mediaData = $media[id] || {}
+            let mediaStyle: MediaStyle = getMediaStyle(mediaData, outputStyle)
 
-            // remove active slide
-            if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
+            const videoType = mediaData.videoType
+            const shouldLoop = videoType === "background" ? show.loop || true : false
+            const shouldBeMuted = videoType === "background" ? show.muted || true : false
+
+            let out = { path: id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: type, ...mediaStyle }
+
+            // clear slide
+            if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
 
             setOutput("background", out)
         } else if (type === "pdf") {
@@ -180,7 +186,7 @@
     $: outline = activeOutput !== null || !!$playingAudio[id]
 </script>
 
-<div id="show_{id}" class="main">
+<div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton
         on:click={click}
         on:dblclick={doubleClick}
@@ -192,7 +198,7 @@
     >
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon || show.locked}
-                <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
+                <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
             {/if}
 
             {#if active === "number" && show.quickAccess?.number}
@@ -221,6 +227,10 @@
 </div>
 
 <style>
+    .main {
+        width: 100%;
+    }
+
     .main :global(button) {
         width: 100%;
         justify-content: space-between;
@@ -228,6 +238,10 @@
     }
     .main :global(button p) {
         margin: 3px 5px;
+    }
+
+    .main.played :global(button:not(.isActive)) {
+        border-left: 4px double rgb(255 255 255 / 0.2) !important;
     }
 
     .layout {

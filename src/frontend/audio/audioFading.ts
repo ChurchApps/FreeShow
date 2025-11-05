@@ -3,7 +3,7 @@
 import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
 import { stopMetronome } from "../components/drawer/audio/metronome"
-import { activePlaylist, isFadingOut, playingAudio, special } from "../stores"
+import { activePlaylist, audioPlaylists, isFadingOut, playingAudio, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 
@@ -12,6 +12,7 @@ type AudioClearOptions = {
     playlistCrossfade?: boolean
     commonClear?: boolean
     clearTime?: number // effects
+    isPlayingNew?: boolean
 }
 
 export const clearing: string[] = []
@@ -21,7 +22,7 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (options.clearPlaylist !== false && !audioPath) stopMetronome()
+    if (!options.isPlayingNew && options.clearPlaylist !== false && !audioPath) stopMetronome()
 
     if (clearing.includes(audioPath)) {
         if (!options.commonClear) return
@@ -185,6 +186,12 @@ export function fadeinAllPlayingAudio() {
     isFadingOut.set(false)
     stopFading()
 
+    let fadeToVolume = 1
+    if (get(activePlaylist)?.id) {
+        const playlist = get(audioPlaylists)[get(activePlaylist).id]
+        fadeToVolume = playlist?.volume ?? 1
+    }
+
     Object.values(get(playingAudio)).forEach(({ audio }) => {
         fadeinAudio(audio)
     })
@@ -193,7 +200,7 @@ export function fadeinAllPlayingAudio() {
 
     async function fadeinAudio(audio) {
         audio.play()
-        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true)
+        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true, fadeToVolume)
         // if (faded) analyseAudio()
     }
 }

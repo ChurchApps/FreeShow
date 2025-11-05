@@ -235,3 +235,44 @@ export function getChangedKeys(current: any[], previous: any[]) {
 
     return changedKeys
 }
+
+
+export function rangeSelect(e: any, currentlySelected: (number | string)[], newSelection: (number | string)): (number | string)[] {
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+
+    if (e.ctrlKey || e.metaKey) {
+        if (currentlySelected.includes(newSelection)) {
+            return currentlySelected.filter((id) => id !== newSelection)
+        } else {
+            return [...currentlySelected, newSelection]
+        }
+    }
+
+    if (e.shiftKey && !currentlySelected.includes(newSelection) && !isNaN(Number(newSelection))) {
+        // add range between last selected and new selection
+        let lastSelected = Number(currentlySelected[currentlySelected.length - 1])
+        newSelection = Number(newSelection)
+        let first: number = newSelection + 1
+        let last: number = lastSelected
+        if (newSelection < lastSelected) {
+            first = lastSelected
+            last = newSelection - 1
+        }
+
+        for (let i = last + 1; i < first; i++) {
+            if (!currentlySelected.includes(i)) currentlySelected.push(i)
+        }
+
+        // remove duplicates
+        currentlySelected = [...new Set(currentlySelected)]
+        // sort by value (shift key last selected relies on unsorted order)
+        // currentlySelected.sort((a, b) => a - b)
+    }
+
+    return currentlySelected
+}
+
+// compare two objects, check that they are identical, regardless of key order
+export function areObjectsEqual(a: Record<string, any>, b: Record<string, any>): boolean {
+    return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
+}

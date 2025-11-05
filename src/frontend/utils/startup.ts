@@ -11,11 +11,14 @@ import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
+import { openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
+let startupProfile: string = ""
+
 export function startup() {
     window.api.receive(
         STARTUP,
@@ -35,6 +38,8 @@ export function startup() {
                 return
             }
 
+            startupProfile = msg.autoProfile
+
             startupMain()
         },
         "startup"
@@ -50,6 +55,9 @@ async function startupMain() {
     getStoredData()
 
     await waitUntilValueIsDefined(() => get(loaded), 100, 8000)
+
+    if (startupProfile) openProfileByName(startupProfile)
+
     storeSubscriber()
     remoteListen()
     checkStartupActions()
@@ -94,7 +102,7 @@ function autoBackup() {
 export function contentProviderSync() {
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { dataPath: get(dataPath) } },
-        { providerId: "chums" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).chums?.syncCategories || [], showsPath: get(showsPath) || "" } }
+        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [], showsPath: get(showsPath) || "" } }
     ]
 
     providers.forEach(({ providerId, scope, data }) => {

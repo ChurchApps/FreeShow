@@ -1,12 +1,12 @@
 <script lang="ts">
+    import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
-    import type { BibleCategories } from "../../../../types/Tabs"
     import { sendMain } from "../../../IPC/main"
     import { labelsDisabled, language, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
-    import { customBibleData } from "../../drawer/bible/scripture"
+    import { customBibleData, getApiBiblesList } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -17,49 +17,26 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
 
+    let bibles: CustomBibleListContent[] = []
+    let recommended: CustomBibleListContent[] = []
     let error: null | string = null
-    let bibles: any[] = []
 
-    let cachedBibles = ""
-    $: if (importType === "api") fetchBibles()
-    function fetchBibles() {
-        // read cache
-        if (cachedBibles) {
-            bibles = JSON.parse(cachedBibles)
-            return
-        }
-
-        const api = "https://contentapi.churchapps.org/bibles"
-        fetch(api)
-            .then((response) => response.json())
-            .then(manageResult)
-            .catch((e) => {
-                console.log(e)
-                error = e
+    $: if (importType === "api") loadApiBibles()
+    async function loadApiBibles() {
+        try {
+            let bibleList = await getApiBiblesList()
+            bibleList = bibleList.map((a) => {
+                const bible = customBibleData(a)
+                if (bible.description && (bible.description.toLowerCase() === "common" || bible.name.includes(bible.description))) bible.description = ""
+                return bible
             })
 
-        function manageResult(data) {
-            // console.log("MANAGE RESULT", data)
-            if (!data) return
-
-            bibles = data.map(customBibleData)
-
-            // cache bibles
-            let cache = { date: new Date(), bibles }
-            cachedBibles = JSON.stringify(cache)
-        }
-    }
-
-    // get list of bibles in language
-    let sortedBibles: any[] = []
-    let recommended: any[] = []
-    $: {
-        if (bibles?.length) {
+            // get list of bibles in language
             let langCode = window.navigator.language.slice(-2).toLowerCase()
             // if it needs attribution, it's probably more in demand!
-            sortedBibles = sortByName(bibles).sort((a, b) => (b.attributionRequired || b.attributionString) - (a.attributionRequired || a.attributionString))
+            bibleList = sortByName(bibleList).sort((a, b) => ((b.attributionRequired || b.attributionString) as any) - ((a.attributionRequired || a.attributionString) as any))
             let newSorted: any[] = []
-            sortedBibles.forEach((bible) => {
+            bibleList.forEach((bible) => {
                 newSorted.push(bible)
                 let found = false
                 if (bible.countryList?.includes(langCode)) found = true
@@ -74,50 +51,40 @@
                     newSorted.pop()
                 }
             })
-            sortedBibles = newSorted
+            bibles = newSorted
             recommended = recommended
+        } catch (err) {
+            error = err
         }
     }
 
-    type ChurchAppsApiBible = {
-        id: string // not needed
-        abbreviation: string
-        name: string
-        nameLocal: string
-        description: string | null
-        source: "api.bible"
-        sourceKey: string // id
-        language: string // "eng"
-        copyright: string
-        attributionRequired: boolean
-        attributionString?: string
-    }
+    let searchedBibles: CustomBibleListContent[] = []
+    let searchedRecommendedBibles: CustomBibleListContent[] = []
+    $: searchedBibles = bibles
+    $: searchedRecommendedBibles = recommended.map((a) => ({ ...a, name: a.nameLocal || a.name }))
 
-    function toggleScripture({ sourceKey: id, name, copyright, attributionRequired, attributionString }: ChurchAppsApiBible) {
-        scriptures.update((a: any) => {
-            let key: string | null = null
-            Object.entries(a).forEach(([sId, value]: any) => {
-                if (value.id === id) key = sId
-            })
+    function toggleScripture(bible: CustomBibleListContent) {
+        scriptures.update((a) => {
+            const id = bible.sourceKey
+            const existingId = Object.entries(a).find(([_key, value]: any) => value.id === id)?.[0]
 
-            if (key) delete a[key]
-            else a[uid()] = { name, api: true, id, copyright, attributionRequired, attributionString } as BibleCategories
+            if (existingId) delete a[existingId]
+            else a[uid()] = { name: bible.name, api: true, id, metadata: { copyright: bible.copyright }, attributionRequired: bible.attributionRequired, attributionString: bible.attributionString }
+
             return a
         })
     }
 
-    $: searchedBibles = sortedBibles
-    $: searchedRecommendedBibles = recommended
     function search(e: any) {
         let value = e.detail.toLowerCase()
 
         if (value.length < 2) {
-            searchedBibles = sortedBibles
+            searchedBibles = bibles
             searchedRecommendedBibles = recommended
             return
         }
 
-        searchedBibles = sortedBibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedBibles = bibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
         searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
@@ -133,7 +100,7 @@
     function goBack() {
         if (importType === "api" && searchActive && (document.getElementById("scriptureApiSearchInput") as any)?.value) {
             searchActive = false
-            searchedBibles = sortedBibles
+            searchedBibles = bibles
             searchedRecommendedBibles = recommended
             return
         }
@@ -164,24 +131,26 @@
                 </MaterialButton>
             {/if}
         </div>
+
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                        {bible.nameLocal || bible.name}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !(bible.nameLocal || bible.name).includes(bible.description)}
+                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
+                        {bible.name}
+                        {#if bible.description}
                             <span class="description" data-title={bible.description}>{bible.description}</span>
                         {/if}
                     </MaterialButton>
                 {/each}
                 <hr />
             {/if}
-            {#if sortedBibles.length}
+
+            {#if bibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
                         <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                             {bible.name}
-                            {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
+                            {#if bible.description}
                                 <span class="description" data-title={bible.description}>{bible.description}</span>
                             {/if}
                         </MaterialButton>

@@ -82,6 +82,7 @@ import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
+import { createScriptureShow } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -97,6 +98,7 @@ import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
@@ -509,7 +511,7 @@ const clickActions = {
             }))
 
         projects.update((a) => {
-            if (!a[get(activeProject)!]) return a
+            if (!a[get(activeProject)!]?.shows) return a
 
             a[get(activeProject)!].shows.push(...obj.sel!.data)
             return a
@@ -752,9 +754,9 @@ const clickActions = {
             history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
         } else if (obj.contextElem?.classList.contains("chapters")) {
             triggerFunction("scripture_selectAll")
-            setTimeout(() => triggerFunction("scripture_newShow"))
+            setTimeout(createScriptureShow)
         } else if (obj.sel?.id === "scripture") {
-            triggerFunction("scripture_newShow")
+            createScriptureShow()
         }
     },
 
@@ -871,6 +873,24 @@ const clickActions = {
     section: (obj) => {
         const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+    },
+    mark_played: (obj: ObjData) => {
+        const projectId = get(activeProject)
+        const indexes = (obj.sel?.data || []).map(item => Number(item.index))
+        if (!projectId || !indexes.length) return
+
+        projects.update((a) => {
+            if (!a[projectId]?.shows) return a
+
+            const newState = !a[projectId].shows[indexes[0]]?.played
+
+            indexes.forEach(index => {
+                if (!a[projectId].shows[index]) return
+                a[projectId].shows[index].played = newState
+            })
+
+            return a
+        })
     },
     copy_to_template: (obj: ObjData) => {
         let project = clone(get(projects)[obj.sel?.data?.[0]?.id])
@@ -1256,11 +1276,18 @@ const clickActions = {
         const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
+        const videoType = get(media)[path]?.videoType || ""
+
         // clear slide text
-        if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) setOutput("slide", null)
-        setOutput("background", { path, ...mediaStyle })
+        // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
+        if (videoType === "foreground") clearSlide()
+
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false })
     },
     play_no_audio: (obj: ObjData) => {
+        if (get(outLocked)) return
+
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
 
@@ -1270,12 +1297,21 @@ const clickActions = {
 
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
 
-        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle, type: getMediaType(getExtension(path)), muted: true })
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, ...mediaStyle, type, loop: true, muted: true })
     },
     play_no_filters: (obj: ObjData) => {
+        if (get(outLocked)) return
+
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
-        if (!get(outLocked)) setOutput("background", { path, type: getMediaType(getExtension(path)) })
+
+        const videoType = get(media)[path]?.videoType || ""
+        const loop = videoType === "foreground" ? false : true
+        const muted = videoType === "foreground" ? false : true
+
+        const type = getMediaType(getExtension(path))
+        setOutput("background", { path, type, loop, muted })
     },
     favourite: (obj: ObjData) => {
         if (!obj.sel) return

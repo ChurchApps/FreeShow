@@ -484,7 +484,7 @@
         "manage_dynamic_values": "動的変数を管理",
         "choose_camera": "カメラを選択",
         "manage_tags": "タグを管理",
-        "chums_sync_categories": "同期するカテゴリを選択",
+        "sync_categories": "同期するカテゴリを選択",
         "effect_items": "効果項目",
         "initialize": "FreeShowへようこそ",
         "unsaved": "本当に終了しますか？",
@@ -1615,9 +1615,5 @@
         "translation_description_multiline": "すべての言語を1つのテキストボックスに交互の行で追加します（Songbeamer と同様）。",
         "translation_description_textboxes": "各言語を個別のテキストボックスとしてスライドに追加します。",
         "translation_description_layouts": "言語ごとに固有のスライドセットとレイアウトを作成します。"
-    },
-    "chums": {
-        "sync_categories": "カテゴリを同期",
-        "sync_categories_description": "CHUMS と曲として同期するカテゴリを選択"
     }
 }

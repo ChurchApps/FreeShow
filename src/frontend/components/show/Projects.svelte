@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Tree } from "../../../types/Projects"
-    import { activeEdit, activeProject, activeRename, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { activeEdit, activeProject, activeRename, activeShow, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects, sorted } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
@@ -212,7 +212,7 @@
             {#if !$focusMode}
                 <MaterialButton style="flex: 1;padding: 0.3em 0.5em;" icon="back" title="remote.projects" on:click={back} />
                 <!-- {recentlyUsedList.length ? '' : 'border-bottom: 1px solid var(--secondary);'} -->
-                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
+                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={translateText("remote.project: ") + ($projects[$activeProject || ""]?.name || "")}>
                     <!-- <Icon id="project" white right /> -->
                     {#if recentlyUsedList.length}
                         <p style="font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>

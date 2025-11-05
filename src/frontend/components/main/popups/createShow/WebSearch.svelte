@@ -3,8 +3,9 @@
     import { Main } from "../../../../../types/IPC/Main"
     import type { LyricSearchResult } from "../../../../../types/Main"
     import { destroyMain, receiveMain, sendMain } from "../../../../IPC/main"
-    import { dictionary, special } from "../../../../stores"
+    import { special } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
+    import { translateText } from "../../../../utils/language"
     import Icon from "../../../helpers/Icon.svelte"
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
@@ -70,7 +71,7 @@
         }
 
         setValue(data)
-        newToast($dictionary.toast?.lyrics_copied + " " + data.source + "!")
+        newToast(translateText(`toast.lyrics_copied ${data.source}!`))
     })
     onDestroy(() => {
         destroyMain(listenerIdSearch)
@@ -153,7 +154,7 @@
                             <td class="flex-table" style={blocked ? "text-decoration: line-through;" : ""}>
                                 {song.artist}
                                 {#if song.artist && song.source !== "Hymnary"}
-                                    <Button title={blocked ? $dictionary.actions?.undo : $dictionary.create_show?.block} style="padding: 2px;" on:click={() => blockArtist(song.artist)}>
+                                    <Button title={translateText(blocked ? "actions.undo" : "create_show.block")} style="padding: 2px;" on:click={() => blockArtist(song.artist)}>
                                         <Icon style="opacity: 0.4;" id={blocked ? "undo" : "block"} white />
                                     </Button>
                                 {/if}

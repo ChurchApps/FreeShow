@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { actions, actionTags, activeActionTagFilter, activePopup, dictionary, labelsDisabled, popupData, runningActions } from "../../../stores"
+    import { actions, actionTags, activeActionTagFilter, activePopup, labelsDisabled, popupData, runningActions } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
@@ -36,7 +37,7 @@
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button
-                            title={$dictionary.media?.play}
+                            title={translateText("media.play")}
                             on:click={(e) => {
                                 if (e.ctrlKey || e.metaKey) return
                                 action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action)
@@ -102,7 +103,7 @@
                             {#if $activeActionTagFilter.length}
                                 <span class="tags">
                                     {#each action.tags as tagId}
-                                        {@const tag = $actionTags[tagId]}
+                                        {@const tag = $actionTags[tagId] || {}}
 
                                         {#if !$activeActionTagFilter.includes(tagId)}
                                             <span class="tag" style="--color: {tag.color || 'white'};">

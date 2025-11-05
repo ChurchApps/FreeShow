@@ -104,7 +104,7 @@ export class EditboxHelper {
 
         const defaultLine = [
             {
-                align: lines[0].align || "",
+                align: lines[0]?.align || "",
                 text: [{ style: lines[0].text[0]?.style || "", value: "" }]
             }
         ]
@@ -171,6 +171,9 @@ export class EditboxHelper {
 
     static getCustomTextStyle(style: string) {
         if (!style) return ""
+
+        // fix quotes (for font family names with spaces)
+        style = style.replaceAll('"', "'")
 
         // text gradient
 

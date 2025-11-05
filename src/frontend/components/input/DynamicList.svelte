@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { dictionary } from "../../stores"
+    import { translateText } from "../../utils/language"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Center from "../system/Center.svelte"
@@ -33,14 +33,14 @@
     {#each items as item}
         <InputRow>
             {#if allowOpen}
-                <MaterialButton style="width: 100%;font-weight: normal;" title={$dictionary.titlebar?.edit} on:click={() => openItem(item.id)}>
+                <MaterialButton style="width: 100%;font-weight: normal;" title={translateText("titlebar.edit")} on:click={() => openItem(item.id)}>
                     <slot {item} />
                 </MaterialButton>
             {:else}
                 <slot {item} />
             {/if}
 
-            <MaterialButton icon="delete" style="width: 40px;" title={$dictionary.actions?.delete} on:click={() => deleteItem(item.id)} white />
+            <MaterialButton icon="delete" style="width: 40px;" title={translateText("actions.delete")} on:click={() => deleteItem(item.id)} white />
         </InputRow>
     {/each}
 {:else if nothingText}

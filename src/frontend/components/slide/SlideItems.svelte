@@ -18,6 +18,7 @@
     import Visualizer from "./views/Visualizer.svelte"
     import Weather from "./views/Weather.svelte"
     import Website from "./views/Website.svelte"
+    import MetronomeVisualizer from "../drawer/audio/MetronomeVisualizer.svelte"
 
     export let item: Item
 
@@ -109,6 +110,8 @@
     <Captions {item} />
 {:else if item.type === "icon"}
     <IconItem {item} {ratio} />
+{:else if item.type === "metronome"}
+    <MetronomeVisualizer isItem />
 {:else if item.type === "list"}
     <!-- moved to textbox in 1.3.3 -->
     <ListView list={item.list} disableTransition={edit || disableListTransition} />

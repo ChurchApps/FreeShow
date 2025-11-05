@@ -51,7 +51,7 @@
     const updaterInterval = setInterval(() => {
         if (isClearing) return
         if (currentItems.find((a) => a.conditions)) updater++
-    }, 100)
+    }, 300)
     onDestroy(() => clearInterval(updaterInterval))
 
     // do not update if only line has changed

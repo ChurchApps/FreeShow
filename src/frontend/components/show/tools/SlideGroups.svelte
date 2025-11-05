@@ -1,7 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { sortByName } from "../../helpers/array"
     import { ondrop } from "../../helpers/drop"
@@ -29,7 +30,7 @@
 
     $: globalGroups = Object.entries($groups).map(([id, group]) => {
         let name = group.name
-        if (group.default) name = $dictionary.groups?.[group.name] || ""
+        if (group.default) name = translateText(`groups.${group.name}`)
         return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 

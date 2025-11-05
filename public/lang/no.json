@@ -137,7 +137,6 @@
         "_hide_preview": "Skjul forhåndsvisning",
         "show_preview": "Vis forhåndsvisning",
         "restore_output": "Gjenopprett utgang",
-        "enable_controls": "Vis kontroller for forhåndsvisning av medier",
         "background": "Bakgrunn",
         "foreground": "Fremgrunn",
         "slide": "Lysbilde",
@@ -147,7 +146,8 @@
         "nextTimer": "Tid til neste lysbilde",
         "lock": "Lås",
         "unlock": "Lås opp",
-        "test_pattern": "Prøvebilde"
+        "test_pattern": "Prøvebilde",
+        "live_prepare": "Skjul innhold på utgangsskjerm (Svart overlegg)"
     },
     "clear": {
         "general": "Fjern",
@@ -207,7 +207,7 @@
         "online": "Online",
         "recommended": "Anbefalt",
         "bundle_media_files": "Samle alle mediefiler",
-        "bundle_media_files_tip": "Kopier alle mediefilene fra hver show, til en mappe"
+        "bundle_media_files_tip": "Kopiér alle mediefilene fra hver enkelt show, til en mappe"
     },
     "audio": {
         "settings": "Lydinnstillinger",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Lar deg sette volumet over 100% (Kan føre til forvrengning)",
         "pre_fader_volume_meter": "Vis volumnivå før fadere",
         "mixer": "Mikser",
+        "equalizer": "Equalizer",
+        "preset": "Forhåndsinnstilling",
+        "main": "Hoved",
         "metronome": "Metronom",
         "toggle_metronome": "Veksle metronom",
         "use_metadata_bpm": "Bruk BPM fra metadata",
@@ -484,7 +487,7 @@
         "manage_dynamic_values": "Behandle dynamiske verdier",
         "choose_camera": "Velg kamera",
         "manage_tags": "Behandle etiketter",
-        "chums_sync_categories": "Velg kategorier for synkronisering",
+        "sync_categories": "Velg kategorier for synkronisering",
         "effect_items": "Effekt elementer",
         "initialize": "Velkommen til FreeShow",
         "unsaved": "Er du sikkert på at du vil avslutte?",
@@ -617,7 +620,7 @@
         "undo": "Angre",
         "redo": "Gjør om",
         "cut": "Klipp ut",
-        "copy": "Kopier",
+        "copy": "Kopiér",
         "paste": "Lim inn",
         "pasteAndMatchStyle": "Lim inn uten formatering",
         "selectAll": "Merk alt",
@@ -1046,7 +1049,9 @@
         "longitude": "Lengdegrad",
         "altitude": "Høyde",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Lang rekkevidde"
+        "longRange": "Lang rekkevidde",
+        "media_item_tip": "Prøver du å bruke media som bakgrunn?",
+        "convert_to_background": "Konverter til bakgrunn"
     },
     "items": {
         "text": "Tekstboks",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Fremdrift",
         "visualizer": "Visualisering",
         "captions": "Teksting",
+        "metronome": "Metronom",
         "icon": "Ikon",
         "effect": "Effekt",
         "slide_text": "Lysbilde tekst",
         "slide_notes": "Lysbilde notater",
-        "current_output": "Gjeldende utgang"
+        "current_output": "Utgangsskjerm"
     },
     "borders": {
         "solid": "Hel",
@@ -1253,12 +1259,14 @@
         "window": "Vindu",
         "active_style": "Bruk stil",
         "alert_updates": "Varsle når en ny oppdatering er tilgjengelig",
+        "alert_updates_beta": "Varsle når en ny beta-oppdatering er tilgjengelig",
         "auto_updates": "Automatisk oppdatering",
         "disable_labels": "Deaktiver etiketter",
         "group_numbers": "Gruppenummer",
         "auto_group_numbers": "Angi gruppe-nummer automatisk",
         "transparent_slides": "Gjennomsiktig forhåndsvisning av lysbilde",
         "full_colors": "Gruppefarger med høy kontrast",
+        "next_item_on_last_slide": "Pil venstre/høyre endrer prosjekt-element på første/siste lysbilde",
         "slide_number_keys": "Spill av lysbilder med nummer-taster",
         "auto_shortcut_first_letter": "Automatisk hurtigtast til første bokstav i tekst",
         "startup_projects_list": "Vis prosjekter-listen ved oppstart",
@@ -1615,9 +1623,5 @@
         "translation_description_multiline": "Legger til alle språk i en tekstboks med vekslende linjer. (Som i Songbeamer)",
         "translation_description_textboxes": "Legger hvert språk til lysbildet i en egen tekstboks.",
         "translation_description_layouts": "Oppretter et unikt sett med lysbilder og et oppsett for hvert språk."
-    },
-    "chums": {
-        "sync_categories": "Synkroniserte kategorier",
-        "sync_categories_description": "Velg hvilke kategorier som skal synkroniseres som sanger til Chums"
     }
 }

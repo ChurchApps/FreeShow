@@ -62,9 +62,7 @@
             // Capture the latest incoming state (coalesced within debounce)
             const hasBook = Number.isInteger(bookIndex) && bookIndex >= 0
             const hasChapter = Number.isInteger(chapterIndex) && chapterIndex >= 0
-            const latestVerse = Array.isArray(verseList) && verseList.length > 0
-                ? parseInt(String(verseList[verseList.length - 1]), 10)
-                : 0
+            const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
             const hasVerse = Number.isFinite(latestVerse) && latestVerse > 0
 
             const sameBook = hasBook ? bookIndex === displayedBookIndex : true
@@ -178,36 +176,36 @@
 
     // Common book name mappings for scripture reference parsing
     const BOOK_NAME_MAPPINGS: { [key: string]: string[] } = {
-        'genesis': ['gen', 'ge'],
-        '1 john': ['1john', '1 jn', 'i john'],
-        '2 john': ['2john', '2 jn', 'ii john'],
-        '3 john': ['3john', '3 jn', 'iii john'],
-        'psalms': ['psalm', 'ps'],
-        'revelation': ['rev', 're'],
-        'matthew': ['matt', 'mt'],
-        'mark': ['mk'],
-        'luke': ['lk'],
-        'john': ['jn'],
+        genesis: ["gen", "ge"],
+        "1 john": ["1john", "1 jn", "i john"],
+        "2 john": ["2john", "2 jn", "ii john"],
+        "3 john": ["3john", "3 jn", "iii john"],
+        psalms: ["psalm", "ps"],
+        revelation: ["rev", "re"],
+        matthew: ["matt", "mt"],
+        mark: ["mk"],
+        luke: ["lk"],
+        john: ["jn"]
         // Add more mappings as needed
     }
 
     // Parse scripture reference from slide content and extract highlighting info
-    function parseScriptureReference(reference: string): { bookIndex: number, chapterIndex: number, verseNumber: number } | null {
+    function parseScriptureReference(reference: string): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
         if (!reference || !books || books.length === 0) return null
-        
+
         // Match patterns like "Genesis 1:1", "Genesis 1 1", "1 John 2:3", "Psalm 23:1-6", etc.
         const match = reference.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-\d+)?$/)
         if (!match) return null
-        
+
         const [, bookName, chapterStr, versePart1, versePart2] = match
         const verseStr = versePart1 || versePart2
         if (!verseStr) return null
-        
+
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
-        
+
         // Find the book by name (case insensitive) in the current scripture collection
-        const bookIndex = books.findIndex(book => {
+        const bookIndex = books.findIndex((book) => {
             // Try exact match first
             if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
                 return true
@@ -216,7 +214,7 @@
             // Try matching common book name variations
             const normalizedBookName = bookName.toLowerCase().trim()
             const normalizedScriptureName = book.name.toLowerCase()
-            
+
             // Check if the scripture book name matches any variations of the reference book name
             for (const [canonical, variations] of Object.entries(BOOK_NAME_MAPPINGS)) {
                 if (canonical === normalizedScriptureName || variations.includes(normalizedScriptureName)) {
@@ -225,41 +223,40 @@
                     }
                 }
             }
-            
+
             // Try partial match as fallback
-            return normalizedScriptureName.includes(normalizedBookName) || 
-                   normalizedBookName.includes(normalizedScriptureName)
+            return normalizedScriptureName.includes(normalizedBookName) || normalizedBookName.includes(normalizedScriptureName)
         })
-        
+
         if (bookIndex === -1) {
             return null
         }
-        
+
         // Convert chapter number to chapter index (chapters are 0-based arrays)
         const chapterIndex = chapterNumber - 1
-        
+
         return { bookIndex, chapterIndex, verseNumber }
     }
 
     // Extract scripture reference from outShow slide content
-    function extractScriptureFromSlide(): { bookIndex: number, chapterIndex: number, verseNumber: number } | null {
+    function extractScriptureFromSlide(): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
         if (!$outShow?.slides || $outSlide === null) return null
-        
+
         const currentSlideId = Object.keys($outShow.slides)[$outSlide]
         if (!currentSlideId || !$outShow.slides[currentSlideId]) return null
-        
+
         const slide = $outShow.slides[currentSlideId]
         if (!slide.items) return null
-        
+
         // Look through all slide items for scripture references
         for (const item of slide.items) {
             if (!item.lines || !Array.isArray(item.lines)) continue
-            
+
             for (const line of item.lines) {
                 if (!line.text || !Array.isArray(line.text)) continue
-                
+
                 for (const textItem of line.text) {
-                    if (textItem && textItem.value && typeof textItem.value === 'string') {
+                    if (textItem && textItem.value && typeof textItem.value === "string") {
                         // Check if this looks like a scripture reference
                         if (textItem.value.match(/^.+?\s+\d+(?:[:.,]\s*\d+|\s+\d+)/)) {
                             const parsed = parseScriptureReference(textItem.value)
@@ -271,23 +268,20 @@
                 }
             }
         }
-        
+
         return null
     }
 
     // Initialize highlighting from slide content when scripture state is empty
-    $: if (scripture && Array.isArray(scripture.books) && 
-           displayedBookIndex === -1 && displayedChapterIndex === -1 && displayedVerseNumber === 0 &&
-           $outShow && $outSlide !== null) {
-        
+    $: if (scripture && Array.isArray(scripture.books) && displayedBookIndex === -1 && displayedChapterIndex === -1 && displayedVerseNumber === 0 && $outShow && $outSlide !== null) {
         const slideScripture = extractScriptureFromSlide()
         if (slideScripture) {
             displayedBookIndex = slideScripture.bookIndex
             displayedChapterIndex = slideScripture.chapterIndex
             displayedVerseNumber = slideScripture.verseNumber
         }
-            }
-    // This ensures that when user reloads the page and a verse is already active, 
+    }
+    // This ensures that when user reloads the page and a verse is already active,
     // the navigation will show the correct highlights when they browse back
     $: if (scripture && Array.isArray(scripture.books) && displayedBookIndex >= 0 && depth === 0) {
         // At depth 0 (books view), always ensure activeBook matches displayedBookIndex
@@ -301,14 +295,14 @@
             }
         }
     }
-    
+
     import { outShow, outSlide } from "../../util/stores"
 
     // NAV CONTROLS: navigate to next/previous chapter or verse
     export function forward() {
         // If a verse is highlighted at verse-level, move to next verse
         if (depth === 2 && activeVerse > 0) {
-            const verseNumbers: number[] = verses.map((v: any, i: number) => (v?.number ?? i + 1))
+            const verseNumbers: number[] = verses.map((v: any, i: number) => v?.number ?? i + 1)
             const currentIndex = verseNumbers.indexOf(activeVerse)
             if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
                 activeVerse = verseNumbers[currentIndex + 1]
@@ -327,7 +321,7 @@
     export function backward() {
         // If a verse is highlighted at verse-level, move to previous verse
         if (depth === 2 && activeVerse > 0) {
-            const verseNumbers: number[] = verses.map((v: any, i: number) => (v?.number ?? i + 1))
+            const verseNumbers: number[] = verses.map((v: any, i: number) => v?.number ?? i + 1)
             const currentIndex = verseNumbers.indexOf(activeVerse)
             if (currentIndex > 0) {
                 activeVerse = verseNumbers[currentIndex - 1]
@@ -394,7 +388,14 @@
                                 activeBook = i
                                 depth++
                             }}
-                            on:keydown={(e) => e.key === 'Enter' && (() => { activeVerse = 0; activeChapter = -1; activeBook = i; depth++; })()}
+                            on:keydown={(e) =>
+                                e.key === "Enter" &&
+                                (() => {
+                                    activeVerse = 0
+                                    activeChapter = -1
+                                    activeBook = i
+                                    depth++
+                                })()}
                             class:active={activeBook === i}
                             class:displayed={i === displayedBookIndex}
                             class:output={i === displayedBookIndex}
@@ -427,7 +428,13 @@
                             activeChapter = i
                             depth++
                         }}
-                        on:keydown={(e) => e.key === 'Enter' && (() => { if (activeChapter !== i) activeVerse = 0; activeChapter = i; depth++; })()}
+                        on:keydown={(e) =>
+                            e.key === "Enter" &&
+                            (() => {
+                                if (activeChapter !== i) activeVerse = 0
+                                activeChapter = i
+                                depth++
+                            })()}
                         class:active={activeChapter === i}
                         class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
                         class:output={i === displayedChapterIndex && activeBook === displayedBookIndex}
@@ -448,7 +455,7 @@
                     {@const id = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && id === displayedVerseNumber}
                     {@const isActive = activeVerse == id}
-                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === 'Enter' && playScripture(id)} class:active={isActive} class:displayed={isDisplayed}>
+                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === "Enter" && playScripture(id)} class:active={isActive} class:displayed={isDisplayed}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                             {id}
                         </span>
@@ -495,11 +502,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .grid div::-webkit-scrollbar { width: 8px; height: 8px; }
+    .grid div::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .grid div::-webkit-scrollbar-track,
-    .grid div::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .grid div::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .grid div::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .grid div::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .grid div::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .grid div::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
 
     /* .grid .content */
     .grid .books {
@@ -535,11 +552,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .grid .verses.list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .grid .verses.list::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .grid .verses.list::-webkit-scrollbar-track,
-    .grid .verses.list::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .grid .verses.list::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .grid .verses.list::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .grid .verses.list::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .grid .verses.list::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .grid .verses.list::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
 
     .grid .verse-button,
     .grid span {

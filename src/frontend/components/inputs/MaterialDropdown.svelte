@@ -289,7 +289,7 @@
 
     <div
         class="input edit dropdown-trigger"
-        data-title="{translateText(label)}: <b>{selected?.label || '—'}</b>"
+        data-title="{translateText(label)}{selected ? `: <b>${selected.label || '—'}</b>` : ''}"
         role="button"
         tabindex={disabled ? undefined : 0}
         on:click={(e) => {

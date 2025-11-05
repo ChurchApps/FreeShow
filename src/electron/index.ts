@@ -15,7 +15,7 @@ import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
+import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -37,6 +37,9 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
+// parse command line arguments
+const commandLineArgs = parseCommandLineArgs()
+
 // check if store works
 config.set("loaded", true)
 if (!config.get("loaded")) console.error("Could not get stored data!")
@@ -48,17 +51,14 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 // set application menu
 setGlobalMenu()
 
-// disable hardware acceleration by default (on mac)
-let disableHWA = config.get("disableHardwareAcceleration")
-if (disableHWA === null) disableHWA = isMac
-if (disableHWA !== false) {
-    // Video flickers, especially on ARM mac otherwise. Performance is actually better without on macOS (most of the time).
-    // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
+// hardware acceleration
+const disableHWA = config.get("disableHardwareAcceleration")
+if (disableHWA === true) {
+    // Video did flicker sometime with HWA, especially on ARM Mac.
+    // CPU usage is often lower with HWA enabled.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
-    // on Windows it's often better with hardware acceleration
     app.disableHardwareAcceleration()
-} else {
-    console.info("Starting with Hardware Acceleration")
+    console.info("Hardware Acceleration Disabled")
 }
 
 // start when ready
@@ -66,17 +66,18 @@ if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", startApp)
 
 export let powerSaveBlockerId: number | null = null
-async function startApp() {
+function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
+    // WIDEVINE
     // Wait for Widevine CDM components to be ready (required for castlabs electron)
-    try {
-        const { components } = require("electron")
-        await components.whenReady()
-        console.info("Widevine CDM components ready")
-    } catch (err) {
-        console.warn("Failed to initialize Widevine CDM components:", err)
-    }
+    // try {
+    //     const { components } = require("electron")
+    //     await components.whenReady()
+    //     console.info("Widevine CDM components ready")
+    // } catch (err) {
+    //     console.warn("Failed to initialize Widevine CDM components:", err)
+    // }
 
     setTimeout(createLoading)
 
@@ -185,7 +186,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 
     window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type })
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile: commandLineArgs.profile || "" })
     })
 
     function loadingFailed(err: Error) {

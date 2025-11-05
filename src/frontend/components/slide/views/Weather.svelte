@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Weather } from "../../../../types/Show"
-    import { dictionary, timeFormat } from "../../../stores"
+    import { timeFormat } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getWeather } from "../../../utils/weather"
     import T from "../../helpers/T.svelte"
 
@@ -37,14 +38,14 @@
             .map((a, i) => {
                 const currentTime = new Date(a)
                 let dayIndex = currentTime.getDay() === 0 ? 7 : currentTime.getDay()
-                const dayname = i === 0 ? $dictionary.calendar?.today : i === 1 ? $dictionary.calendar?.tomorrow : $dictionary.weekday?.[dayIndex]
+                const dayname = translateText(i < 2 ? `calendar.${i === 0 ? "today" : "tomorrow"}` : `weekday.${dayIndex}`)
                 const isoTime = toGlobalISO(a)
                 let timedata = weather.properties.timeseries.find((a) => a.time === isoTime)
                 if (timedata && i === 0) timedata = weather.properties.timeseries[0]
                 if (!timedata) return null
 
                 return {
-                    name: data.longRange ? dayname : i === 0 ? $dictionary.calendar?.now : getTime(a),
+                    name: data.longRange ? dayname : i === 0 ? translateText("calendar.now") : getTime(a),
                     icon: (timedata?.data.next_1_hours || timedata?.data.next_6_hours)?.summary.symbol_code,
                     temperature: convertTemperature(timedata.data.instant.details.air_temperature || 0, !!data.useFahrenheit) + u_temp,
                     wind_speed: timedata.data.instant.details.wind_speed + u_wind_speed

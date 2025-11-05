@@ -12,6 +12,7 @@ import {
     activePopup,
     activeProject,
     alertUpdates,
+    audioChannelsData,
     audioFolders,
     audioPlaylists,
     audioStreams,
@@ -32,6 +33,8 @@ import {
     effects,
     effectsLibrary,
     emitters,
+    eqPresets,
+    equalizerConfig,
     formatNewShow,
     fullColors,
     gain,
@@ -281,6 +284,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     transitionData: (v: any) => transitionData.set(v),
     volume: (v: any) => volume.set(v),
     gain: (v: any) => gain.set(v),
+    audioChannelsData: (v: any) => audioChannelsData.set(v),
     emitters: (v: any) => emitters.set(v),
     midiIn: (v: any) => actions.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
@@ -291,6 +295,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
+    equalizerConfig: (v: any) => equalizerConfig.set(v),
+    eqPresets: (v: any) => eqPresets.set(v),
     effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
@@ -325,7 +331,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     // @ts-ignore - DEPERACTED (migrate)
     chumsSyncCategories: (v: any) => {
-        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), chums: { syncCategories: v } })
+        if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), churchApps: { syncCategories: v } })
     },
     contentProviderData: (v: any) => contentProviderData.set(v),
     effects: (a: any) => effects.set(a)

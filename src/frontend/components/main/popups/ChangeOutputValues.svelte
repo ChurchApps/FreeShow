@@ -61,16 +61,16 @@
         <HRule title="settings.position" />
 
         <InputRow>
-            <MaterialNumberInput label="edit.x" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={(e) => updateBounds("x", e.detail)} />
-            <MaterialNumberInput label="edit.y" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={(e) => updateBounds("y", e.detail)} />
+            <MaterialNumberInput label="edit.x (px)" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={(e) => updateBounds("x", e.detail)} />
+            <MaterialNumberInput label="edit.y (px)" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={(e) => updateBounds("y", e.detail)} />
         </InputRow>
     {/if}
 
     <HRule title="edit.size" />
 
     <InputRow>
-        <MaterialNumberInput label="edit.width" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={(e) => updateBounds("width", e.detail)} />
-        <MaterialNumberInput label="edit.height" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={(e) => updateBounds("height", e.detail)} />
+        <MaterialNumberInput label="edit.width (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={(e) => updateBounds("width", e.detail)} />
+        <MaterialNumberInput label="edit.height (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={(e) => updateBounds("height", e.detail)} />
     </InputRow>
 {/if}
 

@@ -28,7 +28,7 @@
         else if (selection.id === "output") value = $outputs[selection.data[0].id].color || ""
         else if (selection.id === "profile") value = $profiles[selection.data[0].id].color || ""
         else if (selection.id === "tag") value = $globalTags[selection.data[0].id].color || ""
-        else if (selection.id === "show") value = $projects[$activeProject || ""]?.shows[selection.data[0].index].color || ""
+        else if (selection.id === "show") value = $projects[$activeProject || ""]?.shows?.[selection.data[0].index]?.color || ""
     })
 
     const actions = {

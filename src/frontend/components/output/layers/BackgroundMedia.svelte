@@ -6,7 +6,7 @@
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { currentWindow, media, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { audioChannelsData, currentWindow, media, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -153,8 +153,16 @@
 
     // FADE OUT AUDIO
 
+    $: audioChannelVolume = $audioChannelsData[outputId]?.volume ?? 1
+    $: isMuted = !!($audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
+    // $: if (isMuted !== undefined) setMuted(isMuted)
+    // function setMuted(muted: boolean) {
+    //     if (!video) return
+    //     video.muted = muted
+    // }
+
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100))
+    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100))
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {

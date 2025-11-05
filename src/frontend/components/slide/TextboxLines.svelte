@@ -141,7 +141,7 @@
     // CHORDS
 
     let chordLines: string[] = []
-    $: if (chords && (item?.lines || fontSize)) createChordLines()
+    $: if (chords && (item?.lines || fontSize)) setTimeout(createChordLines)
     function createChordLines() {
         chordLines = []
         if (!Array.isArray(item?.lines)) return

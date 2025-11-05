@@ -10,6 +10,7 @@ import {
     contextActive,
     customMessageCredits,
     drawSettings,
+    focusMode,
     lockedOverlays,
     outLocked,
     outputCache,
@@ -45,8 +46,9 @@ export function clearAll(button = false) {
 
     storeCache()
 
+    const keepLastSlide = get(focusMode)
     clearBackground()
-    clearSlide(true)
+    clearSlide(!keepLastSlide)
     clearOverlays()
     clearAudio("", { clearPlaylist: true, commonClear: true })
     clearTimers()
@@ -125,6 +127,7 @@ export function clearBackground(specificOutputId = "") {
     customActionActivation("background_cleared")
 }
 
+// shouldClearAll = don't keep cached previous slide
 export function clearSlide(shouldClearAll = false) {
     if (!shouldClearAll) {
         // store position
@@ -134,9 +137,9 @@ export function clearSlide(shouldClearAll = false) {
             const slide = get(outputs)[outputId]?.out?.slide || null
             if (!slide?.id || slide.index === undefined) return
 
-            // only store if not last slide
+            // only store if not last slide & not in focus mode
             const layoutRef = _show(slide.id).layouts([slide.layout]).ref()[0] || []
-            if (slide.index >= layoutRef.length - 1) return
+            if (!get(focusMode) && slide.index >= layoutRef.length - 1) return
 
             slideCache[outputId] = slide
         })

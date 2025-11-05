@@ -132,7 +132,7 @@ const keys = {
     Delete: () => deleteAction(get(selected), "remove"),
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
-    F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
+    F2: () => get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
     F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null)
 }
@@ -251,7 +251,7 @@ export const previewShortcuts = {
     },
     F2: () => {
         // return if "rename" is selected
-        if (get(outLocked) || (get(selected).id && get(selected).id !== "scripture")) return false
+        if (get(outLocked) || (get(selected).id && get(selected).id !== "scripture" && !get(focusMode))) return false
         if (presentationControllersKeysDisabled()) return false
 
         clearSlide()
@@ -447,8 +447,17 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
         }
 
         const outputStyle = get(styles)[currentOutput.style || ""]
-        const mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
-        setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
+        const mediaData = get(media)[item.id] || {}
+        const mediaStyle = getMediaStyle(mediaData, outputStyle)
+
+        const videoType = mediaData.videoType
+        const shouldLoop = videoType === "background" ? true : false
+        const shouldBeMuted = videoType === "background" ? true : false
+
+        // clear slide
+        if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
+
+        setOutput("background", { type, path: item.id, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {

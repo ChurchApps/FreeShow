@@ -19,9 +19,8 @@
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
-        { id: "slide_text", icon: "text" },
+        { id: "slide_text", icon: "text" }
         // { id: "slide_notes", icon: "notes" }, // added as dynamic value in textbox
-        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen", maxAmount: 1 }])
     ]
 
     const normalItems: ItemRef[] = [
@@ -31,7 +30,9 @@
         { id: "camera" },
         { id: "timer" },
         { id: "clock" },
-        { id: "slide_tracker", icon: "percentage" }
+        { id: "slide_tracker", icon: "percentage" },
+        { id: "metronome", maxAmount: 1 },
+        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen" }])
     ]
 
     $: stageId = $activeStage.id || ""
@@ -149,13 +150,13 @@
                 {#if !$labelsDisabled}{translateText("items.text")}{/if}
             </MaterialButton>
 
-            <MaterialDropdown label="" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} title="actions.dynamic_values" onlyArrow />
+            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
         </InputRow>
     </div>
 
     <div class="section">
         {#each normalItems as item}
-            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style="justify-content: left;width: 50%;padding: 12px 14px;" on:click={() => addItem(item.id)}>
+            <MaterialButton variant="outlined" title="settings.add: <b>items.{item.id}</b>" style={item.id === "current_output" ? "width: 100%;" : "justify-content: left;width: 50%;padding: 12px 14px;"} on:click={() => addItem(item.id)}>
                 <Icon id={item.icon || item.id} size={0.9} />
                 {#if !$labelsDisabled}{translateText("items." + item.id)}{/if}
             </MaterialButton>

@@ -328,7 +328,7 @@
     style={$$props.style}
     class="selectElem {$$props.class || ''}"
     class:fill
-    class:isSelected={$selected.id === id && arrayHasData($selected.data, data)}
+    class:isSelected={selectable && $selected.id === id && arrayHasData($selected.data, data)}
     bind:this={elem}
     on:mouseenter={enter}
     on:mousedown={mousedown}
@@ -372,6 +372,8 @@
         background-color: var(--focus);
         outline: 2px solid var(--text);
         opacity: 0.9;
+
+        border-radius: 6px;
 
         /* filter: invert(1); */
         /* filter: sepia(1); */

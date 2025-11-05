@@ -484,7 +484,7 @@
         "manage_dynamic_values": "동적 값 관리",
         "choose_camera": "카메라 선택",
         "manage_tags": "꼬리표 관리",
-        "chums_sync_categories": "동기화 할 분류 선택",
+        "sync_categories": "동기화 할 분류 선택",
         "effect_items": "효과 항목",
         "initialize": "FreeShow에 오신 것을 환영합니다",
         "unsaved": "정말 종료하시겠습니까?",
@@ -1615,9 +1615,5 @@
         "translation_description_multiline": "모든 언어를 하나의 글상자에 여러줄로 입력합니다. (Songbeamer 방식)",
         "translation_description_textboxes": "각 언어별로 글상자를 구분하여 슬라이드에 추가합니다.",
         "translation_description_layouts": "각 언어별로 별도의 레이아웃과 슬라이드 집합을 만듭니다."
-    },
-    "chums": {
-        "sync_categories": "분류 동기화",
-        "sync_categories_description": "CHUMS와 동기화 할 곡 분류 선택"
     }
 }

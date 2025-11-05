@@ -3,6 +3,7 @@ import { outputs, slideTimers } from "../../stores"
 import { clone } from "./array"
 import { nextSlide } from "./showActions"
 import { playFolder } from "../../utils/shortcuts"
+import { startFolderTimer } from "./output"
 
 export function newSlideTimer(timerId: string, duration: number, folderPath = "") {
     if (duration <= 0) return
@@ -26,7 +27,7 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
         const data = get(slideTimers)[id].data || ""
 
         outputs.update((a) => {
-            if (a[id].out) a[id].out!.transition = null
+            if (a[id]?.out) a[id].out.transition = null
             return a
         })
 
@@ -36,7 +37,13 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
         })
 
         if (data) {
-            playFolder(data)
+            const isPDF = data.endsWith(".pdf")
+            if (isPDF) {
+                startFolderTimer(data, { type: "pdf", path: "" })
+                nextSlide(null, false, false, true, true, id, true)
+            } else {
+                playFolder(data)
+            }
             return
         }
 

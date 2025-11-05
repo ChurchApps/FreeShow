@@ -6,18 +6,40 @@
     import { waitForPopupData } from "../../../utils/popup"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import { keysToID, sortByName, sortObject } from "../../helpers/array"
+    import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
     import { addOutput, enableStageOutput, refreshOut } from "../../helpers/output"
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
-    let outputsList: Output[] = []
-    $: outputsList = sortObject(sortByName(keysToID($outputs)), "stageOutput")
+    // prevent "resetting" rename if output changed while renaming
+    $: updatedOutputs = $outputs
+    let currentOutputs = clone($outputs)
+    $: {
+        let newOutputs = clone(updatedOutputs)
+        Object.values(newOutputs).map((a) => {
+            delete a.out
+            return a
+        })
+        let currOutputs = clone(currentOutputs)
+        Object.values(currOutputs).map((a) => {
+            delete a.out
+            return a
+        })
 
-    $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
+        if (JSON.stringify(newOutputs) !== JSON.stringify(currOutputs)) {
+            currentOutputs = clone(updatedOutputs)
+        }
+    }
+
+    ///
+
+    let outputsList: Output[] = []
+    $: outputsList = sortObject(sortByName(keysToID(currentOutputs)), "stageOutput")
+
+    $: if (outputsList.length && (!$currentOutputSettings || !currentOutputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
 
     let currentOutput: Output | null = null
-    $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
+    $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...currentOutputs[$currentOutputSettings] }
 
     function updateOutput(key: string, value: any, outputId = "") {
         if (!outputId) outputId = currentOutput?.id || ""

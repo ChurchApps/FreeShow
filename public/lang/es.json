@@ -137,7 +137,6 @@
         "_hide_preview": "Ocultar vista preliminar",
         "show_preview": "Mostrar vista preliminar",
         "restore_output": "Restaurar salida",
-        "enable_controls": "Mostrar controles de previsualización de multimedia",
         "background": "Fondo",
         "foreground": "Primer plano",
         "slide": "Diapositiva",
@@ -147,7 +146,8 @@
         "nextTimer": "Temporizador de siguiente diapositiva",
         "lock": "Bloquear",
         "unlock": "Desbloquear",
-        "test_pattern": "Patrón de prueba"
+        "test_pattern": "Patrón de prueba",
+        "live_prepare": "Ocultar contenido de salida (superposición negra)"
     },
     "clear": {
         "general": "Limpiar",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Permitir configurar el volumen por encima del 100% (Puede causar distorsión)",
         "pre_fader_volume_meter": "Medidor de volumen pre-fader",
         "mixer": "Mezclador",
+        "equalizer": "Ecualizador",
+        "preset": "Predeterminado",
+        "main": "Principal",
         "metronome": "Metrónomo",
         "toggle_metronome": "Activar metrónomo",
         "use_metadata_bpm": "Usar PPM a partir de los metadatos",
@@ -484,7 +487,7 @@
         "manage_dynamic_values": "Gestionar valores dinámicos",
         "choose_camera": "Elegir cámara",
         "manage_tags": "Gestionar etiquetas",
-        "chums_sync_categories": "Elige las categorías a sincronizar",
+        "sync_categories": "Elige las categorías a sincronizar",
         "effect_items": "Elementos de efecto",
         "initialize": "Bienvenido a FreeShow",
         "unsaved": "¿Seguro que desea salir?",
@@ -1046,7 +1049,9 @@
         "longitude": "Longitud",
         "altitude": "Altitud",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Largo alcance"
+        "longRange": "Largo alcance",
+        "media_item_tip": "¿Está intentando utilizar los archivos multimedia como fondo?",
+        "convert_to_background": "Convertir en fondo"
     },
     "items": {
         "text": "Cuadro de texto",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Progreso",
         "visualizer": "Visualizador",
         "captions": "Subtítulos",
+        "metronome": "Metrónomo",
         "icon": "Icono",
         "effect": "Efecto",
         "slide_text": "Texto de diapositiva",
         "slide_notes": "Notas de Diapositivas",
-        "current_output": "Salida actual"
+        "current_output": "Ventana de salida"
     },
     "borders": {
         "solid": "Sólido",
@@ -1253,12 +1259,14 @@
         "window": "Ventana",
         "active_style": "Usar estilo",
         "alert_updates": "Alertar cuando una nueva actualización está disponible",
+        "alert_updates_beta": "Alertar cuando haya una nueva versión beta disponible",
         "auto_updates": "Actualizaciones automáticas",
         "disable_labels": "Deshabilitar etiquetas",
         "group_numbers": "Números de grupo",
         "auto_group_numbers": "Asignar automáticamente números de grupo",
         "transparent_slides": "Vista previa de diapositiva transparente",
         "full_colors": "Grupo de colores de alto contraste",
+        "next_item_on_last_slide": "Flecha izquierda/derecha cambia el elemento del proyecto en la primera/última diapositiva",
         "slide_number_keys": "Reproducir diapositivas con las teclas numéricas",
         "auto_shortcut_first_letter": "Atajo automático a la primera letra en el texto",
         "startup_projects_list": "Mostrar la lista de proyectos al iniciar",
@@ -1615,9 +1623,5 @@
         "translation_description_multiline": "Agregar todos los idiomas en un único cuadro de texto en líneas alternas. (Como en Songbeamer)",
         "translation_description_textboxes": "Agregar cada idioma como un cuadro de texto separado a la diapositiva.",
         "translation_description_layouts": "Crear un conjunto único de diapositivas y un diseño para cada idioma."
-    },
-    "chums": {
-        "sync_categories": "Sincronizar categorías",
-        "sync_categories_description": "Seleccionar qué categorías sincronizar como canciones con Chums"
     }
 }

@@ -35,13 +35,13 @@
 
     let active: string = selectedItemIds.length ? "item" : "items"
     $: type = item?.type || "text"
-    $: if (type === "slide_text" || type === "slide_notes" || type === "current_output") type = "text"
+    $: if (type === "slide_text" || type === "slide_notes") type = "text"
     $: tabs.text.name = "items." + type
     $: tabs.text.icon = itemBoxes[type]?.icon || "text"
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
-        if (item?.type === "current_output") {
+        if (item?.type === "metronome") {
             tabs.text.disabled = true
             if (active === "text") active = "items"
             return

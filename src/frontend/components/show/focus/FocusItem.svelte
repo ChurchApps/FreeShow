@@ -58,7 +58,7 @@
         <OverlayPreview {show} />
     </div>
 {:else if type === "pdf"}
-    <PdfPreview {show} />
+    <PdfPreview {show} index={show.index || 0} />
     <!-- ppt, screen, ndi -->
 {:else if type === "folder"}
     <FolderShow path={show.id} index={show.index || 0} />

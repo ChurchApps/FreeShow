@@ -3,7 +3,8 @@
     import { Main } from "../../../../types/IPC/Main"
     import { ShowRef } from "../../../../types/Projects"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activeShow, dictionary, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
+    import { activeShow, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, setOutput } from "../../helpers/output"
@@ -95,7 +96,7 @@
 
     {#if $presentationData?.id === show.id && $presentationData?.stat?.slides}
         <div class="info">
-            <Button on:click={restartPresentation} title={$dictionary.presentation_control?.restart}>
+            <Button on:click={restartPresentation} title={translateText("presentation_control.restart")}>
                 <Icon id="refresh" />
             </Button>
             <p style="white-space: normal;overflow: auto;padding: 3px 8px;">

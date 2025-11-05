@@ -1,7 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
-    import { activeDrawerTab, activeEdit, activePage, activeStyle, dictionary, outputs, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeStyle, outputs, styles, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
@@ -14,11 +15,11 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleButtons from "../../inputs/MaterialToggleButtons.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -57,7 +58,7 @@
     }
 
     const defaultStyle: Styles = {
-        name: $dictionary.example?.default || "Default"
+        name: translateText("example.default")
     }
 
     // set id after deletion
@@ -192,7 +193,7 @@
 <!-- Background -->
 <Title label="preview.background" icon="background" />
 
-<MaterialNumberInput label="media.volume" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
+<MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
 
 <!-- Slide -->
 <Title label="preview.slide" icon="slide" />

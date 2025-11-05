@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
     import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
+    import { loadCustomFonts } from "../helpers/fonts"
     import { history } from "../helpers/history"
-    import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
@@ -14,13 +14,12 @@
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Loader from "../main/Loader.svelte"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
-    import { loadCustomFonts } from "../helpers/fonts"
 
     export let showId: string
     export let layout = ""
@@ -33,6 +32,11 @@
     onMount(() => {
         // custom fonts
         if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+    })
+
+    onDestroy(() => {
+        if (timeout && typeof timeout !== "boolean") clearTimeout(timeout)
+        if (loadingTimeout) clearTimeout(loadingTimeout)
     })
 
     // fix broken media
@@ -159,7 +163,7 @@
 
         let showTemplate = currentShow?.settings?.template || ""
         // get category template if no show template
-        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow.category || ""]?.template || ""
+        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow?.category || ""]?.template || ""
 
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
@@ -397,6 +401,7 @@
 
         function next() {
             lazyLoader += $focusMode ? 20 : 4
+            clearTimeout(timeout as NodeJS.Timeout)
             timeout = null
             startLazyLoader()
         }
@@ -460,7 +465,7 @@
                 <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
+                            {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}
@@ -483,13 +488,12 @@
                             {/if}
                         {/each}
                     {:else}
-                        <Center absolute size={2}>
-                            <span style="opacity: 0.5;"><T id="empty.slides" /></span>
-                            <!-- Add slides button -->
-                            <Button disabled={isLocked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
-                                <Icon id="add" right />
+                        <Center absolute>
+                            <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
+
+                            <MaterialButton disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 12px;" on:click={createSlide}>
                                 <T id="new.slide" />
-                            </Button>
+                            </MaterialButton>
                         </Center>
                     {/if}
                 </div>

@@ -12,8 +12,12 @@ import { updateVideoData, updateVideoTime } from "./video"
 export function playRecording(recording: Recording, { showId, layoutId }, startIndex = 0, subtractTime = 0) {
     if (get(outLocked)) return
 
+    // already playing
+    const current = get(activeSlideRecording)
+    if (current && current.ref.showId === showId && current.ref.layoutId === layoutId && current.index === startIndex) return
+
     // WIP play multiple recordings at the same time in different outputs...
-    if (get(activeSlideRecording)) clearTimeout(get(activeSlideRecording).timeout)
+    if (current) clearTimeout(current.timeout)
 
     const layoutRef = _show(showId).layouts([layoutId]).ref()[0] || []
 
@@ -60,11 +64,11 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
         if (audioPath && get(playingAudio)[audioPath]?.audio?.paused) return
 
-        const outputId = getActiveOutputs()[0]
+        const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
         const outSlide = get(outputs)[outputId]?.out?.slide
-        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
-            updateOut("active", index, layoutRef)
-            const slideIndex = sequence.slideRef.index
+        const slideIndex = sequence.slideRef.index
+        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== slideIndex) {
+            updateOut("active", slideIndex, layoutRef)
             // WIP check that slide is the correct ID ??
             setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })
         }
@@ -118,6 +122,8 @@ function startBackgroundListener() {
 }
 
 function checkTimeDifference(currentTime: number) {
+    if (!get(activeSlideRecording)?.sequence) return
+
     // find closest sequence
     let addedTime = 0
     const sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {

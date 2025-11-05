@@ -118,7 +118,8 @@
     .numberInput {
         display: flex;
         /* align-items: center; */
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
+        border-radius: 4px;
         flex-flow: wrap;
         transition: opacity 0.3s;
     }
@@ -144,6 +145,8 @@
 
     .input :global(input) {
         padding: 5px;
+        background-color: var(--primary-darkest);
+        border-radius: 4px;
     }
 
     .title {

@@ -1,13 +1,13 @@
+import type { Bible, Book, Chapter, Verse } from "json-bible/lib/Bible"
 import { uid } from "uid"
-import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
-import { xml2json } from "./xml"
 import { setActiveScripture } from "./bible"
+import { xml2json } from "./xml"
 
 export function convertOSISBible(data: any[]) {
     data.forEach((bible) => {
-        const obj: Bible = XMLtoObject(bible.content)
+        const obj = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
@@ -27,21 +27,21 @@ export function convertOSISBible(data: any[]) {
     })
 }
 
-function XMLtoObject(xml: string): Bible {
+function XMLtoObject(xml: string) {
     const bible = xml2json(xml, true)?.osis?.osisText || {}
-    const books: any[] = []
+    const books: Book[] = []
 
     bible.div?.forEach((book, bookIndex) => {
         const bookId = book["@osisID"]
         const name = book["@name"] || defaultNames[bookId]
         const abbreviation = book["@abbr"]
         const bookNumber = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? bookIndex) + 1
-        const chapters: any[] = []
+        const chapters: Chapter[] = []
 
         if (!Array.isArray(book.chapter)) book.chapter = [book.chapter]
         book.chapter.forEach((chapter: any, chapterIndex: number) => {
             const chapterNumber = chapter["@osisID"].split(".")?.[1] ?? chapterIndex + 1
-            const verses: any[] = []
+            const verses: Verse[] = []
 
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
             chapter.verse.forEach((verse: any, verseIndex: number) => {
@@ -64,7 +64,7 @@ function XMLtoObject(xml: string): Bible {
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem
     const info = bible.header?.work || {}
 
-    return { name: info.title || info.description || "", metadata: { ...info, copyright: info.rights || "" }, books }
+    return { name: info.title || info.description || "", metadata: { ...info, copyright: info.rights || "" }, books } as Bible
 }
 
 const defaultNames: any = {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activeProject, activeShow, dictionary, projects, special } from "../../stores"
+    import { actions, activeProject, activeShow, projects, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getActionIcon, runAction } from "../actions/actions"
     import { keysToID, sortByName } from "../helpers/array"
@@ -19,13 +19,14 @@
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
-        note = $projects[$activeProject || ""]?.shows[section.index]?.notes || ""
+        note = $projects[$activeProject || ""]?.shows?.[section.index]?.notes || ""
     }
 
     function edit(e: any) {
         if (section.notes === e.detail || !$activeProject) return
 
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index].notes = e.detail
             return a
@@ -40,6 +41,7 @@
         if (!$activeProject) return
 
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index][key] = value
             return a
@@ -67,6 +69,7 @@
 
     function updateSectionData(key: string, value: any) {
         projects.update((a) => {
+            if (!a[$activeProject!]?.shows?.[section.index]) return a
             const currentData = a[$activeProject!].shows[section.index].data || {}
             a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
             return a
@@ -75,7 +78,7 @@
 
     let settingsOpened = false
 
-    $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
+    $: sectionUpdated = $projects[$activeProject || ""]?.shows?.[section.index] || {}
     $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
 
     $: currentActionId = localAction || $special.sectionTriggerAction
@@ -96,7 +99,7 @@
     {#key section}
         <InputRow>
             <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
-                <TextInput value={section?.name || ""} placeholder={$dictionary.main?.unnamed} on:input={updateName} on:keydown={keydown} />
+                <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} on:input={updateName} on:keydown={keydown} />
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 

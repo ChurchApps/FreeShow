@@ -6,10 +6,11 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
-import { dataPath, dictionary, gain, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { audioChannelsData, dataPath, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
+import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
 
 type AudioMetadata = {
@@ -34,7 +35,8 @@ export type AudioData = {
 }
 
 export class AudioPlayer {
-    static channelCount = 2
+    static channelCount = AudioMultichannel.DEFAULT_CHANNELS // default, will be updated dynamically
+    static maxChannels = AudioMultichannel.MAX_CHANNELS // support up to 8 channels (7.1 surround)
     static sampleRate = 48000 // Hz
 
     // static playing: { [key: string]: AudioData } = {}
@@ -66,7 +68,7 @@ export class AudioPlayer {
 
         const audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
-        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade })
+        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade, isPlayingNew: true })
 
         const audio = await this.createAudio(path)
         // another audio might have been started while awaiting (if played rapidly)
@@ -169,6 +171,14 @@ export class AudioPlayer {
             // WIP get microphone input stream (audio will have to be muted in that case)
             // let stream = this.getPlaying(id)?.stream || audio
             AudioAnalyser.attach(id, audio)
+
+            // Check if system supports multichannel and enable it if available
+            setTimeout(() => {
+                if (!AudioAnalyser.supportsMultichannel()) return
+
+                const maxChannels = AudioAnalyser.getMaxSupportedChannels()
+                if (maxChannels > AudioAnalyser.channels) AudioAnalyser.updateChannelCount(maxChannels)
+            }, 500) // Give audio time to start playing and stabilize
         }, waitToPlay * 1000)
     }
 
@@ -271,7 +281,7 @@ export class AudioPlayer {
             return
         }
 
-        if (get(special).clearMediaOnFinish === false) this.pause(id)
+        if (get(special).clearMediaOnFinish === false && AudioPlayer.getAudioType(id, audio.duration) === "music") this.pause(id)
         else this.stop(id)
 
         const stillPlaying = this.getAllPlaying()
@@ -322,12 +332,14 @@ export class AudioPlayer {
     }
 
     static getVolume(id: string | null = null, _updater = get(volume)) {
-        if (!id) return _updater
-        return _updater * (get(media)[id]?.volume || 1)
+        const mainVolume = get(audioChannelsData).main?.isMuted ? 0 : _updater
+        if (!id) return mainVolume
+        return mainVolume * (get(media)[id]?.volume || 1)
     }
 
     static getGain() {
-        return get(special).allowGaining ? get(gain) || 1 : 1
+        return 1
+        // return get(special).allowGaining ? get(gain) || 1 : 1
     }
 
     static getGlobalOptions(path: string) {
@@ -347,6 +359,23 @@ export class AudioPlayer {
         // if (!duration) duration = this.storedDurations.get(path) || 0
         // if (!duration && globalEnd) return globalEnd
         return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
+    }
+
+    static getOutputs(): Promise<{ value: string; label: string }[]> {
+        return new Promise(resolve => {
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices) => {
+                    // only get audio outputs & not "default" becuase that does not work
+                    const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
+                    const audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
+                    resolve(audioOutputs)
+                })
+                .catch((err) => {
+                    console.log(`${err.name}: ${err.message}`)
+                    resolve([])
+                })
+        })
     }
 
     // STATE

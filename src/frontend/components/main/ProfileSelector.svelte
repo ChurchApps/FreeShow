@@ -1,15 +1,16 @@
 <script lang="ts">
-    import { activeProfile, dictionary, profiles } from "../../stores"
+    import { activeProfile, profiles } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { confirmCustom } from "../../utils/popup"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const profilesList = [{ id: "", color: "", name: $dictionary.profile?.admin || "Admin" }, ...sortByName(keysToID($profiles))]
+    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles))]
 
     async function selectProfile(id: string) {
-        if (id === "" && !(await confirmCustom($dictionary.profile?.choose_admin || "Choose admin profile?"))) return
+        if (id === "" && !(await confirmCustom(translateText("profile.choose_admin")))) return
 
         activeProfile.set(id)
     }
@@ -21,7 +22,7 @@
 
     <div class="flex">
         {#each profilesList as profile}
-            <Button title="{$dictionary.profile?.set_active}: {profile.name}" style="padding: 1.8em;" on:click={() => selectProfile(profile.id)}>
+            <Button title="{translateText('profile.set_active')}: {profile.name}" style="padding: 1.8em;" on:click={() => selectProfile(profile.id)}>
                 <div class="profile">
                     <Icon id={profile.id ? "profiles" : "admin"} size={8} style="fill: {profile.color || 'white'};" />
                     <p>{profile.name}</p>

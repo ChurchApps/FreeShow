@@ -137,7 +137,6 @@
         "_hide_preview": "Masquer l'aperçu",
         "show_preview": "Prévisualisation de la présentation",
         "restore_output": "Restaurer la sortie",
-        "enable_controls": "Afficher les contrôles de prévisualisation des médias",
         "background": "Arrière-plan",
         "foreground": "Premier plan",
         "slide": "Diapositive",
@@ -147,7 +146,8 @@
         "nextTimer": "Minuteur de la diapositive suivante",
         "lock": "Verrouillage",
         "unlock": "Déverrouillage",
-        "test_pattern": "Mires de test"
+        "test_pattern": "Mires de test",
+        "live_prepare": "Masquer le contenu de sortie (superposition noire)"
     },
     "clear": {
         "general": "Effacer",
@@ -219,6 +219,9 @@
         "allow_gaining_tip": "Autorise le réglage du volume supérieur à 100 % (Risque de distorsion)",
         "pre_fader_volume_meter": "Vumètre de volume pré-fader",
         "mixer": "Mixeur",
+        "equalizer": "Égaliseur",
+        "preset": "Préréglage",
+        "main": "Principal",
         "metronome": "Métronome",
         "toggle_metronome": "Activer/Désactiver le métronome",
         "use_metadata_bpm": "Utiliser le Tempo des métadonnées",
@@ -484,7 +487,7 @@
         "manage_dynamic_values": "Gérer les valeurs dynamiques",
         "choose_camera": "Choisir la caméra",
         "manage_tags": "Gérer les tags",
-        "chums_sync_categories": "Sélectionner les catégories à synchroniser",
+        "sync_categories": "Sélectionner les catégories à synchroniser",
         "effect_items": "Éléments d'effet",
         "initialize": "Bienvenue sur FreeShow",
         "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
@@ -1046,7 +1049,9 @@
         "longitude": "Longitude",
         "altitude": "Altitude",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Longue portée"
+        "longRange": "Longue portée",
+        "media_item_tip": "Utiliser les médias comme image de fond ?",
+        "convert_to_background": "Convertir en image de fond"
     },
     "items": {
         "text": "Zone de texte",
@@ -1067,11 +1072,12 @@
         "slide_tracker": "Progression",
         "visualizer": "Visualiser",
         "captions": "Légendes",
+        "metronome": "Métronome",
         "icon": "Icône",
         "effect": "Effet",
         "slide_text": "Texte de la diapositive",
         "slide_notes": "Notes de la diapositive",
-        "current_output": "Sortie actuelle"
+        "current_output": "Fenêtre de sortie"
     },
     "borders": {
         "solid": "Solide",
@@ -1253,12 +1259,14 @@
         "window": "Fenêtre",
         "active_style": "Utiliser la mise en forme",
         "alert_updates": "Prévenir de la mise à disposition de mise à jour",
+        "alert_updates_beta": "Alerter lorsqu'une nouvelle version bêta est disponible",
         "auto_updates": "Mises à jour automatiques",
         "disable_labels": "Désactiver les étiquettes",
         "group_numbers": "Groupes Numérotés",
         "auto_group_numbers": "Attribuer automatiquement des numéros de groupe",
         "transparent_slides": "Aperçu de diapositive transparent",
         "full_colors": "Couleurs de groupe à fort contraste",
+        "next_item_on_last_slide": "La flèche gauche/droite modifie l'élément du projet sur la première/dernière diapositive",
         "slide_number_keys": "Afficher les diapositives avec les touches numériques",
         "auto_shortcut_first_letter": "Raccourci automatique vers la première lettre du texte",
         "startup_projects_list": "Afficher la liste des projets au démarrage",
@@ -1615,9 +1623,5 @@
         "translation_description_multiline": "Ajoute toutes les langues dans une seule zone de texte, en alternance de lignes. (Comme dans Songbeamer)",
         "translation_description_textboxes": "Ajoute chaque langue dans une zone de texte distincte à la diapositive.",
         "translation_description_layouts": "Crée un ensemble unique de diapos et une mise en page pour chaque langue."
-    },
-    "chums": {
-        "sync_categories": "Synchroniser les catégories",
-        "sync_categories_description": "Sélectionnez les catégories à synchroniser avec Chums"
     }
 }

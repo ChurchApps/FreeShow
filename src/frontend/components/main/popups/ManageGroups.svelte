@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { activePopup, dictionary, groupNumbers, groups, templates } from "../../../stores"
+    import { activePopup, groupNumbers, groups, groupsMoreOptionsEnabled, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -10,7 +11,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
+    $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? translateText("groups." + a.name) || a.name : a.name })))
 
     function changeGroup(e: any, id: string, key = "name") {
         // remove default tag if name is changed (used for translation)
@@ -57,10 +58,10 @@
         groupNumbers.set(true)
     }
 
-    let showMore = false
+    $: showMore = $groupsMoreOptionsEnabled
 </script>
 
-<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => groupsMoreOptionsEnabled.set(!showMore)} white />
 
 {#if showMore}
     <MaterialButton class="popup-reset" icon="reset" iconSize={1.1} title="actions.reset" on:click={reset} white />

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { dictionary, guideActive, os } from "../../stores"
+    import { guideActive, os } from "../../stores"
     import { wait } from "../../utils/common"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -94,11 +95,11 @@
                         <T id="guide.skip" />
                     </Button>
                 {:else if steps[stepIndex + 1]}
-                    <Button on:click={() => stepIndex--} title={$dictionary.media?.previous}>
+                    <Button on:click={() => stepIndex--} title={translateText("media.previous")}>
                         <Icon id="back" size={1.5} white />
                     </Button>
                 {/if}
-                <Button on:click={() => (steps[stepIndex + 1] ? stepIndex++ : guideActive.set(false))} title={steps[stepIndex + 1] ? $dictionary.media?.next : $dictionary.actions?.done}>
+                <Button on:click={() => (steps[stepIndex + 1] ? stepIndex++ : guideActive.set(false))} title={translateText(steps[stepIndex + 1] ? "media.next" : "actions.done")}>
                     <Icon id={steps[stepIndex + 1] ? "arrow_forward" : "check"} size={1.5} white={!!steps[stepIndex + 1]} />
                 </Button>
             </div>
@@ -136,6 +137,8 @@
         box-shadow: 0 0 0 8000px rgb(0 0 0 / 40%);
 
         transition: 0.8s all;
+
+        border-radius: 2px;
     }
 
     .text {
@@ -150,6 +153,8 @@
 
         background-color: rgb(0 0 0 / 70%);
         padding: 8px 12px;
+
+        border-radius: 4px;
     }
     .text.flip {
         inset-inline-start: initial;
@@ -171,5 +176,7 @@
         padding: 10px;
 
         pointer-events: initial;
+
+        border-radius: 4px;
     }
 </style>

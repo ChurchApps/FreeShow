@@ -163,7 +163,7 @@ function renameOpusBuild() {
     })
 }
 
-const devScriptPath = '<script type="module" src="../src/frontend/main.ts"></script>'
+const devScriptPath = '<script type="module" src="/src/frontend/main.ts"></script>'
 const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
 function setProductionHTML() {
     const sourceIndexPath = join(__dirname, "..", "public", "index.html")

@@ -1,8 +1,11 @@
 <!-- THIS MODE WILL SHOW ALL THE ELEMENTS IN YOUR PROJECT! -->
 
 <script lang="ts">
-    import { activeFocus, activeProject, projects, resized } from "../../../stores"
+    import { onMount } from "svelte"
+    import type { ProjectShowRef } from "../../../../types/Projects"
+    import { activeFocus, activeProject, outputs, projects, resized } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
+    import { getActiveOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
@@ -13,7 +16,7 @@
     $: project = $projects[projectId]
 
     let projectUpdating: any = null
-    $: if (project) initScroll()
+    $: if (project?.shows) initScroll()
     function initScroll() {
         if (projectUpdating) clearTimeout(projectUpdating)
         projectUpdating = setTimeout(() => {
@@ -28,25 +31,34 @@
     let listElem: HTMLElement | undefined
     let fromTop = 0 // 25px on Windows
 
+    $: outputId = getActiveOutputs($outputs, true, true, true)[0] || ""
+    $: output = $outputs[outputId]
+    $: outputShowId = output?.out?.slide?.id
+    $: outputIndex = output?.out?.slide?.index
+
     $: active = $activeFocus
     let scrollingToActive: any = null
-    $: if (active) scrollToActive()
+    // auto scroll to active slide when show or output changes
+    $: if (active || outputIndex !== undefined) scrollToActive()
     function scrollToActive() {
         if (!listElem || isScrolling || projectUpdating) return
 
         let index = active.index
-        if (index === undefined) index = project.shows.findIndex((a) => a.id === active.id)
+        if (index === undefined) index = project.shows.findIndex((a) => a.id === (outputShowId ?? active.id))
 
-        let id = "id_" + getId(active.id) + "_" + index
-        let elem = listElem.querySelector("#" + id)
-        let elemTop = (elem as HTMLElement)?.offsetTop || 0
+        let id = "id_" + getId(outputShowId ?? active.id) + "_" + index
+        let elem = listElem.querySelector("#" + id) as HTMLElement
+        let elemTop = elem?.offsetTop || 0
+        const slide = elem?.querySelector(".grid")?.children[outputIndex || 0] as HTMLElement
+        let slideTop = elemTop + (slide?.offsetTop ?? elem?.offsetTop ?? 0)
+        if (!slide) return
 
         // WIP scroll to active slide also if it's outside of view
 
         // don't scroll if already visible
         const currentScrollPos = listElem.closest(".center")?.scrollTop || 0
         const currentViewHeight = listElem.closest(".center")?.clientHeight || 0
-        if (elemTop - currentScrollPos > -250 && elemTop - currentScrollPos < currentViewHeight - 200) return
+        if (slideTop - currentScrollPos > -250 && slideTop - currentScrollPos < currentViewHeight - 200) return
 
         // smooth scrolling time
         if (scrollingToActive) clearTimeout(scrollingToActive)
@@ -55,7 +67,8 @@
         }, 3000)
 
         // scroll to active elem!
-        listElem.closest(".center")?.scrollTo(0, elemTop - fromTop)
+        const MARGIN = 80
+        listElem.closest(".center")?.scrollTo(0, slideTop - fromTop - MARGIN)
     }
 
     $: if (listElem) setScrollListener()
@@ -70,7 +83,7 @@
 
     let isScrolling: any = null
     function scrolling(e: any) {
-        if (scrollingToActive || !listElem || !project || projectUpdating) return
+        if (scrollingToActive || !listElem || !project?.shows || projectUpdating) return
 
         if (isScrolling) clearTimeout(isScrolling)
         isScrolling = setTimeout(() => {
@@ -101,9 +114,18 @@
     function getId(text: string) {
         return text.replace(/[^a-zA-Z0-9]+/g, "")
     }
+
+    // don't refresh list unless count changes
+    let projectsItemsList: ProjectShowRef[] = []
+    onMount(updateProjectItemsList)
+    $: projectItems = project?.shows?.length || 0
+    $: if (projectItems) updateProjectItemsList()
+    function updateProjectItemsList() {
+        projectsItemsList = project?.shows || []
+    }
 </script>
 
-{#await getAllProjectItems(project.shows)}
+{#await getAllProjectItems(projectsItemsList)}
     <Center>
         <Loader />
     </Center>
@@ -111,17 +133,15 @@
     {#if list.length}
         <div class="list" bind:this={listElem}>
             {#each list as item, i}
-                <div class="name" id={"id_" + getId(item.id) + "_" + i} style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
-                    <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
-                    <p>{item.name}</p>
+                <div id={"id_" + getId(item.id) + "_" + i}>
+                    <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
+                        <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
+                        <p>{item.name}</p>
+                    </div>
+                    <FocusItem show={{ ...item, index: i }} />
                 </div>
-                <FocusItem show={{ ...item, index: i }} />
             {/each}
         </div>
-
-        <!-- scroll to active if list updates -->
-        <!-- <span style="font-size: 0;position: absolute;">{setTimeout(scrollToActive, 100)}</span> -->
-        <span style="font-size: 0;position: absolute;">{console.log("LOADED")}</span>
     {:else}
         <Center faded>
             <T id="empty.general" />

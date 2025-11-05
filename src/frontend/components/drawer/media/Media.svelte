@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
+    import type { ClickEvent } from "../../../../types/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
@@ -91,10 +92,12 @@
 
     // Content providers with libraries, and are currently connected
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
-    onMount(async () => {
-        const allProviders = await requestMain(Main.GET_CONTENT_PROVIDERS)
-        contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
-    })
+    $: if ($providerConnections) getProviders()
+    function getProviders() {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
 
     $: if ($providerConnections) {
         requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
@@ -137,7 +140,10 @@
                 prevActive = active
                 files = []
                 fullFilteredFiles = []
-                Object.values($mediaFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" }))
+
+                for (const data of Object.values($mediaFolders)) {
+                    sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" })
+                }
             }
         } else if (path?.length) {
             if (path !== prevActive) {
@@ -314,7 +320,13 @@
         }
     }
 
-    function goBack() {
+    function goBack(e?: ClickEvent) {
+        if (e?.detail.ctrl) {
+            lastPaths.push(path)
+            path = rootPath
+            return
+        }
+
         const lastSlash = path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")
         const folder = path.slice(0, lastSlash)
 
@@ -436,7 +448,7 @@
                     {#if $mediaOptions.mode === "grid"}
                         <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
                             {#if item.folder}
-                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} />
+                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={item.credits || {}}
@@ -454,7 +466,7 @@
                     {:else}
                         <VirtualList items={sortedFiles} let:item={file}>
                             {#if file.folder}
-                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                                <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={(e) => (path = e.detail)} />
                             {:else}
                                 <Media
                                     credits={file.credits || {}}
@@ -614,6 +626,9 @@
 
     .grid :global(.selectElem) {
         outline-offset: -3px;
+    }
+    .grid :global(.isSelected) {
+        border-radius: 0 !important;
     }
     /* .grid :global(#media.isSelected .main) {
         z-index: -1;

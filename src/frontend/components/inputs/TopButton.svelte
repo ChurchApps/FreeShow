@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { TopViews } from "../../../types/Tabs"
-    import { activeEdit, activePage, activeShow, editHistory, labelsDisabled, shows, special } from "../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, editHistory, labelsDisabled, shows, special } from "../../stores"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -44,7 +45,7 @@
 <!-- border-top-left-radius: 12px;border-top-right-radius: 12px; -->
 <MaterialButton
     style="border-radius: 0;border-bottom: 2px solid var(--primary);{label ? 'padding: 0.3em 1.2em;' : ''}"
-    title="menu._title_{id} {$special.numberKeys ? '' : ` [${keys[id] || ''}]`}"
+    title={translateText(`menu._title_${id}${$special.numberKeys ? "" : ` [${keys[id]}]`}`, $dictionary)}
     isActive={$activePage === id}
     {disabled}
     on:click={openPage}

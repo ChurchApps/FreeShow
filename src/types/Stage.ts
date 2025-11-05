@@ -71,4 +71,5 @@ export interface StageItem {
     tracker?: any // slide tracker data
     timer?: any // timer options
     clock?: any // clock options
+    currentOutput?: { source?: string; showLabel?: boolean }
 }

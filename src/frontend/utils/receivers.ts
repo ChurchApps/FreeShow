@@ -16,6 +16,7 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
+    audioChannelsData,
     audioData,
     closeAd,
     colorbars,
@@ -26,10 +27,13 @@ import {
     driveData,
     dynamicValueData,
     effects,
+    equalizerConfig,
     events,
     gain,
     livePrepare,
     media,
+    metronome,
+    metronomeTimer,
     ndiData,
     outputDisplay,
     outputs,
@@ -67,6 +71,7 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { playFolder, previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
+import { setEqualizerEnabled, updateEqualizerBands } from "../audio/audioEqualizer"
 
 export function setupMainReceivers() {
     receiveMainGlobal()
@@ -308,6 +313,16 @@ export const receiveOUTPUTasOUTPUT: any = {
 
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
+    AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
+
+    EQUALIZER_CONFIG: (a: any) => {
+        equalizerConfig.set(a)
+        setEqualizerEnabled(a.enabled)
+        updateEqualizerBands(a.bands)
+    },
+
+    METRONOME: (a: any) => metronome.set(a),
+    METRONOME_TIMER: (a: any) => metronomeTimer.set(a),
 
     // dynamic values
     PLAYING_AUDIO: (a: any) => playingAudioPaths.set(a),

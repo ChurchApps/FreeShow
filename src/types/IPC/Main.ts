@@ -1,9 +1,10 @@
 import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
+import type { Bible } from "json-bible/lib/Bible"
 import type os from "os"
+import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { stores } from "../../electron/data/store"
-import type { Bible } from "../Bible"
 import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
@@ -14,7 +15,6 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
-import type { ContentLibraryCategory, ContentFile, ContentProviderId } from "../../electron/contentProviders/base/types"
 
 export const MAIN = "MAIN"
 
@@ -142,7 +142,7 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
-    [Main.BIBLE]: { id: string; path: string; name: string; data: any }
+    [Main.BIBLE]: { id: string; path: string; name: string }
     [Main.SHOW]: { id: string; path: string | null; name: string }
     [Main.SAVE]: SaveData
     [Main.SHOWS]: { showsPath: string }
@@ -241,7 +241,7 @@ export interface MainReturnPayloads {
     [Main.CLOSE]: boolean | void
     [Main.MAXIMIZED]: boolean
     /////////////////////
-    [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible]; data?: { index?: number } }
+    [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible] }
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
     [Main.GET_DISPLAYS]: Display[]

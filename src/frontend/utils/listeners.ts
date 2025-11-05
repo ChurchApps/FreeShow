@@ -12,6 +12,7 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
+    audioChannelsData,
     audioData,
     cachedShowsData,
     colorbars,
@@ -21,12 +22,15 @@ import {
     drawTool,
     driveKeys,
     effects,
+    equalizerConfig,
     events,
     folders,
     gain,
     groups,
     livePrepare,
     media,
+    metronome,
+    metronomeTimer,
     openedFolders,
     outputs,
     outputSlideCache,
@@ -272,6 +276,21 @@ export function storeSubscriber() {
     })
     gain.subscribe((data) => {
         send(OUTPUT, ["GAIN"], data)
+    })
+    audioChannelsData.subscribe((data) => {
+        send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    })
+
+    equalizerConfig.subscribe((data) => {
+        send(OUTPUT, ["EQUALIZER_CONFIG"], data)
+    })
+
+    metronome.subscribe((data) => {
+        send(OUTPUT, ["METRONOME"], data)
+    })
+    metronomeTimer.subscribe((data) => {
+        send(OUTPUT, ["METRONOME_TIMER"], data)
+        // WIP send to stage
     })
 
     timeFormat.subscribe((a) => {

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
+    import { activeDays, activePopup, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
-    import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
 
@@ -76,7 +76,7 @@
         weekdays = []
         for (let i = 0; i < 7; i++) {
             let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
-            weekdays.push($dictionary.weekday?.[index] || "")
+            weekdays.push(translateText("weekday." + index))
         }
     }
 
@@ -186,23 +186,18 @@
         if (type === "action") return actionData[actionId]?.icon || "actions"
         return type
     }
+
+    $: isPresentDay = !!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()
+    function setToPresentDay() {
+        current = today
+        activeDays.set([copyDate(today).getTime()])
+    }
 </script>
 
 <div class="calendar">
     <div class="week" style="flex: 1;">
-        <div class="weekday" style="min-width: 25px;flex: 1;padding: 0;">
-            <Button
-                on:click={() => {
-                    current = today
-                    activeDays.set([copyDate(today).getTime()])
-                }}
-                active={!!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()}
-                title={$dictionary.calendar?.today}
-                style="width: 100%;height: 100%;padding: 0;"
-                center
-            >
-                <Icon id="calendar" />
-            </Button>
+        <div class="weekday" style="min-width: 25px;flex: 1;padding: 0;background-color: var(--primary-darker);font-size: 0.9em;opacity: 0.7;font-weight: 600;">
+            {current.getFullYear().toString().slice(2)}
         </div>
 
         {#each weekdays as weekday}
@@ -263,8 +258,14 @@
 
     <div class="divider"></div>
 
+    <MaterialButton title="calendar.today" isActive={isPresentDay} on:click={setToPresentDay}>
+        <Icon id="home" white={!isPresentDay} size={1.1} />
+    </MaterialButton>
+
+    <div class="divider"></div>
+
     <span style="opacity: 0.8;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
-        {$dictionary.month?.[current.getMonth() + 1]}
+        {translateText("month." + (current.getMonth() + 1))}
         {current.getFullYear()}
     </span>
 </FloatingInputs>

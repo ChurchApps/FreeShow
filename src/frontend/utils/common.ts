@@ -93,7 +93,15 @@ export function focusArea(e: any) {
     if (get(quickSearchActive) && !e.target.closest(".quicksearch")) quickSearchActive.set(false)
 
     if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
-    focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
+
+    const id = e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id
+    if (id) focusedArea.set(id)
+
+    // custom area without select elems
+    if (!id) {
+        const scriptureArea = e.target.closest(".scripture")
+        if (scriptureArea) focusedArea.set("scripture")
+    }
 }
 
 // auto save
@@ -194,13 +202,14 @@ export function togglePanels() {
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-const triggerTimeout: NodeJS.Timeout | null = null
+let triggerTimeout: NodeJS.Timeout | null = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 
     if (triggerTimeout) clearTimeout(triggerTimeout)
-    setTimeout(() => {
+    triggerTimeout = setTimeout(() => {
         activeTriggerFunction.set("")
+        triggerTimeout = null
     }, 100)
 }
 

@@ -10,7 +10,7 @@ export interface Shows {
 export interface Show {
     name: string
     id?: string // this id should not be stored (but often used in the program as a temporary value)
-    origin?: string // "pco" | "chums" | "hymnary", etc.
+    origin?: string // "pco" | "churchApps" | "hymnary", etc.
     private?: boolean // hide from drawer
     locked?: boolean // disable edits
     category: null | ID
@@ -131,7 +131,7 @@ export interface Item {
     web?: any
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
-    actions?: any // showTime | hideTime
+    actions?: any // showTime | hideTime | transition
     clickReveal?: boolean
     lineReveal?: boolean
     chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }
@@ -552,7 +552,7 @@ export interface Tag {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome" | "current_output" // "shape" | "video"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "camera" | "player" | "audio"

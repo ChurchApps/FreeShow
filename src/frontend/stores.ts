@@ -1,10 +1,10 @@
 // ----- FreeShow -----
 // Here are all the global app variables
 
+import type { Bible } from "json-bible/lib/Bible"
 import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
-import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
@@ -16,9 +16,10 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { AudioChannel, AudioStream, Playlist } from "./../types/Audio"
+import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
+import { type EQBand, type EqualizerConfig } from "./audio/audioEqualizer"
 import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
 
@@ -67,13 +68,14 @@ export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
-export const activeScripture: Writable<any> = writable({})
+export const activeScripture: Writable<{ id?: string; reference?: { book: number | string; chapters: (number | string)[]; verses: (number | string)[][] } }> = writable({})
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
 export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
+export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -140,6 +142,7 @@ export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult 
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
+export const groupsMoreOptionsEnabled: Writable<boolean> = writable(false)
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)
@@ -154,7 +157,7 @@ export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 
 // OTHER
-export const notFound: Writable<any> = writable({ show: [], bible: [] })
+export const notFound: Writable<{ show: string[]; bible: string[] }> = writable({ show: [], bible: [] })
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
@@ -162,7 +165,6 @@ export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
-export const playScripture: Writable<boolean> = writable(false)
 export const openScripture: Writable<any> = writable(null)
 export const deletedShows: Writable<{ name: string; id: string }[]> = writable([])
 export const renamedShows: Writable<{ id: string; name: string; oldName: string }[]> = writable([])
@@ -234,8 +236,11 @@ export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
+export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
 export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
+export const equalizerConfig = writable<EqualizerConfig>({ enabled: false, bands: [] })
+export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}

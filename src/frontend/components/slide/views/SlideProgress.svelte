@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { allOutputs, dictionary, groups, outputs } from "../../../stores"
+    import { allOutputs, groups, outputs, showsCache } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getActiveOutputs } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -18,7 +19,7 @@
     $: currentSlideOut = currentOutput?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
-    $: currentLayoutRef = getLayoutRef(currentShowId)
+    $: currentLayoutRef = getLayoutRef(currentShowId, $showsCache)
     $: currentShowSlides = _show(currentShowId).get("slides") || {}
     $: slidesLength = currentLayoutRef.length || 0
 
@@ -32,7 +33,7 @@
 
         let group = slide.group || "—"
         if (slide.globalGroup && $groups[slide.globalGroup]) {
-            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+            group = $groups[slide.globalGroup].default ? translateText(`groups.${$groups[slide.globalGroup].name}`) : $groups[slide.globalGroup].name
         }
 
         if (typeof group !== "string") group = ""

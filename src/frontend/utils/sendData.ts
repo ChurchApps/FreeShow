@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
+import { API_ACTIONS } from "../components/actions/api"
+import { checkWindowCapture } from "../components/helpers/output"
 import { connections, currentWindow, shows } from "../stores"
 import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
-import { API_ACTIONS } from "../components/actions/api"
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
     return Object.entries(object)
@@ -28,6 +29,8 @@ export function client(id: Clients, msg: ClientMessage) {
             return c
         })
         console.info("SERVER: " + msgId + " connected")
+
+        if (id === "STAGE") checkWindowCapture()
     } else if (msg.channel === "DISCONNECT") {
         connections.update((c: any) => {
             if (c[id]) delete c[id][msgId]

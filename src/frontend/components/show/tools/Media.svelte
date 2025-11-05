@@ -5,7 +5,7 @@
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activePopup, activeShow, alertMessage, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { send } from "../../../utils/request"
@@ -211,16 +211,10 @@
                         {/if}
 
                         {#if background.type === "video"}
-                            <Button
-                                style="flex: 0;padding: 14px 5px;"
-                                center
-                                title={background.muted !== false ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
-                                on:click={() => setBG(background.id || "", "muted", background.muted === false)}
-                                dark
-                            >
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText(background.muted !== false ? "actions.unmute" : "actions.mute")} on:click={() => setBG(background.id || "", "muted", background.muted === false)} dark>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0;padding: 14px 5px;" center title={$dictionary.media?._loop} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop")} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
                         {/if}
