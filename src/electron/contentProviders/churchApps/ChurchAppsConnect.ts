@@ -5,23 +5,23 @@ import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
 import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
-import type { ChumsAuthData, ChumsRequestData, ChumsScopes } from "./types"
-import { CHURCHAPPS_API_URL, CHUMS_APP_URL } from "./types"
+import type { ChurchAppsAuthData, ChurchAppsRequestData, ChurchAppsScopes } from "./types"
+import { CHURCHAPPS_API_URL, CHURCHAPPS_APP_URL } from "./types"
 
 /**
- * Handles authentication and API communication with the Chums service.
+ * Handles authentication and API communication with the ChurchApps service.
  * Manages OAuth flow, token refresh, and provides methods for making authenticated API requests.
  *
- * WARNING: This class should ONLY be accessed through ChumsProvider.
+ * WARNING: This class should ONLY be accessed through ChurchAppsProvider.
  * Do not import or use this class directly in other parts of the application.
- * Use ContentProviderRegistry or ChumsProvider instead.
+ * Use ContentProviderRegistry or ChurchAppsProvider instead.
  */
-export class ChumsConnect {
+export class ChurchAppsConnect {
     private static app = express()
-    private static readonly CHUMS_PORT = 5502
-    private static CHUMS_ACCESS: ChumsAuthData = null
-    private static readonly clientId: string = getKey("chums_id")
-    private static readonly clientSecret: string = getKey("chums_secret")
+    private static readonly CHURCHAPPS_PORT = 5502
+    private static CHURCHAPPS_ACCESS: ChurchAppsAuthData = null
+    private static readonly clientId: string = getKey("churchApps_id")
+    private static readonly clientSecret: string = getKey("churchApps_secret")
 
     private static readonly HTML_SUCCESS = `
     <head>
@@ -43,36 +43,36 @@ export class ChumsConnect {
     </body>
   `
 
-    public static async connect(scope: ChumsScopes): Promise<ChumsAuthData> {
-        const storedAccess: any = this.CHUMS_ACCESS || getContentProviderAccess("chums", scope)
+    public static async connect(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData> {
+        const storedAccess: any = this.CHURCHAPPS_ACCESS || getContentProviderAccess("churchApps", scope)
 
         if (storedAccess?.created_at) {
             if (this.hasExpired(storedAccess)) {
-                this.CHUMS_ACCESS = await this.refreshToken(storedAccess)
-                return this.CHUMS_ACCESS
+                this.CHURCHAPPS_ACCESS = await this.refreshToken(storedAccess)
+                return this.CHURCHAPPS_ACCESS
             }
 
-            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true })
-            if (!this.CHUMS_ACCESS) this.CHUMS_ACCESS = storedAccess
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true })
+            if (!this.CHURCHAPPS_ACCESS) this.CHURCHAPPS_ACCESS = storedAccess
             return storedAccess
         }
 
-        this.CHUMS_ACCESS = await this.authenticate(scope)
-        return this.CHUMS_ACCESS
+        this.CHURCHAPPS_ACCESS = await this.authenticate(scope)
+        return this.CHURCHAPPS_ACCESS
     }
 
-    public static disconnect(scope: ChumsScopes = "plans"): { success: boolean } {
-        setContentProviderAccess("chums", scope, null)
-        this.CHUMS_ACCESS = null
+    public static disconnect(scope: ChurchAppsScopes = "plans"): { success: boolean } {
+        setContentProviderAccess("churchApps", scope, null)
+        this.CHURCHAPPS_ACCESS = null
         return { success: true }
     }
 
-    public static async apiRequest(data: ChumsRequestData): Promise<any> {
-        let CHUMS_ACCESS: any = {}
+    public static async apiRequest(data: ChurchAppsRequestData): Promise<any> {
+        let CHURCHAPPS_ACCESS: any = {}
         if (data.authenticated) {
-            CHUMS_ACCESS = await this.connect(data.scope)
-            if (!CHUMS_ACCESS) {
-                sendToMain(ToMain.ALERT, "Not authorized at Chums (try logging out and in again)!")
+            CHURCHAPPS_ACCESS = await this.connect(data.scope)
+            if (!CHURCHAPPS_ACCESS) {
+                sendToMain(ToMain.ALERT, "Not authorized at ChurchApps (try logging out and in again)!")
                 return null
             }
         }
@@ -81,7 +81,7 @@ export class ChumsConnect {
             const apiUrl = CHURCHAPPS_API_URL
             const pathPrefix = data.api === "doing" ? "/doing" : "/content"
             const fullEndpoint = `${pathPrefix}${data.endpoint}`
-            const headers = data.authenticated ? { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` } : {}
+            const headers = data.authenticated ? { Authorization: `Bearer ${CHURCHAPPS_ACCESS.access_token}` } : {}
             httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
                     console.error("Could not get data", apiUrl, fullEndpoint)
@@ -92,12 +92,12 @@ export class ChumsConnect {
         })
     }
 
-    private static async authenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
+    private static async authenticate(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData> {
         const path = "/auth/complete"
-        const redirect_uri = `http://localhost:${this.CHUMS_PORT}${path}`
+        const redirect_uri = `http://localhost:${this.CHURCHAPPS_PORT}${path}`
 
-        const server = this.app.listen(this.CHUMS_PORT, () => {
-            console.info(`Listening for Chums OAuth response at port ${this.CHUMS_PORT}`)
+        const server = this.app.listen(this.CHURCHAPPS_PORT, () => {
+            console.info(`Listening for ChurchApps OAuth response at port ${this.CHURCHAPPS_PORT}`)
         })
 
         server.once("error", (err: Error) => {
@@ -121,7 +121,7 @@ export class ChumsConnect {
                     redirect_uri,
                 }
 
-                httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+                httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
                     if (err) {
                         res.setHeader("Content-Type", "text/html")
                         const errorPage = this.HTML_ERROR.replace("{error_msg}", err.message)
@@ -138,26 +138,26 @@ export class ChumsConnect {
 
                     server.close()
 
-                    setContentProviderAccess("chums", scope, data)
-                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true, isFirstConnection: true })
+                    setContentProviderAccess("churchApps", scope, data)
+                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true, isFirstConnection: true })
                     resolve(data)
                 })
             })
 
-            const URL = `${CHUMS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
+            const URL = `${CHURCHAPPS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
             openURL(URL)
         })
     }
 
-    private static hasExpired(access: ChumsAuthData): boolean {
+    private static hasExpired(access: ChurchAppsAuthData): boolean {
         if (access === null) return true
         return (access.created_at + access.expires_in) * 1000 < Date.now()
     }
 
-    private static refreshToken(access: ChumsAuthData): Promise<ChumsAuthData> {
+    private static refreshToken(access: ChurchAppsAuthData): Promise<ChurchAppsAuthData> {
         return new Promise((resolve) => {
             if (!access?.refresh_token) return resolve(null)
-            console.info("Refreshing Chums OAuth token")
+            console.info("Refreshing ChurchApps OAuth token")
 
             const params = {
                 grant_type: "refresh_token",
@@ -166,7 +166,7 @@ export class ChumsConnect {
                 refresh_token: access.refresh_token,
             }
 
-            httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+            httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
                 if (err || data === null) {
                     this.disconnect()
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))
@@ -174,9 +174,9 @@ export class ChumsConnect {
                     return
                 }
 
-                this.CHUMS_ACCESS = data
-                setContentProviderAccess("chums", data.scope, data)
-                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "chums", success: true })
+                this.CHURCHAPPS_ACCESS = data
+                setContentProviderAccess("churchApps", data.scope, data)
+                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true })
                 resolve(data)
             })
         })

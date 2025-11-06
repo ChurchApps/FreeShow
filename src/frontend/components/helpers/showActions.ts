@@ -219,7 +219,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (((!slide || start) && currentShow?.type === "pdf") || (!start && slide?.type === "pdf")) {
         if (start && slide?.id !== currentShow?.id) slide = null
         const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
-        playPdf(slide, nextPage)
+        playPdf(slide, nextPage, nextAfterMedia)
         return
     }
 
@@ -367,7 +367,7 @@ async function goToNextShowInProject(slide, customOutputId) {
     // get current project show
     const currentProject = get(projects)[get(activeProject)!]
     // this will get the first show in the project with this id, so it won't work properly with multiple of the same shows in a project
-    const projectIndex = currentProject.shows.findIndex((a) => a.id === slide.id)
+    const projectIndex = currentProject?.shows?.findIndex((a) => a.id === slide.id) ?? -1
     if (projectIndex < 0) return
 
     const currentOutputProjectShowIndex = currentProject.shows[projectIndex]
@@ -416,7 +416,7 @@ export function goToNextProjectItem(key = "") {
 
         let index: number = currentShow.index ?? -1
         if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
-        if (index > -1 && index !== currentShow.index) {
+        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
             const newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
@@ -456,7 +456,7 @@ export function goToPreviousProjectItem(key = "") {
 
         let index: number = currentShow.index ?? get(projects)[get(activeProject)!]?.shows?.length
         if (index - 1 >= 0) index--
-        if (index > -1 && index !== currentShow.index) {
+        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
             const newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
@@ -647,7 +647,7 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-async function playPdf(slide: null | OutSlide, nextPage: number) {
+async function playPdf(slide: null | OutSlide, nextPage: number, loop = false) {
     const data = slide || get(activeShow)
     if (!data?.id) return
 
@@ -656,9 +656,12 @@ async function playPdf(slide: null | OutSlide, nextPage: number) {
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
-    if (nextPage > pages - 1) return
+    if (nextPage > pages - 1) {
+        if (!loop) return
+        nextPage = 0
+    }
 
-    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
+    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]?.name
 
     setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
     clearBackground()
@@ -1183,7 +1186,6 @@ export function getDynamicIds(noVariables = false) {
     if (noVariables) return mergedValues
 
     const timersList = sortByName(Object.values(get(timers))).filter(a => a.name).map(({ name }) => `timer_${getVariableNameId(name)}`)
-    console.log(timersList)
 
     const rssValues = sortByName(get(special).dynamicRSS || []).filter(a => a.name).map(({ name }) => `rss_${getVariableNameId(name)}`)
 
@@ -1345,7 +1347,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const audioTime = (isOutputWindow ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
         const audioDuration = (isOutputWindow ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
-        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId)
+        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 

@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Manage dynamic values",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
-        "chums_sync_categories": "Select categories to sync",
+        "sync_categories": "Select categories to sync",
         "effect_items": "Effect items",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
-    },
-    "chums": {
-        "sync_categories": "Sync categories",
-        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }

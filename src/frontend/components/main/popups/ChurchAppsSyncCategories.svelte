@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { keysToID, sortByName } from "../../../components/helpers/array"
-    import T from "../../../components/helpers/T.svelte"
+    import { keysToID, sortByName } from "../../helpers/array"
+    import T from "../../helpers/T.svelte"
     import { categories, contentProviderData, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
@@ -15,14 +15,14 @@
 
     const categoryOptions = sortByName(mappedCategories)
 
-    $: currentlySelected = $contentProviderData.chums?.syncCategories || []
+    $: currentlySelected = $contentProviderData.churchApps?.syncCategories || []
 
     function toggleCategory(id: string) {
         contentProviderData.update((a) => {
             if (currentlySelected.indexOf(id) === -1) {
-                a.chums = { ...a.chums, syncCategories: [...currentlySelected, id] }
+                a.churchApps = { ...a.churchApps, syncCategories: [...currentlySelected, id] }
             } else {
-                a.chums = { ...a.chums, syncCategories: currentlySelected.filter((c) => c !== id) }
+                a.churchApps = { ...a.churchApps, syncCategories: currentlySelected.filter((c) => c !== id) }
             }
 
             return a
@@ -30,7 +30,7 @@
     }
 </script>
 
-<p class="tip"><T id="chums.sync_categories_description" /></p>
+<p class="tip"><T id="settings.sync_categories_tip" /></p>
 
 <div class="categories">
     {#each categoryOptions as { id, name, count }}

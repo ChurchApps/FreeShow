@@ -8,15 +8,21 @@
     export let checkered: boolean = false
 
     export let ratio: number = 1
-    $: ratio = slideWidth / 1920
+    let baseWidth: number = 1920
+    let baseHeight: number = 1080
+    $: baseWidth = resolution?.width ?? 1920
+    $: baseHeight = resolution?.height ?? 1080
+    let slideHeight: number = 0
+    // Fit to both width and height to avoid overflow on Safari
+    $: ratio = Math.min(slideWidth / baseWidth, slideHeight / baseHeight)
 
     let slideWidth: number = 0
 </script>
 
 <div class:center>
-    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
-        <!-- WIP firefox does not support "zoom": https://stackoverflow.com/questions/4049342/how-can-i-zoom-an-html-element-in-firefox-and-opera (-moz-transform: scale({ratio});) -->
-        <span style="zoom: {ratio};">
+    <div bind:offsetWidth={slideWidth} bind:offsetHeight={slideHeight} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
+        <!-- Use transform scale for cross-browser support (Safari/Firefox do not support CSS zoom) -->
+        <span style="display: inline-block; width: {baseWidth}px; height: {baseHeight}px; transform: scale({isFinite(ratio) && ratio > 0 ? ratio : 1}); transform-origin: top left; will-change: transform;">
             <slot />
         </span>
     </div>

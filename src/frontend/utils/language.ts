@@ -49,8 +49,7 @@ function setLanguage(locale = "", init = false) {
                 if (!messages[key]) messages[key] = defaultStrings[key]
                 else {
                     Object.keys(defaultStrings[key]).forEach((stringId) => {
-                        if (!messages[key]) messages[key] = defaultStrings[key] || {}
-                        if (!messages[key]![stringId]) messages[key]![stringId] = defaultStrings[key][stringId]
+                        if (!(messages[key]![stringId] || "").trim()) messages[key]![stringId] = defaultStrings[key][stringId]
                     })
                 }
             })

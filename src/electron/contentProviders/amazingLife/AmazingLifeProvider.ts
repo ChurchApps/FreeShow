@@ -1,10 +1,13 @@
-import { ContentProvider } from "../base/ContentProvider"
+import type express from "express"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
 import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
-import { sendToMain } from "../../IPC/main"
-import { ToMain } from "../../../types/IPC/ToMain"
-import { AMAZING_LIFE_API_URL } from "./types"
-import type { ContentLibraryCategory, ContentFile } from "../base/types"
+import { ContentProvider } from "../base/ContentProvider"
+import { OAuth2Helper } from "../base/OAuth2Helper"
+import type { ContentFile, ContentLibraryCategory } from "../base/types"
+import { AMAZING_LIFE_API_URL, AMAZING_LIFE_OAUTH_BASE } from "./types"
 
 // Import and re-export types
 import type { AmazingLifeScopes } from "./types"
@@ -19,84 +22,132 @@ export interface AmazingLifeAuthData {
     scope: AmazingLifeScopes
 }
 
-/**
- * Amazing Life provider that acts as the sole interface to Amazing Life functionality.
- *
- * This is the ONLY class that should interface with Amazing Life services.
- * All external code should use this provider through ContentProviderRegistry.
- */
 export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, AmazingLifeAuthData> {
     hasContentLibrary = true
+    private static contentLibraryCache: ContentLibraryCategory[] | null = null
+    private oauthHelper: OAuth2Helper<AmazingLifeAuthData>
 
     constructor() {
+        const port = 5502
+        const clientId = getKey("amazinglife_id") || ""
+        const redirectUri = `http://localhost:${port}/auth/complete`
+
         super({
             providerId: "amazinglife",
-            displayName: "Amazing Life",
-            port: 5503,
-            clientId: getKey("amazinglife_id") || "",
-            clientSecret: getKey("amazinglife_secret") || "",
+            displayName: "APlay",
+            port,
+            clientId,
+            clientSecret: "",
             apiUrl: AMAZING_LIFE_API_URL,
-            scopes: ["services"] as const
+            scopes: ["openid profile email"] as const
+        })
+
+        this.oauthHelper = new OAuth2Helper<AmazingLifeAuthData>({
+            clientId,
+            clientSecret: "", // Not needed for PKCE flow
+            authUrl: `${AMAZING_LIFE_OAUTH_BASE}/authorize`,
+            tokenUrl: `${AMAZING_LIFE_OAUTH_BASE}/token`,
+            redirectUri,
+            scopes: ["openid", "profile", "email"],
+            usePKCE: true,
+            additionalParams: { state: "xyz" }
         })
     }
 
     async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // If already connected, just notify and return existing access
-        if (this.access) {
-            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
-            return this.access
+        const storedAccess = getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null
+
+        if (storedAccess) {
+            this.access = storedAccess
+
+            if (this.isTokenExpired()) {
+                console.info("APlay token expired, refreshing...")
+                const refreshed = await this.refreshToken(scope)
+                if (refreshed) {
+                    this.access = refreshed
+                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
+                    return refreshed
+                }
+            } else {
+                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
+                return storedAccess
+            }
         }
 
-        const manualToken = "redacted"
-        this.access = {
-            access_token: manualToken,
-            refresh_token: "",
-            token_type: "Bearer",
-            created_at: Date.now(),
-            expires_in: 7775000,
-            scope: scope
-        }
+        console.info("Starting APlay OAuth flow...")
+        const authData = await this.authenticate(scope)
 
-        sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection: true })
-        return this.access
+        if (authData) {
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection: true })
+            return authData
+        } else {
+            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: false })
+            return null
+        }
     }
 
-    disconnect(scope: AmazingLifeScopes = "services"): void {
-        console.log(`Disconnecting from Amazing Life with scope: ${scope}`)
+    disconnect(scope: AmazingLifeScopes = "openid profile email"): void {
+        console.log(`Disconnecting from APlay with scope: ${scope}`)
         this.access = null
+        AmazingLifeProvider.contentLibraryCache = null
     }
 
     async apiRequest(data: any): Promise<any> {
-        // TODO: Implement Amazing Life API requests
-        console.log(`Making Amazing Life API request:`, data)
+        console.log(data)
         return null
     }
 
     async loadServices(dataPath?: string): Promise<void> {
-        // Connect first to ensure we have authentication
-        const connected = await this.connect("services")
+        const connected = await this.connect("openid profile email")
         if (!connected) {
-            console.error("Failed to connect to Amazing Life")
+            console.error("Failed to connect to APlay")
             return
         }
 
-        // TODO: Implement Amazing Life service loading when API endpoint is available
-        console.log(`Loading services from Amazing Life${dataPath ? ` at ${dataPath}` : ""}`)
+        console.log(`Loading services from APlay${dataPath ? ` at ${dataPath}` : ""}`)
     }
 
     async startupLoad(scope: AmazingLifeScopes, data?: any): Promise<void> {
         const connected = await this.connect(scope)
         if (!connected) return
 
-        // Load services from Amazing Life
         await this.loadServices(data?.dataPath)
     }
 
+    private fetchProductLibraries(productId: string, productTitle: string, productImage: string, headers: any): Promise<ContentLibraryCategory | null> {
+        return new Promise((resolve) => {
+            httpsRequest("https://api-prod.amazingkids.app", `/prod/curriculum/modules/products/${productId}/libraries`, "GET", headers, {}, (err, data) => {
+                if (err) {
+                    console.error(`Failed to fetch libraries for product ${productId}:`, err)
+                    resolve(null)
+                    return
+                }
+
+                const libraries = Array.isArray(data) ? data : (data.data || data.libraries || [])
+                const productCategory: ContentLibraryCategory = {
+                    name: productTitle,
+                    thumbnail: productImage,
+                    children: libraries.map((library: any) => ({
+                        name: library.title || library.name,
+                        thumbnail: library.image,
+                        key: library.libraryId || library.id
+                    }))
+                }
+
+                resolve(productCategory)
+            })
+        })
+    }
 
     // Modules -> Products -> Libraries
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
+        // Return cached data if available
+        if (AmazingLifeProvider.contentLibraryCache) {
+            console.log("Returning cached APlay content library")
+            return AmazingLifeProvider.contentLibraryCache
+        }
         if (!this.access) {
-            console.error("Not authenticated with Amazing Life")
+            console.error("Not authenticated with APlay")
             return []
         }
 
@@ -108,17 +159,16 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
             // First, fetch the modules
             httpsRequest("https://api-prod.amazingkids.app", "/prod/curriculum/modules", "GET", headers, {}, async (err, data) => {
                 if (err) {
-                    console.error("Failed to fetch Amazing Life modules:", err)
+                    console.error("Failed to fetch APlay modules:", err)
                     return reject(err)
                 }
 
-                console.log("Amazing Life API response:", JSON.stringify(data, null, 2))
+                console.log("APlay API response:", JSON.stringify(data, null, 2))
                 try {
                     const modules = data.data || []
                     console.log(`Found ${modules.length} modules`)
 
-                    const categories: ContentLibraryCategory[] = []
-                    for (const module of modules) {
+                    const modulePromises = modules.map(async (module: any) => {
                         const moduleCategory: ContentLibraryCategory = {
                             name: module.title,
                             thumbnail: module.image,
@@ -127,49 +177,34 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                         // Fetch libraries for each product in the module
                         if (module.products && Array.isArray(module.products)) {
-                            for (const product of module.products) {
-                                await new Promise<void>((resolveProduct) => {
-                                    httpsRequest("https://api-prod.amazingkids.app", `/prod/curriculum/modules/products/${product.productId}/libraries`, "GET", headers, {}, (libErr, libData) => {
-                                        if (libErr) {
-                                            console.error(`Failed to fetch libraries for product ${product.productId}:`, libErr)
-                                            resolveProduct() // Continue even if one product fails
-                                            return
-                                        }
-                                        const libraries = Array.isArray(libData) ? libData : (libData.data || libData.libraries || [])
-                                        const productCategory: ContentLibraryCategory = {
-                                            name: product.title,
-                                            thumbnail: product.image,
-                                            children: libraries.map((library: any) => ({
-                                                name: library.title || library.name,
-                                                thumbnail: library.image,
-                                                key: library.libraryId || library.id
-                                            }))
-                                        }
+                            const productPromises = module.products.map((product: any) =>
+                                this.fetchProductLibraries(product.productId, product.title, product.image, headers)
+                            )
 
-                                        moduleCategory.children!.push(productCategory)
-                                        resolveProduct()
-                                    }
-                                    )
-                                })
-                            }
+                            const productResults = await Promise.all(productPromises)
+                            moduleCategory.children = productResults.filter((p): p is ContentLibraryCategory => p !== null)
                         }
-                        categories.push(moduleCategory)
-                    }
+
+                        return moduleCategory
+                    })
+
+                    const categories = await Promise.all(modulePromises)
+
+                    // Cache the results for future requests
+                    AmazingLifeProvider.contentLibraryCache = categories
+
                     resolve(categories)
                 } catch (error) {
-                    console.error("Failed to convert Amazing Life content library:", error)
+                    console.error("Failed to convert APlay content library:", error)
                     reject(error)
                 }
             })
         })
     }
 
-    /**
-     * Retrieves content files for a given library
-     */
     async getContent(libraryId: string): Promise<ContentFile[]> {
         if (!this.access) {
-            console.error("Not authenticated with Amazing Life")
+            console.error("Not authenticated with APlay")
             return []
         }
 
@@ -196,7 +231,9 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                         let thumbnail = ""
 
                         if (item.mediaType?.toLowerCase() === 'video' && item.video) {
-                            url = item.video.muxStreamingUrl || item.video.url || ""
+                            // Use MP4 download URL instead of .m3u8 streaming URL
+                            if (item.video.muxPlaybackId) url = `https://stream.mux.com/${item.video.muxPlaybackId}/capped-1080p.mp4`
+                            else url = item.video.muxStreamingUrl || ""
                             thumbnail = item.video.thumbnailUrl || item.thumbnail?.src || ""
                         } else if (item.mediaType?.toLowerCase() === 'image' || item.image) {
                             url = item.image?.src || item.url || ""
@@ -211,18 +248,22 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
                         const isVideo = item.mediaType?.toLowerCase() === 'video' || url.includes('.m3u8') || url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.mov')
 
-                        return {
-                            url: url,
-                            thumbnail: thumbnail,
+                        const file: ContentFile = {
+                            url,
+                            thumbnail,
                             fileSize: item.fileSize || 0,
                             type: isVideo ? "video" : "image",
                             name: item.title || item.name || item.fileName || ""
                         }
+
+                        if (item.isLicensed) file.decryptionKey = "123456789"
+
+                        return file
                     }).filter((file: ContentFile) => file.url) // Only include items with valid URLs
 
                     resolve(files)
                 } catch (error) {
-                    console.error("Failed to convert Amazing Life media:", error)
+                    console.error("Failed to convert APlay media:", error)
                     reject(error)
                 }
             }
@@ -230,17 +271,50 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         })
     }
 
-    protected handleAuthCallback(_req: any, _res: any): void {
-        // TODO: Implement Amazing Life auth callback handling
+    protected handleAuthCallback(req: express.Request, res: express.Response): void {
+        this.oauthHelper.handleCallback(req, res)
     }
 
-    protected async refreshToken(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // TODO: Implement Amazing Life token refresh
-        return null
+    protected async refreshToken(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
+        if (!this.access?.refresh_token) {
+            console.warn("No refresh token available for APlay")
+            return null
+        }
+
+        try {
+            const refreshed = await this.oauthHelper.refreshAccessToken(this.access.refresh_token, scope)
+            if (refreshed) {
+                this.access = refreshed
+                setContentProviderAccess("amazinglife", scope, refreshed)
+            }
+            return refreshed
+        } catch (error) {
+            console.error("Failed to refresh APlay token:", error)
+            return null
+        }
     }
 
-    protected async authenticate(_scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        // TODO: Implement Amazing Life authentication
-        return null
+    protected async authenticate(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
+        const server = this.app.listen(this.config.port, () => {
+            console.info(`Listening for APlay OAuth response at port ${this.config.port}`)
+        })
+
+        server.once("error", (err: Error) => {
+            if ((err as any).code === "EADDRINUSE") server.close()
+        })
+
+        try {
+            const authData = await this.oauthHelper.authorize(scope)
+            if (authData) {
+                this.access = authData
+                setContentProviderAccess("amazinglife", scope, authData)
+            }
+            server.close()
+            return authData
+        } catch (error) {
+            console.error("APlay authentication failed:", error)
+            server.close()
+            return null
+        }
     }
 }

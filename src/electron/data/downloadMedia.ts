@@ -6,6 +6,7 @@ import type { LessonFile, LessonsData } from "../../types/Main"
 import { sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getValidFileName, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
+import { decryptFile, encryptFile, getProtectedPath, getProviderKey, isProtectedProvider } from "./protected"
 import { filePathHashCode } from "./thumbnails"
 
 export function downloadLessonsMedia(lessons: LessonsData[]) {
@@ -215,16 +216,19 @@ function startDownload(data: DownloadFile) {
 
 const downloading: string[] = []
 export function downloadMedia({ url, dataPath }: { url: string; dataPath: string }) {
-    if (!url?.includes("http")) return
+    if (!url?.includes("http") || url?.includes("blob:")) return
 
     if (downloading.includes(url)) return
     downloading.push(url)
 
-    const extension = path.extname(url)
-    const fileName = `${filePathHashCode(url)}${extension}`
-    const outputFolder = getDataFolder(dataPath, dataFolderNames.onlineMedia)
-    const outputPath = path.join(outputFolder, fileName)
-    createFolder(outputFolder)
+    console.info("Downloading online media: " + url)
+
+    const outputPath = getMediaThumbnailPath(url, dataPath)
+
+    if (isProtectedProvider(url)) {
+        encryptFile(url, outputPath, getProviderKey(url))
+        return
+    }
 
     const fileStream = fs.createWriteStream(outputPath)
     https
@@ -283,14 +287,36 @@ export function downloadMedia({ url, dataPath }: { url: string; dataPath: string
     // ) // 8 minutes timeout
 }
 
-export function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
+export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
     if (!url?.includes("http")) return null
 
-    const extension = path.extname(url)
+    const outputPath = getMediaThumbnailPath(url, dataPath)
+    if (!doesPathExist(outputPath)) return null
+
+    if (isProtectedProvider(url)) {
+        try {
+            const decryptedData = await decryptFile(outputPath, getProviderKey(url))
+            return { path: outputPath, buffer: decryptedData }
+        } catch (err) {
+            console.error(`Failed to decrypt file: ${url}`, err)
+            // this response will request a re-download, and replace the file
+            // important in case the key has changed or file is corrupted
+            return null
+        }
+    }
+
+    return { path: outputPath, buffer: null }
+}
+
+function getMediaThumbnailPath(url: string, dataPath: string) {
+    const isProtected = isProtectedProvider(url)
+    if (isProtected) return getProtectedPath(url)
+
+    const urlWithoutQuery = url.split('?')[0]
+    const extension = path.extname(urlWithoutQuery)
     const fileName = `${filePathHashCode(url)}${extension}`
     const outputFolder = getDataFolder(dataPath, dataFolderNames.onlineMedia)
-    const outputPath = path.join(outputFolder, fileName)
+    createFolder(outputFolder)
 
-    if (!doesPathExist(outputPath)) return null
-    return outputPath
+    return path.join(outputFolder, fileName)
 }

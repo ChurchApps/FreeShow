@@ -3,7 +3,7 @@
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, os, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, os, popupData, shows, showsCache, showsPath, special, usageLog, version } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -154,12 +154,18 @@
     let usageLogExported = false
     function exportUsageLog() {
         exportingUsageLog = true
-        setTimeout(() => (usageLogExported = true), 1000)
+        setTimeout(() => {
+            usageLogExported = true
+            exportingUsageLog = false
+        }, 1000)
         send(EXPORT, ["USAGE"], { path: $dataPath, content: $usageLog })
     }
     function resetUsageLog() {
         usageLog.set({ all: [] })
+        usageLogExported = false
     }
+
+    $: isBeta = $version.includes("beta")
 </script>
 
 <MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
@@ -167,7 +173,9 @@
 <!-- <InputRow arrow={$alertUpdates}> -->
 <MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
 <!-- <div slot="menu"> -->
-<MaterialToggleSwitch label="settings.alert_updates_beta" checked={$special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
+{#if $alertUpdates}
+    <MaterialToggleSwitch label="settings.alert_updates_beta" disabled={isBeta} checked={isBeta ? $alertUpdates : $special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
+{/if}
 <!-- </div> -->
 <!-- </InputRow> -->
 

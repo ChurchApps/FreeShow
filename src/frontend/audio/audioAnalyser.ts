@@ -5,7 +5,7 @@ import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, s
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
-import { AudioMultichannel } from "./audioMultichannel"
+import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { AudioPlayer } from "./audioPlayer"
 
 export class AudioAnalyser {
@@ -65,6 +65,20 @@ export class AudioAnalyser {
             this.connectGain(eqOutputNode)
             this.connectDestination(eqOutputNode)
             console.log(`Audio source "${id}" connected to equalizer and analysis chain`)
+
+            // Perform runtime channel detection after connection and audio stabilization
+            // timeout to give more time for audio to stabilize
+            setTimeout(async () => {
+                try {
+                    const runtimeChannels = await this.detectActiveChannelCount(id)
+                    if (runtimeChannels > this.channels) {
+                        console.log(`Runtime detection found ${runtimeChannels} channels, updating from ${this.channels}`)
+                        this.updateChannelCount(runtimeChannels)
+                    }
+                } catch (err) {
+                    console.warn(`Runtime channel detection failed for ${id}:`, err)
+                }
+            }, 1500)
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)
         }
@@ -134,14 +148,14 @@ export class AudioAnalyser {
 
     // MULTI CHANNEL
 
-    // static detectActiveChannelCount(sourceId: string): number {
-    //     const source = this.sources[sourceId]
-    //     return AudioMultichannel.detectActiveChannelCount(this.ac, source, sourceId, this.maxChannels)
-    // }
+    static async detectActiveChannelCount(sourceId: string): Promise<number> {
+        const source = this.sources[sourceId]
+        return AudioMultichannel.detectActiveChannelCount(this.ac, source, sourceId, this.maxChannels)
+    }
 
-    // static getChannelInfo(): MultichannelInfo {
-    //     return AudioMultichannel.getChannelInfo(this.ac, this.channels, this.maxChannels)
-    // }
+    static getChannelInfo(): MultichannelInfo {
+        return AudioMultichannel.getChannelInfo(this.ac, this.channels, this.maxChannels)
+    }
 
     static supportsMultichannel(): boolean {
         return AudioMultichannel.supportsMultichannel(this.ac)
@@ -154,7 +168,15 @@ export class AudioAnalyser {
     // update channel count and reinitialize audio nodes
     static updateChannelCount(newChannelCount: number) {
         const validatedChannelCount = AudioMultichannel.validateChannelCount(newChannelCount)
-        if (!AudioMultichannel.shouldUpdateChannelCount(this.channels, validatedChannelCount)) return
+        if (!AudioMultichannel.shouldUpdateChannelCount(this.channels, validatedChannelCount)) {
+            console.log(`Channel count update skipped: current=${this.channels}, requested=${newChannelCount}, validated=${validatedChannelCount}`)
+            return
+        }
+
+        console.log(`🔄 Updating channel count from ${this.channels} to ${validatedChannelCount}`)
+
+        // Log debug info before update
+        AudioMultichannel.debugChannelInfo(this.ac, this.channels, this.maxChannels)
 
         // disconnect existing connections
         if (this.splitter) {
@@ -173,10 +195,12 @@ export class AudioAnalyser {
         if (this.gainNode) AudioMultichannel.configureNodeForMultichannel(this.gainNode, this.channels)
 
         this.reconnectAllSources()
+
+        console.log(`✅ Channel count updated to ${this.channels}`)
     }
 
     private static reconnectAllSources() {
-        Object.keys(this.sources).forEach(async (id) => {
+        Object.keys(this.sources).forEach((id) => {
             try {
                 const source = this.sources[id]
                 if (!source) return

@@ -83,7 +83,7 @@
 
         // set active layout in project
         if (sortedLayouts?.length < 2) return
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject].shows[$activeShow.index]) {
+        if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject]?.shows?.[$activeShow.index]) {
             projects.update((a) => {
                 a[$activeProject!].shows[$activeShow!.index!].layout = id
                 a[$activeProject!].shows[$activeShow!.index!].layoutInfo = layoutInfo

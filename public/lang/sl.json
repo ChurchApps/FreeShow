@@ -482,7 +482,7 @@
         "manage_dynamic_values": "Upravljal spremenljive vrednosti",
         "choose_camera": "Izberite kamero",
         "manage_tags": "Upravljaj z oznakami",
-        "chums_sync_categories": "Izberite zvrsti, ki jih želite uskladiti",
+        "sync_categories": "Izberite zvrsti, ki jih želite uskladiti",
         "effect_items": "Učinkovni predmeti",
         "initialize": "Dobrodošli v FreeShowu",
         "unsaved": "Ali ste prepričani, da želi končati?",
@@ -1613,9 +1613,5 @@
         "translation_description_multiline": "Doda vse jezike v eno samo besedilno polje izmenjaje po vrsticah. (Kot pri Songbeamer-ju)",
         "translation_description_textboxes": "Doda na prosojnico vsak jezik kot svoje besedilno polje.",
         "translation_description_layouts": "Ustvari samostojen zbir prosojnic in postavitev za vsak jezik."
-    },
-    "chums": {
-        "sync_categories": "Zvrsti za uskladitev",
-        "sync_categories_description": "Select which categories to sync as songs with Chums"
     }
 }

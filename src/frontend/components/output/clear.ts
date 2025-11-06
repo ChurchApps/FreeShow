@@ -46,8 +46,9 @@ export function clearAll(button = false) {
 
     storeCache()
 
+    const keepLastSlide = get(focusMode)
     clearBackground()
-    clearSlide(true)
+    clearSlide(!keepLastSlide)
     clearOverlays()
     clearAudio("", { clearPlaylist: true, commonClear: true })
     clearTimers()
@@ -126,6 +127,7 @@ export function clearBackground(specificOutputId = "") {
     customActionActivation("background_cleared")
 }
 
+// shouldClearAll = don't keep cached previous slide
 export function clearSlide(shouldClearAll = false) {
     if (!shouldClearAll) {
         // store position

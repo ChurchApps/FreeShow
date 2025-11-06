@@ -1,10 +1,9 @@
 import { getContentProviderAccess } from "../data/contentProviders"
-import { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
-import type { ContentProviderId } from "./base/types"
-
-// Import providers
 import { AmazingLifeProvider } from "./amazingLife/AmazingLifeProvider"
-import { ChumsProvider } from "./chums/ChumsProvider"
+import type { ContentProvider } from "./base/ContentProvider"
+import { ContentProviderFactory } from "./base/ContentProvider"
+import type { ContentProviderId } from "./base/types"
+import { ChurchAppsProvider } from "./churchApps/ChurchAppsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
 
 /**
@@ -21,7 +20,7 @@ export class ContentProviderRegistry {
         if (this.initialized) return
 
         // Register all available content providers
-        ContentProviderFactory.register("chums", ChumsProvider)
+        ContentProviderFactory.register("churchApps", ChurchAppsProvider)
         ContentProviderFactory.register("planningcenter", PlanningCenterProvider)
         ContentProviderFactory.register("amazinglife", AmazingLifeProvider)
 
@@ -202,7 +201,7 @@ export async function pcoConnect(scope: any) {
     return null
 }
 
-export async function pcoRequest(data: any, _attempt = 0) {
+export async function pcoRequest(data: any) {
     const provider = ContentProviderRegistry.getProvider<PlanningCenterProvider>("planningcenter")
     if (provider) {
         return provider.apiRequest(data)

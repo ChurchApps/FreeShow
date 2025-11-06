@@ -157,6 +157,7 @@
     let loopStop: NodeJS.Timeout | null = null
     let newCall = false
     function calculateAutosize() {
+        if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) return
 
         if (loopStop) {

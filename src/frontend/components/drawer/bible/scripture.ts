@@ -132,17 +132,31 @@ export async function getActiveScripturesContent() {
 
         // WIP custom verse number offset per scripture (for collections)
 
+        // add the three prior and next verse numbers to selected for the stage display next slide
+        const selected = clone(selectedVerses)
+        const includeCount = 3
+        selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
+        selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
+        // remove selected not in range of min to max verse number
+        const minVerseNumber = 1
+        const maxVerseNumber = Chapters[0].data.verses[Chapters[0].data.verses.length - 1].number ?? Chapters[0].data.verses.length
+        selected[0] = selected[0].filter(v => {
+            const id = getVerseId(v)
+            if (isNaN(id)) return true
+            return id >= minVerseNumber && id <= maxVerseNumber
+        })
+
         const splitLongVerses = get(scriptureSettings).splitLongVerses
-        let allVersesText: { [key: string]: string }[] = []
-        selectedVerses.forEach((verses, i) => {
-            let versesText: { [key: string]: string } = {}
+        const allVersesText: { [key: string]: string }[] = []
+        selected.forEach((verses, i) => {
+            const versesText: { [key: string]: string } = {}
 
             // WIP if 1_1, 1_2, 1_3 all add up to over the splitted verse length combined, then merge into "1"
 
             verses.forEach(v => {
                 const { id, subverse } = getVerseIdParts(v)
 
-                const text = Chapters[i].getVerse(id).getText()
+                const text = Chapters[i].getVerse(id).getHTML()
                 const splittedVerses = getSplittedVerses({ [id]: text })
 
                 const newVerseId = id + (subverse ? `_${subverse}` : "")
@@ -176,7 +190,7 @@ export async function playScripture() {
 
     // scripture usage history
     scriptureHistory.update((a) => {
-        let newItem = {
+        const newItem = {
             id: biblesContent[0].id,
             book: biblesContent[0].bookId,
             chapter: biblesContent[0].chapters[0],
@@ -186,29 +200,29 @@ export async function playScripture() {
         }
         // WIP multiple verses, play from another version
 
-        let existingIndex = a.findIndex((a) => JSON.stringify(a) === JSON.stringify(newItem))
+        const existingIndex = a.findIndex((a) => JSON.stringify(a) === JSON.stringify(newItem))
         if (existingIndex > -1) a.splice(existingIndex, 1)
         a.push(newItem)
 
         return a
     })
 
-    let outputIsScripture = get(outputs)[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
+    const outputIsScripture = get(outputs)[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
     if (!outputIsScripture) customActionActivation("scripture_start")
 
     const attributionString = getMergedAttribution(biblesContent)
     const includeCount = 3
 
-    let tempItems: Item[] = slides[0] || []
-    let categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
+    const tempItems: Item[] = slides[0] || []
+    const categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
     setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
 
     // track
     const verseRange = joinRange(selectedVerses[0])
-    let reference = `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${verseRange}`
+    const reference = `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${verseRange}`
     biblesContent.forEach((translation) => {
-        let name = translation.version || ""
-        let apiId = translation.isApi ? get(scriptures)[translation.id!]?.id || translation.id || "" : null
+        const name = translation.version || ""
+        const apiId = translation.isApi ? get(scriptures)[translation.id]?.id || translation.id || "" : null
         if (name || apiId) trackScriptureUsage(name, apiId, reference)
     })
 
@@ -220,31 +234,31 @@ export async function playScripture() {
     if (!templateBackground) return
 
     // get style (for media "fit")
-    let currentOutput = get(outputs)[getActiveOutputs()[0]]
-    let currentStyle = get(styles)[currentOutput?.style || ""] || {}
+    const currentOutput = get(outputs)[getActiveOutputs()[0]]
+    const currentStyle = get(styles)[currentOutput?.style || ""] || {}
 
-    let mediaStyle = getMediaStyle(get(media)[templateBackground], currentStyle)
+    const mediaStyle = getMediaStyle(get(media)[templateBackground], currentStyle)
     setOutput("background", { path: templateBackground, loop: true, muted: true, ...mediaStyle })
 
     ///
 
     function getPreviousSlides() {
-        let lowestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(a) - getVerseId(b))[0])
+        const lowestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(a) - getVerseId(b))[0])
 
-        let slides: any[] = []
+        const slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
-            let verseIndex = lowestIndex - i
+            const verseIndex = lowestIndex - i
             slides.push(getScriptureSlides({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true)[0])
         }
 
         return slides
     }
     function getNextSlides() {
-        let highestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(b) - getVerseId(a))[0])
+        const highestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(b) - getVerseId(a))[0])
 
-        let slides: any[] = []
+        const slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
-            let verseIndex = highestIndex + i
+            const verseIndex = highestIndex + i
             slides.push(getScriptureSlides({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true)[0])
         }
 
@@ -336,9 +350,12 @@ export function joinRange(array: (number | string)[]) {
         const { id, subverse, endNumber } = getVerseIdParts(noChapter)
         const v = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
 
-        if (Number(id) === prev) return
+        // For subverses of the same base verse (e.g., 2_1, 2_2), don't skip them
+        if (Number(id) === prev && !subverse) return
 
-        if (Number(id) - 1 === prev) {
+        // Check if this verse is consecutive to the previous one
+        const isConsecutive = Number(id) - 1 === prev || (Number(id) === prev && subverse && array[i - 1] && getVerseIdParts(String(array[i - 1]).replace(/^\d+:/, "")).subverse === subverse - 1)
+        if (isConsecutive) {
             if (i + 1 === array.length) {
                 // If the last added token has a chapter prefix and the current token
                 // has the same prefix, append only the verse part to the range end
@@ -363,7 +380,8 @@ export function joinRange(array: (number | string)[]) {
             range += v
         }
 
-        prev = Number(id)
+        // Only update prev for the base verse number, not for subverses
+        if (!subverse || Number(id) !== prev) prev = Number(id)
     })
 
     // console.log("OUTPUT", range)
@@ -414,7 +432,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             if (get(scriptureSettings).versesOnIndividualLines) {
                 lineIndex = verseLine
                 verseLine++
-                if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
+                if (!slideArr.lines[lineIndex]) slideArr.lines[lineIndex] = { text: [], align: alignStyle }
             }
 
             // verse number
@@ -426,7 +444,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 const { id, subverse, endNumber } = getVerseIdParts(v.verseId)
                 const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
 
-                slideArr.lines![lineIndex].text.push({
+                slideArr.lines[lineIndex].text.push({
                     value,
                     style: verseNumberStyle,
                     customType: "disableTemplate" // dont let template style verse numbers
@@ -492,7 +510,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 textArray.push({ value: text, style: textStyle })
             }
 
-            slideArr.lines![lineIndex].text.push(...textArray)
+            slideArr.lines[lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < biblesContent.length) return
             if (onlyOne || (rangeIndex + 1) % get(scriptureSettings).versesPerSlide > 0) return
@@ -693,7 +711,7 @@ function removeTags(text) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
-export function formatBibleText(text: string | undefined, redJesus: boolean = false) {
+export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
     return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", '&')
@@ -718,7 +736,7 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
         return
     }
 
-    let show = getScriptureShow(biblesContent)
+    const show = getScriptureShow(biblesContent)
     if (!show) return
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
@@ -748,31 +766,41 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         if (metaStyle) slides = [[metaStyle], ...slides]
         // only keep one line/text item (not verse number)
         slides[0][0].lines = [slides[0][0].lines![0]]
-        slides[0][0].lines![0].text = [slides[0][0].lines[0].text[1] || slides[0][0].lines[0].text[0]]
+        slides[0][0].lines[0].text = [slides[0][0].lines[0].text[1] || slides[0][0].lines[0].text[0]]
         // set verse text to reference
-        let refValue = (get(scriptureSettings)?.invertItems ? textboxesClone.at(-2) : textboxesClone.at(-1))?.lines?.at(get(scriptureSettings)?.referenceAtBottom ? -1 : 0)?.text?.[0].value || ""
-        slides[0][0].lines![0].text[0].value = refValue
+        const refValue = (get(scriptureSettings)?.invertItems ? textboxesClone.at(-2) : textboxesClone.at(-1))?.lines?.at(get(scriptureSettings)?.referenceAtBottom ? -1 : 0)?.text?.[0].value || ""
+        slides[0][0].lines[0].text[0].value = refValue
     }
 
-    let slides2: any = {}
-    let layouts: any[] = []
-    slides.forEach((items: any) => {
-        let id = uid()
+    // template data
+    const template = clone(get(templates)[get(scriptureSettings).template])
+    const backgroundPath = template?.settings?.backgroundPath
+    const media = {}
+    const backgroundId = uid(5)
+    if (backgroundPath) media[backgroundId] = { path: backgroundPath, loop: true, muted: true }
+
+    const slides2: any = {}
+    const layouts: any[] = []
+    slides.forEach((items: any, i) => {
+        const id = uid()
         const referenceText = getReferenceText(biblesContent)
 
         slides2[id] = { group: referenceText, color: null, settings: {}, notes: "", items }
-        let l: any = { id }
+        const l: any = { id }
+
+        if (backgroundId && i === 0) l.background = backgroundId
+
         layouts.push(l)
     })
 
     // add scripture category
     const categoryId = createCategory("scripture", "scripture", { isDefault: true, isArchive: true })
 
-    let layoutID = uid()
+    const layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
-    let template = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
+    const templateId = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-    let show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : template)
+    const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : templateId)
 
     Object.keys(biblesContent[0].metadata || {}).forEach((key) => {
         if (key.startsWith("@")) return
@@ -786,8 +814,9 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(biblesContent[0].version || "")}`)
     show.slides = slides2
     show.layouts = { [layoutID]: { name: biblesContent[0].version || "", notes: "", slides: layouts } }
+    show.media = media
 
-    let versions = biblesContent.map((a) => a.version).join(" + ")
+    const versions = biblesContent.map((a) => a.version).join(" + ")
     show.reference = {
         type: "scripture",
         data: {

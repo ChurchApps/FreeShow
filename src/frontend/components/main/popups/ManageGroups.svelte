@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, groupNumbers, groups, templates } from "../../../stores"
+    import { activePopup, groupNumbers, groups, groupsMoreOptionsEnabled, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -58,10 +58,10 @@
         groupNumbers.set(true)
     }
 
-    let showMore = false
+    $: showMore = $groupsMoreOptionsEnabled
 </script>
 
-<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => groupsMoreOptionsEnabled.set(!showMore)} white />
 
 {#if showMore}
     <MaterialButton class="popup-reset" icon="reset" iconSize={1.1} title="actions.reset" on:click={reset} white />

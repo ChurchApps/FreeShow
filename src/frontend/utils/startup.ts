@@ -17,7 +17,7 @@ import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
-let startupProfile: string = ""
+let startupProfile = ""
 
 export function startup() {
     window.api.receive(
@@ -102,7 +102,7 @@ function autoBackup() {
 export function contentProviderSync() {
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { dataPath: get(dataPath) } },
-        { providerId: "chums" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).chums?.syncCategories || [], showsPath: get(showsPath) || "" } }
+        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [], showsPath: get(showsPath) || "" } }
     ]
 
     providers.forEach(({ providerId, scope, data }) => {

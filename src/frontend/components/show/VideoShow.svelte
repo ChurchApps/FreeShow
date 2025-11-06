@@ -234,8 +234,6 @@
 
         content = formatVTT(content)
 
-        console.log(content)
-
         media.update((a) => {
             if (!a[showId]) a[showId] = {}
             if (!a[showId].tracks) a[showId].tracks = []

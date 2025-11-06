@@ -314,7 +314,7 @@ const customSavedListener = {
     },
     projects: (data: Projects) => {
         removeDeleted(keysToID(data)).forEach((a) => {
-            data[a.id].shows.map((show) => {
+            data[a.id].shows?.map((show) => {
                 delete show.layout
             })
         })

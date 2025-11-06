@@ -10,7 +10,7 @@ export interface Shows {
 export interface Show {
     name: string
     id?: string // this id should not be stored (but often used in the program as a temporary value)
-    origin?: string // "pco" | "chums" | "hymnary", etc.
+    origin?: string // "pco" | "churchApps" | "hymnary", etc.
     private?: boolean // hide from drawer
     locked?: boolean // disable edits
     category: null | ID
@@ -131,7 +131,7 @@ export interface Item {
     web?: any
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
-    actions?: any // showTime | hideTime
+    actions?: any // showTime | hideTime | transition
     clickReveal?: boolean
     lineReveal?: boolean
     chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }

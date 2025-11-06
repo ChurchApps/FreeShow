@@ -1,93 +1,93 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
-import { ChumsConnect } from "./ChumsConnect"
-import { ChumsImport } from "./ChumsImport"
-import { ChumsExport } from "./ChumsExport"
+import { ChurchAppsConnect } from "./ChurchAppsConnect"
+import { ChurchAppsImport } from "./ChurchAppsImport"
+import { ChurchAppsExport } from "./ChurchAppsExport"
 import { httpsRequest } from "../../utils/requests"
 import type { ContentLibraryCategory, ContentFile } from "../base/types"
 
 // Import and re-export types
-import type { ChumsScopes } from "./types"
-export type { ChumsScopes } from "./types"
+import type { ChurchAppsScopes } from "./types"
+export type { ChurchAppsScopes } from "./types"
 
-// Fix ChumsAuthData to not include null in the export
-export interface ChumsAuthData {
+// Fix ChurchAppsAuthData to not include null in the export
+export interface ChurchAppsAuthData {
     access_token: string
     refresh_token: string
     token_type: "Bearer"
     created_at: number
     expires_in: number
-    scope: ChumsScopes
+    scope: ChurchAppsScopes
 }
 
 /**
- * Chums provider that acts as the sole interface to Chums functionality.
+ * ChurchApps provider that acts as the sole interface to ChurchApps functionality.
  *
- * This is the ONLY class that should import from ChumsConnect.ts, ChumsImport.ts, and ChumsExport.ts.
+ * This is the ONLY class that should import from ChurchAppsConnect.ts, ChurchAppsImport.ts, and ChurchAppsExport.ts.
  * All external code should use this provider through ContentProviderRegistry.
  */
-export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
+export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, ChurchAppsAuthData> {
     hasContentLibrary = true
 
     constructor() {
         super({
-            providerId: "chums",
+            providerId: "churchApps",
             displayName: "ChurchApps",
             port: 5502,
-            clientId: getKey("chums_id") || "",
-            clientSecret: getKey("chums_secret") || "",
+            clientId: getKey("churchApps_id") || "",
+            clientSecret: getKey("churchApps_secret") || "",
             apiUrl: "https://api.churchapps.org",
             scopes: ["plans"] as const
         })
     }
 
-    async connect(scope: ChumsScopes): Promise<ChumsAuthData | null> {
-        const result = await ChumsConnect.connect(scope)
+    async connect(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData | null> {
+        const result = await ChurchAppsConnect.connect(scope)
         this.access = result
         return result
     }
 
-    disconnect(scope: ChumsScopes = "plans"): void {
-        ChumsConnect.disconnect(scope)
+    disconnect(scope: ChurchAppsScopes = "plans"): void {
+        ChurchAppsConnect.disconnect(scope)
         this.access = null
     }
 
     async apiRequest(data: any): Promise<any> {
-        return ChumsConnect.apiRequest(data)
+        return ChurchAppsConnect.apiRequest(data)
     }
 
     async loadServices(): Promise<void> {
-        return ChumsImport.loadServices()
+        return ChurchAppsImport.loadServices()
     }
 
-    async startupLoad(scope: ChumsScopes, data?: any): Promise<void> {
+    async startupLoad(scope: ChurchAppsScopes, data?: any): Promise<void> {
         const connected = await this.connect(scope)
         if (!connected) return
 
-        // Export songs to Chums if data provided
+        // Export songs to ChurchApps if data provided
         if (data) {
-            await ChumsExport.sendSongsToChums(data)
+            await ChurchAppsExport.sendSongsToChurchApps(data)
         }
 
-        // Load services from Chums
-        await ChumsImport.loadServices()
+        // Load services from ChurchApps
+        await ChurchAppsImport.loadServices()
     }
 
     /**
-     * Export data to Chums (e.g., songs)
+     * Export data to ChurchApps (e.g., songs)
      */
     async exportData(data: any): Promise<void> {
-        return ChumsExport.sendSongsToChums(data)
+        return ChurchAppsExport.sendSongsToChurchApps(data)
     }
 
     /**
-     * Retrieves the content library category tree from Chums
+     * Retrieves the content library category tree from ChurchApps
      */
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
         return new Promise((resolve, reject) => {
             httpsRequest("https://api.lessons.church", "/lessons/public/tree", "GET", {}, {}, (err, data) => {
                 if (err) {
-                    console.error("Failed to fetch Chums content library:", err)
+                    console.error("Failed to fetch ChurchApps content library:", err)
                     return reject(err)
                 }
 
@@ -114,7 +114,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
                     const categories = convertToCategories(data.programs || [])
                     resolve(categories)
                 } catch (error) {
-                    console.error("Failed to convert Chums content library:", error)
+                    console.error("Failed to convert ChurchApps content library:", error)
                     reject(error)
                 }
             })
@@ -128,7 +128,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
         return new Promise((resolve, reject) => {
             httpsRequest("https://api.lessons.church", `/venues/playlist/${venueId}`, "GET", {}, {}, (err, data) => {
                 if (err) {
-                    console.error("Failed to fetch Chums content:", err)
+                    console.error("Failed to fetch ChurchApps content:", err)
                     return reject(err)
                 }
 
@@ -158,7 +158,7 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
 
                     resolve(files)
                 } catch (error) {
-                    console.error("Failed to convert Chums content:", error)
+                    console.error("Failed to convert ChurchApps content:", error)
                     reject(error)
                 }
             })
@@ -166,16 +166,16 @@ export class ChumsProvider extends ContentProvider<ChumsScopes, ChumsAuthData> {
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {
-        // Not used - ChumsConnect handles authentication internally
+        // Not used - ChurchAppsConnect handles authentication internally
     }
 
-    protected async refreshToken(_scope: ChumsScopes): Promise<ChumsAuthData | null> {
-        // Not used - ChumsConnect handles token refresh internally
+    protected async refreshToken(_scope: ChurchAppsScopes): Promise<ChurchAppsAuthData | null> {
+        // Not used - ChurchAppsConnect handles token refresh internally
         return null
     }
 
-    protected async authenticate(_scope: ChumsScopes): Promise<ChumsAuthData | null> {
-        // Not used - ChumsConnect handles authentication internally
+    protected async authenticate(_scope: ChurchAppsScopes): Promise<ChurchAppsAuthData | null> {
+        // Not used - ChurchAppsConnect handles authentication internally
         return null
     }
 }

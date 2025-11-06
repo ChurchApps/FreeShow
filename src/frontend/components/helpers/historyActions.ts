@@ -782,7 +782,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 let itemIndex = -1
                 // find match
                 let slideMatch = ref.find((slideRef) => {
-                    itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines)
+                    itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
                     return itemIndex > -1
                 })
 
@@ -796,7 +796,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     slides = get(showsCache)[data.remember.showId]?.slides || {}
                     // find match
                     slideMatch = ref.find((slideRef) => {
-                        itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines)
+                        itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
                         return itemIndex > -1
                     })
                 }

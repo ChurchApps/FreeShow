@@ -1,29 +1,29 @@
 /**
- * WARNING: This file should ONLY be accessed through ChumsProvider.
+ * WARNING: This file should ONLY be accessed through ChurchAppsProvider.
  * Do not import or use this class directly in other parts of the application.
- * Use ContentProviderRegistry or ChumsProvider instead.
+ * Use ContentProviderRegistry or ChurchAppsProvider instead.
  */
 
 import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../../types/Show"
 import { sendToMain } from "../../IPC/main"
-import { ChumsConnect } from "./ChumsConnect"
+import { ChurchAppsConnect } from "./ChurchAppsConnect"
 
 /**
- * Handles importing service plans and songs from Chums.
- * Converts Chums service plans and songs into FreeShow shows and projects.
+ * Handles importing service plans and songs from ChurchApps.
+ * Converts ChurchApps service plans and songs into FreeShow shows and projects.
  */
-export class ChumsImport {
+export class ChurchAppsImport {
     private static projects: any[] = []
     private static shows: Show[] = []
 
     public static async loadServices(): Promise<void> {
         this.projects = []
         this.shows = []
-        // console.log("Loading services from Chums")
+        // console.log("Loading services from ChurchApps")
 
-        const SERVICE_PLANS = await ChumsConnect.apiRequest({
+        const SERVICE_PLANS = await ChurchAppsConnect.apiRequest({
             api: "doing",
             authenticated: true,
             scope: "plans",
@@ -38,13 +38,13 @@ export class ChumsImport {
             })
         )
 
-        sendToMain(ToMain.TOAST, `Loaded ${this.projects.length} service(s) from Chums`)
-        sendToMain(ToMain.PROVIDER_PROJECTS, { providerId: "chums", categoryName: "Chums", shows: this.shows, projects: this.projects })
+        sendToMain(ToMain.TOAST, `Loaded ${this.projects.length} service(s) from ChurchApps`)
+        sendToMain(ToMain.PROVIDER_PROJECTS, { providerId: "churchApps", categoryName: "ChurchApps", shows: this.shows, projects: this.projects })
     }
 
     private static async loadPlanItems(plan: any): Promise<void> {
         const projectItems: any[] = []
-        const planItems: any = await ChumsConnect.apiRequest({
+        const planItems: any = await ChurchAppsConnect.apiRequest({
             api: "doing",
             authenticated: false,
             scope: "plans",
@@ -95,7 +95,7 @@ export class ChumsImport {
     private static async loadArrangementKey(churchId: string, arrangementId: string) {
         let data: any = {}
         try {
-            data = await ChumsConnect.apiRequest({
+            data = await ChurchAppsConnect.apiRequest({
                 api: "content",
                 authenticated: false,
                 scope: "plans",
@@ -183,7 +183,7 @@ export class ChumsImport {
         const layoutId = uid()
         const show: Show = {
             name: title || "",
-            category: "chums",
+            category: "churchapps",
             timestamps: {
                 created: new Date(SONG.dateAdded).getTime() || Date.now(),
                 modified: new Date(SONG.dateAdded).getTime() || null,
@@ -225,7 +225,7 @@ export class ChumsImport {
         const layoutId = uid()
         const show: Show = {
             name: title || "",
-            category: "chums",
+            category: "churchapps",
             timestamps: { created: Date.now(), modified: null, used: null },
             meta: metadata,
             settings: { activeLayout: layoutId, template: null },
