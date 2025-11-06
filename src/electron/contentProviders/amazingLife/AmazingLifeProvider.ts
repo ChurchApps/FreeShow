@@ -1,13 +1,13 @@
+import type express from "express"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
+import { sendToMain } from "../../IPC/main"
+import { getKey } from "../../utils/keys"
+import { httpsRequest } from "../../utils/requests"
 import { ContentProvider } from "../base/ContentProvider"
 import { OAuth2Helper } from "../base/OAuth2Helper"
-import { httpsRequest } from "../../utils/requests"
-import { sendToMain } from "../../IPC/main"
-import { ToMain } from "../../../types/IPC/ToMain"
+import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AMAZING_LIFE_API_URL, AMAZING_LIFE_OAUTH_BASE } from "./types"
-import type { ContentLibraryCategory, ContentFile } from "../base/types"
-import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
-import { getKey } from "../../utils/keys"
-import express from "express"
 
 // Import and re-export types
 import type { AmazingLifeScopes } from "./types"
@@ -93,7 +93,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     async apiRequest(data: any): Promise<any> {
-        console.log(data);
+        console.log(data)
         return null
     }
 
@@ -249,8 +249,8 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                         const isVideo = item.mediaType?.toLowerCase() === 'video' || url.includes('.m3u8') || url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.mov')
 
                         const file: ContentFile = {
-                            url: url,
-                            thumbnail: thumbnail,
+                            url,
+                            thumbnail,
                             fileSize: item.fileSize || 0,
                             type: isVideo ? "video" : "image",
                             name: item.title || item.name || item.fileName || ""

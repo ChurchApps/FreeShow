@@ -44,12 +44,12 @@ export class AudioEqualizer {
     }
 
     // Initialize the equalizer with Web Audio API
-    public async initialize(audioContext: AudioContext): Promise<void> {
-        this.audioContext = audioContext
+    public initialize(ac: AudioContext) {
+        this.audioContext = ac
 
         // Create input and output gain nodes
-        this.inputGainNode = audioContext.createGain()
-        this.outputGainNode = audioContext.createGain()
+        this.inputGainNode = ac.createGain()
+        this.outputGainNode = ac.createGain()
 
         // Create filter nodes for each band
         this.createFilterNodes()
@@ -58,7 +58,7 @@ export class AudioEqualizer {
         this.connectFilters()
     }
 
-    private createFilterNodes(): void {
+    private createFilterNodes() {
         if (!this.audioContext) return
 
         this.filterNodes = []
@@ -70,7 +70,7 @@ export class AudioEqualizer {
         })
     }
 
-    private updateFilterFromBand(filter: BiquadFilterNode, band: EQBand): void {
+    private updateFilterFromBand(filter: BiquadFilterNode, band: EQBand) {
         if (!this.audioContext) return
 
         const currentTime = this.audioContext.currentTime
@@ -95,7 +95,7 @@ export class AudioEqualizer {
         filter.gain.setValueAtTime(effectiveGain, currentTime)
     }
 
-    private connectFilters(): void {
+    private connectFilters() {
         if (!this.inputGainNode || !this.outputGainNode || this.filterNodes.length === 0) return
 
         // Connect input -> first filter
@@ -127,7 +127,7 @@ export class AudioEqualizer {
     }
 
     // Update EQ bands configuration
-    public updateBands(bands: EQBand[]): void {
+    public updateBands(bands: EQBand[]) {
         this.config.bands = [...bands]
 
         // Update existing filter nodes
@@ -153,7 +153,7 @@ export class AudioEqualizer {
     }
 
     // Update a single band
-    public updateBand(bandIndex: number, band: EQBand): void {
+    public updateBand(bandIndex: number, band: EQBand) {
         if (bandIndex < 0 || bandIndex >= this.config.bands.length) return
 
         this.config.bands[bandIndex] = { ...band }
@@ -164,7 +164,7 @@ export class AudioEqualizer {
     }
 
     // Update a specific band's gain setting (for real-time adjustments)
-    public setBandGain(bandIndex: number, gain: number): void {
+    public setBandGain(bandIndex: number, gain: number) {
         if (bandIndex < 0 || bandIndex >= this.config.bands.length || !this.audioContext) return
 
         this.config.bands[bandIndex].gain = gain
@@ -178,7 +178,7 @@ export class AudioEqualizer {
     }
 
     // Enable/disable the equalizer
-    public setEnabled(enabled: boolean): void {
+    public setEnabled(enabled: boolean) {
         const wasEnabled = this.config.enabled
         this.config.enabled = enabled
 
@@ -204,13 +204,13 @@ export class AudioEqualizer {
     }
 
     // Reset to default values
-    public reset(): void {
+    public reset() {
         this.config.bands = AudioEqualizer.getDefaultBands()
         this.updateBands(this.config.bands)
     }
 
     // Cleanup
-    public dispose(): void {
+    public dispose() {
         this.filterNodes.forEach(node => {
             try {
                 node.disconnect()
@@ -286,8 +286,8 @@ export class EqualizerCalculations {
     }
 
     // Generate frequency response curve data points
-    static generateResponseCurve(bands: EQBand[], numPoints: number = 300, minFreq: number = 20, maxFreq: number = 20000): Array<{ frequency: number, response: number }> {
-        const points: Array<{ frequency: number, response: number }> = []
+    static generateResponseCurve(bands: EQBand[], numPoints = 300, minFreq = 20, maxFreq = 20000): { frequency: number, response: number }[] {
+        const points: { frequency: number, response: number }[] = []
 
         for (let i = 0; i <= numPoints; i++) {
             // Logarithmic frequency scale
@@ -342,7 +342,7 @@ export async function initializeEqualizer(externalAudioContext?: AudioContext, o
 
         // Create new equalizer instance first (before disposing old one)
         const newEqualizer = new AudioEqualizer(getEqualizerConfig())
-        await newEqualizer.initialize(audioContext)
+        newEqualizer.initialize(audioContext)
 
         // Now seamlessly switch to the new equalizer
         globalEqualizer = newEqualizer
@@ -438,7 +438,7 @@ export function connectAudioToEqualizer(id: string, audio: HTMLAudioElement | Me
         return null
     }
 }// Disconnect audio from equalizer
-export function disconnectAudioFromEqualizer(id: string): void {
+export function disconnectAudioFromEqualizer(id: string) {
     const connection = connectedSources.get(id)
     if (connection) {
         try {
@@ -454,7 +454,7 @@ export function disconnectAudioFromEqualizer(id: string): void {
 }
 
 // Disconnect audio source from equalizer (for integration with existing audio systems)
-export function disconnectAudioSourceFromEqualizer(id: string): void {
+export function disconnectAudioSourceFromEqualizer(id: string) {
     const connection = connectedSources.get(id)
     if (connection) {
         try {
@@ -470,7 +470,7 @@ export function disconnectAudioSourceFromEqualizer(id: string): void {
 
 // Update equalizer bands configuration
 // Update all equalizer bands
-export function updateEqualizerBands(bands: EQBand[]): void {
+export function updateEqualizerBands(bands: EQBand[]) {
     // Update store immediately (this ensures UI changes are reflected)
     equalizerConfig.update(config => ({
         ...config,
@@ -484,7 +484,7 @@ export function updateEqualizerBands(bands: EQBand[]): void {
 }
 
 // Update individual band gain (for real-time adjustments)
-export function updateEqualizerBandGain(bandIndex: number, gain: number): void {
+export function updateEqualizerBandGain(bandIndex: number, gain: number) {
     // Update store immediately (this ensures UI changes are reflected)
     equalizerConfig.update(config => {
         const newBands = [...config.bands]
@@ -504,7 +504,7 @@ export function updateEqualizerBandGain(bandIndex: number, gain: number): void {
 }
 
 // Update a single equalizer band
-export function updateEqualizerBand(bandIndex: number, band: EQBand): void {
+export function updateEqualizerBand(bandIndex: number, band: EQBand) {
     // Update store immediately (this ensures UI changes are reflected)
     equalizerConfig.update(config => {
         const newBands = [...config.bands]
@@ -524,7 +524,7 @@ export function updateEqualizerBand(bandIndex: number, band: EQBand): void {
 }
 
 // Enable/disable equalizer
-export function setEqualizerEnabled(enabled: boolean): void {
+export function setEqualizerEnabled(enabled: boolean) {
     // Update store immediately (this ensures UI changes are reflected)
     equalizerConfig.update(config => ({
         ...config,
@@ -546,7 +546,7 @@ function getEqualizerConfig(): EqualizerConfig {
 }
 
 // Connect output to destination (speakers/headphones)
-export function connectEqualizerToDestination(outputNode: AudioNode): void {
+export function connectEqualizerToDestination(outputNode: AudioNode) {
     if (audioContext && outputNode) {
         try {
             outputNode.connect(audioContext.destination)
@@ -578,7 +578,7 @@ export function isEqualizerReady(): boolean {
 }
 
 // Reconnect all active audio sources (for enable/disable functionality)
-export function reconnectAllAudioSources(): void {
+export function reconnectAllAudioSources() {
     console.log("EQ enable/disable state changed - audio reconnection needed")
     console.warn("Note: For full effect, restart audio playback after changing EQ enable/disable state")
 
@@ -595,7 +595,7 @@ export function reconnectAllAudioSources(): void {
 }
 
 // Cleanup function
-export function disposeEqualizer(): void {
+export function disposeEqualizer() {
     // Disconnect all sources
     for (const [id] of connectedSources) {
         disconnectAudioFromEqualizer(id)

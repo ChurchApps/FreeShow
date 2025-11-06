@@ -85,14 +85,9 @@ export class NdiReceiver {
 
             // For NDI-HX sources, start continuous reception for thumbnail generation
             if (!this.NDI_RECEIVERS[source.id]) {
-                this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: false, shouldStop: false, fetchInProgress: false }
-
-                const receiverData = this.NDI_RECEIVERS[source.id]
-                if (!receiverData.isReceiving) {
-                    receiverData.isReceiving = true
-                    // Start lightweight frame loop for thumbnails only
-                    this.thumbnailLoop(source.id, receiver, receiverData)
-                }
+                this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false, fetchInProgress: false }
+                // Start lightweight frame loop for thumbnails only
+                this.thumbnailLoop(source.id, receiver, this.NDI_RECEIVERS[source.id])
             }
 
             let rawFrame: any = null

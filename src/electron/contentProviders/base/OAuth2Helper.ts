@@ -1,5 +1,5 @@
-import { randomFillSync, createHash } from "crypto"
-import express from "express"
+import { createHash, randomFillSync } from "crypto"
+import type express from "express"
 import { openURL } from "../../IPC/responsesMain"
 import { httpsRequest } from "../../utils/requests"
 import type { BaseAuthData } from "./ContentProvider"

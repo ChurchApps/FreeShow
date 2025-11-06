@@ -17,7 +17,7 @@ import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
-let startupProfile: string = ""
+let startupProfile = ""
 
 export function startup() {
     window.api.receive(

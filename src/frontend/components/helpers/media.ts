@@ -578,8 +578,7 @@ export async function downloadOnlineMedia(url: string) {
 
     if (downloadedPath?.buffer) {
         const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
-        const url = URL.createObjectURL(blob)
-        return url
+        return URL.createObjectURL(blob)
     }
 
     if (downloadedPath) {

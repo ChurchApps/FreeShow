@@ -250,7 +250,7 @@ export function rangeSelect(e: any, currentlySelected: (number | string)[], newS
 
     if (e.shiftKey && !currentlySelected.includes(newSelection) && !isNaN(Number(newSelection))) {
         // add range between last selected and new selection
-        let lastSelected = Number(currentlySelected[currentlySelected.length - 1])
+        const lastSelected = Number(currentlySelected[currentlySelected.length - 1])
         newSelection = Number(newSelection)
         let first: number = newSelection + 1
         let last: number = lastSelected

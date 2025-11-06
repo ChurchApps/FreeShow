@@ -647,7 +647,7 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-async function playPdf(slide: null | OutSlide, nextPage: number, loop: boolean = false) {
+async function playPdf(slide: null | OutSlide, nextPage: number, loop = false) {
     const data = slide || get(activeShow)
     if (!data?.id) return
 

@@ -1,5 +1,5 @@
 import express from "express"
-import type { ContentProviderId } from "./types"
+import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "./types"
 
 /**
  * Base types for content provider authentication and requests
@@ -80,17 +80,17 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     /**
      * Indicates if this provider has a content library
      */
-    hasContentLibrary: boolean = false
+    hasContentLibrary = false
 
     /**
      * Retrieves the content library category tree (optional - only if hasContentLibrary is true)
      */
-    getContentLibrary?(): Promise<import("./types").ContentLibraryCategory[]>
+    getContentLibrary?(): Promise<ContentLibraryCategory[]>
 
     /**
      * Retrieves content files for a given category key (optional - only if hasContentLibrary is true)
      */
-    getContent?(key: string): Promise<import("./types").ContentFile[]>
+    getContent?(key: string): Promise<ContentFile[]>
 
     /**
      * Validates if a scope is supported by this provider
@@ -182,9 +182,7 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
 /**
  * Interface for content provider factory registration
  */
-export interface ContentProviderConstructor<T extends ContentProvider = ContentProvider> {
-    new(...args: any[]): T
-}
+export type ContentProviderConstructor<T extends ContentProvider = ContentProvider> = new (...args: any[]) => T
 
 /**
  * Factory for managing content provider instances
