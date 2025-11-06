@@ -458,7 +458,16 @@ function decodeBase64(text: string) {
 }
 
 function RTFToText(input: string) {
-    input = input.slice(0, input.lastIndexOf("}"))
+    // Handle the binary ending characters that sometimes appear
+    const binaryEndPos = input.search(/[ÿ¿\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]+$/)
+    if (binaryEndPos > -1) {
+        input = input.slice(0, binaryEndPos)
+    }
+
+    // Remove the last } if it exists
+    input = input.slice(0, input.lastIndexOf("}") > 0 ? input.lastIndexOf("}") : input.length)
+
+    // Convert common RTF commands to line breaks
     input = input.replaceAll("\\pard", "\\remove")
     input = input.replaceAll("\\part", "\\remove")
     input = input.replaceAll("\\par", "__BREAK__")
@@ -470,7 +479,7 @@ function RTFToText(input: string) {
     const regex = /\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+\n?(?:-?\d+)?[ ]?/gm
     let newInput = input.replace(regex, "").replaceAll("\\*", "")
 
-    // some files have {} wapped around the text, so it gets removed
+    // some files have {} wrapped around the text, so it gets removed
     if (!newInput.replaceAll("__BREAK__", "").trim().length) {
         input = input.replaceAll("}", "").replaceAll("{", "")
         newInput = input.replace(regex, "").replaceAll("\\*", "")
@@ -481,11 +490,19 @@ function RTFToText(input: string) {
         newInput = newInput.replaceAll(";;", "")
     }
 
-    const splitted = newInput.split("__BREAK__").filter((a) => a)
+    // Clean up remaining formatting artifacts
+    newInput = newInput.replace(/\s+/g, " ").trim()
+
+    const splitted = newInput.split("__BREAK__").filter((a) => a.trim())
     return splitted.join("\n").trim()
 }
 
 function decodeHex(input: string) {
+    // If input looks like RTF but doesn't contain hex encodings, use RTF parser
+    if (input.includes("\\rtf") && !input.includes("\\'")) {
+        return RTFToText(input)
+    }
+
     const textStart = input.indexOf("\\ltrch")
     // remove RTF before text
     if (textStart > -1) {
