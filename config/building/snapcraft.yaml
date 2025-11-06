@@ -46,19 +46,27 @@ apps:
         extensions: [gnome]
         plugs:
             - alsa
+            - audio-playback
+            - browser-support
+            - camera
             - desktop
             - desktop-legacy
             - home
-            - x11
-            - wayland
-            - unity7
-            - browser-support
-            - network
             - gsettings
-            - audio-playback
-            - pulseaudio
+            - network
+            - network-bind
+            - network-control
+            - network-observe
+            - network-manager
+            - network-manager-observe
+            - network-setup-observe
             - opengl
+            - pulseaudio
+            - pipewire
             - removable-media
+            - unity7
+            - wayland
+            - x11
         environment:
             PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
             SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
