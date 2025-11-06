@@ -487,7 +487,7 @@
         "manage_dynamic_values": "Gérer les valeurs dynamiques",
         "choose_camera": "Choisir la caméra",
         "manage_tags": "Gérer les tags",
-        "chums_sync_categories": "Sélectionner les catégories à synchroniser",
+        "sync_categories": "Sélectionner les catégories à synchroniser",
         "effect_items": "Éléments d'effet",
         "initialize": "Bienvenue sur FreeShow",
         "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
@@ -1623,9 +1623,5 @@
         "translation_description_multiline": "Ajoute toutes les langues dans une seule zone de texte, en alternance de lignes. (Comme dans Songbeamer)",
         "translation_description_textboxes": "Ajoute chaque langue dans une zone de texte distincte à la diapositive.",
         "translation_description_layouts": "Crée un ensemble unique de diapos et une mise en page pour chaque langue."
-    },
-    "chums": {
-        "sync_categories": "Synchroniser les catégories",
-        "sync_categories_description": "Sélectionnez les catégories à synchroniser avec Chums"
     }
 }

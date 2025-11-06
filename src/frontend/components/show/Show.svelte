@@ -40,7 +40,7 @@
             <OverlayPreview {show} />
         {:else if show.type === "pdf"}
             {#key show}
-                <PdfPreview {show} />
+                <PdfPreview {show} index={show.index || 0} />
             {/key}
         {:else if show.type === "ppt"}
             <PowerPointPreview {show} />

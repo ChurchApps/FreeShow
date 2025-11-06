@@ -198,7 +198,7 @@
     </InputRow>
 {/each}
 
-{#if !$providerConnections.planningcenter && !$providerConnections.chums && !$providerConnections.amazinglife}
+{#if !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <Title label="Content Provider" icon="list" />
 
@@ -209,16 +209,17 @@
     </InputRow>
 
     <InputRow>
-        <MaterialButton on:click={() => contentProviderConnect("chums")} style="flex: 1;" icon="login">
-            <T id="settings.connect_to" replace={["Chums"]} />
+        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["ChurchApps"]} />
         </MaterialButton>
     </InputRow>
-
-    <!-- <InputRow>
+<!--
+    <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
-            <T id="settings.connect_to" replace={["Amazing Life"]} />
+            <T id="settings.connect_to" replace={["APlay"]} />
         </MaterialButton>
-    </InputRow> -->
+    </InputRow>
+-->
 {:else if $providerConnections.planningcenter}
     <!-- Planning Center connected -->
     <Title label="Content Provider: Planning Center" icon="list" />
@@ -232,28 +233,28 @@
         </MaterialButton>
     </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
-{:else if $providerConnections.chums}
-    <!-- Chums connected -->
-    <Title label="Content Provider: Chums" icon="list" />
+{:else if $providerConnections.churchApps}
+    <!-- ChurchApps connected -->
+    <Title label="Content Provider: ChurchApps" icon="list" />
 
     <InputRow>
-        <MaterialButton on:click={() => contentProviderConnect("chums")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
-            <T id="settings.disconnect_from" replace={["Chums"]} />
+        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
-        <MaterialButton title="chums.sync_categories_description" icon="options" on:click={() => activePopup.set("chums_sync_categories")}>
-            <T id="chums.sync_categories" />
+        <MaterialButton title="settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("sync_categories")}>
+            <T id="popup.sync_categories" />
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.amazinglife}
-    <!-- Amazing Life connected -->
-    <Title label="Content Provider: Amazing Life" icon="list" />
+    <!-- APlay connected -->
+    <Title label="Content Provider: APlay" icon="list" />
 
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
-            <T id="settings.disconnect_from" replace={["Amazing Life"]} />
+            <T id="settings.disconnect_from" replace={["APlay"]} />
         </MaterialButton>
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />

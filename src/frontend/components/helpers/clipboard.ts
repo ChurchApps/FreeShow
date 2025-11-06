@@ -1036,6 +1036,7 @@ const duplicateActions = {
         })
 
         projects.update((a) => {
+            if (!a[get(activeProject)!]?.shows) return a
             a[get(activeProject)!].shows.push(...data)
             return a
         })

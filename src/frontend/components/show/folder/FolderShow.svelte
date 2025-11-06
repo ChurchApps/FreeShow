@@ -25,7 +25,7 @@
     export let index: number
 
     let data: { timer?: number } | undefined
-    $: data = $projects[$activeProject || ""]?.shows[index]?.data
+    $: data = $projects[$activeProject || ""]?.shows?.[index]?.data
 
     type TFile = { path: string; name: string; type: ShowType; thumbnail?: string }
     let folderFiles: TFile[] = []
@@ -144,7 +144,7 @@
         <MaterialButton
             disabled={!folderFiles.length}
             on:click={() => {
-                popupData.set({ type: "folder", value: timer, totalTime })
+                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter((a) => a.type === "image").length })
                 activePopup.set("next_timer")
             }}
             title="popup.next_timer{totalTime !== 0 ? `: ${totalTime}s` : ''}"

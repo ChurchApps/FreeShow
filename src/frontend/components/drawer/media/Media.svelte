@@ -2,6 +2,7 @@
     import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
+    import type { ClickEvent } from "../../../../types/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
@@ -93,6 +94,12 @@
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
     $: if ($providerConnections) getProviders()
     function getProviders() {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
+
+    $: if ($providerConnections) {
         requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
             contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
         })
@@ -313,7 +320,13 @@
         }
     }
 
-    function goBack() {
+    function goBack(e?: ClickEvent) {
+        if (e?.detail.ctrl) {
+            lastPaths.push(path)
+            path = rootPath
+            return
+        }
+
         const lastSlash = path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")
         const folder = path.slice(0, lastSlash)
 
@@ -613,6 +626,9 @@
 
     .grid :global(.selectElem) {
         outline-offset: -3px;
+    }
+    .grid :global(.isSelected) {
+        border-radius: 0 !important;
     }
     /* .grid :global(#media.isSelected .main) {
         z-index: -1;

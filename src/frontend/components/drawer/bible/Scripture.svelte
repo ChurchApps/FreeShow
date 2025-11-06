@@ -3,6 +3,7 @@
     import { ApiBible } from "json-bible/lib/api"
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
+    import { onMount } from "svelte"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import {
         activeEdit,
@@ -30,8 +31,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
-    import { onMount } from "svelte"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -52,7 +52,8 @@
     $: if (previewBibleData?.customName) previewBibleData.name = previewBibleData.customName
 
     // auto load scriptures when changed
-    $: loadScripture(previewBibleId)
+    // timeout is to load drawer tab "instantly", before loading scripture
+    $: setTimeout(() => loadScripture(previewBibleId), 10)
 
     $: isActiveInOutput = outputIsScripture($outputs)
 
@@ -450,10 +451,48 @@
     function _moveSelection(moveLeft: boolean) {
         if (!activeReference.book) return
 
+        // Check if we're dealing with split verses
+        const currentVerses = activeReference.verses[0] || []
+        const currentVerseId = currentVerses[0]?.toString()
+        const selectionCount = currentVerses.length
+        if (currentVerseId && splittedVerses.length) {
+            const currentIndex = splittedVerses.findIndex((v) => v.id === currentVerseId)
+            if (currentIndex !== -1) {
+                // Navigate within split verses, maintaining selection count
+                const newIndex = moveLeft ? currentIndex - selectionCount : currentIndex + selectionCount
+
+                if (newIndex >= 0 && newIndex + selectionCount - 1 < splittedVerses.length) {
+                    // Stay within current split verses range, select the same count
+                    const newSelection: string[] = []
+                    for (let i = 0; i < selectionCount; i++) {
+                        newSelection.push(splittedVerses[newIndex + i].id)
+                    }
+                    openVerse([newSelection])
+                    if (isActiveInOutput) setTimeout(playScripture)
+                    return
+                } else if (newIndex < 0 || newIndex + selectionCount - 1 >= splittedVerses.length) {
+                    // Need to move to next/previous chapter or book
+                    // Fall through to the regular moveSelection logic below
+                }
+            }
+        }
+
+        let versesCount = splittedVerses.length
+
+        // WIP get length from previous chapter when moving left from verse 1
+        // const normalizedVerses = (verses || []).map((v) => getVerseIdParts(String(v)).id)
+        // const firstVerse = normalizedVerses[0]
+        // if (moveLeft && firstVerse === 1) {
+        //     // get verses count from previous chapter
+        //     const prevChapterIndex = (chapters || []).findIndex((c) => c.number?.toString() === activeReference.chapters[0]?.toString()) - 1
+        //     const prevChapter = chapters?.[prevChapterIndex]
+        //     versesCount = prevChapter ? prevChapter.verses.length : 0
+        // }
+
         const lengths = {
             book: books?.length || 0,
             chapters: chapters?.length || 0,
-            verses: splittedVerses.length || 0
+            verses: versesCount
         }
 
         const selection = {
@@ -463,11 +502,19 @@
         }
 
         const newSelection = moveSelection(lengths, selection, moveLeft)
-        newSelection.verses = newSelection.verses
 
         openBook(newSelection.book, newSelection.chapters, [newSelection.verses])
 
         if (isActiveInOutput) setTimeout(playScripture)
+    }
+
+    $: reference = getReference({ data, activeReference })
+    function getReference(_updater: any) {
+        const book = data[previewBibleId]?.bookData?.name || ""
+        const referenceDivider = $scriptureSettings.referenceDivider || ":"
+        const range = joinRange(activeReference.verses[0] || [])
+        const reference = `${book} ${activeReference.chapters}${referenceDivider}${range}`
+        return reference
     }
 </script>
 
@@ -650,10 +697,13 @@
                 {/if}
 
                 {#key data}
-                    <!-- temp solution to split long verses -->
-                    {#if !currentBibleData?.verseData?.getReference()?.includes("NaN")}
+                    {reference}
+
+                    <!-- WIP had some issues with selecting multiple verses -->
+                    <!-- !NaN = temp solution to split long verses -->
+                    <!-- {#if !currentBibleData?.verseData?.getReference()?.includes("NaN")}
                         {currentBibleData?.verseData?.getReference() || "..."}
-                    {/if}
+                    {/if} -->
                 {/key}
             {/if}
         </span>

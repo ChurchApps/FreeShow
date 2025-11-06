@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, currentWindow, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import { hexToRgb } from "../helpers/color"
@@ -17,6 +17,7 @@
     let side: "right" | "left" = "right"
     let translate = 0
 
+    let autoCloseTimeout: NodeJS.Timeout | null = null
     function onContextMenu(e: MouseEvent) {
         spellcheck.set(null)
 
@@ -55,6 +56,11 @@
         if (x + (250 + 150) > window.innerWidth) side = "left"
 
         contextActive.set(true)
+
+        // auto close context menu in output window, in case it's opened on accident
+        if (!$currentWindow) return
+        if (autoCloseTimeout) clearTimeout(autoCloseTimeout)
+        autoCloseTimeout = setTimeout(closeContextMenu, 3000)
     }
 
     function getContextMenu(id: string | null) {

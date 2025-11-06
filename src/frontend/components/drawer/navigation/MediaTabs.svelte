@@ -61,6 +61,12 @@
         })
     }
 
+    $: if ($providerConnections) {
+        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
+            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        })
+    }
+
     let sections: any[] = []
     $: sections = [
         [

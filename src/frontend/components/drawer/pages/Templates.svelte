@@ -181,4 +181,7 @@
         width: var(--width);
         outline-offset: -3px;
     }
+    .grid :global(.isSelected) {
+        border-radius: 0 !important;
+    }
 </style>

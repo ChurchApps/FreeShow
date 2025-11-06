@@ -53,7 +53,7 @@ import type { API_camera, API_screen, API_stage_output_layout } from "../actions
 import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearBackground, clearSlide } from "../output/clear"
-import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
+import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
@@ -208,11 +208,11 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
 export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {
     // WIP timer loop does not work if project is changed (should be global for the folder instead of per project item)
-    const projectItems = get(projects)[get(activeProject) || ""]?.shows
+    const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
     // this does not work with multiple of the same folder
-    const projectItemIndex = projectItems.findIndex((a) => a.type === "folder" && a.id === folderPath)
+    const projectItemIndex = projectItems.findIndex((a) => (a.type === "folder" || a.type === "pdf") && a.id === folderPath)
     const timer = Number(projectItems?.[projectItemIndex]?.data?.timer ?? 10)
-    if (!timer || file.type !== "image") return
+    if (!timer || (file.type !== "image" && file.type !== "pdf")) return
 
     // newSlideTimer played from Preview.svelte
     setOutput("transition", { duration: timer, folderPath })
@@ -793,7 +793,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         const type = item.type || "text"
 
-        const templateItem = sortedTemplateItems[type]?.shift()
+        const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
 
         item.style = templateItem.style || ""
@@ -811,10 +811,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // if (hasClickReveal) templateItem.clickReveal = true
 
         // remove exiting styling & add new if set in template
+        // WIP some keys are probably missing here...
         const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
-        extraStyles.forEach((style) => {
-            delete item[style]
-            if (templateItem[style]) item[style] = templateItem[style]
+        extraStyles.forEach((key) => {
+            delete item[key]
+            if (templateItem[key]) item[key] = templateItem[key]
         })
 
         if (type !== "text") return finish()
@@ -889,7 +890,15 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // remove textbox items
     templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
     // remove any duplicate values
-    templateItems = templateItems.filter((item) => !newSlideItems.find((a) => JSON.stringify(item) === JSON.stringify(a)))
+    templateItems = templateItems.filter((item) => !newSlideItems.find((a) => {
+        const currentItem = clone(a)
+        delete currentItem.align
+        delete currentItem.auto
+        delete currentItem.autoFontSize
+        delete currentItem.fromTemplate
+
+        return areObjectsEqual(currentItem, item)
+    }))
 
     // this will ensure the correct order on the remaining items
     const remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)

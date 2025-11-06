@@ -137,6 +137,8 @@
         box-shadow: 0 0 0 8000px rgb(0 0 0 / 40%);
 
         transition: 0.8s all;
+
+        border-radius: 2px;
     }
 
     .text {
@@ -151,6 +153,8 @@
 
         background-color: rgb(0 0 0 / 70%);
         padding: 8px 12px;
+
+        border-radius: 4px;
     }
     .text.flip {
         inset-inline-start: initial;
@@ -172,5 +176,7 @@
         padding: 10px;
 
         pointer-events: initial;
+
+        border-radius: 4px;
     }
 </style>

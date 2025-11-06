@@ -576,6 +576,7 @@
 
     .slide :global(.isSelected) {
         outline: 5px solid var(--text) !important;
+        border-radius: 0 !important;
     }
 
     .main.focused {

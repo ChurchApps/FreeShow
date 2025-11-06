@@ -1,6 +1,6 @@
 // ----- FreeShow -----
 // Content Provider Helper Functions
-// Handles access and settings for external content providers like Planning Center, Chums (B1), etc.
+// Handles access and settings for external content providers like Planning Center, ChurchApps (B1), etc.
 
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { stores } from "./store"
@@ -31,7 +31,7 @@ export function migrateContentProviderSettings() {
     // Migrate ACCESS store
     const accessKeys: { old: string; newProvider: ContentProviderId; newScope: string }[] = [
         { old: "pco_services", newProvider: "planningcenter", newScope: "services" },
-        { old: "chums_plans", newProvider: "chums", newScope: "plans" }
+        { old: "churchApps_plans", newProvider: "churchApps", newScope: "plans" }
     ]
 
     for (const { old, newProvider, newScope } of accessKeys) {

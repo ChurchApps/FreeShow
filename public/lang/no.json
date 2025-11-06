@@ -217,7 +217,6 @@
         "mute_when_video_plays": "Demp når video spilles",
         "allow_gaining": "Tillat forsterking",
         "allow_gaining_tip": "Lar deg sette volumet over 100% (Kan føre til forvrengning)",
-        "pre_fader_volume_meter": "Vis volumnivå før fadere",
         "mixer": "Mikser",
         "equalizer": "Equalizer",
         "preset": "Forhåndsinnstilling",
@@ -487,7 +486,7 @@
         "manage_dynamic_values": "Behandle dynamiske verdier",
         "choose_camera": "Velg kamera",
         "manage_tags": "Behandle etiketter",
-        "chums_sync_categories": "Velg kategorier for synkronisering",
+        "sync_categories": "Synkroniser kategorier",
         "effect_items": "Effekt elementer",
         "initialize": "Velkommen til FreeShow",
         "unsaved": "Er du sikkert på at du vil avslutte?",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "Aktiver når bakgrunn fjernes",
         "activate_show_created": "Aktiver når show blir laget",
         "activate_show_opened": "Aktiver når show blir åpnet",
-        "activate_audio_playlist_ended": "Aktiver når spilleliste er ferdig"
+        "activate_audio_playlist_ended": "Aktiver når spilleliste er ferdig",
+        "mark_played": "Merk som avspilt",
+        "mark_not_played": "Merk som ikke avspilt"
     },
     "conditions": {
         "show_item": "Vis element hvis",
@@ -1299,6 +1300,7 @@
         "show_location": "Show-plassering",
         "data_location": "Data-plassering",
         "user_data_location": "Lagre bruker-innstillinger i 'Data-plassering'",
+        "user_data_location_confirm": "Bare fortsett om du vet hva du gjør. Endre plassering for brukerdata?",
         "user_data_exists": "Fant eksisterende data på egendefinert plassering, vil du overskrive det?",
         "user_data_yes": "Ja, behold nåværende data",
         "user_data_no": "Nei, importer eksisterende data",
@@ -1327,6 +1329,7 @@
         "restart": "Start serverene på nytt",
         "connect_to": "Koble til $1",
         "disconnect_from": "Koble fra $1",
+        "sync_categories_tip": "Velg hvilke kategorier som skal lastes opp som sanger",
         "reset_all": "Tilbakestill alt",
         "reset_theme": "Tilbakestill tema",
         "reset_themes": "Tilbakestill temaer",
@@ -1623,9 +1626,5 @@
         "translation_description_multiline": "Legger til alle språk i en tekstboks med vekslende linjer. (Som i Songbeamer)",
         "translation_description_textboxes": "Legger hvert språk til lysbildet i en egen tekstboks.",
         "translation_description_layouts": "Oppretter et unikt sett med lysbilder og et oppsett for hvert språk."
-    },
-    "chums": {
-        "sync_categories": "Synkroniserte kategorier",
-        "sync_categories_description": "Velg hvilke kategorier som skal synkroniseres som sanger til Chums"
     }
 }

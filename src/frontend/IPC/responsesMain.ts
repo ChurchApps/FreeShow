@@ -110,7 +110,16 @@ export const mainResponses: MainResponses = {
     },
     [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
-        projects.set(a.projects || {})
+        const projectsList = a.projects || {}
+
+        // remove "Mark as played" on startup
+        Object.values(projectsList).forEach((project) => {
+            project?.shows?.forEach((item) => {
+                delete item.played
+            })
+        })
+
+        projects.set(projectsList)
         folders.set(a.folders || {})
         projectTemplates.set(a.projectTemplates || {})
     },
@@ -299,7 +308,7 @@ export const mainResponses: MainResponses = {
             // TODO: check if name contains scripture reference (and is empty), and load from active scripture
 
             // first find any shows linked to the id
-            const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "chums" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
+            const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
@@ -326,9 +335,9 @@ export const mainResponses: MainResponses = {
                     }
                 }
             } else {
-                // Chums: replace with existing Chums show, that has the same name (but different ID), if it's without content
+                // ChurchApps: replace with existing ChurchApps show, that has the same name (but different ID), if it's without content
                 for (const [showId, currentShow] of Object.entries(get(shows))) {
-                    if (currentShow.name !== show.name || currentShow.origin !== "chums") continue
+                    if (currentShow.name !== show.name || currentShow.origin !== "churchApps") continue
                     await loadShows([showId])
 
                     const loadedShow = get(showsCache)[showId]

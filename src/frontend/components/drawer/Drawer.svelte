@@ -97,12 +97,17 @@
         if (!e.target.closest(".top")) move = false
     }
 
+    $: activeTab = $activeDrawerTab
     function openDrawerTab(tab: { id: string; name: string; icon: string }) {
-        if ($activeDrawerTab === tab.id) return
+        const newId = tab.id as DrawerTabIds
+        if ($activeDrawerTab === newId) return
+
+        // open visually immediately
+        activeTab = newId
 
         // allow click event first
         setTimeout(() => {
-            activeDrawerTab.set(tab.id as DrawerTabIds)
+            activeDrawerTab.set(newId)
 
             // remove focus for search function to work
             setTimeout(() => (document.activeElement as any)?.blur(), 10)
@@ -155,7 +160,7 @@
             }
 
             searchElem.select()
-            let newIndex = ($activeShow?.index ?? $projects[$activeProject].shows.length - 1) + 1
+            let newIndex = ($activeShow?.index ?? $projects[$activeProject]?.shows?.length - 1) + 1
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...match, index: newIndex })
             searchValue = ""
@@ -205,11 +210,11 @@
                         style="border-radius: 0;border-bottom: 2px solid var(--primary);padding: 0.2em 0.8em;"
                         class="context #drawer_top"
                         title="{tab.name.split('.')[0]}.{tab.name.split('.')[1]} [Ctrl+{i + 1}]"
-                        isActive={$activeDrawerTab === tab.id}
+                        isActive={activeTab === tab.id}
                         on:click={() => openDrawerTab(tab)}
                         on:dblclick={closeDrawer}
                     >
-                        <Icon id={tab.icon} size={1.3} white={$activeDrawerTab === tab.id} />
+                        <Icon id={tab.icon} size={1.3} white={activeTab === tab.id} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}

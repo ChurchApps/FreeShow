@@ -1,4 +1,4 @@
-export type ContentProviderId = "planningcenter" | "chums" | "amazinglife"
+export type ContentProviderId = "planningcenter" | "churchApps" | "amazinglife"
 
 /**
  * Common types and interfaces for content providers
@@ -105,4 +105,5 @@ export interface ContentFile {
     fileSize: number
     type: "image" | "video"
     name?: string
+    decryptionKey?: string
 }

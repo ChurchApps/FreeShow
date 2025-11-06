@@ -171,14 +171,6 @@ export class AudioPlayer {
             // WIP get microphone input stream (audio will have to be muted in that case)
             // let stream = this.getPlaying(id)?.stream || audio
             AudioAnalyser.attach(id, audio)
-
-            // Check if system supports multichannel and enable it if available
-            setTimeout(() => {
-                if (!AudioAnalyser.supportsMultichannel()) return
-
-                const maxChannels = AudioAnalyser.getMaxSupportedChannels()
-                if (maxChannels > AudioAnalyser.channels) AudioAnalyser.updateChannelCount(maxChannels)
-            }, 500) // Give audio time to start playing and stabilize
         }, waitToPlay * 1000)
     }
 

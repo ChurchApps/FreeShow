@@ -482,7 +482,7 @@
         "manage_dynamic_values": "Dinamik değerleri yönetin",
         "choose_camera": "Kamera seç",
         "manage_tags": "Etiketleri yönet",
-        "chums_sync_categories": "Senkronize edilecek kategorileri seçin",
+        "sync_categories": "Senkronize edilecek kategorileri seçin",
         "effect_items": "Efekt öğeleri",
         "initialize": "FreeShow'a Hoşgeldiniz",
         "unsaved": "Bırakmak istediğine emin misin?",
@@ -1613,9 +1613,5 @@
         "translation_description_multiline": "Tüm dilleri tek bir metin kutusuna dönüşümlü satırlar halinde ekler. (Songbeamer'daki gibi)",
         "translation_description_textboxes": "Her dili ayrı bir metin kutusu olarak slayta ekler.",
         "translation_description_layouts": "Her dil için benzersiz bir slayt seti ve bir düzen oluşturur."
-    },
-    "chums": {
-        "sync_categories": "Kategorileri senkronize et",
-        "sync_categories_description": "Chums ile şarkı olarak hangi kategorilerin senkronize edileceğini seçin"
     }
 }
