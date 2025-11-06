@@ -154,11 +154,15 @@
     let usageLogExported = false
     function exportUsageLog() {
         exportingUsageLog = true
-        setTimeout(() => (usageLogExported = true), 1000)
+        setTimeout(() => {
+            usageLogExported = true
+            exportingUsageLog = false
+        }, 1000)
         send(EXPORT, ["USAGE"], { path: $dataPath, content: $usageLog })
     }
     function resetUsageLog() {
         usageLog.set({ all: [] })
+        usageLogExported = false
     }
 
     $: isBeta = $version.includes("beta")
