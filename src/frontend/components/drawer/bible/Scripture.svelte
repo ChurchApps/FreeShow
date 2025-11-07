@@ -23,7 +23,7 @@
         selected
     } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { clone, rangeSelect } from "../../helpers/array"
+    import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -31,7 +31,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -279,24 +279,46 @@
 
     onMount(() => selected.set({ id: "scripture", data: [] }))
 
+    let previousSelection: (number | string)[] = []
     let isSelected = false
-    function updateVersesSelection(e: any, verseNumber: string) {
+    function updateVersesSelection(e: any, verseNumber: string, isClick: boolean = false) {
+        const selectedVerses = clone(activeReference.verses)
+
+        if (isClick) {
+            if (previousSelection.find((a) => a.toString() === verseNumber)) {
+                return [[verseNumber]]
+            }
+            return selectedVerses
+        }
+
+        previousSelection = clone(selectedVerses[selectedVerses.length - 1])
+
         isSelected = true
         setTimeout(() => (isSelected = false), 20)
 
-        const selectedVerses = clone(activeReference.verses)
-        selectedVerses[selectedVerses.length - 1] = rangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber)
+        const keys = e.ctrlKey || e.metaKey || e.shiftKey
+        if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a.toString() === verseNumber || a === getVerseId(verseNumber))) {
+            selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
+        }
 
         // drop action (create slide/show from drag&drop)
         selected.set({ id: "scripture", data: [] })
 
         return selectedVerses
+
+        function getVerseId(verseRef: number | string) {
+            return Number(verseRef.toString().split("_")[0])
+        }
     }
 
     $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
     function selectAllVerses() {
-        if (!verses) return
-        openVerse([verses.map((a) => a.number)])
+        if (!splittedVerses) return
+
+        openVerse([splittedVerses.map((a) => a.id)])
+
+        // update
+        setTimeout(() => (activeReference = activeReference))
     }
 
     /// SEARCH ///
@@ -638,13 +660,19 @@
                                     class:isActive
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
-                                    on:click={(e) => {
+                                    on:mousedown={(e) => {
                                         openVerse(updateVersesSelection(e, content.id))
+                                    }}
+                                    on:click={(e) => {
+                                        openVerse(updateVersesSelection(e, content.id, true))
                                     }}
                                     on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     on:click={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
                                     role="none"
                                 >
+                                    <!-- on:click={(e) => {
+                                        openVerse(updateVersesSelection(e, content.id, true))
+                                    }} -->
                                     <!-- on:mouseup={(e) => updateVersesSelection(e, id)}
                                     on:mousedown={(e) => {
                                         if (e.ctrlKey || e.metaKey || e.shiftKey) return

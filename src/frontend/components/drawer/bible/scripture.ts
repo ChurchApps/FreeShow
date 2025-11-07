@@ -962,3 +962,61 @@ export function swapPreviewBible(collectionId: string) {
         return a
     })
 }
+
+// WIP similar to array.ts rangeSelect
+// Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
+export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+
+    if (e.ctrlKey || e.metaKey) {
+        if (currentlySelected.includes(newSelection)) {
+            return currentlySelected.filter((id) => id !== newSelection)
+        } else {
+            return [...currentlySelected, newSelection]
+        }
+    }
+
+    if (e.shiftKey && !currentlySelected.includes(newSelection) && currentlySelected.length > 0) {
+        // Helper function to convert verse IDs to sortable numbers
+        const verseToNumber = (verseId: number | string): number => {
+            const str = String(verseId)
+            // Check if it's a split verse (contains underscore)
+            if (str.includes("_")) {
+                const [id, subverse] = str.split("_").map(Number)
+                return id + (subverse || 0) * 0.1
+            }
+            // Regular verse number
+            const num = Number(str)
+            return isNaN(num) ? -1 : num
+        }
+
+        // Convert to sortable numbers
+        const newSelectionNum = verseToNumber(newSelection)
+        const lastSelectedNum = verseToNumber(currentlySelected[currentlySelected.length - 1])
+
+        // Only proceed if both conversions were successful
+        if (newSelectionNum !== -1 && lastSelectedNum !== -1) {
+            // Get all verse numbers in the range
+            const start = Math.min(newSelectionNum, lastSelectedNum)
+            const end = Math.max(newSelectionNum, lastSelectedNum)
+
+            // Find all verses in the range from available verses
+            for (const verse of availableVerses) {
+                const verseNum = verseToNumber(verse.id)
+                if (verseNum > start && verseNum < end && !currentlySelected.includes(verse.id)) {
+                    currentlySelected.push(verse.id)
+                }
+            }
+
+            // Always include the new selection (the end point)
+            if (!currentlySelected.includes(newSelection)) {
+                currentlySelected.push(newSelection)
+            }
+
+            // remove duplicates
+            currentlySelected = [...new Set(currentlySelected)]
+        }
+    }
+
+    return currentlySelected
+}
