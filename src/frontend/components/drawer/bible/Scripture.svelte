@@ -86,7 +86,8 @@
     $: currentBible = currentBibleData?.bibleData?.data || null
     $: books = currentBible?.books || null
     $: chapters = currentBibleData?.bookData?.data?.chapters || null
-    $: verses = currentBibleData?.chapterData?.data?.verses || null
+    // $: verses = currentBibleData?.chapterData?.data?.verses || null
+    $: verses = currentBibleData?.chapterData?.data?.verses?.map((a) => ({ ...a, text: currentBibleData?.chapterData?.getVerse(a.number).getHTML() || "" })) || null
 
     // category color / abbreviation data
     $: booksData = currentBibleData?.bibleData?.getBooksData() || []
@@ -864,6 +865,13 @@
         font-style: italic;
         width: 100%;
         text-align: center;
+    }
+
+    /* bible parts */
+    .main :global(.uncertain) {
+        opacity: 0.7;
+        font-size: 0.8em;
+        font-style: italic;
     }
 
     /* LIST MODE */

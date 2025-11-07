@@ -42,10 +42,10 @@
     $: templateBackground = template.settings?.backgroundPath
 
     // auto change template based on number of bibles (if default)
-    $: if (activeScriptureId || templateId) setTimeout(checkTemplate, 100)
+    $: if (activeScriptureId || templateId || biblesContent.length) setTimeout(checkTemplate, 100)
     $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
     function checkTemplate() {
-        if (!isDefault) return
+        if (!isDefault || !biblesContent.length) return
 
         let newTemplateId = "scripture_" + biblesContent.length
         scriptureSettings.update((a) => {

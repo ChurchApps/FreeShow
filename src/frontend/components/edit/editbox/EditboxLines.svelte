@@ -778,4 +778,11 @@
   min-width: 100px;
   display: inline-table; */
     }
+
+    /* bible parts */
+    .edit :global(.break span.uncertain) {
+        opacity: 0.7;
+        font-size: 0.8em;
+        font-style: italic;
+    }
 </style>

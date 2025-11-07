@@ -217,7 +217,6 @@
         "mute_when_video_plays": "Némítás videó lejátszása alatt",
         "allow_gaining": "Túlerősítés engedélyezése",
         "allow_gaining_tip": "Hangerő beállításának engedélyezése 100% felett (torzítást okozhat)",
-        "pre_fader_volume_meter": "Hangerő-szabályozó előszabályozó",
         "mixer": "Keverő",
         "equalizer": "Hangszínszabályozó",
         "preset": "Előre beállított",
@@ -487,7 +486,7 @@
         "manage_dynamic_values": "Dinamikus értékek kezelése",
         "choose_camera": "Kamera kiválasztása",
         "manage_tags": "Címkék kezelése",
-        "sync_categories": "Szinkronizálandó kategóriák kijelölése",
+        "sync_categories": "Kategóriák szinkronizálása",
         "effect_items": "Effektus elemek",
         "initialize": "Üdvözöljük a FreeShow-ban",
         "unsaved": "Biztosan ki szeretne léptni?",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "Aktiválás háttér törlésekor",
         "activate_show_created": "Aktiválás bemutató létrehozásakor",
         "activate_show_opened": "Aktiválás bemutató megnyitásakor",
-        "activate_audio_playlist_ended": "Aktiválás hanglejátszási lista végén"
+        "activate_audio_playlist_ended": "Aktiválás hanglejátszási lista végén",
+        "mark_played": "Megjelölés lejátszottként",
+        "mark_not_played": "Megjelölés nem lejátszottként"
     },
     "conditions": {
         "show_item": "Elem megjelenítése ha",
@@ -1299,6 +1300,7 @@
         "show_location": "Bemutatók helye",
         "data_location": "Adatok helye",
         "user_data_location": "Felhasználói beállítások mentése az „Adatok helyére\"",
+        "user_data_location_confirm": "Csak akkor folytassa, ha tudja, mit csinál. Valóban megváltoztatja a felhasználói adatok helyét?",
         "user_data_exists": "Meglévő adatok találhatóak ezen az egyedi helyen, szeretné felülírni azokat?",
         "user_data_yes": "Igen, jelenlegi adatok megőrzése",
         "user_data_no": "Nem, meglévő adatok importálása",
@@ -1327,6 +1329,7 @@
         "restart": "Szerverek újraindítása",
         "connect_to": "Kapcsolódás: $1",
         "disconnect_from": "Kapcsolat bontása: $1",
+        "sync_categories_tip": "Jelölje ki, mely kategóriákat szeretné dalként feltölteni",
         "reset_all": "Minden visszaállítása",
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",

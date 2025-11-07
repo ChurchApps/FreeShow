@@ -106,13 +106,13 @@
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput}>
-                <Icon id="reset" size={1.2} right={!$labelsDisabled} white />
-                {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
+                <Icon id="reset" size={1.2} white />
+                {#if !$labelsDisabled}<T id="preview.restore_output" />{/if}
             </MaterialButton>
         {:else}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || allCleared} title="clear.all [esc]" on:click={() => clearAll(true)} red>
-                <Icon id="clear" size={1.2} right={!$labelsDisabled} white />
-                {#if !$labelsDisabled}<T id={"clear.all"} />{/if}
+                <Icon id="clear" size={1.2} white />
+                {#if !$labelsDisabled}<T id="clear.all" />{/if}
             </MaterialButton>
         {/if}
     </span>

@@ -245,6 +245,7 @@
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
+                            class="textContainer"
                             style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                 ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
                                 : style
@@ -314,7 +315,8 @@
     color: white;
   } */
 
-    .break:not(.stageChords) :global(span) {
+    /* not sure what this is used for? */
+    .break:not(.stageChords) :global(span.textContainer) {
         font-size: 100px;
         min-height: 50px;
         /* display: inline-block; */
@@ -324,6 +326,13 @@
     .break.smallFontSize :global(span) {
         /* font-size: 30px; */
         font-size: var(--font-size) !important;
+    }
+
+    /* bible parts */
+    .break :global(span.uncertain) {
+        opacity: 0.7;
+        font-size: 0.8em;
+        font-style: italic;
     }
 
     /* .height {
