@@ -10,7 +10,7 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
-import { activePopup, activeProject, activeScripture, dataPath, drawerTabsData, media, notFound, outLocked, outputs, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { activePopup, activeProject, activeScripture, dataPath, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
@@ -19,6 +19,7 @@ import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
+import { getItemText } from "../../edit/scripts/textStyle"
 
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
@@ -391,9 +392,11 @@ export function joinRange(array: (number | string)[]) {
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
     const slides: Item[][] = [[]]
 
-    const template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
-    const templateTextItems = template.filter((a) => a.lines)
-    const templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+    const template = get(templates)[get(scriptureSettings).template]
+    const templateItems = clone(template?.items || [])
+    const templateTextItems = templateItems.filter((a) => a.lines && !getItemText(a).includes("{"))
+    const templateOtherItems = templateItems.filter((a) => (!a.lines && a.type !== "text") || getItemText(a).includes("{"))
+    const templateOverlayItems = get(overlays)[template?.settings?.overlayId || ""]?.items || []
 
     const combineWithText = templateTextItems.length <= 1 || get(scriptureSettings).combineWithText
 
@@ -573,7 +576,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
 
     // add other items
     slides.forEach((items, i) => {
-        slides[i] = [...templateOtherItems, ...items]
+        slides[i] = [...templateOverlayItems, ...templateOtherItems, ...items]
         if (get(scriptureSettings).invertItems) slides[i].reverse()
     })
 
