@@ -660,24 +660,12 @@
                                     class:isActive
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
-                                    on:mousedown={(e) => {
-                                        openVerse(updateVersesSelection(e, content.id))
-                                    }}
-                                    on:click={(e) => {
-                                        openVerse(updateVersesSelection(e, content.id, true))
-                                    }}
-                                    on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
+                                    on:mousedown={(e) => openVerse(updateVersesSelection(e, content.id))}
+                                    on:click={(e) => openVerse(updateVersesSelection(e, content.id, true))}
                                     on:click={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
+                                    on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <!-- on:click={(e) => {
-                                        openVerse(updateVersesSelection(e, content.id, true))
-                                    }} -->
-                                    <!-- on:mouseup={(e) => updateVersesSelection(e, id)}
-                                    on:mousedown={(e) => {
-                                        if (e.ctrlKey || e.metaKey || e.shiftKey) return
-                                        openVerse(id)
-                                    }} -->
                                     <span class="v" style={endNumber && subverse ? "width: 60px;" : ""}>
                                         {id}{#if endNumber}-{endNumber}{/if}
                                         <!-- WIP style position not very good -->

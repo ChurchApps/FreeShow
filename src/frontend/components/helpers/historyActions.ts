@@ -873,7 +873,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
                     if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor
 
-                    const isFirst = templateMode === "global" && !!show.layouts[data.remember.layout]?.slides?.find((a) => a?.id === id)
+                    const isFirst = templateMode === "global" && id === show.layouts[data.remember.layout]?.slides?.[0]?.id
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
 
                     const slideRefs = ref.filter((a) => a.id === id)
