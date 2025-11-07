@@ -40,6 +40,7 @@ parts:
         stage-packages:
             - libasound2t64
             - libnode109
+            - libglu1-mesa
 apps:
     freeshow:
         command: command.sh
