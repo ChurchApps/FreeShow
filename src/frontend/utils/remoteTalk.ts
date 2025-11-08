@@ -200,6 +200,70 @@ export const receiveREMOTE: any = {
         }))
         msg.data.bible = { books: mappedBooks }
         return msg
+    },
+    SEARCH_SCRIPTURE: async (msg: ClientMessage) => {
+        const { id, searchTerm, searchType } = msg.data || {}
+        if (!id || !searchTerm) return
+
+        const jsonBible = await loadJsonBible(id)
+        if (!jsonBible) return
+
+        const scriptureData: any = get(scriptures)[id]
+        const isApi = scriptureData?.api === true
+
+        // For local bibles, return null to use cached search
+        if (!isApi) {
+            msg.data.searchResults = null
+            return msg
+        }
+
+        try {
+            if (searchType === "reference") {
+                // Use bookSearch for reference parsing (e.g., "John 3:16")
+                const result = jsonBible.bookSearch(searchTerm)
+                if (result) {
+                    // Get book name if we have book number
+                    let bookName: string | null = null
+                    if (result.book) {
+                        const bookObj = jsonBible.data.books.find((b: any) => b.number === result.book || b.id === result.book)
+                        bookName = bookObj?.name || null
+                    }
+                    msg.data.searchResults = {
+                        type: "reference",
+                        autocompleted: result.autocompleted || undefined,
+                        book: result.book || null,
+                        bookName: bookName,
+                        chapter: result.chapter || null,
+                        verses: result.verses || []
+                    }
+                } else {
+                    msg.data.searchResults = { type: "reference", found: false }
+                }
+            } else {
+                // Use textSearch for content search (minimum 3 characters)
+                if (searchTerm.length < 3) {
+                    msg.data.searchResults = { type: "text", results: [] }
+                    return msg
+                }
+                const results = await jsonBible.textSearch(searchTerm)
+                msg.data.searchResults = {
+                    type: "text",
+                    results: (results || []).slice(0, 50).map((ref: any) => ({
+                        book: ref.book,
+                        chapter: ref.chapter,
+                        verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
+                        reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
+                        referenceFull: ref.reference || "",
+                        verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
+                    }))
+                }
+            }
+        } catch (err) {
+            console.error("Scripture search error:", err)
+            msg.data.searchResults = { type: searchType, error: true }
+        }
+
+        return msg
     }
 }
 

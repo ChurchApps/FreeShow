@@ -151,6 +151,7 @@
             const chapters = bookObj?.chapters || []
 
             let chapterIndex = chapters.findIndex((c: any) => {
+                if (!c) return false
                 const cNum = typeof c.number === 'string' ? parseInt(c.number, 10) : c.number
                 return cNum === chapterNum
             })
