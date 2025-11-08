@@ -809,6 +809,24 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         layouts.push(l)
     })
 
+    const firstSlideTemplateId = template?.settings?.firstSlideTemplate || ""
+    if (firstSlideTemplateId) {
+        const firstLayoutId = layouts[0]?.id
+        if (firstLayoutId && slides2[firstLayoutId]) {
+            const firstTemplate = clone(get(templates)[firstSlideTemplateId || ""])
+            const firstTemplateSettings = firstTemplate?.settings
+            slides2[firstLayoutId].settings = { ...(slides2[firstLayoutId].settings || {}), template: firstSlideTemplateId }
+            if (firstTemplateSettings?.backgroundColor) slides2[firstLayoutId].color = firstTemplateSettings.backgroundColor
+            if (firstTemplateSettings?.backgroundPath) {
+                const existingMediaId = Object.entries(media as Record<string, any>).find(([, value]) => value.path === firstTemplateSettings.backgroundPath)?.[0]
+                const mediaId = existingMediaId || uid(5)
+                media[mediaId] = { path: firstTemplateSettings.backgroundPath, loop: true, muted: true }
+                const firstLayout = layouts.find((layout) => layout.id === firstLayoutId)
+                if (firstLayout) firstLayout.background = mediaId
+            }
+        }
+    }
+
     // add scripture category
     const categoryId = createCategory("scripture", "scripture", { isDefault: true, isArchive: true })
 
