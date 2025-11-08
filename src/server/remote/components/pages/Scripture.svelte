@@ -88,6 +88,17 @@
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
     let isApiBible = false
+    
+    // Track failed chapter requests to prevent infinite retries
+    const failedChapterRequests = new Set<string>()
+    
+    // Clear failed requests when search changes or scripture changes
+    $: if (searchValue || openedScripture) {
+        if (searchValue.trim() === "") {
+            failedChapterRequests.clear()
+        }
+    }
+    
     $: isApiBible = openedScripture && $scriptures[openedScripture]?.api === true
     $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
     $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
@@ -337,6 +348,8 @@
                     
                     if (isReasonableChapter) {
                         // Construct reference and request data
+                        const requestKey = `${openedScriptureId}:${book.keyName}:${chapterNumber}`
+                        
                         if (verseNumber) {
                             searchResult = {
                                 reference: `${book.number}.${chapterNumber}.${verseNumber}`,
@@ -345,7 +358,8 @@
                             }
                             searchResults = [searchResult]
                             
-                            if (book.keyName) {
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
                                 send("GET_SCRIPTURE", { 
                                     id: openedScriptureId, 
                                     bookKey: book.keyName, 
@@ -363,7 +377,8 @@
                             }
                             searchResults = [searchResult]
                             
-                            if (book.keyName) {
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
                                 send("GET_SCRIPTURE", { 
                                     id: openedScriptureId, 
                                     bookKey: book.keyName, 
@@ -558,13 +573,24 @@
             
             const chapter = book.chapters[chapterNumber - 1]
             if (!chapter) {
-                // Chapter doesn't exist - remove this result
+                // Chapter doesn't exist - mark as failed and remove this result
+                const requestKey = `${scriptureId}:${book.keyName}:${chapterNumber}`
+                failedChapterRequests.add(requestKey)
                 updated = true
                 continue
             }
             
-            if (!chapter.verses || chapter.verses.length === 0) {
+            if (!chapter.verses) {
+                // Verses not loaded yet - keep the result
                 validResults.push(result)
+                continue
+            }
+            
+            if (chapter.verses.length === 0) {
+                // Empty verses array from failed API request - mark as failed and remove
+                const requestKey = `${scriptureId}:${book.keyName}:${chapterNumber}`
+                failedChapterRequests.add(requestKey)
+                updated = true
                 continue
             }
             

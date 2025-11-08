@@ -169,25 +169,35 @@ export const receiveREMOTE: any = {
         }
 
         if (bookKey && !chapterKey) {
-            const bookData = await jsonBible.getBook(bookKey)
-            const mapped = (bookData.data.chapters || []).map((c) => ({
-                number: c.number,
-                keyName: c.number,
-            }))
-            msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
+            try {
+                const bookData = await jsonBible.getBook(bookKey)
+                const mapped = (bookData.data.chapters || []).map((c) => ({
+                    number: c.number,
+                    keyName: c.number,
+                }))
+                msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
+            } catch (error) {
+                console.warn(`Failed to load book ${bookKey}:`, error)
+                msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: [] }
+            }
             return msg
         }
 
         if (bookKey && chapterKey) {
-            const bookData = await jsonBible.getBook(bookKey)
-            const chapterData = await bookData.getChapter(chapterKey)
-            const versesData = chapterData.data.verses
-            const mappedVerses = versesData.map((v) => ({
-                number: v.number,
-                text: v.text,
-                keyName: v.number,
-            }))
-            msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
+            try {
+                const bookData = await jsonBible.getBook(bookKey)
+                const chapterData = await bookData.getChapter(chapterKey)
+                const versesData = chapterData.data.verses
+                const mappedVerses = versesData.map((v) => ({
+                    number: v.number,
+                    text: v.text,
+                    keyName: v.number,
+                }))
+                msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
+            } catch (error) {
+                console.warn(`Failed to load ${bookKey} ${chapterKey}:`, error)
+                msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: [] }
+            }
             return msg
         }
 
