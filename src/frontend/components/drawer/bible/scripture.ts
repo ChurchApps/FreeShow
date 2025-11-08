@@ -187,7 +187,8 @@ export async function playScripture() {
     const slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
-    const value = id + (subverse ? getVersePartLetter(subverse) : "")
+    const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
+    const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
 
     // scripture usage history
     scriptureHistory.update((a) => {
@@ -341,6 +342,8 @@ export function joinRange(array: (number | string)[]) {
         return suffixA.localeCompare(suffixB)
     })
 
+    const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
+
     array.forEach((a, i) => {
         // if multiple chapters are selected, a preset chapter might be prefixed (2:1)
         const raw = String(a)
@@ -349,10 +352,15 @@ export function joinRange(array: (number | string)[]) {
         const noChapter = raw.replace(/^\d+:/, "")
 
         const { id, subverse, endNumber } = getVerseIdParts(noChapter)
-        const v = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
+
+        if (!showSplitSuffix && subverse > 1) return
+
+        const baseValue = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}`
+        const suffix = showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""
+        const v = `${baseValue}${suffix}`
 
         // For subverses of the same base verse (e.g., 2_1, 2_2), don't skip them
-        if (Number(id) === prev && !subverse) return
+        if (!subverse && Number(id) === prev) return
 
         // Check if this verse is consecutive to the previous one
         const isConsecutive = Number(id) - 1 === prev || (Number(id) === prev && subverse && array[i - 1] && getVerseIdParts(String(array[i - 1]).replace(/^\d+:/, "")).subverse === subverse - 1)
@@ -445,13 +453,20 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
                 const { id, subverse, endNumber } = getVerseIdParts(v.verseId)
-                const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
+                const showSuffix = get(scriptureSettings).splitLongVersesSuffix
+                const showBaseNumber = !subverse || subverse === 1 || showSuffix
 
-                slideArr.lines[lineIndex].text.push({
-                    value,
-                    style: verseNumberStyle,
-                    customType: "disableTemplate" // dont let template style verse numbers
-                })
+                let verseNumberValue = ""
+                if (showBaseNumber) verseNumberValue = `${id}${endNumber ? "-" + endNumber : ""}`
+                if (showSuffix && subverse) verseNumberValue += getVersePartLetter(Number(subverse))
+
+                if (verseNumberValue) {
+                    slideArr.lines[lineIndex].text.push({
+                        value: `${verseNumberValue} `,
+                        style: verseNumberStyle,
+                        customType: "disableTemplate" // dont let template style verse numbers
+                    })
+                }
             }
 
             // custom Jesus red to JSON format: !{}!
@@ -969,57 +984,75 @@ export function swapPreviewBible(collectionId: string) {
 // WIP similar to array.ts rangeSelect
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+    const toKey = (value: number | string) => value.toString()
+    const orderedVerseIds = availableVerses.map((verse) => verse.id)
+
+    const getSplitGroup = (value: number | string): string[] => {
+        const targetParts = getVerseIdParts(value)
+        if (!targetParts.id) return [toKey(value)]
+
+        const group = availableVerses
+            .filter((verse) => {
+                const parts = getVerseIdParts(verse.id)
+                return parts.id === targetParts.id && parts.endNumber === targetParts.endNumber
+            })
+            .map((verse) => verse.id)
+
+        return group.length ? group : [toKey(value)]
+    }
+
+    const getGroupStartIndex = (value: number | string) => {
+        const targetParts = getVerseIdParts(value)
+        if (!targetParts.id) return -1
+
+        return availableVerses.findIndex((verse) => {
+            const parts = getVerseIdParts(verse.id)
+            return parts.id === targetParts.id && parts.endNumber === targetParts.endNumber
+        })
+    }
+
+    const buildSelection = (selectionSet: Set<string>) =>
+        orderedVerseIds.filter((id) => selectionSet.has(toKey(id)))
+
+    const newSelectionGroup = getSplitGroup(newSelection)
+
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        return newSelectionGroup
+    }
+
+    const selectionSet = new Set(currentlySelected.map((id) => toKey(id)))
 
     if (e.ctrlKey || e.metaKey) {
-        if (currentlySelected.includes(newSelection)) {
-            return currentlySelected.filter((id) => id !== newSelection)
-        } else {
-            return [...currentlySelected, newSelection]
-        }
+        const hasWholeGroup = newSelectionGroup.every((id) => selectionSet.has(toKey(id)))
+
+        newSelectionGroup.forEach((id) => {
+            const key = toKey(id)
+            if (hasWholeGroup) selectionSet.delete(key)
+            else selectionSet.add(key)
+        })
+
+        return buildSelection(selectionSet)
     }
 
     if (e.shiftKey && !currentlySelected.includes(newSelection) && currentlySelected.length > 0) {
-        // Helper function to convert verse IDs to sortable numbers
-        const verseToNumber = (verseId: number | string): number => {
-            const str = String(verseId)
-            // Check if it's a split verse (contains underscore)
-            if (str.includes("_")) {
-                const [id, subverse] = str.split("_").map(Number)
-                return id + (subverse || 0) * 0.1
+        const lastSelected = currentlySelected[currentlySelected.length - 1]
+        const startIndex = getGroupStartIndex(lastSelected)
+        const endIndex = getGroupStartIndex(newSelection)
+
+        if (startIndex !== -1 && endIndex !== -1) {
+            const rangeStart = Math.min(startIndex, endIndex)
+            const rangeEnd = Math.max(startIndex, endIndex)
+
+            for (let i = rangeStart; i <= rangeEnd; i++) {
+                const verseId = orderedVerseIds[i]
+                getSplitGroup(verseId).forEach((id) => selectionSet.add(toKey(id)))
             }
-            // Regular verse number
-            const num = Number(str)
-            return isNaN(num) ? -1 : num
+
+            return buildSelection(selectionSet)
         }
 
-        // Convert to sortable numbers
-        const newSelectionNum = verseToNumber(newSelection)
-        const lastSelectedNum = verseToNumber(currentlySelected[currentlySelected.length - 1])
-
-        // Only proceed if both conversions were successful
-        if (newSelectionNum !== -1 && lastSelectedNum !== -1) {
-            // Get all verse numbers in the range
-            const start = Math.min(newSelectionNum, lastSelectedNum)
-            const end = Math.max(newSelectionNum, lastSelectedNum)
-
-            // Find all verses in the range from available verses
-            for (const verse of availableVerses) {
-                const verseNum = verseToNumber(verse.id)
-                if (verseNum > start && verseNum < end && !currentlySelected.includes(verse.id)) {
-                    currentlySelected.push(verse.id)
-                }
-            }
-
-            // Always include the new selection (the end point)
-            if (!currentlySelected.includes(newSelection)) {
-                currentlySelected.push(newSelection)
-            }
-
-            // remove duplicates
-            currentlySelected = [...new Set(currentlySelected)]
-        }
+        newSelectionGroup.forEach((id) => selectionSet.add(toKey(id)))
     }
 
-    return currentlySelected
+    return buildSelection(selectionSet)
 }
