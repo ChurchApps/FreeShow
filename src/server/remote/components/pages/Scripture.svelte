@@ -16,6 +16,8 @@
     let collectionId = localStorage.collectionId || ""
     let openedScripture = localStorage.scripture || ""
     $: if (openedScripture && !$scriptureCache[openedScripture]) send("GET_SCRIPTURE", { id: openedScripture })
+    
+    let depthBeforeSearch = 0
 
     function openScripture(id: string, collection: string = "") {
         openedScripture = id
@@ -43,20 +45,10 @@
     let currentVerse = ""
 
     function next() {
-        if ($isCleared.all) {
-            // When cleared: if a verse is highlighted, move verse; otherwise move chapter/book
-            scriptureContentRef?.forward?.()
-        } else {
-            // Live: use existing API trigger to advance verse/selection
-            send("API:scripture_next")
-        }
+        scriptureContentRef?.forward?.()
     }
     function previous() {
-        if ($isCleared.all) {
-            scriptureContentRef?.backward?.()
-        } else {
-            send("API:scripture_previous")
-        }
+        scriptureContentRef?.backward?.()
     }
 
     // UI control visibility
@@ -68,15 +60,21 @@
 
     $: if (triggerScriptureSearch) triggerSearch()
     function triggerSearch() {
+        depthBeforeSearch = depth
         openScriptureSearch = true
         triggerScriptureSearch = false
     }
 
     function closeSearch() {
         openScriptureSearch = false
-        // Ensure the current scripture is loaded when returning
+        searchValue = ""
+        // Restore depth to where user was before search
+        // Only reset if scripture data isn't loaded
         if (openedScripture && !$scriptureCache[openedScripture]) {
             send("GET_SCRIPTURE", { id: openedScripture })
+            depth = 0
+        } else {
+            depth = depthBeforeSearch
         }
     }
 
@@ -100,7 +98,7 @@
             .replace(/ç/g, "c")
     }
 
-    // Common biblical book abbreviations - moved outside function for performance
+    // Common biblical book abbreviations
     const BOOK_ABBREVIATIONS: Record<string, string> = {
         jh: "john",
         jn: "john",
@@ -325,14 +323,31 @@
         const ref = reference || searchResult.reference
         if (!ref) return
 
-        // Set depth to verse level (2) and navigate to the specific verse
-        depth = 2
+        // Parse reference: "book.chapter.verse"
+        const parts = ref.split('.')
+        const bookNum = parseInt(parts[0], 10)
+        const chapterNum = parseInt(parts[1], 10)
+
+        // Close search first so ScriptureContent component is rendered
+        openScriptureSearch = false
+        searchValue = ""
 
         // Send the scripture reference to display
         send("API:start_scripture", { id: collectionId || openedScripture, reference: ref })
 
-        // Close search after selecting
-        openScriptureSearch = false
+        // Wait for next tick to ensure component is rendered, then navigate
+        setTimeout(() => {
+            if (scriptureContentRef?.navigateToVerse) {
+                scriptureContentRef.navigateToVerse(bookNum, chapterNum)
+            } else {
+                // Fallback: if ref still not available, try again after a short delay
+                setTimeout(() => {
+                    if (scriptureContentRef?.navigateToVerse) {
+                        scriptureContentRef.navigateToVerse(bookNum, chapterNum)
+                    }
+                }, 100)
+            }
+        }, 0)
     }
 
     function highlightSearchTerm(text: string, searchTerm: string): string {
