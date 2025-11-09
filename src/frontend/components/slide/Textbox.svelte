@@ -74,13 +74,15 @@
     // timer updater
     let loaded = false
     let dateInterval: NodeJS.Timeout | null = null
+    let rafId: number | null = null
     onMount(() => {
-        setTimeout(() => (loaded = true), 100)
+        rafId = requestAnimationFrame(() => (loaded = true))
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
         if (loopStop) clearTimeout(loopStop)
         if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
+        if (rafId !== null) cancelAnimationFrame(rafId)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
@@ -138,7 +140,8 @@
     let itemElem: HTMLElement | undefined
 
     let previousItem = "{}"
-    $: newItem = JSON.stringify(item)
+    const autosizeSerialize = (key: string, value: any) => (key === "autoFontSize" ? undefined : value)
+    $: newItem = JSON.stringify(item, autosizeSerialize)
     $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines || stageItem)) calculateAutosize()
     $: if ($variables) setTimeout(calculateAutosize)
 
@@ -231,6 +234,8 @@
         if (item.type === "slide_tracker") return
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
     }
+
+    $: if (!stageAutoSize && item.auto && item.autoFontSize && fontSize !== item.autoFontSize) fontSize = item.autoFontSize
 
     function setItemAutoFontSize(fontSize) {
         if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return

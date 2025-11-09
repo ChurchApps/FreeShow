@@ -1102,8 +1102,14 @@ export function getStyleTemplate(outSlide: OutSlide, currentStyle: Styles | unde
     return template
 }
 
-export function slideHasAutoSizeItem(slide: Slide | Template) {
-    return slide?.items?.find((a) => a.auto)
+export function slideHasAutoSizeItem(slide: Slide | Template, requirePendingCalculation = false) {
+    if (!slide?.items?.length) return false
+
+    return slide.items.some((item) => {
+        if (!item.auto) return false
+        if (!requirePendingCalculation) return true
+        return !item.autoFontSize
+    })
 }
 
 export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[] | undefined, outputId: string) {

@@ -56,10 +56,14 @@
             let customTemplate = getStyleTemplate(outSlide, currentStyle)
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
-            // wait output style/scripture template auto size
-            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 500
+            const templateNeedsAutosize = Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate, true) : false
+            const itemNeedsAutosize = item.auto && !item.autoFontSize
 
-            if (!inDelay) inDelay = outDelay * 0.98
+            // short delay only when auto-size still needs to run
+            if (templateNeedsAutosize || itemNeedsAutosize) {
+                outDelay = 120
+                if (!inDelay) inDelay = Math.max(0, outDelay - 10)
+            }
         }
 
         // add some time in case an identical item is "fading" in
