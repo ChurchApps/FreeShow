@@ -20,6 +20,7 @@ import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
 import { getItemText } from "../../edit/scripts/textStyle"
+import { splitTextContentInHalf } from "../../../show/slides"
 
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
@@ -677,50 +678,94 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 export function splitText(value: string, maxLength: number) {
     if (!value) return []
 
-    const splitted: string[] = []
+    const queue: string[] = [value.trim()]
+    const segments: string[] = []
+    const proportion = Math.floor(maxLength * 0.3)
+    const upperBound = Math.max(maxLength - 1, 0)
+    let minSegmentLength = Math.max(10, proportion)
+    if (upperBound > 0) minSegmentLength = Math.min(minSegmentLength, upperBound)
+    if (minSegmentLength < 1) minSegmentLength = 1
 
-    let start = 0
-    while (start < value.length) {
-        // find the next possible break point
-        let end = Math.min(start + maxLength, value.length)
+    while (queue.length) {
+        const current = queue.shift()?.trim()
+        if (!current) continue
 
-        if (end < value.length) {
-            // prefer punctuation within 10 chars before the split point
-            const windowStart = Math.max(start + 1, end - 10)
-            let punctIndex = -1
-            // search backwards from end (inclusive) to windowStart
-            const searchStart = Math.min(end, value.length - 1)
-            for (let i = searchStart; i >= windowStart; i--) {
-                const ch = value.charAt(i)
-                if (/[.,;:!?]/.test(ch)) {
-                    punctIndex = i
-                    break
-                }
-            }
-
-            if (punctIndex > start) {
-                // split after the punctuation
-                end = punctIndex + 1
-            } else {
-                // or fallback: split at last space within range
-                const spaceIndex = value.lastIndexOf(" ", end)
-                if (spaceIndex > start) end = spaceIndex
-            }
+        if (current.length <= maxLength) {
+            segments.push(current)
+            continue
         }
 
-        const trimmedValue = value.substring(start, end).trim()
-        if (trimmedValue.length) splitted.push(trimmedValue)
+        const halves = getSplitHalves(current, maxLength)
+        if (!halves) {
+            segments.push(current)
+            continue
+        }
 
-        // continue search
-        start = end + 1
+        let [first, second] = halves
+
+        const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
+        first = rebalanced.first
+        second = rebalanced.second
+
+        if (second.length < 1) {
+            segments.push(first)
+            continue
+        }
+
+        if (second.length > 0) queue.unshift(second)
+        if (first.length > 0) queue.unshift(first)
     }
 
-    // merge short strings
-    if (splitted.length > 1 && splitted[splitted.length - 1].length < 20) {
-        splitted[splitted.length - 2] += " " + splitted.pop()
+    if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
+        segments[segments.length - 2] = `${segments[segments.length - 2]} ${segments.pop()}`.trim()
     }
 
-    return splitted
+    return segments
+}
+
+function getSplitHalves(text: string, maxLength: number): [string, string] | null {
+    const halves = splitTextContentInHalf(text)
+    if (halves.length >= 2) {
+        const first = halves[0].trim()
+        const second = halves[1].trim()
+        if (first.length && second.length) return [first, second]
+    }
+
+    if (text.length <= maxLength) return null
+
+    let pivot = text.lastIndexOf(" ", maxLength)
+    if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
+    if (pivot <= 0) pivot = maxLength
+
+    const first = text.slice(0, pivot).trim()
+    const second = text.slice(pivot).trim()
+    if (!first.length || !second.length) return null
+    return [first, second]
+}
+
+function rebalanceHalves(first: string, second: string, maxLength: number, minSegmentLength: number) {
+    if (second.length >= minSegmentLength || first.length <= minSegmentLength) {
+        return { first, second }
+    }
+
+    const words = first.split(/\s+/).filter(Boolean)
+    while (words.length > 1 && second.length < minSegmentLength) {
+        const moved = words.pop()
+        if (!moved) break
+
+        const candidateFirst = words.join(" ").trim()
+        const candidateSecond = `${moved} ${second}`.trim()
+
+        if (!candidateFirst.length || candidateFirst.length > maxLength || candidateSecond.length > maxLength) {
+            words.push(moved)
+            break
+        }
+
+        first = candidateFirst
+        second = candidateSecond
+    }
+
+    return { first, second }
 }
 
 function removeTags(text) {
