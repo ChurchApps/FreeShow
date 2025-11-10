@@ -290,18 +290,29 @@ export const textKeys = {
 }
 
 export function joinRange(array: (number | string)[]) {
-    const sorted = [...array].sort((a, b) => {
+    // console.log("INPUT", array)
+
+    let prev = -1
+    let range = ""
+
+    // sort in correct order (should not be, but can be mixed up: ["10", "9", "8_b", 8, "8_a", "7"])
+    // If items include an optional chapter prefix (e.g. "2:7"), we want unprefixed verses
+    // first, then chapter-prefixed groups sorted by chapter number, then verse.
+    array = array.sort((a, b) => {
         const sa = String(a)
         const sb = String(b)
 
+        // detect optional chapter prefix
         const chapA = sa.match(/^(\d+):/)
         const chapB = sb.match(/^(\d+):/)
         const chapANum = chapA ? Number(chapA[1]) : null
         const chapBNum = chapB ? Number(chapB[1]) : null
 
+        // strip chapter prefix for verse parsing/comparison
         const restA = sa.replace(/^\d+:/, "")
         const restB = sb.replace(/^\d+:/, "")
 
+        // Run match and safely handle null on the remaining verse part
         const matchA = restA.match(/^(\d+)(?:_(.+))?$/) || []
         const matchB = restB.match(/^(\d+)(?:_(.+))?$/) || []
 
@@ -311,6 +322,7 @@ export function joinRange(array: (number | string)[]) {
         const numB = Number(matchB[1] || 0)
         const suffixB = matchB[2] || ""
 
+        // If both have chapter prefixes: compare chapter first
         if (chapANum !== null && chapBNum !== null) {
             if (chapANum !== chapBNum) return chapANum - chapBNum
             if (numA !== numB) return numA - numB
@@ -319,80 +331,63 @@ export function joinRange(array: (number | string)[]) {
             return suffixA.localeCompare(suffixB)
         }
 
+        // If only one has a chapter prefix, place the non-prefixed one first
         if (chapANum !== null && chapBNum === null) return 1
         if (chapANum === null && chapBNum !== null) return -1
 
+        // Neither have chapter prefixes: compare verse number + suffix
         if (numA !== numB) return numA - numB
         if (suffixA === "" && suffixB !== "") return -1
         if (suffixA !== "" && suffixB === "") return 1
         return suffixA.localeCompare(suffixB)
     })
 
-    type NormalizedEntry = {
-        chapter: number | null
-        start: number
-        end: number
-    }
-
-    const seen = new Set<string>()
-    const entries: NormalizedEntry[] = []
-
-    sorted.forEach((value) => {
-        const raw = String(value)
+    array.forEach((a, i) => {
+        // if multiple chapters are selected, a preset chapter might be prefixed (2:1)
+        const raw = String(a)
         const chapterMatch = raw.match(/^(\d+):/)
-        const chapter = chapterMatch ? Number(chapterMatch[1]) : null
+        const chapterPrefix = chapterMatch ? chapterMatch[0] : "" // e.g. "2:"
         const noChapter = raw.replace(/^\d+:/, "")
-        const { id, endNumber } = getVerseIdParts(noChapter)
 
-        if (!id && id !== 0) return
+        const { id, subverse, endNumber } = getVerseIdParts(noChapter)
+        const v = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
 
-        const start = Number(id)
-        if (!Number.isFinite(start)) return
+        // For subverses of the same base verse (e.g., 2_1, 2_2), don't skip them
+        if (Number(id) === prev && !subverse) return
 
-        const end = endNumber || start
-        const key = `${chapter ?? ""}-${start}-${end}`
-        if (seen.has(key)) return
-        seen.add(key)
-
-        entries.push({ chapter, start, end })
-    })
-
-    if (!entries.length) return ""
-
-    const segments: string[] = []
-    let i = 0
-
-    while (i < entries.length) {
-        const startEntry = entries[i]
-        let segmentChapter = startEntry.chapter
-        let segmentStart = startEntry.start
-        let segmentEnd = startEntry.end
-        let j = i + 1
-
-        while (j < entries.length) {
-            const next = entries[j]
-            if (next.chapter !== segmentChapter) break
-            if (next.start <= segmentEnd) {
-                segmentEnd = Math.max(segmentEnd, next.end)
-                j++
-                continue
+        // Check if this verse is consecutive to the previous one
+        const isConsecutive = Number(id) - 1 === prev || (Number(id) === prev && subverse && array[i - 1] && getVerseIdParts(String(array[i - 1]).replace(/^\d+:/, "")).subverse === subverse - 1)
+        if (isConsecutive) {
+            if (i + 1 === array.length) {
+                // If the last added token has a chapter prefix and the current token
+                // has the same prefix, append only the verse part to the range end
+                const lastToken = range.split("+").pop() || ""
+                const lastChap = (lastToken.match(/^(\d+):/) || [])[1]
+                const curChap = (String(a).match(/^(\d+):/) || [])[1]
+                if (lastChap && curChap && lastChap === curChap) {
+                    range += "-" + v.replace(/^\d+:/, "")
+                } else {
+                    range += "-" + v
+                }
             }
-            if (next.start === segmentEnd + 1) {
-                segmentEnd = Math.max(segmentEnd, next.end)
-                j++
-                continue
+        } else {
+            if (range.length) {
+                // get last numeric value from the last token in range
+                const lastToken = range.split("+").pop() || ""
+                const lastNums = lastToken.match(/\d+/g) || []
+                const lastNum = lastNums.length ? Number(lastNums[lastNums.length - 1]) : NaN
+                if (prev !== lastNum) range += "-" + prev
+                range += "+"
             }
-            break
+            range += v
         }
 
-        const prefix = segmentChapter !== null ? `${segmentChapter}:` : ""
-        const segmentText = segmentStart === segmentEnd ? `${prefix}${segmentStart}` : `${prefix}${segmentStart}-${segmentEnd}`
-        segments.push(segmentText)
+        // Only update prev for the base verse number, not for subverses
+        if (!subverse || Number(id) !== prev) prev = Number(id)
+    })
 
-        i = j
-    }
-
-    return segments.join("+")
+    // console.log("OUTPUT", range)
+    return range
 }
 
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
@@ -1000,75 +995,57 @@ export function swapPreviewBible(collectionId: string) {
 // WIP similar to array.ts rangeSelect
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
-    const toKey = (value: number | string) => value.toString()
-    const orderedVerseIds = availableVerses.map((verse) => verse.id)
-
-    const getSplitGroup = (value: number | string): string[] => {
-        const targetParts = getVerseIdParts(value)
-        if (!targetParts.id) return [toKey(value)]
-
-        const group = availableVerses
-            .filter((verse) => {
-                const parts = getVerseIdParts(verse.id)
-                return parts.id === targetParts.id && parts.endNumber === targetParts.endNumber
-            })
-            .map((verse) => verse.id)
-
-        return group.length ? group : [toKey(value)]
-    }
-
-    const getGroupStartIndex = (value: number | string) => {
-        const targetParts = getVerseIdParts(value)
-        if (!targetParts.id) return -1
-
-        return availableVerses.findIndex((verse) => {
-            const parts = getVerseIdParts(verse.id)
-            return parts.id === targetParts.id && parts.endNumber === targetParts.endNumber
-        })
-    }
-
-    const buildSelection = (selectionSet: Set<string>) =>
-        orderedVerseIds.filter((id) => selectionSet.has(toKey(id)))
-
-    const newSelectionGroup = getSplitGroup(newSelection)
-
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        return newSelectionGroup
-    }
-
-    const selectionSet = new Set(currentlySelected.map((id) => toKey(id)))
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
 
     if (e.ctrlKey || e.metaKey) {
-        const hasWholeGroup = newSelectionGroup.every((id) => selectionSet.has(toKey(id)))
-
-        newSelectionGroup.forEach((id) => {
-            const key = toKey(id)
-            if (hasWholeGroup) selectionSet.delete(key)
-            else selectionSet.add(key)
-        })
-
-        return buildSelection(selectionSet)
+        if (currentlySelected.includes(newSelection)) {
+            return currentlySelected.filter((id) => id !== newSelection)
+        } else {
+            return [...currentlySelected, newSelection]
+        }
     }
 
     if (e.shiftKey && !currentlySelected.includes(newSelection) && currentlySelected.length > 0) {
-        const lastSelected = currentlySelected[currentlySelected.length - 1]
-        const startIndex = getGroupStartIndex(lastSelected)
-        const endIndex = getGroupStartIndex(newSelection)
-
-        if (startIndex !== -1 && endIndex !== -1) {
-            const rangeStart = Math.min(startIndex, endIndex)
-            const rangeEnd = Math.max(startIndex, endIndex)
-
-            for (let i = rangeStart; i <= rangeEnd; i++) {
-                const verseId = orderedVerseIds[i]
-                getSplitGroup(verseId).forEach((id) => selectionSet.add(toKey(id)))
+        // Helper function to convert verse IDs to sortable numbers
+        const verseToNumber = (verseId: number | string): number => {
+            const str = String(verseId)
+            // Check if it's a split verse (contains underscore)
+            if (str.includes("_")) {
+                const [id, subverse] = str.split("_").map(Number)
+                return id + (subverse || 0) * 0.1
             }
-
-            return buildSelection(selectionSet)
+            // Regular verse number
+            const num = Number(str)
+            return isNaN(num) ? -1 : num
         }
 
-        newSelectionGroup.forEach((id) => selectionSet.add(toKey(id)))
+        // Convert to sortable numbers
+        const newSelectionNum = verseToNumber(newSelection)
+        const lastSelectedNum = verseToNumber(currentlySelected[currentlySelected.length - 1])
+
+        // Only proceed if both conversions were successful
+        if (newSelectionNum !== -1 && lastSelectedNum !== -1) {
+            // Get all verse numbers in the range
+            const start = Math.min(newSelectionNum, lastSelectedNum)
+            const end = Math.max(newSelectionNum, lastSelectedNum)
+
+            // Find all verses in the range from available verses
+            for (const verse of availableVerses) {
+                const verseNum = verseToNumber(verse.id)
+                if (verseNum > start && verseNum < end && !currentlySelected.includes(verse.id)) {
+                    currentlySelected.push(verse.id)
+                }
+            }
+
+            // Always include the new selection (the end point)
+            if (!currentlySelected.includes(newSelection)) {
+                currentlySelected.push(newSelection)
+            }
+
+            // remove duplicates
+            currentlySelected = [...new Set(currentlySelected)]
+        }
     }
 
-    return buildSelection(selectionSet)
+    return currentlySelected
 }
