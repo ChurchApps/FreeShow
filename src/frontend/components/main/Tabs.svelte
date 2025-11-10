@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activePage, labelsDisabled, openToolsTab } from "../../stores"
+    import { activePage, dictionary, labelsDisabled, openToolsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -49,7 +49,7 @@
                 }}
                 isActive={active === id}
                 disabled={tab.disabled}
-                title={tab.tooltip || translateText(`tooltip.${id}`)}
+                title={tab.tooltip || $dictionary.tooltip?.[id] || tab.name}
             >
                 <Icon id={tab.icon} white={active === id} />
                 {#if labels}

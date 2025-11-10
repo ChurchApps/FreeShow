@@ -255,7 +255,7 @@
                         }}
                         center
                     >
-                        <p style="color: var(--outline-color);">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
+                        <p style="color: var(--outline-color);max-width: 150px;">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
                     </MaterialButton>
                 {:else}
                     {#if allowEmpty}
@@ -305,7 +305,7 @@
                     {/if}
 
                     <div class="color" style="background: {hexValue};">
-                        <p style="color: var(--outline-color);">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
+                        <p style="color: var(--outline-color);max-width: 150px;">{translateText("actions." + (editMode ? "add_color" : "choose_custom"))}</p>
                         <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value={hexValue} on:input={input} on:change={change} />
                     </div>
                 {/if}
@@ -432,6 +432,11 @@
     .picker.isOverflowing {
         left: unset;
         right: 0;
+    }
+
+    .picker :global(.tabs button span) {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .pickerContent {
