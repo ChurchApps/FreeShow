@@ -641,7 +641,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     refreshEditSlide.set(true)
 }
 
-function splitTextContentInHalf(text: string) {
+export function splitTextContentInHalf(text: string) {
     const center = Math.floor(text.length / 2)
 
     // find split index based on input "./,/!/?" closest to center
