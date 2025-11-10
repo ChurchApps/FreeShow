@@ -137,13 +137,6 @@
         return newVerses
     }
 
-    function buildVerseLabel(id: number, subverse: number, endNumber: number, showSuffix: boolean) {
-        const baseVisible = !subverse || subverse === 1 || showSuffix
-        const base = baseVisible ? `${id}${endNumber ? "-" + endNumber : ""}` : ""
-        const suffix = showSuffix && subverse ? getVersePartLetter(subverse) : ""
-        return { base, suffix }
-    }
-
     function toggleChapter(e: any, id: string) {
         if (e.ctrlKey || e.metaKey) {
             if (activeReference.chapters.find((cid) => cid.toString() === id)) {
@@ -656,8 +649,6 @@
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
-                                {@const showSplitSuffix = $scriptureSettings.splitLongVersesSuffix}
-                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSplitSuffix)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find((vid) => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
 
@@ -675,10 +666,10 @@
                                     on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <span class="v" style={endNumber && subverse && showSplitSuffix ? "width: 60px;" : ""}>
-                                        {verseLabel.base}
+                                    <span class="v" style={endNumber && subverse ? "width: 60px;" : ""}>
+                                        {id}{#if endNumber}-{endNumber}{/if}
                                         <!-- WIP style position not very good -->
-                                        {#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}
+                                        {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                                     </span>
 
                                     {#if $scriptureMode !== "grid"}
