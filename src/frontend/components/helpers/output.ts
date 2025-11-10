@@ -913,6 +913,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
 export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false) {
     const settings = template.settings || {}
+    if (!slide.settings) slide.settings = {}
 
     // if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
     if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
