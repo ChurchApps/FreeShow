@@ -446,6 +446,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
 
                 const { id, subverse, endNumber } = getVerseIdParts(v.verseId)
                 const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
+
                 slideArr.lines[lineIndex].text.push({
                     value,
                     style: verseNumberStyle,

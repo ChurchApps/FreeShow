@@ -807,6 +807,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateSlidesWithTemplate(template: Template) {
                 // const slidesWithTextboxes = Object.values(slides).reduce((count, slide) => (getSlideText(slide).length ? count + 1 : count), 0)
+
+                // first slide template
                 const firstLayoutSlideId = show.layouts?.[data.remember.layout]?.slides?.[0]?.id || ""
                 const firstSlideTemplateId = template?.settings?.firstSlideTemplate || ""
                 const previousFirstSlideTemplateId = get(templates)[data.previousData?.template || ""]?.settings?.firstSlideTemplate || ""
@@ -820,6 +822,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // slide template
                     if (slide.settings?.template) {
                         slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                        // first slide template
                         const matchesFirstTemplate = !!firstSlideTemplateId && slide.settings.template === firstSlideTemplateId
                         const matchesPreviousFirstTemplate = !!previousFirstSlideTemplateId && slide.settings.template === previousFirstSlideTemplateId
                         templateMode = matchesFirstTemplate || matchesPreviousFirstTemplate ? "global" : "slide"
@@ -837,6 +840,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         }
                     }
 
+                    // first slide template
                     const isFirstSlide = templateMode === "global" && id === firstLayoutSlideId
                     let appliedFirstOverride = false
                     if (isFirstSlide && firstSlideTemplateId) {
