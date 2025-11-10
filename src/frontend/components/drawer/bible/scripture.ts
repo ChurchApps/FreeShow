@@ -187,8 +187,7 @@ export async function playScripture() {
     const slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
-    const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
-    const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
+    const value = id + (subverse ? getVersePartLetter(subverse) : "")
 
     // scripture usage history
     scriptureHistory.update((a) => {
@@ -446,20 +445,12 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
                 const { id, subverse, endNumber } = getVerseIdParts(v.verseId)
-                const showSuffix = get(scriptureSettings).splitLongVersesSuffix
-                const showBaseNumber = !subverse || subverse === 1 || showSuffix
-
-                let verseNumberValue = ""
-                if (showBaseNumber) verseNumberValue = `${id}${endNumber ? "-" + endNumber : ""}`
-                if (showSuffix && subverse) verseNumberValue += getVersePartLetter(Number(subverse))
-
-                if (verseNumberValue) {
-                    slideArr.lines[lineIndex].text.push({
-                        value: `${verseNumberValue} `,
-                        style: verseNumberStyle,
-                        customType: "disableTemplate" // dont let template style verse numbers
-                    })
-                }
+                const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
+                slideArr.lines[lineIndex].text.push({
+                    value,
+                    style: verseNumberStyle,
+                    customType: "disableTemplate" // dont let template style verse numbers
+                })
             }
 
             // custom Jesus red to JSON format: !{}!
