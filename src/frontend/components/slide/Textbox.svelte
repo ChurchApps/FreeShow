@@ -2,8 +2,8 @@
     import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import type { Item, Transition, TemplateStyleOverride } from "../../../types/Show"
-    import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import type { Item, Transition, TemplateStyleOverride, Slide } from "../../../types/Show"
+    import { currentWindow, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
@@ -154,16 +154,35 @@
 
     // grab any template level overrides so we can re-use them later
     let templateStyleOverrides: TemplateStyleOverride[] = []
+    let slideData: Slide | null = null
+    let groupTemplateId = ""
+    let resolvedTemplateId = ""
+    $: slideData = (() => {
+        if (!ref?.showId) return null
+        const slideId = ref.slideId || ref.id
+        if (!slideId) return null
+        return ($showsCache[ref.showId]?.slides?.[slideId] as Slide) || null
+    })()
+    $: groupTemplateId = (() => {
+        if (!slideData) return ""
+        const groupId = slideData.globalGroup && slideData.globalGroup !== "none" ? slideData.globalGroup : slideData.group
+        if (!groupId) return ""
+        // pick up template supplied by group overrides (if present)
+        return $groups[groupId]?.template || ""
+    })()
+    $: resolvedTemplateId = (() => {
+        if (ref?.type === "template" && ref.id) return ref.id
+        if (ref?.type === "overlay") return ""
+        if (slideData?.settings?.template) return slideData.settings.template
+        if (groupTemplateId) return groupTemplateId
+        if (currentShowTemplateId) return currentShowTemplateId
+        if (outputStyle?.template) return outputStyle.template
+        return ""
+    })()
     $: templateStyleOverrides = (() => {
-        const templateId = (() => {
-            if (ref?.type === "template" && ref.id) return ref.id
-            if (ref?.type === "overlay") return ""
-            if (currentShowTemplateId) return currentShowTemplateId
-            if (outputStyle?.template) return outputStyle.template
-            return ""
-        })()
-        if (!templateId) return []
-        return clone($templates[templateId]?.settings?.styleOverrides || [])
+        // ensure overrides follow whichever template actually drives this slide
+        if (!resolvedTemplateId) return []
+        return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
 
     let customTypeRatio = 1

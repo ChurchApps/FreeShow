@@ -9,9 +9,9 @@
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
     const initialData = get(popupData)
     let templateId: string = initialData.templateId || ""
@@ -19,13 +19,21 @@
     $: template = $templates[templateId] || {}
     $: overrides = clone(template.settings?.styleOverrides || [])
 
+    type FormatToggleKey = "bold" | "italic" | "underline" | "uppercase"
+    const formatOptions: { key: FormatToggleKey; label: string; icon?: string }[] = [
+        { key: "bold", label: "edit._title_bold", icon: "bold" },
+        { key: "italic", label: "edit._title_italic", icon: "italic" },
+        { key: "underline", label: "edit._title_underline", icon: "underline" },
+        { key: "uppercase", label: "edit.uppercase", icon: "capitalize" }
+    ]
+
     // push the updated override list back through history so undo still works
     function commit(nextOverrides: TemplateStyleOverride[]) {
         if (!templateId) return
 
         const settings = clone(template.settings || {})
-        if (nextOverrides.length) settings.styleOverrides = clone(nextOverrides)
-        else delete settings.styleOverrides
+    if (nextOverrides.length) settings.styleOverrides = clone(nextOverrides)
+    else delete settings.styleOverrides
 
         history({ id: "UPDATE", newData: { key: "settings", data: settings }, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: `${templateId}_styleOverrides` } })
     }
@@ -39,6 +47,14 @@
     function updateOverride(id: string, key: keyof TemplateStyleOverride, value: string | boolean) {
         const next = overrides.map((override) => (override.id === id ? { ...override, [key]: value } : override))
         commit(next)
+    }
+
+    function toggleOverrideFlag(id: string, key: FormatToggleKey) {
+        const target = overrides.find((override) => override.id === id)
+        if (!target) return
+
+        const active = !!target[key]
+        updateOverride(id, key, !active)
     }
 
     function removeOverride(id: string) {
@@ -62,27 +78,39 @@
             {#each overrides as override (override.id)}
                 <div class="overrideRow">
                     <InputRow>
-                    <MaterialTextInput
-                        style="flex: 2;"
-                        label="edit.style_override_pattern"
-                        value={override.pattern}
-                        on:change={(e) => updateOverride(override.id, "pattern", e.detail)}
-                        autofocus={!override.pattern}
-                    />
-                    <MaterialColorInput
-                        style="flex: 0 0 210px;"
-                        label="edit.style_override_color"
-                        value={override.color || ""}
-                        allowEmpty
-                        on:change={(e) => updateOverride(override.id, "color", e.detail)}
-                    />
-                    <div class="toggles">
-                        <MaterialCheckbox label="edit._title_bold" checked={!!override.bold} on:change={(e) => updateOverride(override.id, "bold", e.detail)} />
-                        <MaterialCheckbox label="edit._title_italic" checked={!!override.italic} on:change={(e) => updateOverride(override.id, "italic", e.detail)} />
-                        <MaterialCheckbox label="edit._title_underline" checked={!!override.underline} on:change={(e) => updateOverride(override.id, "underline", e.detail)} />
-                        <MaterialCheckbox label="edit.uppercase" checked={!!override.uppercase} on:change={(e) => updateOverride(override.id, "uppercase", e.detail)} />
-                    </div>
-                    <MaterialButton icon="delete" title="actions.delete" on:click={() => removeOverride(override.id)} white />
+                        <MaterialTextInput
+                            style="flex: 2 1 240px;min-width: 200px;"
+                            label="edit.style_override_pattern"
+                            value={override.pattern}
+                            on:change={(e) => updateOverride(override.id, "pattern", e.detail)}
+                            autofocus={!override.pattern}
+                        />
+                        <MaterialColorInput
+                            style="flex: 0 0 190px;min-width: 170px;"
+                            label="edit.style_override_color"
+                            value={override.color || ""}
+                            allowEmpty
+                            on:change={(e) => updateOverride(override.id, "color", e.detail)}
+                        />
+                        <div class="toggles">
+                            {#each formatOptions as option}
+                                {@const isActive = !!override[option.key]}
+                                <MaterialButton
+                                    class="toggleButton"
+                                    title={option.label}
+                                    aria-pressed={isActive ? "true" : "false"}
+                                    on:click={() => toggleOverrideFlag(override.id, option.key)}
+                                >
+                                    {#if option.icon}
+                                        <Icon id={option.icon} size={1.2} white />
+                                    {:else}
+                                        <span class="toggleGlyph">Aa</span>
+                                    {/if}
+                                    <div class="highlight" class:active={isActive}></div>
+                                </MaterialButton>
+                            {/each}
+                        </div>
+                        <MaterialButton icon="delete" title="actions.delete" style="flex: 0 0 52px;min-width: 52px;" on:click={() => removeOverride(override.id)} white />
                     </InputRow>
                 </div>
             {/each}
@@ -98,7 +126,7 @@
             <T id="settings.add" />
         </MaterialButton>
         <MaterialButton variant="text" style="width: 100%;" on:click={closePopup}>
-            <T id="popup.continue" />
+            <T id="popup.apply" />
         </MaterialButton>
     </footer>
 </div>
@@ -136,20 +164,47 @@
     }
     .overrideRow :global(.row) {
         align-items: stretch;
+        gap: 8px;
+        flex-wrap: nowrap;
     }
     .overrideRow :global(.textfield) {
         min-height: 50px;
     }
 
     .toggles {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(140px, 1fr));
-        gap: 4px;
-        padding: 4px;
-        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 4px;
+        flex: 1 1 320px;
+        min-height: 50px;
     }
-    .toggles :global(.checkboxfield) {
-        height: 50px;
+    .toggles :global(.toggleButton) {
+        flex: 1;
+        min-width: 64px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .toggleGlyph {
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    .highlight {
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 2px;
+        width: 80%;
+        background-color: var(--primary-lighter);
+        transition: 0.2s background-color ease;
+    }
+    .highlight.active {
+        background-color: var(--secondary);
+        box-shadow: 0 0 3px rgb(255 255 255 / 0.2);
     }
 
     .empty {
