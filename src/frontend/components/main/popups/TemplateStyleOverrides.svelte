@@ -138,6 +138,7 @@
         gap: 15px;
         width: clamp(500px, 75vw, 900px);
         max-height: 80vh;
+        overflow-y: auto;
     }
 
     header h2 {
@@ -155,7 +156,8 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        overflow-y: auto;
+        flex: 1 1 auto;
+        overflow: visible;
     }
 
     .overrideRow {
