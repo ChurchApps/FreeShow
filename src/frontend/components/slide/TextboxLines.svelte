@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
     import type { Styles } from "../../../types/Settings"
-    import type { Item } from "../../../types/Show"
+    import type { Item, TemplateStyleOverride } from "../../../types/Show"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
@@ -38,6 +38,7 @@
     export let maxLinesInvert = false // stage next item preview (last lines)
     export let centerPreview = false
     export let revealed = -1
+    export let styleOverrides: TemplateStyleOverride[] = []
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -52,6 +53,9 @@
             linesEnd = index + linesCount
         }
     }
+
+    let renderedLines: any[] = []
+    $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
     onDestroy(() => {
         clearInterval(dynamicInterval)
@@ -181,6 +185,96 @@
         })
     }
 
+    // split the rendered text so template rules can restyle matching chunks
+    function applyStyleOverrides(baseLines: any[], overrides: TemplateStyleOverride[]) {
+        return baseLines.map((line) => {
+            if (!Array.isArray(line?.text)) return line
+
+            let segments = line.text.map((segment) => ({ ...segment }))
+            overrides.forEach((override) => {
+                const regex = buildOverrideRegex(override)
+                if (!regex) return
+
+                const nextSegments: any[] = []
+                segments.forEach((segment) => {
+                    nextSegments.push(...splitSegment(segment, regex, override))
+                })
+                segments = nextSegments
+            })
+
+            return { ...line, text: segments }
+        })
+    }
+
+    function buildOverrideRegex(override: TemplateStyleOverride) {
+        const raw = (override.pattern || "").trim()
+        if (!raw) return null
+
+        if (raw.startsWith("/") && raw.lastIndexOf("/") > 0) {
+            const lastSlash = raw.lastIndexOf("/")
+            const body = raw.slice(1, lastSlash)
+            if (!body) return null
+
+            const flagSource = raw.slice(lastSlash + 1)
+            const flags = flagSource ? (flagSource.includes("g") ? flagSource : `${flagSource}g`) : "g"
+            try {
+                return new RegExp(body, flags)
+            } catch (error) {
+                console.warn("Template style override regex failed", error)
+                return null
+            }
+        }
+
+        const safe = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        return new RegExp(safe, "gi")
+    }
+
+    function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverride) {
+        if (!segment?.value) return [segment]
+        if (segment.customType?.includes("disableTemplate")) return [segment]
+
+        const text = String(segment.value)
+        const matcher = new RegExp(regex.source, regex.flags)
+        const parts: any[] = []
+        let lastIndex = 0
+        let match: RegExpExecArray | null
+
+        while ((match = matcher.exec(text)) !== null) {
+            const matchedText = match[0]
+            if (!matchedText) {
+                matcher.lastIndex += 1
+                continue
+            }
+
+            const start = match.index
+            if (start > lastIndex) {
+                const before = text.slice(lastIndex, start)
+                if (before) parts.push({ ...segment, value: before })
+            }
+
+            const styledPart = { ...segment, value: matchedText, style: mergeOverrideStyles(segment.style, override) }
+            parts.push(styledPart)
+            lastIndex = start + matchedText.length
+        }
+
+        if (lastIndex < text.length) {
+            const trailing = text.slice(lastIndex)
+            if (trailing) parts.push({ ...segment, value: trailing })
+        }
+
+        return parts.length ? parts : [segment]
+    }
+
+    function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride) {
+        let style = baseStyle || ""
+        if (override.color) style += `color: ${override.color};`
+        if (override.bold) style += "font-weight: 700;"
+        if (override.italic) style += "font-style: italic;"
+        if (override.underline) style += "text-decoration: underline;"
+        if (override.uppercase) style += "text-transform: uppercase;"
+        return style
+    }
+
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
     // font-size: inherit;
     $: listStyle = item?.list?.enabled ? `;font-size: ${fontSize || cssFontSize || 100}px;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
@@ -225,7 +319,7 @@
     style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
 >
     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
-        {#each lines as line, i}
+        {#each renderedLines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                 {#if chords && chordLines[i]}
                     <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;{style ? line.align : ''}">

@@ -311,6 +311,7 @@ export type Popups =
     | "manage_metadata"
     | "manage_dynamic_values"
     | "player"
+    | "template_style_overrides"
     | "rename"
     | "color"
     | "color_gradient"

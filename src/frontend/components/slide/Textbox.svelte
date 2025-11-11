@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import type { Item, Transition } from "../../../types/Show"
+    import type { Item, Transition, TemplateStyleOverride } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
@@ -151,6 +151,20 @@
     // else outputTemplateAutoSize = false
 
     // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
+
+    // grab any template level overrides so we can re-use them later
+    let templateStyleOverrides: TemplateStyleOverride[] = []
+    $: templateStyleOverrides = (() => {
+        const templateId = (() => {
+            if (ref?.type === "template" && ref.id) return ref.id
+            if (ref?.type === "overlay") return ""
+            if (currentShowTemplateId) return currentShowTemplateId
+            if (outputStyle?.template) return outputStyle.template
+            return ""
+        })()
+        if (!templateId) return []
+        return clone($templates[templateId]?.settings?.styleOverrides || [])
+    })()
 
     let customTypeRatio = 1
 
@@ -365,6 +379,7 @@
             {maxLinesInvert}
             {centerPreview}
             {revealed}
+            styleOverrides={templateStyleOverrides}
             on:updateAutoSize={calculateAutosize}
         />
     {:else}
