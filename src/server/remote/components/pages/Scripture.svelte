@@ -15,7 +15,26 @@
 
     let collectionId = localStorage.collectionId || ""
     let openedScripture = localStorage.scripture || ""
-    $: if (openedScripture && !$scriptureCache[openedScripture]) send("GET_SCRIPTURE", { id: openedScripture })
+    
+    function checkScriptureExists(scriptureId: string, collId: string): boolean {
+        if (!scriptureId || Object.keys($scriptures).length === 0) return false
+        return !!($scriptures[scriptureId] || (collId && $scriptures[collId]))
+    }
+    
+    $: scripturesLoaded = Object.keys($scriptures).length > 0
+    
+    // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
+    $: if (scripturesLoaded && openedScripture && !checkScriptureExists(openedScripture, collectionId)) {
+        openedScripture = ""
+        collectionId = ""
+        localStorage.removeItem("scripture")
+        localStorage.removeItem("collectionId")
+    }
+    
+    // Request scripture data only if it exists in store
+    $: if (openedScripture && checkScriptureExists(openedScripture, collectionId) && !$scriptureCache[openedScripture]) {
+        send("GET_SCRIPTURE", { id: openedScripture })
+    }
     
     let depthBeforeSearch = 0
 
@@ -675,7 +694,7 @@
             {/if}
         </div>
     </div>
-{:else if openedScripture}
+{:else if openedScripture && (checkScriptureExists(openedScripture, collectionId) || !scripturesLoaded)}
     <div class="header-bar" style="margin-bottom: 0.5rem;" class:has-ref={!!depth}>
         <button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
             <Icon id="back" size={1.5} />
@@ -700,9 +719,8 @@
 
     <div class="bible">
         {#if $scriptureCache[openedScripture]}
-            <!-- {tablet} -->
             <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
-        {:else}
+        {:else if checkScriptureExists(openedScripture, collectionId)}
             <Loading />
         {/if}
     </div>
