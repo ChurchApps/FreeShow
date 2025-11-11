@@ -2,7 +2,7 @@
     import type { Show } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
     import { activePopup, textEditActive, textEditZoom } from "../../stores"
-    import { transposeText } from "../../utils/chordTranspose"
+    import { transposeText } from "../../../server/common/util/transpose"
     import Icon from "../helpers/Icon.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"

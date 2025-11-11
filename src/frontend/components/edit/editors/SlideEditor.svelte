@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
-    import { transposeText } from "../../../utils/chordTranspose"
+    import { transposeText } from "../../../../server/common/util/transpose"
     import { triggerFunction } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"

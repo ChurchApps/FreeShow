@@ -78,3 +78,20 @@ export function transposeText(text: string, step: number): string {
         return "[" + transposeFullChord(p1, step, preferSharps) + "]"
     })
 }
+
+export function hasChords(text: string): boolean {
+    // Check if text contains chord notation in brackets
+    // This regex is more specific to avoid matching section labels like [Chorus], [Verse], etc.
+    const chordInBrackets = /\[([A-G][b#♭♯]?(?:maj|min|m|aug|dim|sus|add|\d|\(|\)|\/[A-G][b#♭♯]?)*)\]/g
+    const matches = text.match(chordInBrackets)
+    if (!matches) return false
+
+    // Check if any match looks like a chord (not a section label)
+    return matches.some((match) => {
+        const content = match.slice(1, -1) // Remove brackets
+        // Section labels typically have more than 3 characters and contain lowercase letters
+        // that aren't part of chord notation
+        return !(content.length > 3 && /[a-z]{3,}/.test(content))
+    })
+}
+
