@@ -6,7 +6,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureViewList, outSlide, outShow } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
 
@@ -68,6 +68,10 @@
     function closeSearch() {
         openScriptureSearch = false
         searchValue = ""
+        // Clear search results
+        searchResults = []
+        searchResult = { reference: "", referenceFull: "", verseText: "" }
+        scriptureSearchResults.set(null)
         // Restore depth to where user was before search
         // Only reset if scripture data isn't loaded
         if (openedScripture && !$scriptureCache[openedScripture]) {
@@ -83,7 +87,22 @@
     type SearchItem = { reference: string; referenceFull: string; verseText: string }
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
-    $: updateSearch(searchValue, $scriptureCache, openedScripture)
+    let isApiBible = false
+    
+    // Track failed chapter requests to prevent infinite retries
+    const failedChapterRequests = new Set<string>()
+    
+    // Clear failed requests when search changes or scripture changes
+    $: if (searchValue || openedScripture) {
+        if (searchValue.trim() === "") {
+            failedChapterRequests.clear()
+        }
+    }
+    
+    $: isApiBible = openedScripture && $scriptures[openedScripture]?.api === true
+    $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
+    $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
+    $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
 
     function formatBookSearch(search: string): string {
         return search
@@ -208,8 +227,8 @@
             if (bookName === search) return true
 
             // Handle common abbreviations
-            const abbreviation = BOOK_ABBREVIATIONS[search]
-            if (abbreviation && formatBookSearch(book.name).includes(abbreviation)) return true
+            const expandedName = BOOK_ABBREVIATIONS[search]
+            if (expandedName && bookName.includes(expandedName)) return true
 
             return false
         })
@@ -257,13 +276,134 @@
         return results.slice(0, 50)
     }
 
-    function updateSearch(searchVal: string, scriptureCache: any, openedScriptureId: string) {
+    function updateSearch(searchVal: string, scriptureCache: any, openedScriptureId: string, isApi: boolean) {
         if (!searchVal.trim()) {
             searchResults = []
             searchResult = { reference: "", referenceFull: "", verseText: "" }
+            // Clear API search results store
+            if (isApi) {
+                scriptureSearchResults.set(null)
+            }
             return
         }
 
+        // For API bibles, parse references locally first (same as local bibles)
+        // Then use API search only for text content searches
+        if (isApi) {
+            const scripture = scriptureCache[openedScriptureId]
+            
+            if (!scripture?.books) {
+                // Books not loaded yet, use API search as fallback
+                const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
+                const searchType = referenceMatch ? "reference" : "text"
+                send("SEARCH_SCRIPTURE", { id: openedScriptureId, searchTerm: searchVal, searchType })
+                return
+            }
+
+            const books = scripture.books
+            const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
+            
+            if (referenceMatch) {
+                const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
+                const versePart = versePart1 || versePart2
+
+                const book = findBook(books, bookPart)
+                if (book) {
+                    const chapterNumber = parseInt(chapterPart, 10)
+                    const verseNumber = versePart ? parseInt(versePart, 10) : null
+                    const chapter = findChapter(book, chapterPart)
+                    
+                    if (chapter) {
+                        if (versePart) {
+                            // Specific verse found in cache
+                            const verse = findVerse(chapter, versePart)
+                            if (verse) {
+                                searchResult = {
+                                    reference: `${book.number}.${chapterNumber}.${verse.number}`,
+                                    referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
+                                    verseText: verse.text
+                                }
+                                searchResults = [searchResult]
+                                return
+                            }
+                        } else {
+                            // Whole chapter found in cache
+                            if (chapter.verses && chapter.verses.length > 0) {
+                                searchResults = chapter.verses.map((verse: any) => ({
+                                    reference: `${book.number}.${chapterNumber}.${verse.number}`,
+                                    referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
+                                    verseText: verse.text
+                                }))
+                                if (searchResults.length > 0) {
+                                    searchResult = searchResults[0]
+                                    return
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Book found but chapter/verse data not in cache
+                    // Check if chapter number is reasonable (most books don't have > 150 chapters)
+                    const isReasonableChapter = chapterNumber > 0 && chapterNumber <= 150
+                    
+                    if (isReasonableChapter) {
+                        // Construct reference and request data
+                        const requestKey = `${openedScriptureId}:${book.keyName}:${chapterNumber}`
+                        
+                        if (verseNumber) {
+                            searchResult = {
+                                reference: `${book.number}.${chapterNumber}.${verseNumber}`,
+                                referenceFull: `${book.name} ${chapterNumber}:${verseNumber}`,
+                                verseText: ""
+                            }
+                            searchResults = [searchResult]
+                            
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                                send("GET_SCRIPTURE", { 
+                                    id: openedScriptureId, 
+                                    bookKey: book.keyName, 
+                                    chapterKey: chapterNumber, 
+                                    bookIndex: book.number - 1, 
+                                    chapterIndex: chapterNumber - 1 
+                                })
+                            }
+                            return
+                        } else if (chapterNumber) {
+                            searchResult = {
+                                reference: `${book.number}.${chapterNumber}.1`,
+                                referenceFull: `${book.name} ${chapterNumber}`,
+                                verseText: ""
+                            }
+                            searchResults = [searchResult]
+                            
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                                send("GET_SCRIPTURE", { 
+                                    id: openedScriptureId, 
+                                    bookKey: book.keyName, 
+                                    chapterKey: chapterNumber, 
+                                    bookIndex: book.number - 1, 
+                                    chapterIndex: chapterNumber - 1 
+                                })
+                            }
+                            return
+                        }
+                    }
+                }
+            }
+
+            // If reference parsing failed or it's not a reference, use API text search
+            if (searchVal.length >= 3) {
+                send("SEARCH_SCRIPTURE", { id: openedScriptureId, searchTerm: searchVal, searchType: "text" })
+            } else {
+                searchResults = []
+                searchResult = { reference: "", referenceFull: "", verseText: "" }
+            }
+            return
+        }
+
+        // For local bibles, use cached search
         const scripture = scriptureCache[openedScriptureId]
         if (!scripture?.books) return
 
@@ -319,6 +459,54 @@
             searchResult = { reference: "", referenceFull: "", verseText: "" }
         }
     }
+
+    // Handle API search results
+    function handleApiSearchResults(apiResults: any, searchVal: string, scriptureId: string) {
+        // Don't process if we already have search results (from local reference parsing)
+        if (searchResults.length > 0) return
+        if (!apiResults || !searchVal || !searchVal.trim() || !scriptureId) return
+
+        if (apiResults.error) {
+            searchResults = []
+            searchResult = { reference: "", referenceFull: "", verseText: "" }
+            return
+        }
+
+        if (apiResults.type === "reference") {
+            // Handle reference search results
+            if (!apiResults.found && !apiResults.book) {
+                searchResults = []
+                searchResult = { reference: "", referenceFull: "", verseText: "" }
+                return
+            }
+
+            if (apiResults.book && apiResults.chapter) {
+                const verseNumbers = apiResults.verses && apiResults.verses.length > 0 ? apiResults.verses : [1]
+                const verseNum = typeof verseNumbers[0] === "object" ? verseNumbers[0].number : verseNumbers[0]
+                const reference = `${apiResults.book}.${apiResults.chapter}.${verseNum}`
+                const referenceFull = apiResults.bookName ? `${apiResults.bookName} ${apiResults.chapter}:${verseNum}` : reference
+                
+                // For reference search, we'll need to load the verse text separately
+                // For now, just create the reference
+                searchResult = {
+                    reference: reference,
+                    referenceFull: referenceFull,
+                    verseText: "" // Will be loaded when verse is displayed
+                }
+                searchResults = [searchResult]
+            }
+        } else if (apiResults.type === "text") {
+            // Handle text search results
+            const results = (apiResults.results || []).map((r: any) => ({
+                reference: r.reference,
+                referenceFull: r.referenceFull || r.reference,
+                verseText: r.verseText || ""
+            }))
+            searchResults = results
+            searchResult = results.length > 0 ? results[0] : { reference: "", referenceFull: "", verseText: "" }
+        }
+    }
+
     function playSearchVerse(reference?: string) {
         const ref = reference || searchResult.reference
         if (!ref) return
@@ -348,6 +536,95 @@
                 }, 100)
             }
         }, 0)
+    }
+
+    // Update search results with verse text when chapter data loads
+    // Also validates and removes invalid references (non-existent chapters/verses)
+    function updateSearchResultsWithLoadedVerses(cache: any, results: SearchItem[], scriptureId: string) {
+        if (!results.length || !scriptureId) return
+        
+        const scripture = cache[scriptureId]
+        if (!scripture?.books) return
+        
+        const validResults: SearchItem[] = []
+        let updated = false
+        
+        for (const result of results) {
+            if (result.verseText) {
+                validResults.push(result)
+                continue
+            }
+            
+            const parts = result.reference.split('.')
+            if (parts.length !== 3) {
+                validResults.push(result)
+                continue
+            }
+            
+            const bookIndex = parseInt(parts[0], 10) - 1
+            const chapterNumber = parseInt(parts[1], 10)
+            const verseNumber = parseInt(parts[2], 10)
+            
+            const book = scripture.books[bookIndex]
+            if (!book?.chapters) {
+                validResults.push(result)
+                continue
+            }
+            
+            const chapter = book.chapters[chapterNumber - 1]
+            if (!chapter) {
+                // Chapter doesn't exist - mark as failed and remove this result
+                const requestKey = `${scriptureId}:${book.keyName}:${chapterNumber}`
+                failedChapterRequests.add(requestKey)
+                updated = true
+                continue
+            }
+            
+            if (!chapter.verses) {
+                // Verses not loaded yet - keep the result
+                validResults.push(result)
+                continue
+            }
+            
+            if (chapter.verses.length === 0) {
+                // Empty verses array from failed API request - mark as failed and remove
+                const requestKey = `${scriptureId}:${book.keyName}:${chapterNumber}`
+                failedChapterRequests.add(requestKey)
+                updated = true
+                continue
+            }
+            
+            const verse = chapter.verses[verseNumber - 1]
+            if (!verse) {
+                // Verse doesn't exist - remove this result
+                updated = true
+                continue
+            }
+            
+            if (verse.text) {
+                updated = true
+                validResults.push({
+                    reference: result.reference,
+                    referenceFull: result.referenceFull,
+                    verseText: verse.text
+                })
+            } else {
+                validResults.push(result)
+            }
+        }
+        
+        if (updated) {
+            searchResults = validResults
+            
+            if (searchResult.reference) {
+                const updatedResult = validResults.find(r => r.reference === searchResult.reference)
+                if (updatedResult) {
+                    searchResult = updatedResult
+                } else if (!searchResult.verseText) {
+                    searchResult = validResults.length > 0 ? validResults[0] : { reference: "", referenceFull: "", verseText: "" }
+                }
+            }
+        }
     }
 
     function highlightSearchTerm(text: string, searchTerm: string): string {

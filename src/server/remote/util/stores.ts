@@ -72,6 +72,7 @@ export let playingAudioData: Writable<any> = writable({})
 export let playingAudioTime: Writable<number> = writable(0)
 
 export let pdfPages: Writable<{ [key: string]: string[] }> = writable({})
+export let scriptureSearchResults: Writable<any> = writable(null)
 
 /////
 
@@ -107,7 +108,8 @@ export const _ = {
     scriptureCache,
     playingAudioData,
     playingAudioTime,
-    pdfPages
+    pdfPages,
+    scriptureSearchResults
 }
 
 /////

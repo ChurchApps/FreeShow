@@ -911,11 +911,13 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     return newSlideItems // .reverse()
 }
 
-export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false) {
+export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false, firstTemplateId?: string) {
     const settings = template.settings || {}
+    if (!slide.settings) slide.settings = {}
 
     // if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
-    if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
+    const firstTemplate = firstTemplateId ?? settings.firstSlideTemplate
+    if (isFirst && (firstTemplate || removeOverflow)) slide.settings.template = firstTemplate || ""
     if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
 
     // add overlay items to slide items

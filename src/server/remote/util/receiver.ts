@@ -254,6 +254,12 @@ export const receiver = {
             return cache
         })
     },
+    SEARCH_SCRIPTURE: (data: any) => {
+        // Store search results for the search component to use
+        if (data.searchResults !== undefined) {
+            _set("scriptureSearchResults", data.searchResults)
+        }
+    },
     OVERLAYS: (data: any) => {
         overlays.set(data)
     },

@@ -300,7 +300,7 @@ export function removeTemplatesFromShow(showId: string, enableHistory = false) {
     showsCache.update((a) => {
         const show = a[showId]
         Object.values(show.slides || {}).forEach((slide) => {
-            if (slide.settings.template) delete slide.settings.template
+            if (slide.settings?.template) delete slide.settings.template
         })
         return a
     })

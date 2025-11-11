@@ -20,6 +20,7 @@ import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
 import { getItemText } from "../../edit/scripts/textStyle"
+import { splitTextContentInHalf } from "../../../show/slides"
 
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
@@ -187,7 +188,8 @@ export async function playScripture() {
     const slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
-    const value = id + (subverse ? getVersePartLetter(subverse) : "")
+    const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
+    const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
 
     // scripture usage history
     scriptureHistory.update((a) => {
@@ -287,6 +289,8 @@ export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]"
 }
+
+
 
 export function joinRange(array: (number | string)[]) {
     // console.log("INPUT", array)
@@ -445,13 +449,20 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
                 const { id, subverse, endNumber } = getVerseIdParts(v.verseId)
-                const value = `${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(Number(subverse)) : ""} `
+                const showSuffix = get(scriptureSettings).splitLongVersesSuffix
+                const showBaseNumber = !subverse || subverse === 1 || showSuffix
 
-                slideArr.lines[lineIndex].text.push({
-                    value,
-                    style: verseNumberStyle,
-                    customType: "disableTemplate" // dont let template style verse numbers
-                })
+                let verseNumberValue = ""
+                if (showBaseNumber) verseNumberValue = `${id}${endNumber ? "-" + endNumber : ""}`
+                if (showSuffix && subverse) verseNumberValue += getVersePartLetter(Number(subverse))
+
+                if (verseNumberValue) {
+                    slideArr.lines[lineIndex].text.push({
+                        value: `${verseNumberValue} `,
+                        style: verseNumberStyle,
+                        customType: "disableTemplate" // dont let template style verse numbers
+                    })
+                }
             }
 
             // custom Jesus red to JSON format: !{}!
@@ -664,50 +675,94 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 export function splitText(value: string, maxLength: number) {
     if (!value) return []
 
-    const splitted: string[] = []
+    const queue: string[] = [value.trim()]
+    const segments: string[] = []
+    const proportion = Math.floor(maxLength * 0.3)
+    const upperBound = Math.max(maxLength - 1, 0)
+    let minSegmentLength = Math.max(10, proportion)
+    if (upperBound > 0) minSegmentLength = Math.min(minSegmentLength, upperBound)
+    if (minSegmentLength < 1) minSegmentLength = 1
 
-    let start = 0
-    while (start < value.length) {
-        // find the next possible break point
-        let end = Math.min(start + maxLength, value.length)
+    while (queue.length) {
+        const current = queue.shift()?.trim()
+        if (!current) continue
 
-        if (end < value.length) {
-            // prefer punctuation within 10 chars before the split point
-            const windowStart = Math.max(start + 1, end - 10)
-            let punctIndex = -1
-            // search backwards from end (inclusive) to windowStart
-            const searchStart = Math.min(end, value.length - 1)
-            for (let i = searchStart; i >= windowStart; i--) {
-                const ch = value.charAt(i)
-                if (/[.,;:!?]/.test(ch)) {
-                    punctIndex = i
-                    break
-                }
-            }
-
-            if (punctIndex > start) {
-                // split after the punctuation
-                end = punctIndex + 1
-            } else {
-                // or fallback: split at last space within range
-                const spaceIndex = value.lastIndexOf(" ", end)
-                if (spaceIndex > start) end = spaceIndex
-            }
+        if (current.length <= maxLength) {
+            segments.push(current)
+            continue
         }
 
-        const trimmedValue = value.substring(start, end).trim()
-        if (trimmedValue.length) splitted.push(trimmedValue)
+        const halves = getSplitHalves(current, maxLength)
+        if (!halves) {
+            segments.push(current)
+            continue
+        }
 
-        // continue search
-        start = end + 1
+        let [first, second] = halves
+
+        const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
+        first = rebalanced.first
+        second = rebalanced.second
+
+        if (second.length < 1) {
+            segments.push(first)
+            continue
+        }
+
+        if (second.length > 0) queue.unshift(second)
+        if (first.length > 0) queue.unshift(first)
     }
 
-    // merge short strings
-    if (splitted.length > 1 && splitted[splitted.length - 1].length < 20) {
-        splitted[splitted.length - 2] += " " + splitted.pop()
+    if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
+        segments[segments.length - 2] = `${segments[segments.length - 2]} ${segments.pop()}`.trim()
     }
 
-    return splitted
+    return segments
+}
+
+function getSplitHalves(text: string, maxLength: number): [string, string] | null {
+    const halves = splitTextContentInHalf(text)
+    if (halves.length >= 2) {
+        const first = halves[0].trim()
+        const second = halves[1].trim()
+        if (first.length && second.length) return [first, second]
+    }
+
+    if (text.length <= maxLength) return null
+
+    let pivot = text.lastIndexOf(" ", maxLength)
+    if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
+    if (pivot <= 0) pivot = maxLength
+
+    const first = text.slice(0, pivot).trim()
+    const second = text.slice(pivot).trim()
+    if (!first.length || !second.length) return null
+    return [first, second]
+}
+
+function rebalanceHalves(first: string, second: string, maxLength: number, minSegmentLength: number) {
+    if (second.length >= minSegmentLength || first.length <= minSegmentLength) {
+        return { first, second }
+    }
+
+    const words = first.split(/\s+/).filter(Boolean)
+    while (words.length > 1 && second.length < minSegmentLength) {
+        const moved = words.pop()
+        if (!moved) break
+
+        const candidateFirst = words.join(" ").trim()
+        const candidateSecond = `${moved} ${second}`.trim()
+
+        if (!candidateFirst.length || candidateFirst.length > maxLength || candidateSecond.length > maxLength) {
+            words.push(moved)
+            break
+        }
+
+        first = candidateFirst
+        second = candidateSecond
+    }
+
+    return { first, second }
 }
 
 function removeTags(text) {
@@ -795,6 +850,24 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
         layouts.push(l)
     })
+
+    const firstSlideTemplateId = template?.settings?.firstSlideTemplate || ""
+    if (firstSlideTemplateId) {
+        const firstLayoutId = layouts[0]?.id
+        if (firstLayoutId && slides2[firstLayoutId]) {
+            const firstTemplate = clone(get(templates)[firstSlideTemplateId || ""])
+            const firstTemplateSettings = firstTemplate?.settings
+            slides2[firstLayoutId].settings = { ...(slides2[firstLayoutId].settings || {}), template: firstSlideTemplateId }
+            if (firstTemplateSettings?.backgroundColor) slides2[firstLayoutId].color = firstTemplateSettings.backgroundColor
+            if (firstTemplateSettings?.backgroundPath) {
+                const existingMediaId = Object.entries(media as Record<string, any>).find(([, value]) => value.path === firstTemplateSettings.backgroundPath)?.[0]
+                const mediaId = existingMediaId || uid(5)
+                media[mediaId] = { path: firstTemplateSettings.backgroundPath, loop: true, muted: true }
+                const firstLayout = layouts.find((layout) => layout.id === firstLayoutId)
+                if (firstLayout) firstLayout.background = mediaId
+            }
+        }
+    }
 
     // add scripture category
     const categoryId = createCategory("scripture", "scripture", { isDefault: true, isArchive: true })

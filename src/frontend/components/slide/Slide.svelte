@@ -373,7 +373,7 @@
                     background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit)
                         ? transparentOutput || $special.transparentSlides
                             ? "var(--primary);"
-                            : slide.settings.color || currentStyle.background || "black"
+                            : slide.settings?.color || currentStyle.background || "black"
                         : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
                     checkered={viewMode !== "lyrics" && slide.items?.length > 0 && (transparentOutput || $special.transparentSlides) && !bg}
                     let:ratio
