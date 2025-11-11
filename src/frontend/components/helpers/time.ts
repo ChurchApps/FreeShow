@@ -66,6 +66,7 @@ export function dateToString(date: string | number | Date, full = false, d = get
 
 export function getWeekday(day: number, d = get(dictionary), uppercase = false) {
     let weekday = d.weekday ? d.weekday[day === 0 ? 7 : day] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]
+    if (!weekday?.length) return ""
     if (uppercase) weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
 
     return weekday
@@ -74,6 +75,7 @@ export function getWeekday(day: number, d = get(dictionary), uppercase = false) 
 export function getMonthName(month: number, d = get(dictionary), uppercase = false) {
     // this might be upper or lower case depending on the language
     let monthname = d.month ? d.month[month + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month]
+    if (!monthname?.length) return ""
     if (uppercase) monthname = monthname[0].toUpperCase() + monthname.slice(1, monthname.length)
 
     return monthname

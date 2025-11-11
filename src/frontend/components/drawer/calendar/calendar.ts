@@ -204,6 +204,7 @@ function getDayNameIfCloseToToday(day: Date): string {
         const weekDay = new Date(day).getDay() || 7
         const dayString = translateText("weekday." + weekDay)
 
+        if (!dayString.length) return ""
         return dayString[0].toUpperCase() + dayString.slice(1, dayString.length)
     }
 
