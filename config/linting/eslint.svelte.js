@@ -42,4 +42,4 @@ module.exports = {
         // disable a11y warnings (not working)
         // "svelte3/valid-compile": ["error", { ignoreWarnings: true }],
     },
-};
+}; // always check js config files before executing!!
