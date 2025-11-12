@@ -1419,6 +1419,9 @@ const dynamicValues = {
     show_name: ({ show }) => show.name || "",
     show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
 
+    // expose logSongUsage so external controllers can inspect the setting via dynamic values
+    logSongUsage: () => (get(special).logSongUsage ? "true" : "false"),
+
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
