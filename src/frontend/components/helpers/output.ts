@@ -219,6 +219,8 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 }
 
 function appendShowUsage(showId: string) {
+    if (!get(special).logSongUsage) return
+
     const show = get(showsCache)[showId]
     if (!show) return
 

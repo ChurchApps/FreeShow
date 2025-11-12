@@ -43,8 +43,8 @@ export async function loadJsonBible(id: string) {
     const localBible = await getLocalBible(id)
     if (!localBible) throw new Error("Local Bible not found")
 
-    // load custom book names for local bibles (as many xml names are missing or in English)
-    localBible.books = localBible.books.map(a => ({ ...a, name: (a as any).customName || a.name }))
+    // load custom book names for local bibles (as many xml names are missing or in English) & fix numbers
+    localBible.books = localBible.books.map((a, i) => ({ ...a, name: (a as any).customName || a.name, number: !isNaN(a.number) ? Number(a.number) : i + 1 }))
 
     return await JsonBible(localBible)
 }

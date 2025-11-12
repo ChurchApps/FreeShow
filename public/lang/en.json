@@ -1212,7 +1212,8 @@
         "source_output": "Source output",
         "auto_stretch": "Auto stretch content",
         "labels": "Show labels",
-        "label_color": "Label color"
+        "label_color": "Label color",
+        "create_stage_output": "Create stage output"
     },
     "settings": {
         "general": "General",
@@ -1309,6 +1310,7 @@
         "user_data_no": "No, import existing data",
         "auto_locate_missing_media_files": "Auto locate missing media files",
         "popup_before_close": "Enable close confirmation popup",
+        "log_song_usage": "Log song usage to a file",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
