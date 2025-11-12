@@ -35,7 +35,7 @@
     $: if (Object.keys($events).length) startEventTimer()
 
     // autosave
-    $: if ($autosave) startAutosave()
+    $: if ($autosave || "15min") startAutosave()
 
     // stream to OutputShow
     $: if (($loaded && $disabledServers.output_stream !== "") || !$outputDisplay) setTimeout(toggleRemoteStream, 1000)

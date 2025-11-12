@@ -111,7 +111,8 @@ export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
 
-    const saveInterval = convertAutosave[get(autosave)]
+    const as = get(autosave) || "15min"
+    const saveInterval = convertAutosave[as]
     if (!saveInterval) {
         autosaveTimeout = null
         return

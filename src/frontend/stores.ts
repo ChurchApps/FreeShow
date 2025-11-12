@@ -294,7 +294,7 @@ export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
-export const autosave: Writable<string> = writable("never") // "never"
+export const autosave: Writable<string> = writable("15min") // "15min"
 export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false
