@@ -205,9 +205,9 @@
     <!-- bind:this={listElem} -->
     <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
-            {#if createFromSearch && searchValue.length}
+            {#if createFromSearch && searchValue.length && typeof searchValue === "string"}
                 <div class="warning">
-                    <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0].toUpperCase() + searchValue.slice(1)}</span></p>
+                    <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
             <!-- reload list when changing category -->

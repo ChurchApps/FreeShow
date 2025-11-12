@@ -33,7 +33,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     activeProject: null,
     alertUpdates: true,
     autoOutput: false,
-    autosave: "never",
+    autosave: "15min",
     timeFormat: "24",
     remotePassword: "",
     ports: { remote: 5510, stage: 5511 },

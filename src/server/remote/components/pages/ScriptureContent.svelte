@@ -3,7 +3,7 @@
     import Loading from "../../../common/components/Loading.svelte"
     import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
-    import { currentScriptureState, scriptureViewList } from "../../util/stores"
+    import { currentScriptureState, scriptureViewList, outShow, outSlide } from "../../util/stores"
 
     export let id: string
     export let scripture: Bible
@@ -16,15 +16,15 @@
     let activeChapter = -1
     let activeVerse = 0
 
-    // Track what is actually displayed on the output
+    // Track what is displayed on output (separate from user's navigation position)
     let displayedBookIndex = -1
     let displayedChapterIndex = -1
     let displayedVerseNumber = 0
+    let pendingVerseDepth = false // Used when navigating from search to wait for data load
 
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
     $: if (depth === 1) {
-        // If we entered chapters for an API bible and chapters are missing, request them once
         const bookObj: any = books[activeBook]
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: activeBook })
@@ -32,15 +32,29 @@
     }
     $: verses = chapters[activeChapter]?.verses || []
     $: if (depth === 2) {
-        // If we entered verses for an API bible and verses are missing, request them once
         const bookObj: any = books[activeBook]
         const chapterObj: any = chapters[activeChapter]
         if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
         }
     }
+    // Auto-advance to verse depth once data loads (for search navigation)
+    $: if (pendingVerseDepth && depth === 1 && activeBook >= 0 && activeChapter >= 0) {
+        const chapterObj: any = chapters[activeChapter]
+        if (chapters.length > 0 && chapterObj) {
+            const bookObj: any = books[activeBook]
+            if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
+                send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
+            } else if (chapterObj?.verses?.length > 0) {
+                pendingVerseDepth = false
+                depth = 2
+            }
+        }
+    }
+    $: if (pendingVerseDepth && depth === 2 && verses.length > 0) {
+        pendingVerseDepth = false
+    }
 
-    // Update current location strings for parent component based on where we are visiting (browsing)
     $: currentBook = books[activeBook]?.name || ""
     $: currentChapter = (() => {
         const num = chapters[activeChapter]?.number
@@ -48,60 +62,22 @@
     })()
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
-    // Update local state when scripture state changes from main app (normalized shape)
-    let applyTimer: ReturnType<typeof setTimeout> | null = null
+    // Update displayed indices from main app state (what's currently on output)
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state) return
-        // Debounce to coalesce quick consecutive updates (prevents transient wrong labels)
-        if (applyTimer) clearTimeout(applyTimer)
-        applyTimer = setTimeout(() => {
-            const bookIndex = state.bookId
-            const chapterIndex = state.chapterId
-            const verseList = state.activeVerses
+        if (state.scriptureId && state.scriptureId !== id) return
+        
+        const bookIndex = state.bookId
+        const chapterIndex = state.chapterId
+        const verseList = state.activeVerses
+        const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
 
-            // Capture the latest incoming state (coalesced within debounce)
-            const hasBook = Number.isInteger(bookIndex) && bookIndex >= 0
-            const hasChapter = Number.isInteger(chapterIndex) && chapterIndex >= 0
-            const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
-            const hasVerse = Number.isFinite(latestVerse) && latestVerse > 0
-
-            const sameBook = hasBook ? bookIndex === displayedBookIndex : true
-            const sameChapter = hasChapter ? chapterIndex === displayedChapterIndex : true
-            const safeToApplyAll = hasBook && hasChapter && hasVerse
-
-            // opportunistically accept partial updates for book/chapter to keep display in sync
-            if (hasBook && displayedBookIndex !== bookIndex) displayedBookIndex = bookIndex
-            if (hasChapter && displayedChapterIndex !== chapterIndex) displayedChapterIndex = chapterIndex
-
-            // Case 1: within the same chapter, only verse changed → update verse immediately
-            if (hasVerse && sameBook && sameChapter) {
-                displayedVerseNumber = latestVerse
-                if (depth === 2) activeVerse = latestVerse
-                return
-            }
-
-            // Case 2: full change (book + chapter + verse) arrived together → apply atomically
-            if (safeToApplyAll) {
-                // Update displayed indices (reflect what's on output)
-                displayedBookIndex = bookIndex
-                displayedChapterIndex = chapterIndex
-                displayedVerseNumber = latestVerse
-
-                // Only update active browsing selection when already at verse depth
-                if (depth === 2) {
-                    activeBook = bookIndex
-                    activeChapter = chapterIndex
-                    activeVerse = latestVerse
-                }
-                return
-            }
-
-            // Otherwise, wait for missing parts (no forced depth change)
-        }, 260)
+        if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
+        if (Number.isInteger(chapterIndex) && chapterIndex >= 0) displayedChapterIndex = chapterIndex
+        if (Number.isFinite(latestVerse) && latestVerse > 0) displayedVerseNumber = latestVerse
     })
     onDestroy(() => {
         unsubscribeScripture()
-        if (applyTimer) clearTimeout(applyTimer)
     })
 
     // COLORS
@@ -135,9 +111,15 @@
     // OUTPUT
 
     function playScripture(verseNumber: number) {
-        activeVerse = verseNumber
-        // chapters[activeChapter]?.number ??
-        send("API:start_scripture", { id, reference: `${books[activeBook]?.number ?? activeBook + 1}.${activeChapter + 1}.${activeVerse}` })
+        if (activeBook < 0 || activeChapter < 0 || verseNumber <= 0) return
+        
+        const book = books[activeBook]
+        const chapter = chapters[activeChapter]
+        if (!book || !chapter) return
+        
+        const bookNumber = book.number ?? activeBook + 1
+        const chapterNumber = chapter.number ?? activeChapter + 1
+        send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumber}` })
     }
 
     // NAVIGATION
@@ -146,24 +128,61 @@
 
     export function goBack() {
         if (depth > 0) {
-            // Preserve activeVerse so highlight remains when returning to verse depth
+            pendingVerseDepth = false
             if (depth === 1) {
-                // leaving chapters -> books: clear chapter selection
                 activeChapter = -1
-                // When going back from chapters, highlight the current book
-                if (displayedBookIndex >= 0) activeBook = displayedBookIndex
-            } else if (depth === 2) {
-                // leaving verses -> chapters: preserve displayed chapter highlight
                 activeVerse = 0
-                // When going back from verses, highlight the current chapter and book
-                if (displayedBookIndex >= 0) activeBook = displayedBookIndex
-                if (displayedChapterIndex >= 0) activeChapter = displayedChapterIndex
+            } else if (depth === 2) {
+                activeVerse = 0
             }
             depth--
         }
     }
 
-    // Reset internal selection when the bound scripture object changes (e.g. API <-> local)
+    // Navigate to verse depth from search - handles data loading progressively
+    export function navigateToVerse(bookNum: number, chapterNum: number) {
+        const bookIndex = books.findIndex((b: any) => {
+            const bNum = typeof b?.number === 'string' ? parseInt(b.number, 10) : b?.number
+            return (bNum ?? 0) === bookNum
+        })
+        if (bookIndex >= 0) {
+            activeBook = bookIndex
+            const bookObj: any = books[bookIndex]
+            const chapters = bookObj?.chapters || []
+
+            let chapterIndex = chapters.findIndex((c: any) => {
+                if (!c) return false
+                const cNum = typeof c.number === 'string' ? parseInt(c.number, 10) : c.number
+                return cNum === chapterNum
+            })
+            if (chapterIndex < 0) {
+                chapterIndex = Math.max(0, chapterNum - 1)
+            }
+            activeChapter = chapterIndex
+
+            const chapterObj: any = chapters[chapterIndex]
+            const hasChapters = chapters.length > 0
+            const hasVerses = chapterObj?.verses?.length > 0
+
+            // Request missing data and set depth based on what's available
+            if (bookObj?.keyName && !hasChapters) {
+                pendingVerseDepth = true
+                send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex })
+                depth = 1
+            } else if (bookObj?.keyName && chapterObj?.keyName && !hasVerses) {
+                pendingVerseDepth = true
+                send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex, chapterIndex })
+                depth = 2
+            } else if (hasChapters && hasVerses) {
+                pendingVerseDepth = false
+                depth = 2
+            } else {
+                pendingVerseDepth = true
+                depth = 1
+            }
+        }
+    }
+
     $: if (!scripture || !Array.isArray(scripture.books)) {
         activeBook = -1
         activeChapter = -1
@@ -174,22 +193,6 @@
         depth = 0
     }
 
-    // Common book name mappings for scripture reference parsing
-    const BOOK_NAME_MAPPINGS: { [key: string]: string[] } = {
-        genesis: ["gen", "ge"],
-        "1 john": ["1john", "1 jn", "i john"],
-        "2 john": ["2john", "2 jn", "ii john"],
-        "3 john": ["3john", "3 jn", "iii john"],
-        psalms: ["psalm", "ps"],
-        revelation: ["rev", "re"],
-        matthew: ["matt", "mt"],
-        mark: ["mk"],
-        luke: ["lk"],
-        john: ["jn"]
-        // Add more mappings as needed
-    }
-
-    // Parse scripture reference from slide content and extract highlighting info
     function parseScriptureReference(reference: string): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
         if (!reference || !books || books.length === 0) return null
 
@@ -204,27 +207,14 @@
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
 
-        // Find the book by name (case insensitive) in the current scripture collection
         const bookIndex = books.findIndex((book) => {
-            // Try exact match first
             if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
                 return true
             }
 
-            // Try matching common book name variations
             const normalizedBookName = bookName.toLowerCase().trim()
             const normalizedScriptureName = book.name.toLowerCase()
 
-            // Check if the scripture book name matches any variations of the reference book name
-            for (const [canonical, variations] of Object.entries(BOOK_NAME_MAPPINGS)) {
-                if (canonical === normalizedScriptureName || variations.includes(normalizedScriptureName)) {
-                    if (canonical === normalizedBookName || variations.includes(normalizedBookName)) {
-                        return true
-                    }
-                }
-            }
-
-            // Try partial match as fallback
             return normalizedScriptureName.includes(normalizedBookName) || normalizedBookName.includes(normalizedScriptureName)
         })
 
@@ -232,7 +222,6 @@
             return null
         }
 
-        // Convert chapter number to chapter index (chapters are 0-based arrays)
         const chapterIndex = chapterNumber - 1
 
         return { bookIndex, chapterIndex, verseNumber }
@@ -272,8 +261,8 @@
         return null
     }
 
-    // Initialize highlighting from slide content when scripture state is empty
-    $: if (scripture && Array.isArray(scripture.books) && displayedBookIndex === -1 && displayedChapterIndex === -1 && displayedVerseNumber === 0 && $outShow && $outSlide !== null) {
+    // Update displayed verse from slide content (ensures highlight follows main app changes)
+    $: if (scripture && Array.isArray(scripture.books) && $outShow && $outSlide !== null) {
         const slideScripture = extractScriptureFromSlide()
         if (slideScripture) {
             displayedBookIndex = slideScripture.bookIndex
@@ -281,59 +270,75 @@
             displayedVerseNumber = slideScripture.verseNumber
         }
     }
-    // This ensures that when user reloads the page and a verse is already active,
-    // the navigation will show the correct highlights when they browse back
-    $: if (scripture && Array.isArray(scripture.books) && displayedBookIndex >= 0 && depth === 0) {
-        // At depth 0 (books view), always ensure activeBook matches displayedBookIndex
-        if (activeBook !== displayedBookIndex) {
-            activeBook = displayedBookIndex
-            if (displayedChapterIndex >= 0) {
-                activeChapter = displayedChapterIndex
-            }
-            if (displayedVerseNumber > 0) {
+    // Sync highlight with displayed verse (only when viewing that book/chapter - no auto-navigation)
+    $: if (depth === 2 && displayedVerseNumber > 0 && displayedBookIndex >= 0 && displayedChapterIndex >= 0) {
+        if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex) {
+            if (activeVerse !== displayedVerseNumber) {
                 activeVerse = displayedVerseNumber
             }
         }
     }
 
-    import { outShow, outSlide } from "../../util/stores"
-
-    // NAV CONTROLS: navigate to next/previous chapter or verse
+    // Navigate next/previous verse based on what's displayed on output (not user's navigation)
     export function forward() {
-        // If a verse is highlighted at verse-level, move to next verse
-        if (depth === 2 && activeVerse > 0) {
-            const verseNumbers: number[] = verses.map((v: any, i: number) => v?.number ?? i + 1)
-            const currentIndex = verseNumbers.indexOf(activeVerse)
-            if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
-                activeVerse = verseNumbers[currentIndex + 1]
-            } else if (verseNumbers.length > 0) {
-                activeVerse = verseNumbers[verseNumbers.length - 1]
+        if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
+            const displayedBook = books[displayedBookIndex]
+            if (!displayedBook) return
+            
+            const bookNumber = displayedBook.number ?? displayedBookIndex + 1
+            const displayedChapters = displayedBook.chapters || []
+            const displayedChapter = displayedChapters[displayedChapterIndex]
+            if (!displayedChapter) return
+            
+            const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
+            
+            // Use loaded verses if available, otherwise increment verse number
+            if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
+                const verseNumbers: number[] = verses.map((v: any, i: number) => {
+                    const num = v?.number ?? i + 1
+                    return typeof num === 'string' ? parseInt(num, 10) : num
+                })
+                const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
+                if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
+                    const nextVerse = verseNumbers[currentIndex + 1]
+                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${nextVerse}` })
+                }
+            } else {
+                const nextVerse = displayedVerseNumber + 1
+                send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${nextVerse}` })
             }
-            return
-        }
-        // Otherwise move to next chapter (when at or viewing verse/chapter level)
-        if (depth >= 1) {
-            const totalChapters = chapters.length
-            if (totalChapters > 0) activeChapter = Math.min(Math.max(activeChapter, 0) + 1, totalChapters - 1)
         }
     }
 
     export function backward() {
-        // If a verse is highlighted at verse-level, move to previous verse
-        if (depth === 2 && activeVerse > 0) {
-            const verseNumbers: number[] = verses.map((v: any, i: number) => v?.number ?? i + 1)
-            const currentIndex = verseNumbers.indexOf(activeVerse)
-            if (currentIndex > 0) {
-                activeVerse = verseNumbers[currentIndex - 1]
-            } else if (verseNumbers.length > 0) {
-                activeVerse = verseNumbers[0]
+        if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
+            const displayedBook = books[displayedBookIndex]
+            if (!displayedBook) return
+            
+            const bookNumber = displayedBook.number ?? displayedBookIndex + 1
+            const displayedChapters = displayedBook.chapters || []
+            const displayedChapter = displayedChapters[displayedChapterIndex]
+            if (!displayedChapter) return
+            
+            const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
+            
+            // Use loaded verses if available, otherwise decrement verse number
+            if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
+                const verseNumbers: number[] = verses.map((v: any, i: number) => {
+                    const num = v?.number ?? i + 1
+                    return typeof num === 'string' ? parseInt(num, 10) : num
+                })
+                const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
+                if (currentIndex > 0) {
+                    const prevVerse = verseNumbers[currentIndex - 1]
+                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${prevVerse}` })
+                }
+            } else {
+                if (displayedVerseNumber > 1) {
+                    const prevVerse = displayedVerseNumber - 1
+                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${prevVerse}` })
+                }
             }
-            return
-        }
-        // Otherwise move to previous chapter
-        if (depth >= 1) {
-            const totalChapters = chapters.length
-            if (totalChapters > 0) activeChapter = Math.max(Math.min(activeChapter, totalChapters - 1) - 1, 0)
         }
     }
 
@@ -383,17 +388,17 @@
                             role="button"
                             tabindex="0"
                             on:mousedown={() => {
-                                activeVerse = 0
-                                activeChapter = -1
                                 activeBook = i
+                                activeChapter = -1
+                                activeVerse = 0
                                 depth++
                             }}
                             on:keydown={(e) =>
                                 e.key === "Enter" &&
                                 (() => {
-                                    activeVerse = 0
-                                    activeChapter = -1
                                     activeBook = i
+                                    activeChapter = -1
+                                    activeVerse = 0
                                     depth++
                                 })()}
                             class:active={activeBook === i}
@@ -423,21 +428,32 @@
                         role="button"
                         tabindex="0"
                         on:mousedown={() => {
-                            // Only reset verse highlight when switching to a different chapter
-                            if (activeChapter !== i) activeVerse = 0
+                            const previousChapter = activeChapter
                             activeChapter = i
+                            activeBook = i >= 0 ? activeBook : -1
+                            if (i === displayedChapterIndex && activeBook === displayedBookIndex && displayedVerseNumber > 0) {
+                                activeVerse = displayedVerseNumber
+                            } else if (previousChapter !== i) {
+                                activeVerse = 0
+                            }
                             depth++
                         }}
                         on:keydown={(e) =>
                             e.key === "Enter" &&
                             (() => {
-                                if (activeChapter !== i) activeVerse = 0
+                                const previousChapter = activeChapter
                                 activeChapter = i
+                                activeBook = i >= 0 ? activeBook : -1
+                                if (i === displayedChapterIndex && activeBook === displayedBookIndex && displayedVerseNumber > 0) {
+                                    activeVerse = displayedVerseNumber
+                                } else if (previousChapter !== i) {
+                                    activeVerse = 0
+                                }
                                 depth++
                             })()}
                         class:active={activeChapter === i}
-                        class:displayed={i === displayedChapterIndex && activeBook === displayedBookIndex}
-                        class:output={i === displayedChapterIndex && activeBook === displayedBookIndex}
+                        class:displayed={activeBook === displayedBookIndex && i === displayedChapterIndex}
+                        class:output={activeBook === displayedBookIndex && i === displayedChapterIndex}
                     >
                         {chapterUiId}
                     </span>
@@ -452,12 +468,12 @@
         <div class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
             {#if verses.length}
                 {#each verses as verse, i}
-                    {@const id = Number(verse.number) || i + 1}
-                    {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && id === displayedVerseNumber}
-                    {@const isActive = activeVerse == id}
-                    <button type="button" class="verse-button" on:click={() => playScripture(id)} on:keydown={(e) => e.key === "Enter" && playScripture(id)} class:active={isActive} class:displayed={isDisplayed}>
+                    {@const verseNumber = Number(verse.number) || i + 1}
+                    {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
+                    {@const isActive = activeVerse === verseNumber}
+                    <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={(e) => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
-                            {id}
+                            {verseNumber}
                         </span>
                         {#if $scriptureViewList}{formatBibleText(verse.text || verse.value)}{/if}
                     </button>
@@ -635,7 +651,7 @@
         box-shadow: inset 0 0 0 2px var(--secondary);
         border-radius: 6px;
     }
-    /* Distinguish displayed reference vs browsing selection at verse depth */
+    /* Highlight currently displayed verse - works across all translations */
     .grid .verses .displayed {
         background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);

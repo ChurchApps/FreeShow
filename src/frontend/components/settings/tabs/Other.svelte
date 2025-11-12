@@ -183,6 +183,8 @@
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 
+<MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
+
 <MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} defaultValue={false} on:change={toggleHardwareAcceleration} />
 <!-- "optimized_mode": "Optimized mode", -->
 <!-- <MaterialToggleSwitch label="settings.optimized_mode" checked={$special.optimizedMode} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "optimizedMode")} /> -->
@@ -264,7 +266,7 @@
     </MaterialButton>
 </InputRow>
 
-{#if $usageLog.all?.length}
+{#if $special.logSongUsage && $usageLog.all?.length}
     <InputRow>
         <MaterialButton disabled={exportingUsageLog} style="width: 100%;justify-content: left;" icon={usageLogExported ? "reset" : "export"} on:click={() => (usageLogExported ? resetUsageLog() : exportUsageLog())}>
             <T id="actions.{usageLogExported ? 'reset' : 'export'}_usage_log" />

@@ -1,13 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
     import type { Styles } from "../../../types/Settings"
-    import type { Item } from "../../../types/Show"
+    import type { Item, TemplateStyleOverride } from "../../../types/Show"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import { createVirtualBreaks } from "../../show/slides"
+    import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
     export let slideIndex = 0
@@ -38,6 +39,7 @@
     export let maxLinesInvert = false // stage next item preview (last lines)
     export let centerPreview = false
     export let revealed = -1
+    export let styleOverrides: TemplateStyleOverride[] = []
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -52,6 +54,9 @@
             linesEnd = index + linesCount
         }
     }
+
+    let renderedLines: any[] = []
+    $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
     onDestroy(() => {
         clearInterval(dynamicInterval)
@@ -225,7 +230,7 @@
     style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
 >
     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
-        {#each lines as line, i}
+        {#each renderedLines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                 {#if chords && chordLines[i]}
                     <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;{style ? line.align : ''}">
@@ -245,6 +250,7 @@
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
+                            class="textContainer"
                             style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                 ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
                                 : style
@@ -314,7 +320,8 @@
     color: white;
   } */
 
-    .break:not(.stageChords) :global(span) {
+    /* not sure what this is used for? */
+    .break:not(.stageChords) :global(span.textContainer) {
         font-size: 100px;
         min-height: 50px;
         /* display: inline-block; */
@@ -324,6 +331,13 @@
     .break.smallFontSize :global(span) {
         /* font-size: 30px; */
         font-size: var(--font-size) !important;
+    }
+
+    /* bible parts */
+    .break :global(span.uncertain) {
+        opacity: 0.7;
+        font-size: 0.8em;
+        font-style: italic;
     }
 
     /* .height {

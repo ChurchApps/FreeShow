@@ -42,10 +42,10 @@
     $: templateBackground = template.settings?.backgroundPath
 
     // auto change template based on number of bibles (if default)
-    $: if (activeScriptureId || templateId) setTimeout(checkTemplate, 100)
+    $: if (activeScriptureId || templateId || biblesContent.length) setTimeout(checkTemplate, 100)
     $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
     function checkTemplate() {
-        if (!isDefault) return
+        if (!isDefault || !biblesContent.length) return
 
         let newTemplateId = "scripture_" + biblesContent.length
         scriptureSettings.update((a) => {
@@ -181,6 +181,7 @@
             <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={(e) => update("splitLongVerses", e.detail)} />
         </InputRow>
         {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
+            <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={(e) => update("splitLongVersesSuffix", e.detail)} />
             <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
         {/if}
 

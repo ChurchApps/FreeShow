@@ -51,6 +51,29 @@
         if (timer) startFolderTimer(path, { type: "pdf", path: "" })
     }
 
+    // AUTO SCROLL TO ACTIVE PAGE
+    let isScrolling: any = null
+    $: if (active !== -1) scrollToActive()
+    function scrollToActive() {
+        if (isScrolling) clearTimeout(isScrolling)
+        isScrolling = setTimeout(() => {
+            const slide = document.getElementById("id_" + getId(path) + "_" + active)
+            if (!slide) return
+
+            const scrollElem = slide.closest(".grid")
+            const slideTop = slide.offsetTop
+            const slideHeight = slide.clientHeight
+
+            scrollElem?.scrollTo({ top: slideTop - slideHeight * 0.8, behavior: "smooth" })
+
+            isScrolling = null
+        }, 50)
+    }
+
+    function getId(text: string) {
+        return text.replace(/[^a-zA-Z0-9]+/g, "")
+    }
+
     /////
 
     // GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -105,7 +128,7 @@
 
 <div class="grid">
     {#each { length: pageCount } as _page, i}
-        <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
+        <div id={"id_" + getId(path) + "_" + i} class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
             <!-- icons -->
             <div class="icons">
                 {#if timer}

@@ -23,7 +23,7 @@
         selected
     } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { clone, rangeSelect } from "../../helpers/array"
+    import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -31,7 +31,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -86,7 +86,8 @@
     $: currentBible = currentBibleData?.bibleData?.data || null
     $: books = currentBible?.books || null
     $: chapters = currentBibleData?.bookData?.data?.chapters || null
-    $: verses = currentBibleData?.chapterData?.data?.verses || null
+    // $: verses = currentBibleData?.chapterData?.data?.verses || null
+    $: verses = currentBibleData?.chapterData?.data?.verses?.map((a) => ({ ...a, text: currentBibleData?.chapterData?.getVerse(a.number).getHTML() || "" })) || null
 
     // category color / abbreviation data
     $: booksData = currentBibleData?.bibleData?.getBooksData() || []
@@ -134,6 +135,13 @@
         })
 
         return newVerses
+    }
+
+    function buildVerseLabel(id: number, subverse: number, endNumber: number, showSuffix: boolean) {
+        const baseVisible = !subverse || subverse === 1 || showSuffix
+        const base = baseVisible ? `${id}${endNumber ? "-" + endNumber : ""}` : ""
+        const suffix = showSuffix && subverse ? getVersePartLetter(subverse) : ""
+        return { base, suffix }
     }
 
     function toggleChapter(e: any, id: string) {
@@ -278,24 +286,46 @@
 
     onMount(() => selected.set({ id: "scripture", data: [] }))
 
+    let previousSelection: (number | string)[] = []
     let isSelected = false
-    function updateVersesSelection(e: any, verseNumber: string) {
+    function updateVersesSelection(e: any, verseNumber: string, isClick: boolean = false) {
+        const selectedVerses = clone(activeReference.verses)
+
+        if (isClick) {
+            if (previousSelection.find((a) => a.toString() === verseNumber)) {
+                return [[verseNumber]]
+            }
+            return selectedVerses
+        }
+
+        previousSelection = clone(selectedVerses[selectedVerses.length - 1])
+
         isSelected = true
         setTimeout(() => (isSelected = false), 20)
 
-        const selectedVerses = clone(activeReference.verses)
-        selectedVerses[selectedVerses.length - 1] = rangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber)
+        const keys = e.ctrlKey || e.metaKey || e.shiftKey
+        if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a.toString() === verseNumber || a === getVerseId(verseNumber))) {
+            selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
+        }
 
         // drop action (create slide/show from drag&drop)
         selected.set({ id: "scripture", data: [] })
 
         return selectedVerses
+
+        function getVerseId(verseRef: number | string) {
+            return Number(verseRef.toString().split("_")[0])
+        }
     }
 
     $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
     function selectAllVerses() {
-        if (!verses) return
-        openVerse([verses.map((a) => a.number)])
+        if (!splittedVerses) return
+
+        openVerse([splittedVerses.map((a) => a.id)])
+
+        // update
+        setTimeout(() => (activeReference = activeReference))
     }
 
     /// SEARCH ///
@@ -626,6 +656,8 @@
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
+                                {@const showSplitSuffix = $scriptureSettings.splitLongVersesSuffix}
+                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSplitSuffix)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find((vid) => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
 
@@ -637,22 +669,16 @@
                                     class:isActive
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
-                                    on:click={(e) => {
-                                        openVerse(updateVersesSelection(e, content.id))
-                                    }}
-                                    on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
+                                    on:mousedown={(e) => openVerse(updateVersesSelection(e, content.id))}
+                                    on:click={(e) => openVerse(updateVersesSelection(e, content.id, true))}
                                     on:click={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
+                                    on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <!-- on:mouseup={(e) => updateVersesSelection(e, id)}
-                                    on:mousedown={(e) => {
-                                        if (e.ctrlKey || e.metaKey || e.shiftKey) return
-                                        openVerse(id)
-                                    }} -->
-                                    <span class="v" style={endNumber && subverse ? "width: 60px;" : ""}>
-                                        {id}{#if endNumber}-{endNumber}{/if}
+                                    <span class="v" style={endNumber && subverse && showSplitSuffix ? "width: 60px;" : ""}>
+                                        {verseLabel.base}
                                         <!-- WIP style position not very good -->
-                                        {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
+                                        {#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}
                                     </span>
 
                                     {#if $scriptureMode !== "grid"}
@@ -864,6 +890,13 @@
         font-style: italic;
         width: 100%;
         text-align: center;
+    }
+
+    /* bible parts */
+    .main :global(.uncertain) {
+        opacity: 0.7;
+        font-size: 0.8em;
+        font-style: italic;
     }
 
     /* LIST MODE */

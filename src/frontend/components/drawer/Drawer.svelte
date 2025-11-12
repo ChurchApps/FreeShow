@@ -154,7 +154,7 @@
 
             // create from search
             if (match === "SEARCH_CREATE") {
-                quickTextCache.set({ name: searchValue[0].toUpperCase() + searchValue.slice(1), text: "", fromSearch: true })
+                quickTextCache.set({ name: searchValue[0]?.toUpperCase() + searchValue.slice(1), text: "", fromSearch: true })
                 activePopup.set("show")
                 return
             }

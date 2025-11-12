@@ -78,7 +78,7 @@
     //     const customLocation = !!$special.customUserDataLocation
     //     if (customLocation) save(false, { backup: true, isAutoBackup: true })
 
-    //     autosave.set("never")
+    //     autosave.set("15min")
     //     special.update((a) => {
     //         delete a.autoBackup
     //         delete a.customUserDataLocation
@@ -111,8 +111,9 @@
         const now = Date.now()
 
         // autosave
-        if (previousAutosave && ($autosave || "never") !== "never") {
-            const saveInterval = convertAutosave[$autosave]
+        const as = $autosave || "15min"
+        if (previousAutosave && as !== "never") {
+            const saveInterval = convertAutosave[as]
             nextAutosave = now - previousAutosave - saveInterval
         } else {
             nextAutosave = 0
@@ -172,7 +173,7 @@
     $: autoBackup = $special.autoBackup || "weekly"
 </script>
 
-<MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="never" options={autosaveList} on:change={(e) => autosave.set(e.detail)} />
+<MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={(e) => autosave.set(e.detail)} />
 <MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
 <!-- changing the "Data loction" should also change "Shows" location if it's the correct path ? -->

@@ -86,13 +86,13 @@
     function removeSlideSetting(key: string) {
         if (!slide || currentShow.locked) return
 
-        let settings = clone(slide.settings)
+        let settings = clone(slide.settings || {})
         delete settings[key]
         let newData = { style: settings }
 
         history({
             id: "slideStyle",
-            oldData: { style: slide.settings },
+            oldData: { style: slide.settings || {} },
             newData,
             location: { page: "show", show: $activeShow!, slide: layoutSlide.id }
         })

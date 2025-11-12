@@ -266,8 +266,10 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
         // check if path already exists on the system
         if (doesPathExist(rawPath)) return
 
+        const extension = upath.extname(rawPath)
         const fileName = upath.basename(rawPath)
-        const file = zipData.find((a) => a.name === fileName)?.content
+        const hashedFileName = `${upath.basename(rawPath, extension)}__${filePathHashCode(rawPath)}${extension}`
+        const file = zipData.find((a) => a.name === hashedFileName || a.name === fileName)?.content
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten

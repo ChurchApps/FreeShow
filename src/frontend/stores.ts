@@ -262,7 +262,17 @@ export const stageShows: Writable<StageLayouts> = writable({}) // {default}
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
-export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
+export const scriptureSettings: Writable<any> = writable({
+    template: "scripture",
+    versesPerSlide: 3,
+    verseNumbers: false,
+    showVersion: false,
+    showVerse: true,
+    referenceDivider: ":",
+    splitLongVerses: false,
+    longVersesChars: 100,
+    splitLongVersesSuffix: false
+}) // {default}
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
@@ -284,7 +294,7 @@ export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
-export const autosave: Writable<string> = writable("never") // "never"
+export const autosave: Writable<string> = writable("15min") // "15min"
 export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false
@@ -421,6 +431,8 @@ export const $ = {
     themes,
     outputs,
     styles,
+    customMetadata,
+    customMessageCredits,
     outLocked,
     ports,
     maxConnections,

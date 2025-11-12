@@ -3,6 +3,7 @@ import { get } from "svelte/store"
 import { OUTPUT, STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
+import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import {
@@ -31,6 +32,7 @@ import {
     selected,
     showsCache,
     sortedShowsList,
+    special,
     styles,
     timers,
     variables,
@@ -55,8 +57,7 @@ import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_variable } from "./api"
-import { clearAudio } from "../../audio/audioFading"
+import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -601,6 +602,16 @@ export function timerSeekTo(data: API_seek) {
             delete a[index].startTime
         }
 
+        return a
+    })
+}
+
+// OTHER
+
+export function toggleLogSongUsage(data: API_toggle_specific) {
+    const newValue = data.value !== undefined ? data.value : !get(special).logSongUsage
+    special.update((a) => {
+        a.logSongUsage = newValue
         return a
     })
 }

@@ -279,7 +279,7 @@ export async function setSlideStyle(style: StyleClipboard, slides: any) {
     }
 
     function updateSlideStyle(slide) {
-        const oldData = { style: slide.settings }
+        const oldData = { style: slide.settings || {} }
 
         history({
             id: "slideStyle",

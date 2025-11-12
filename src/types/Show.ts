@@ -471,6 +471,15 @@ export interface Template {
     settings?: TemplateSettings
     items: Item[]
 }
+export interface TemplateStyleOverride {
+    id: string
+    pattern: string
+    color?: string
+    bold?: boolean
+    italic?: boolean
+    underline?: boolean
+    uppercase?: boolean
+}
 export interface TemplateSettings {
     resolution?: Resolution
     backgroundColor?: string
@@ -480,6 +489,7 @@ export interface TemplateSettings {
     maxLinesPerSlide?: number // auto break slides if more than set lines
     breakLongLines?: number // auto break lines if longer than set words
     actions?: any[]
+    styleOverrides?: TemplateStyleOverride[]
 }
 
 // output
