@@ -435,13 +435,11 @@ export function goToNextProjectItem(key = "") {
             if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
 
             // mark as played
-            if (newShow.type !== "section") {
-                projects.update((a) => {
-                    if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
-                    a[get(activeProject)!].shows[index - 1].played = true
-                    return a
-                })
-            }
+            projects.update((a) => {
+                if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
+                a[get(activeProject)!].shows[index - 1].played = true
+                return a
+            })
         }
     })
 }
