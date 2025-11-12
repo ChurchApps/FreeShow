@@ -5,7 +5,7 @@
 import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
 import fs, { type WriteFileOptions } from "fs"
-import { join } from "path"
+import { basename, extname, join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -16,6 +16,7 @@ import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openInSystem, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
+import { filePathHashCode } from "./thumbnails"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions = {
@@ -267,7 +268,9 @@ export function exportProject(data: { type: "project"; path: string; name: strin
     files.forEach((path) => {
         try {
             // file might not exist
-            zip.addLocalFile(path)
+            const extension = extname(path)
+            const hashedFileName = `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
+            zip.addLocalFile(path, "", hashedFileName)
         } catch (err) {
             console.error("Could not add a file to project:", err)
         }
