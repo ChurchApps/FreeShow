@@ -74,15 +74,14 @@
     // timer updater
     let loaded = false
     let dateInterval: NodeJS.Timeout | null = null
-    let rafId: number | null = null
     onMount(() => {
-        rafId = requestAnimationFrame(() => (loaded = true))
+        loaded = true // ensure autosize runs before the first frame shows large text
+        if (itemElem) calculateAutosize() // pre-measure immediately so transitions do not flash oversized text
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
         if (loopStop) clearTimeout(loopStop)
         if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
-        if (rafId !== null) cancelAnimationFrame(rafId)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
