@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
-    import { activeEdit, overlays, templates } from "../../../stores"
+    import { activeEdit, activePopup, overlays, popupData, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -8,6 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
@@ -104,6 +105,18 @@
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(settings.firstSlideTemplate || "")} />
                 {/if} -->
         </InputRow>
+
+        <MaterialButton
+            variant="outlined"
+            icon="text"
+            style="width: 100%;"
+            on:click={() => {
+                popupData.set({ templateId })
+                activePopup.set("template_style_overrides")
+            }}
+        >
+            {translateText("popup.template_style_overrides")}
+        </MaterialButton>
     </div>
 </div>
 

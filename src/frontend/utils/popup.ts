@@ -64,6 +64,7 @@ import SetTime from "../components/main/popups/SetTime.svelte"
 import Shortcuts from "../components/main/popups/Shortcuts.svelte"
 import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
 import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
+import TemplateStyleOverrides from "../components/main/popups/TemplateStyleOverrides.svelte"
 import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
 import Trigger from "../components/main/popups/Trigger.svelte"
@@ -93,6 +94,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
     manage_dynamic_values: ManageDynamicValues,
+    template_style_overrides: TemplateStyleOverrides,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,
