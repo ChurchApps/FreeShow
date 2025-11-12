@@ -17,6 +17,7 @@ import {
     cachedShowsData,
     colorbars,
     customMessageCredits,
+    customMetadata,
     draw,
     drawSettings,
     drawTool,
@@ -241,6 +242,9 @@ export function storeSubscriber() {
         send(STAGE, ["OUT_SLIDE_CACHE"], a)
     })
 
+    customMetadata.subscribe((data) => {
+        send(OUTPUT, ["CUSTOM_METADATA"], data)
+    })
     customMessageCredits.subscribe((data) => {
         send(OUTPUT, ["CUSTOM_CREDITS"], data)
     })
@@ -396,6 +400,8 @@ const initalOutputData = {
     PROJECTS: "projects",
     ACTIVE_PROJECT: "activeProject",
     SHOWS_DATA: "shows",
+    CUSTOM_METADATA: "customMetadata",
+    CUSTOM_CREDITS: "customMessageCredits",
 
     // received by Output
     VOLUME: "volume"

@@ -431,6 +431,8 @@ export const $ = {
     themes,
     outputs,
     styles,
+    customMetadata,
+    customMessageCredits,
     outLocked,
     ports,
     maxConnections,
