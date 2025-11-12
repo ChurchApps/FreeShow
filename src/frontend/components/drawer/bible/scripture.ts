@@ -293,20 +293,29 @@ export const textKeys = {
 
 
 export function joinRange(array: (number | string)[]) {
-    if (!Array.isArray(array) || !array.length) return ""
+    // console.log("INPUT", array)
 
-    const sorted = array.slice().sort((a, b) => {
+    let prev = -1
+    let range = ""
+
+    // sort in correct order (should not be, but can be mixed up: ["10", "9", "8_b", 8, "8_a", "7"])
+    // If items include an optional chapter prefix (e.g. "2:7"), we want unprefixed verses
+    // first, then chapter-prefixed groups sorted by chapter number, then verse.
+    array = array.sort((a, b) => {
         const sa = String(a)
         const sb = String(b)
 
+        // detect optional chapter prefix
         const chapA = sa.match(/^(\d+):/)
         const chapB = sb.match(/^(\d+):/)
         const chapANum = chapA ? Number(chapA[1]) : null
         const chapBNum = chapB ? Number(chapB[1]) : null
 
+        // strip chapter prefix for verse parsing/comparison
         const restA = sa.replace(/^\d+:/, "")
         const restB = sb.replace(/^\d+:/, "")
 
+        // Run match and safely handle null on the remaining verse part
         const matchA = restA.match(/^(\d+)(?:_(.+))?$/) || []
         const matchB = restB.match(/^(\d+)(?:_(.+))?$/) || []
 
@@ -316,6 +325,7 @@ export function joinRange(array: (number | string)[]) {
         const numB = Number(matchB[1] || 0)
         const suffixB = matchB[2] || ""
 
+        // If both have chapter prefixes: compare chapter first
         if (chapANum !== null && chapBNum !== null) {
             if (chapANum !== chapBNum) return chapANum - chapBNum
             if (numA !== numB) return numA - numB
@@ -324,76 +334,63 @@ export function joinRange(array: (number | string)[]) {
             return suffixA.localeCompare(suffixB)
         }
 
+        // If only one has a chapter prefix, place the non-prefixed one first
         if (chapANum !== null && chapBNum === null) return 1
         if (chapANum === null && chapBNum !== null) return -1
 
+        // Neither have chapter prefixes: compare verse number + suffix
         if (numA !== numB) return numA - numB
         if (suffixA === "" && suffixB !== "") return -1
         if (suffixA !== "" && suffixB === "") return 1
         return suffixA.localeCompare(suffixB)
     })
 
-    const normalized: string[] = []
-    sorted.forEach((entry) => {
-        const raw = String(entry)
+    array.forEach((a, i) => {
+        // if multiple chapters are selected, a preset chapter might be prefixed (2:1)
+        const raw = String(a)
         const chapterMatch = raw.match(/^(\d+):/)
-        const chapterPrefix = chapterMatch ? `${chapterMatch[1]}:` : ""
+        const chapterPrefix = chapterMatch ? chapterMatch[0] : "" // e.g. "2:"
         const noChapter = raw.replace(/^\d+:/, "")
 
-        const { id, endNumber } = getVerseIdParts(noChapter)
-        if (!id) return
+        const { id, subverse, endNumber } = getVerseIdParts(noChapter)
+        const v = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}${subverse ? getVersePartLetter(subverse) : ""}`
 
-        const base = `${chapterPrefix}${id}${endNumber ? "-" + endNumber : ""}`
-        if (normalized[normalized.length - 1] !== base) normalized.push(base)
-    })
+        // For subverses of the same base verse (e.g., 2_1, 2_2), don't skip them
+        if (Number(id) === prev && !subverse) return
 
-    if (!normalized.length) return ""
-
-    type NormalizedPart = { chapter: string | null, start: number, end: number }
-
-    const parts: NormalizedPart[] = normalized
-        .map((token) => {
-            const hasChapter = token.includes(":")
-            const [chapterPart, versePart] = hasChapter ? token.split(":") : [null, token]
-            const [startPart, endPart] = versePart.split("-")
-
-            const start = Number(startPart)
-            const end = Number(endPart || startPart)
-
-            if (Number.isNaN(start) || Number.isNaN(end)) return null
-
-            return { chapter: chapterPart, start, end }
-        })
-        .filter((part): part is NormalizedPart => !!part)
-
-    if (!parts.length) return ""
-
-    const segments: NormalizedPart[] = []
-    parts.forEach((part) => {
-        const last = segments[segments.length - 1]
-        const sameChapter = last && (last.chapter === part.chapter)
-        const isConsecutive = last && sameChapter && part.start <= last.end + 1
-
-        if (!last) {
-            segments.push({ ...part })
-            return
-        }
-
+        // Check if this verse is consecutive to the previous one
+        const isConsecutive = Number(id) - 1 === prev || (Number(id) === prev && subverse && array[i - 1] && getVerseIdParts(String(array[i - 1]).replace(/^\d+:/, "")).subverse === subverse - 1)
         if (isConsecutive) {
-            last.end = Math.max(last.end, part.end)
-            return
+            if (i + 1 === array.length) {
+                // If the last added token has a chapter prefix and the current token
+                // has the same prefix, append only the verse part to the range end
+                const lastToken = range.split("+").pop() || ""
+                const lastChap = (lastToken.match(/^(\d+):/) || [])[1]
+                const curChap = (String(a).match(/^(\d+):/) || [])[1]
+                if (lastChap && curChap && lastChap === curChap) {
+                    range += "-" + v.replace(/^\d+:/, "")
+                } else {
+                    range += "-" + v
+                }
+            }
+        } else {
+            if (range.length) {
+                // get last numeric value from the last token in range
+                const lastToken = range.split("+").pop() || ""
+                const lastNums = lastToken.match(/\d+/g) || []
+                const lastNum = lastNums.length ? Number(lastNums[lastNums.length - 1]) : NaN
+                if (prev !== lastNum) range += "-" + prev
+                range += "+"
+            }
+            range += v
         }
 
-        segments.push({ ...part })
+        // Only update prev for the base verse number, not for subverses
+        if (!subverse || Number(id) !== prev) prev = Number(id)
     })
 
-    return segments
-        .map((segment) => {
-            const chapterPrefix = segment.chapter ? `${segment.chapter}:` : ""
-            if (segment.start === segment.end) return `${chapterPrefix}${segment.start}`
-            return `${chapterPrefix}${segment.start}-${segment.end}`
-        })
-        .join("+")
+    // console.log("OUTPUT", range)
+    return range
 }
 
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {

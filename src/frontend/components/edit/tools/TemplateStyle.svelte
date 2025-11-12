@@ -115,7 +115,7 @@
                 activePopup.set("template_style_overrides")
             }}
         >
-            {translateText("edit.style_overrides")}
+            {translateText("popup.template_style_overrides")}
         </MaterialButton>
     </div>
 </div>

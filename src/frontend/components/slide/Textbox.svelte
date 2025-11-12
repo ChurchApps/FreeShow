@@ -133,24 +133,7 @@
         return 1
     }
 
-    // AUTO SIZE
-
-    let itemElem: HTMLElement | undefined
-
-    let previousItem = "{}"
-    $: newItem = JSON.stringify(item)
-    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines || stageItem)) calculateAutosize()
-    $: if ($variables) setTimeout(calculateAutosize)
-
-    // recalculate auto size if output template is different than show template
-    $: currentShowTemplateId = _show(ref.showId).get("settings.template")
-    // let outputTemplateAutoSize = false
-    $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
-    $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
-    $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
-    // else outputTemplateAutoSize = false
-
-    // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
+    // WORD OVERRIDE
 
     // grab any template level overrides so we can re-use them later
     let templateStyleOverrides: TemplateStyleOverride[] = []
@@ -184,6 +167,25 @@
         if (!resolvedTemplateId) return []
         return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
+
+    // AUTO SIZE
+
+    let itemElem: HTMLElement | undefined
+
+    let previousItem = "{}"
+    $: newItem = JSON.stringify(item)
+    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines || stageItem)) calculateAutosize()
+    $: if ($variables) setTimeout(calculateAutosize)
+
+    // recalculate auto size if output template is different than show template
+    $: currentShowTemplateId = _show(ref.showId).get("settings.template")
+    // let outputTemplateAutoSize = false
+    $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
+    $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
+    $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
+    // else outputTemplateAutoSize = false
+
+    // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
     let customTypeRatio = 1
 
