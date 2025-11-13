@@ -110,8 +110,9 @@ export interface Item {
     align?: string
     specialStyle?: any // line gap && line background
     media?: any
-    timer?: Timer // pre 0.8.3 // also local backup?
-    timerId?: string
+    // timer?: Timer // pre 0.8.3 // also local backup?
+    timer?: { id: string }
+    timerId?: string // pre 1.5.0
     clock?: Clock
     events?: DynamicEvent
     type?: ItemType
