@@ -87,6 +87,7 @@ import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, 
 import { checkForUpdates } from "./checkForUpdates"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { startAutosave } from "./common"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -241,7 +242,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     ports: (v: any) => ports.set(v),
     disabledServers: (v: any) => disabledServers.set(v),
     serverData: (v: any) => serverData.set(v),
-    autosave: (v: any) => autosave.set(v),
+    autosave: (v: any) => {
+        autosave.set(v)
+        startAutosave()
+    },
     timeFormat: (v: any) => timeFormat.set(v),
     outputs: (v: any) => {
         Object.keys(v).forEach((id: string) => {

@@ -138,7 +138,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             )
 
             // run category action if show slide is not currently outputted, and it does not have a custom override action
-            if (currentOutSlideId !== data?.id || resetActionTrigger) {
+            if ((currentOutSlideId !== data?.id) || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
                 const categoryActionId = get(categories)[category]?.action
                 if (!overrideCategoryAction && categoryActionId) runAction(get(actions)[categoryActionId], {}, true)
@@ -218,11 +218,16 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
     setOutput("transition", { duration: timer, folderPath })
 }
 
+let justLogged = ""
 function appendShowUsage(showId: string) {
     if (!get(special).logSongUsage) return
 
     const show = get(showsCache)[showId]
     if (!show) return
+
+    // only log once in a row
+    if (show.name === justLogged) return
+    justLogged = show.name || ""
 
     usageLog.update((a) => {
         const metadata = show.meta || {}

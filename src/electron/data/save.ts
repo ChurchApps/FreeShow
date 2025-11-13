@@ -12,7 +12,11 @@ import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFo
 import { renameShows } from "../utils/shows"
 import { wait } from "../utils/helpers"
 
+let isSaving = false
 export async function save(data: SaveData) {
+    if (isSaving) return
+    isSaving = true
+
     const reset = !!data.customTriggers?.changeUserData?.reset
     if (reset) {
         data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
@@ -83,6 +87,8 @@ export async function save(data: SaveData) {
 
     if (data.closeWhenFinished) await wait(300) // make sure files are written before closing
     if (!reset) sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })
+
+    isSaving = false
 }
 
 // a few keys might not be placed in the same order in JS object vs store file

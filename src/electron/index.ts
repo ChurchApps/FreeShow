@@ -81,12 +81,7 @@ function startApp() {
 
     setTimeout(createLoading)
 
-    // Start these heavy operations in parallel, not blocking main window creation
-    Promise.resolve()
-        .then(() => {
-            updateDataPath({ load: true })
-        })
-        .catch(console.error)
+    updateDataPath({ load: true })
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()

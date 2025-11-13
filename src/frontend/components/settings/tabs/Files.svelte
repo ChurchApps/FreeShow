@@ -3,7 +3,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
     import { activePopup, autosave, dataPath, driveData, driveKeys, showsPath, special } from "../../../stores"
-    import { previousAutosave } from "../../../utils/common"
+    import { previousAutosave, startAutosave } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
@@ -167,13 +167,18 @@
         })
     }
 
+    function updateAutosave(e) {
+        autosave.set(e.detail)
+        startAutosave()
+    }
+
     const infoStyle = "color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;"
     $: autosaveInfo = nextAutosave ? `<span style="${infoStyle}">${joinTimeBig(nextAutosave / 1000)}<span>` : ""
     $: autoBackupInfo = nextAutobackup ? `<span style="${infoStyle}">${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)}<span>` : ""
     $: autoBackup = $special.autoBackup || "weekly"
 </script>
 
-<MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={(e) => autosave.set(e.detail)} />
+<MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
 <MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
 <!-- changing the "Data loction" should also change "Shows" location if it's the correct path ? -->
