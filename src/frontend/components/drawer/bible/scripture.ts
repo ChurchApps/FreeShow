@@ -22,7 +22,7 @@ import { checkName } from "../../helpers/show"
 import { getItemText } from "../../edit/scripts/textStyle"
 import { splitTextContentInHalf } from "../../../show/slides"
 
-const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
+const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
 export async function getApiBiblesList() {
     try {
