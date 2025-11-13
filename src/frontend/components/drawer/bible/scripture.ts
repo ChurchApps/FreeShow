@@ -25,7 +25,12 @@ import { splitTextContentInHalf } from "../../../show/slides"
 const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
 
 export async function getApiBiblesList() {
-    return await ApiBiblesList("*", SCRIPTURE_API_URL)
+    try {
+        return await ApiBiblesList("*", SCRIPTURE_API_URL)
+    } catch (err) {
+        console.error("Error loading API Bible:", err)
+        return await ApiBiblesList(getKey("bibleapi"))
+    }
 }
 
 export async function loadJsonBible(id: string) {
@@ -35,7 +40,12 @@ export async function loadJsonBible(id: string) {
     if (isApi) {
         const key = getKey("bibleapi")
         const apiId = scriptureData?.id || id
-        return await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
+        try {
+            return await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
+        } catch (err) {
+            console.error("Error loading API Bible:", err)
+            return await JsonBibleApi(key, apiId)
+        }
     }
 
     if (scriptureData?.collection) throw new Error("Collections must load one at a time")
