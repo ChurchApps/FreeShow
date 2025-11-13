@@ -377,7 +377,7 @@
         <div class="books">
             {#if books?.length}
                 {#key books}
-                    {#each books as book, i}
+                    {#each books as book, i (book.number || i)}
                         <!-- this uses index instead of number! -->
                         {@const bookUiId = i + 1}
                         {@const color = getColorCode(books, i)}
@@ -421,7 +421,7 @@
     {#if depth === 1}
         <div class="chapters context #scripture_chapter" style="text-align: center;" class:center={!chapters?.length}>
             {#if chapters?.length}
-                {#each chapters as chapter, i}
+                {#each chapters as chapter, i (chapter.number || i)}
                     {@const chapterUiId = Number(chapter.number) || i + 1}
                     <span
                         id={chapterUiId.toString()}
@@ -467,7 +467,7 @@
     {#if depth === 2}
         <div class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
             {#if verses.length}
-                {#each verses as verse, i}
+                {#each verses as verse, i (verse.number || i)}
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
@@ -559,6 +559,7 @@
     .grid .verses {
         flex-wrap: wrap;
         align-content: normal;
+        gap: 0;
     }
 
     .grid .verses.list {
@@ -593,6 +594,8 @@
         /* min-width: 40px; */
         min-width: 50px;
         flex: 1;
+        padding: 0;
+        margin: 0;
 
         font-weight: 600;
     }

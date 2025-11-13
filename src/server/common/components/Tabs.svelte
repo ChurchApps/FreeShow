@@ -23,7 +23,7 @@
 
 <div class="tabs">
     {#each Object.entries(tabs) as [id, tab]}
-        <Button on:click={() => setActive(id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
+        <Button on:click={() => setActive(id)} title={tab.name} active={active === id} center disabled={!disabled[id]} compact>
             <Icon id={tab.icon} size={2} />
             <!-- {#if labels}
         <T id={tab.name} />
@@ -40,12 +40,21 @@
         display: flex;
         flex-wrap: wrap;
         background-color: var(--primary-darkest);
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+        /* ensure bottom navigation sits above any sticky page controls on mobile */
+        position: relative;
+        z-index: 3;
+        touch-action: manipulation;
     }
 
     .tabs :global(button) {
         flex: auto;
         padding-inline-start: 0 !important;
         padding-inline-end: 0 !important;
+        border-radius: 8px;
+        margin: 0;
     }
 
     .label {

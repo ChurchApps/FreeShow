@@ -64,7 +64,7 @@
 				</label>
 
 				<div class="submit-wrap">
-					<Button type="submit" bold dark center style="width: 100%; border-radius: 12px;">{translate("remote.submit", $dictionary)}</Button>
+					<Button type="submit" bold center variant="contained" style="width: 100%; border-radius: 12px;">{translate("remote.submit", $dictionary)}</Button>
 				</div>
 			</div>
 		</form>
@@ -89,7 +89,7 @@
 		background-color: var(--primary-darker);
 		border: 1px solid var(--primary-lighter);
 		border-radius: 16px;
-		box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
 		position: relative;
 		overflow: hidden;
 	}
@@ -148,13 +148,15 @@
 	}
 	.input:hover {
 		border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary));
+		background-color: rgb(255 255 255 / 0.08);
 	}
 	.input:active,
 	.input:focus {
 		outline: 2px solid var(--secondary);
 		outline-offset: 0;
-		background-color: rgb(255 255 255 / 0.08);
+		background-color: rgb(255 255 255 / 0.1);
 		box-shadow: 0 0 0 4px var(--secondary-opacity);
+		border-color: var(--secondary);
 	}
 	.input::placeholder {
 		color: inherit;

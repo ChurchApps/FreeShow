@@ -65,6 +65,14 @@
 
     let newShowName = ""
     let newShowText = ""
+    let previousCreateShow = false
+    $: {
+        // Set initial name when dialog opens with a string value
+        if ($createShow && typeof $createShow === "string" && !previousCreateShow) {
+            newShowName = $createShow
+        }
+        previousCreateShow = !!$createShow
+    }
     function newShow() {
         if (!newShowText) {
             newShowFinish()
@@ -117,7 +125,7 @@
 {#if $createShow}
     <div class="fullscreen">
         <div style="display: flex;height: 50px;">
-            <Button on:click={() => createShow.set(false)} dark>
+            <Button on:click={() => createShow.set(false)} variant="outlined" style="margin-right: 8px;">
                 <Icon id="back" size={2} />
             </Button>
             <TextInput placeholder={translate("main.unnamed", $dictionary)} value={newShowName} on:change={updateName} />
@@ -126,7 +134,7 @@
         <Textarea style="width: 100%;height: calc(100% - 90px - 6px);" bind:value={newShowText} />
 
         <div style="display: flex;height: 40px;">
-            <Button on:click={newShow} style="width: 100%;" center dark>
+            <Button on:click={newShow} variant="contained" style="width: 100%;" center>
                 <Icon id="add" right />
                 <p style="font-size: 0.8em;">{translate("new.show", $dictionary)}</p>
             </Button>
@@ -140,6 +148,7 @@
         flex-direction: column;
         flex: 1;
         overflow: hidden;
+        min-height: 0;
     }
 
     .justify {
@@ -168,6 +177,10 @@
 
         background-color: var(--primary);
         z-index: 99;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
     }
 
     /* tablet & computers */

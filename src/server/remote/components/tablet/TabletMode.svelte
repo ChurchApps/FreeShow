@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
@@ -51,11 +51,59 @@
     // SHOW
 
     let scrollElem: HTMLElement | undefined
-    // auto scroll
+    let scrollRaf: number | null = null
+    let userScrolled = false
+    let scrollTimeout: number | null = null
+    let lastSlideNumber = -1
+    let lastAutoScrollTime = 0
+    
+    // Detect manual scrolling - disable auto-scroll temporarily
+    function handleScroll() {
+        if (!scrollElem || slideView !== "lyrics") return
+        
+        // If scroll happens more than 300ms after auto-scroll, it's user scroll
+        if (Date.now() - lastAutoScrollTime > 300) {
+            userScrolled = true
+            if (scrollTimeout !== null) clearTimeout(scrollTimeout)
+            // Re-enable auto-scroll after 4 seconds
+            scrollTimeout = setTimeout(() => {
+                userScrolled = false
+                scrollTimeout = null
+            }, 4000) as unknown as number
+        }
+    }
+    
+    // Auto-scroll to current slide
     $: {
-        if (scrollElem && outNumber !== null && slideView === "lyrics") {
-            let offset = (scrollElem.children[outNumber] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 5
-            scrollElem.scrollTo(0, offset - 50)
+        if (scrollElem && outNumber !== null && slideView === "lyrics" && scrollRaf === null && outNumber !== lastSlideNumber) {
+            // Reset flag when slide changes
+            if (lastSlideNumber !== -1) {
+                userScrolled = false
+                if (scrollTimeout !== null) {
+                    clearTimeout(scrollTimeout)
+                    scrollTimeout = null
+                }
+            }
+            
+            // Auto-scroll if user hasn't manually scrolled
+            if (!userScrolled) {
+                const elem = scrollElem
+                const targetSlide = outNumber
+                lastSlideNumber = targetSlide
+                
+                scrollRaf = requestAnimationFrame(() => {
+                    if (!elem || userScrolled) {
+                        scrollRaf = null
+                        return
+                    }
+                    const offset = (elem.children[targetSlide] as HTMLElement)?.offsetTop - elem.offsetTop - 5
+                    elem.scrollTo({ top: offset - 50, behavior: 'smooth' })
+                    lastAutoScrollTime = Date.now()
+                    scrollRaf = null
+                }) as unknown as number
+            } else {
+                lastSlideNumber = outNumber
+            }
         }
     }
 
@@ -88,7 +136,9 @@
             _set("projectsOpened", !$projectsOpened)
         } else if (id === "scripture") {
             activeTab = ""
-            setTimeout(() => (activeTab = "scripture"))
+            requestAnimationFrame(() => {
+                activeTab = "scripture"
+            })
         }
     }
 
@@ -178,11 +228,11 @@
     const minPanel = 200
     const minCenter = 300
     const defaultWidth = 290
-    const snapThreshold = 20 // pixels to snap
+    const snapThreshold = 30 // pixels to snap - larger for easier touch interaction
 
     function clampPersistedWidths() {
         const total = window.innerWidth
-        const resizers = 12
+        const resizers = 24 // increased for larger touch targets
         // Re-read in case values changed outside
         const storedLeft = parseInt(localStorage.getItem("tablet.leftWidth") || String(leftWidth), 10)
         const storedRight = parseInt(localStorage.getItem("tablet.rightWidth") || String(rightWidth), 10)
@@ -236,7 +286,7 @@
         e.preventDefault()
 
         const total = window.innerWidth
-        const resizers = 12 // two resizers of 6px each
+        const resizers = 24 // two resizers with larger touch targets
         const delta = e.clientX - startX
 
         if (dragging === "left") {
@@ -287,6 +337,12 @@
             window.removeEventListener("pointermove", onPointerMove)
         }
     })
+
+    // Cleanup
+    onDestroy(() => {
+        if (scrollTimeout !== null) clearTimeout(scrollTimeout)
+        if (scrollRaf !== null) cancelAnimationFrame(scrollRaf)
+    })
 </script>
 
 <svelte:window on:keydown={keydown} on:resize={clampPersistedWidths} />
@@ -329,19 +385,19 @@
 
                 <div class="buttons">
                     {#if groupsOpened && !addGroups}
-                        <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
+                        <Button on:click={() => (addGroups = true)} variant="outlined" style="width: 100%;" center>
                             <Icon id="add" right />
                             {translate("settings.add", $dictionary)}
                         </Button>
                     {/if}
 
-                    <Button on:click={done} style="width: 100%;" center dark>
+                    <Button on:click={done} variant="contained" style="width: 100%;" center>
                         <Icon id={addGroups ? "back" : "check"} right />
                         {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
                     </Button>
                 </div>
             {:else}
-                <div bind:this={scrollElem} class="scroll" style="height: 100%;overflow-y: auto;background-color: var(--primary-darker);scroll-behavior: smooth;display: flex;flex-direction: column;">
+                <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darker);scroll-behavior: smooth;display: flex;flex-direction: column;">
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
@@ -392,16 +448,16 @@
                         </div>
 
                         <div class="buttons">
-                            <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])}>
+                            <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])} variant="outlined">
                                 <Icon size={1.3} id={slideView} white />
                             </Button>
 
-                            <Button on:click={() => (groupsOpened = true)} center dark>
+                            <Button on:click={() => (groupsOpened = true)} variant="outlined" center class="toolButton">
                                 <Icon id="groups" right />
                                 {translate("tools.groups", $dictionary)}
                             </Button>
 
-                            <Button on:click={() => (editOpened = true)} center dark>
+                            <Button on:click={() => (editOpened = true)} variant="outlined" center class="toolButton">
                                 <Icon id="edit" right />
                                 {translate("titlebar.edit", $dictionary)}
                             </Button>
@@ -439,12 +495,14 @@
                 </div>
 
                 {#if $outShow && layout}
-                    <div class="buttons" style="display: flex;width: 100%;">
-                        <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                        <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
-                        <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outNumber + 1}/{totalSlides}</span>
-                        <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                        <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                    <div class="controls">
+                        <Button on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} variant="outlined" center compact>
+                            <Icon id="previous" size={1.5} />
+                        </Button>
+                        <span class="counter">{outNumber + 1}/{totalSlides}</span>
+                        <Button on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} variant="outlined" center compact>
+                            <Icon id="next" size={1.5} />
+                        </Button>
                     </div>
                 {/if}
             </div>
@@ -479,6 +537,15 @@
         flex-direction: column;
     }
 
+    /* Ensure left panel tabs and center panel layouts align at bottom */
+    .left {
+        justify-content: space-between;
+    }
+
+    .center {
+        justify-content: space-between;
+    }
+
     .left,
     .right {
         width: 290px;
@@ -499,18 +566,20 @@
         overflow: hidden; /* prevent inner content from creating page-wide overflow */
     }
 
-    /* Resizers */
+    /* Resizers - touch-friendly for tablets */
     .resizer {
         position: relative;
-        z-index: 1;
-        width: 6px;
-        background: var(--primary-darker);
+        z-index: 10;
+        width: 12px;
+        background: transparent;
         cursor: col-resize;
         transition: background 0.2s ease;
         user-select: none;
-        /* Expand touch area */
-        padding: 0 2px;
-        margin: 0 -2px;
+        touch-action: none;
+        /* Large touch target for tablets */
+        padding: 0 8px;
+        margin: 0 -8px;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .resizer::before {
@@ -519,22 +588,29 @@
         top: 0;
         bottom: 0;
         left: 50%;
-        width: 2px; /* single visual line */
+        width: 3px;
         transform: translateX(-50%);
         background-color: var(--primary-lighter);
+        border-radius: 2px;
         transition:
             background-color 0.2s ease,
-            width 0.2s ease;
+            width 0.2s ease,
+            opacity 0.2s ease;
+        opacity: 0.6;
     }
 
     .resizer:hover,
+    .resizer:active,
     .resizer:focus {
-        background: var(--primary-darkest);
+        background: rgba(255, 255, 255, 0.05);
         outline: none;
     }
 
-    .resizer:hover::before {
-        background-color: var(--primary-darkest);
+    .resizer:hover::before,
+    .resizer:active::before {
+        background-color: var(--secondary);
+        width: 4px;
+        opacity: 1;
     }
 
     .resizer:focus {
@@ -542,8 +618,26 @@
     }
 
     .resizer.snapping::before {
-        background-color: var(--primary);
-        width: 4px;
+        background-color: var(--secondary);
+        width: 5px;
+        opacity: 1;
+    }
+
+    /* Larger touch target on tablets */
+    @media (pointer: coarse) {
+        .resizer {
+            width: 20px;
+            padding: 0 12px;
+            margin: 0 -12px;
+        }
+
+        .resizer::before {
+            width: 4px;
+        }
+
+        .resizer:active::before {
+            width: 6px;
+        }
     }
 
     /* ///// */
@@ -579,6 +673,15 @@
         background: rgb(255 255 255 / 0.5);
     }
 
+    /* lyric spacing inside scroll */
+    .scroll .lyric {
+        line-height: 1.5;
+        margin: 0.4rem 0; /* gap between lyric blocks */
+    }
+    .scroll .lyric .break {
+        margin-bottom: 0.25rem; /* gap between lines inside a block */
+    }
+
     /* ///// */
 
     .layouts {
@@ -586,12 +689,25 @@
         justify-content: space-between;
 
         background-color: var(--primary-darkest);
+        border-radius: 12px;
+        padding: 6px;
+        margin: 0;
+        gap: 6px;
 
-        font-size: 0.9em;
+        font-size: 0.95em;
+        /* Align with tabs bar at bottom - no margin to match tabs */
+        margin-top: auto;
     }
 
     .layouts .buttons {
         display: flex;
+        gap: 6px;
+    }
+
+    /* Better spacing for layout buttons */
+    .layouts :global(button) {
+        border-radius: 8px;
+        padding: 0.6em 1em !important;
     }
 
     /* ///// */
@@ -599,6 +715,32 @@
     .outSlides {
         display: flex;
         width: 100%;
+    }
+
+    .controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 8px;
+        padding: 10px 12px;
+        background-color: var(--primary-darkest);
+        border-radius: 12px;
+        margin-top: 8px;
+    }
+
+    .counter {
+        flex: 1;
+        text-align: center;
+        opacity: 0.8;
+        font-size: 1em;
+        font-weight: 500;
+    }
+
+    /* svelte-ignore css-unused-selector */
+    /* This class is used via component props, not directly in template */
+    :global(.toolButton) {
+        padding: 0.75rem 1.25rem !important;
+        font-size: 0.95em !important;
     }
 
     /* Tablet/iPad specific safeguards */
@@ -624,16 +766,23 @@
         justify-content: center;
         align-items: center;
 
-        /* background-color: white; */
-        background-color: rgb(255 255 255 / 0.2);
+        background-color: var(--primary-darker);
         color: var(--text);
+        border: 1px solid var(--primary-lighter);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
         padding: 10px;
-        border-radius: 50%;
-        border: 2px solid black;
+        transition: all 0.2s ease;
+        cursor: pointer;
     }
-    .fullscreen button:hover,
-    .fullscreen button:active {
+    .fullscreen button:hover {
         background-color: var(--primary-lighter);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px);
+    }
+    .fullscreen button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 </style>

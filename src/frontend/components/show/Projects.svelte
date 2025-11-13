@@ -305,6 +305,9 @@
         width: 100%;
         padding: 0.2em 0.8em;
         font-weight: 600;
+        height: 44px; /* match remote header height */
+        min-height: 44px;
+        max-height: 44px;
 
         display: flex;
         justify-content: center;

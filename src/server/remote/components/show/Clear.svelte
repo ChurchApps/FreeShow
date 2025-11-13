@@ -42,6 +42,7 @@
                     red
                     dark
                     center
+                    compact
                 >
                     <Icon id="background" size={1.2} />
                 </Button>
@@ -58,6 +59,7 @@
                 red
                 dark
                 center
+                compact
             >
                 <Icon id={type === "pdf" ? "background" : "slide"} size={1.2} />
             </Button>
@@ -73,6 +75,7 @@
                 red
                 dark
                 center
+                compact
             >
                 <Icon id="overlays" size={1.2} />
             </Button>
@@ -82,11 +85,11 @@
     <span style="display: flex;">
         <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("API:clear_all")} red dark center>
             <Icon id="clear" size={1.2} />
-            <span style="padding-inline-start: 10px;">{translate("clear.all", $dictionary)}</span>
+            <span style="padding-inline-start: 10px; font-size: 1em; font-weight: 500;">{translate("clear.all", $dictionary)}</span>
         </Button>
 
         {#if !tablet}
-            <Button disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => (moreOptions = !moreOptions)} style="flex: 0;" dark center>
+            <Button disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => (moreOptions = !moreOptions)} style="flex: 0;" dark center compact>
                 <Icon id="expand" style="transition: transform .2s;{moreOptions ? 'transform: rotate(180deg);' : ''}" size={1.1} />
             </Button>
         {/if}
@@ -98,12 +101,20 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        font-size: 0.7em;
+        gap: 4px;
+        padding-bottom: 4px;
     }
     .clear :global(button) {
         width: 100%;
         flex: 1;
-        padding: 0.5em 0.8em;
+    }
+    .clear :global(.clearAll) {
+        padding: 0.75rem 1.25rem !important;
+        font-size: 0.95em !important;
+    }
+    .clear :global(.clearAll) :global(svg) {
+        width: 20px;
+        height: 20px;
     }
 
     .clear.tablet {
