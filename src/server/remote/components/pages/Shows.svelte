@@ -19,31 +19,55 @@
         showsSorted = $shows.filter((s) => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
         // removeValues(sortObject(keysToID(s), "name"), "private", true)
     }
-    let filteredShows: any[]
+    let filteredShows: any[] = []
     let filteredStored: any
     $: filteredStored = showsSorted
     // $: filteredStored = showsSorted.filter((s: any) => category === "all" || category === s.category || (category === "unlabeled" && s.category === null))
     // $: console.log(filteredStored)
 
     export let firstMatch: null | string = null
+    
+    // Performance: Limit visible items to prevent browser crash with large lists
+    const MAX_VISIBLE_ITEMS = 500
+    let visibleShows: any[] = []
+    
+    // Debounce search for better performance
+    let searchTimeout: number | null = null
     $: {
-        if (searchValue.length > 1) setTimeout(findMatches, 10)
-        else {
-            filteredShows = filteredStored
+        if (searchTimeout !== null) clearTimeout(searchTimeout)
+        if (searchValue.length > 1) {
+            searchTimeout = setTimeout(findMatches, 150) as unknown as number
+        } else {
+            filteredShows = filteredStored || []
             firstMatch = null
+            updateVisibleShows()
         }
     }
 
     function findMatches() {
+        if (!filteredStored) return
+        
         filteredShows = []
         filteredStored.forEach((s: any) => {
             let match = search(s)
             if (match) filteredShows.push({ ...s, match })
         })
-        // filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
+        // Sort results by match score
         filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? 1 : a.match > b.match ? -1 : 0))
         firstMatch = filteredShows[0]?.id || null
+        updateVisibleShows()
     }
+    
+    function updateVisibleShows() {
+        // Limit visible items to prevent DOM overload
+        if (!filteredShows || filteredShows.length === 0) {
+            visibleShows = []
+            return
+        }
+        visibleShows = filteredShows.slice(0, MAX_VISIBLE_ITEMS)
+    }
+    
+    $: if (filteredShows !== undefined) updateVisibleShows()
 
     $: sva = formatSearch(searchValue).split(" ")
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
@@ -106,7 +130,9 @@
     }
 
     function showSearchKeydown(e: any) {
-        if (e.key === "Enter") openShow(filteredShows[0].id)
+        if (e.key === "Enter" && visibleShows.length > 0) {
+            openShow(visibleShows[0].id)
+        }
     }
 
     // show quick play
@@ -117,7 +143,9 @@
     }
 
     function newShow() {
-        createShow.set(true)
+        // Pre-fill with search value if available
+        const initialName = searchValue.trim() ? searchValue.trim() : true
+        createShow.set(initialName)
     }
 
     onMount(() => {
@@ -127,15 +155,9 @@
             console.log("Unable to use LocalStorage!")
         }
 
-        setTimeout(() => (loadingStarted = true), 10)
-        // initialize custom scrollbar metrics
-        setTimeout(updateScrollbarMetrics, 0)
-        window.addEventListener("resize", handleResize)
+        loadingStarted = true
         return () => {
-            window.removeEventListener("resize", handleResize)
-            window.removeEventListener("pointermove", onThumbPointerMove)
-            if (scrollRaf !== null) cancelAnimationFrame(scrollRaf)
-            if (resizeRaf !== null) cancelAnimationFrame(resizeRaf)
+            if (searchTimeout !== null) clearTimeout(searchTimeout)
         }
     })
 
@@ -164,90 +186,6 @@
 
     // open tab instantly before loading content
     let loadingStarted: boolean = false
-
-    // CUSTOM MOBILE SCROLLBAR (visible and draggable)
-    let enableCustomScrollbar = false
-    let isCoarsePointer = false
-    let thumbHeight = 0
-    let thumbTop = 0
-    let isDragging = false
-    let dragOffsetY = 0
-
-    // Cache computed style values to avoid repeated calculations
-    let cachedPaddingBottom = 0
-
-    function updateScrollbarMetrics() {
-        if (!scrollElem) return
-        // Determine if device uses a coarse pointer (touch). Only then use custom scrollbar
-        isCoarsePointer = typeof window !== "undefined" ? window.matchMedia("(pointer: coarse)").matches : false
-        const scrollHeight = scrollElem.scrollHeight
-        const clientHeight = scrollElem.clientHeight
-        const scrollable = scrollHeight - clientHeight
-        // account for bottom padding reserved for action buttons so track aligns visually
-        if (cachedPaddingBottom === 0) {
-            const paddingBottomStr = getComputedStyle(scrollElem).paddingBottom || "0px"
-            cachedPaddingBottom = Number(paddingBottomStr.replace("px", "")) || 0
-        }
-        const effectiveClientHeight = Math.max(0, clientHeight - cachedPaddingBottom)
-        enableCustomScrollbar = isCoarsePointer
-        if (!enableCustomScrollbar) return
-
-        const minThumb = 36
-        thumbHeight = Math.max((effectiveClientHeight / scrollHeight) * effectiveClientHeight, minThumb)
-        const maxThumbTop = Math.max(0, effectiveClientHeight - thumbHeight)
-        const ratio = scrollable === 0 ? 0 : scrollElem.scrollTop / scrollable
-        thumbTop = Math.min(maxThumbTop, Math.max(0, ratio * maxThumbTop))
-    }
-    let scrollRaf: number | null = null
-    function handleScroll() {
-        if (scrollRaf !== null) return
-        scrollRaf = requestAnimationFrame(() => {
-            updateScrollbarMetrics()
-            scrollRaf = null
-        })
-    }
-    let resizeRaf: number | null = null
-    function handleResize() {
-        if (resizeRaf !== null) return
-        resizeRaf = requestAnimationFrame(() => {
-            updateScrollbarMetrics()
-            resizeRaf = null
-        })
-    }
-
-    function onThumbPointerDown(e: PointerEvent) {
-        if (!scrollElem) return
-        isDragging = true
-        try {
-            ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
-        } catch (err) {
-            // Ignore pointer capture errors on some browsers
-        }
-        const rect = scrollElem.getBoundingClientRect()
-        dragOffsetY = e.clientY - (rect.top + thumbTop)
-        window.addEventListener("pointermove", onThumbPointerMove)
-        window.addEventListener("pointerup", onThumbPointerUp, { once: true })
-        window.addEventListener("pointercancel", onThumbPointerUp, { once: true })
-    }
-
-    function onThumbPointerMove(e: PointerEvent) {
-        if (!isDragging || !scrollElem) return
-        const rect = scrollElem.getBoundingClientRect()
-        const clientHeight = scrollElem.clientHeight
-        const scrollable = scrollElem.scrollHeight - clientHeight
-        const effectiveClientHeight = Math.max(0, clientHeight - cachedPaddingBottom)
-        const maxThumbTop = Math.max(0, effectiveClientHeight - thumbHeight)
-        let y = e.clientY - rect.top - dragOffsetY
-        y = Math.min(maxThumbTop, Math.max(0, y))
-        thumbTop = y
-        const ratio = maxThumbTop === 0 ? 0 : y / maxThumbTop
-        scrollElem.scrollTop = ratio * scrollable
-    }
-
-    function onThumbPointerUp() {
-        isDragging = false
-        window.removeEventListener("pointermove", onThumbPointerMove)
-    }
 </script>
 
 {#if $shows.length}
@@ -257,19 +195,18 @@
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->
         <div class="scroll-wrap">
-            <div class="scroll" class:hide-native={enableCustomScrollbar} bind:this={scrollElem} on:scroll={handleScroll}>
-                {#each filteredShows as show}
+            <div class="scroll show-list" bind:this={scrollElem}>
+                {#each visibleShows as show (show.id)}
                     {#if searchValue.length <= 1 || show.match}
                         <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
                     {/if}
                 {/each}
-                {#if enableCustomScrollbar}
-                    <div class="scrollbar" style={`top:${scrollElem?.getBoundingClientRect ? scrollElem.getBoundingClientRect().top + window.scrollY : 0}px; bottom:var(--bottom-actions-height, 96px);`}>
-                        <div
-                            class="scrollbar-thumb"
-                            style={`height:${thumbHeight}px; transform: translateY(${thumbTop}px);`}
-                            on:pointerdown={onThumbPointerDown}
-                        />
+                {#if filteredShows.length > MAX_VISIBLE_ITEMS}
+                    <div class="limit-notice">
+                        <p>{translate("remote.showing_first", $dictionary) || "Showing first"} {MAX_VISIBLE_ITEMS} {translate("remote.of", $dictionary) || "of"} {filteredShows.length} {translate("main.shows", $dictionary) || "shows"}</p>
+                        {#if searchValue.length > 1}
+                            <p style="font-size: 0.9em; opacity: 0.7; margin-top: 4px;">{translate("remote.refine_search", $dictionary) || "Refine your search to see more results"}</p>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -278,21 +215,19 @@
             <Center faded>{translate("empty.search", $dictionary)}</Center>
         {/if}
 
-        {#if searchValue.length < 2}
-            <div class="buttons">
-                {#if !tablet}
-                    <div class="check">
-                        <p style="font-size: 0.8em;">{translate("remote.quick_play", $dictionary)}</p>
-                        <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
-                    </div>
-                {/if}
+        <div class="buttons">
+            {#if !tablet}
+                <div class="check">
+                    <p>{translate("remote.quick_play", $dictionary)}</p>
+                    <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
+                </div>
+            {/if}
 
-                <Button on:click={newShow} style="width: 100%;" center dark>
-                    <Icon id="add" right />
-                    <p style="font-size: 0.8em;">{translate("new.show", $dictionary)}</p>
-                </Button>
-            </div>
-        {/if}
+            <Button on:click={newShow} style="width: 100%;" center dark class="new-show-button">
+                <Icon id="add" right />
+                <p>{translate("new.show", $dictionary)}</p>
+            </Button>
+        </div>
     {:else}
         <Center faded>{translate("remote.loading", $dictionary)}</Center>
     {/if}
@@ -301,105 +236,148 @@
 {/if}
 
 <style>
-    :global(:root) {
-        --bottom-actions-height: 96px;
+    /* Scroll container */
+    .scroll-wrap {
+        position: relative;
+        display: contents;
     }
-    .scroll-wrap { position: relative; display: contents; }
+
     .scroll {
         display: flex;
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        /* ensure content and scrollbar don't sit under the bottom action bar */
-        padding-bottom: var(--bottom-actions-height, 96px);
-        /* keep room for scrollbar so content isn't underneath */
-        scrollbar-gutter: stable both-edges;
-        /* mobile/touch improvements */
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
         overscroll-behavior: contain;
-        /* FreeShow UI scrollbar */
-        scrollbar-width: thin;
-        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-    }
-    /* Hide native scrollbar when custom one is enabled */
-    .hide-native {
-        scrollbar-width: none; /* Firefox */
-    }
-    .hide-native::-webkit-scrollbar { width: 0; height: 0; }
-    /* WebKit FreeShow UI */
-    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-    .scroll::-webkit-scrollbar-track,
-    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
-
-    /* Larger, easier scrollbar on touch devices */
-    @media (pointer: coarse) {
-        .scroll {
-            padding-inline-end: 12px;
-            scrollbar-width: thick; /* Firefox */
-        }
-        .scroll::-webkit-scrollbar { width: 18px; height: 18px; }
     }
 
-    /* Custom visible scrollbar track/thumb */
-    .scrollbar {
-        position: fixed;
-        right: 2px;
-        width: 10px;
-        display: block;
-        pointer-events: none; /* let content receive events; thumb will enable on pointerdown */
+    /* Show list styling */
+    .show-list {
+        gap: 1px;
     }
-    .scrollbar-thumb {
-        position: absolute;
-        right: 0;
-        width: 10px;
-        border-radius: 8px;
-        background: rgb(255 255 255 / 0.35);
-        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2);
-        pointer-events: auto; /* thumb is interactive */
-        touch-action: none; /* we'll handle dragging */
-    }
-    .scrollbar-thumb:active { background: rgb(255 255 255 / 0.55); }
 
-    /* quick play */
-    .check {
-        display: flex;
-        background-color: var(--primary-darker);
-        justify-content: space-between;
-        padding: 10px;
+    :global(.show-list) :global(button) {
+        padding: 0.6em 1em;
+        min-height: 48px;
+        font-size: 1.1em;
         align-items: center;
+        justify-content: flex-start;
+        text-align: left;
+        margin: 0;
     }
 
+    :global(.show-list) :global(button) :global(p),
+    :global(.show-list) :global(button) :global(span) {
+        display: flex;
+        align-items: center;
+        line-height: 1.2;
+        font-size: inherit;
+        text-align: left;
+    }
+
+    :global(.show-list) :global(button) :global(svg) {
+        width: 1.6em;
+        height: 1.6em;
+        flex-shrink: 0;
+    }
+
+    /* Input field */
     .input {
         background-color: rgb(0 0 0 / 0.2);
         color: var(--text);
-        /* font-family: inherit; */
         padding: 10px 18px;
         border: none;
         font-size: inherit;
-
         border-bottom: 2px solid var(--secondary);
     }
+
     .input:active,
     .input:focus {
         outline: 2px solid var(--secondary);
         outline-offset: -2px;
-        /* background-color: var(--secondary-opacity); */
     }
+
     .input::placeholder {
         color: inherit;
         opacity: 0.4;
     }
 
-    /* keep bottom actions visually above and separated from the scroll area */
+    /* Quick play checkbox */
+    .check {
+        display: flex;
+        background-color: var(--primary-darker);
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        align-items: center;
+        font-size: 1em;
+        font-weight: 600;
+        min-height: 48px;
+    }
+
+    /* Bottom action buttons */
     .buttons {
         position: sticky;
         bottom: 0;
         background-color: var(--primary-darker);
         border-top: 2px solid var(--primary-lighter);
         z-index: 1;
+    }
+
+    /* New show button - matches edit button styling */
+    :global(.new-show-button) {
+        padding: 1rem 1.5rem !important;
+        font-size: 1em !important;
+        font-weight: 600 !important;
+        margin-top: 0.5rem;
+        min-height: 48px;
+    }
+
+    :global(.new-show-button:hover) {
+        background-color: var(--hover) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Limit notice */
+    .limit-notice {
+        padding: 1em;
+        text-align: center;
+        color: var(--text);
+        opacity: 0.8;
+        font-size: 0.9em;
+        background-color: rgb(0 0 0 / 0.1);
+        margin-top: 8px;
+        border-radius: 4px;
+    }
+
+    /* Mobile styles */
+    @media screen and (max-width: 1000px) {
+        .input {
+            padding: 14px 20px;
+            font-size: 1.1em;
+        }
+
+        .show-list {
+            gap: 1px;
+        }
+
+        :global(.show-list) :global(button) {
+            padding: 0.7em 1.1em;
+            min-height: 52px;
+            font-size: 1.2em;
+        }
+
+        :global(.show-list) :global(button) :global(svg) {
+            width: 1.9em;
+            height: 1.9em;
+        }
+
+        .buttons :global(button) {
+            padding: 1em 1.5em;
+            font-size: 1.05em;
+            min-height: 48px;
+        }
     }
 </style>

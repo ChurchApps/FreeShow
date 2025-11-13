@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Dropdown from "../../../common/components/Dropdown.svelte"
@@ -9,27 +10,35 @@
     import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
+    import SlideControls from "../show/SlideControls.svelte"
     import AddGroups from "./AddGroups.svelte"
     import GroupsEdit from "./GroupsEdit.svelte"
     import TextEdit from "./TextEdit.svelte"
 
+    // Memoize layout calculation
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
     $: _set("layout", layout)
 
     $: slideNum = $outSlide ?? -1
 
+    // Memoize totalSlides calculation
     $: totalSlides = layout ? layout.length : 0
 
     let scrollElem: HTMLElement | undefined
     let lyricsScroll: any
-    // auto scroll
+    // auto scroll - optimize with requestAnimationFrame
+    let scrollRaf: number | null = null
     $: {
-        if (lyricsScroll && slideNum !== null && $activeTab === "lyrics") {
-            let offset = lyricsScroll.children[slideNum]?.offsetTop - lyricsScroll.offsetTop - 5
-            lyricsScroll.scrollTo(0, offset)
+        if (lyricsScroll && slideNum !== null && $activeTab === "lyrics" && scrollRaf === null) {
+            scrollRaf = requestAnimationFrame(() => {
+                let offset = lyricsScroll.children[slideNum]?.offsetTop - lyricsScroll.offsetTop - 5
+                lyricsScroll.scrollTo(0, offset)
+                scrollRaf = null
+            }) as unknown as number
         }
     }
 
+    // Memoize layouts to avoid recalculation
     $: layouts = Object.entries($activeShow?.layouts || {}).map(([id, a]: any) => ({ id, name: a.name }))
 
     function changeLayout(e: any) {
@@ -92,6 +101,13 @@
         _set("outShow", $activeShow)
         send("API:get_cleared")
     }
+
+    // Cleanup scroll animation frame
+    onDestroy(() => {
+        if (scrollRaf !== null) {
+            cancelAnimationFrame(scrollRaf)
+        }
+    })
 </script>
 
 <!-- GetLayout($activeShow, $activeShow?.settings?.activeLayout).length -->
@@ -110,17 +126,19 @@
         {/if}
 
         <div class="buttons">
-            {#if groupsOpened && !addGroups}
-                <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
-                    <Icon id="add" right />
-                    {translate("settings.add", $dictionary)}
-                </Button>
-            {/if}
+            <div class="edit-actions">
+                {#if groupsOpened && !addGroups}
+                    <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
+                        <Icon id="add" right />
+                        {translate("settings.add", $dictionary)}
+                    </Button>
+                {/if}
 
-            <Button on:click={done} style="width: 100%;" center dark>
-                <Icon id={addGroups ? "back" : "check"} right />
-                {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
-            </Button>
+                <Button on:click={done} style="width: 100%;" center dark>
+                    <Icon id={addGroups ? "back" : "check"} right />
+                    {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
+                </Button>
+            </div>
         </div>
     {:else}
         <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
@@ -128,28 +146,31 @@
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
-            <div class="buttons">
-                {#key slideNum}
-                    <Clear outSlide={slideNum} />
-                {/key}
-            </div>
-
             {#if $activeShow.id === $outShow?.id}
-                <div class="buttons" style="display: flex;width: 100%;">
-                    <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                    <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} center><Icon size={1.8} id="previous" /></Button>
-                    <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{slideNum + 1}/{totalSlides}</span>
-                    <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                    <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                <div class="controls-section">
+                    <SlideControls {slideNum} {totalSlides} />
+
+                    <div class="buttons">
+                        {#key slideNum}
+                            <Clear outSlide={slideNum} />
+                        {/key}
+                    </div>
+                </div>
+            {:else}
+                <div class="buttons">
+                    {#key slideNum}
+                        <Clear outSlide={slideNum} />
+                    {/key}
                 </div>
             {/if}
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}
-                    <Dropdown value={layouts.find((a) => a.id == $activeShow.settings?.activeLayout)?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
+                    {@const currentLayout = layouts.find((a) => a.id == $activeShow.settings?.activeLayout)}
+                    <Dropdown value={currentLayout?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 
-                <div class="edit" style="display: flex;">
+                <div class="edit">
                     <Button on:click={() => (groupsOpened = true)} style="width: 100%;" center dark>
                         <Icon id="groups" right />
                         {translate("tools.groups", $dictionary)}
@@ -167,6 +188,12 @@
 {/if}
 
 <style>
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px; /* consistent spacing between SlideControls and Clear */
+    }
+
     .scroll {
         display: flex;
         flex-direction: column;

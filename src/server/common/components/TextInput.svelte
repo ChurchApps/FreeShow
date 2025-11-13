@@ -27,9 +27,11 @@
         font-family: inherit;
         font-size: inherit;
         font-weight: inherit;
-        border: 0;
-        padding: 5px 10px;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 8px;
+        padding: 8px 12px;
         outline-offset: -2px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     }
     input::placeholder {
         color: var(--text);
@@ -45,6 +47,12 @@
         background-color: var(--primary);
     }
     input:hover:not(:disabled) {
+        border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary));
         background-color: var(--hover);
+    }
+    input:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px var(--secondary-opacity);
+        background-color: var(--primary-darker);
     }
 </style>
