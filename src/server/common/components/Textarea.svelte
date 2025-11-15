@@ -28,8 +28,7 @@
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
     textarea:hover {
-        border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary));
-        background-color: var(--hover);
+        border-color: var(--primary-lighter);
     }
     textarea:focus {
         border-color: var(--secondary);
