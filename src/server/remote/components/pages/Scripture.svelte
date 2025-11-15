@@ -114,6 +114,7 @@
 
     let openScriptureSearch = false
     let searchValue = ""
+    let searchInput: HTMLInputElement | null = null
     type SearchItem = { reference: string; referenceFull: string; verseText: string }
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
@@ -133,6 +134,11 @@
     $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
     $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
+    
+    // Auto-focus search input when search is opened
+    $: if (openScriptureSearch && searchInput) {
+        setTimeout(() => searchInput?.focus(), 0)
+    }
 
     function formatBookSearch(search: string): string {
         return search
@@ -281,12 +287,69 @@
         return chapter.verses?.[verseNumber - 1] || null
     }
 
+    /**
+     * Extracts book name and text search term from a combined query.
+     * Supports single-word, two-word, and three-word book names.
+     */
+    function parseCombinedQuery(query: string, books: any[]): { textTerm: string; book: any | null } {
+        const trimmed = query.trim()
+        const words = trimmed.split(/\s+/)
+        
+        if (words.length < 2) {
+            return { textTerm: trimmed, book: null }
+        }
+
+        // Check progressively longer word combinations to match book names
+        for (let i = 0; i < words.length; i++) {
+            // Single word
+            const singleWord = words[i]
+            const book = findBook(books, singleWord)
+            if (book) {
+                const textTerm = words.filter((_, idx) => idx !== i).join(' ').trim()
+                if (textTerm.length >= 2) {
+                    return { textTerm, book }
+                }
+            }
+
+            // Two words
+            if (i < words.length - 1) {
+                const twoWords = `${words[i]} ${words[i + 1]}`
+                const book2 = findBook(books, twoWords)
+                if (book2) {
+                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1).join(' ').trim()
+                    if (textTerm.length >= 2) {
+                        return { textTerm, book: book2 }
+                    }
+                }
+            }
+
+            // Three words
+            if (i < words.length - 2) {
+                const threeWords = `${words[i]} ${words[i + 1]} ${words[i + 2]}`
+                const book3 = findBook(books, threeWords)
+                if (book3) {
+                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2).join(' ').trim()
+                    if (textTerm.length >= 2) {
+                        return { textTerm, book: book3 }
+                    }
+                }
+            }
+        }
+
+        return { textTerm: trimmed, book: null }
+    }
+
     type RawSearchHit = { book: any; chapter: any; verse: any; reference: string; referenceFull: string; verseText: string }
-    function searchInBible(books: any[], searchTerm: string): RawSearchHit[] {
+    
+    /**
+     * Searches for text in verse content, optionally limited to a specific book.
+     */
+    function searchInBible(books: any[], searchTerm: string, filterBook: any | null = null): RawSearchHit[] {
         const results: RawSearchHit[] = []
         const searchLower = searchTerm.toLowerCase()
+        const booksToSearch = filterBook ? [filterBook] : books
 
-        books.forEach((book) => {
+        booksToSearch.forEach((book) => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
                     if (verse.text.toLowerCase().includes(searchLower)) {
@@ -423,8 +486,19 @@
                 }
             }
 
-            // If reference parsing failed or it's not a reference, use API text search
-            if (searchVal.length >= 3) {
+            // Try combined text + book search
+            const combinedQuery = parseCombinedQuery(searchVal, books)
+            
+            if (combinedQuery.book && combinedQuery.textTerm.length >= 3) {
+                // Search filtered to specific book
+                send("SEARCH_SCRIPTURE", { 
+                    id: openedScriptureId, 
+                    searchTerm: combinedQuery.textTerm, 
+                    searchType: "text",
+                    bookFilter: combinedQuery.book.number
+                })
+            } else if (searchVal.length >= 3) {
+                // Regular text search across all books
                 send("SEARCH_SCRIPTURE", { id: openedScriptureId, searchTerm: searchVal, searchType: "text" })
             } else {
                 searchResults = []
@@ -480,9 +554,19 @@
             }
         }
 
-        // If not a valid reference, search for text content
-        const textResults = searchInBible(books, searchVal)
-        searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        // Try combined text + book search
+        const combinedQuery = parseCombinedQuery(searchVal, books)
+        
+        if (combinedQuery.book && combinedQuery.textTerm.length >= 2) {
+            // Search filtered to specific book
+            const textResults = searchInBible(books, combinedQuery.textTerm, combinedQuery.book)
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        } else {
+            // Regular text search across all books
+            const textResults = searchInBible(books, searchVal)
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        }
+        
         if (searchResults.length > 0) {
             searchResult = searchResults[0]
         } else {
@@ -527,11 +611,20 @@
             }
         } else if (apiResults.type === "text") {
             // Handle text search results
-            const results = (apiResults.results || []).map((r: any) => ({
+            let results = (apiResults.results || []).map((r: any) => ({
                 reference: r.reference,
                 referenceFull: r.referenceFull || r.reference,
                 verseText: r.verseText || ""
             }))
+            
+            // Apply book filter if provided
+            if (apiResults.bookFilter) {
+                results = results.filter((r: any) => {
+                    const parts = r.reference.split('.')
+                    return parts.length > 0 && parseInt(parts[0], 10) === apiResults.bookFilter
+                })
+            }
+            
             searchResults = results
             searchResult = results.length > 0 ? results[0] : { reference: "", referenceFull: "", verseText: "" }
         }
@@ -675,7 +768,7 @@
             <button class="header-action" aria-label="Back" on:click={closeSearch}>
                 <Icon id="back" size={1.2} />
             </button>
-            <input type="text" class="input search-input" placeholder="Search" bind:value={searchValue} />
+            <input type="text" class="input search-input" placeholder="Search" bind:value={searchValue} bind:this={searchInput} />
         </div>
 
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">

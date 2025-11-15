@@ -700,6 +700,9 @@
     /* Highlight currently displayed verse - works across all translations */
     .grid .verses .displayed {
         position: relative;
+        background-color: var(--focus);
+        box-shadow: inset 0 0 0 2px var(--secondary);
+        border-radius: 6px;
     }
 
     .grid .verses.list .displayed {
