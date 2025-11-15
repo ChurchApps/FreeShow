@@ -383,7 +383,7 @@
                     <TextEdit bind:value={textValue} />
                 {/if}
 
-                <div class="buttons">
+                <div class="buttons edit-buttons" style="position: relative; z-index: 2;">
                     {#if groupsOpened && !addGroups}
                         <Button on:click={() => (addGroups = true)} variant="outlined" style="width: 100%;" center>
                             <Icon id="add" right />
@@ -391,7 +391,7 @@
                         </Button>
                     {/if}
 
-                    <Button on:click={done} variant="contained" style="width: 100%;" center>
+                    <Button on:click={done} dark style="width: 100%;" center class="done-button">
                         <Icon id={addGroups ? "back" : "check"} right />
                         {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
                     </Button>
@@ -750,6 +750,10 @@
     :global(.toolButton) {
         padding: 0.75rem 1.25rem !important;
         font-size: 0.95em !important;
+    }
+
+    .edit-buttons :global(.done-button) {
+        border-radius: 8px 8px 0 0 !important;
     }
 
     /* Tablet/iPad specific safeguards */

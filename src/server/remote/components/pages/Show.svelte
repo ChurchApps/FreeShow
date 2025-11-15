@@ -124,7 +124,7 @@
             <TextEdit bind:value={textValue} />
         {/if}
 
-        <div class="buttons">
+        <div class="buttons" style="position: relative; z-index: 2;">
             <div class="edit-actions">
                 {#if groupsOpened && !addGroups}
                     <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
@@ -133,7 +133,7 @@
                     </Button>
                 {/if}
 
-                <Button on:click={done} style="width: 100%;" center dark>
+                <Button on:click={done} style="width: 100%;" center dark class="done-button">
                     <Icon id={addGroups ? "back" : "check"} right />
                     {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
                 </Button>
@@ -270,5 +270,9 @@
         .scroll {
             background-color: var(--primary) !important;
         }
+    }
+
+    .edit-actions :global(.done-button) {
+        border-radius: 8px 8px 0 0 !important;
     }
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, activeSlideRecording, activeTimers, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, activeTimers, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -267,27 +267,6 @@
 
     {#if $activePage === "show"}
         <div class="section" style="margin-top: 2px;">
-            {#if outSlide && ref.length > 0}
-                <div class="slide-progress">
-                    <MaterialButton
-                        title="preview._previous_slide [Arrow Left]"
-                        disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !ref.length)))}
-                        on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
-                        class="nav-button"
-                    >
-                        <Icon id="previous" size={1.2} />
-                    </MaterialButton>
-                    <span class="counter">{(outSlide?.index ?? -1) + 1}/{ref.length}</span>
-                    <MaterialButton
-                        title="preview._next_slide [Arrow Right]"
-                        disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= ref.length && (linesIndex || 0) + 1 >= (maxLines || 0) : !ref.length)))}
-                        on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
-                        class="nav-button"
-                    >
-                        <Icon id="next" size={1.2} />
-                    </MaterialButton>
-                </div>
-            {/if}
             <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
             {#if updatedActiveClear === "background"}
@@ -376,44 +355,5 @@
     }
     .section.float.light {
         --background: rgba(225, 225, 225, 0.6);
-    }
-
-    .slide-progress {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: relative;
-        gap: 12px;
-        padding: 4px 6px;
-        background-color: var(--primary-darkest);
-        border-radius: 8px;
-        margin-bottom: 4px;
-    }
-
-    .slide-progress :global(button.nav-button) {
-        min-width: 36px;
-        min-height: 36px !important;
-        padding: 4px 8px !important;
-        flex-shrink: 0;
-        background-color: transparent;
-        border: none;
-    }
-
-    .slide-progress :global(button.nav-button) :global(svg) {
-        fill: var(--secondary);
-    }
-
-    .slide-progress .counter {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        color: white;
-        font-size: 0.95em;
-        font-weight: 700;
-        padding: 0 8px;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: 0.3px;
-        pointer-events: none;
     }
 </style>
