@@ -66,7 +66,6 @@
         overflow-y: auto;
         overflow-x: hidden;
         padding: 10px;
-        /* gap: 10px; */
         scroll-behavior: smooth;
         /* FreeShow UI scrollbar */
         scrollbar-width: thin; /* Firefox */
