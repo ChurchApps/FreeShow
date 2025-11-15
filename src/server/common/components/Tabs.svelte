@@ -9,6 +9,7 @@
     export let active: string
     export let disabled: any
     export let icons: boolean = false
+    export let noTopRadius: boolean = false
 
     let dispatch = createEventDispatcher()
     function setActive(id: string) {
@@ -21,9 +22,9 @@
     }
 </script>
 
-<div class="tabs">
+<div class="tabs" class:no-top-radius={noTopRadius}>
     {#each Object.entries(tabs) as [id, tab]}
-        <Button on:click={() => setActive(id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
+        <Button on:click={() => setActive(id)} title={tab.name} active={active === id} center disabled={!disabled[id]} compact>
             <Icon id={tab.icon} size={2} />
             <!-- {#if labels}
         <T id={tab.name} />
@@ -40,12 +41,25 @@
         display: flex;
         flex-wrap: wrap;
         background-color: var(--primary-darkest);
+        border-radius: 12px 12px 0 0;
+        padding: 4px;
+        gap: 4px;
+        /* ensure bottom navigation sits above any sticky page controls on mobile */
+        position: relative;
+        z-index: 3;
+        touch-action: manipulation;
+    }
+
+    .tabs.no-top-radius {
+        border-radius: 0;
     }
 
     .tabs :global(button) {
         flex: auto;
         padding-inline-start: 0 !important;
         padding-inline-end: 0 !important;
+        border-radius: 8px;
+        margin: 0;
     }
 
     .label {
@@ -65,6 +79,17 @@
     @media screen and (max-width: 800px) {
         .label {
             display: none;
+        }
+        
+        .tabs {
+            padding: 2px;
+            border-radius: 8px 8px 0 0;
+            gap: 2px;
+        }
+        
+        .tabs :global(button) {
+            padding: 0.3rem 0.4rem;
+            min-height: 16px;
         }
     }
 </style>
