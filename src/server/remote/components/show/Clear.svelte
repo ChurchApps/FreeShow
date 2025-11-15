@@ -109,12 +109,19 @@
         flex: 1;
     }
     .clear :global(.clearAll) {
-        padding: 0.75rem 1.25rem !important;
-        font-size: 0.95em !important;
+        padding: 0.5rem 1rem !important;
+        font-size: 0.9em !important;
+        background-color: #661a26 !important;
+        color: white !important;
+        min-height: auto !important;
     }
     .clear :global(.clearAll) :global(svg) {
         width: 20px;
         height: 20px;
+        fill: white !important;
+    }
+    .clear :global(.clearAll) :global(span) {
+        color: white !important;
     }
 
     .clear.tablet {

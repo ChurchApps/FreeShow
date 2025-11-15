@@ -85,7 +85,6 @@
     // UI control visibility
     $: showControlsBar = depth === 2 || !$isCleared.all
     $: showPrevNext = depth !== 2 || +currentVerse > 0 || ($isCleared.all ? $outShow && $outSlide !== null : false)
-    $: centerOnlyToggle = depth === 2 && !showPrevNext
 
     // SEARCH
 
@@ -738,24 +737,30 @@
     </div>
 
     {#if showControlsBar}
-        <div class="buttons scripture-controls" class:center-toggle={centerOnlyToggle}>
+        <div class="controls-section">
             {#if showPrevNext}
-                <Button style="flex: 1;" on:click={previous} center>
-                    <Icon size={1.8} id="previous" />
-                </Button>
-                <Button style="flex: 1;" on:click={next} center>
-                    <Icon size={1.8} id="next" />
-                </Button>
+                <div class="navigation-buttons">
+                    <Button style="flex: 1;" on:click={previous} center dark>
+                        <Icon size={1.2} id="previous" />
+                    </Button>
+                    <Button style="flex: 1;" on:click={next} center dark>
+                        <Icon size={1.2} id="next" />
+                    </Button>
+                </div>
             {/if}
-            {#if depth === 2}
-                <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                    <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                </Button>
+            {#if depth === 2 && !showPrevNext}
+                <div class="navigation-buttons center-toggle">
+                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                    </Button>
+                </div>
+            {/if}
+            {#if !$isCleared.all && !tablet}
+                <div class="buttons">
+                    <Clear />
+                </div>
             {/if}
         </div>
-        {#if !$isCleared.all && !tablet}
-            <Clear />
-        {/if}
     {/if}
 {:else if sortedBibles.length}
     <h2 class="header">
@@ -894,15 +899,58 @@
         background-color: var(--primary-darker);
     }
 
-    /* Scripture controls */
-    .scripture-controls {
+    /* Controls section */
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .navigation-buttons {
         display: flex;
         width: 100%;
         flex-direction: row;
         align-items: center;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        padding: 2px 4px;
     }
-    .scripture-controls.center-toggle {
+
+    .navigation-buttons.center-toggle {
         justify-content: center;
+    }
+
+    .navigation-buttons :global(button) {
+        flex: 1;
+        min-height: 36px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.9em !important;
+        border-radius: 0 !important;
+    }
+
+    .navigation-buttons :global(button:first-child) {
+        border-radius: 8px 0 0 0 !important;
+    }
+
+    .navigation-buttons :global(button:last-child) {
+        border-radius: 0 8px 0 0 !important;
+    }
+
+    .navigation-buttons.center-toggle :global(button) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .controls-section .buttons {
+        border-radius: 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 0 !important;
     }
 
     /* text input */
@@ -1040,14 +1088,20 @@
             font-size: 1.05em;
         }
 
-        .buttons :global(button) {
-            padding: 1em 1.5em;
-            font-size: 1.05em;
-            min-height: 48px;
+        .navigation-buttons {
+            padding: 2px 4px;
         }
 
-        .scripture-controls :global(button) {
-            min-height: 52px;
+        .navigation-buttons :global(button) {
+            min-height: 36px !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.9em !important;
+        }
+
+        .controls-section .buttons :global(button) {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9em !important;
+            min-height: auto !important;
         }
     }
 </style>

@@ -590,14 +590,14 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        font-size: 1.3em;
+        font-weight: 600;
 
         /* min-width: 40px; */
         min-width: 50px;
         flex: 1;
         padding: 0;
         margin: 0;
-
-        font-weight: 600;
     }
     .grid .verses.list .verse-button {
         align-items: unset;
@@ -621,6 +621,7 @@
     }
 
     .grid .books span {
+        font-weight: bold;
         /* min-width: 52px; */
         /* min-width: 82px; */
         /* min-width: 33%; */
@@ -630,6 +631,11 @@
     .grid .books span,
     .grid .chapters span {
         cursor: pointer;
+    }
+
+    .grid .chapters span,
+    .grid .verses .verse-button span {
+        font-weight: bold;
     }
     .grid .big span {
         min-width: 40px;

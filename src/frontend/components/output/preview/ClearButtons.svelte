@@ -231,6 +231,14 @@
 
     :global(.clearAll) {
         width: 100%;
+        background-color: #661a26 !important;
+        color: white !important;
+    }
+    :global(.clearAll) :global(svg) {
+        fill: white !important;
+    }
+    :global(.clearAll) :global(span) {
+        color: white !important;
     }
 
     .group {

@@ -304,34 +304,40 @@
         opacity: 0.4;
     }
 
-    /* Quick play checkbox */
-    .check {
-        display: flex;
-        background-color: var(--primary-darker);
-        justify-content: space-between;
-        padding: 1rem 1.5rem;
-        align-items: center;
-        font-size: 1em;
-        font-weight: 600;
-        min-height: 48px;
-    }
-
     /* Bottom action buttons */
     .buttons {
         position: sticky;
         bottom: 0;
-        background-color: var(--primary-darker);
-        border-top: 2px solid var(--primary-lighter);
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
         z-index: 1;
+    }
+
+    /* Quick play checkbox */
+    .check {
+        display: flex;
+        background-color: var(--primary-darkest);
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        align-items: center;
+        font-size: 0.9em;
+        font-weight: 600;
+        min-height: auto;
+        border-radius: 8px 8px 0 0;
     }
 
     /* New show button - matches edit button styling */
     :global(.new-show-button) {
-        padding: 1rem 1.5rem !important;
-        font-size: 1em !important;
+        padding: 0.5rem 1rem !important;
+        font-size: 0.9em !important;
         font-weight: 600 !important;
-        margin-top: 0.5rem;
-        min-height: 48px;
+        margin-top: 0 !important;
+        min-height: auto !important;
+        border-radius: 0 !important;
     }
 
     :global(.new-show-button:hover) {
@@ -374,10 +380,15 @@
             height: 1.9em;
         }
 
+        .check {
+            padding: 0.5rem 1rem;
+            font-size: 0.9em;
+        }
+
         .buttons :global(button) {
-            padding: 1em 1.5em;
-            font-size: 1.05em;
-            min-height: 48px;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9em !important;
+            min-height: auto !important;
         }
     }
 </style>

@@ -10,7 +10,6 @@
     import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
-    import SlideControls from "../show/SlideControls.svelte"
     import AddGroups from "./AddGroups.svelte"
     import GroupsEdit from "./GroupsEdit.svelte"
     import TextEdit from "./TextEdit.svelte"
@@ -148,12 +147,20 @@
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
             {#if $activeShow.id === $outShow?.id}
                 <div class="controls-section">
-                    <SlideControls {slideNum} {totalSlides} />
-
                     <div class="buttons">
                         {#key slideNum}
                             <Clear outSlide={slideNum} />
                         {/key}
+                    </div>
+
+                    <div class="slide-progress">
+                        <Button on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
+                            <Icon id="previous" size={1.2} />
+                        </Button>
+                        <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                        <Button on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
+                            <Icon id="next" size={1.2} />
+                        </Button>
                     </div>
                 </div>
             {:else}
@@ -191,7 +198,56 @@
     .controls-section {
         display: flex;
         flex-direction: column;
-        gap: 4px; /* consistent spacing between SlideControls and Clear */
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .controls-section .buttons {
+        border-radius: 8px 8px 0 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .slide-progress {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        gap: 12px;
+        padding: 2px 6px;
+        background-color: var(--primary-darkest);
+        border-radius: 0;
+        min-height: 36px;
+    }
+
+    .slide-progress :global(button) {
+        min-width: 32px;
+        min-height: 32px !important;
+        padding: 2px 6px !important;
+        flex-shrink: 0;
+    }
+
+    .slide-progress :global(button) :global(svg) {
+        fill: var(--secondary);
+    }
+
+    .slide-progress .counter {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: white;
+        font-size: 0.85em;
+        font-weight: 700;
+        padding: 0 8px;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.3px;
+        pointer-events: none;
     }
 
     .scroll {
@@ -209,4 +265,10 @@
     .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
     .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
     .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+
+    @media screen and (max-width: 1000px) {
+        .scroll {
+            background-color: var(--primary) !important;
+        }
+    }
 </style>
