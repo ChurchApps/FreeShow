@@ -359,7 +359,7 @@
             {/if}
         </div>
 
-        <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
+        <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons noTopRadius />
     </div>
 {/if}
 
@@ -397,7 +397,7 @@
                     </Button>
                 </div>
             {:else}
-                <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darker);scroll-behavior: smooth;display: flex;flex-direction: column;">
+                <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darkest);scroll-behavior: smooth;display: flex;flex-direction: column;">
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
@@ -564,6 +564,7 @@
         flex: 1;
         min-width: 0; /* allow flexbox to shrink center to available width */
         overflow: hidden; /* prevent inner content from creating page-wide overflow */
+        background-color: var(--primary-darkest);
     }
 
     /* Resizers - touch-friendly for tablets */
@@ -689,10 +690,11 @@
         justify-content: space-between;
 
         background-color: var(--primary-darkest);
-        border-radius: 12px;
-        padding: 6px;
+        border-radius: 0;
+        padding: 4px;
         margin: 0;
-        gap: 6px;
+        gap: 4px;
+        min-height: 60px;
 
         font-size: 0.95em;
         /* Align with tabs bar at bottom - no margin to match tabs */
@@ -701,13 +703,14 @@
 
     .layouts .buttons {
         display: flex;
-        gap: 6px;
+        gap: 4px;
     }
 
     /* Better spacing for layout buttons */
     .layouts :global(button) {
         border-radius: 8px;
         padding: 0.6em 1em !important;
+        min-height: auto !important;
     }
 
     /* ///// */
@@ -721,11 +724,17 @@
         display: flex;
         align-items: center;
         justify-content: space-around;
-        gap: 8px;
-        padding: 10px 12px;
+        gap: 6px;
+        padding: 0.5rem 0.75rem;
         background-color: var(--primary-darkest);
         border-radius: 12px;
         margin-top: 8px;
+        min-height: auto;
+    }
+
+    .controls :global(button) {
+        min-height: auto !important;
+        padding: 0.4rem 0.6rem !important;
     }
 
     .counter {

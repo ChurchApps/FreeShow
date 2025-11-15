@@ -41,7 +41,7 @@
         display: flex;
         flex-wrap: wrap;
         background-color: var(--primary-darkest);
-        border-radius: 12px;
+        border-radius: 12px 12px 0 0;
         padding: 4px;
         gap: 4px;
         /* ensure bottom navigation sits above any sticky page controls on mobile */
@@ -51,7 +51,7 @@
     }
 
     .tabs.no-top-radius {
-        border-radius: 0 0 12px 12px;
+        border-radius: 0;
     }
 
     .tabs :global(button) {
@@ -83,7 +83,7 @@
         
         .tabs {
             padding: 2px;
-            border-radius: 8px;
+            border-radius: 8px 8px 0 0;
             gap: 2px;
         }
         

@@ -85,7 +85,7 @@
     <span style="display: flex;">
         <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("API:clear_all")} red dark center>
             <Icon id="clear" size={1.2} />
-            <span style="padding-inline-start: 10px; font-size: 1em; font-weight: 500;">{translate("clear.all", $dictionary)}</span>
+            <span class="clear-text">{translate("clear.all", $dictionary)}</span>
         </Button>
 
         {#if !tablet}
@@ -110,21 +110,34 @@
     }
     .clear :global(.clearAll) {
         padding: 0.5rem 1rem !important;
-        font-size: 0.9em !important;
+        font-size: 1em !important;
+        font-family: sans-serif !important;
         background-color: #661a26 !important;
         color: white !important;
         min-height: auto !important;
+        display: flex !important;
+        align-items: center !important;
     }
     .clear :global(.clearAll) :global(svg) {
         width: 20px;
         height: 20px;
         fill: white !important;
+        margin-inline-end: 6px;
+        flex-shrink: 0;
+        vertical-align: middle;
     }
-    .clear :global(.clearAll) :global(span) {
+    :global(.clearAll) .clear-text {
         color: white !important;
+        font-weight: 700;
+        line-height: 1.2;
+        vertical-align: middle;
     }
 
     .clear.tablet {
         flex-direction: column-reverse;
+    }
+
+    .clear.tablet :global(.clearAll) {
+        border-radius: 0 0 8px 8px !important;
     }
 </style>
