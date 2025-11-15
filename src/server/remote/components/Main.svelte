@@ -7,7 +7,7 @@
     import TextInput from "../../common/components/TextInput.svelte"
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
-    import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
+    import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, isCleared, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
     import Project from "./pages/Project.svelte"
     import Scripture from "./pages/Scripture.svelte"
@@ -119,7 +119,7 @@
         {/if}
     </div>
 
-    <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} />
+    <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} noTopRadius={(tab === "show" && ($activeShow?.id === $outShow?.id || !$isCleared.all)) || tab === "slide" || tab === "shows" || tab === "scripture"} />
 </section>
 
 {#if $createShow}

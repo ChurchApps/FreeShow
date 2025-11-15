@@ -8,7 +8,6 @@
     import { _set, dictionary, outLayout, outputMode, outShow, outSlide } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slide from "../show/Slide.svelte"
-    import SlideControls from "../show/SlideControls.svelte"
     import Lyrics from "./Lyrics.svelte"
 
     let transition: any = { type: "fade", duration: 500 }
@@ -47,15 +46,32 @@
             </div>
         {/if}
 
+        <div class="slide-progress-text">{slideNum + 1}/{totalSlides}</div>
+
         <div class="controls-section">
-            <SlideControls {slideNum} {totalSlides} />
+            <div class="slide-progress desktop-only">
+                <Button class="desktop-nav" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
+                    <Icon id="previous" size={1.2} />
+                </Button>
+                <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                <Button class="desktop-nav" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
+                    <Icon id="next" size={1.2} />
+                </Button>
+            </div>
 
             <div class="buttons">
-            <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
+                <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
+            </div>
+
+            <div class="mode-toggle">
+                <Button on:click={() => _set("outputMode", $outputMode === "slide" ? "lyrics" : "slide")} style="width: 100%;" center dark>
+                    <Icon id={$outputMode} right />
+                    {translate(`remote.${$outputMode}`, $dictionary)}
+                </Button>
             </div>
         </div>
 
-        <div class="modes">
+        <div class="modes desktop-only">
             <Button on:click={() => _set("outputMode", $outputMode === "slide" ? "lyrics" : "slide")} style="width: 100%;" center dark>
                 <Icon id={$outputMode} right />
                 {translate(`remote.${$outputMode}`, $dictionary)}
@@ -76,10 +92,106 @@
         min-height: 0;
     }
 
+    .slide-progress-text,
+    .slide-progress .counter {
+        font-size: 0.85em;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.3px;
+        color: white;
+    }
+
+    .slide-progress-text {
+        text-align: center;
+        padding: 8px 0;
+    }
+
     .controls-section {
         display: flex;
         flex-direction: column;
-        gap: 4px; /* consistent spacing between SlideControls and Clear */
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .controls-section .buttons {
+        border-radius: 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .slide-progress {
+        display: none;
+    }
+
+    .mode-toggle {
+        padding: 4px;
+        background-color: var(--primary-darkest);
+        border-radius: 0;
+    }
+
+    .mode-toggle :global(button) {
+        width: 100%;
+        border-radius: 0 !important;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    @media screen and (min-width: 1001px) {
+        .slide-progress-text {
+            display: none;
+        }
+
+        .slide-progress {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            gap: 12px;
+            padding: 2px 6px;
+            background-color: var(--primary-darkest);
+            border-radius: 8px 8px 0 0;
+            min-height: 36px;
+        }
+
+        .slide-progress .desktop-nav {
+            display: flex;
+            min-width: 32px;
+            min-height: 32px !important;
+            padding: 2px 6px !important;
+            flex-shrink: 0;
+        }
+
+        .slide-progress .desktop-nav :global(svg) {
+            fill: var(--secondary);
+        }
+
+        .slide-progress .counter {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            padding: 0 8px;
+            pointer-events: none;
+        }
+
+        .controls-section .buttons {
+            border-radius: 0;
+        }
+
+        .mode-toggle {
+            display: none;
+        }
+
+        .desktop-only {
+            display: block;
+        }
     }
 
     .outSlides {
@@ -110,7 +222,7 @@
 
     /* Mobile styles - align bottom buttons with tabs bar */
     @media screen and (max-width: 1000px) {
-        .modes {
+        .desktop-only {
             display: none;
         }
 
