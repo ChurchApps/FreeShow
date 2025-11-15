@@ -22,6 +22,10 @@
     let displayedVerseNumber = 0
     let pendingVerseDepth = false // Used when navigating from search to wait for data load
 
+    // Reference to verses container for scrolling
+    let versesContainer: HTMLElement | null = null
+    let previousViewList = $scriptureViewList
+
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
     $: if (depth === 1) {
@@ -279,6 +283,32 @@
         }
     }
 
+    // Auto-scroll to displayed verse when switching from grid to list view
+    $: if (depth === 2 && $scriptureViewList && !previousViewList && displayedVerseNumber > 0 && versesContainer && verses.length > 0) {
+        // Wait for DOM to update, then scroll
+        setTimeout(() => {
+            if (!versesContainer) return
+            
+            // Find the verse button with the displayed verse number
+            const verseButtons = versesContainer.querySelectorAll('.verse-button')
+            for (let i = 0; i < verseButtons.length; i++) {
+                const button = verseButtons[i] as HTMLElement
+                const verseSpan = button.querySelector('span')
+                if (verseSpan && Number(verseSpan.textContent?.trim()) === displayedVerseNumber) {
+                    // Scroll the container to show the button
+                    const containerRect = versesContainer.getBoundingClientRect()
+                    const buttonRect = button.getBoundingClientRect()
+                    const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - (containerRect.height / 2) + (buttonRect.height / 2)
+                    versesContainer.scrollTo({ top: scrollTop, behavior: 'smooth' })
+                    break
+                }
+            }
+        }, 150)
+        previousViewList = $scriptureViewList
+    } else {
+        previousViewList = $scriptureViewList
+    }
+
     // Navigate next/previous verse based on what's displayed on output (not user's navigation)
     export function forward() {
         if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
@@ -465,7 +495,7 @@
     {/if}
 
     {#if depth === 2}
-        <div class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
+        <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
             {#if verses.length}
                 {#each verses as verse, i (verse.number || i)}
                     {@const verseNumber = Number(verse.number) || i + 1}
@@ -565,6 +595,7 @@
     .grid .verses.list {
         flex-direction: column;
         flex-wrap: nowrap;
+        padding: 0 12px 0 8px;
         /* FreeShow UI scrollbar styling (desktop) */
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
@@ -603,6 +634,12 @@
         align-items: unset;
         justify-content: unset;
         padding: 10px 0;
+        gap: 12px;
+    }
+
+    .grid .verses.list .verse-button span {
+        flex-shrink: 0;
+        min-width: 40px;
     }
     .verse-button {
         display: flex;
@@ -662,8 +699,24 @@
     }
     /* Highlight currently displayed verse - works across all translations */
     .grid .verses .displayed {
+        position: relative;
+    }
+
+    .grid .verses.list .displayed {
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    .grid .verses.list .displayed::after {
+        content: '';
+        position: absolute;
+        left: -4px; /* Start a bit before the verse number */
+        right: 0;
+        top: 0;
+        bottom: 0;
         background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);
         border-radius: 6px;
+        z-index: -1;
     }
 </style>

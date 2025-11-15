@@ -160,7 +160,7 @@
             min-height: 36px;
         }
 
-        .slide-progress .desktop-nav {
+        .slide-progress :global(.desktop-nav) {
             display: flex;
             min-width: 32px;
             min-height: 32px !important;
@@ -168,7 +168,7 @@
             flex-shrink: 0;
         }
 
-        .slide-progress .desktop-nav :global(svg) {
+        .slide-progress :global(.desktop-nav) :global(svg) {
             fill: var(--secondary);
         }
 

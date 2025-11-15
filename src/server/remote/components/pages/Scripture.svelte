@@ -746,9 +746,13 @@
                     <Button style="flex: 1;" on:click={next} center dark>
                         <Icon size={1.2} id="next" />
                     </Button>
+                    {#if depth === 2}
+                        <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
                 </div>
-            {/if}
-            {#if depth === 2 && !showPrevNext}
+            {:else if depth === 2}
                 <div class="navigation-buttons center-toggle">
                     <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
                         <Icon id={$scriptureViewList ? "grid" : "list"} white />
