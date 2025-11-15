@@ -17,13 +17,10 @@
     let showsSorted: any
     $: {
         showsSorted = $shows.filter((s) => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
-        // removeValues(sortObject(keysToID(s), "name"), "private", true)
     }
     let filteredShows: any[] = []
     let filteredStored: any
     $: filteredStored = showsSorted
-    // $: filteredStored = showsSorted.filter((s: any) => category === "all" || category === s.category || (category === "unlabeled" && s.category === null))
-    // $: console.log(filteredStored)
 
     export let firstMatch: null | string = null
     
@@ -83,8 +80,6 @@
             .replace(/\p{Diacritic}/gu, "")
     }
 
-    let totalMatch: number = 0
-    $: totalMatch = searchValue ? 0 : 0
     function search(obj: any): number {
         let match: any[] = []
 
@@ -105,15 +100,8 @@
 
         if (hasZero) sum = 0
 
-        totalMatch += sum
         return Math.min(sum, 100)
     }
-
-    // click on content
-    // function click(e: any) {
-    //     if (e.clientX < window.innerWidth / 3) previous()
-    //     else next()
-    // }
 
     // shows list
     let searchElem: HTMLInputElement | undefined
@@ -191,9 +179,6 @@
 {#if $shows.length}
     {#if $shows.length < 10 || loadingStarted}
         <input id="showSearch" type="text" class="input" placeholder="Search..." value={searchValue} on:input={updateTextValue} on:keydown={showSearchKeydown} on:click={select} bind:this={searchElem} />
-        <!-- {#each shows as showObj}
-<Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
-{/each} -->
         <div class="scroll-wrap">
             <div class="scroll show-list" bind:this={scrollElem}>
                 {#each visibleShows as show (show.id)}
@@ -211,7 +196,7 @@
                 {/if}
             </div>
         </div>
-        {#if searchValue.length > 1 && totalMatch === 0}
+        {#if searchValue.length > 1 && filteredShows.length === 0}
             <Center faded>{translate("empty.search", $dictionary)}</Center>
         {/if}
 
@@ -251,6 +236,24 @@
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
         overscroll-behavior: contain;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .scroll::-webkit-scrollbar-track,
+    .scroll::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .scroll::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
     }
 
     /* Show list styling */
