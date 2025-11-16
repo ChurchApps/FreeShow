@@ -152,13 +152,43 @@
         // pick up template supplied by group overrides (if present)
         return $groups[groupId]?.template || ""
     })()
+    // track whether this textbox belongs to the first slide for the active layout
+    let isFirstLayoutSlide = false
+    $: isFirstLayoutSlide = (() => {
+        if (!ref?.showId) return false
+        const slideId = ref.slideId || ref.id
+        if (!slideId) return false
+        const layoutId = ref.layoutId || $showsCache[ref.showId]?.settings?.activeLayout || ""
+        if (!layoutId) return false
+        const layout = $showsCache[ref.showId]?.layouts?.[layoutId]
+        const firstId = layout?.slides?.[0]?.id || ""
+        return !!firstId && firstId === slideId
+    })()
+
+    function resolveTemplate(baseId: string) {
+        if (!baseId) return ""
+        if (isFirstLayoutSlide) {
+            // templates can specify a dedicated cover/first slide template; pick it when we are on that slide
+            const firstSlideTemplateId = $templates[baseId]?.settings?.firstSlideTemplate || ""
+            if (firstSlideTemplateId) return firstSlideTemplateId
+        }
+        return baseId
+    }
+
     $: resolvedTemplateId = (() => {
         if (ref?.type === "template" && ref.id) return ref.id
         if (ref?.type === "overlay") return ""
         if (slideData?.settings?.template) return slideData.settings.template
-        if (groupTemplateId) return groupTemplateId
-        if (currentShowTemplateId) return currentShowTemplateId
-        if (outputStyle?.template) return outputStyle.template
+
+        const groupResolved = resolveTemplate(groupTemplateId)
+        if (groupResolved) return groupResolved
+
+        const showResolved = resolveTemplate(currentShowTemplateId)
+        if (showResolved) return showResolved
+
+        const styleResolved = resolveTemplate(outputStyle?.template || "")
+        if (styleResolved) return styleResolved
+
         return ""
     })()
     $: templateStyleOverrides = (() => {
