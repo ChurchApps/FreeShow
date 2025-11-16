@@ -3,13 +3,12 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Transition, TemplateStyleOverride, Slide } from "../../../types/Show"
-    import { currentWindow, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
+    import { activeFocus, activeShow, currentWindow, focusMode, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
-    import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
@@ -178,7 +177,17 @@
     $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
-    $: currentShowTemplateId = _show(ref.showId).get("settings.template")
+    $: currentShowTemplateId = (() => {
+        let showId = ref?.showId || ""
+
+        if (!showId) {
+            if ($focusMode && $activeFocus.id && $showsCache[$activeFocus.id]) showId = $activeFocus.id
+            else if ($activeShow?.id && (!$activeShow.type || $activeShow.type === "show")) showId = $activeShow.id
+        }
+
+        if (!showId) return ""
+        return $showsCache[showId]?.settings?.template || ""
+    })()
     // let outputTemplateAutoSize = false
     $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
