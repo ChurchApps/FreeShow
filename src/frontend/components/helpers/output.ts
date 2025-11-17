@@ -780,6 +780,13 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // should be reversed, but people have to invert the order of their template items order.
     templateItems = clone(templateItems) // .reverse()
 
+    if (resetAutoSize) {
+        templateItems.forEach((item) => {
+            if (!item) return
+            delete item.autoFontSize
+        })
+    }
+
     const sorted = sortItemsByType(templateItems)
     const sortedTemplateItems = clone(sorted)
 
