@@ -69,12 +69,12 @@ export function transposeText(text: string, step: number): string {
     // This regex is more specific to avoid matching section labels like [Chorus], [Verse], etc.
     const chordInBrackets = /\[([A-G][b#♭♯]?(?:maj|min|m|aug|dim|sus|add|\d|\(|\)|\/[A-G][b#♭♯]?)*)\]/g
     return text.replace(chordInBrackets, (match, p1) => {
-        // Additional validation: check if this looks like a chord vs a section label
-        // Section labels typically have more than 3 characters and contain lowercase letters
-        // that aren't part of chord notation (like "horus", "erse", "ridge")
-        if (p1.length > 3 && /[a-z]{3,}/.test(p1)) {
+        // Chord notation uses: note names (A-G), accidentals (b#♭♯), numbers, and specific extensions
+        // If it's longer than 8 chars or contains letters other than standard chord notation, likely not a chord
+        if (p1.length > 8 || /[a-z]{4,}/i.test(p1.replace(/^[A-G][b#♭♯]?(maj|min|aug|dim|sus|add)/i, ''))) {
             return match // Return unchanged if it looks like a section label
         }
+
         return "[" + transposeFullChord(p1, step, preferSharps) + "]"
     })
 }
