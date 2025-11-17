@@ -191,6 +191,7 @@
 
         return ""
     })()
+    // WIP this will update the output immediately when template changes, but shouldn't update until refreshing
     $: templateStyleOverrides = (() => {
         // ensure overrides follow whichever template actually drives this slide
         if (!resolvedTemplateId) return []

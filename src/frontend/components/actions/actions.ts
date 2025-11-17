@@ -126,18 +126,6 @@ export function toggleAction(data: API_toggle) {
 }
 
 export function checkStartupActions() {
-    // WIP only for v1.1.7 (can be removed)
-    actions.update((a) => {
-        Object.keys(a).forEach((actionId) => {
-            const action = a[actionId]
-            if (action.startupEnabled && !action.customActivation) {
-                delete action.startupEnabled
-                action.customActivation = "startup"
-            }
-        })
-        return a
-    })
-
     customActionActivation("startup")
 }
 

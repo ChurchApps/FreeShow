@@ -119,7 +119,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
 
         stores[storeId].clear()
             ; (stores[storeId] as any).set(data)
-        // WIP restoring synced settings will reset settings
+
         sendMain(storeId as Main, data)
     }
 

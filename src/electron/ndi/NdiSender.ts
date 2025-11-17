@@ -22,7 +22,6 @@ const loadGrandiose = async () => {
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
-// TODO: audio
 export class NdiSender {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
@@ -89,8 +88,14 @@ export class NdiSender {
         }, 1000)
     }
 
+    // static frames = 0
     static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
         if (this.ndiDisabled || !this.NDI[id]?.sender) return
+
+        // DEBUG log fps
+        // this.frames++
+        // setTimeout(() => this.frames--, 1000)
+        // console.log(`NDI FPS ${id}:`, this.frames)
 
         /*  convert from ARGB (Electron/Chromium on big endian CPU)
         to BGRA (supported input of NDI SDK). On little endian

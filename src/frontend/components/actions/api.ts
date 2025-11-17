@@ -265,8 +265,6 @@ export const API_ACTIONS = {
     lock_output: (data: API_output_lock) => toggleLock(data), // BC
     toggle_output_windows: () => toggleOutputs(), // BC
     toggle_output: (data: API_id) => toggleOutput(data.id),
-    // WIP disable stage ?
-    // WIP disable NDI ?
     id_select_output_style: (data: API_id) => changeOutputStyle({ styleId: data.id }), // BC
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
