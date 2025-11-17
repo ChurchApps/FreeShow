@@ -3,13 +3,12 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Transition, TemplateStyleOverride, Slide } from "../../../types/Show"
-    import { currentWindow, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
+    import { activeFocus, activeShow, currentWindow, focusMode, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
-    import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
@@ -153,13 +152,43 @@
         // pick up template supplied by group overrides (if present)
         return $groups[groupId]?.template || ""
     })()
+    // track whether this textbox belongs to the first slide for the active layout
+    let isFirstLayoutSlide = false
+    $: isFirstLayoutSlide = (() => {
+        if (!ref?.showId) return false
+        const slideId = ref.slideId || ref.id
+        if (!slideId) return false
+        const layoutId = ref.layoutId || $showsCache[ref.showId]?.settings?.activeLayout || ""
+        if (!layoutId) return false
+        const layout = $showsCache[ref.showId]?.layouts?.[layoutId]
+        const firstId = layout?.slides?.[0]?.id || ""
+        return !!firstId && firstId === slideId
+    })()
+
+    function resolveTemplate(baseId: string) {
+        if (!baseId) return ""
+        if (isFirstLayoutSlide) {
+            // templates can specify a dedicated cover/first slide template; pick it when we are on that slide
+            const firstSlideTemplateId = $templates[baseId]?.settings?.firstSlideTemplate || ""
+            if (firstSlideTemplateId) return firstSlideTemplateId
+        }
+        return baseId
+    }
+
     $: resolvedTemplateId = (() => {
         if (ref?.type === "template" && ref.id) return ref.id
         if (ref?.type === "overlay") return ""
         if (slideData?.settings?.template) return slideData.settings.template
-        if (groupTemplateId) return groupTemplateId
-        if (currentShowTemplateId) return currentShowTemplateId
-        if (outputStyle?.template) return outputStyle.template
+
+        const groupResolved = resolveTemplate(groupTemplateId)
+        if (groupResolved) return groupResolved
+
+        const showResolved = resolveTemplate(currentShowTemplateId)
+        if (showResolved) return showResolved
+
+        const styleResolved = resolveTemplate(outputStyle?.template || "")
+        if (styleResolved) return styleResolved
+
         return ""
     })()
     $: templateStyleOverrides = (() => {
@@ -178,7 +207,17 @@
     $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
-    $: currentShowTemplateId = _show(ref.showId).get("settings.template")
+    $: currentShowTemplateId = (() => {
+        let showId = ref?.showId || ""
+
+        if (!showId) {
+            if ($focusMode && $activeFocus.id && $showsCache[$activeFocus.id]) showId = $activeFocus.id
+            else if ($activeShow?.id && (!$activeShow.type || $activeShow.type === "show")) showId = $activeShow.id
+        }
+
+        if (!showId) return ""
+        return $showsCache[showId]?.settings?.template || ""
+    })()
     // let outputTemplateAutoSize = false
     $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
