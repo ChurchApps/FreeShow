@@ -43,6 +43,9 @@
     let currentItems: Item[] = []
     let current: any = {}
     let show = false
+    // maintain a hidden workload that primes autosize results ahead of the visible reveal
+    let precomputeTargets: { item: Item; index: number; key: string }[] = []
+    let precomputePending = new Set<string>()
 
     const showItemRef = { outputId, slideIndex: outSlide?.index }
     // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
@@ -82,8 +85,54 @@
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween = false
 
+    // lightweight guard so we only precompute for text items that actually rely on autosize
+    function shouldPrecomputeAutoSize(item: Item) {
+        if (!item) return false
+        const type = item.type || "text"
+        if (type !== "text") return false
+        return !!item.auto
+    }
+
+    // kick off hidden textbox renders that warm the autosize cache before we flip "show" on
+    function scheduleAutoSizePrecompute(items: Item[]) {
+        if (preview || !Array.isArray(items) || !items.length) {
+            precomputeTargets = []
+            precomputePending.clear()
+            return
+        }
+
+        const targets: { item: Item; index: number; key: string }[] = []
+        const pendingKeys = new Set<string>()
+
+        items.forEach((item, index) => {
+            if (!shouldPrecomputeAutoSize(item)) return
+            const key = createAutoSizeKey(item, index)
+            if (!key) return
+            if (item.autoFontSize) return // skip entries that already have cached measurements
+            pendingKeys.add(key)
+            targets.push({ item: clone(item), index, key })
+        })
+
+        precomputeTargets = targets
+        precomputePending = pendingKeys
+    }
+
+    // remove hidden probes once the underlying textbox reports that its autosize cache is hot
+    function handlePrecomputeReady(event: CustomEvent<{ key: string; fontSize: number }>) {
+        const key = event.detail?.key
+        if (!key || !precomputePending.has(key)) return
+        precomputePending.delete(key)
+        if (!precomputePending.size) precomputeTargets = []
+    }
+
+    // create a stable identifier for precompute + visible textbox coordination
+    function createAutoSizeKey(item: Item, index: number) {
+        return item?.id ? String(item.id) : `idx-${index}`
+    }
+
     function updateItems() {
         if (!currentSlideItems?.length) {
+            scheduleAutoSizePrecompute([])
             currentItems = []
             current = {
                 outSlide: clone(outSlide),
@@ -94,6 +143,8 @@
             }
             return
         }
+
+        scheduleAutoSizePrecompute(currentSlide.items)
 
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
@@ -148,7 +199,7 @@
 
 <!-- Updating this with another "store" causes svelte transition bug! -->
 {#key show}
-    {#each currentItems as item}
+    {#each currentItems as item, index}
         {#if show && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
             <SlideItemTransition
                 {preview}
@@ -186,8 +237,42 @@
                     {preview}
                     slideIndex={customOut?.index}
                     {styleIdOverride}
+                    autoSizeKey={createAutoSizeKey(item, index)}
                 />
             </SlideItemTransition>
         {/if}
     {/each}
 {/key}
+
+{#if precomputeTargets.length}
+    <div class="autosize-precompute" aria-hidden="true">
+        {#each precomputeTargets as target (target.key)}
+            <Textbox
+                item={target.item}
+                {ratio}
+                {outputId}
+                outputStyle={currentStyle}
+                {mirror}
+                {preview}
+                {styleIdOverride}
+                ref={{ showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }}
+                autoSizeKey={target.key}
+                on:autosizeReady={handlePrecomputeReady}
+            />
+        {/each}
+    </div>
+{/if}
+
+<style>
+    /* park precompute textboxes far off-screen so they never flash during transitions */
+    .autosize-precompute {
+        position: absolute;
+        top: -10000px;
+        left: -10000px;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        pointer-events: none;
+        visibility: hidden;
+    }
+</style>
