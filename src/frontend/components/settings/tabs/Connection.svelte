@@ -213,13 +213,12 @@
             <T id="settings.connect_to" replace={["ChurchApps"]} />
         </MaterialButton>
     </InputRow>
-<!--
+
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["APlay"]} />
         </MaterialButton>
     </InputRow>
--->
 {:else if $providerConnections.planningcenter}
     <!-- Planning Center connected -->
     <Title label="Content Provider: Planning Center" icon="list" />

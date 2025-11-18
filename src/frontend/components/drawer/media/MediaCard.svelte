@@ -1,5 +1,6 @@
 <script lang="ts">
     import { derived } from "svelte/store"
+    import type { ContentFile } from "../../../../electron/contentProviders/base/types"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
     import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
@@ -23,6 +24,16 @@
     export let thumbnailPath = ""
     export let thumbnail = true
     export let contentProvider = false
+    export let contentFileData: ContentFile | null = null
+
+    // Populate media store with ContentFile metadata (pingbackUrl)
+    $: if (contentFileData?.pingbackUrl && contentProvider && path) {
+        media.update((m) => {
+            if (!m[path]) m[path] = {}
+            m[path].pingbackUrl = contentFileData.pingbackUrl
+            return m
+        })
+    }
 
     // Memoized name computation
     let displayName = ""

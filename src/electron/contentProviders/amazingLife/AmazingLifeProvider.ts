@@ -58,6 +58,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         const storedAccess = getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null
 
         if (storedAccess) {
+            console.info("APlay: Found stored credentials, using them")
             this.access = storedAccess
 
             if (this.isTokenExpired()) {
@@ -69,12 +70,13 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                     return refreshed
                 }
             } else {
+                console.info("APlay: Stored credentials are valid, reusing without login prompt")
                 sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
                 return storedAccess
             }
         }
 
-        console.info("Starting APlay OAuth flow...")
+        console.info("APlay: No stored credentials found, starting OAuth flow...")
         const authData = await this.authenticate(scope)
 
         if (authData) {
@@ -87,9 +89,12 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     disconnect(scope: AmazingLifeScopes = "openid profile email"): void {
-        console.log(`Disconnecting from APlay with scope: ${scope}`)
+        console.log(`APlay: Disconnecting with scope: ${scope}`)
+        console.log(`APlay: Clearing stored credentials for scope: ${scope}`)
+        setContentProviderAccess("amazinglife", scope, null)
         this.access = null
         AmazingLifeProvider.contentLibraryCache = null
+        console.log("APlay: Disconnect complete - credentials cleared")
     }
 
     async apiRequest(data: any): Promise<any> {
@@ -215,7 +220,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
 
             console.log(`Fetching media for library: ${libraryId}`)
 
-            httpsRequest("https://api-prod.amazingkids.app", `/prod/creators/libraries/${libraryId}/media`, "GET", headers, {}, (err, data) => {
+            httpsRequest("https://api-prod.amazingkids.app", `/prod/creators/libraries/${libraryId}/media`, "GET", headers, {}, async (err, data) => {
                 if (err) {
                     console.error(`Failed to fetch media for library ${libraryId}:`, err)
                     return reject(err)
@@ -224,6 +229,10 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                 try {
                     const mediaItems = data.data || []
                     console.log(`Found ${mediaItems.length} media items`)
+
+                    // Step 1: Map media items to files and collect video/audio mediaIds
+                    const videoAudioMediaIds: string[] = []
+                    const mediaIdToItemMap = new Map<string, any>()
 
                     const files: ContentFile[] = mediaItems.map((item: any) => {
                         // Extract URL based on media type
@@ -247,19 +256,43 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                         if (item.thumbnail?.src) thumbnail = item.thumbnail.src
 
                         const isVideo = item.mediaType?.toLowerCase() === 'video' || url.includes('.m3u8') || url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.mov')
+                        const isAudio = item.mediaType?.toLowerCase() === 'audio'
 
                         const file: ContentFile = {
                             url,
                             thumbnail,
                             fileSize: item.fileSize || 0,
                             type: isVideo ? "video" : "image",
-                            name: item.title || item.name || item.fileName || ""
+                            name: item.title || item.name || item.fileName || "",
+                            mediaId: item.mediaId || item.id
                         }
 
-                        if (item.isLicensed) file.decryptionKey = "123456789"
+                        // Collect video/audio mediaIds for license check
+                        if ((isVideo || isAudio) && file.mediaId) {
+                            videoAudioMediaIds.push(file.mediaId)
+                            mediaIdToItemMap.set(file.mediaId, file)
+                        }
 
                         return file
                     }).filter((file: ContentFile) => file.url) // Only include items with valid URLs
+
+                    // Step 2: Check licenses for video/audio files
+                    if (videoAudioMediaIds.length > 0) {
+                        try {
+                            const licenseCheckResult = await this.checkMediaLicenses(videoAudioMediaIds, accessToken)
+
+                            // Step 3: Set pingbackUrl for licensed media
+                            licenseCheckResult.forEach(({ mediaId, isLicensed }) => {
+                                if (isLicensed) {
+                                    const file = mediaIdToItemMap.get(mediaId)
+                                    if (file) file.pingbackUrl = `https://api-prod.amazingkids.app/prod/reports/media/${mediaId}/stream-count?source=aplay-pro`
+                                }
+                            })
+                        } catch (licenseError) {
+                            console.error("Failed to check media licenses:", licenseError)
+                            // Continue without license info - don't fail the entire request
+                        }
+                    }
 
                     resolve(files)
                 } catch (error) {
@@ -268,6 +301,36 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
                 }
             }
             )
+        })
+    }
+
+    private async checkMediaLicenses(mediaIds: string[], accessToken: string): Promise<Array<{ mediaId: string; isLicensed: boolean }>> {
+        return new Promise((resolve, reject) => {
+            const headers = {
+                "Authorization": `Bearer ${accessToken}`,
+                "accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            const payload = { mediaIds }
+
+            console.log(`Checking licenses for ${mediaIds.length} media items`)
+
+            httpsRequest("https://api-prod.amazingkids.app", "/prod/reports/media/license-check", "POST", headers, payload, (err, data) => {
+                if (err) {
+                    console.error("Failed to check media licenses:", err)
+                    return reject(err)
+                }
+
+                try {
+                    // Expected response: array of { mediaId: string, isLicensed: boolean }
+                    const licenseData = Array.isArray(data) ? data : (data.data || [])
+                    console.log(`License check returned ${licenseData.length} results`)
+                    resolve(licenseData)
+                } catch (error) {
+                    console.error("Failed to parse license check response:", error)
+                    reject(error)
+                }
+            })
         })
     }
 

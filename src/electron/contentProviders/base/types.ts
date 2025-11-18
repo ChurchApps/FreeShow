@@ -106,4 +106,6 @@ export interface ContentFile {
     type: "image" | "video"
     name?: string
     decryptionKey?: string
+    mediaId?: string // Provider-specific media ID for tracking
+    pingbackUrl?: string // URL to ping after 30+ seconds of playback
 }
