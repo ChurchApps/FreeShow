@@ -290,10 +290,12 @@
     .input {
         background-color: rgb(0 0 0 / 0.2);
         color: var(--text);
-        padding: 10px 18px;
+        padding: 0.75em 1em;
+        min-height: 56px;
         border: none;
-        font-size: inherit;
+        font-size: 1.05em;
         border-bottom: 2px solid var(--secondary);
+        box-sizing: border-box;
     }
 
     .input:active,
@@ -364,8 +366,9 @@
     /* Mobile styles */
     @media screen and (max-width: 1000px) {
         .input {
-            padding: 14px 20px;
-            font-size: 1.1em;
+            padding: 0.9em 1.2em;
+            min-height: 60px;
+            font-size: 1.15em;
         }
 
         .show-list {

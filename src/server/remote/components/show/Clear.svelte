@@ -26,7 +26,7 @@
     $: type = $outData?.slide?.type
 </script>
 
-<div class="clear" class:tablet>
+<div class="clear" class:tablet class:expanded={moreOptions && !tablet}>
     {#if moreOptions || tablet}
         <div class="more" style="display: flex;" in:slide={{ duration: tablet ? 0 : 300 }}>
             <!-- WIP get state -->
@@ -82,7 +82,7 @@
         </div>
     {/if}
 
-    <span style="display: flex;">
+    <span class="clear-all-container" style="display: flex;">
         <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("API:clear_all")} red dark center>
             <Icon id="clear" size={1.2} />
             <span class="clear-text">{translate("clear.all", $dictionary)}</span>
@@ -107,6 +107,26 @@
     .clear :global(button) {
         width: 100%;
         flex: 1;
+    }
+    .clear .more {
+        gap: 8px;
+        padding: 8px 8px 4px 8px;
+    }
+    .clear.expanded .more {
+        border-radius: 8px 8px 0 0;
+    }
+    .clear.tablet .more {
+        padding-top: 0;
+    }
+    .clear .more :global(button) {
+        width: auto;
+        flex: 1;
+    }
+    .clear.tablet .clear-all-container {
+        padding: 8px 8px 0 8px;
+    }
+    .clear-all-container :global(button:not(.clearAll)) {
+        padding-top: 8px !important;
     }
     .clear :global(.clearAll) {
         padding: 0.5rem 1rem !important;
@@ -138,6 +158,9 @@
     }
 
     .clear.tablet :global(.clearAll) {
-        border-radius: 0 0 8px 8px !important;
+        border-radius: 8px !important;
+    }
+    .clear.expanded :global(.clearAll) {
+        border-radius: 0 !important;
     }
 </style>

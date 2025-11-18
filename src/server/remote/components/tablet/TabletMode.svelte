@@ -728,7 +728,7 @@
         padding: 0.5rem 0.75rem;
         background-color: var(--primary-darkest);
         border-radius: 12px;
-        margin-top: 8px;
+        margin: 8px 8px 0 8px;
         min-height: auto;
     }
 

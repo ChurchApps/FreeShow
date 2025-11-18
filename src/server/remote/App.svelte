@@ -160,9 +160,9 @@
             color: var(--text);
             width: 100%;
 
-            height: 44px; /* fixed height, no scaling */
+            height: 56px; /* Match show item height */
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 1.05em;
         }
 
         /* CHECKERED */

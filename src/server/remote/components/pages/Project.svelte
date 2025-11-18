@@ -87,14 +87,11 @@
             <p style="font-size: 0.8em;">{translate("actions.back", $dictionary)}</p>
         </Button>
     {:else}
-    <div class="header">
-            <div class="header-back">
-                <Button on:click={() => _set("projectsOpened", true)}>
-                    <Icon id="back" size={1.5} />
-                </Button>
-            </div>
+        <div class="header">
+            <Button on:click={() => _set("projectsOpened", true)} class="header-back">
+                <Icon id="back" size={1.5} />
+            </Button>
             <p class="header-title">{$activeProject.name}</p>
-            <div class="header-spacer"></div>
         </div>
 
         {#if $activeProject.shows?.length}
@@ -119,15 +116,15 @@
                             border
                         >
                             <Icon id={show.type === "audio" ? "music" : show.type === "overlay" ? "overlays" : show.type || ""} right />
-                            <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
-                                <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || (showId ? getFileName(removeExtension(showId)) : "")}</p>
+                            <span style="display: flex;align-items: center;flex: 1;overflow: hidden;min-width: 0;">
+                                <p style="margin: 0;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || (showId ? getFileName(removeExtension(showId)) : "")}</p>
                             </span>
                         </Button>
                     {:else if (show.type || "show") !== "show"}
                         <!-- WIP player / PPT -->
-                        <div class="item" style="display: flex;align-items: center;padding: 0.2em 0.8em;">
+                        <div class="item" style="display: flex;align-items: center;padding: 0.75em 1em;">
                             <Icon id={show.type || ""} box={show.type === "ppt" ? 50 : 24} right />
-                            <p style="font-size: 0.7em;opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>
+                            <p style="font-size: 0.8em;opacity: 0.6;margin: 0 0.5em;text-transform: uppercase;font-weight: 500;">{show.type}</p>
                         </div>
                     {:else if s}
                         <ShowButton
@@ -242,6 +239,7 @@
     /* Project shows list - match project list styling */
     .project-shows-list {
         gap: 2px;
+        padding: 0;
     }
 
     .project-shows-list :global(button) {
@@ -252,6 +250,8 @@
         justify-content: flex-start;
         text-align: left;
         margin: 0;
+        width: 100%;
+        border-radius: 0;
     }
 
     .project-shows-list :global(button) :global(p),
@@ -260,38 +260,35 @@
         align-items: center;
         line-height: 1.2;
         text-align: left;
+        margin: 0;
     }
 
     .project-shows-list :global(button) :global(svg) {
         width: 1.5em;
         height: 1.5em;
         flex-shrink: 0;
+        margin-right: 0.5em;
     }
 
-    .list .item {
-        display: flex;
-        justify-content: space-between;
-
-        border-bottom: 1px solid var(--primary-lighter);
-    }
-
-    .list .item p {
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
+    .project-shows-list :global(button.active) {
+        background-color: var(--primary-darkest);
     }
 
     /* List items */
     .list .item {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         border-bottom: 1px solid var(--primary-lighter);
+        padding: 0.5em 0;
     }
 
     .list .item p {
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
+        flex: 1;
+        margin: 0;
     }
 
     /* Section headers */
@@ -299,42 +296,50 @@
         text-align: center;
         font-size: 0.75em;
         background-color: var(--primary-darker);
-        padding: 2px;
+        padding: 0.5em 0.8em;
+        margin: 2px 0;
+        border-radius: 4px;
+    }
+
+    .section p {
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     /* Header layout - match global header style */
     .header {
-        display: grid;
-        grid-template-columns: 44px 1fr 44px;
-        align-items: center;
-        position: relative;
-        height: 44px; /* match global header height */
-    }
-
-    .header-back {
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100%;
+        position: relative;
+        height: 58px;
+        padding: 0 44px;
+        border-bottom: 1px solid var(--primary-lighter);
+        background-color: var(--primary-darker);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 1.05em;
+        box-sizing: border-box;
+    }
+
+    .header :global(.header-back) {
+        position: absolute;
+        left: 0;
+        padding: 0.5em;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .header-title {
-        grid-column: 2;
+        flex: 1;
         text-align: center;
         padding: 0;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .header-spacer {
-        grid-column: 3;
-        width: 100%;
-        height: 100%;
     }
 
     /* Edit button */
@@ -354,6 +359,11 @@
 
     /* Mobile styles */
     @media screen and (max-width: 1000px) {
+        .header {
+            height: 60px;
+            font-size: 1.15em;
+        }
+
         .project-shows-list {
             gap: 3px;
         }

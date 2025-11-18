@@ -899,11 +899,11 @@
         justify-content: space-between;
         gap: 0.5rem;
         overflow: hidden;
-        height: 44px; /* Match Projects header height */
+        height: 56px; /* Match show item height */
         background-color: var(--primary-darker);
         color: var(--text);
         font-weight: 600;
-        font-size: 0.95em;
+        font-size: 1.05em;
     }
     .header-center {
         flex: 1;
