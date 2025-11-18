@@ -790,7 +790,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(noPopup = false, showPopup = false) {
+export async function createScriptureShow(showPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -799,10 +799,10 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (!noPopup && (showPopup || selectedVerses[0]?.length > 3)) {
+    if (showPopup) {
         const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
 
-        popupData.set({ showVersion })
+        popupData.set({ showVersion, create: true })
         activePopup.set("scripture_show")
         return
     }
