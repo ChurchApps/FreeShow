@@ -165,6 +165,11 @@ export function clearOverlay(overlayId: string) {
         lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
 
         setOutput("overlays", outOverlays, false, outputId)
+
+        // clear effects
+        let outEffects: string[] = get(outputs)[outputId]?.out?.effects || []
+        outEffects = outEffects.filter((id) => id !== overlayId)
+        setOutput("effects", outEffects, false, outputId)
     })
 }
 

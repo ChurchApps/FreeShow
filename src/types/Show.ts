@@ -387,7 +387,7 @@ export interface Media {
 export interface Action {
     name: string
     triggers: string[]
-    actionValues?: any[]
+    actionValues?: any
     tags?: string[]
     // action?: string
     // actionData?: any

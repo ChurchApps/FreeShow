@@ -10,6 +10,8 @@
     }
 </script>
 
+<MaterialButton class="popup-options" icon="delete" title="actions.clear_history" on:click={clearHistory} white />
+
 <main class="history">
     {#if $actionHistory.length}
         <div class="list">
@@ -23,10 +25,6 @@
                 </p>
             {/each}
         </div>
-
-        <MaterialButton variant="outlined" style="margin-top: 20px;" icon="delete" on:click={clearHistory}>
-            <T id="actions.clear_history" />
-        </MaterialButton>
     {:else}
         <Center faded>
             <T id="empty.general" />

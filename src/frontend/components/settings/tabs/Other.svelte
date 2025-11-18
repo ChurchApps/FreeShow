@@ -35,7 +35,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value && key !== "autoLocateMedia") delete a[key]
+            if (!value) delete a[key]
             else a[key] = value
 
             return a
@@ -178,8 +178,6 @@
 {/if}
 <!-- </div> -->
 <!-- </InputRow> -->
-
-<MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoLocateMedia")} />
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 

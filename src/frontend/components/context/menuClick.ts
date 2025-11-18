@@ -23,6 +23,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    activeStyle,
     activeTagFilter,
     activeTimers,
     activeVariableTagFilter,
@@ -495,6 +496,9 @@ const clickActions = {
         else activeTags.splice(currentIndex, 1)
 
         activeVariableTagFilter.set(activeTags || [])
+    },
+    action_history: () => {
+        activePopup.set("action_history")
     },
 
     addToProject: (obj: ObjData) => {
@@ -1059,6 +1063,23 @@ const clickActions = {
         } else if (obj.contextElem?.classList.value.includes("#edit_custom_action")) {
             activePopup.set("custom_action")
         }
+    },
+    edit_style: (obj: ObjData) => {
+        const outputId = obj.contextElem?.id || ""
+        const output = get(outputs)[outputId]
+        if (!output) return
+
+        if (output.stageOutput) {
+            activeStage.set({ id: output.stageOutput, items: [] })
+            activePage.set("stage")
+            return
+        }
+
+        if (!output.style) return
+
+        activeStyle.set(output.style)
+        settingsTab.set("styles")
+        activePage.set("settings")
     },
     manage_groups: () => {
         // settingsTab.set("general")

@@ -6,7 +6,7 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
-import { audioChannelsData, dataPath, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { audioChannelsData, dataPath, dictionary, media, outLocked, playingAudio, playingAudioPaths, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
@@ -273,8 +273,8 @@ export class AudioPlayer {
             return
         }
 
-        if (get(special).clearMediaOnFinish === false && AudioPlayer.getAudioType(id, audio.duration) === "music") this.pause(id)
-        else this.stop(id)
+        // if (get(special).clearAudioOnFinish === false && AudioPlayer.getAudioType(id, audio.duration) === "music") this.pause(id) else
+        this.stop(id)
 
         const stillPlaying = this.getAllPlaying()
         if (!stillPlaying.length) checkNextAfterMedia(id, "audio")
