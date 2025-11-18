@@ -206,10 +206,10 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         THEMES: get(themes),
         DRIVE_API_KEY: get(driveKeys),
         // CACHES SAVED TO MULTIPLE FILES
-        showsCache: clone(get(showsCache)),
-        scripturesCache: clone(get(scripturesCache)),
-        deletedShows: clone(get(deletedShows)),
-        renamedShows: clone(get(renamedShows)),
+        showsCache: get(showsCache),
+        scripturesCache: get(scripturesCache),
+        deletedShows: get(deletedShows),
+        renamedShows: get(renamedShows),
         // CACHES
         CACHE: { text: get(textCache) },
         HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
@@ -219,12 +219,14 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         customTriggers
     }
 
+    const saveData = clone(allSavedData)
+
     deletedShows.set([])
     renamedShows.set([])
 
     if (customTriggers.backup) newToast("settings.backup_started")
     // trigger toast before saving
-    setTimeout(() => sendMain(Main.SAVE, allSavedData))
+    setTimeout(() => sendMain(Main.SAVE, saveData))
 }
 
 export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {

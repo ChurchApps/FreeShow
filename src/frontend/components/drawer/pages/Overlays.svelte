@@ -18,6 +18,7 @@
     import Card from "../Card.svelte"
     import Effects from "../effects/Effects.svelte"
     import OverlayActions from "./OverlayActions.svelte"
+    import { translateText } from "../../../utils/language"
 
     export let active: string | null
     export let searchValue = ""
@@ -58,6 +59,19 @@
     // open drawer tab instantly before content has loaded
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
+
+    $: overlayWithNonExistentCategory = active === "unlabeled" && filteredOverlays.some((s) => s.category)
+    function createNonExistentCategories() {
+        const nonexistentCategories = [...new Set(filteredOverlays.map((s) => s.category))].filter((c) => c && !$overlayCategories[c]) as string[]
+
+        overlayCategories.update((a) => {
+            nonexistentCategories.forEach((id) => {
+                if (a[id]) return
+                a[id] = { name: translateText("main.unnamed") }
+            })
+            return a
+        })
+    }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
@@ -125,6 +139,14 @@
         </DropArea>
     {/if}
 </div>
+
+{#if overlayWithNonExistentCategory}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton icon="autofill" on:click={createNonExistentCategories}>
+            <T id="category.create_nonexistent" />
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 {#if active === "effects"}
     <FloatingInputs onlyOne>

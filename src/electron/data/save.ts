@@ -10,7 +10,7 @@ import { stores } from "../data/store"
 import { sendMain, sendToMain } from "../IPC/main"
 import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, parseShow, readFile, writeFile } from "../utils/files"
 import { renameShows } from "../utils/shows"
-import { wait } from "../utils/helpers"
+import { clone, wait } from "../utils/helpers"
 
 let isSaving = false
 export async function save(data: SaveData) {
@@ -19,8 +19,8 @@ export async function save(data: SaveData) {
 
     const reset = !!data.customTriggers?.changeUserData?.reset
     if (reset) {
-        data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
-        data.SYNCED_SETTINGS = JSON.parse(JSON.stringify(defaultSyncedSettings))
+        data.SETTINGS = clone(defaultSettings)
+        data.SYNCED_SETTINGS = clone(defaultSyncedSettings)
     }
 
     // save to files

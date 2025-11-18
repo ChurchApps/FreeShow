@@ -17,6 +17,7 @@ import { forceCloseApp } from "../utils/close"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { clone } from "../utils/helpers"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -81,8 +82,8 @@ function checkStores(dataPath: string) {
 
 const DEFAULTS = {
     error_log: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] },
-    settings: defaultSettings,
-    synced_settings: defaultSyncedSettings,
+    settings: clone(defaultSettings),
+    synced_settings: clone(defaultSyncedSettings),
     themes: {} as { [key: string]: Themes },
     projects: { projects: {}, folders: {}, projectTemplates: {} },
     shows: {} as TrimmedShows,
@@ -205,7 +206,7 @@ function createStoreAtNewLocation(id: string, load = false) {
     let tempData: any = {}
     if (!load) {
         try {
-            tempData = JSON.parse(JSON.stringify(stores[key].store))
+            tempData = clone(stores[key].store)
         } catch (err) {
             console.error("Could not parse store:", key)
         }

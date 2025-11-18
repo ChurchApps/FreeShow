@@ -318,6 +318,8 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
     const data = cVal.data || "value"
     let dataValue: string | number = cVal.value ?? ""
     if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
+    // dynamic value text
+    if (dataValue.toString().includes("{")) dataValue = getDynamicValue(dataValue.toString(), type)
 
     let value = ""
     if (element === "text") value = itemsText

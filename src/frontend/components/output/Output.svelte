@@ -255,7 +255,15 @@
     // values
     $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
-    $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
+    // metadata display
+    $: firstActiveSlideIndex = currentLayout.findIndex((a) => !a.data.disabled)
+    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex((a) => !a.data.disabled)
+    $: displayMetadata =
+        metadata.value?.length &&
+        (metadata.display === "always" ||
+            (metadata.display?.includes("first") && (slide?.index === firstActiveSlideIndex || slide?.index === 0)) ||
+            (metadata.display?.includes("last") && (slide?.index === lastActiveSlideIndex || slide?.index === currentLayout.length - 1)))
+    // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
@@ -377,7 +385,7 @@
         {/if}
 
         <!-- metadata -->
-        {#if metadataValue || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
+        {#if displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
