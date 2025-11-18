@@ -11,11 +11,12 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { activePage, activeProject, activeShow, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
 import { loadJsonBible } from "../components/drawer/bible/scripture"
+import { lastClickTime } from "./common"
 
 // REMOTE
 
@@ -75,6 +76,7 @@ export const receiveREMOTE: any = {
 
         if (loadingShow !== showID) return
 
+        openShow(showID)
         return msg
     },
     OUT: async (msg: any) => {
@@ -364,3 +366,12 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 //     reader.onload = () => resolve(reader.result);
 //     reader.onerror = error => reject(error);
 // });
+
+function openShow(id: string) {
+    if (get(activePage) !== "show") return
+    if (!get(shows)[id]) return
+    // don't open if last interaction was less than 20 seconds ago
+    if (Date.now() - lastClickTime < 20000) return
+
+    activeShow.set({ id })
+}
