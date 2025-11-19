@@ -132,8 +132,12 @@
 
     function newShow() {
         // Pre-fill with search value if available
-        const initialName = searchValue.trim() ? searchValue.trim() : true
-        createShow.set(initialName)
+        const initialName = searchValue.trim() || ""
+        if (initialName) {
+            createShow.set(initialName)
+        } else {
+            createShow.set(true)
+        }
     }
 
     onMount(() => {
@@ -176,51 +180,64 @@
     let loadingStarted: boolean = false
 </script>
 
-{#if $shows.length}
-    {#if $shows.length < 10 || loadingStarted}
-        <input id="showSearch" type="text" class="input" placeholder="Search..." value={searchValue} on:input={updateTextValue} on:keydown={showSearchKeydown} on:click={select} bind:this={searchElem} />
-        <div class="scroll-wrap">
-            <div class="scroll show-list" bind:this={scrollElem}>
-                {#each visibleShows as show (show.id)}
-                    {#if searchValue.length <= 1 || show.match}
-                        <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
-                    {/if}
-                {/each}
-                {#if filteredShows.length > MAX_VISIBLE_ITEMS}
-                    <div class="limit-notice">
-                        <p>{translate("remote.showing_first", $dictionary) || "Showing first"} {MAX_VISIBLE_ITEMS} {translate("remote.of", $dictionary) || "of"} {filteredShows.length} {translate("main.shows", $dictionary) || "shows"}</p>
-                        {#if searchValue.length > 1}
-                            <p style="font-size: 0.9em; opacity: 0.7; margin-top: 4px;">{translate("remote.refine_search", $dictionary) || "Refine your search to see more results"}</p>
+<div class="shows-container" class:has-quick-play={!tablet}>
+    {#if $shows.length}
+        {#if $shows.length < 10 || loadingStarted}
+            <input id="showSearch" type="text" class="input" placeholder="Search..." value={searchValue} on:input={updateTextValue} on:keydown={showSearchKeydown} on:click={select} bind:this={searchElem} />
+            <div class="scroll-wrap">
+                <div class="scroll show-list" bind:this={scrollElem}>
+                    {#each visibleShows as show (show.id)}
+                        {#if searchValue.length <= 1 || show.match}
+                            <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
                         {/if}
-                    </div>
-                {/if}
+                    {/each}
+                    {#if filteredShows.length > MAX_VISIBLE_ITEMS}
+                        <div class="limit-notice">
+                            <p>{translate("remote.showing_first", $dictionary) || "Showing first"} {MAX_VISIBLE_ITEMS} {translate("remote.of", $dictionary) || "of"} {filteredShows.length} {translate("main.shows", $dictionary) || "shows"}</p>
+                            {#if searchValue.length > 1}
+                                <p style="font-size: 0.9em; opacity: 0.7; margin-top: 4px;">{translate("remote.refine_search", $dictionary) || "Refine your search to see more results"}</p>
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
             </div>
-        </div>
-        {#if searchValue.length > 1 && filteredShows.length === 0}
-            <Center faded>{translate("empty.search", $dictionary)}</Center>
-        {/if}
+            {#if searchValue.length > 1 && filteredShows.length === 0}
+                <Center faded>{translate("empty.search", $dictionary)}</Center>
+            {/if}
 
-        <div class="buttons">
+            {#if !$createShow}
+                <div class="floating-input-container">
+                    <Button on:click={newShow} center dark class="floating-add-button" title={translate("new.show", $dictionary)}>
+                        <Icon id="add" size={1.2} />
+                        <span>{translate("new.show", $dictionary)}</span>
+                    </Button>
+                </div>
+            {/if}
+
             {#if !tablet}
                 <div class="check">
                     <p>{translate("remote.quick_play", $dictionary)}</p>
                     <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
                 </div>
             {/if}
-
-            <Button on:click={newShow} style="width: 100%;" center dark class="new-show-button">
-                <Icon id="add" right />
-                <p>{translate("new.show", $dictionary)}</p>
-            </Button>
-        </div>
+        {:else}
+            <Center faded>{translate("remote.loading", $dictionary)}</Center>
+        {/if}
     {:else}
-        <Center faded>{translate("remote.loading", $dictionary)}</Center>
+        <Center faded>{translate("empty.shows", $dictionary)}</Center>
     {/if}
-{:else}
-    <Center faded>{translate("empty.shows", $dictionary)}</Center>
-{/if}
+</div>
 
 <style>
+    /* Main container */
+    .shows-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex: 1;
+    }
+
     /* Scroll container */
     .scroll-wrap {
         position: relative;
@@ -236,6 +253,7 @@
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
         overscroll-behavior: contain;
+        padding-bottom: 80px; /* Space for floating input */
         /* FreeShow UI scrollbar */
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
@@ -309,21 +327,10 @@
         opacity: 0.4;
     }
 
-    /* Bottom action buttons */
-    .buttons {
-        position: sticky;
-        bottom: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        background-color: var(--primary-darkest);
-        border-radius: 8px 8px 0 0;
-        overflow: hidden;
-        z-index: 1;
-    }
-
     /* Quick play checkbox */
     .check {
+        position: sticky;
+        bottom: 0;
         display: flex;
         background-color: var(--primary-darkest);
         justify-content: space-between;
@@ -333,22 +340,59 @@
         font-weight: 600;
         min-height: auto;
         border-radius: 8px 8px 0 0;
+        z-index: 1;
     }
 
-    /* New show button - matches edit button styling */
-    :global(.new-show-button) {
-        padding: 0.5rem 1rem !important;
-        font-size: 0.9em !important;
-        font-weight: 600 !important;
-        margin-top: 0 !important;
-        min-height: auto !important;
-        border-radius: 0 !important;
+    /* Floating input container */
+    .floating-input-container {
+        --size: 40px;
+        --padding: 12px;
+        --background: rgba(25, 25, 35, 0.85);
+
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        z-index: 199;
+        max-width: calc(100% - 64px);
     }
 
-    :global(.new-show-button:hover) {
-        background-color: var(--hover) !important;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    .shows-container.has-quick-play .floating-input-container {
+        bottom: 50px;
+        right: 5px;
+    }
+
+    :global(.floating-add-button) {
+        font-size: 1em;
+        border-radius: 50px !important;
+        height: var(--size);
+        padding: 0 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5em;
+        background: linear-gradient(var(--background), var(--background)) padding-box,
+            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
+        border: 2px solid transparent !important;
+        transition: 0.4s filter ease;
+        box-shadow: 1px 1px 6px rgb(0 0 0 / 0.4);
+        backdrop-filter: blur(3px);
+        overflow: visible !important; /* Prevent clipping of rounded corners */
+    }
+
+    :global(.floating-add-button:not(:disabled):hover) {
+        background: linear-gradient(var(--background), var(--background)) padding-box,
+            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
+        filter: hue-rotate(15deg);
+    }
+
+    :global(.floating-add-button:not(:disabled):active) {
+        background: linear-gradient(var(--background), var(--background)) padding-box,
+            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
+        filter: hue-rotate(30deg);
+    }
+
+    :global(.floating-add-button) :global(span) {
+        white-space: nowrap;
     }
 
     /* Limit notice */
@@ -391,10 +435,11 @@
             font-size: 0.9em;
         }
 
-        .buttons :global(button) {
-            padding: 0.5rem 1rem !important;
-            font-size: 0.9em !important;
-            min-height: auto !important;
+        .floating-input-container {
+            bottom: 45px; /* Positioned above quick play checkbox on mobile */
+            right: 5px;
+            max-width: calc(100% - 10px);
+            min-width: 150px;
         }
     }
 </style>

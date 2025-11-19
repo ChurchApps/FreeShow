@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -136,8 +137,15 @@
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
     
     // Auto-focus search input when search is opened
-    $: if (openScriptureSearch && searchInput) {
-        setTimeout(() => searchInput?.focus(), 0)
+    $: if (openScriptureSearch) {
+        focusSearchInput()
+    }
+
+    async function focusSearchInput() {
+        await tick()
+        if (!searchInput) return
+        searchInput.focus({ preventScroll: true })
+        searchInput.select()
     }
 
     function formatBookSearch(search: string): string {

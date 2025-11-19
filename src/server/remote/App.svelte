@@ -84,6 +84,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+            touch-action: manipulation;
         }
 
         /* Match FreeShow main app scrollbar */

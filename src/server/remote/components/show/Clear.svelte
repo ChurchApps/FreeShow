@@ -102,7 +102,7 @@
         flex-direction: column;
         width: 100%;
         gap: 4px;
-        padding-bottom: 4px;
+        padding-bottom: 0;
     }
     .clear :global(button) {
         width: 100%;

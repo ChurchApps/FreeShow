@@ -270,6 +270,11 @@
         .scroll {
             background-color: var(--primary) !important;
         }
+
+        .slide-progress {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
     }
 
     .edit-actions :global(.done-button) {

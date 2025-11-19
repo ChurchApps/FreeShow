@@ -38,7 +38,7 @@
                     <span style="left: 0;position: absolute;">{i + 1}</span>
                     <span>{slides[layoutSlide.id]?.group === null ? "" : getName(slides[layoutSlide.id]?.group || "", layoutSlide.id, i)}</span>
                 </span>
-                {#each slides[layoutSlide.id]?.items || [] as item (item.id ? `${layoutSlide.id}-item-${item.id}` : `${layoutSlide.id}-item-${i}-${item}`)}
+                {#each slides[layoutSlide.id]?.items || [] as item, itemIndex (item.id ? `${layoutSlide.id}-item-${item.id}` : `${layoutSlide.id}-item-${i}-${itemIndex}`)}
                     {#if item.lines}
                         <div class="lyric">
                             {#each item.lines as line, lineIndex (line.id ? `${layoutSlide.id}-line-${line.id}` : `${layoutSlide.id}-line-${i}-${lineIndex}`)}
