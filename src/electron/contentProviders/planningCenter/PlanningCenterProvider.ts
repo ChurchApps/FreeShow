@@ -50,13 +50,12 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoRequest(data)
     }
 
-    async loadServices(dataPath?: string): Promise<void> {
-        return pcoLoadServices(dataPath || "")
+    async loadServices(): Promise<void> {
+        return pcoLoadServices()
     }
 
-    async startupLoad(scope: PCOScopes, data?: any): Promise<void> {
-        const dataPath = data?.dataPath || ""
-        return pcoStartupLoad(dataPath, scope)
+    async startupLoad(scope: PCOScopes): Promise<void> {
+        return pcoStartupLoad(scope)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

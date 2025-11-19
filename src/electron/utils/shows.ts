@@ -2,12 +2,11 @@ import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
-import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
+import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
-export function getAllShows(data: { path: string }) {
-    if (!doesPathExist(data.path)) return []
-
-    const filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
+export function getAllShows() {
+    const showsPath = getDataFolderPath("shows")
+    const filesInFolder: string[] = readFolder(showsPath).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
@@ -63,27 +62,30 @@ export function getShowTextContent(show: Show) {
 
 /// //
 
-export function deleteShows(data: { path: string; shows: { name: string; id: string }[] }) {
+export function deleteShows(data: { shows: { name: string; id: string }[] }) {
     const deleted: string[] = []
+
+    const showsPath = getDataFolderPath("shows")
 
     data.shows.forEach(({ id, name }) => {
         name = (name || id) + ".show"
-        const showPath: string = path.join(data.path, name)
-
+        const showPath: string = path.join(showsPath, name)
         deleteFile(showPath)
         deleted.push(name)
     })
 
-    refreshAllShows(data)
+    refreshAllShows()
     return { deleted }
 }
 
-export function deleteShowsNotIndexed(data: { shows: TrimmedShows; path: string }) {
+export function deleteShowsNotIndexed(data: { shows: TrimmedShows }) {
     // get all names
     const names: string[] = Object.entries(data.shows).map(([id, { name }]) => (name || id) + ".show")
 
+    const showsPath = getDataFolderPath("shows")
+
     // list all shows in folder
-    const filesInFolder: string[] = readFolder(data.path)
+    const filesInFolder: string[] = readFolder(showsPath)
     if (!filesInFolder.length) return
 
     const deleted: string[] = []
@@ -92,7 +94,7 @@ export function deleteShowsNotIndexed(data: { shows: TrimmedShows; path: string 
     function checkFile(name: string) {
         if (names.includes(name) || !name.includes(".show")) return
 
-        const showPath: string = path.join(data.path, name)
+        const showPath: string = path.join(showsPath, name)
         deleteFile(showPath)
         deleted.push(name)
     }
@@ -100,11 +102,11 @@ export function deleteShowsNotIndexed(data: { shows: TrimmedShows; path: string 
     return { deleted }
 }
 
-export function refreshAllShows(data: { path: string }) {
-    if (!doesPathExist(data.path)) return
+export function refreshAllShows() {
+    const showsPath = getDataFolderPath("shows")
 
     // list all shows in folder
-    const filesInFolder: string[] = readFolder(data.path)
+    const filesInFolder: string[] = readFolder(showsPath)
     if (!filesInFolder.length) return
 
     const newShows: TrimmedShows = {}
@@ -113,7 +115,7 @@ export function refreshAllShows(data: { path: string }) {
     function loadFile(name: string) {
         if (!name.includes(".show")) return
 
-        const showPath: string = path.join(data.path, name)
+        const showPath: string = path.join(showsPath, name)
         const show = parseShow(readFile(showPath))
 
         if (!show || !show[1]) return
@@ -126,11 +128,11 @@ export function refreshAllShows(data: { path: string }) {
     sendToMain(ToMain.REFRESH_SHOWS2, newShows)
 }
 
-export async function getEmptyShows(data: { path: string; cached: Shows }) {
-    if (!doesPathExist(data.path)) return []
+export async function getEmptyShows(data: { cached: Shows }) {
+    const showsPath = getDataFolderPath("shows")
 
     // list all shows in folder
-    const filesInFolder: string[] = await readFolderAsync(data.path)
+    const filesInFolder: string[] = await readFolderAsync(showsPath)
     if (!filesInFolder.length || filesInFolder.length > 1000) return []
 
     const emptyShows: { id: string; name: string }[] = []
@@ -139,7 +141,7 @@ export async function getEmptyShows(data: { path: string; cached: Shows }) {
     async function loadFile(name: string) {
         if (!name.includes(".show")) return
 
-        const showPath: string = path.join(data.path, name)
+        const showPath: string = path.join(showsPath, name)
         const show = parseShow(await readFileAsync(showPath))
         if (!show || !show[1]) return
 

@@ -4,7 +4,7 @@ import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
 import type os from "os"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { stores } from "../../electron/data/store"
+import type { _store } from "../../electron/data/store"
 import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
@@ -61,8 +61,8 @@ export enum Main {
     URL = "URL",
     LANGUAGE = "LANGUAGE",
     GET_PATHS = "GET_PATHS",
-    SHOWS_PATH = "SHOWS_PATH",
     DATA_PATH = "DATA_PATH",
+    UPDATE_DATA_PATH = "UPDATE_DATA_PATH",
     LOG_ERROR = "LOG_ERROR",
     OPEN_LOG = "OPEN_LOG",
     OPEN_CACHE = "OPEN_CACHE",
@@ -116,8 +116,6 @@ export enum Main {
     SEARCH_LYRICS = "SEARCH_LYRICS",
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
-    DOES_PATH_EXIST = "DOES_PATH_EXIST",
-    UPDATE_DATA_PATH = "UPDATE_DATA_PATH",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
     GET_SIMULAR = "GET_SIMULAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
@@ -142,39 +140,36 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
-    [Main.BIBLE]: { id: string; path: string; name: string }
-    [Main.SHOW]: { id: string; path: string | null; name: string }
+    [Main.BIBLE]: { id: string; name: string }
+    [Main.SHOW]: { id: string; name: string }
     [Main.SAVE]: SaveData
-    [Main.SHOWS]: { showsPath: string }
     ////////////
     [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
+    [Main.UPDATE_DATA_PATH]: { oldPath: string }
     [Main.LOG_ERROR]: ErrorLog
     [Main.OPEN_FOLDER_PATH]: string
-    [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string }
-    [Main.SET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
-    [Main.DELETE_SHOWS]: { shows: { id: string; name: string }[]; path: string }
-    [Main.DELETE_SHOWS_NI]: { shows: TrimmedShows; path: string }
-    [Main.REFRESH_SHOWS]: { path: string }
-    [Main.GET_EMPTY_SHOWS]: { path: string; cached: Shows }
-    [Main.FULL_SHOWS_LIST]: { path: string }
+    [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof _store; key: string }
+    [Main.SET_STORE_VALUE]: { file: "config" | keyof typeof _store; key: string; value: any }
+    [Main.DELETE_SHOWS]: { shows: { id: string; name: string }[] }
+    [Main.DELETE_SHOWS_NI]: { shows: TrimmedShows }
+    [Main.GET_EMPTY_SHOWS]: { cached: Shows }
     [Main.OUTPUT]: "true" | "false"
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
-    [Main.PDF_TO_IMAGE]: { dataPath: string; filePath: string }
+    [Main.SAVE_IMAGE]: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
+    [Main.PDF_TO_IMAGE]: { filePath: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
-    [Main.MEDIA_DOWNLOAD]: { url: string; dataPath: string }
-    [Main.MEDIA_IS_DOWNLOADED]: { url: string; dataPath: string }
-    [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string; unknownLang: string[] }
-    [Main.NOW_PLAYING_UNSET]: { dataPath: string }
+    [Main.MEDIA_DOWNLOAD]: { url: string }
+    [Main.MEDIA_IS_DOWNLOADED]: { url: string }
+    [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[] }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
-    [Main.LIBREOFFICE_CONVERT]: { type: string; dataPath: string }
+    [Main.LIBREOFFICE_CONVERT]: { type: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
     [Main.PRESENTATION_CONTROL]: { action: string }
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }
@@ -189,14 +184,10 @@ export interface MainSendPayloads {
     [Main.CLOSE_MIDI]: { id: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
-    [Main.RESTORE]: { showsPath: string }
     [Main.SYSTEM_OPEN]: string
-    [Main.DOES_PATH_EXIST]: { path: string; dataPath: string }
-    [Main.UPDATE_DATA_PATH]: { reset: boolean; dataPath: string }
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
     [Main.GET_SIMULAR]: { paths: string[] }
-    [Main.BUNDLE_MEDIA_FILES]: { showsPath: string; dataPath: string }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
     [Main.READ_FOLDERS]: { path: string }[]
@@ -204,7 +195,7 @@ export interface MainSendPayloads {
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; dataPath?: string }
+    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
     [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any }
     // Content Library
@@ -246,9 +237,8 @@ export interface MainReturnPayloads {
     ///
     [Main.GET_DISPLAYS]: Display[]
     [Main.GET_PATHS]: MainFilePaths
-    [Main.SHOWS_PATH]: string
     [Main.DATA_PATH]: string
-    [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
+    [Main.GET_STORE_VALUE]: any
     [Main.DELETE_SHOWS]: { deleted: string[] }
     [Main.DELETE_SHOWS_NI]: { deleted: string[] } | undefined
     [Main.GET_EMPTY_SHOWS]: Promise<{ id: string; name: string }[] | undefined>
@@ -269,7 +259,6 @@ export interface MainReturnPayloads {
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
-    [Main.DOES_PATH_EXIST]: { path: string; dataPath: string; exists: boolean }
     [Main.GET_SIMULAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null

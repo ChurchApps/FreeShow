@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain } from "../../../IPC/main"
-    import { activePopup, autosave, dataPath, driveData, driveKeys, showsPath, special } from "../../../stores"
+    import { requestMain, sendMain } from "../../../IPC/main"
+    import { activePopup, autosave, dataPath, driveData, driveKeys, special } from "../../../stores"
     import { previousAutosave, startAutosave } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -18,7 +18,6 @@
     import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import { confirmCustom } from "../../../utils/popup"
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -27,32 +26,6 @@
 
             return a
         })
-    }
-
-    let refreshInput = 0
-    async function toggle(checked: boolean, key: string) {
-        if (key === "customUserDataLocation") {
-            let existingData = false
-            if (checked) {
-                // Are you sure?
-                if (!(await confirmCustom(translateText("settings.user_data_location_confirm")))) {
-                    // revert toggle switch
-                    refreshInput++
-                    return
-                }
-
-                existingData = (await requestMain(Main.DOES_PATH_EXIST, { path: "data_config", dataPath: $dataPath }))?.exists
-                if (existingData) activePopup.set("user_data_overwrite")
-            }
-            if (!existingData) {
-                updateSpecial(checked, key)
-                save(false, { backup: true, isAutoBackup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
-            }
-
-            return
-        }
-
-        updateSpecial(checked, key)
     }
 
     const autosaveList = [
@@ -87,11 +60,6 @@
 
     //     requestMain(Main.DATA_PATH, undefined, (path) => {
     //         dataPath.set(path)
-    //         if (customLocation) save(false, { changeUserData: { reset: true, dataPath: path } })
-    //     })
-    //     requestMain(Main.SHOWS_PATH, undefined, (path) => {
-    //         showsPath.set(path)
-    //         sendMain(Main.SHOWS, { showsPath: path })
     //     })
     // }
 
@@ -176,21 +144,29 @@
     $: autosaveInfo = nextAutosave ? `<span style="${infoStyle}">${joinTimeBig(nextAutosave / 1000)}<span>` : ""
     $: autoBackupInfo = nextAutobackup ? `<span style="${infoStyle}">${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)}<span>` : ""
     $: autoBackup = $special.autoBackup || "weekly"
+
+    function updateDataPath(e: any) {
+        const oldPath = $dataPath
+        sendMain(Main.UPDATE_DATA_PATH, { oldPath })
+
+        const newPath = e.detail
+        dataPath.set(newPath)
+    }
 </script>
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
 <MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
-<!-- changing the "Data loction" should also change "Shows" location if it's the correct path ? -->
-<MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={(e) => dataPath.set(e.detail)} />
+<MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={updateDataPath} />
+
+<!-- DEPRECATED -->
 <!-- shows path should be a "Shows" folder inside of "Data location" -->
 <!-- {#if !$showsPath?.includes($dataPath) || !$showsPath?.includes("Shows")} -->
-<MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} />
+<!-- <MaterialFolderPicker label="settings.show_location" value={$showsPath || ""} on:change={(e) => showsPath.set(e.detail)} /> -->
 <!-- {/if} -->
-
-{#key refreshInput}
+<!-- {#key refreshInput}
     <MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
-{/key}
+{/key} -->
 
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { dataPath, theme, themes } from "../../../stores"
+    import { theme, themes } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
@@ -16,7 +16,7 @@
 
     function importTheme() {
         const format = { extensions: ["fstheme", "theme", "json"], name: translateText("formats.theme") }
-        sendMain(Main.IMPORT, { channel: "freeshow_theme", format, settings: { path: $dataPath } })
+        sendMain(Main.IMPORT, { channel: "freeshow_theme", format })
     }
 </script>
 

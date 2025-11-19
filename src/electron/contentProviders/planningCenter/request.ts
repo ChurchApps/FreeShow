@@ -7,14 +7,14 @@
 import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
+import type { LessonsData } from "../../../types/Main"
+import type { Project } from "../../../types/Projects"
 import type { Show, Slide, SlideData } from "../../../types/Show"
 import { downloadLessonsMedia } from "../../data/downloadMedia"
 import { sendToMain } from "../../IPC/main"
-import { dataFolderNames, getDataFolder } from "../../utils/files"
+import { getDataFolderPath } from "../../utils/files"
 import { httpsRequest } from "../../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
-import type { Media } from "../../../types/Main"
-import type { Project } from "../../../types/Projects"
 
 const PCO_API_version = 2
 
@@ -135,7 +135,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
 const ONE_WEEK_MS = 604800000
 
-export async function pcoLoadServices(dataPath: string) {
+export async function pcoLoadServices() {
     const serviceTypes = await fetchServiceTypes()
     if (!serviceTypes) {
         console.info("No service types found in Planning Center")
@@ -144,7 +144,7 @@ export async function pcoLoadServices(dataPath: string) {
 
     sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
-    const results = await processAllServiceTypes(serviceTypes, dataPath)
+    const results = await processAllServiceTypes(serviceTypes)
 
     if (results.downloadableMedia.length > 0) {
         downloadLessonsMedia(results.downloadableMedia)
@@ -168,17 +168,17 @@ async function fetchServiceTypes() {
     return serviceTypes
 }
 
-async function processAllServiceTypes(serviceTypes: ServiceType[], dataPath: string): Promise<any> {
+async function processAllServiceTypes(serviceTypes: ServiceType[]): Promise<any> {
     const projects: Project[] = []
     const shows: Show[] = []
-    const downloadableMedia: Media[] = []
+    const downloadableMedia: LessonsData[] = []
 
     await Promise.all(
         serviceTypes.map(async (serviceType) => {
             const servicePlans = await fetchServicePlans(serviceType)
             if (!servicePlans || !servicePlans.length) return
 
-            const results = await processServicePlans(servicePlans, serviceType, dataPath)
+            const results = await processServicePlans(servicePlans, serviceType)
 
             projects.push(...results.projects)
             shows.push(...results.shows)
@@ -219,14 +219,14 @@ async function fetchServicePlans(serviceType: ServiceType) {
     return filteredPlans
 }
 
-async function processServicePlans(plans: Plan[], serviceType: ServiceType, dataPath: string) {
+async function processServicePlans(plans: Plan[], serviceType: ServiceType) {
     const projects: Project[] = []
     const shows: Show[] = []
-    const downloadableMedia: Media[] = []
+    const downloadableMedia: LessonsData[] = []
 
     await Promise.all(
         plans.map(async (plan: Plan) => {
-            const results = await processPlan(plan, serviceType, dataPath)
+            const results = await processPlan(plan, serviceType)
             if (results) {
                 if (results.project) projects.push(results.project)
                 if (results.shows.length) shows.push(...results.shows)
@@ -238,7 +238,7 @@ async function processServicePlans(plans: Plan[], serviceType: ServiceType, data
     return { projects, shows, downloadableMedia }
 }
 
-async function processPlan(plan: Plan, serviceType: ServiceType, dataPath: string): Promise<any> {
+async function processPlan(plan: Plan, serviceType: ServiceType): Promise<any> {
     const typesEndpoint = "service_types"
     const plansEndpoint = `${typesEndpoint}/${serviceType.id}/plans`
     const itemsEndpoint = `${plansEndpoint}/${plan.id}/items`
@@ -248,7 +248,7 @@ async function processPlan(plan: Plan, serviceType: ServiceType, dataPath: strin
 
     const projectItems = []
     const shows = []
-    const downloadableMedia = []
+    const downloadableMedia: LessonsData[] = []
 
     for (const item of planItems) {
         const type = item.attributes.item_type
@@ -259,7 +259,7 @@ async function processPlan(plan: Plan, serviceType: ServiceType, dataPath: strin
         } else if (type === "item") {
             result = processRegularItem(item)
         } else if (type === "media") {
-            result = await processMediaItem(item, itemsEndpoint, serviceType, dataPath)
+            result = await processMediaItem(item, itemsEndpoint, serviceType)
         } else if (type === "header") {
             result = processHeaderItem(item)
         }
@@ -351,7 +351,7 @@ function processRegularItem(item: ProjectItem) {
     }
 }
 
-async function processMediaItem(item: ProjectItem, itemsEndpoint: string, serviceType: ServiceType, dataPath: string) {
+async function processMediaItem(item: ProjectItem, itemsEndpoint: string, serviceType: ServiceType) {
     const mediaEndpoint = `${itemsEndpoint}/${item.id}/media`
     const media = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))[0]
     if (!media?.id) return null
@@ -361,8 +361,8 @@ async function processMediaItem(item: ProjectItem, itemsEndpoint: string, servic
 
     const downloadUrl = await getMediaStreamUrl(`attachments/${attachment.id}/open`)
 
-    const fileFolderPath = getDataFolder(dataPath, dataFolderNames.planningcenter)
-    const filePath = path.join(fileFolderPath, serviceType.attributes.name, attachment.attributes.filename)
+    const mediaFolderPath = getDataFolderPath("planningcenter", serviceType.attributes.name)
+    const filePath = path.join(mediaFolderPath, attachment.attributes.filename)
 
     return {
         projectItem: {
@@ -372,11 +372,10 @@ async function processMediaItem(item: ProjectItem, itemsEndpoint: string, servic
             id: filePath
         },
         downloadableMedia: {
-            path: dataPath,
             name: serviceType.attributes.name,
             type: "planningcenter",
             files: [{ name: attachment.attributes.filename, url: downloadUrl }]
-        }
+        } as LessonsData
     }
 }
 

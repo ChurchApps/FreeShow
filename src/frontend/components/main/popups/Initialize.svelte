@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, dictionary, guideActive, language, showsPath, timeFormat } from "../../../stores"
+    import { activePopup, dataPath, dictionary, guideActive, language, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -16,7 +16,6 @@
 
     onMount(() => {
         if (!$dataPath) sendMain(Main.DATA_PATH)
-        if (!$showsPath) sendMain(Main.SHOWS_PATH)
 
         // check time format (based on browser language)
         const locale = navigator.language
@@ -27,22 +26,21 @@
     function create() {
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
 
-        if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
-        else sendMain(Main.SHOWS_PATH)
+        sendMain(Main.REFRESH_SHOWS)
 
         guideActive.set(true)
         activePopup.set(null)
     }
 
     function restore() {
-        sendMain(Main.RESTORE, { showsPath: $showsPath! })
+        sendMain(Main.RESTORE)
     }
 
     $: languageText = translateText("settings.language", $dictionary)
     $: languageLabel = `${languageText}${languageText === "Language" ? "" : "/Language"}`
 </script>
 
-<MaterialButton style="inset-inline-end: 0;" class="popup-options" icon="import" iconSize={1.3} title="setup.restore_data" disabled={!$showsPath} on:click={restore} white />
+<MaterialButton style="inset-inline-end: 0;" class="popup-options" icon="import" iconSize={1.3} title="setup.restore_data" on:click={restore} white />
 
 <div class="main">
     <p><T id="setup.good_luck" /></p>
@@ -66,7 +64,7 @@
 
     <!-- <HRule title="setup.or" />
 
-    <MaterialButton variant="outlined" style="padding: 8px;" disabled={!$showsPath} on:click={restore} white>
+    <MaterialButton variant="outlined" style="padding: 8px;" on:click={restore} white>
         <Icon id="import" style="margin-inline-start: 0.5em;" size={1.2} white />
         <T id="setup.restore_data" />
     </MaterialButton> -->

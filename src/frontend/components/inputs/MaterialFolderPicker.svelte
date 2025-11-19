@@ -4,7 +4,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
     import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
-    import { activePopup, alertMessage, os, showsPath } from "../../stores"
+    import { activePopup, alertMessage, os } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -32,12 +32,6 @@
     const dispatch = createEventDispatcher()
     let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
-
-        // custom
-        if (data.showsPath) {
-            showsPath.set(data.showsPath)
-        }
-
         dispatch("change", data.path)
     })
     onDestroy(() => destroyMain(listenerId))

@@ -2,17 +2,17 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
+import type { LessonFile } from "../../types/Main"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension } from "../components/helpers/media"
 import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
 import { destroyMain, receiveToMain, sendMain } from "../IPC/main"
-import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
+import { activeProject, activeRename, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
 import { videoExtensions } from "../values/extensions"
 import { createCategory, setTempShows } from "./importHelpers"
-import type { LessonFile } from "../../types/Main"
 
 type File = {
     name: string
@@ -74,7 +74,7 @@ export async function convertLessonsPresentation(data: any) {
     const { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    sendMain(Main.DOWNLOAD_LESSONS_MEDIA, [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
+    sendMain(Main.DOWNLOAD_LESSONS_MEDIA, [{ name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
     const replace = await receiveMessage()
     replace.forEach((r) => {

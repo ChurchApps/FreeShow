@@ -5,9 +5,9 @@ import { isProd } from ".."
 import { Main } from "../../types/IPC/Main"
 import type { DriveData } from "../../types/Main"
 import type { Show, TrimmedShow } from "../../types/Show"
-import { stores } from "../data/store"
+import { _store, getStore } from "../data/store"
 import { sendMain } from "../IPC/main"
-import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
+import { deleteFile, doesPathExist, getDataFolderPath, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
 import { trimShow } from "../utils/shows"
 import type { BibleCategories } from "./../../types/Tabs"
 
@@ -185,7 +185,7 @@ export async function downloadFile(fileId: string): Promise<any> {
 
 const SHOWS_CONTENT = "SHOWS_CONTENT"
 const combineLocations = ["PROJECTS"]
-const storesToSave: (keyof typeof stores)[] = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave: (keyof typeof _store)[] = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
 
 export let currentlyDeletedShows: string[] = []
@@ -210,8 +210,8 @@ export async function syncDataDrive(data: DriveData) {
     await Promise.all(storesToSave.map(syncStores))
 
     // SCRIPTURE
-    if (bibles === null) bibles = stores.SYNCED_SETTINGS.store?.scriptures
-    if (bibles) await syncBibles(data.dataPath)
+    if (bibles === null) bibles = getStore("SYNCED_SETTINGS")?.scriptures
+    if (bibles) await syncBibles()
 
     // SHOWS
     const syncStates: { [key: string]: number } = {}
@@ -222,8 +222,10 @@ export async function syncDataDrive(data: DriveData) {
 
     /// //
 
-    async function syncStores(id: keyof typeof stores) {
-        const store = stores[id]
+    async function syncStores(id: keyof typeof _store) {
+        const store = _store[id]
+        if (!store) return
+
         const storeData: any = store.store
         const name = id + ".json"
 
@@ -299,7 +301,7 @@ export async function syncDataDrive(data: DriveData) {
         // responses.push(response)
     }
 
-    async function syncBibles(dataPath: string) {
+    async function syncBibles() {
         const localBibles: string[] = Object.values(bibles!)
             .filter((a) => !a.api && !a.collection)
             .map((a) => a.name + ".fsb")
@@ -319,7 +321,7 @@ export async function syncDataDrive(data: DriveData) {
         // this sets a limit to 100 bibles downloaded from cloud
         const driveBibles = await listFiles(100, "'" + driveBiblesFolderId + "' in parents")
 
-        const localBiblesFolder: string = getDataFolder(dataPath, dataFolderNames.scriptures)
+        const localBiblesFolder = getDataFolderPath("scriptures")
 
         await Promise.all(localBibles.map(syncBible))
 
@@ -369,10 +371,9 @@ export async function syncDataDrive(data: DriveData) {
     }
 
     async function syncAllShows() {
-        const showsPath = checkShowsFolder(data.path || "")
+        const showsPath = getDataFolderPath("shows")
         if (!showsPath) return
 
-        if (DEBUG) console.info("Path:", data.path)
         if (DEBUG) console.info("Method:", data.method)
 
         const name = SHOWS_CONTENT + ".json"
@@ -382,7 +383,7 @@ export async function syncDataDrive(data: DriveData) {
         // download shows
         const driveContent = driveFile ? await downloadFile(driveFileId) : null
 
-        const localShows = loadShows({ showsPath }, true)
+        const localShows = loadShows(true)
         // some might have the same id
         const shows: { [key: string]: TrimmedShow | Show } = { ...localShows, ...(driveContent || {}) }
         if (DEBUG) console.info("Local shows count:", Object.keys(localShows).length)

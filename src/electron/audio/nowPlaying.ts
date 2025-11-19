@@ -2,14 +2,14 @@ import { type ICommonTagsResult, parseFile } from "music-metadata"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, deleteFile, doesPathExist, getDocumentsFolder, writeFile } from "../utils/files"
+import { deleteFile, doesPathExist, getDataFolderPath, writeFile } from "../utils/files"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
 
 // let currentContent = ""
-export async function setPlayingState(data: { dataPath: string; filePath: string; name: string; unknownLang: string[] }) {
-    const documentsPath = createFolder(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
+export async function setPlayingState(data: { filePath: string; name: string; unknownLang: string[] }) {
+    const audioFolder = getDataFolderPath("audio")
 
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
@@ -22,7 +22,7 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
     // currentContent = content
 
     // create playing data text file
-    const filePath = join(documentsPath, fileNameText)
+    const filePath = join(audioFolder, fileNameText)
     writeFile(filePath, content)
 
     // (no point in this at the moment)
@@ -30,7 +30,7 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
     // startServer()
 
     // create album art cover
-    const filePathCover = join(documentsPath, fileNameImage)
+    const filePathCover = join(audioFolder, fileNameImage)
     const cover = metadata?.picture?.[0]
     const buffer = cover?.data
     if (!buffer) {
@@ -50,13 +50,13 @@ function getArtist(metadata: ICommonTagsResult) {
 }
 
 // remove now playing when not playing
-export function unsetPlayingAudio(data: { dataPath: string }) {
-    const documentsPath = join(data.dataPath, dataFolderNames.audio)
+export function unsetPlayingAudio() {
+    const audioFolder = getDataFolderPath("audio")
 
-    const filePath = join(documentsPath, fileNameText)
+    const filePath = join(audioFolder, fileNameText)
     writeFile(filePath, "")
 
-    const filePathCover = join(documentsPath, fileNameImage)
+    const filePathCover = join(audioFolder, fileNameImage)
     if (doesPathExist(filePathCover)) {
         deleteFile(filePathCover)
     }

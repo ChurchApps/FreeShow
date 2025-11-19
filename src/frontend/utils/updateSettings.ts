@@ -85,9 +85,9 @@ import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
+import { startAutosave } from "./common"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import { startAutosave } from "./common"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -208,16 +208,16 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v) projectView.set(false)
     },
     showsPath: (v: any) => {
-        if (!v) sendMain(Main.SHOWS_PATH)
-        else {
-            showsPath.set(v)
-            // LOAD SHOWS FROM FOLDER
-            sendMain(Main.SHOWS, { showsPath: v })
-        }
+        if (!v) return
+
+        // DEPRECATED (keep for backward compatibility)
+        showsPath.set(v)
     },
     dataPath: (v: any) => {
-        if (!v) sendMain(Main.DATA_PATH)
-        else dataPath.set(v)
+        if (!v) return
+
+        // DEPRECATED (keep for backward compatibility)
+        dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
         // only get locked overlays
@@ -330,6 +330,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             contentProviderData.update((a) => ({ ...a, planningcenter: { localAlways: true } }))
             delete v.pcoLocalAlways
         }
+
+        // DEPRECATED (migrate)
+        v.customUserDataLocation = true
 
         special.set(v)
     },

@@ -1,16 +1,16 @@
-import upath from "upath"
 import path, { join } from "path"
 import protobufjs from "protobufjs"
+import upath from "upath"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
+import MDBReader from "mdb-reader"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
-import MDBReader from "mdb-reader"
 // @ts-ignore
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { pptToShow } from "../output/ppt/pptToShow"
-import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
+import { doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompress, isZip } from "./zip"
@@ -18,12 +18,12 @@ import { decompress, isZip } from "./zip"
 type FileData = { content: Buffer | string | object; name?: string; extension?: string }
 
 const specialImports = {
-    powerpoint: async (files: string[], dataPath: string) => {
+    powerpoint: async (files: string[]) => {
         sendToMain(ToMain.ALERT, "popup.importing")
 
         const data: FileData[] = []
         for await (const filePath of files) {
-            const json = await pptToShow(filePath, dataPath)
+            const json = await pptToShow(filePath)
             if (json) data.push({ name: getFileName(filePath), content: json })
         }
 
@@ -107,11 +107,11 @@ export async function importShow(id: string, files: string[] | null, importSetti
     if (mdbFile) importId = "mdb"
 
     if (id === "freeshow_project") {
-        await importProject(files, importSettings.path)
+        await importProject(files)
         return
     }
     if (id === "freeshow_template") {
-        await importTemplate(files, importSettings.path)
+        await importTemplate(files)
         return
     }
 
@@ -144,7 +144,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
         return
     }
 
-    if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files, importSettings?.path || "")
+    if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         for (let i = 0; i < files.length; i += BATCH_SIZE) {
@@ -184,7 +184,7 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 
 // PROJECT
 
-async function importProject(files: string[], dataPath: string) {
+async function importProject(files: string[]) {
     sendToMain(ToMain.ALERT, "popup.importing")
 
     // some .project files are plain JSON and others are zip
@@ -200,13 +200,7 @@ async function importProject(files: string[], dataPath: string) {
 
     const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
-    const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
-    const importFolder = path.join(importDataPath, "Projects")
-
-    // we can store the new media files under a subdirectory with the current date/time
-    // to avoid conflicts with same file name, but this does not work for all scenarios
-    // const importFolder = path.join(importDataPath, `project-${getTimePointString()}`)
-    if (!doesPathExist(importFolder)) makeDir(importFolder)
+    const importFolder = getDataFolderPath("imports", "Projects")
 
     zipFiles.forEach((zipFile) => {
         const dataFile = extractZipDataAndMedia(zipFile, importFolder)
@@ -221,7 +215,7 @@ async function importProject(files: string[], dataPath: string) {
 
 // TEMPLATE
 
-async function importTemplate(files: string[], dataPath: string) {
+async function importTemplate(files: string[]) {
     sendToMain(ToMain.ALERT, "popup.importing")
 
     // some .fstemplate files are plain JSON and others are zip
@@ -237,10 +231,7 @@ async function importTemplate(files: string[], dataPath: string) {
 
     const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
-    const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
-    const importFolder = path.join(importDataPath, "Templates")
-
-    if (!doesPathExist(importFolder)) makeDir(importFolder)
+    const importFolder = getDataFolderPath("imports", "Templates")
 
     zipFiles.forEach((zipFile) => {
         const dataFile = extractZipDataAndMedia(zipFile, importFolder)
