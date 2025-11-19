@@ -113,7 +113,7 @@
         <div class="grid" class:list={$mediaOptions.mode === "list"}>
             <div class="context #media" style="display: contents;">
                 <MediaGrid items={content} {columns} let:item>
-                    <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} allFiles={[]} activeFile={null} active="online" contentProvider contentFileData={item} />
+                    <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} allFiles={[]} activeFile={null} active="online" contentProvider={providerId} contentFileData={item} />
                 </MediaGrid>
             </div>
         </div>

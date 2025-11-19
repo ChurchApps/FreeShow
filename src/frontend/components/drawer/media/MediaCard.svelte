@@ -1,8 +1,10 @@
 <script lang="ts">
     import { derived } from "svelte/store"
-    import type { ContentFile } from "../../../../electron/contentProviders/base/types"
+    import type { ContentFile, ContentProviderId } from "../../../../electron/contentProviders/base/types"
+    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
+    import { requestMain } from "../../../IPC/main"
     import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
@@ -23,14 +25,15 @@
     export let shiftRange: any[] = []
     export let thumbnailPath = ""
     export let thumbnail = true
-    export let contentProvider = false
+    export let contentProvider: ContentProviderId | false = false
     export let contentFileData: ContentFile | null = null
 
-    // Populate media store with ContentFile metadata (pingbackUrl)
-    $: if (contentFileData?.pingbackUrl && contentProvider && path) {
+    // Store mediaId and provider for later license check during download
+    $: if (contentFileData?.mediaId && contentProvider && path) {
         media.update((m) => {
             if (!m[path]) m[path] = {}
-            m[path].pingbackUrl = contentFileData.pingbackUrl
+            m[path].mediaId = contentFileData.mediaId
+            m[path].contentProvider = contentProvider
             return m
         })
     }

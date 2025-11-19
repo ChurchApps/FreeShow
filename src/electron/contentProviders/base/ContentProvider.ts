@@ -93,6 +93,11 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     getContent?(key: string): Promise<ContentFile[]>
 
     /**
+     * Checks if a media item is licensed and returns its pingback URL (optional)
+     */
+    checkMediaLicense?(mediaId: string): Promise<string | null>
+
+    /**
      * Validates if a scope is supported by this provider
      */
     protected validateScope(scope: string): scope is TScope {

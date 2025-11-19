@@ -227,6 +227,14 @@ export const mainResponses: MainResponses = {
             return []
         }
         return await provider.getContent(data.key)
+    },
+    [Main.CHECK_MEDIA_LICENSE]: async (data) => {
+        const provider = ContentProviderRegistry.getProvider(data.providerId)
+        if (!provider?.checkMediaLicense) {
+            console.error(`Provider ${data.providerId} does not support checkMediaLicense`)
+            return null
+        }
+        return await provider.checkMediaLicense(data.mediaId)
     }
 }
 

@@ -585,6 +585,25 @@ export async function downloadOnlineMedia(url: string) {
         return downloadedPath.path
     }
 
+    // Check license before downloading (for content providers like APlay)
+    const mediaData = get(media)[url]
+    if (mediaData?.mediaId && mediaData?.contentProvider && !mediaData?.licenseChecked) {
+        media.update((m) => {
+            if (!m[url]) m[url] = {}
+            m[url].licenseChecked = true
+            return m
+        })
+
+        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, { providerId: mediaData.contentProvider, mediaId: mediaData.mediaId })
+        if (pingbackUrl) {
+            media.update((m) => {
+                if (!m[url]) m[url] = {}
+                m[url].pingbackUrl = pingbackUrl
+                return m
+            })
+        }
+    }
+
     // not downloaded yet
     sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
     return url

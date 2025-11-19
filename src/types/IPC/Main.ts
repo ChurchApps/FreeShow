@@ -134,7 +134,8 @@ export enum Main {
     // Content Library
     GET_CONTENT_PROVIDERS = "GET_CONTENT_PROVIDERS",
     GET_CONTENT_LIBRARY = "GET_CONTENT_LIBRARY",
-    GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT"
+    GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT",
+    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE"
 }
 
 export interface MainSendPayloads {
@@ -210,6 +211,7 @@ export interface MainSendPayloads {
     // Content Library
     [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
     [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
+    [Main.CHECK_MEDIA_LICENSE]: { providerId: ContentProviderId; mediaId: string }
 }
 
 export interface MainReturnPayloads {
@@ -282,6 +284,7 @@ export interface MainReturnPayloads {
     [Main.GET_CONTENT_PROVIDERS]: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[]
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
+    [Main.CHECK_MEDIA_LICENSE]: Promise<string | null>
 }
 
 ///////////
