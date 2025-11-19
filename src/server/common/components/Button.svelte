@@ -5,9 +5,12 @@
     export let dark: boolean = false
     export let bold: boolean = true
     export let red: boolean = false
+    export let variant: "contained" | "outlined" | "text" = "text"
+    export let disabled: boolean = false
+    export let compact: boolean = false
 </script>
 
-<button id={$$props.id} style={$$props.style} class:active class:center class:border class:bold class:dark class:red class={$$props.class} on:click on:dblclick disabled={$$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
+<button id={$$props.id} style={$$props.style} class:active class:center class:border class:bold class:dark class:red class:contained={variant === "contained"} class:outlined={variant === "outlined"} class:text={variant === "text"} class:compact class={$$props.class} on:click on:dblclick disabled={disabled || $$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
     <slot />
 </button>
 
@@ -15,14 +18,25 @@
     button {
         background-color: inherit;
         color: inherit;
-        /* font-size: inherit; */
         font-size: 0.9em;
         border: none;
         display: flex;
         align-items: center;
-        padding: 0.2em 0.8em;
-
-        transition: background-color 0.2s;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        user-select: none;
+        gap: 8px;
+        white-space: nowrap;
+        min-height: 25px;
+        justify-content: center;
+    }
+    button.compact {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8em;
     }
     button.dark {
         background-color: var(--primary-darker);
@@ -30,16 +44,52 @@
     button.center {
         justify-content: center;
     }
-    button.bold {
+    button.bold:not(.compact) {
         font-weight: bold;
         letter-spacing: 0.5px;
         padding: 0.3em 0.8em;
         /* text-transform: uppercase; */
     }
+    button.bold.compact {
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+
+    /* Variants */
+    button.contained {
+        background-color: var(--secondary);
+        color: var(--secondary-text);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    button.contained:hover:not(:disabled) {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        transform: translateY(-1px);
+    }
+    button.contained:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    button.outlined {
+        border: 1px solid var(--primary-lighter);
+        background-color: transparent;
+    }
+    button.outlined:hover:not(:disabled) {
+        background-color: var(--hover);
+        border-color: var(--secondary);
+    }
+
+    button.text {
+        background-color: transparent;
+        padding: 0.5rem 1rem;
+    }
+    button.text:hover:not(:disabled) {
+        background-color: var(--hover);
+    }
 
     /* red */
     button.red:not(:disabled) {
-        background-color: rgb(255 0 0 / 0.25);
+        background-color: var(--red);
     }
     button.red:hover:not(:disabled):not(.active) {
         background-color: rgb(255 0 0 / 0.35);
@@ -55,11 +105,10 @@
     button:not(:disabled) {
         cursor: pointer;
     }
-    button:hover:not(:disabled):not(.active) {
+    button:hover:not(:disabled):not(.contained) {
         background-color: var(--hover);
     }
-    button:active:not(:disabled):not(.active),
-    button:focus:not(.active) {
+    button:active:not(:disabled):not(.contained) {
         background-color: var(--focus);
     }
     button.active {

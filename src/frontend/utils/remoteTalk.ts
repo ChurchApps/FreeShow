@@ -214,7 +214,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     SEARCH_SCRIPTURE: async (msg: ClientMessage) => {
-        const { id, searchTerm, searchType } = msg.data || {}
+        const { id, searchTerm, searchType, bookFilter } = msg.data || {}
         if (!id || !searchTerm) return
 
         const jsonBible = await loadJsonBible(id)
@@ -254,20 +254,28 @@ export const receiveREMOTE: any = {
             } else {
                 // Use textSearch for content search (minimum 3 characters)
                 if (searchTerm.length < 3) {
-                    msg.data.searchResults = { type: "text", results: [] }
+                    msg.data.searchResults = { type: "text", results: [], bookFilter }
                     return msg
                 }
                 const results = await jsonBible.textSearch(searchTerm)
+                let filteredResults = (results || []).map((ref: any) => ({
+                    book: ref.book,
+                    chapter: ref.chapter,
+                    verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
+                    reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
+                    referenceFull: ref.reference || "",
+                    verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
+                }))
+                
+                // Apply book filter if provided
+                if (bookFilter) {
+                    filteredResults = filteredResults.filter((ref: any) => ref.book === bookFilter)
+                }
+                
                 msg.data.searchResults = {
                     type: "text",
-                    results: (results || []).slice(0, 50).map((ref: any) => ({
-                        book: ref.book,
-                        chapter: ref.chapter,
-                        verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
-                        reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
-                        referenceFull: ref.reference || "",
-                        verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
-                    }))
+                    results: filteredResults.slice(0, 50),
+                    bookFilter
                 }
             }
         } catch (err) {

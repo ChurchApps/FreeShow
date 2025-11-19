@@ -49,6 +49,11 @@
         height: 100%;
         flex: 1;
         position: relative;
+        z-index: 1;
+    }
+
+    .editor-container :global(textarea) {
+        border-radius: 8px 8px 0 0;
     }
 
     .transpose-buttons {

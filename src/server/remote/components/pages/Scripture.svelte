@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -50,12 +51,24 @@
         localStorage.setItem("collectionId", collection)
     }
 
-    // Include both local and API bibles; keep original sorting
+    // Include both local and API bibles; keep original sorting - memoize to avoid recalculation
     $: sortedBibles = keysToID($scriptures)
         .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-        .sort((a: any, b: any) => (b.customName || b.name).localeCompare(a.customName || a.name))
-        .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
-        .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
+        .sort((a: any, b: any) => {
+            // Combined sort for better performance
+            const nameA = (a.customName || a.name || "").toLowerCase()
+            const nameB = (b.customName || b.name || "").toLowerCase()
+            const nameCompare = nameB.localeCompare(nameA)
+            if (nameCompare !== 0) return nameCompare
+            
+            // API bibles last
+            if (a.api !== b.api) return a.api ? 1 : -1
+            
+            // Collections first
+            if (a.collection !== b.collection) return a.collection ? -1 : 1
+            
+            return 0
+        })
 
     let depth = 0
     let scriptureContentRef: any
@@ -73,7 +86,6 @@
     // UI control visibility
     $: showControlsBar = depth === 2 || !$isCleared.all
     $: showPrevNext = depth !== 2 || +currentVerse > 0 || ($isCleared.all ? $outShow && $outSlide !== null : false)
-    $: centerOnlyToggle = depth === 2 && !showPrevNext
 
     // SEARCH
 
@@ -103,6 +115,7 @@
 
     let openScriptureSearch = false
     let searchValue = ""
+    let searchInput: HTMLInputElement | null = null
     type SearchItem = { reference: string; referenceFull: string; verseText: string }
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
@@ -122,6 +135,18 @@
     $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
     $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
+    
+    // Auto-focus search input when search is opened
+    $: if (openScriptureSearch) {
+        focusSearchInput()
+    }
+
+    async function focusSearchInput() {
+        await tick()
+        if (!searchInput) return
+        searchInput.focus({ preventScroll: true })
+        searchInput.select()
+    }
 
     function formatBookSearch(search: string): string {
         return search
@@ -270,12 +295,69 @@
         return chapter.verses?.[verseNumber - 1] || null
     }
 
+    /**
+     * Extracts book name and text search term from a combined query.
+     * Supports single-word, two-word, and three-word book names.
+     */
+    function parseCombinedQuery(query: string, books: any[]): { textTerm: string; book: any | null } {
+        const trimmed = query.trim()
+        const words = trimmed.split(/\s+/)
+        
+        if (words.length < 2) {
+            return { textTerm: trimmed, book: null }
+        }
+
+        // Check progressively longer word combinations to match book names
+        for (let i = 0; i < words.length; i++) {
+            // Single word
+            const singleWord = words[i]
+            const book = findBook(books, singleWord)
+            if (book) {
+                const textTerm = words.filter((_, idx) => idx !== i).join(' ').trim()
+                if (textTerm.length >= 2) {
+                    return { textTerm, book }
+                }
+            }
+
+            // Two words
+            if (i < words.length - 1) {
+                const twoWords = `${words[i]} ${words[i + 1]}`
+                const book2 = findBook(books, twoWords)
+                if (book2) {
+                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1).join(' ').trim()
+                    if (textTerm.length >= 2) {
+                        return { textTerm, book: book2 }
+                    }
+                }
+            }
+
+            // Three words
+            if (i < words.length - 2) {
+                const threeWords = `${words[i]} ${words[i + 1]} ${words[i + 2]}`
+                const book3 = findBook(books, threeWords)
+                if (book3) {
+                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2).join(' ').trim()
+                    if (textTerm.length >= 2) {
+                        return { textTerm, book: book3 }
+                    }
+                }
+            }
+        }
+
+        return { textTerm: trimmed, book: null }
+    }
+
     type RawSearchHit = { book: any; chapter: any; verse: any; reference: string; referenceFull: string; verseText: string }
-    function searchInBible(books: any[], searchTerm: string): RawSearchHit[] {
+    
+    /**
+     * Searches for text in verse content, optionally limited to a specific book.
+     */
+    function searchInBible(books: any[], searchTerm: string, filterBook: any | null = null): RawSearchHit[] {
         const results: RawSearchHit[] = []
         const searchLower = searchTerm.toLowerCase()
+        const booksToSearch = filterBook ? [filterBook] : books
 
-        books.forEach((book) => {
+        booksToSearch.forEach((book) => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
                     if (verse.text.toLowerCase().includes(searchLower)) {
@@ -412,8 +494,19 @@
                 }
             }
 
-            // If reference parsing failed or it's not a reference, use API text search
-            if (searchVal.length >= 3) {
+            // Try combined text + book search
+            const combinedQuery = parseCombinedQuery(searchVal, books)
+            
+            if (combinedQuery.book && combinedQuery.textTerm.length >= 3) {
+                // Search filtered to specific book
+                send("SEARCH_SCRIPTURE", { 
+                    id: openedScriptureId, 
+                    searchTerm: combinedQuery.textTerm, 
+                    searchType: "text",
+                    bookFilter: combinedQuery.book.number
+                })
+            } else if (searchVal.length >= 3) {
+                // Regular text search across all books
                 send("SEARCH_SCRIPTURE", { id: openedScriptureId, searchTerm: searchVal, searchType: "text" })
             } else {
                 searchResults = []
@@ -469,9 +562,19 @@
             }
         }
 
-        // If not a valid reference, search for text content
-        const textResults = searchInBible(books, searchVal)
-        searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        // Try combined text + book search
+        const combinedQuery = parseCombinedQuery(searchVal, books)
+        
+        if (combinedQuery.book && combinedQuery.textTerm.length >= 2) {
+            // Search filtered to specific book
+            const textResults = searchInBible(books, combinedQuery.textTerm, combinedQuery.book)
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        } else {
+            // Regular text search across all books
+            const textResults = searchInBible(books, searchVal)
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+        }
+        
         if (searchResults.length > 0) {
             searchResult = searchResults[0]
         } else {
@@ -516,11 +619,20 @@
             }
         } else if (apiResults.type === "text") {
             // Handle text search results
-            const results = (apiResults.results || []).map((r: any) => ({
+            let results = (apiResults.results || []).map((r: any) => ({
                 reference: r.reference,
                 referenceFull: r.referenceFull || r.reference,
                 verseText: r.verseText || ""
             }))
+            
+            // Apply book filter if provided
+            if (apiResults.bookFilter) {
+                results = results.filter((r: any) => {
+                    const parts = r.reference.split('.')
+                    return parts.length > 0 && parseInt(parts[0], 10) === apiResults.bookFilter
+                })
+            }
+            
             searchResults = results
             searchResult = results.length > 0 ? results[0] : { reference: "", referenceFull: "", verseText: "" }
         }
@@ -664,7 +776,7 @@
             <button class="header-action" aria-label="Back" on:click={closeSearch}>
                 <Icon id="back" size={1.2} />
             </button>
-            <input type="text" class="input search-input" placeholder="Search" autofocus bind:value={searchValue} />
+            <input type="text" class="input search-input" placeholder="Search" bind:value={searchValue} bind:this={searchInput} />
         </div>
 
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
@@ -695,7 +807,7 @@
         </div>
     </div>
 {:else if openedScripture && (checkScriptureExists(openedScripture, collectionId) || !scripturesLoaded)}
-    <div class="header-bar" style="margin-bottom: 0.5rem;" class:has-ref={!!depth}>
+    <div class="header-bar" class:has-ref={!!depth}>
         <button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
             <Icon id="back" size={1.5} />
         </button>
@@ -726,35 +838,50 @@
     </div>
 
     {#if showControlsBar}
-        <div class="buttons" class:center-toggle={centerOnlyToggle} style="display: flex; width: 100%; gap: 8px; background-color: var(--primary-darker);">
+        <div class="controls-section">
             {#if showPrevNext}
-                <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
-                <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+                <div class="navigation-buttons">
+                    <Button style="flex: 1;" on:click={previous} center dark>
+                        <Icon size={1.2} id="previous" />
+                    </Button>
+                    <Button style="flex: 1;" on:click={next} center dark>
+                        <Icon size={1.2} id="next" />
+                    </Button>
+                    {#if depth === 2}
+                        <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
+                </div>
+            {:else if depth === 2}
+                <div class="navigation-buttons center-toggle">
+                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                    </Button>
+                </div>
             {/if}
-            {#if depth === 2}
-                <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                    <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                </Button>
+            {#if !$isCleared.all && !tablet}
+                <div class="buttons">
+                    <Clear />
+                </div>
             {/if}
         </div>
-        {#if !$isCleared.all && !tablet}
-            <Clear />
-        {/if}
     {/if}
 {:else if sortedBibles.length}
-    <h2 class="header" style="margin-bottom: 0.5rem;">
+    <h2 class="header">
         {translate("tabs.scripture", $dictionary)}
     </h2>
-    <div class="scroll" style="overflow: auto;">
-        {#each sortedBibles as scripture}
+    <div class="scroll scripture-list" style="overflow: auto;">
+        {#each sortedBibles as scripture (scripture.id)}
             <Button
                 on:click={() => {
                     const collection = $scriptures[scripture.id].collection
                     openScripture(collection ? collection.versions[0] : scripture.id, collection ? scripture.id : "")
                 }}
                 title={scripture.customName || scripture.name}
-                style="padding: 0.5em 0.8em;width: 100%;"
+                style="width: 100%;"
                 bold={false}
+                class="scripture-item"
             >
                 <Icon id={scripture.icon} right />
                 <p>{scripture.customName || scripture.name}</p>
@@ -773,31 +900,18 @@
         word-wrap: break-word;
     }
 
-    .header {
-        white-space: normal;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        max-width: 100%;
-    }
-
-    /* Unified header bar with title, ref and actions */
+    /* Unified header bar with title, ref and actions - matches Projects header styling */
     .header-bar {
         display: flex;
-        align-items: center; /* vertically center icons */
+        align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
         overflow: hidden;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        min-height: 52px; /* larger touch target */
-        /* Match the darker show header style */
+        height: 56px; /* Match show item height */
         background-color: var(--primary-darker);
-        border-bottom: 2px solid var(--primary-lighter);
-    }
-    /* keep same vertical rhythm even when reference exists */
-    .header-bar.has-ref {
-        padding-top: 8px;
-        padding-bottom: 8px;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 1.05em;
     }
     .header-center {
         flex: 1;
@@ -806,29 +920,30 @@
         align-items: center;
         text-align: center;
         min-width: 0; /* enable ellipsis in children */
-        line-height: 1; /* keep block height tight so actions don't shift */
+        line-height: 1;
+        justify-content: center;
+    }
+    .header-bar.has-ref .header-center {
         justify-content: flex-start;
     }
     .header-title {
         margin: 0;
         line-height: 1.1;
-        font-weight: 700;
-        font-size: clamp(1.15rem, 6vw, 1.6rem);
+        font-weight: 600;
+        font-size: 0.95em; /* Match Projects header font size */
         max-width: 100%;
-        /* let JS autosizer control wrapping and width */
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: clip;
-        /* Ensure translation label is white like the show header */
+        text-overflow: ellipsis;
         color: var(--text);
     }
-    /* When reference is present, allow the title to scale smaller to avoid clipping */
+    /* When reference is present, scale title smaller to fit */
     .header-bar.has-ref .header-title {
-        font-size: clamp(0.95rem, 4.5vw, 1.4rem);
+        font-size: 0.85em;
     }
     .header-ref {
-        margin-top: 0;
-        font-size: clamp(0.95rem, 4.5vw, 1.1rem);
+        margin-top: 2px;
+        font-size: 0.8em;
         color: var(--text);
         opacity: 0.9;
         max-width: 100%;
@@ -837,7 +952,7 @@
         text-overflow: ellipsis;
     }
     .header-bar.has-ref .header-ref {
-        margin-top: 6px;
+        margin-top: 2px;
     }
     /* When no reference, let title use two lines (avoid ellipsis) and hide the ref row */
     .header-bar:not(.has-ref) .header-title {
@@ -889,9 +1004,58 @@
         background-color: var(--primary-darker);
     }
 
-    /* Center toggle when arrows are hidden */
-    .buttons.center-toggle {
+    /* Controls section */
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        padding: 2px 4px;
+    }
+
+    .navigation-buttons.center-toggle {
         justify-content: center;
+    }
+
+    .navigation-buttons :global(button) {
+        flex: 1;
+        min-height: 36px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.9em !important;
+        border-radius: 0 !important;
+    }
+
+    .navigation-buttons :global(button:first-child) {
+        border-radius: 8px 0 0 0 !important;
+    }
+
+    .navigation-buttons :global(button:last-child) {
+        border-radius: 0 8px 0 0 !important;
+    }
+
+    .navigation-buttons.center-toggle :global(button) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .controls-section .buttons {
+        border-radius: 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 0 !important;
     }
 
     /* text input */
@@ -950,5 +1114,99 @@
     .search-scroll::-webkit-scrollbar-thumb:hover,
     .bible::-webkit-scrollbar-thumb:hover {
         background: rgb(255 255 255 / 0.5);
+    }
+
+    /* Scripture list styling */
+    .scripture-list {
+        gap: 2px;
+    }
+
+    :global(.scripture-item) {
+        justify-content: flex-start !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 0.75em 1em !important;
+        min-height: 56px !important;
+        font-size: 1.05em !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    :global(.scripture-item p) {
+        text-align: left;
+        font-size: inherit !important;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        line-height: 1.2;
+        justify-content: flex-start;
+    }
+
+    :global(.scripture-item) :global(svg) {
+        width: 1.5em;
+        height: 1.5em;
+        flex-shrink: 0;
+        margin-right: 0.5em;
+    }
+
+    /* Tablet and mobile styles - match project sizes exactly */
+    @media screen and (max-width: 1000px) {
+        .header {
+            font-size: 1.2em;
+            padding: 0.6em 0;
+        }
+
+        .scripture-list {
+            gap: 3px;
+        }
+
+        :global(.scripture-item) {
+            padding: 0.9em 1.2em !important;
+            min-height: 60px !important;
+            font-size: 1.15em !important;
+        }
+
+        :global(.scripture-item) :global(svg) {
+            width: 1.8em !important;
+            height: 1.8em !important;
+        }
+
+        .input {
+            padding: 14px 20px;
+            font-size: 1.1em;
+        }
+
+        .header-title {
+            font-size: 1.1em;
+        }
+
+        .header-bar.has-ref .header-title {
+            font-size: 1em;
+        }
+
+        .header-ref {
+            font-size: 0.95em;
+        }
+
+        .verse {
+            padding: 14px;
+            font-size: 1.05em;
+        }
+
+        .navigation-buttons {
+            padding: 2px 4px;
+        }
+
+        .navigation-buttons :global(button) {
+            min-height: 36px !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.9em !important;
+        }
+
+        .controls-section .buttons :global(button) {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9em !important;
+            min-height: auto !important;
+        }
     }
 </style>
