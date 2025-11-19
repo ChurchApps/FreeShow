@@ -87,7 +87,7 @@ export class ContentProviderRegistry {
     /**
      * Load services from a content provider
      */
-    static async loadServices(providerId: ContentProviderId, dataPath?: string): Promise<void> {
+    static async loadServices(providerId: ContentProviderId): Promise<void> {
         this.ensureInitialized()
 
         const provider = this.getProvider(providerId)
@@ -97,7 +97,7 @@ export class ContentProviderRegistry {
         }
 
         try {
-            await provider.loadServices(dataPath)
+            await provider.loadServices()
         } catch (error) {
             console.error(`Failed to load services from ${providerId}:`, error)
             throw error

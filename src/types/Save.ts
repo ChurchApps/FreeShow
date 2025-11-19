@@ -84,8 +84,6 @@ export type SaveListSettings =
     | "contentProviderData"
 
 export interface SaveData {
-    path: string
-    dataPath: string
     // SETTINGS
     SETTINGS: { [key in SaveListSettings]: any } | {}
     SYNCED_SETTINGS: { [key in SaveListSyncedSettings]: any } | {}
@@ -113,4 +111,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }
+export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; autosave?: boolean; reset?: boolean }

@@ -65,7 +65,7 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     /**
      * Loads services/plans from the content provider
      */
-    abstract loadServices(dataPath?: string): Promise<void>
+    abstract loadServices(): Promise<void>
 
     /**
      * Handles startup load operations

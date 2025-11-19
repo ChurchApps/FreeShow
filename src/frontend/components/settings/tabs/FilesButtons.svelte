@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { showsCache, showsPath } from "../../../stores"
+    import { showsCache } from "../../../stores"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -13,10 +13,8 @@
     }
 
     function restore() {
-        if (!$showsPath) return
-
         showsCache.set({})
-        sendMain(Main.RESTORE, { showsPath: $showsPath })
+        sendMain(Main.RESTORE)
     }
 </script>
 

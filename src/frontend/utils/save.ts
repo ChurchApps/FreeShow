@@ -121,8 +121,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         autosave: get(autosave),
         timeFormat: get(timeFormat),
         // events: get(events),
-        showsPath: get(showsPath),
-        dataPath: get(dataPath),
+        showsPath: get(showsPath), // DEPRECATED
+        dataPath: get(dataPath), // DEPRECATED
         lockedOverlays: get(lockedOverlays),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
@@ -189,8 +189,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     }
 
     const allSavedData: SaveData = {
-        path: get(showsPath) || "",
-        dataPath: get(dataPath),
         // SETTINGS
         SETTINGS: settings,
         SYNCED_SETTINGS: syncedSettings,
@@ -237,7 +235,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
         console.info("SAVED!")
     }
 
-    if (customTriggers?.backup || customTriggers?.changeUserData) return
+    if (customTriggers?.backup || customTriggers?.reset) return
 
     const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
@@ -339,8 +337,8 @@ const saveList: { [key in SaveList]: any } = {
     disabledServers,
     serverData,
     events,
-    showsPath,
-    dataPath,
+    showsPath: null,
+    dataPath: null,
     lockedOverlays: null,
     drawer: null,
     drawerTabsData: null,

@@ -32,7 +32,6 @@ import {
     colorbars,
     currentOutputSettings,
     currentWindow,
-    dataPath,
     drawer,
     drawerTabsData,
     effects,
@@ -777,7 +776,7 @@ const clickActions = {
             })
             getFile(template.settings?.backgroundPath)
 
-            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
+            send(EXPORT, ["TEMPLATE"], { name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
 
             function getFile(path: string | undefined) {
                 if (!path) return
@@ -790,7 +789,7 @@ const clickActions = {
         if (obj.sel?.id === "theme") {
             const theme = get(themes)[obj.sel.data[0]?.id]
             if (!theme) return
-            send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
+            send(EXPORT, ["THEME"], { content: theme })
 
             return
         }
@@ -807,7 +806,7 @@ const clickActions = {
         if (obj.contextElem?.classList.value.includes("#projectsTab")) {
             const extensions = ["project", "shows", "json", "zip"]
             const name = translateText("formats.project")
-            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
+            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
             return
         }
     },
