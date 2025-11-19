@@ -29,6 +29,7 @@
     $: _set("layout", layout)
 
     $: totalSlides = layout ? layout.length : 0
+    $: outShowName = $outShow?.name || translate("remote.no_show_selected", $dictionary) || "—"
 
     ///////
 
@@ -220,6 +221,23 @@
         _set("outShow", $activeShow)
         // _set("outSlide", index) // ??
         // send("API:get_cleared") // ??
+    }
+
+    function openOutShow() {
+        const showId = $outShow?.id
+        if (!showId) return
+
+        send("SHOW", showId)
+        _set("active", { id: showId, type: "show" })
+        _set("activeTab", "show")
+        _set("activeShow", $outShow)
+    }
+
+    function handleLabelKeydown(event: KeyboardEvent) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault()
+            openOutShow()
+        }
     }
 
     // RESIZERS
@@ -496,13 +514,25 @@
 
                 {#if $outShow && layout}
                     <div class="controls">
-                        <Button on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} variant="outlined" center compact>
-                            <Icon id="previous" size={1.5} />
-                        </Button>
-                        <span class="counter">{outNumber + 1}/{totalSlides}</span>
-                        <Button on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} variant="outlined" center compact>
-                            <Icon id="next" size={1.5} />
-                        </Button>
+                        <div class="nav-buttons">
+                            <Button on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} variant="outlined" center compact>
+                                <Icon id="previous" size={1.5} />
+                            </Button>
+                            <span class="counter">{outNumber + 1}/{totalSlides}</span>
+                            <Button on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} variant="outlined" center compact>
+                                <Icon id="next" size={1.5} />
+                            </Button>
+                        </div>
+
+                        {#if $outShow}
+                            <button class="current-show-label" type="button" on:click={openOutShow} on:keydown={handleLabelKeydown}>
+                                <span class="label-text">{outShowName}</span>
+                            </button>
+                        {:else}
+                            <div class="current-show-label disabled">
+                                <span class="label-text">{outShowName}</span>
+                            </div>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -722,17 +752,22 @@
 
     .controls {
         display: flex;
-        align-items: center;
-        justify-content: space-around;
+        flex-direction: column;
         gap: 6px;
         padding: 0.5rem 0.75rem;
         background-color: var(--primary-darkest);
         border-radius: 12px;
         margin: 8px 8px 0 8px;
-        min-height: auto;
     }
 
-    .controls :global(button) {
+    .nav-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 6px;
+    }
+
+    .nav-buttons :global(button) {
         min-height: auto !important;
         padding: 0.4rem 0.6rem !important;
     }
@@ -743,6 +778,34 @@
         opacity: 0.8;
         font-size: 1em;
         font-weight: 500;
+    }
+
+    .current-show-label {
+        width: 100%;
+        border: none;
+        background: transparent;
+        color: white;
+        font-size: 0.95em;
+        font-weight: 600;
+        padding: 4px 6px 2px 6px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1.2;
+    }
+
+    .current-show-label.disabled,
+    .current-show-label:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+
+    .current-show-label .label-text {
+        width: 100%;
+        white-space: normal;
+        word-break: break-word;
     }
 
     /* svelte-ignore css-unused-selector */
