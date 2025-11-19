@@ -217,7 +217,6 @@
         "mute_when_video_plays": "视频播放时静音",
         "allow_gaining": "允许获取",
         "allow_gaining_tip": "允许将音量设置超过100%（可能导致失真）",
-        "pre_fader_volume_meter": "推子前音量表",
         "mixer": "调音台",
         "equalizer": "均衡器",
         "preset": "预设",
@@ -487,7 +486,7 @@
         "manage_dynamic_values": "管理动态值",
         "choose_camera": "选择相机",
         "manage_tags": "管理标签",
-        "sync_categories": "选择要同步的分类",
+        "sync_categories": "同步分类",
         "effect_items": "效果元素",
         "initialize": "欢迎使用 FreeShow",
         "unsaved": "您确定要退出吗？",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "背景清除时激活",
         "activate_show_created": "创建节目时激活",
         "activate_show_opened": "节目打开时激活",
-        "activate_audio_playlist_ended": "音频播放列表结束时激活"
+        "activate_audio_playlist_ended": "音频播放列表结束时激活",
+        "mark_played": "标记为已播放",
+        "mark_not_played": "标记为未播放"
     },
     "conditions": {
         "show_item": "显示项目如果",
@@ -1299,6 +1300,7 @@
         "show_location": "节目位置",
         "data_location": "数据位置",
         "user_data_location": "将个人设置存储在“数据位置”",
+        "user_data_location_confirm": "只有在你清楚自己在做什么的情况下才继续。是否更改用户数据位置？",
         "user_data_exists": "在自定义位置发现已有数据，是否要覆盖它？",
         "user_data_yes": "是，保留当前数据",
         "user_data_no": "否，导入已有数据",
@@ -1327,6 +1329,7 @@
         "restart": "重启服务器",
         "connect_to": "连接到 $1",
         "disconnect_from": "与 $1 断开连接",
+        "sync_categories_tip": "选择要作为歌曲上传的类别",
         "reset_all": "全部重置",
         "reset_theme": "重置主题",
         "reset_themes": "重置主题",

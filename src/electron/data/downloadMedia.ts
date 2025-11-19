@@ -4,7 +4,7 @@ import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { LessonFile, LessonsData } from "../../types/Main"
 import { sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getValidFileName, makeDir } from "../utils/files"
+import { doesPathExist, getDataFolderPath, getValidFileName, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { decryptFile, encryptFile, getProtectedPath, getProviderKey, isProtectedProvider } from "./protected"
 import { filePathHashCode } from "./thumbnails"
@@ -22,8 +22,8 @@ function checkLesson(lesson: LessonsData) {
     failedDownloads = 0
     sendToMain(ToMain.LESSONS_DONE, { showId: lesson.showId, status: { finished: 0, failed: 0 } })
 
-    const lessonsFolder = getDataFolder(lesson.path, dataFolderNames[type])
-    const lessonFolder = path.join(lessonsFolder, getValidFileName(lesson.name))
+    const folderName = getValidFileName(lesson.name)
+    const lessonFolder = getDataFolderPath("lessons", folderName)
     makeDir(lessonFolder)
 
     return lesson.files
@@ -215,7 +215,7 @@ function startDownload(data: DownloadFile) {
 /// //
 
 const downloading: string[] = []
-export function downloadMedia({ url, dataPath }: { url: string; dataPath: string }) {
+export function downloadMedia({ url }: { url: string }) {
     if (!url?.includes("http") || url?.includes("blob:")) return
 
     if (downloading.includes(url)) return
@@ -223,7 +223,7 @@ export function downloadMedia({ url, dataPath }: { url: string; dataPath: string
 
     console.info("Downloading online media: " + url)
 
-    const outputPath = getMediaThumbnailPath(url, dataPath)
+    const outputPath = getMediaThumbnailPath(url)
 
     if (isProtectedProvider(url)) {
         encryptFile(url, outputPath, getProviderKey(url))
@@ -287,10 +287,10 @@ export function downloadMedia({ url, dataPath }: { url: string; dataPath: string
     // ) // 8 minutes timeout
 }
 
-export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
+export async function checkIfMediaDownloaded({ url }: { url: string }) {
     if (!url?.includes("http")) return null
 
-    const outputPath = getMediaThumbnailPath(url, dataPath)
+    const outputPath = getMediaThumbnailPath(url)
     if (!doesPathExist(outputPath)) return null
 
     if (isProtectedProvider(url)) {
@@ -308,15 +308,14 @@ export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; d
     return { path: outputPath, buffer: null }
 }
 
-function getMediaThumbnailPath(url: string, dataPath: string) {
+function getMediaThumbnailPath(url: string) {
     const isProtected = isProtectedProvider(url)
     if (isProtected) return getProtectedPath(url)
 
     const urlWithoutQuery = url.split('?')[0]
     const extension = path.extname(urlWithoutQuery)
     const fileName = `${filePathHashCode(url)}${extension}`
-    const outputFolder = getDataFolder(dataPath, dataFolderNames.onlineMedia)
-    createFolder(outputFolder)
+    const outputFolder = getDataFolderPath("onlineMedia")
 
     return path.join(outputFolder, fileName)
 }

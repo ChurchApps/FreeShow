@@ -399,7 +399,8 @@
         "offers": "Offers",
         "notice": "Notice",
         "visuals": "Visuals",
-        "action_tip": "An action that triggers each time a show with this category is presented."
+        "action_tip": "An action that triggers each time a show with this category is presented.",
+        "create_nonexistent": "Create non-existent categories"
     },
     "groups": {
         "current": "Current",
@@ -446,6 +447,7 @@
         "choose_output": "Choose output type",
         "choose_style": "Choose style preset",
         "change_output_values": "Change output values",
+        "output_selector": "Output selector",
         "choose_chord": "Choose chord",
         "set_time": "Set time",
         "assign_shortcut": "Assign shortcut",
@@ -1301,13 +1303,7 @@
         "add": "Add",
         "remove": "Remove",
         "change_name": "Change name",
-        "show_location": "Show location",
         "data_location": "Data location",
-        "user_data_location": "Save user settings at 'Data location'",
-        "user_data_location_confirm": "Only continue if you know what you are doing. Change user data location?",
-        "user_data_exists": "Found existing data at custom location, would you like to overwrite it?",
-        "user_data_yes": "Yes, keep current data",
-        "user_data_no": "No, import existing data",
         "auto_locate_missing_media_files": "Auto locate missing media files",
         "popup_before_close": "Enable close confirmation popup",
         "log_song_usage": "Log song usage to a file",

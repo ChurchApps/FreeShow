@@ -79,7 +79,10 @@ export function hideDisplay() {
     toggleOutputs(null, { state: false })
 }
 
+export let lastClickTime = 0
 export function mainClick(e: any) {
+    lastClickTime = Date.now()
+
     // open links externally
     if (e.target?.closest("a.open")) {
         e.preventDefault()

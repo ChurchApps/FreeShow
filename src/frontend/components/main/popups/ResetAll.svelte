@@ -16,8 +16,8 @@
 
     function resetSettings() {
         sendMain(Main.SAVE, {
-            path: $showsPath || "",
-            dataPath: $dataPath,
+            path: $showsPath || "", // DEPRECATED
+            dataPath: $dataPath, // DEPRECATED
             // SETTINGS
             SETTINGS: {},
             SYNCED_SETTINGS: {},
@@ -37,7 +37,7 @@
             USAGE: { all: [] },
             // SAVE DATA
             closeWhenFinished: false,
-            customTriggers: { changeUserData: { reset: true } }
+            customTriggers: { reset: true }
         } as SaveData)
 
         // WIP reset error log / other config files
@@ -47,8 +47,6 @@
         clearAll()
         drawSettings.set({})
 
-        showsPath.set(null)
-        // dataPath.set("")
         // showsCache.set({})
         scripturesCache.set({})
         deletedShows.set([])

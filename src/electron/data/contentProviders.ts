@@ -3,23 +3,23 @@
 // Handles access and settings for external content providers like Planning Center, ChurchApps (B1), etc.
 
 import type { ContentProviderId } from "../contentProviders/base/types"
-import { stores } from "./store"
+import { _store } from "./store"
 
 // ----- CONTENT PROVIDER HELPERS -----
 
 export function getContentProviderAccess(providerId: ContentProviderId, scope: string) {
-    const contentProviders = stores.ACCESS.get("contentProviders") || {}
+    const contentProviders = _store.ACCESS?.get("contentProviders") || {}
     const providerData = contentProviders[providerId] || {}
 
     return providerData[scope] || null
 }
 
 export function setContentProviderAccess(providerId: ContentProviderId, scope: string, data: any) {
-    const contentProviders = stores.ACCESS.get("contentProviders") || {}
+    const contentProviders = _store.ACCESS?.get("contentProviders") || {}
     if (!contentProviders[providerId]) contentProviders[providerId] = {}
     contentProviders[providerId][scope] = data
 
-    stores.ACCESS.set("contentProviders", contentProviders)
+    _store.ACCESS?.set("contentProviders", contentProviders)
 }
 
 // ----- CONTENT PROVIDER MIGRATION -----
@@ -35,7 +35,7 @@ export function migrateContentProviderSettings() {
     ]
 
     for (const { old, newProvider, newScope } of accessKeys) {
-        const oldData = stores.ACCESS.get(old as any)
+        const oldData = _store.ACCESS?.get(old as any)
         if (oldData && !getContentProviderAccess(newProvider, newScope)) {
             setContentProviderAccess(newProvider, newScope, oldData)
             keysToDelete.push(old)
@@ -45,7 +45,7 @@ export function migrateContentProviderSettings() {
 
     if (keysToDelete.length) {
         for (const key of keysToDelete) {
-            stores.ACCESS.delete(key as any)
+            _store.ACCESS?.delete(key as any)
             console.info(`Deleted legacy key: ${key}`)
         }
     }

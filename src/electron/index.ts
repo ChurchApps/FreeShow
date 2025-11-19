@@ -9,7 +9,7 @@ import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
-import { config, updateDataPath } from "./data/store"
+import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
 import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
@@ -81,12 +81,7 @@ function startApp() {
 
     setTimeout(createLoading)
 
-    // Start these heavy operations in parallel, not blocking main window creation
-    Promise.resolve()
-        .then(() => {
-            updateDataPath({ load: true })
-        })
-        .catch(console.error)
+    setupStores()
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()

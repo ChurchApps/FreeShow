@@ -21,7 +21,7 @@ export let password = writable({
 
 export let isConnected = writable(false)
 export let quickPlay = writable(false)
-export let createShow = writable(false)
+export let createShow: Writable<boolean | string> = writable(false)
 export let showSearchValue = writable("")
 export let activeTab = writable("shows")
 export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")

@@ -181,7 +181,7 @@
     {#if edit && stageLayoutId}
         {#if !hasStageOutput}
             <FloatingInputs side="left" onlyOne>
-                <MaterialButton icon="display_settings" title="stage.create_stage_output" on:click={createStageOutput}>
+                <MaterialButton icon="autofill" title="stage.create_stage_output" on:click={createStageOutput}>
                     <T id="stage.create_stage_output" />
                 </MaterialButton>
             </FloatingInputs>

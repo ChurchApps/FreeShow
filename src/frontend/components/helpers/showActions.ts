@@ -424,6 +424,13 @@ export function goToNextProjectItem(key = "") {
             // change layout
             if ((newShow.type || "show") === "show") swichProjectItem(index, newShow.id)
 
+            // mark as played
+            projects.update((a) => {
+                if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
+                a[get(activeProject)!].shows[index - 1].played = true
+                return a
+            })
+
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
                 let actionId = newShow.data?.settings?.triggerAction
                 if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
@@ -433,13 +440,6 @@ export function goToNextProjectItem(key = "") {
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
-
-            // mark as played
-            projects.update((a) => {
-                if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
-                a[get(activeProject)!].shows[index - 1].played = true
-                return a
-            })
         }
     })
 }

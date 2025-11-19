@@ -840,7 +840,7 @@ const slideDrop = {
         history.id = "SLIDES"
         const slides = drag.data.map((a) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getTimerItem(a) }))
         function getTimerItem(timer): Item[] {
-            return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timerId: timer.id }]
+            return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timer: { id: timer.id } }]
         }
 
         // start timer layout

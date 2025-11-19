@@ -13,21 +13,18 @@ import { restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
-import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
+import { _store, appDataPath, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
-import { closeMain, forceCloseApp } from "../utils/close"
+import { closeMain } from "../utils/close"
 import {
     bundleMediaFiles,
-    checkShowsFolder,
-    dataFolderNames,
-    doesPathExist,
-    getDataFolder,
-    getDocumentsFolder,
+    getDataFolderPath,
+    getDataFolderRoot,
     getFileInfo,
     getFolderContent,
     getFoldersContent,
@@ -85,37 +82,31 @@ export const mainResponses: MainResponses = {
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
-    [Main.SAVE]: (a) => {
-        if (userDataPath === null) updateDataPath()
-        save(a)
-    },
+    [Main.SAVE]: (a) => save(a),
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
     // MAIN
-    [Main.SHOWS]: (data) => {
-        if (userDataPath === null) updateDataPath()
-        return loadShows(data)
-    },
+    [Main.SHOWS]: () => loadShows(),
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
     [Main.URL]: (data) => openURL(data),
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
-    [Main.SHOWS_PATH]: () => getDocumentsFolder(),
-    [Main.DATA_PATH]: () => getDocumentsFolder(null, ""),
+    [Main.DATA_PATH]: () => getDataFolderRoot(),
+    [Main.UPDATE_DATA_PATH]: (data) => createStores(data.oldPath),
     [Main.LOG_ERROR]: (data) => logError(data),
-    [Main.OPEN_LOG]: () => openInSystem(error_log.path),
+    [Main.OPEN_LOG]: () => openInSystem(_store.ERROR_LOG?.path || ""),
     [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),
-    [Main.OPEN_APPDATA]: () => openInSystem(path.dirname(config.path), true),
+    [Main.OPEN_APPDATA]: () => openInSystem(appDataPath, true),
     [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath, true),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS
     [Main.DELETE_SHOWS]: (data) => deleteShows(data),
     [Main.DELETE_SHOWS_NI]: (data) => deleteShowsNotIndexed(data),
-    [Main.REFRESH_SHOWS]: (data) => refreshAllShows(data),
+    [Main.REFRESH_SHOWS]: () => refreshAllShows(),
     [Main.GET_EMPTY_SHOWS]: (data) => getEmptyShows(data),
-    [Main.FULL_SHOWS_LIST]: (data) => getAllShows(data),
+    [Main.FULL_SHOWS_LIST]: () => getAllShows(),
     // OUTPUT
     [Main.GET_SCREENS]: () => getScreens(),
     [Main.GET_WINDOWS]: () => getScreens("window"),
@@ -133,7 +124,7 @@ export const mainResponses: MainResponses = {
     [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
     [Main.MEDIA_IS_DOWNLOADED]: async (data) => await checkIfMediaDownloaded(data),
     [Main.NOW_PLAYING]: (data) => setPlayingState(data),
-    [Main.NOW_PLAYING_UNSET]: (data) => unsetPlayingAudio(data),
+    [Main.NOW_PLAYING_UNSET]: () => unsetPlayingAudio(),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
     [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),
@@ -165,24 +156,11 @@ export const mainResponses: MainResponses = {
     [Main.GET_LYRICS]: (data) => getLyrics(data),
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
     // FILES
-    [Main.RESTORE]: (data) => restoreFiles(data),
+    [Main.RESTORE]: () => restoreFiles(),
     [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
-    [Main.DOES_PATH_EXIST]: (data) => {
-        let configPath = data.path
-        if (configPath === "data_config") configPath = path.join(data.dataPath, dataFolderNames.userData)
-        return { ...data, exists: doesPathExist(configPath) }
-    },
-    [Main.UPDATE_DATA_PATH]: () => {
-        // updateDataPath({ ...data, load: true })
-        const special = stores.SETTINGS.get("special")
-        special.customUserDataLocation = true
-        stores.SETTINGS.set("special", special)
-
-        forceCloseApp()
-    },
     [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
     [Main.GET_SIMULAR]: (data) => getSimularPaths(data),
-    [Main.BUNDLE_MEDIA_FILES]: (data) => bundleMediaFiles(data),
+    [Main.BUNDLE_MEDIA_FILES]: () => bundleMediaFiles(),
     [Main.FILE_INFO]: (data) => getFileInfo(data),
     [Main.READ_FOLDER]: (data) => getFolderContent(data),
     [Main.READ_FOLDERS]: (data) => getFoldersContent(data),
@@ -191,7 +169,7 @@ export const mainResponses: MainResponses = {
     [Main.OPEN_FILE]: (data) => selectFiles(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
-        await ContentProviderRegistry.loadServices(data.providerId, data.dataPath)
+        await ContentProviderRegistry.loadServices(data.providerId)
     },
     [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
@@ -239,12 +217,12 @@ export function startImport(data: { channel: string; format: { name: string; ext
     const needsFileAndNoFileSelected = data.format.extensions && !files.length
     if (needsFileAndNoFileSelected) return
 
-    importShow(data.channel, files || null, data.settings)
+    importShow(data.channel, files || null, data.settings || {})
 }
 
 // BIBLE
-export function loadScripture(msg: { id: string; path: string; name: string }) {
-    const bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
+export function loadScripture(msg: { id: string; name: string }) {
+    const bibleFolder: string = getDataFolderPath("scriptures")
     let filePath: string = path.join(bibleFolder, msg.name + ".fsb")
 
     let bible = loadFile(filePath, msg.id)
@@ -271,9 +249,9 @@ export function loadScripture(msg: { id: string; path: string; name: string }) {
 }
 
 // SHOW
-export function loadShow(msg: { id: string; path: string | null; name: string }) {
-    let filePath: string = checkShowsFolder(msg.path || "")
-    filePath = path.join(filePath, (msg.name || msg.id) + ".show")
+export function loadShow(msg: { id: string; name: string }) {
+    const showsFolder = getDataFolderPath("shows")
+    const filePath = path.join(showsFolder, (msg.name || msg.id) + ".show")
     const show = loadFile(filePath, msg.id)
 
     return show
@@ -358,8 +336,8 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 // only open once per session
 let systemOpened = false
 export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
-    const folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
-    const filePath: string = path.join(folder, msg.name)
+    const folder = getDataFolderPath("recordings")
+    const filePath = path.join(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
     writeFile(filePath, buffer)
@@ -375,7 +353,7 @@ const maxLogLength = 250
 export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "renderer") {
     if (!isProd) log.dev = true
 
-    const storedLog = error_log.store
+    const storedLog = getStore("ERROR_LOG")
 
     let previousLog = storedLog[key] || []
     previousLog.push(log)
@@ -383,8 +361,8 @@ export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "
     if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
     if (!previousLog.length) return
 
-    // error_log.clear()
-    error_log.set({ [key]: previousLog })
+    // _store.ERROR_LOG?.clear()
+    _store.ERROR_LOG?.set({ [key]: previousLog })
 }
 
 const ERROR_FILTER = [
@@ -418,15 +396,3 @@ export function createLog(err: Error) {
 //     })
 //     return encodedFiles
 // }
-
-// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
-function getStoreValue(data: { file: "config" | keyof typeof stores; key: string }) {
-    const store = data.file === "config" ? config : stores[data.file]
-    return { ...data, value: (store as any).get(data.key) }
-}
-
-// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
-function setStoreValue(data: { file: "config" | keyof typeof stores; key: string; value: any }) {
-    const store = data.file === "config" ? config : stores[data.file]
-    store.set(data.key, data.value)
-}

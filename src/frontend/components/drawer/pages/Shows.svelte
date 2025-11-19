@@ -3,6 +3,7 @@
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import T from "../../helpers/T.svelte"
@@ -197,6 +198,19 @@
     // function updateScrollElem() {
     //     scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
     // }
+
+    $: showWithNonExistentCategory = active === "unlabeled" && filteredStored.some((s) => s.category)
+    function createNonExistentCategories() {
+        const nonexistentCategories = [...new Set(filteredStored.map((s) => s.category))] as string[]
+
+        categories.update((a) => {
+            nonexistentCategories.forEach((id) => {
+                if (a[id]) return
+                a[id] = { name: translateText("main.unnamed") }
+            })
+            return a
+        })
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -229,6 +243,14 @@
         {/if}
     </div>
 </Autoscroll>
+
+{#if showWithNonExistentCategory}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton icon="autofill" on:click={createNonExistentCategories}>
+            <T id="category.create_nonexistent" />
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <FloatingInputs onlyOne gradient>
     <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>

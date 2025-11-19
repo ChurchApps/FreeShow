@@ -137,7 +137,6 @@
         "_hide_preview": "Voorbeeld verbergen",
         "show_preview": "Voorbeeld tonen",
         "restore_output": "Uitgang herstellen",
-        "enable_controls": "Besturingselementen voor mediavoorbeelden weergeven",
         "background": "Achtergrond",
         "foreground": "Voorgrond",
         "slide": "Dia",
@@ -147,7 +146,8 @@
         "nextTimer": "Volgende diatimer",
         "lock": "Vergrendelen",
         "unlock": "Ontgrendelen",
-        "test_pattern": "Test patroon"
+        "test_pattern": "Test patroon",
+        "live_prepare": "Outputinhoud verbergen (zwarte overlay)"
     },
     "clear": {
         "general": "Leeg maken",
@@ -217,8 +217,10 @@
         "mute_when_video_plays": "Dempen wanneer video wordt afgespeeld",
         "allow_gaining": "Versterken toestaan",
         "allow_gaining_tip": "Volume boven de 100% instellen toestaan (kan vervorming veroorzaken)",
-        "pre_fader_volume_meter": "Pre-fader volumemeter",
         "mixer": "Mixer",
+        "equalizer": "Equalizer",
+        "preset": "Voorinstelling",
+        "main": "Hoofd",
         "metronome": "Metronoom",
         "toggle_metronome": "Metronoom in-/uitschakelen",
         "use_metadata_bpm": "BPM van metagegevens gebruiken",
@@ -484,7 +486,7 @@
         "manage_dynamic_values": "Dynamische waarden beheren",
         "choose_camera": "Kies camera",
         "manage_tags": "Labels beheren",
-        "sync_categories": "Selecteer categorieën om te synchroniseren",
+        "sync_categories": "Categorieën synchroniseren",
         "effect_items": "Effecten",
         "initialize": "Welkom bij FreeShow",
         "unsaved": "Weet je zeker dat je wilt afsluiten?",
@@ -794,7 +796,9 @@
         "activate_background_cleared": "Activeren wanneer het achtergrond is leeggemaakt",
         "activate_show_created": "Activeren wanneer een show is gemaakt",
         "activate_show_opened": "Activeren wanneer show is geopend",
-        "activate_audio_playlist_ended": "Activeren wanneer de audio afspeellijst is afgelopen"
+        "activate_audio_playlist_ended": "Activeren wanneer de audio afspeellijst is afgelopen",
+        "mark_played": "Markeren als gespeeld",
+        "mark_not_played": "Markeren als niet gespeeld"
     },
     "conditions": {
         "show_item": "Item tonen als",
@@ -1046,7 +1050,9 @@
         "longitude": "Lengtegraad",
         "altitude": "Hoogte",
         "fahrenheit": "Fahrenheit",
-        "longRange": "Groot bereik"
+        "longRange": "Groot bereik",
+        "media_item_tip": "Probeer je de media als achtergrond te gebruiken?",
+        "convert_to_background": "Converteren naar achtergrond"
     },
     "items": {
         "text": "Tekstvak",
@@ -1067,11 +1073,12 @@
         "slide_tracker": "Voortgang",
         "visualizer": "Muziekvisualizer",
         "captions": "Bijschrift",
+        "metronome": "Metronoom",
         "icon": "Pictogram",
         "effect": "Effect",
         "slide_text": "Dia tekst",
         "slide_notes": "Dia notities",
-        "current_output": "Huidige uitvoer"
+        "current_output": "Uitvoervenster"
     },
     "borders": {
         "solid": "Stevig",
@@ -1253,12 +1260,14 @@
         "window": "Venster",
         "active_style": "Stijl gebruiken ",
         "alert_updates": "Waarschuw wanneer er een nieuwe update beschikbaar is",
+        "alert_updates_beta": "Waarschuw wanneer er een nieuwe beta versie beschikbaar is",
         "auto_updates": "Auto updates",
         "disable_labels": "Schakel labels uit",
         "group_numbers": "Groepsnummers",
         "auto_group_numbers": "Groepsnummers automatisch toewijzen",
         "transparent_slides": "Transparant dia voorbeeld",
         "full_colors": "Groepskleuren met hoog contrast",
+        "next_item_on_last_slide": "Pijl naar links/rechts verandert projectitem op eerste/laatste dia",
         "slide_number_keys": "Dia's afspelen met cijfertoetsen",
         "auto_shortcut_first_letter": "Automatische snelkoppeling naar de eerste letter in de tekst",
         "startup_projects_list": "Toon de projectenlijst bij het opstarten",
@@ -1291,6 +1300,7 @@
         "show_location": "Showlocatie",
         "data_location": "Datalocatie",
         "user_data_location": "Gebruikersinstellingen opslaan op datalocatie",
+        "user_data_location_confirm": "Ga alleen door als je weet wat je doet. Gebruikersgegevenslocatie wijzigen?",
         "user_data_exists": "Er zijn bestaande gegevens op de aangepaste locatie gevonden. Wilt u deze overschrijven?",
         "user_data_yes": "Ja, behoud huidige gegevens",
         "user_data_no": "Nee, importeer bestaande gegevens",
@@ -1319,6 +1329,7 @@
         "restart": "Start servers opnieuw op",
         "connect_to": "Verbinding maken met $1",
         "disconnect_from": "Verbinding verbreken met $1",
+        "sync_categories_tip": "Selecteer welke categorieën u wilt uploaden als nummers",
         "reset_all": "Alles resetten",
         "reset_theme": "Thema opnieuw instellen",
         "reset_themes": "Thema's opnieuw instellen",

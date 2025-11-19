@@ -97,21 +97,19 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         return null
     }
 
-    async loadServices(dataPath?: string): Promise<void> {
+    async loadServices(): Promise<void> {
         const connected = await this.connect("openid profile email")
         if (!connected) {
             console.error("Failed to connect to APlay")
             return
         }
-
-        console.log(`Loading services from APlay${dataPath ? ` at ${dataPath}` : ""}`)
     }
 
-    async startupLoad(scope: AmazingLifeScopes, data?: any): Promise<void> {
+    async startupLoad(scope: AmazingLifeScopes): Promise<void> {
         const connected = await this.connect(scope)
         if (!connected) return
 
-        await this.loadServices(data?.dataPath)
+        await this.loadServices()
     }
 
     private fetchProductLibraries(productId: string, productTitle: string, productImage: string, headers: any): Promise<ContentLibraryCategory | null> {

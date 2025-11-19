@@ -23,6 +23,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    activeStyle,
     activeTagFilter,
     activeTimers,
     activeVariableTagFilter,
@@ -31,7 +32,6 @@ import {
     colorbars,
     currentOutputSettings,
     currentWindow,
-    dataPath,
     drawer,
     drawerTabsData,
     effects,
@@ -496,6 +496,9 @@ const clickActions = {
 
         activeVariableTagFilter.set(activeTags || [])
     },
+    action_history: () => {
+        activePopup.set("action_history")
+    },
 
     addToProject: (obj: ObjData) => {
         if (!obj.sel) return
@@ -773,7 +776,7 @@ const clickActions = {
             })
             getFile(template.settings?.backgroundPath)
 
-            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
+            send(EXPORT, ["TEMPLATE"], { name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
 
             function getFile(path: string | undefined) {
                 if (!path) return
@@ -786,7 +789,7 @@ const clickActions = {
         if (obj.sel?.id === "theme") {
             const theme = get(themes)[obj.sel.data[0]?.id]
             if (!theme) return
-            send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
+            send(EXPORT, ["THEME"], { content: theme })
 
             return
         }
@@ -803,7 +806,7 @@ const clickActions = {
         if (obj.contextElem?.classList.value.includes("#projectsTab")) {
             const extensions = ["project", "shows", "json", "zip"]
             const name = translateText("formats.project")
-            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
+            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
             return
         }
     },
@@ -1059,6 +1062,23 @@ const clickActions = {
         } else if (obj.contextElem?.classList.value.includes("#edit_custom_action")) {
             activePopup.set("custom_action")
         }
+    },
+    edit_style: (obj: ObjData) => {
+        const outputId = obj.contextElem?.id || ""
+        const output = get(outputs)[outputId]
+        if (!output) return
+
+        if (output.stageOutput) {
+            activeStage.set({ id: output.stageOutput, items: [] })
+            activePage.set("stage")
+            return
+        }
+
+        if (!output.style) return
+
+        activeStyle.set(output.style)
+        settingsTab.set("styles")
+        activePage.set("settings")
     },
     manage_groups: () => {
         // settingsTab.set("general")

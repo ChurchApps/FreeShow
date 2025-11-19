@@ -8,7 +8,7 @@ import path from "path"
 import { ToMain } from "../../../types/IPC/ToMain"
 import type { TrimmedShows } from "../../../types/Show"
 import { sendToMain } from "../../IPC/main"
-import { parseShow, readFile } from "../../utils/files"
+import { getDataFolderPath, parseShow, readFile } from "../../utils/files"
 import { ChurchAppsConnect } from "./ChurchAppsConnect"
 import type { ChurchAppsSongData } from "./types"
 
@@ -18,7 +18,6 @@ import type { ChurchAppsSongData } from "./types"
 export interface ChurchAppsStartupLoadData {
     shows: TrimmedShows
     categories: string[]
-    showsPath: string
 }
 
 /**
@@ -78,7 +77,7 @@ export class ChurchAppsExport {
 
         freeShowIds.forEach((key: string) => {
             const show = shows[key]
-            const showData = this.loadShowData(show.name, data.showsPath)
+            const showData = this.loadShowData(show.name)
             if (!showData) return
 
             const songData: ChurchAppsSongData = {
@@ -113,7 +112,8 @@ export class ChurchAppsExport {
         return songList
     }
 
-    private static loadShowData(showName: string, showsPath: string) {
+    private static loadShowData(showName: string) {
+        const showsPath = getDataFolderPath("shows")
         const showPath = path.join(showsPath, `${showName}.show`)
         const jsonData = readFile(showPath) || "{}"
         return parseShow(jsonData)

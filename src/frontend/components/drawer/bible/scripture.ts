@@ -10,22 +10,27 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
-import { activePopup, activeProject, activeScripture, dataPath, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { splitTextContentInHalf } from "../../../show/slides"
+import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
+import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
-import { getItemText } from "../../edit/scripts/textStyle"
-import { splitTextContentInHalf } from "../../../show/slides"
 
-const SCRIPTURE_API_URL = "https://contentapi.churchapps.org/bibles"
+const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
 export async function getApiBiblesList() {
-    return await ApiBiblesList("*", SCRIPTURE_API_URL)
+    try {
+        return await ApiBiblesList("*", SCRIPTURE_API_URL)
+    } catch (err) {
+        console.error("Error loading API Bible:", err)
+        return await ApiBiblesList(getKey("bibleapi"))
+    }
 }
 
 export async function loadJsonBible(id: string) {
@@ -35,7 +40,12 @@ export async function loadJsonBible(id: string) {
     if (isApi) {
         const key = getKey("bibleapi")
         const apiId = scriptureData?.id || id
-        return await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
+        try {
+            return await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
+        } catch (err) {
+            console.error("Error loading API Bible:", err)
+            return await JsonBibleApi(key, apiId)
+        }
     }
 
     if (scriptureData?.collection) throw new Error("Collections must load one at a time")
@@ -55,7 +65,7 @@ async function getLocalBible(id: string) {
     const scriptureData = get(scriptures)[id]
     if (!scriptureData) return null
 
-    const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id, path: get(dataPath) })
+    const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id })
     const localBible = localBibleResponse.content?.[1]
 
     if (localBibleResponse.error === "not_found" || !localBible) {
@@ -780,7 +790,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(noPopup = false, showPopup = false) {
+export async function createScriptureShow(showPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -789,10 +799,10 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (!noPopup && (showPopup || selectedVerses[0]?.length > 3)) {
+    if (showPopup) {
         const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
 
-        popupData.set({ showVersion })
+        popupData.set({ showVersion, create: true })
         activePopup.set("scripture_show")
         return
     }

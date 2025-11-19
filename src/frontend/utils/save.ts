@@ -121,8 +121,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         autosave: get(autosave),
         timeFormat: get(timeFormat),
         // events: get(events),
-        showsPath: get(showsPath),
-        dataPath: get(dataPath),
+        showsPath: get(showsPath), // DEPRECATED
+        dataPath: get(dataPath), // DEPRECATED
         lockedOverlays: get(lockedOverlays),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
@@ -189,8 +189,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     }
 
     const allSavedData: SaveData = {
-        path: get(showsPath) || "",
-        dataPath: get(dataPath),
         // SETTINGS
         SETTINGS: settings,
         SYNCED_SETTINGS: syncedSettings,
@@ -206,10 +204,10 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         THEMES: get(themes),
         DRIVE_API_KEY: get(driveKeys),
         // CACHES SAVED TO MULTIPLE FILES
-        showsCache: clone(get(showsCache)),
-        scripturesCache: clone(get(scripturesCache)),
-        deletedShows: clone(get(deletedShows)),
-        renamedShows: clone(get(renamedShows)),
+        showsCache: get(showsCache),
+        scripturesCache: get(scripturesCache),
+        deletedShows: get(deletedShows),
+        renamedShows: get(renamedShows),
         // CACHES
         CACHE: { text: get(textCache) },
         HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
@@ -219,12 +217,14 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         customTriggers
     }
 
+    const saveData = clone(allSavedData)
+
     deletedShows.set([])
     renamedShows.set([])
 
     if (customTriggers.backup) newToast("settings.backup_started")
     // trigger toast before saving
-    setTimeout(() => sendMain(Main.SAVE, allSavedData))
+    setTimeout(() => sendMain(Main.SAVE, saveData))
 }
 
 export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
@@ -235,7 +235,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
         console.info("SAVED!")
     }
 
-    if (customTriggers?.backup || customTriggers?.changeUserData) return
+    if (customTriggers?.backup || customTriggers?.reset) return
 
     const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
@@ -337,8 +337,8 @@ const saveList: { [key in SaveList]: any } = {
     disabledServers,
     serverData,
     events,
-    showsPath,
-    dataPath,
+    showsPath: null,
+    dataPath: null,
     lockedOverlays: null,
     drawer: null,
     drawerTabsData: null,

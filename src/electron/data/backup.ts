@@ -4,23 +4,23 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
-import { stores, updateDataPath } from "./store"
+import { doesPathExist, getDataFolderPath, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
+import { _store } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
-const storesToSave: (keyof typeof stores)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave: (keyof typeof _store)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: config.json, cache.json, history.json, DRIVE_API_KEY.json
 
-export async function startBackup({ showsPath, dataPath, customTriggers }: { showsPath: string; dataPath: string; customTriggers: SaveActions }) {
+export async function startBackup({ customTriggers }: { customTriggers: SaveActions }) {
     let shows: TrimmedShows | null = null
     // let bibles = null
 
     // no need to backup shows on auto backup (as that just takes a lot of space)
     const isAutoBackup = !!customTriggers?.isAutoBackup
 
-    const backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
-    const backupFolder = createFolder(path.join(backupPath, getTimePointString() + (isAutoBackup ? "_auto" : "")))
+    const folderName = getTimePointString() + (isAutoBackup ? "_auto" : "")
+    const backupFolder = getDataFolderPath("backups", folderName)
 
     // CONFIGS
     await Promise.all(storesToSave.map(syncStores))
@@ -34,13 +34,14 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
 
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
-    if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
-    else if (!isAutoBackup) openInSystem(backupFolder, true)
+    if (!isAutoBackup) openInSystem(backupFolder, true)
 
     /// //
 
-    async function syncStores(id: keyof typeof stores) {
-        const store = stores[id]
+    async function syncStores(id: keyof typeof _store) {
+        const store = _store[id]
+        if (!store) return
+
         const name = id + ".json"
 
         if (id === "SHOWS" && isAutoBackup) return
@@ -53,10 +54,11 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     }
 
     async function syncAllShows() {
-        if (!shows || !showsPath) return
+        if (!shows) return
 
         const name = "SHOWS_CONTENT.json"
         const allShows: Shows = {}
+        const showsPath = getDataFolderPath("shows")
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: [string, TrimmedShow]) {
@@ -79,14 +81,12 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
 
 // RESTORE
 
-export function restoreFiles({ showsPath }: { showsPath: string }) {
+export function restoreFiles() {
     const files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
     if (!files?.length) return sendToMain(ToMain.RESTORE2, { finished: false })
     sendToMain(ToMain.RESTORE2, { starting: true })
 
-    // don't replace certain settings
-    const settings = stores.SETTINGS.store
-    const dataPath: string = settings.dataPath
+    const showsPath = getDataFolderPath("shows")
 
     files.forEach((filePath: string) => {
         if (filePath.includes("SHOWS_CONTENT")) {
@@ -105,21 +105,15 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
 
     /// //
 
-    function restoreStore(filePath: string, storeId: keyof typeof stores) {
+    function restoreStore(filePath: string, storeId: keyof typeof _store) {
         const file = readFile(filePath)
-        if (!stores[storeId] || !file || !isValidJSON(file)) return
+        if (!_store[storeId] || !file || !isValidJSON(file)) return
 
         const data = JSON.parse(file)
 
-        // don't replace certain settings
-        if (storeId === "SETTINGS") {
-            data.dataPath = dataPath
-            data.showsPath = showsPath
-        }
+        _store[storeId]?.clear()
+        _store[storeId]?.set(data)
 
-        stores[storeId].clear()
-            ; (stores[storeId] as any).set(data)
-        // WIP restoring synced settings will reset settings
         sendMain(storeId as Main, data)
     }
 

@@ -56,16 +56,21 @@
             let customTemplate = getStyleTemplate(outSlide, currentStyle)
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
-            // wait output style/scripture template auto size
-            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 500
+            // only keep the legacy autosize delay when nothing has pre-populated a font size yet
+            const templateNeedsAutoSize = Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : false
+            const itemNeedsAutoSize = item.auto && !item.autoFontSize
 
-            if (!inDelay) inDelay = outDelay * 0.98
+            if (templateNeedsAutoSize || itemNeedsAutoSize) {
+                outDelay = 500
+                if (!inDelay) inDelay = outDelay * 0.98
+            }
         }
 
         // add some time in case an identical item is "fading" in
         if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
-        // don't "go to black" in between text
-        else if (!outDelay && transition?.duration === 0) outDelay = 50
+        // the previous fallback kept the old item visible a moment longer to avoid a black flash,
+        // but the autosize precompute path already keeps the new content ready, so we let the
+        // zero-duration case swap immediately to prevent overlapping text.
         // WIP having outDelay on just 1 item will cause all other items to not clear until that is finished!
 
         // SET DELAY

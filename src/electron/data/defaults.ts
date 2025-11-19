@@ -1,6 +1,6 @@
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
-export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: null }
+export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, dataPath: null, disableHardwareAcceleration: null }
 
 export const defaultGroups = {
     break: { name: "break", default: true, color: "#f5255e" },
@@ -57,8 +57,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     groupNumbers: true,
     fullColors: false,
     formatNewShow: false,
-    showsPath: null,
-    dataPath: "",
+    showsPath: null, // DEPRECATED
+    dataPath: "", // DEPRECATED
     lockedOverlays: [],
     splitLines: 0,
     theme: "default",

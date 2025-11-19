@@ -6,7 +6,7 @@ import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
-import { activePopup, alertMessage, contentProviderData, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, showsPath, special, tempPath, version, windowState } from "../stores"
+import { activePopup, alertMessage, contentProviderData, currentWindow, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, special, tempPath, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { setLanguage } from "./language"
@@ -101,8 +101,8 @@ function autoBackup() {
 
 export function contentProviderSync() {
     const providers = [
-        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { dataPath: get(dataPath) } },
-        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [], showsPath: get(showsPath) || "" } }
+        { providerId: "planningcenter" as ContentProviderId, scope: "services" },
+        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } }
     ]
 
     providers.forEach(({ providerId, scope, data }) => {
@@ -127,6 +127,9 @@ async function getStoredData() {
 
     await waitUntilValueIsDefined(() => get(loadedState).includes("synced_settings"), 200, 8000)
     sendMain(Main.SETTINGS)
+
+    // LOAD SHOWS FROM FOLDER
+    sendMain(Main.SHOWS)
 }
 
 async function startupOutput() {

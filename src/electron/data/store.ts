@@ -2,58 +2,63 @@
 // Get all user configs
 // https://www.npmjs.com/package/electron-store
 
-import { app } from "electron"
 import Store from "electron-store"
-import { statSync } from "fs"
+import { statSync, renameSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
-import type { ErrorLog, Media } from "../../types/Main"
+import type { Config, ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
-import { forceCloseApp } from "../utils/close"
-import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
+import { clone } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 
-const fileNames: { [key: string]: string } = {
-    error_log: "error_log",
-    settings: "settings",
-    synced_settings: "settings_synced",
-    themes: "themes",
-    projects: "projects",
-    shows: "shows",
-    stageShows: "stage",
-    overlays: "overlays",
-    templates: "templates",
-    events: "events",
-    driveKeys: "DRIVE_API_KEY",
-    media: "media",
-    cache: "cache",
-    history: "history",
-    usage: "usage",
-    access: "ACCESS",
-}
-
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
-const storeExtraConfig: { [key: string]: string } = {}
-if (process.env.FS_MOCK_STORE_PATH !== undefined) {
-    storeExtraConfig.cwd = process.env.FS_MOCK_STORE_PATH
+export const config = new Store<Config>({ defaults: defaultConfig })
+
+const storeFilesData = {
+    ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
+    SETTINGS: { fileName: "settings", portable: false, defaults: clone(defaultSettings) },
+
+    SYNCED_SETTINGS: { fileName: "settings_synced", portable: true, defaults: clone(defaultSyncedSettings) },
+    THEMES: { fileName: "themes", portable: true, defaults: {} as { [key: string]: Themes } },
+
+    PROJECTS: { fileName: "projects", portable: true, defaults: { projects: {}, folders: {}, projectTemplates: {} } },
+    SHOWS: { fileName: "shows", portable: true, defaults: {} as TrimmedShows, minify: true },
+    STAGE_SHOWS: { fileName: "stage", portable: true, defaults: {} as StageLayouts },
+    OVERLAYS: { fileName: "overlays", portable: true, defaults: {} as Overlays },
+    TEMPLATES: { fileName: "templates", portable: true, defaults: {} as Templates },
+    EVENTS: { fileName: "events", portable: true, defaults: {} as { [key: string]: Event } },
+
+    HISTORY: { fileName: "history", portable: true, defaults: {} as { undo: History[]; redo: History[] }, minify: true },
+
+    DRIVE_API_KEY: { fileName: "DRIVE_API_KEY", portable: false, defaults: {} as any },
+    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } },
+
+    MEDIA: { fileName: "media", portable: false, defaults: {} as Media, minify: true },
+    CACHE: { fileName: "cache", portable: false, defaults: {} as any, minify: true },
+    USAGE: { fileName: "usage", portable: false, defaults: {} as { all: any[] }, minify: true },
 }
 
-// MAIN WINDOW
-export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
+export const appDataPath = path.dirname(config.path)
+checkStores(appDataPath)
 
-const storesPath = config.path
-checkStores(storesPath)
+export function setupStores() {
+    const oldLocation = migrateConfig()
+    createStores(oldLocation)
+
+    checkStores(getDataFolderRoot())
+}
 
 // Check that files are parsed properly!
 function checkStores(dataPath: string) {
-    Object.values(fileNames).forEach((fileName) => {
-        const filePath = path.join(path.dirname(dataPath), fileName + ".json")
+    Object.values(storeFilesData).forEach(({ fileName }) => {
+        const filePath = path.join(dataPath, fileName + ".json")
         if (!doesPathExist(filePath)) return
 
         // delete if too large
@@ -79,158 +84,112 @@ function checkStores(dataPath: string) {
     })
 }
 
-const DEFAULTS = {
-    error_log: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] },
-    settings: defaultSettings,
-    synced_settings: defaultSyncedSettings,
-    themes: {} as { [key: string]: Themes },
-    projects: { projects: {}, folders: {}, projectTemplates: {} },
-    shows: {} as TrimmedShows,
-    stageShows: {} as StageLayouts,
-    overlays: {} as Overlays,
-    templates: {} as Templates,
-    events: {} as { [key: string]: Event },
-    driveKeys: {} as any,
-    media: {} as Media,
-    cache: {} as any,
-    history: {} as { undo: History[]; redo: History[] },
-    usage: { all: [] } as any,
-    accessKeys: { contentProviders: {} as { [key in ContentProviderId]?: any } },
-}
+export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
-// ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: DEFAULTS.error_log, ...storeExtraConfig })
+export function createStores(previousLocation?: string | null) {
+    const configFolderPath = getDataFolderPath("userData")
 
-// SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
-const synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
-const themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
+    Object.entries(storeFilesData).forEach(([key, data]) => {
+        _store[key as keyof typeof storeFilesData] = new Store({
+            name: data.fileName,
+            defaults: data.defaults,
+            cwd: data.portable ? configFolderPath : undefined,
+            serialize: (data as any).minify ? (v) => JSON.stringify(v) : undefined,
+            accessPropertiesByDotNotation: key === "MEDIA" ? false : true,
+        })
 
-// PROJECTS
-const projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
-
-// SLIDES
-const shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
-const overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
-const templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
-
-// CALENDAR
-const events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...storeExtraConfig })
-
-// CLOUD
-const driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
-
-// CACHE
-const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
-
-export const stores = {
-    SETTINGS: settings,
-    SYNCED_SETTINGS: synced_settings,
-    THEMES: themes,
-    PROJECTS: projects,
-    SHOWS: shows,
-    STAGE_SHOWS: stageShows,
-    OVERLAYS: overlays,
-    TEMPLATES: templates,
-    EVENTS: events,
-    DRIVE_API_KEY: driveKeys,
-    MEDIA: media,
-    CACHE: cache,
-    HISTORY: history,
-    USAGE: usage,
-    ACCESS: accessKeys,
+        // move user data files to data/Config folder if not already
+        if (previousLocation && data.portable) moveStore(key as keyof typeof storeFilesData, previousLocation)
+    })
 }
 
 // ----- GET STORE -----
 
-export function getStore<T extends keyof typeof stores>(id: T): (typeof stores)[T] extends { store: infer S } ? S : null {
-    if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
+export function getStore(id: "config"): Config
+export function getStore<T extends keyof typeof storeFilesData>(id: T): typeof storeFilesData[T]["defaults"]
+export function getStore<T extends keyof typeof storeFilesData | "config">(id: T) {
+    if (id === "config") return config.store
 
-    const store = stores[id].store
-    return store as (typeof stores)[T] extends { store: infer S } ? S : null
+    const storeId = id as keyof typeof storeFilesData
+    if (!_store[storeId]) throw new Error(`Store with key ${id} does not exist.`)
+    return _store[storeId]!.store
 }
 
-// ----- CUSTOM DATA PATH -----
-
-const portableData: { [key: string]: { key: keyof typeof stores; defaults: object } } = {
-    synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
-    themes: { key: "THEMES", defaults: {} },
-    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {}, projectTemplates: {} } },
-    shows: { key: "SHOWS", defaults: {} },
-    stageShows: { key: "STAGE_SHOWS", defaults: {} },
-    overlays: { key: "OVERLAYS", defaults: {} },
-    templates: { key: "TEMPLATES", defaults: {} },
-    events: { key: "EVENTS", defaults: {} },
-    driveKeys: { key: "DRIVE_API_KEY", defaults: {} },
-    history: { key: "HISTORY", defaults: {} },
+// GET STORE VALUE (used in special cases - currently only some "config" keys)
+export function getStoreValue(data: { file: "config" | keyof typeof _store; key: string }) {
+    const store = data.file === "config" ? config : _store[data.file]
+    return (store as any).get(data.key)
+}
+// SET STORE VALUE (used in special cases - currently only some "config" keys)
+export function setStoreValue(data: { file: "config" | keyof typeof _store; key: string; value: any }) {
+    const store = data.file === "config" ? config : _store[data.file]
+    store?.set(data.key, data.value)
 }
 
-export let userDataPath: string | null = null
-export function updateDataPath({ reset, dataPath, load }: { reset?: boolean; dataPath?: string; load?: boolean } = {}) {
-    if (reset) return resetStoresPath()
+/// MIGRATE
 
-    const settingsStore = settings.store || {}
+function moveStore(key: keyof typeof storeFilesData, previousLocation: string) {
+    const store = _store[key]
+    if (!store) return
 
-    const useDataPath = !!settingsStore.special?.customUserDataLocation
-    if (!useDataPath) return
+    const filePathOld = path.join(previousLocation, storeFilesData[key].fileName + ".json")
 
-    userDataPath = dataPath || settingsStore.dataPath || ""
-    if (!userDataPath) return
+    // || doesPathExist(filePathNew)
+    if (!doesPathExist(filePathOld)) return
 
-    userDataPath = path.join(userDataPath, dataFolderNames.userData)
-    checkStores(path.join(userDataPath, "config.json"))
-    updateStoresPath(load)
+    const fileData = readFile(filePathOld)
+    if (!fileData) return
+
+    store.clear()
+    store.set(JSON.parse(fileData))
+
+    // deleteFile(filePathOld) // keep old file for now
+    console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
 }
 
-function resetStoresPath() {
-    userDataPath = app.getPath("userData")
-    updateStoresPath()
+// move pre 1.5.3 data path & config
+export function migrateConfig() {
+    const configDataPath = config.get("dataPath")
+    if (configDataPath) return null // already set
+
+    // read settings.json at appDataPath
+    const settings = JSON.parse(readFile(path.join(appDataPath, "settings.json")) || "{}")
+    const dataPath = settings.dataPath || getDefaultDataFolderRoot()
+    const showsPath = settings.showsPath
+
+    // setStoreValue({ file: "config", key: "dataPath", value: dataPath })
+    config.set("dataPath", dataPath)
+
+    // move shows content to data/Shows if not already
+    if (showsPath && (!showsPath.includes(dataPath) || !showsPath.includes("Shows"))) {
+        moveShowsToDataFolder(showsPath)
+    }
+
+    const useDataPath = !!settings.special?.customUserDataLocation
+    const userDataPath = path.join(dataPath, dataFolderNames.userData, "settings_synced.json")
+    const noConfig = !useDataPath || !doesPathExist(userDataPath)
+
+    return noConfig ? appDataPath : null
 }
 
-function updateStoresPath(load = false) {
-    if (!userDataPath) return
-    Object.keys(portableData).forEach((id) => createStoreAtNewLocation(id, load))
-}
+function moveShowsToDataFolder(oldShowsPath: string) {
+    if (!doesPathExist(oldShowsPath)) return
 
-let error = false
-function createStoreAtNewLocation(id: string, load = false) {
-    if (error) return
+    console.log("Moving shows to data location")
 
-    const key = portableData[id].key
-    let tempData: any = {}
-    if (!load) {
+    const files = readFolder(oldShowsPath)
+    const showsFolderPath = getDataFolderPath("shows")
+
+    files.forEach((file) => {
+        if (!file.endsWith(".show")) return
+
+        const oldPath = path.join(oldShowsPath, file)
+        const newPath = path.join(showsFolderPath, file)
+
         try {
-            tempData = JSON.parse(JSON.stringify(stores[key].store))
+            renameSync(oldPath, newPath)
         } catch (err) {
-            console.error("Could not parse store:", key)
+            console.error("Could not move show file to new data folder:", err)
         }
-    }
-
-    // set new stores to export
-    try {
-        stores[key] = new Store({ name: fileNames[id], defaults: (portableData[id].defaults || {}) as any, cwd: userDataPath! }) as any
-    } catch (err) {
-        error = true
-        console.error("Can't create store at set location!", err)
-
-        // revert
-        const special = stores.SETTINGS.get("special")
-        special.customUserDataLocation = false
-        stores.SETTINGS.set("special", special)
-        stores.SETTINGS.set("dataPath", "")
-        stores.SETTINGS.set("showsPath", "")
-
-        forceCloseApp()
-    }
-
-    if (load || !Object.keys(tempData).length) return
-
-    // rewrite data to new location
-    stores[key].clear()
-        ; (stores[key] as any).set(tempData)
+    })
 }

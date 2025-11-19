@@ -217,7 +217,6 @@
         "mute_when_video_plays": "Tornar mudo quando um vídeo reproduzir",
         "allow_gaining": "Permitir ganho",
         "allow_gaining_tip": "Permitir configurar volume acima de 100% (Pode causar distorção)",
-        "pre_fader_volume_meter": "Exibir volume antes do fader",
         "mixer": "Mixer",
         "equalizer": "Equalizador",
         "preset": "Predefinição",
@@ -487,7 +486,7 @@
         "manage_dynamic_values": "Gerenciar valores dinâmicos",
         "choose_camera": "Escolha a câmera",
         "manage_tags": "Gerenciar tags",
-        "sync_categories": "Selecione categorias para sincronizar",
+        "sync_categories": "Sincronizar categorias",
         "effect_items": "Efeitos",
         "initialize": "Seja bem-vindo ao FreeShow",
         "unsaved": "Tem certeza que deseja sair?",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "Ativar quando limpar o background",
         "activate_show_created": "Ativar quando um Show é criado",
         "activate_show_opened": "Ativar quando um Show for aberto",
-        "activate_audio_playlist_ended": "Ativar quando uma playlist de áudio termina"
+        "activate_audio_playlist_ended": "Ativar quando uma playlist de áudio termina",
+        "mark_played": "Marcar como projetado",
+        "mark_not_played": "Remover marcação"
     },
     "conditions": {
         "show_item": "Mostrar item se",
@@ -1299,6 +1300,7 @@
         "show_location": "Local dos Shows",
         "data_location": "Local dos dados",
         "user_data_location": "Salvar configurações do usuário em \"Dados\"",
+        "user_data_location_confirm": "Continue apenas se souber o que está fazendo. Mudar local dos arquivos do usuário?",
         "user_data_exists": "Há dados existentes em um local personalizado. Gostaria de substituí-los?",
         "user_data_yes": "Sim, mantenha os arquivos atuais",
         "user_data_no": "Não, importe os arquivos existentes",
@@ -1327,6 +1329,7 @@
         "restart": "Reiniciar servidores",
         "connect_to": "Conectar a $1",
         "disconnect_from": "Desconectar de $1",
+        "sync_categories_tip": "Selecione quais categorias devem ser sincronizadas como músicas",
         "reset_all": "Redefinir tudo",
         "reset_theme": "Redefinir tema",
         "reset_themes": "Redefinir temas",
