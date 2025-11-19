@@ -335,6 +335,7 @@ export type Popups =
     | "choose_output"
     | "choose_style"
     | "change_output_values"
+    | "output_selector"
     | "set_time"
     | "assign_shortcut"
     | "dynamic_values"

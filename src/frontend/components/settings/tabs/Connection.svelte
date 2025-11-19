@@ -155,6 +155,18 @@
             return a
         })
     }
+
+    // TEMP solution
+    let showAll = false
+    let taps = 0
+    function tap() {
+        taps++
+        setTimeout(() => {
+            taps = 0
+        }, 1500)
+
+        if (taps >= 3) showAll = true
+    }
 </script>
 
 {#each servers as server}
@@ -200,7 +212,9 @@
 
 {#if !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
-    <Title label="Content Provider" icon="list" />
+    <div class="tapping" on:click={tap}>
+        <Title label="Content Provider" icon="list" />
+    </div>
 
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("planningcenter")} style="flex: 1;" icon="login">
@@ -213,13 +227,14 @@
             <T id="settings.connect_to" replace={["ChurchApps"]} />
         </MaterialButton>
     </InputRow>
-    <!--
-    <InputRow>
-        <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
-            <T id="settings.connect_to" replace={["APlay"]} />
-        </MaterialButton>
-    </InputRow>
--->
+
+    {#if showAll}
+        <InputRow>
+            <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
+                <T id="settings.connect_to" replace={["APlay"]} />
+            </MaterialButton>
+        </InputRow>
+    {/if}
 {:else if $providerConnections.planningcenter}
     <!-- Planning Center connected -->
     <Title label="Content Provider: Planning Center" icon="list" />

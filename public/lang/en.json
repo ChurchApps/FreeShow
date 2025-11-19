@@ -447,6 +447,7 @@
         "choose_output": "Choose output type",
         "choose_style": "Choose style preset",
         "change_output_values": "Change output values",
+        "output_selector": "Output selector",
         "choose_chord": "Choose chord",
         "set_time": "Set time",
         "assign_shortcut": "Assign shortcut",

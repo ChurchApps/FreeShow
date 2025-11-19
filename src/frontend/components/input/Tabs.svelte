@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import type { SelectIds } from "../../../types/Main"
+    import type { ClickEvent, SelectIds } from "../../../types/Main"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -25,8 +25,8 @@
     function open(id: string) {
         dispatch("open", id)
     }
-    function create() {
-        dispatch("create")
+    function create(e: ClickEvent) {
+        dispatch("create", e.detail)
         setTimeout(checkScroll, 110)
     }
 
@@ -70,6 +70,7 @@
 <style>
     .row {
         display: flex;
+        width: 100%;
 
         background-color: var(--primary);
 

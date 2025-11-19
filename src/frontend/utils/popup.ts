@@ -73,6 +73,7 @@ import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelt
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import SlideMidi from "../components/main/popups/SlideMidi.svelte"
+import OutputSelector from "../components/main/popups/OutputSelector.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -119,6 +120,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     choose_output: ChooseOutput,
     choose_style: ChooseStyle,
     change_output_values: ChangeOutputValues,
+    output_selector: OutputSelector,
     set_time: SetTime,
     assign_shortcut: SlideShortcut,
     dynamic_values: DynamicValues,

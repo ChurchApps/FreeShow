@@ -46,6 +46,12 @@
             <T id="popup.manage_colors" />
         </MaterialButton>
     </div>
+{:else if openedTab === "display_settings"}
+    <div class="bottom">
+        <MaterialButton variant="outlined" icon="screen" on:click={() => open("output_selector")} small>
+            <T id="popup.output_selector" />
+        </MaterialButton>
+    </div>
 {:else if openedTab === "other"}
     <div class="bottom">
         <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
