@@ -403,7 +403,7 @@ export function joinRange(array: (number | string)[]) {
             if (segment.start === segment.end) return `${chapterPrefix}${segment.start}`
             return `${chapterPrefix}${segment.start}-${segment.end}`
         })
-        .join("+")
+        .join(" ; ")
 }
 
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
