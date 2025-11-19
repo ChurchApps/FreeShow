@@ -10,10 +10,12 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { translateText } from "../../../utils/language"
 
     let screens: any[] = []
 
-    $: outputWindows = keysToID($outputs)
+    // enabled windows on top
+    $: outputWindows = keysToID($outputs).sort((a, b) => (a.enabled === b.enabled ? 0 : a.enabled ? 1 : -1))
 
     let minPosX: number | null = null
     let minPosY: number | null = null
@@ -114,7 +116,7 @@
                     <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);font-size: 0.5em;pointer-events: none;">{currentScreen.name}</span>
                     <!-- Current screen position -->
                     <div
-                        data-title={currentScreen.name}
+                        data-title={translateText(`main.open: <b>${currentScreen.name}</b>`)}
                         class="screen"
                         style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"
                         on:click={() => openOutput(currentScreen.id)}
@@ -210,9 +212,6 @@
         z-index: 1;
     }
 
-    .screen.disabled {
-        opacity: 0.5;
-    }
     .screen:focus:not(.disabled) {
         outline: 42px solid var(--secondary);
         outline-offset: 0;
