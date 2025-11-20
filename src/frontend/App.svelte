@@ -71,6 +71,7 @@
             <MainOutput />
         {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
             <Popup />
+            <Toast />
             <ProfileSelector />
         {:else if $loaded}
             <Popup />

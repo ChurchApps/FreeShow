@@ -177,3 +177,9 @@ export async function confirmCustom(prompt: string) {
     const data = await waitForPopupData("confirm")
     return !!data
 }
+
+export async function promptCustom(prompt: string) {
+    popupData.set({ prompt, textInput: true })
+    const data = await waitForPopupData("confirm") || ""
+    return data as string
+}

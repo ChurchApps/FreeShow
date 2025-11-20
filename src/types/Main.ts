@@ -279,6 +279,7 @@ export interface Profiles {
 export interface Profile {
     name: string
     color: string
+    password?: string
     image: string
     access: { [key: string]: { [key: string]: AccessType } }
 }

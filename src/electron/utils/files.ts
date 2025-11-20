@@ -17,7 +17,7 @@ import { _store, config, getStore } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { mainWindow, toApp } from "./../index"
+import { mainWindow, setAutoProfile, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
@@ -857,6 +857,9 @@ const FIXES = {
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openInSystem(_store.SETTINGS?.path || "", true)
+    },
+    ADMIN_PROFILE: () => {
+        setAutoProfile("admin")
     }
 }
 function specialCaseFixer() {

@@ -3,6 +3,7 @@
     import { SettingsTabs } from "../../../../types/Tabs"
     import { activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { encodePassword } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,6 +11,7 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiButtons from "../../inputs/MaterialMultiButtons.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
 
     // set id after deletion
@@ -123,15 +125,31 @@
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]
+
+    $: hasAdminPass = !!$profiles.admin?.password
+    function setAdminPassword(e: any) {
+        const password = e.detail
+
+        profiles.update((a) => {
+            a.admin = { name: "", color: "", image: "", password: password ? encodePassword(password) : "", access: {} }
+            return a
+        })
+    }
+
+    $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
 </script>
 
-{#if $activeProfile !== profileId && Object.keys($profiles).length}
+{#if $activeProfile !== profileId && profilesList.length}
     <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={() => activeProfile.set(profileId)}>
         <T id="profile.set_active" />
     </MaterialButton>
 {/if}
 
-{#if !profileId || !Object.keys($profiles).length}
+{#if !profileId || !profilesList.length}
+    {#if profilesList.length && !$activeProfile}
+        <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "****" : ""} defaultValue="" on:change={setAdminPassword} />
+    {/if}
+
     <Center style="height: 82%;opacity: 0.1;">
         <Icon id="admin" size={15} white />
     </Center>
