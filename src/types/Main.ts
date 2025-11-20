@@ -167,9 +167,7 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
-    pingbackUrl?: string // URL to ping after 30+ seconds of playback
-    mediaId?: string // content provider media ID for license tracking
-    contentProvider?: string // content provider ID (e.g., "amazinglife")
+    contentFile?: any // ContentFile from content provider (imported type would create circular dependency)
     licenseChecked?: boolean // whether license has been checked for this media
     cropping?: Partial<Cropping>
 

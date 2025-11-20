@@ -578,8 +578,7 @@ export async function downloadOnlineMedia(url: string) {
     const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, {
         url,
         dataPath: get(dataPath),
-        contentProvider: mediaData?.contentProvider,
-        pingbackUrl: mediaData?.pingbackUrl
+        contentFile: mediaData?.contentFile
     })
 
     if (downloadedPath?.buffer) {
@@ -592,18 +591,22 @@ export async function downloadOnlineMedia(url: string) {
     }
 
     // Check license before downloading (for content providers like APlay)
-    if (mediaData?.mediaId && mediaData?.contentProvider && !mediaData?.licenseChecked) {
+    if (mediaData?.contentFile?.mediaId && mediaData?.contentFile?.providerId && !mediaData?.licenseChecked) {
         media.update((m) => {
             if (!m[url]) m[url] = {}
             m[url].licenseChecked = true
             return m
         })
 
-        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, { providerId: mediaData.contentProvider, mediaId: mediaData.mediaId })
+        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, {
+            providerId: mediaData.contentFile.providerId,
+            mediaId: mediaData.contentFile.mediaId
+        })
         if (pingbackUrl) {
             media.update((m) => {
                 if (!m[url]) m[url] = {}
-                m[url].pingbackUrl = pingbackUrl
+                if (!m[url].contentFile) m[url].contentFile = {}
+                m[url].contentFile.pingbackUrl = pingbackUrl
                 return m
             })
         }
@@ -614,8 +617,7 @@ export async function downloadOnlineMedia(url: string) {
     sendMain(Main.MEDIA_DOWNLOAD, {
         url,
         dataPath: get(dataPath),
-        contentProvider: updatedMediaData?.contentProvider,
-        pingbackUrl: updatedMediaData?.pingbackUrl
+        contentFile: updatedMediaData?.contentFile
     })
     return url
 }

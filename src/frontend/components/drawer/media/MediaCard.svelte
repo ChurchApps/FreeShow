@@ -28,12 +28,11 @@
     export let contentProvider: ContentProviderId | false = false
     export let contentFileData: ContentFile | null = null
 
-    // Store mediaId and provider for later license check during download
-    $: if (contentFileData?.mediaId && contentProvider && path) {
+    // Store ContentFile object for later license check during download
+    $: if (contentFileData && contentProvider && path) {
         media.update((m) => {
             if (!m[path]) m[path] = {}
-            m[path].mediaId = contentFileData.mediaId
-            m[path].contentProvider = contentProvider
+            m[path].contentFile = { ...contentFileData, providerId: contentProvider }
             return m
         })
     }

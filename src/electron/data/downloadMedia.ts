@@ -216,7 +216,7 @@ function startDownload(data: DownloadFile) {
 /// //
 
 const downloading: string[] = []
-export function downloadMedia({ url, dataPath, contentProvider, pingbackUrl }: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }) {
+export function downloadMedia({ url, dataPath, contentFile }: { url: string; dataPath: string; contentFile?: any }) {
     if (!url?.includes("http") || url?.includes("blob:")) return
 
     if (downloading.includes(url)) return
@@ -224,15 +224,15 @@ export function downloadMedia({ url, dataPath, contentProvider, pingbackUrl }: {
 
     console.info("Downloading online media: " + url)
 
-    const outputPath = getMediaThumbnailPath(url, dataPath, contentProvider, pingbackUrl)
+    const outputPath = getMediaThumbnailPath(url, dataPath, contentFile)
 
     // Check if provider-based encryption is needed
-    if (contentProvider) {
-        const provider = ContentProviderFactory.getProvider(contentProvider as any)
-        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             const encryptionKey = provider.getEncryptionKey?.()
             if (!encryptionKey) {
-                console.error(`Provider ${contentProvider} requires encryption but did not provide an encryption key`)
+                console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
                 return
             }
             encryptFile(url, outputPath, encryptionKey)
@@ -297,20 +297,20 @@ export function downloadMedia({ url, dataPath, contentProvider, pingbackUrl }: {
     // ) // 8 minutes timeout
 }
 
-export async function checkIfMediaDownloaded({ url, dataPath, contentProvider, pingbackUrl }: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }) {
+export async function checkIfMediaDownloaded({ url, dataPath, contentFile }: { url: string; dataPath: string; contentFile?: any }) {
     if (!url?.includes("http")) return null
 
-    const outputPath = getMediaThumbnailPath(url, dataPath, contentProvider, pingbackUrl)
+    const outputPath = getMediaThumbnailPath(url, dataPath, contentFile)
     if (!doesPathExist(outputPath)) return null
 
     // Check if provider-based encryption is needed
-    if (contentProvider) {
-        const provider = ContentProviderFactory.getProvider(contentProvider as any)
-        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             try {
                 const encryptionKey = provider.getEncryptionKey?.()
                 if (!encryptionKey) {
-                    console.error(`Provider ${contentProvider} requires encryption but did not provide an encryption key`)
+                    console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
                     return null
                 }
                 const decryptedData = await decryptFile(outputPath, encryptionKey)
@@ -327,11 +327,11 @@ export async function checkIfMediaDownloaded({ url, dataPath, contentProvider, p
     return { path: outputPath, buffer: null }
 }
 
-function getMediaThumbnailPath(url: string, dataPath: string, contentProvider?: string, pingbackUrl?: string) {
+function getMediaThumbnailPath(url: string, dataPath: string, contentFile?: any) {
     // Check if provider-based encryption is needed
-    if (contentProvider) {
-        const provider = ContentProviderFactory.getProvider(contentProvider as any)
-        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             return getProtectedPath(url)
         }
     }
