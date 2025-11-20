@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
 import { cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
-import { clone, keysToID, removeValues, sortByName } from "./array"
+import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
 import { _show } from "./shows"
@@ -157,12 +157,21 @@ export function updateShowsList(allShows: TrimmedShows) {
     const sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
     let sortedShows: (TrimmedShow & { id: string })[] = []
+    const getTimestampValue = (entry: TrimmedShow & { id: string }, key: "created" | "modified" | "used") => {
+        return entry.timestamps?.[key] || entry.timestamps?.created || 0
+    }
+
     if (sortType === "created") {
-        sortedShows = showsList.sort((a, b) => b.timestamps?.created - a.timestamps?.created)
+        sortedShows = showsList.sort((a, b) => getTimestampValue(b, "created") - getTimestampValue(a, "created"))
     } else if (sortType === "modified") {
-        sortedShows = showsList.sort((a, b) => (b.timestamps?.modified || b.timestamps?.created) - (a.timestamps?.modified || a.timestamps?.created))
+        sortedShows = showsList.sort((a, b) => getTimestampValue(b, "modified") - getTimestampValue(a, "modified"))
+    } else if (sortType === "modified_old") {
+        sortedShows = showsList.sort((a, b) => getTimestampValue(a, "modified") - getTimestampValue(b, "modified"))
     } else if (sortType === "used") {
-        sortedShows = showsList.sort((a, b) => (b.timestamps?.used || b.timestamps?.created) - (a.timestamps?.used || a.timestamps?.created))
+        sortedShows = showsList.sort((a, b) => getTimestampValue(b, "used") - getTimestampValue(a, "used"))
+    } else if (sortType === "number" || sortType === "number_des") {
+        const direction = sortType === "number_des" ? "desc" : "asc"
+        sortedShows = sortByNameAndNumber(showsList, direction)
     } else {
         // sort by name
         sortedShows = sortByName(showsList)

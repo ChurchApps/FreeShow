@@ -1,14 +1,17 @@
 <script lang="ts">
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
+    import { get } from "svelte/store"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByNameAndNumber } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { updateShowsList } from "../../helpers/show"
     import { dateToString } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -40,7 +43,10 @@
         active === "all"
             ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
             : active === "number"
-              ? sortByNameAndNumber(showsSorted.filter((a) => a.quickAccess?.number))
+              ? sortByNameAndNumber(
+                    showsSorted.filter((a) => a.quickAccess?.number),
+                    "asc"
+                )
               : active === "locked"
                 ? showsSorted.filter((a) => a.locked)
                 : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
@@ -178,7 +184,32 @@
         }
     }
 
+    $: showWithNumber = filteredShows.some((a) => a.quickAccess?.number)
     $: sortType = $sorted.shows?.type || "name"
+    // All sortable columns share the same metadata so the UI + store stay in sync
+    $: sortHeaders = [
+        { id: "name", label: translateText("show.name"), asc: "name", desc: "name_des", default: "asc" },
+        ...(showWithNumber ? [{ id: "number", label: translateText("meta.number"), asc: "number", desc: "number_des", default: "asc" }] : []),
+        { id: "modified", label: translateText("info.modified"), asc: "modified_old", desc: "modified", default: "desc" }
+    ]
+
+    function toggleSort(columnId: string) {
+        const definition = sortHeaders.find((header) => header.id === columnId)
+        if (!definition) return
+
+        const currentType = $sorted.shows?.type || "name"
+        let nextType: string = definition.default === "desc" ? definition.desc : definition.asc
+        if (currentType === definition.asc) nextType = definition.desc
+        else if (currentType === definition.desc) nextType = definition.asc
+
+        sorted.update((state) => {
+            if (!state.shows) state.shows = {}
+            state.shows.type = nextType
+            return state
+        })
+
+        updateShowsList(get(shows))
+    }
 
     function createShow(e: any, border = false) {
         if (border && e.target?.closest("button")) return
@@ -224,6 +255,23 @@
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
+
+            <div class="sort-header" role="group">
+                {#each sortHeaders as header, i}
+                    {@const direction = sortType === header.asc ? "asc" : sortType === header.desc ? "desc" : ""}
+                    {@const isActive = direction !== ""}
+
+                    <MaterialButton style="flex: {i === 0 ? 4 : 1};justify-content: {header.id === 'name' ? 'flex-start' : 'center'};" {isActive} on:click={() => toggleSort(header.id)} title={header.label}>
+                        <p>{header.label}</p>
+                        {#if direction}
+                            <span class="sort-indicator">
+                                <Icon id={direction === "asc" ? "arrow_down" : "arrow_up"} size={1.3} white />
+                            </span>
+                        {/if}
+                    </MaterialButton>
+                {/each}
+            </div>
+
             <!-- reload list when changing category -->
             {#key active}
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
@@ -283,4 +331,37 @@
     /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
         background-color: var(--primary-darkest);
     } */
+
+    /* SORT HEADER */
+
+    .sort-header {
+        display: flex;
+        height: 28px;
+        border-radius: 8px;
+        background-color: var(--primary-darkest);
+        /* box-shadow: 0 3px 8px rgb(0 0 0 / 0.2); */
+        border-bottom: 1px solid var(--primary-lighter);
+    }
+
+    .sort-header :global(button) {
+        font-size: 0.72em;
+        opacity: 0.7;
+    }
+    .sort-header :global(button:not(:last-child)) {
+        border-right: 1px solid var(--primary-lighter) !important;
+    }
+    .sort-header :global(button.isActive) {
+        background-color: var(--primary-darker) !important;
+        border-bottom: 0 !important;
+    }
+
+    .sort-indicator {
+        font-size: 0.85rem;
+        line-height: 1;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%, -38%);
+        opacity: 0.7;
+    }
 </style>
