@@ -217,7 +217,6 @@
         "mute_when_video_plays": "Couper le son lors de la lecture d'une vidéo",
         "allow_gaining": "Autoriser l’amplification",
         "allow_gaining_tip": "Autorise le réglage du volume supérieur à 100 % (Risque de distorsion)",
-        "pre_fader_volume_meter": "Vumètre de volume pré-fader",
         "mixer": "Mixeur",
         "equalizer": "Égaliseur",
         "preset": "Préréglage",
@@ -487,7 +486,7 @@
         "manage_dynamic_values": "Gérer les valeurs dynamiques",
         "choose_camera": "Choisir la caméra",
         "manage_tags": "Gérer les tags",
-        "sync_categories": "Sélectionner les catégories à synchroniser",
+        "sync_categories": "Synchroniser les catégories",
         "effect_items": "Éléments d'effet",
         "initialize": "Bienvenue sur FreeShow",
         "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
@@ -797,7 +796,9 @@
         "activate_background_cleared": "Activer lorsque l'arrière-plan est effacé",
         "activate_show_created": "Activer lorsque une présentation est créée",
         "activate_show_opened": "Activer lorsque une présentation est ouverte",
-        "activate_audio_playlist_ended": "Activer lorsque la liste de lecture audio est terminée"
+        "activate_audio_playlist_ended": "Activer lorsque la liste de lecture audio est terminée",
+        "mark_played": "Marquer comme joué",
+        "mark_not_played": "Marquer comme non joué"
     },
     "conditions": {
         "show_item": "Afficher l'élément si",
@@ -1299,6 +1300,7 @@
         "show_location": "Emplacement de la présentation",
         "data_location": "Emplacement des données",
         "user_data_location": "Sauvegarder les données utilisateur à l'emplacement",
+        "user_data_location_confirm": "Continuer seulement si vous savez ce que vous faites. Modifier l'emplacement des données utilisateur ?",
         "user_data_exists": "Des données existantes ont été trouvées à un emplacement personnalisé, souhaitez-vous les écraser?",
         "user_data_yes": "Oui, conserver les données actuelles",
         "user_data_no": "Non, importer les données existantes",
@@ -1327,6 +1329,7 @@
         "restart": "Redémarrer les serveurs",
         "connect_to": "Se connecter à $1",
         "disconnect_from": "Se déconnecter de $1",
+        "sync_categories_tip": "Sélectionner les catégories de chansons à importer",
         "reset_all": "Réinitialiser tout",
         "reset_theme": "Réinitialiser le thème",
         "reset_themes": "Réinitialiser les thèmes",

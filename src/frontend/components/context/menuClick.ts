@@ -1388,7 +1388,7 @@ const clickActions = {
         if (obj.sel.id === "category_media") data = get(mediaFolders)[data]
         else if (obj.sel.id === "category_audio") data = get(audioFolders)[data]
 
-        const path = data?.path
+        const path = data?.path ?? obj.contextElem?.id
         if (!path) return
 
         sendMain(Main.SYSTEM_OPEN, path)
