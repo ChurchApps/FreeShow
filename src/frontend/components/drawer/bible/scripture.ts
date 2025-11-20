@@ -691,6 +691,51 @@ export function splitText(value: string, maxLength: number) {
     return splitPlainText(value, maxLength)
 }
 
+const BRACKET_WORD_LIMIT = 4
+type DanglingBracketInfo = { lastOpen: number }
+
+function getDanglingBracketInfo(before: string, after: string): DanglingBracketInfo | null {
+    const lastOpen = before.lastIndexOf("[")
+    if (lastOpen === -1) return null
+    if (before.indexOf("]", lastOpen) !== -1) return null
+
+    const closingIndex = after.indexOf("]")
+    if (closingIndex === -1) return null
+
+    const bracketContent = (before.slice(lastOpen + 1) + after.slice(0, closingIndex)).replace(/[\[\]]/g, "").trim()
+    if (!bracketContent.length) return null
+
+    const wordCount = bracketContent.split(/\s+/).filter(Boolean).length
+    if (!wordCount || wordCount >= BRACKET_WORD_LIMIT) return null
+
+    return { lastOpen }
+}
+
+function adjustSplitIndexForBracket(text: string, breakIndex: number) {
+    if (!text) return breakIndex
+    const safeIndex = Math.max(0, Math.min(breakIndex, text.length))
+    const before = text.slice(0, safeIndex)
+    const after = text.slice(safeIndex)
+    const info = getDanglingBracketInfo(before, after)
+    if (!info) return safeIndex
+
+    let newIndex = info.lastOpen
+    while (newIndex > 0 && /\s/.test(before[newIndex - 1])) newIndex--
+
+    return Math.max(0, newIndex)
+}
+
+function moveDanglingBracketToNext(first: string, second: string) {
+    const info = getDanglingBracketInfo(first, second)
+    if (!info) return { first, second }
+
+    const kept = first.slice(0, info.lastOpen).trimEnd()
+
+    const movedPortion = first.slice(info.lastOpen)
+    const combinedSecond = `${movedPortion}${second ? ` ${second.trimStart()}` : ""}`.trim()
+    return { first: kept, second: combinedSecond }
+}
+
 function splitPlainText(value: string, maxLength: number) {
     const queue: string[] = [value.trim()]
     const segments: string[] = []
@@ -716,6 +761,8 @@ function splitPlainText(value: string, maxLength: number) {
         }
 
         let [first, second] = halves
+
+            ; ({ first, second } = moveDanglingBracketToNext(first, second))
 
         const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
         first = rebalanced.first
@@ -835,8 +882,9 @@ function findHtmlSplitIndex(text: string, capacity: number) {
         const idx = slice.lastIndexOf(char)
         if (idx > splitIndex) splitIndex = idx
     })
-    if (splitIndex === -1) splitIndex = capacity
-    return Math.max(1, splitIndex + 1)
+    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
+    breakPos = adjustSplitIndexForBracket(text, breakPos)
+    return Math.max(0, breakPos)
 }
 
 function getSplitHalves(text: string, maxLength: number): [string, string] | null {
@@ -884,7 +932,7 @@ function rebalanceHalves(first: string, second: string, maxLength: number, minSe
     return { first, second }
 }
 
-function removeTags(text) {
+function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
