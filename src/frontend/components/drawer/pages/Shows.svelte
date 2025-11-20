@@ -1,8 +1,9 @@
 <script lang="ts">
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
+    import { get } from "svelte/store"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
@@ -10,6 +11,7 @@
     import { clone, sortByNameAndNumber } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
+    import { updateShowsList } from "../../helpers/show"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
@@ -179,6 +181,37 @@
     }
 
     $: sortType = $sorted.shows?.type || "name"
+    const sortHeaders = [
+        { id: "name", label: "main.name", asc: "name", desc: "name_des", default: "asc" },
+        { id: "number", label: "meta.number", asc: "number", desc: "number_des", default: "asc" },
+        { id: "modified", label: "main.modified", asc: "modified_old", desc: "modified", default: "desc" }
+    ] as const
+
+    function toggleSort(columnId: string) {
+        const definition = sortHeaders.find((header) => header.id === columnId)
+        if (!definition) return
+
+        const currentType = $sorted.shows?.type || "name"
+        let nextType = definition.default === "desc" ? definition.desc : definition.asc
+        if (currentType === definition.asc) nextType = definition.desc
+        else if (currentType === definition.desc) nextType = definition.asc
+
+        sorted.update((state) => {
+            if (!state.shows) state.shows = {}
+            state.shows.type = nextType
+            return state
+        })
+
+        updateShowsList(get(shows))
+    }
+
+    function getSortDirection(columnId: string) {
+        const definition = sortHeaders.find((header) => header.id === columnId)
+        if (!definition) return ""
+        if (sortType === definition.asc) return "asc"
+        if (sortType === definition.desc) return "desc"
+        return ""
+    }
 
     function createShow(e: any, border = false) {
         if (border && e.target?.closest("button")) return
@@ -224,6 +257,17 @@
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
+            <div class="sort-header" role="group">
+                {#each sortHeaders as header}
+                    {@const direction = getSortDirection(header.id)}
+                    <button type="button" aria-pressed={direction ? "true" : "false"} class:selected={!!direction} on:click={() => toggleSort(header.id)} title={translateText(header.label)}>
+                        <T id={header.label} />
+                        {#if direction}
+                            <span class={"sort-indicator " + direction} aria-hidden="true"></span>
+                        {/if}
+                    </button>
+                {/each}
+            </div>
             <!-- reload list when changing category -->
             {#key active}
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
@@ -267,6 +311,7 @@
         flex-direction: column;
         background-color: var(--primary-darker);
         height: 100%;
+        --shows-grid-template: minmax(0, 1fr) 130px 170px;
     }
 
     .warning {
@@ -277,6 +322,60 @@
 
     .column :global(svelte-virtual-list-viewport) {
         padding-bottom: 60px;
+    }
+
+    .sort-header {
+        display: grid;
+        grid-template-columns: var(--shows-grid-template);
+        gap: 6px;
+        padding: 8px 14px;
+        background-color: var(--primary-darkest);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .sort-header button {
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 6px 8px;
+        color: var(--text);
+        text-align: left;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.75;
+        cursor: pointer;
+    }
+
+    .sort-header button.selected {
+        background-color: color-mix(in srgb, var(--secondary) 15%, transparent);
+        border-color: color-mix(in srgb, var(--secondary) 25%, transparent);
+        opacity: 1;
+    }
+
+    .sort-header button:hover {
+        opacity: 1;
+        border-color: color-mix(in srgb, var(--text) 30%, transparent);
+    }
+
+    .sort-indicator {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+    }
+
+    .sort-indicator.asc {
+        border-bottom: 7px solid var(--text);
+    }
+
+    .sort-indicator.desc {
+        border-top: 7px solid var(--text);
     }
 
     /* THIS don't work with virtual list */
