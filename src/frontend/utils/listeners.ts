@@ -181,7 +181,7 @@ export function storeSubscriber() {
     stageShows.subscribe(async (data) => {
         if (await hasNewerUpdate("LISTENER_STAGE", 50)) return
 
-        send(OUTPUT, ["STAGE_SHOWS"], data)
+        send(OUTPUT, ["STAGE"], data)
 
         // STAGE
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
@@ -394,7 +394,7 @@ const initalOutputData = {
     SPECIAL: "special",
 
     PLAYER_VIDEOS: "playerVideos",
-    STAGE_SHOWS: "stageShows",
+    STAGE: "stageShows",
 
     // for dynamic values
     PROJECTS: "projects",

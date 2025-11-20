@@ -123,7 +123,7 @@ function getMainData() {
 }
 
 async function getStoredData() {
-    sendMainMultiple([Main.SYNCED_SETTINGS, Main.STAGE_SHOWS, Main.PROJECTS, Main.OVERLAYS, Main.TEMPLATES, Main.EVENTS, Main.MEDIA, Main.THEMES, Main.DRIVE_API_KEY, Main.HISTORY, Main.CACHE, Main.USAGE])
+    sendMainMultiple([Main.SYNCED_SETTINGS, Main.STAGE, Main.PROJECTS, Main.OVERLAYS, Main.TEMPLATES, Main.EVENTS, Main.MEDIA, Main.THEMES, Main.DRIVE_API_KEY, Main.HISTORY, Main.CACHE, Main.USAGE])
 
     await waitUntilValueIsDefined(() => get(loadedState).includes("synced_settings"), 200, 8000)
     sendMain(Main.SETTINGS)

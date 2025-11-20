@@ -13,7 +13,7 @@ import { restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
-import { _store, appDataPath, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
+import { _store, appDataPath, config, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
@@ -63,7 +63,7 @@ export const mainResponses: MainResponses = {
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
     [Main.SYNCED_SETTINGS]: () => getStore("SYNCED_SETTINGS"),
-    [Main.STAGE_SHOWS]: () => getStore("STAGE_SHOWS"),
+    [Main.STAGE]: () => getStore("STAGE"),
     [Main.PROJECTS]: () => getStore("PROJECTS"),
     [Main.OVERLAYS]: () => getStore("OVERLAYS"),
     [Main.TEMPLATES]: () => getStore("TEMPLATES"),
@@ -93,7 +93,10 @@ export const mainResponses: MainResponses = {
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
     [Main.DATA_PATH]: () => getDataFolderRoot(),
-    [Main.UPDATE_DATA_PATH]: (data) => createStores(data.oldPath),
+    [Main.UPDATE_DATA_PATH]: (data) => {
+        config.set("dataPath", data.newPath)
+        createStores(data.oldPath)
+    },
     [Main.LOG_ERROR]: (data) => logError(data),
     [Main.OPEN_LOG]: () => openInSystem(_store.ERROR_LOG?.path || ""),
     [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),

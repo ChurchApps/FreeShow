@@ -5,7 +5,7 @@ import { isProd } from ".."
 import { Main } from "../../types/IPC/Main"
 import type { DriveData } from "../../types/Main"
 import type { Show, TrimmedShow } from "../../types/Show"
-import { _store, getStore } from "../data/store"
+import { _store, getStore, storeFilesData } from "../data/store"
 import { sendMain } from "../IPC/main"
 import { deleteFile, doesPathExist, getDataFolderPath, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
 import { trimShow } from "../utils/shows"
@@ -185,8 +185,6 @@ export async function downloadFile(fileId: string): Promise<any> {
 
 const SHOWS_CONTENT = "SHOWS_CONTENT"
 const combineLocations = ["PROJECTS"]
-const storesToSave: (keyof typeof _store)[] = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
-// don't upload: settings.json, config.json, cache.json, history.json
 
 export let currentlyDeletedShows: string[] = []
 export async function syncDataDrive(data: DriveData) {
@@ -207,7 +205,10 @@ export async function syncDataDrive(data: DriveData) {
     let bibles: { [key: string]: BibleCategories } | null = null
 
     // CONFIGS
-    await Promise.all(storesToSave.map(syncStores))
+    await Promise.all(Object.entries(storeFilesData).map(([id, data]) => {
+        if (!data.portable) return
+        syncStores(id as keyof typeof _store)
+    }))
 
     // SCRIPTURE
     if (bibles === null) bibles = getStore("SYNCED_SETTINGS")?.scriptures
@@ -229,7 +230,10 @@ export async function syncDataDrive(data: DriveData) {
         const storeData: any = store.store
         const name = id + ".json"
 
-        const driveFileId = files.find((a) => a.name === name)?.id || ""
+        let driveFileId = files.find((a) => a.name === name)?.id || ""
+
+        // pre 1.5.3
+        if (!driveFileId && id === "STAGE") driveFileId = files.find((a) => a.name === "STAGE_SHOWS.json")?.id || ""
 
         const driveFile = await getFile(driveFileId)
 

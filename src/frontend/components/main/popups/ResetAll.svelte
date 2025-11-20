@@ -23,7 +23,7 @@
             SYNCED_SETTINGS: {},
             // SHOWS
             SHOWS: {},
-            STAGE_SHOWS: {},
+            STAGE: {},
             // STORES
             PROJECTS: { projects: {}, folders: {}, projectTemplates: {} },
             OVERLAYS: {},

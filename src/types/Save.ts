@@ -89,7 +89,7 @@ export interface SaveData {
     SYNCED_SETTINGS: { [key in SaveListSyncedSettings]: any } | {}
     // SHOWS
     SHOWS: TrimmedShows
-    STAGE_SHOWS: StageLayouts
+    STAGE: StageLayouts
     // STORES
     PROJECTS: { projects: Projects; folders: Folders; projectTemplates: Projects }
     OVERLAYS: Overlays

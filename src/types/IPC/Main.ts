@@ -31,7 +31,7 @@ export enum Main {
     // STORES
     SETTINGS = "SETTINGS",
     SYNCED_SETTINGS = "SYNCED_SETTINGS",
-    STAGE_SHOWS = "STAGE_SHOWS",
+    STAGE = "STAGE",
     PROJECTS = "PROJECTS",
     OVERLAYS = "OVERLAYS",
     TEMPLATES = "TEMPLATES",
@@ -147,7 +147,7 @@ export interface MainSendPayloads {
     [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
-    [Main.UPDATE_DATA_PATH]: { oldPath: string }
+    [Main.UPDATE_DATA_PATH]: { newPath: string; oldPath: string }
     [Main.LOG_ERROR]: ErrorLog
     [Main.OPEN_FOLDER_PATH]: string
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof _store; key: string }
@@ -217,7 +217,7 @@ export interface MainReturnPayloads {
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
-    [Main.STAGE_SHOWS]: StageLayouts
+    [Main.STAGE]: StageLayouts
     [Main.PROJECTS]: { projects: Projects; folders: Folders; projectTemplates: Projects }
     [Main.OVERLAYS]: Overlays
     [Main.TEMPLATES]: Templates

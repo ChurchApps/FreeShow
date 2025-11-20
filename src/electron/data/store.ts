@@ -3,15 +3,17 @@
 // https://www.npmjs.com/package/electron-store
 
 import Store from "electron-store"
-import { statSync, renameSync } from "fs"
+import { renameSync, statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
+import { Main } from "../../types/IPC/Main"
 import type { Config, ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
+import { sendMain } from "../IPC/main"
 import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
 import { clone } from "../utils/helpers"
 import "./contentProviders"
@@ -21,28 +23,28 @@ import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./default
 
 export const config = new Store<Config>({ defaults: defaultConfig })
 
-const storeFilesData = {
-    ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
+export const storeFilesData = {
+    SHOWS: { fileName: "shows", portable: false, defaults: {} as TrimmedShows, minify: true }, // cache
     SETTINGS: { fileName: "settings", portable: false, defaults: clone(defaultSettings) },
 
+    // PORTABLE
     SYNCED_SETTINGS: { fileName: "settings_synced", portable: true, defaults: clone(defaultSyncedSettings) },
     THEMES: { fileName: "themes", portable: true, defaults: {} as { [key: string]: Themes } },
-
     PROJECTS: { fileName: "projects", portable: true, defaults: { projects: {}, folders: {}, projectTemplates: {} } },
-    SHOWS: { fileName: "shows", portable: true, defaults: {} as TrimmedShows, minify: true },
-    STAGE_SHOWS: { fileName: "stage", portable: true, defaults: {} as StageLayouts },
+    STAGE: { fileName: "stage", portable: true, defaults: {} as StageLayouts },
     OVERLAYS: { fileName: "overlays", portable: true, defaults: {} as Overlays },
     TEMPLATES: { fileName: "templates", portable: true, defaults: {} as Templates },
     EVENTS: { fileName: "events", portable: true, defaults: {} as { [key: string]: Event } },
 
-    HISTORY: { fileName: "history", portable: true, defaults: {} as { undo: History[]; redo: History[] }, minify: true },
+    HISTORY: { fileName: "history", portable: false, defaults: {} as { undo: History[]; redo: History[] }, minify: true },
+    MEDIA: { fileName: "media", portable: false, defaults: {} as Media, minify: true },
+
+    CACHE: { fileName: "cache", portable: false, defaults: {} as any, minify: true },
+    USAGE: { fileName: "usage", portable: false, defaults: {} as { all: any[] }, minify: true },
+    ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
 
     DRIVE_API_KEY: { fileName: "DRIVE_API_KEY", portable: false, defaults: {} as any },
     ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } },
-
-    MEDIA: { fileName: "media", portable: false, defaults: {} as Media, minify: true },
-    CACHE: { fileName: "cache", portable: false, defaults: {} as any, minify: true },
-    USAGE: { fileName: "usage", portable: false, defaults: {} as { all: any[] }, minify: true },
 }
 
 export const appDataPath = path.dirname(config.path)
@@ -50,7 +52,7 @@ checkStores(appDataPath)
 
 export function setupStores() {
     const oldLocation = migrateConfig()
-    createStores(oldLocation)
+    createStores(oldLocation, true)
 
     checkStores(getDataFolderRoot())
 }
@@ -86,7 +88,7 @@ function checkStores(dataPath: string) {
 
 export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
-export function createStores(previousLocation?: string | null) {
+export function createStores(previousLocation?: string | null, setup: boolean = false) {
     const configFolderPath = getDataFolderPath("userData")
 
     Object.entries(storeFilesData).forEach(([key, data]) => {
@@ -99,7 +101,7 @@ export function createStores(previousLocation?: string | null) {
         })
 
         // move user data files to data/Config folder if not already
-        if (previousLocation && data.portable) moveStore(key as keyof typeof storeFilesData, previousLocation)
+        if (previousLocation && data.portable) moveStore(key as keyof typeof storeFilesData, previousLocation, setup)
     })
 }
 
@@ -128,13 +130,22 @@ export function setStoreValue(data: { file: "config" | keyof typeof _store; key:
 
 /// MIGRATE
 
-function moveStore(key: keyof typeof storeFilesData, previousLocation: string) {
+function moveStore(key: keyof typeof storeFilesData, previousLocation: string, setup: boolean = false) {
     const store = _store[key]
     if (!store) return
 
+    if (!setup) {
+        // don't override if existing
+        const filePathNew = path.join(getDataFolderPath("userData"), storeFilesData[key].fileName + ".json")
+        if (doesPathExist(filePathNew)) {
+            // send new data to main
+            sendMain((Main as any)[key], getStore(key))
+            return
+        }
+    }
+
     const filePathOld = path.join(previousLocation, storeFilesData[key].fileName + ".json")
 
-    // || doesPathExist(filePathNew)
     if (!doesPathExist(filePathOld)) return
 
     const fileData = readFile(filePathOld)
