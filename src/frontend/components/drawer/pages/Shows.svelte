@@ -3,15 +3,16 @@
     // import VirtualList from "./VirtualList2.svelte"
     import { get } from "svelte/store"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList, special } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByNameAndNumber } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { dateToString } from "../../helpers/time"
     import { updateShowsList } from "../../helpers/show"
+    import { dateToString } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
@@ -42,7 +43,10 @@
         active === "all"
             ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
             : active === "number"
-            ? sortByNameAndNumber(showsSorted.filter((a) => a.quickAccess?.number), "asc")
+              ? sortByNameAndNumber(
+                    showsSorted.filter((a) => a.quickAccess?.number),
+                    "asc"
+                )
               : active === "locked"
                 ? showsSorted.filter((a) => a.locked)
                 : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
@@ -180,27 +184,21 @@
         }
     }
 
+    $: showWithNumber = filteredShows.some((a) => a.quickAccess?.number)
     $: sortType = $sorted.shows?.type || "name"
-    $: showSortBarEnabled = $special.showSortBarEnabled !== false
     // All sortable columns share the same metadata so the UI + store stay in sync
-    const sortHeaders = [
-        { id: "name", label: "show.name", asc: "name", desc: "name_des", default: "asc" },
-        { id: "number", label: "meta.number", asc: "number", desc: "number_des", default: "asc" },
-        { id: "modified", label: "info.modified", asc: "modified_old", desc: "modified", default: "desc" }
-    ] as const
-
-    $: headerState = sortHeaders.map((header) => ({
-        ...header,
-        direction: sortType === header.asc ? "asc" : sortType === header.desc ? "desc" : "",
-        labelText: resolveHeaderLabel(header.label, $dictionary)
-    }))
+    $: sortHeaders = [
+        { id: "name", label: translateText("show.name"), asc: "name", desc: "name_des", default: "asc" },
+        ...(showWithNumber ? [{ id: "number", label: translateText("meta.number"), asc: "number", desc: "number_des", default: "asc" }] : []),
+        { id: "modified", label: translateText("info.modified"), asc: "modified_old", desc: "modified", default: "desc" }
+    ]
 
     function toggleSort(columnId: string) {
         const definition = sortHeaders.find((header) => header.id === columnId)
         if (!definition) return
 
         const currentType = $sorted.shows?.type || "name"
-        let nextType = definition.default === "desc" ? definition.desc : definition.asc
+        let nextType: string = definition.default === "desc" ? definition.desc : definition.asc
         if (currentType === definition.asc) nextType = definition.desc
         else if (currentType === definition.desc) nextType = definition.asc
 
@@ -211,12 +209,6 @@
         })
 
         updateShowsList(get(shows))
-    }
-
-    function resolveHeaderLabel(id: string, dict: Record<string, Record<string, string>>) {
-        const [category, key] = id.split(".")
-        if (!category || !key) return id
-        return dict?.[category]?.[key] || id
     }
 
     function createShow(e: any, border = false) {
@@ -263,26 +255,23 @@
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
-            {#if showSortBarEnabled}
-                <div class="sort-header" role="group">
-                    {#each headerState as header}
-                        <button
-                            type="button"
-                            aria-pressed={header.direction ? "true" : "false"}
-                            aria-sort={header.direction === "asc" ? "ascending" : header.direction === "desc" ? "descending" : "none"}
-                            class:activeSort={!!header.direction}
-                            class:centered={header.id !== "name"}
-                            on:click={() => toggleSort(header.id)}
-                            title={header.labelText}
-                        >
-                            <span>{header.labelText}</span>
-                            {#if header.direction}
-                                <span class="sort-indicator" aria-hidden="true">{header.direction === "asc" ? "▼" : "▲"}</span>
-                            {/if}
-                        </button>
-                    {/each}
-                </div>
-            {/if}
+
+            <div class="sort-header" role="group">
+                {#each sortHeaders as header, i}
+                    {@const direction = sortType === header.asc ? "asc" : sortType === header.desc ? "desc" : ""}
+                    {@const isActive = direction !== ""}
+
+                    <MaterialButton style="flex: {i === 0 ? 4 : 1};justify-content: {header.id === 'name' ? 'flex-start' : 'center'};" {isActive} on:click={() => toggleSort(header.id)} title={header.label}>
+                        <p>{header.label}</p>
+                        {#if direction}
+                            <span class="sort-indicator">
+                                <Icon id={direction === "asc" ? "arrow_down" : "arrow_up"} size={1.3} white />
+                            </span>
+                        {/if}
+                    </MaterialButton>
+                {/each}
+            </div>
+
             <!-- reload list when changing category -->
             {#key active}
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
@@ -326,7 +315,6 @@
         flex-direction: column;
         background-color: var(--primary-darker);
         height: 100%;
-        --shows-grid-template: minmax(0, 1fr) 130px 170px;
     }
 
     .warning {
@@ -339,64 +327,41 @@
         padding-bottom: 60px;
     }
 
+    /* THIS don't work with virtual list */
+    /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
+        background-color: var(--primary-darkest);
+    } */
+
+    /* SORT HEADER */
+
     .sort-header {
-        display: grid;
-        grid-template-columns: var(--shows-grid-template);
-        gap: 12px;
-        padding: 12px 18px;
-        margin: 6px 12px 12px;
+        display: flex;
+        height: 28px;
         border-radius: 8px;
         background-color: var(--primary-darkest);
-        box-shadow: 0 3px 8px rgb(0 0 0 / 0.25);
-        min-height: 48px;
-        position: sticky;
-        top: 0;
-        z-index: 2;
+        /* box-shadow: 0 3px 8px rgb(0 0 0 / 0.2); */
+        border-bottom: 1px solid var(--primary-lighter);
     }
 
-    .sort-header button {
-        background: transparent;
-        border: none;
-        padding: 0 6px;
-        color: var(--text);
-        text-align: left;
-        font: inherit;
-        font-size: 0.95rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        letter-spacing: normal;
-        opacity: 0.85;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: opacity 140ms ease, background-color 140ms ease;
-        width: 100%;
+    .sort-header :global(button) {
+        font-size: 0.72em;
+        opacity: 0.7;
     }
-
-    .sort-header button:hover,
-    .sort-header button:focus-visible {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.05);
+    .sort-header :global(button:not(:last-child)) {
+        border-right: 1px solid var(--primary-lighter) !important;
     }
-
-    .sort-header button.activeSort {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.09);
-    }
-
-    .sort-header button.centered {
-        justify-content: center;
-        text-align: center;
+    .sort-header :global(button.isActive) {
+        background-color: var(--primary-darker) !important;
+        border-bottom: 0 !important;
     }
 
     .sort-indicator {
         font-size: 0.85rem;
         line-height: 1;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%, -38%);
+        opacity: 0.7;
     }
-
-    /* THIS don't work with virtual list */
-    /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
-        background-color: var(--primary-darkest);
-    } */
 </style>
