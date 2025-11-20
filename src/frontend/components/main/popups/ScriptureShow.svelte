@@ -20,7 +20,7 @@
     }
 
     function createShow() {
-        createScriptureShow()
+        createScriptureShow(false, true)
         activePopup.set(null)
     }
 </script>

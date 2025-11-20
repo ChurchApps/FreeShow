@@ -246,7 +246,8 @@
 <InputRow>
     <Button
         on:click={(e) => {
-            createScriptureShow(e.altKey)
+            // show popup by default; hold Alt to quick-create
+            createScriptureShow(!e.altKey)
         }}
         style="width: 100%;"
         disabled={!selectedVerses.length}

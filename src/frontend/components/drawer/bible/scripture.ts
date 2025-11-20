@@ -197,6 +197,8 @@ export async function playScripture() {
 
     const slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
 
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    // include every selected chapter/verse in the displayed reference label
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
     const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
     const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
@@ -208,7 +210,7 @@ export async function playScripture() {
             book: biblesContent[0].bookId,
             chapter: biblesContent[0].chapters[0],
             verse: selectedVerses[0],
-            reference: `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${value}`,
+            reference: `${biblesContent[0].book} ${fullReferenceRange || `${biblesContent[0].chapters[0]}:${value}`}`.trim(),
             text: getSplittedVerses(biblesContent[0].verses?.[0])[selectedVerses[0]?.[0]] || biblesContent[0].verses[selectedVerses[0]?.[0]] || ""
         }
         // WIP multiple verses, play from another version
@@ -231,8 +233,7 @@ export async function playScripture() {
     setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
 
     // track
-    const verseRange = joinRange(selectedVerses[0])
-    const reference = `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${verseRange}`
+    const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
     biblesContent.forEach((translation) => {
         const name = translation.version || ""
         const apiId = translation.isApi ? get(scriptures)[translation.id]?.id || translation.id || "" : null
@@ -403,7 +404,27 @@ export function joinRange(array: (number | string)[]) {
             if (segment.start === segment.end) return `${chapterPrefix}${segment.start}`
             return `${chapterPrefix}${segment.start}-${segment.end}`
         })
-        .join("+")
+        .join(" ; ")
+}
+
+// Combine multiple chapter selections into a single "1:1-4 ; 2:1-10" style reference.
+export function buildFullReferenceRange(chapters: (number | string)[], versesPerChapter: (number | string)[][]) {
+    if (!Array.isArray(chapters) || !Array.isArray(versesPerChapter)) return ""
+
+    const normalized: (number | string)[] = []
+    chapters.forEach((chapter, index) => {
+        const chapterVerses = versesPerChapter[index] || []
+        chapterVerses.forEach((verse) => {
+            const value = String(verse)
+            if (!value || value === "NaN") return
+
+            if (value.includes(":")) normalized.push(value)
+            else normalized.push(`${chapter}:${value}`)
+        })
+    })
+
+    if (!normalized.length) return ""
+    return joinRange(normalized)
 }
 
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
@@ -944,7 +965,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(showPopup = false) {
+export async function createScriptureShow(showPopup = false, bypassPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -953,10 +974,10 @@ export async function createScriptureShow(showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (showPopup) {
-        const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
-
-        popupData.set({ showVersion, create: true })
+    // force the popup when attribution or version settings must be confirmed
+    const requiresVersionPopup = !!(biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion)
+    if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+        popupData.set({ showVersion: requiresVersionPopup, create: true })
         activePopup.set("scripture_show")
         return
     }
@@ -975,6 +996,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     let slides: Item[][] = [[]]
     if (selectedVerses.length || get(scriptureSettings)) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses })
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    // use the combined range so slide names show multi-chapter selections
 
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
@@ -1051,8 +1074,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     })
     // if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
 
-    const verseRange = joinRange(selectedVerses[0])
-    const bibleShowName = `${biblesContent[0].book} ${selectedChapters[0]},${verseRange}`
+    const fallbackRange = joinRange(selectedVerses[0])
+    const bibleShowName = `${biblesContent[0].book} ${fullReferenceRange || `${selectedChapters[0]}:${fallbackRange}`}`.trim()
     show.name = checkName(bibleShowName)
     if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(biblesContent[0].version || "")}`)
     show.slides = slides2
@@ -1084,9 +1107,9 @@ export function getReferenceText(biblesContent: BibleContent[]) {
     // if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
 
     const books = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
-    const referenceDivider = get(scriptureSettings).referenceDivider || ":"
-    const range = joinRange(biblesContent[0].activeVerses[0])
-    const reference = `${books} ${biblesContent[0].chapters[0]}${referenceDivider}${range}`
+    // reflect all selected chapters when labeling slides/previews
+    const range = buildFullReferenceRange(biblesContent[0].chapters, biblesContent[0].activeVerses)
+    const reference = `${books} ${range || biblesContent[0].chapters[0]}`.trim()
     return reference
 
     // let v = get(scriptureSettings).versesPerSlide
