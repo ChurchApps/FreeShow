@@ -99,14 +99,17 @@ export const receiver = {
     PROJECTS: (data: any) => {
         if (!_get("isConnected")) return
 
-        _set("projects", data)
-        // newest first
-        _set(
-            "projects",
-            _get("projects").sort((a, b) => b.created - a.created)
-        )
+        const array = Array.isArray(data)
+            ? data
+            : Object.entries(data || {}).map(([id, value]: [string, any]) => ({ id, ...(value || {}) }))
 
-        const project = data.find((a: any) => a.id === _get("project"))
+        const sorted = array
+            .filter((project: any) => project && !project.deleted)
+            .sort((a: any, b: any) => (b?.created || 0) - (a?.created || 0))
+
+        _set("projects", sorted)
+
+        const project = sorted.find((a: any) => a.id === _get("project"))
         if (project) _set("activeProject", project)
     },
     PROJECT: (data: any) => {
