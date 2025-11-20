@@ -708,7 +708,11 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 
 export function splitText(value: string, maxLength: number) {
     if (!value) return []
+    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
+    return splitPlainText(value, maxLength)
+}
 
+function splitPlainText(value: string, maxLength: number) {
     const queue: string[] = [value.trim()]
     const segments: string[] = []
     const proportion = Math.floor(maxLength * 0.3)
@@ -752,6 +756,108 @@ export function splitText(value: string, maxLength: number) {
     }
 
     return segments
+}
+
+function splitHtmlText(value: string, maxLength: number) {
+    const tokens = tokenizeHtml(value)
+    if (!tokens.length) return [value]
+
+    const segments: string[] = []
+    let current = ""
+    let currentLength = 0
+    const openTags: { name: string; tag: string }[] = []
+
+    const reopenTags = () => openTags.map((entry) => entry.tag).join("")
+    const closeTags = () => openTags.slice().reverse().map((entry) => `</${entry.name}>`).join("")
+
+    const flushSegment = () => {
+        const textContent = current.replace(/<[^>]+>/g, "").trim()
+        if (textContent) segments.push(current + closeTags())
+        current = reopenTags()
+        currentLength = 0
+    }
+
+    tokens.forEach((token) => {
+        if (token.type === "tag") {
+            current += token.value
+            updateTagStack(token.value, openTags)
+            return
+        }
+
+        let remaining = token.value
+        while (remaining.length) {
+            const capacity = maxLength - currentLength
+            if (capacity <= 0) {
+                flushSegment()
+                continue
+            }
+
+            const splitIndex = findHtmlSplitIndex(remaining, capacity)
+            const chunk = remaining.slice(0, splitIndex)
+            current += chunk
+            currentLength += chunk.length
+            remaining = remaining.slice(splitIndex)
+
+            if (remaining.length) flushSegment()
+        }
+    })
+
+    if (current.replace(/<[^>]+>/g, "").trim()) segments.push(current + closeTags())
+
+    return segments.length ? segments : [value]
+}
+
+function tokenizeHtml(value: string) {
+    const tokens: { type: "text" | "tag"; value: string }[] = []
+    const regex = /(<[^>]+>)/gi
+    let lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = regex.exec(value))) {
+        if (match.index > lastIndex) tokens.push({ type: "text", value: value.slice(lastIndex, match.index) })
+        tokens.push({ type: "tag", value: match[0] })
+        lastIndex = regex.lastIndex
+    }
+    if (lastIndex < value.length) tokens.push({ type: "text", value: value.slice(lastIndex) })
+    return tokens
+}
+
+function updateTagStack(tag: string, stack: { name: string; tag: string }[]) {
+    const isClosing = /^<\//.test(tag)
+    const isSelfClosing = /\/>$/.test(tag)
+    if (!isClosing && !isSelfClosing) {
+        const name = getTagName(tag)
+        if (name) stack.push({ name, tag })
+        return
+    }
+
+    if (isClosing) {
+        const name = getTagName(tag)
+        if (!name) return
+        for (let i = stack.length - 1; i >= 0; i--) {
+            if (stack[i].name === name) {
+                stack.splice(i, 1)
+                break
+            }
+        }
+    }
+}
+
+function getTagName(tag: string) {
+    const match = tag.match(/^<\/?([a-z0-9_-]+)/i)
+    return match ? match[1] : ""
+}
+
+function findHtmlSplitIndex(text: string, capacity: number) {
+    if (text.length <= capacity) return text.length
+    const slice = text.slice(0, capacity)
+    const breakChars = [" ", "\n", "\t", "-", ","]
+    let splitIndex = -1
+    breakChars.forEach((char) => {
+        const idx = slice.lastIndexOf(char)
+        if (idx > splitIndex) splitIndex = idx
+    })
+    if (splitIndex === -1) splitIndex = capacity
+    return Math.max(1, splitIndex + 1)
 }
 
 function getSplitHalves(text: string, maxLength: number): [string, string] | null {
