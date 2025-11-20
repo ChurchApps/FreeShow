@@ -170,8 +170,8 @@ export function updateShowsList(allShows: TrimmedShows) {
     } else if (sortType === "used") {
         sortedShows = showsList.sort((a, b) => getTimestampValue(b, "used") - getTimestampValue(a, "used"))
     } else if (sortType === "number" || sortType === "number_des") {
-        sortedShows = sortByNameAndNumber(showsList)
-        if (sortType === "number_des") sortedShows = sortedShows.reverse()
+        const direction = sortType === "number_des" ? "desc" : "asc"
+        sortedShows = sortByNameAndNumber(showsList, direction)
     } else {
         // sort by name
         sortedShows = sortByName(showsList)
