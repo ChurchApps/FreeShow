@@ -3,7 +3,7 @@
     // import VirtualList from "./VirtualList2.svelte"
     import { get } from "svelte/store"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
@@ -181,6 +181,7 @@
     }
 
     $: sortType = $sorted.shows?.type || "name"
+    $: showSortBarEnabled = $special.showSortBarEnabled !== false
     // All sortable columns share the same metadata so the UI + store stay in sync
     const sortHeaders = [
         { id: "name", label: "show.name", asc: "name", desc: "name_des", default: "asc" },
@@ -262,24 +263,26 @@
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
-            <div class="sort-header" role="group">
-                {#each headerState as header}
-                    <button
-                        type="button"
-                        aria-pressed={header.direction ? "true" : "false"}
-                        aria-sort={header.direction === "asc" ? "ascending" : header.direction === "desc" ? "descending" : "none"}
-                        class:activeSort={!!header.direction}
-                        class:centered={header.id !== "name"}
-                        on:click={() => toggleSort(header.id)}
-                        title={header.labelText}
-                    >
-                        <span>{header.labelText}</span>
-                        {#if header.direction}
-                            <span class="sort-indicator" aria-hidden="true">{header.direction === "asc" ? "▼" : "▲"}</span>
-                        {/if}
-                    </button>
-                {/each}
-            </div>
+            {#if showSortBarEnabled}
+                <div class="sort-header" role="group">
+                    {#each headerState as header}
+                        <button
+                            type="button"
+                            aria-pressed={header.direction ? "true" : "false"}
+                            aria-sort={header.direction === "asc" ? "ascending" : header.direction === "desc" ? "descending" : "none"}
+                            class:activeSort={!!header.direction}
+                            class:centered={header.id !== "name"}
+                            on:click={() => toggleSort(header.id)}
+                            title={header.labelText}
+                        >
+                            <span>{header.labelText}</span>
+                            {#if header.direction}
+                                <span class="sort-indicator" aria-hidden="true">{header.direction === "asc" ? "▼" : "▲"}</span>
+                            {/if}
+                        </button>
+                    {/each}
+                </div>
+            {/if}
             <!-- reload list when changing category -->
             {#key active}
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>

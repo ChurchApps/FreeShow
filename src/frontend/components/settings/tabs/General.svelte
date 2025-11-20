@@ -54,6 +54,7 @@
 <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
 <MaterialToggleSwitch label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
 <MaterialToggleSwitch label="settings.disable_labels" checked={$labelsDisabled} defaultValue={false} on:change={(e) => labelsDisabled.set(e.detail)} />
+<MaterialToggleSwitch label="settings.show_sort_bar" checked={$special.showSortBarEnabled !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "showSortBarEnabled", true)} />
 
 <!-- PROJECT -->
 
