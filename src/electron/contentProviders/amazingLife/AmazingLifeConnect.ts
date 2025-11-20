@@ -21,6 +21,7 @@ export class AmazingLifeConnect {
     private static readonly clientId: string = getKey("amazinglife_id") || ""
     private static oauthHelper: OAuth2Helper<AmazingLifeAuthData>
     private static app = express()
+    private static routeSetup = false
 
     private static initializeOAuthHelper(): void {
         if (!this.oauthHelper) {
@@ -35,6 +36,14 @@ export class AmazingLifeConnect {
                 usePKCE: true,
                 additionalParams: { state: "xyz" }
             })
+        }
+
+        // Set up the auth callback route
+        if (!this.routeSetup) {
+            this.app.get('/auth/complete', (req, res) => {
+                this.handleAuthCallback(req, res)
+            })
+            this.routeSetup = true
         }
     }
 

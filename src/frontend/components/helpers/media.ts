@@ -574,7 +574,13 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
 export async function downloadOnlineMedia(url: string) {
     if (!url?.startsWith("http")) return url
 
-    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, dataPath: get(dataPath) })
+    const mediaData = get(media)[url]
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, {
+        url,
+        dataPath: get(dataPath),
+        contentProvider: mediaData?.contentProvider,
+        pingbackUrl: mediaData?.pingbackUrl
+    })
 
     if (downloadedPath?.buffer) {
         const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
@@ -586,7 +592,6 @@ export async function downloadOnlineMedia(url: string) {
     }
 
     // Check license before downloading (for content providers like APlay)
-    const mediaData = get(media)[url]
     if (mediaData?.mediaId && mediaData?.contentProvider && !mediaData?.licenseChecked) {
         media.update((m) => {
             if (!m[url]) m[url] = {}
@@ -604,8 +609,14 @@ export async function downloadOnlineMedia(url: string) {
         }
     }
 
-    // not downloaded yet
-    sendMain(Main.MEDIA_DOWNLOAD, { url, dataPath: get(dataPath) })
+    // not downloaded yet - get updated media data in case pingbackUrl was just set
+    const updatedMediaData = get(media)[url]
+    sendMain(Main.MEDIA_DOWNLOAD, {
+        url,
+        dataPath: get(dataPath),
+        contentProvider: updatedMediaData?.contentProvider,
+        pingbackUrl: updatedMediaData?.pingbackUrl
+    })
     return url
 }
 

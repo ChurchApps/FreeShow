@@ -6,8 +6,9 @@ import type { LessonFile, LessonsData } from "../../types/Main"
 import { sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getValidFileName, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
-import { decryptFile, encryptFile, getProtectedPath, getProviderKey, isProtectedProvider } from "./protected"
+import { decryptFile, encryptFile, getProtectedPath } from "./protected"
 import { filePathHashCode } from "./thumbnails"
+import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 
 export function downloadLessonsMedia(lessons: LessonsData[]) {
     const replace = lessons.map(checkLesson)
@@ -215,7 +216,7 @@ function startDownload(data: DownloadFile) {
 /// //
 
 const downloading: string[] = []
-export function downloadMedia({ url, dataPath }: { url: string; dataPath: string }) {
+export function downloadMedia({ url, dataPath, contentProvider, pingbackUrl }: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }) {
     if (!url?.includes("http") || url?.includes("blob:")) return
 
     if (downloading.includes(url)) return
@@ -223,11 +224,20 @@ export function downloadMedia({ url, dataPath }: { url: string; dataPath: string
 
     console.info("Downloading online media: " + url)
 
-    const outputPath = getMediaThumbnailPath(url, dataPath)
+    const outputPath = getMediaThumbnailPath(url, dataPath, contentProvider, pingbackUrl)
 
-    if (isProtectedProvider(url)) {
-        encryptFile(url, outputPath, getProviderKey(url))
-        return
+    // Check if provider-based encryption is needed
+    if (contentProvider) {
+        const provider = ContentProviderFactory.getProvider(contentProvider as any)
+        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+            const encryptionKey = provider.getEncryptionKey?.()
+            if (!encryptionKey) {
+                console.error(`Provider ${contentProvider} requires encryption but did not provide an encryption key`)
+                return
+            }
+            encryptFile(url, outputPath, encryptionKey)
+            return
+        }
     }
 
     const fileStream = fs.createWriteStream(outputPath)
@@ -287,30 +297,44 @@ export function downloadMedia({ url, dataPath }: { url: string; dataPath: string
     // ) // 8 minutes timeout
 }
 
-export async function checkIfMediaDownloaded({ url, dataPath }: { url: string; dataPath: string }) {
+export async function checkIfMediaDownloaded({ url, dataPath, contentProvider, pingbackUrl }: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }) {
     if (!url?.includes("http")) return null
 
-    const outputPath = getMediaThumbnailPath(url, dataPath)
+    const outputPath = getMediaThumbnailPath(url, dataPath, contentProvider, pingbackUrl)
     if (!doesPathExist(outputPath)) return null
 
-    if (isProtectedProvider(url)) {
-        try {
-            const decryptedData = await decryptFile(outputPath, getProviderKey(url))
-            return { path: outputPath, buffer: decryptedData }
-        } catch (err) {
-            console.error(`Failed to decrypt file: ${url}`, err)
-            // this response will request a re-download, and replace the file
-            // important in case the key has changed or file is corrupted
-            return null
+    // Check if provider-based encryption is needed
+    if (contentProvider) {
+        const provider = ContentProviderFactory.getProvider(contentProvider as any)
+        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+            try {
+                const encryptionKey = provider.getEncryptionKey?.()
+                if (!encryptionKey) {
+                    console.error(`Provider ${contentProvider} requires encryption but did not provide an encryption key`)
+                    return null
+                }
+                const decryptedData = await decryptFile(outputPath, encryptionKey)
+                return { path: outputPath, buffer: decryptedData }
+            } catch (err) {
+                console.error(`Failed to decrypt file: ${url}`, err)
+                // this response will request a re-download, and replace the file
+                // important in case the key has changed or file is corrupted
+                return null
+            }
         }
     }
 
     return { path: outputPath, buffer: null }
 }
 
-function getMediaThumbnailPath(url: string, dataPath: string) {
-    const isProtected = isProtectedProvider(url)
-    if (isProtected) return getProtectedPath(url)
+function getMediaThumbnailPath(url: string, dataPath: string, contentProvider?: string, pingbackUrl?: string) {
+    // Check if provider-based encryption is needed
+    if (contentProvider) {
+        const provider = ContentProviderFactory.getProvider(contentProvider as any)
+        if (provider?.shouldEncrypt?.(url, pingbackUrl)) {
+            return getProtectedPath(url)
+        }
+    }
 
     const urlWithoutQuery = url.split('?')[0]
     const extension = path.extname(urlWithoutQuery)

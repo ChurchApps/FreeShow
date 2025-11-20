@@ -5,6 +5,7 @@ import { AmazingLifeContentLibrary } from "./AmazingLifeContentLibrary"
 import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AMAZING_LIFE_API_URL } from "./types"
 import { getKey } from "../../utils/keys"
+import { getMachineId } from "../../IPC/responsesMain"
 
 // Import and re-export types
 import type { AmazingLifeScopes, AmazingLifeAuthData } from "./types"
@@ -88,6 +89,23 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
      */
     async checkMediaLicense(mediaId: string): Promise<string | null> {
         return AmazingLifeContentLibrary.checkMediaLicense(mediaId)
+    }
+
+    /**
+     * Determines if a specific URL should be encrypted
+     * AmazingLife media should only be encrypted if it has a pingback URL (licensed content)
+     */
+    shouldEncrypt(url: string, pingbackUrl?: string): boolean {
+        // Only encrypt if this is a Mux URL AND has a pingback URL (indicating licensed content)
+        return url.includes("stream.mux.com") && !!pingbackUrl
+    }
+
+    /**
+     * Returns the encryption key for AmazingLife media
+     * Uses the machine ID as the encryption key
+     */
+    getEncryptionKey(): string {
+        return getMachineId()
     }
 
     protected handleAuthCallback(req: express.Request, res: express.Response): void {

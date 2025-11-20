@@ -169,8 +169,8 @@ export interface MainSendPayloads {
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
-    [Main.MEDIA_DOWNLOAD]: { url: string; dataPath: string }
-    [Main.MEDIA_IS_DOWNLOADED]: { url: string; dataPath: string }
+    [Main.MEDIA_DOWNLOAD]: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }
+    [Main.MEDIA_IS_DOWNLOADED]: { url: string; dataPath: string; contentProvider?: string; pingbackUrl?: string }
     [Main.NOW_PLAYING]: { dataPath: string; filePath: string; name: string; unknownLang: string[] }
     [Main.NOW_PLAYING_UNSET]: { dataPath: string }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
