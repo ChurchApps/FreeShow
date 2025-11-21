@@ -226,8 +226,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
-    drawer_show_button_readonly: ["tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
+    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "SEPARATOR", "selectAll"],
+    drawer_show_button_readonly: ["tag_filter", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",

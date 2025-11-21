@@ -54,6 +54,7 @@ export enum Main {
     BIBLE = "BIBLE",
     SHOW = "SHOW",
     SAVE = "SAVE",
+    BACKUPS = "BACKUPS",
     ///////////////////
     SPELLCHECK = "SPELLCHECK",
     ////
@@ -186,6 +187,7 @@ export interface MainSendPayloads {
     [Main.CLOSE_MIDI]: { id: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
+    [Main.RESTORE]?: { folder: string }
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
@@ -217,6 +219,7 @@ export interface MainReturnPayloads {
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
+    [Main.BACKUPS]: { name: string, date: number }[]
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }

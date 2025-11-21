@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, dictionary, guideActive, language, timeFormat } from "../../../stores"
+    import { activePopup, dataPath, dictionary, guideActive, language, popupData, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -33,7 +33,8 @@
     }
 
     function restore() {
-        sendMain(Main.RESTORE)
+        popupData.set({ back: "initialize" })
+        activePopup.set("restore")
     }
 
     $: languageText = translateText("settings.language", $dictionary)

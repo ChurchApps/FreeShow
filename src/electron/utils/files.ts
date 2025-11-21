@@ -170,13 +170,14 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true): string[] {
+export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
     // crashes if empty in electron v37
     if (!filters.extensions.length) filters.extensions = ["*"]
 
     const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
     if (multiple) options.properties!.push("multiSelections")
+    if (initialPath) options.defaultPath = initialPath
 
     const files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files

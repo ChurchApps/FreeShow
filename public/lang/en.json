@@ -496,6 +496,7 @@
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
         "continue": "Continue",
+        "restore": "Restore backup",
         "reset_all": "Reset everything",
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",

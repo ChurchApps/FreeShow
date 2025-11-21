@@ -4,7 +4,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { doesPathExist, getDataFolderPath, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
+import { doesPathExist, getDataFolderPath, getFileStats, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
 import { _store, getStore, storeFilesData } from "./store"
 
@@ -76,10 +76,35 @@ export async function startBackup({ customTriggers }: { customTriggers: SaveActi
     }
 }
 
+export function getBackups(): { name: string, date: number }[] {
+    const backupsFolder = getDataFolderPath("backups")
+    const files = readFolder(backupsFolder)
+
+    let backups: { name: string, date: number }[] = []
+    files.forEach((name) => {
+        const filePath = path.resolve(backupsFolder, name)
+        const stat = getFileStats(filePath)
+        if (!stat?.folder) return
+
+        backups.push({ name, date: stat.stat.ctimeMs })
+    })
+
+    return backups
+}
+
 // RESTORE
 
-export function restoreFiles() {
-    const files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
+export function restoreFiles(data?: { folder: string }) {
+    let files: string[] = []
+
+    if (data?.folder) {
+        const backupsFolder = getDataFolderPath("backups", data.folder)
+        files = readFolder(backupsFolder).map((name) => path.join(backupsFolder, name))
+    } else {
+        const initialPath = getDataFolderPath("backups")
+        files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] }, true, initialPath)
+    }
+
     if (!files?.length) return sendToMain(ToMain.RESTORE2, { finished: false })
     sendToMain(ToMain.RESTORE2, { starting: true })
 

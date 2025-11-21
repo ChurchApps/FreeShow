@@ -355,6 +355,7 @@ export type Popups =
     | "about"
     | "shortcuts"
     | "unsaved"
+    | "restore"
     | "reset_all"
     | "alert"
     | "history"

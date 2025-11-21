@@ -9,7 +9,7 @@ import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { ContentProviderRegistry } from "../contentProviders"
-import { restoreFiles } from "../data/backup"
+import { getBackups, restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
@@ -84,6 +84,7 @@ export const mainResponses: MainResponses = {
     [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
     [Main.SAVE]: (a) => save(a),
+    [Main.BACKUPS]: () => getBackups(),
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
@@ -161,7 +162,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_LYRICS]: (data) => getLyrics(data),
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
     // FILES
-    [Main.RESTORE]: () => restoreFiles(),
+    [Main.RESTORE]: (data) => restoreFiles(data),
     [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
     [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
     [Main.GET_SIMILAR]: (data) => getSimularPaths(data),

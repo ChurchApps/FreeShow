@@ -157,6 +157,8 @@
 
         sendMain(Main.UPDATE_DATA_PATH, { newPath, oldPath })
         dataPath.set(newPath)
+
+        sendMain(Main.REFRESH_SHOWS)
     }
 </script>
 
