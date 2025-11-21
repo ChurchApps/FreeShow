@@ -168,7 +168,7 @@
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
 
-    $: isOptimized = $special.optimizedMode
+    const isOptimized = $special.optimizedMode
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""

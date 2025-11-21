@@ -28,6 +28,7 @@ export enum Main {
     GET_OS = "GET_OS",
     DEVICE_ID = "DEVICE_ID",
     IP = "IP",
+    CHECK_RAM_USAGE = "CHECK_RAM_USAGE",
     // STORES
     SETTINGS = "SETTINGS",
     SYNCED_SETTINGS = "SYNCED_SETTINGS",
@@ -213,6 +214,7 @@ export interface MainReturnPayloads {
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
     [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
+    [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
     [Main.SHOWS]: TrimmedShows

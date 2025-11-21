@@ -60,6 +60,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => getMachineId(),
     [Main.IP]: () => os.networkInterfaces(),
+    [Main.CHECK_RAM_USAGE]: () => checkRamUsage(),
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
     [Main.SYNCED_SETTINGS]: () => getStore("SYNCED_SETTINGS"),
@@ -276,6 +277,23 @@ function getVersion() {
 
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
+}
+
+function checkRamUsage() {
+    const total = os.totalmem()
+    const free = os.freemem()
+
+    return { total, free, performanceMode: shouldEnablePerformanceMode() }
+
+    function shouldEnablePerformanceMode() {
+        const totalGB = total / 1024 / 1024 / 1024
+        const lowTotalRAM = totalGB <= 8
+
+        const usedPercent = (total - free) / total
+        const highUsage = usedPercent > 0.98
+
+        return lowTotalRAM || highUsage
+    }
 }
 
 // URL: open url in default web browser
