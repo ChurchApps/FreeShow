@@ -157,17 +157,17 @@ export function updateShowsList(allShows: TrimmedShows) {
     const sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
     let sortedShows: (TrimmedShow & { id: string })[] = []
+
     const getTimestampValue = (entry: TrimmedShow & { id: string }, key: "created" | "modified" | "used") => {
         return entry.timestamps?.[key] || entry.timestamps?.created || 0
     }
 
-    if (sortType === "created") {
+    let inverted = sortType.endsWith("_old")
+    if (sortType.startsWith("created")) {
         sortedShows = showsList.sort((a, b) => getTimestampValue(b, "created") - getTimestampValue(a, "created"))
-    } else if (sortType === "modified") {
+    } else if (sortType.startsWith("modified")) {
         sortedShows = showsList.sort((a, b) => getTimestampValue(b, "modified") - getTimestampValue(a, "modified"))
-    } else if (sortType === "modified_old") {
-        sortedShows = showsList.sort((a, b) => getTimestampValue(a, "modified") - getTimestampValue(b, "modified"))
-    } else if (sortType === "used") {
+    } else if (sortType.startsWith("used")) {
         sortedShows = showsList.sort((a, b) => getTimestampValue(b, "used") - getTimestampValue(a, "used"))
     } else if (sortType === "number" || sortType === "number_des") {
         const direction = sortType === "number_des" ? "desc" : "asc"
@@ -175,8 +175,9 @@ export function updateShowsList(allShows: TrimmedShows) {
     } else {
         // sort by name
         sortedShows = sortByName(showsList)
-        if (sortType === "name_des") sortedShows = sortedShows.reverse()
+        if (sortType === "name_des") inverted = true
     }
+    if (inverted) sortedShows = sortedShows.reverse()
 
     // const profile = getAccess("shows")
     // const hiddenCategories = Object.entries(profile).filter(([_, type]) => type === "none").map(([id]) => id)

@@ -1,7 +1,6 @@
 <script lang="ts">
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
-    import { get } from "svelte/store"
     import type { ShowList } from "../../../../types/Show"
     import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -9,7 +8,7 @@
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, sortByNameAndNumber } from "../../helpers/array"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { updateShowsList } from "../../helpers/show"
     import { dateToString } from "../../helpers/time"
@@ -42,14 +41,10 @@
     $: filteredStored = filteredShows =
         active === "all"
             ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
-            : active === "number"
-              ? sortByNameAndNumber(
-                    showsSorted.filter((a) => a.quickAccess?.number),
-                    "asc"
-                )
-              : active === "locked"
-                ? showsSorted.filter((a) => a.locked)
-                : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
+            : // : active === "number" ? sortByNameAndNumber(showsSorted.filter((a) => a.quickAccess?.number), "asc")
+              active === "locked"
+              ? showsSorted.filter((a) => a.locked)
+              : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
@@ -186,11 +181,12 @@
 
     $: showWithNumber = filteredShows.some((a) => a.quickAccess?.number)
     $: sortType = $sorted.shows?.type || "name"
+    $: modifiedType = ["modified", "created", "used"].includes(sortType.replace("_old", "")) ? sortType.replace("_old", "") : "modified"
     // All sortable columns share the same metadata so the UI + store stay in sync
     $: sortHeaders = [
-        { id: "name", label: translateText("show.name"), asc: "name", desc: "name_des", default: "asc" },
-        ...(showWithNumber ? [{ id: "number", label: translateText("meta.number"), asc: "number", desc: "number_des", default: "asc" }] : []),
-        { id: "modified", label: translateText("info.modified"), asc: "modified_old", desc: "modified", default: "desc" }
+        { id: "name", style: "flex: 1;", label: translateText("show.name"), asc: "name", desc: "name_des", default: "asc" },
+        ...(showWithNumber ? [{ id: "number", style: "min-width: var(--number-width);", label: translateText("meta.number"), asc: "number", desc: "number_des", default: "asc" }] : []),
+        { id: "modified", style: "min-width: var(--modified-width);", label: translateText(`info.${modifiedType}`), asc: `${modifiedType}_old`, desc: modifiedType, default: "desc" }
     ]
 
     function toggleSort(columnId: string) {
@@ -208,7 +204,7 @@
             return state
         })
 
-        updateShowsList(get(shows))
+        updateShowsList($shows)
     }
 
     function createShow(e: any, border = false) {
@@ -257,11 +253,11 @@
             {/if}
 
             <div class="sort-header" role="group">
-                {#each sortHeaders as header, i}
+                {#each sortHeaders as header}
                     {@const direction = sortType === header.asc ? "asc" : sortType === header.desc ? "desc" : ""}
                     {@const isActive = direction !== ""}
 
-                    <MaterialButton style="flex: {i === 0 ? 4 : 1};justify-content: {header.id === 'name' ? 'flex-start' : 'center'};" {isActive} on:click={() => toggleSort(header.id)} title={header.label}>
+                    <MaterialButton style="{header.style}justify-content: {header.id === 'name' ? 'flex-start' : 'center'};" {isActive} on:click={() => toggleSort(header.id)} title={header.label}>
                         <p>{header.label}</p>
                         {#if direction}
                             <span class="sort-indicator">
@@ -277,7 +273,13 @@
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton {active} id={show.id} {show} data={dateToString(show.timestamps?.[sortType] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} />
+                            <ShowButton
+                                id={show.id}
+                                {show}
+                                data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)}
+                                class="#drawer_show_button"
+                                match={show.match || null}
+                            />
                         {/if}
                     </SelectElem>
                 </VirtualList>
@@ -315,6 +317,9 @@
         flex-direction: column;
         background-color: var(--primary-darker);
         height: 100%;
+
+        --number-width: 100px;
+        --modified-width: 220px;
     }
 
     .warning {

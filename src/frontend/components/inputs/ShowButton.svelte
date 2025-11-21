@@ -16,8 +16,6 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let active: string | null = null
-
     export let id: string
     export let show: any // ShowList | ShowRef
     export let data: null | string = null
@@ -198,7 +196,7 @@
         tab
     >
         <div class="row">
-            <span class="cell primary">
+            <span class="cell" style="max-width: calc(100% {showNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
                 {#if icon || show.locked}
                     <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
                 {/if}
@@ -214,11 +212,13 @@
                 {/if}
             </span>
 
-            <span class="cell number" class:highlight={active === "number"}>
-                {showNumber}
-            </span>
+            <span class="cell">
+                {#if showNumber}
+                    <span class="number">{showNumber}</span>
+                {/if}
 
-            <span class="cell date">{data || ""}</span>
+                <span class="date">{data || ""}</span>
+            </span>
         </div>
     </MaterialButton>
 </div>
@@ -234,23 +234,22 @@
     }
 
     .row {
-        display: grid;
-        grid-template-columns: var(--shows-grid-template, minmax(0, 1fr) max-content max-content);
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        column-gap: 12px;
+        gap: 5px;
         width: 100%;
     }
 
-    .cell.primary {
+    .cell {
         display: flex;
         align-items: center;
-        gap: 8px;
-        min-width: 0;
-        overflow: hidden;
+
+        max-width: 75%;
     }
 
-    .cell.number,
-    .cell.date {
+    .cell .number,
+    .cell .date {
         font-size: 0.9em;
         white-space: nowrap;
         text-align: right;
@@ -258,18 +257,18 @@
         opacity: 0.75;
     }
 
-    .cell.number {
+    .cell .number {
         font-weight: 600;
         text-align: center;
+
+        min-width: var(--number-width);
     }
 
-    .cell.number.highlight {
-        color: var(--secondary);
-        opacity: 1;
-    }
-
-    .cell.date {
+    .cell .date {
         font-variant-numeric: tabular-nums;
+
+        /* remove button padding & scrollbar width */
+        min-width: calc(var(--modified-width) - 0.8em - 8px);
     }
     .main :global(button p) {
         margin: 3px 5px;
