@@ -457,8 +457,6 @@
                                     thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
                                     type={getMediaType(item.extension)}
                                     shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                    bind:activeFile
-                                    {allFiles}
                                     {active}
                                 />
                             {/if}
@@ -475,8 +473,6 @@
                                     path={file.path}
                                     type={getMediaType(file.extension)}
                                     shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                    bind:activeFile
-                                    {allFiles}
                                     {active}
                                 />
                             {/if}

@@ -1,9 +1,10 @@
 import { get } from "svelte/store"
+import type { ProjectShowRef } from "../../types/Projects"
 import type { Show, ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { actions as actionsStores, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, folders, media as mediaStores, overlays as overlayStores, projects } from "../stores"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects } from "../stores"
 
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
@@ -97,6 +98,22 @@ export function addToProject(type: ShowType, filePaths: string[]) {
     // open project item
     const lastItem = newProjectItems[newProjectItems.length - 1]
     activeShow.set({ ...lastItem, index: project.data.length - 1 })
+}
+
+export function addProjectItem(data: ProjectShowRef) {
+    const currentProject = get(activeProject)
+    if (!currentProject) return
+
+    const projectShows = get(projects)[currentProject]?.shows || []
+
+    const project = { key: "shows", data: [...projectShows, data] }
+    history({ id: "UPDATE", newData: project, oldData: { id: currentProject }, location: { page: "show", id: "project_ref" } })
+
+    if (get(focusMode)) return
+
+    // open project item
+    activePage.set("show")
+    activeShow.set({ ...data, index: project.data.length - 1 })
 }
 
 export function addSection() {
