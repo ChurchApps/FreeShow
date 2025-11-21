@@ -326,6 +326,7 @@ export type Popups =
     | "variable"
     | "trigger"
     | "audio_stream"
+    | "now_playing"
     | "aspect_ratio"
     | "max_lines"
     | "transition"

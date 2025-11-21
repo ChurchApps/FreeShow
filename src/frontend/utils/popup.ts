@@ -73,6 +73,7 @@ import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -106,6 +107,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     trigger: Trigger,
     audio_stream: AudioStream,
+    now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,
     transition: Transition,

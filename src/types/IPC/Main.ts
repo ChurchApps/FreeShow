@@ -68,6 +68,7 @@ export enum Main {
     OPEN_CACHE = "OPEN_CACHE",
     OPEN_APPDATA = "OPEN_APPDATA",
     OPEN_FOLDER_PATH = "OPEN_FOLDER_PATH",
+    OPEN_NOW_PLAYING = "OPEN_NOW_PLAYING",
     GET_STORE_VALUE = "GET_STORE_VALUE",
     SET_STORE_VALUE = "SET_STORE_VALUE",
     DELETE_SHOWS = "DELETE_SHOWS",
@@ -166,7 +167,7 @@ export interface MainSendPayloads {
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
     [Main.MEDIA_DOWNLOAD]: { url: string }
     [Main.MEDIA_IS_DOWNLOADED]: { url: string }
-    [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[] }
+    [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[]; format: string; duration: number }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.LIBREOFFICE_CONVERT]: { type: string }
