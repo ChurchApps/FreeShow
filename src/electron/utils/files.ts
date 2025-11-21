@@ -376,23 +376,23 @@ export function getSimularPaths(data: { paths: string[] }) {
     const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
     const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
-    let simularArray: [{ path: string; name: string }, number][] = []
+    let similarArray: [{ path: string; name: string }, number][] = []
     data.paths.forEach((originalFilePath: string) => {
         const originalFileName = parse(originalFilePath).name
 
         filteredFilePaths.forEach((filePath: string) => {
             const name = parse(filePath).name
-            if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
+            if (data.paths.includes(filePath) || similarArray.find((a) => a[0].name.includes(name))) return
 
             const match = similarity(originalFileName, name)
             if (match < 0.5) return
 
-            simularArray.push([{ path: filePath, name }, match])
+            similarArray.push([{ path: filePath, name }, match])
         })
     })
 
-    simularArray = simularArray.sort((a, b) => b[1] - a[1])
-    const sortedSimularArray = simularArray.slice(0, 10).map((a) => a[0])
+    similarArray = similarArray.sort((a, b) => b[1] - a[1])
+    const sortedSimularArray = similarArray.slice(0, 10).map((a) => a[0])
 
     return sortedSimularArray
 }
