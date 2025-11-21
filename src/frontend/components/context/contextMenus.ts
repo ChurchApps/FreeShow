@@ -226,12 +226,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
-    drawer_show_button_readonly: ["tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
+    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "SEPARATOR", "selectAll"],
+    drawer_show_button_readonly: ["tag_filter", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
-    media_preview: ["create_show", "SEPARATOR", "close"],
+    media_preview: ["create_show", "SEPARATOR", "system_open", "SEPARATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["edit", "preview", "SEPARATOR", "play_no_filters", "SEPARATOR", "system_open"], // "play_no_audio"

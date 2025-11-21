@@ -17,7 +17,7 @@ import { _store, config, getStore } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { mainWindow, toApp } from "./../index"
+import { mainWindow, setAutoProfile, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
@@ -170,13 +170,14 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true): string[] {
+export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
     // crashes if empty in electron v37
     if (!filters.extensions.length) filters.extensions = ["*"]
 
     const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
     if (multiple) options.properties!.push("multiSelections")
+    if (initialPath) options.defaultPath = initialPath
 
     const files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
@@ -376,23 +377,23 @@ export function getSimularPaths(data: { paths: string[] }) {
     const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
     const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
-    let simularArray: [{ path: string; name: string }, number][] = []
+    let similarArray: [{ path: string; name: string }, number][] = []
     data.paths.forEach((originalFilePath: string) => {
         const originalFileName = parse(originalFilePath).name
 
         filteredFilePaths.forEach((filePath: string) => {
             const name = parse(filePath).name
-            if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
+            if (data.paths.includes(filePath) || similarArray.find((a) => a[0].name.includes(name))) return
 
             const match = similarity(originalFileName, name)
             if (match < 0.5) return
 
-            simularArray.push([{ path: filePath, name }, match])
+            similarArray.push([{ path: filePath, name }, match])
         })
     })
 
-    simularArray = simularArray.sort((a, b) => b[1] - a[1])
-    const sortedSimularArray = simularArray.slice(0, 10).map((a) => a[0])
+    similarArray = similarArray.sort((a, b) => b[1] - a[1])
+    const sortedSimularArray = similarArray.slice(0, 10).map((a) => a[0])
 
     return sortedSimularArray
 }
@@ -857,6 +858,9 @@ const FIXES = {
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openInSystem(_store.SETTINGS?.path || "", true)
+    },
+    ADMIN_PROFILE: () => {
+        setAutoProfile("admin")
     }
 }
 function specialCaseFixer() {

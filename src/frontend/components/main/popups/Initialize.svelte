@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, dictionary, guideActive, language, timeFormat } from "../../../stores"
+    import { activePopup, dataPath, dictionary, guideActive, language, popupData, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -33,11 +33,21 @@
     }
 
     function restore() {
-        sendMain(Main.RESTORE)
+        popupData.set({ back: "initialize" })
+        activePopup.set("restore")
     }
 
     $: languageText = translateText("settings.language", $dictionary)
     $: languageLabel = `${languageText}${languageText === "Language" ? "" : "/Language"}`
+
+    // same as Files.svelte
+    function updateDataPath(e: any) {
+        const oldPath = $dataPath
+        const newPath = e.detail
+
+        sendMain(Main.UPDATE_DATA_PATH, { newPath, oldPath })
+        dataPath.set(newPath)
+    }
 </script>
 
 <MaterialButton style="inset-inline-end: 0;" class="popup-options" icon="import" iconSize={1.3} title="setup.restore_data" on:click={restore} white />
@@ -55,7 +65,7 @@
         <MaterialToggleSwitch style="width: 50%;" label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
     </InputRow>
 
-    <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={(e) => dataPath.set(e.detail)} openButton={false} />
+    <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={updateDataPath} openButton={false} />
 
     <MaterialButton variant="outlined" class="start" style="font-size: 1.8em;padding: 15px;margin-top: 20px;" on:click={create} white>
         <Icon id="check" size={2.5} />

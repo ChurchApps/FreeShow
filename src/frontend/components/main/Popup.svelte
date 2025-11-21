@@ -40,9 +40,9 @@
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" class:isOptimized transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" class:isOptimized transition:fade={{ duration: isOptimized ? 20 : 100 }} on:mousedown={mousedown}>
             <!-- class:fill={popupId === "import_scripture"} -->
-            <div class="card" transition:scale={{ duration: 200 }}>
+            <div class="card" transition:scale={{ duration: isOptimized ? 50 : 200 }}>
                 {#if popupId !== "alert"}
                     <div class="headerContent" style="border-bottom: 1px solid var(--primary-lighter);{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
                         <div class="headerMargin">

@@ -23,6 +23,8 @@
     import AudioEffect from "./AudioEffect.svelte"
     import AudioFile from "./AudioFile.svelte"
     import Metronome from "./Metronome.svelte"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
+    import { joinTime, secondsToTime } from "../../helpers/time"
 
     export let active: string | null
     export let searchValue = ""
@@ -207,6 +209,9 @@
     }
 
     $: pathString = path.replace(rootPath, "").replace(name, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
+
+    let updater = 1
+    $: if (active) setTimeout(() => updater++, 500)
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -309,6 +314,21 @@
         >
             <Icon size={1.1} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
         </MaterialButton>
+
+        <div class="divider" />
+
+        <!-- total length of playlist -->
+        <p class="time">
+            {updater &&
+                joinTime(
+                    secondsToTime(
+                        playlist.songs.reduce((sum, path) => {
+                            const duration = AudioPlayer.getDurationSync(path)
+                            return sum + duration
+                        }, 0)
+                    )
+                )}
+        </p>
     </FloatingInputs>
 
     <FloatingInputs round>
@@ -403,5 +423,14 @@
     .effects :global(.selectElem button) {
         background-color: var(--primary-darkest);
         /* transition: 0.2s outline; */
+    }
+
+    .time {
+        display: flex;
+        align-items: center;
+
+        font-size: 0.9em;
+        padding: 0 10px;
+        opacity: 0.8;
     }
 </style>

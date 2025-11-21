@@ -73,6 +73,8 @@ import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import NowPlaying from "../components/main/popups/NowPlaying.svelte"
+import Restore from "../components/main/popups/Restore.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -106,6 +108,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     trigger: Trigger,
     audio_stream: AudioStream,
+    now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,
     transition: Transition,
@@ -132,6 +135,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     about: About,
     shortcuts: Shortcuts,
     unsaved: Unsaved,
+    restore: Restore,
     reset_all: ResetAll,
     alert: Alert,
     history: History,
@@ -176,4 +180,10 @@ export async function confirmCustom(prompt: string) {
     popupData.set({ prompt })
     const data = await waitForPopupData("confirm")
     return !!data
+}
+
+export async function promptCustom(prompt: string) {
+    popupData.set({ prompt, textInput: true })
+    const data = await waitForPopupData("confirm") || ""
+    return data as string
 }

@@ -28,10 +28,11 @@ export enum Main {
     GET_OS = "GET_OS",
     DEVICE_ID = "DEVICE_ID",
     IP = "IP",
+    CHECK_RAM_USAGE = "CHECK_RAM_USAGE",
     // STORES
     SETTINGS = "SETTINGS",
     SYNCED_SETTINGS = "SYNCED_SETTINGS",
-    STAGE_SHOWS = "STAGE_SHOWS",
+    STAGE = "STAGE",
     PROJECTS = "PROJECTS",
     OVERLAYS = "OVERLAYS",
     TEMPLATES = "TEMPLATES",
@@ -53,6 +54,7 @@ export enum Main {
     BIBLE = "BIBLE",
     SHOW = "SHOW",
     SAVE = "SAVE",
+    BACKUPS = "BACKUPS",
     ///////////////////
     SPELLCHECK = "SPELLCHECK",
     ////
@@ -68,6 +70,7 @@ export enum Main {
     OPEN_CACHE = "OPEN_CACHE",
     OPEN_APPDATA = "OPEN_APPDATA",
     OPEN_FOLDER_PATH = "OPEN_FOLDER_PATH",
+    OPEN_NOW_PLAYING = "OPEN_NOW_PLAYING",
     GET_STORE_VALUE = "GET_STORE_VALUE",
     SET_STORE_VALUE = "SET_STORE_VALUE",
     DELETE_SHOWS = "DELETE_SHOWS",
@@ -117,7 +120,7 @@ export enum Main {
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
-    GET_SIMULAR = "GET_SIMULAR",
+    GET_SIMILAR = "GET_SIMILAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
@@ -147,7 +150,7 @@ export interface MainSendPayloads {
     [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
-    [Main.UPDATE_DATA_PATH]: { oldPath: string }
+    [Main.UPDATE_DATA_PATH]: { newPath: string; oldPath: string }
     [Main.LOG_ERROR]: ErrorLog
     [Main.OPEN_FOLDER_PATH]: string
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof _store; key: string }
@@ -166,7 +169,7 @@ export interface MainSendPayloads {
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
     [Main.MEDIA_DOWNLOAD]: { url: string }
     [Main.MEDIA_IS_DOWNLOADED]: { url: string }
-    [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[] }
+    [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[]; format: string; duration: number }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.LIBREOFFICE_CONVERT]: { type: string }
@@ -184,10 +187,11 @@ export interface MainSendPayloads {
     [Main.CLOSE_MIDI]: { id: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
+    [Main.RESTORE]?: { folder: string }
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
-    [Main.GET_SIMULAR]: { paths: string[] }
+    [Main.GET_SIMILAR]: { paths: string[] }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
     [Main.READ_FOLDERS]: { path: string }[]
@@ -212,12 +216,14 @@ export interface MainReturnPayloads {
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
     [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
+    [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
+    [Main.BACKUPS]: { name: string, date: number }[]
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
-    [Main.STAGE_SHOWS]: StageLayouts
+    [Main.STAGE]: StageLayouts
     [Main.PROJECTS]: { projects: Projects; folders: Folders; projectTemplates: Projects }
     [Main.OVERLAYS]: Overlays
     [Main.TEMPLATES]: Templates
@@ -259,7 +265,7 @@ export interface MainReturnPayloads {
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
-    [Main.GET_SIMULAR]: { path: string; name: string }[]
+    [Main.GET_SIMILAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }

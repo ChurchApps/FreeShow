@@ -244,15 +244,7 @@
 </div>
 
 <InputRow>
-    <Button
-        on:click={(e) => {
-            createScriptureShow(e.altKey)
-        }}
-        style="width: 100%;"
-        disabled={!selectedVerses.length}
-        dark
-        center
-    >
+    <Button on:click={(e) => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
         <Icon id="slide" right />
         <T id="new.show_convert" />
         <!-- {#if slides.length > 1}

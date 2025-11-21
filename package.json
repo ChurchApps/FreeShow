@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.5.3-beta.2",
+    "version": "1.5.3-beta.3",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -120,7 +120,7 @@
         "follow-redirects": "^1.15.11",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#a334962",
-        "json-bible": "^1.1.1",
+        "json-bible": "^1.1.2",
         "jzz": "^1.9.5",
         "libreoffice-convert": "^1.6.1",
         "mdb-reader": "^1.2.1",

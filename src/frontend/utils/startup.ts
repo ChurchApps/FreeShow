@@ -4,7 +4,7 @@ import { OUTPUT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
-import { requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
+import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
 import { activePopup, alertMessage, contentProviderData, currentWindow, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, special, tempPath, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
@@ -77,6 +77,15 @@ async function startupMain() {
 
     // CHECK LISTENERS
     // console.log(window.api.getListeners())
+
+    // RAM MONITOR (every 10 minutes)
+    setTimeout(() => checkRamUsage(), 10000)
+    setInterval(() => checkRamUsage(), 600000)
+}
+
+async function checkRamUsage() {
+    const ram = await requestMain(Main.CHECK_RAM_USAGE)
+    if (ram.performanceMode ? ram.performanceMode !== get(special).optimizedMode : get(special).optimizedMode) special.set({ ...get(special), optimizedMode: ram.performanceMode })
 }
 
 function autoBackup() {
@@ -123,7 +132,7 @@ function getMainData() {
 }
 
 async function getStoredData() {
-    sendMainMultiple([Main.SYNCED_SETTINGS, Main.STAGE_SHOWS, Main.PROJECTS, Main.OVERLAYS, Main.TEMPLATES, Main.EVENTS, Main.MEDIA, Main.THEMES, Main.DRIVE_API_KEY, Main.HISTORY, Main.CACHE, Main.USAGE])
+    sendMainMultiple([Main.SYNCED_SETTINGS, Main.STAGE, Main.PROJECTS, Main.OVERLAYS, Main.TEMPLATES, Main.EVENTS, Main.MEDIA, Main.THEMES, Main.DRIVE_API_KEY, Main.HISTORY, Main.CACHE, Main.USAGE])
 
     await waitUntilValueIsDefined(() => get(loadedState).includes("synced_settings"), 200, 8000)
     sendMain(Main.SETTINGS)

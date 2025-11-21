@@ -2,11 +2,12 @@
     import { derived } from "svelte/store"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
+    import { addProjectItem } from "../../../converters/project"
     import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaStyle } from "../../helpers/media"
+    import { getMediaStyle, getMediaType } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
@@ -34,9 +35,6 @@
         }
     }
 
-    export let activeFile: null | number
-    export let allFiles: string[]
-
     let loaded = true
     let videoElem: HTMLVideoElement | undefined
     let hover = false
@@ -57,17 +55,6 @@
 
         if (Number(time) === time) videoElem.currentTime = time
     }
-
-    // Memoized index calculation
-    let cachedIndex = -1
-    let cachedPath = ""
-    $: {
-        if (cachedPath !== path) {
-            cachedIndex = allFiles.findIndex((a) => a === path)
-            cachedPath = path
-        }
-    }
-    $: index = cachedIndex
 
     function mousedown(e: any) {
         if (e.ctrlKey || e.metaKey) return
@@ -137,7 +124,9 @@
     function dblclick(e: any) {
         if (e.ctrlKey || e.metaKey || iconClicked) return
 
-        activeFile = index
+        // add to project
+        const data = { id: path, name, type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length)) }
+        addProjectItem(data)
     }
 
     // Memoized output and style computation

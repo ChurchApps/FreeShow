@@ -1,16 +1,28 @@
 <script lang="ts">
     import { activeProfile, profiles } from "../../stores"
+    import { newToast } from "../../utils/common"
     import { translateText } from "../../utils/language"
-    import { confirmCustom } from "../../utils/popup"
+    import { confirmCustom, promptCustom } from "../../utils/popup"
+    import { checkPassword } from "../../utils/profile"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles))]
+    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
 
     async function selectProfile(id: string) {
-        if (id === "" && !(await confirmCustom(translateText("profile.choose_admin")))) return
+        if (id === "") {
+            // admin profile
+            const adminPassword = $profiles.admin?.password || ""
+            if (adminPassword) {
+                const pwd = await promptCustom(translateText("remote.password"))
+                if (!checkPassword(pwd, adminPassword)) {
+                    newToast("remote.wrong_password")
+                    return
+                }
+            } else if (!(await confirmCustom(translateText("profile.choose_admin")))) return
+        }
 
         activeProfile.set(id)
     }

@@ -6,7 +6,7 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
-import { audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, volume } from "../stores"
+import { audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
@@ -284,7 +284,9 @@ export class AudioPlayer {
     static nowPlaying(filePath: string, name: string) {
         const audioLang = get(dictionary).audio || {}
         const unknownLang = [audioLang.unknown_artist || "", audioLang.unknown_title || "", audioLang.unknown_album || ""]
-        sendMain(Main.NOW_PLAYING, { filePath, name, unknownLang })
+        const format: string = get(special).nowPlayingFormat || ""
+        const duration = this.getDurationSync(filePath)
+        sendMain(Main.NOW_PLAYING, { filePath, name, unknownLang, format, duration })
     }
 
     // GET
@@ -321,6 +323,9 @@ export class AudioPlayer {
 
         this.storedDurations.set(id, duration)
         return duration
+    }
+    static getDurationSync(id: string) {
+        return this.storedDurations.get(id) || 0
     }
 
     static getVolume(id: string | null = null, _updater = get(volume)) {

@@ -279,6 +279,7 @@ export interface Profiles {
 export interface Profile {
     name: string
     color: string
+    password?: string
     image: string
     access: { [key: string]: { [key: string]: AccessType } }
 }
@@ -325,6 +326,7 @@ export type Popups =
     | "variable"
     | "trigger"
     | "audio_stream"
+    | "now_playing"
     | "aspect_ratio"
     | "max_lines"
     | "transition"
@@ -353,6 +355,7 @@ export type Popups =
     | "about"
     | "shortcuts"
     | "unsaved"
+    | "restore"
     | "reset_all"
     | "alert"
     | "history"

@@ -83,6 +83,9 @@ export const actionData = {
     // send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
     emit_action: { SECTION: "actions.emit_data", common: true, canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
+    // OTHER
+    toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },
+
     // ACTION
     run_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },
     toggle_action: { canAddMultiple: true, name: "actions.toggle_action", icon: "actions", input: "toggle_action" },

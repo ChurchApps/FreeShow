@@ -82,7 +82,7 @@ export async function save(data: SaveData) {
 
     // SAVED
 
-    if (data.customTriggers?.backup || data.customTriggers?.reset) startBackup({ customTriggers: data.customTriggers })
+    if (data.customTriggers?.backup) startBackup({ customTriggers: data.customTriggers })
 
     if (data.closeWhenFinished) await wait(300) // make sure files are written before closing
     if (!reset) sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })

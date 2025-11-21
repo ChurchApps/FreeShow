@@ -8,7 +8,7 @@
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getExtension } from "../helpers/media"
+    import { getExtension, getFileName, removeExtension } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -229,19 +229,23 @@
         </div>
     {/if}
     {#if layoutSlide.audio?.length}
-        <div>
+        <div style="max-width: 200px;overflow: hidden;">
             <div class="button">
                 <Button style="padding: 3px;" redHover title={translateText("remove.audio")} {zoom} on:click={() => removeLayout("audio")}>
                     <Icon id="audio" size={0.9} white />
                 </Button>
             </div>
-            <span>
+            <span style="white-space: nowrap;text-overflow: ellipsis;">
                 {#if layoutSlide.audio.length === 1}
                     {#await AudioPlayer.getDuration(audioPath || "")}
                         <p>00:00</p>
                     {:then duration}
                         <p>{joinTime(secondsToTime(duration))}</p>
                     {/await}
+
+                    <!-- file name -->
+                    <!-- WIP get title/artist from metadata? -->
+                    &nbsp;|&nbsp;{removeExtension(getFileName(audioPath || ""))}
                 {:else}
                     <p>{layoutSlide.audio.length}</p>
                 {/if}

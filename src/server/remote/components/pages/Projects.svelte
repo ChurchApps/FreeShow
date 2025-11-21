@@ -25,21 +25,19 @@
 
     function buildTree(parent = "/", index = 0, path = ""): TreeItem[] {
         const tree: TreeItem[] = []
-        
+
         // Get folders in this parent
         const folderEntries = Object.entries($folders || {})
-            .filter(([, folder]: [string, any]) => !folder.deleted && folder.parent === parent)
+            .filter(([, folder]: [string, any]) => !folder.deleted && (folder.parent === parent || (parent === "/" && !$folders[folder.parent])))
             .map(([folderId, folder]: [string, any]) => ({ ...folder, id: folderId, type: "folder" as const }))
-        
+
         // Get projects in this parent
-        const projectEntries = ($projects || [])
-            .filter((p: any) => p.parent === parent)
-            .map((p: any) => ({ ...p, type: "project" as const }))
-        
+        const projectEntries = ($projects || []).filter((p: any) => p.parent === parent || (parent === "/" && !$folders[p.parent])).map((p: any) => ({ ...p, type: "project" as const }))
+
         // Sort and combine
         const sortedFolders = sortByName(folderEntries)
         const sortedProjects = sortByName(projectEntries)
-        
+
         // Add folders first
         sortedFolders.forEach((item: any) => {
             const itemPath = path + item.id + "/"
@@ -51,14 +49,14 @@
                 index,
                 path: itemPath
             })
-            
+
             // Recursively add children for opened folders
             if ($openedFolders.includes(item.id)) {
                 const children = buildTree(item.id, index + 1, itemPath)
                 tree.push(...children)
             }
         })
-        
+
         // Add projects
         sortedProjects.forEach((item: any) => {
             tree.push({
@@ -70,7 +68,7 @@
                 path: path
             })
         })
-        
+
         return tree
     }
 

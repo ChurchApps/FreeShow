@@ -37,8 +37,13 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
+let autoProfile = ""
+export function setAutoProfile(profile: string) {
+    if (profile) autoProfile = profile
+}
+
 // parse command line arguments
-const commandLineArgs = parseCommandLineArgs()
+parseCommandLineArgs()
 
 // check if store works
 config.set("loaded", true)
@@ -181,7 +186,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 
     window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile: commandLineArgs.profile || "" })
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
     })
 
     function loadingFailed(err: Error) {

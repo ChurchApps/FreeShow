@@ -194,7 +194,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         SYNCED_SETTINGS: syncedSettings,
         // SHOWS
         SHOWS: get(shows),
-        STAGE_SHOWS: get(stageShows),
+        STAGE: get(stageShows),
         // STORES
         PROJECTS: { projects: get(projects), folders: get(folders), projectTemplates: get(projectTemplates) },
         OVERLAYS: get(overlays),

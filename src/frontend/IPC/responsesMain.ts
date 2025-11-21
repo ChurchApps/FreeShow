@@ -107,7 +107,7 @@ export const mainResponses: MainResponses = {
 
         shows.set(a)
     },
-    [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
+    [Main.STAGE]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
         const projectsList = a.projects || {}
 

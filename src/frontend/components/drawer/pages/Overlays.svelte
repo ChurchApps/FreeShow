@@ -1,7 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Overlay } from "../../../../types/Show"
-    import { activeEdit, activePage, activeShow, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { addProjectItem } from "../../../converters/project"
+    import { activeEdit, activePage, activeShow, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -18,7 +20,6 @@
     import Card from "../Card.svelte"
     import Effects from "../effects/Effects.svelte"
     import OverlayActions from "./OverlayActions.svelte"
-    import { translateText } from "../../../utils/language"
 
     export let active: string | null
     export let searchValue = ""
@@ -110,9 +111,7 @@
                                     if (e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                                    activeShow.set({ id: overlay.id, type: "overlay" })
-                                    activePage.set("show")
-                                    if ($focusMode) focusMode.set(false)
+                                    addProjectItem({ id: overlay.id, name: overlay.name || "", type: "overlay" })
                                 }}
                             >
                                 <!-- icons -->

@@ -152,13 +152,13 @@
         })
     } else actions = []
 
-    let simularBgs: { path: string; name: string }[] = []
+    let similarBgs: { path: string; name: string }[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
         if (!bgs.filter((a) => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
 
-        requestMain(Main.GET_SIMULAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
-            simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
+        requestMain(Main.GET_SIMILAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
+            similarBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
         })
     }
 
@@ -222,10 +222,10 @@
                 </SelectElem>
             {/each}
 
-            {#if simularBgs.length}
+            {#if similarBgs.length}
                 <h5><T id="media.recommended" /></h5>
 
-                {#each simularBgs as background}
+                {#each similarBgs as background}
                     {@const mediaStyle = getMediaStyle($media[background.path], outputStyle)}
                     {@const type = getMediaType(getExtension(background.path)) || "video"}
 

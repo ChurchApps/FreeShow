@@ -69,8 +69,8 @@
 <Title label="guide_title.output" icon="display_settings" />
 
 <MaterialToggleSwitch label="settings.auto_output" checked={$autoOutput} defaultValue={false} on:change={(e) => autoOutput.set(e.detail)} />
-<!-- apparently does not work on macos -->
-{#if $os.platform !== "darwin"}
+<!-- apparently doesn't work on some versions of macOS -->
+{#if $os.platform !== "darwin" || $special.hideCursor}
     <MaterialToggleSwitch label="settings.hide_cursor_in_output" checked={$special.hideCursor} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "hideCursor")} />
 {/if}
 

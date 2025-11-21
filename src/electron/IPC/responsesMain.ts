@@ -7,13 +7,13 @@ import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from "
 import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { ContentProviderRegistry } from "../contentProviders"
-import { restoreFiles } from "../data/backup"
+import { getBackups, restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
-import { _store, appDataPath, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
+import { _store, appDataPath, config, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
@@ -60,10 +60,11 @@ export const mainResponses: MainResponses = {
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => getMachineId(),
     [Main.IP]: () => os.networkInterfaces(),
+    [Main.CHECK_RAM_USAGE]: () => checkRamUsage(),
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
     [Main.SYNCED_SETTINGS]: () => getStore("SYNCED_SETTINGS"),
-    [Main.STAGE_SHOWS]: () => getStore("STAGE_SHOWS"),
+    [Main.STAGE]: () => getStore("STAGE"),
     [Main.PROJECTS]: () => getStore("PROJECTS"),
     [Main.OVERLAYS]: () => getStore("OVERLAYS"),
     [Main.TEMPLATES]: () => getStore("TEMPLATES"),
@@ -83,6 +84,7 @@ export const mainResponses: MainResponses = {
     [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
     [Main.SAVE]: (a) => save(a),
+    [Main.BACKUPS]: () => getBackups(),
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
@@ -93,12 +95,16 @@ export const mainResponses: MainResponses = {
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
     [Main.DATA_PATH]: () => getDataFolderRoot(),
-    [Main.UPDATE_DATA_PATH]: (data) => createStores(data.oldPath),
+    [Main.UPDATE_DATA_PATH]: (data) => {
+        config.set("dataPath", data.newPath)
+        createStores(data.oldPath)
+    },
     [Main.LOG_ERROR]: (data) => logError(data),
     [Main.OPEN_LOG]: () => openInSystem(_store.ERROR_LOG?.path || ""),
     [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),
     [Main.OPEN_APPDATA]: () => openInSystem(appDataPath, true),
     [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath, true),
+    [Main.OPEN_NOW_PLAYING]: () => openNowPlaying(),
     [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
     [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS
@@ -156,10 +162,10 @@ export const mainResponses: MainResponses = {
     [Main.GET_LYRICS]: (data) => getLyrics(data),
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
     // FILES
-    [Main.RESTORE]: () => restoreFiles(),
+    [Main.RESTORE]: (data) => restoreFiles(data),
     [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
     [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
-    [Main.GET_SIMULAR]: (data) => getSimularPaths(data),
+    [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
     [Main.BUNDLE_MEDIA_FILES]: () => bundleMediaFiles(),
     [Main.FILE_INFO]: (data) => getFileInfo(data),
     [Main.READ_FOLDER]: (data) => getFolderContent(data),
@@ -272,6 +278,23 @@ function getVersion() {
 
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
+}
+
+function checkRamUsage() {
+    const total = os.totalmem()
+    const free = os.freemem()
+
+    return { total, free, performanceMode: shouldEnablePerformanceMode() }
+
+    function shouldEnablePerformanceMode() {
+        const totalGB = total / 1024 / 1024 / 1024
+        const lowTotalRAM = totalGB <= 8
+
+        const usedPercent = (total - free) / total
+        const highUsage = usedPercent > 0.98
+
+        return lowTotalRAM || highUsage
+    }
 }
 
 // URL: open url in default web browser

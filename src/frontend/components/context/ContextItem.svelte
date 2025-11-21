@@ -178,6 +178,7 @@
             if (!$redoHistory.length) disabled = true
         },
         addToProject: () => {
+            // hide button if $selected.id === "media" && one item selected ? as it's now done with double click
             if ($selected.id === "media" && $selected.data.length > 1) {
                 id = "createSlideshow"
                 menu = { label: "context.create_slideshow", icon: "slide" }

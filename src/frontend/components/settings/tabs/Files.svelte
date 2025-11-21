@@ -2,8 +2,8 @@
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, dataPath, driveData, driveKeys, special } from "../../../stores"
-    import { previousAutosave, startAutosave } from "../../../utils/common"
+    import { activePopup, autosave, dataPath, driveData, driveKeys, saved, special } from "../../../stores"
+    import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
@@ -145,12 +145,20 @@
     $: autoBackupInfo = nextAutobackup ? `<span style="${infoStyle}">${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)}<span>` : ""
     $: autoBackup = $special.autoBackup || "weekly"
 
-    function updateDataPath(e: any) {
-        const oldPath = $dataPath
-        sendMain(Main.UPDATE_DATA_PATH, { oldPath })
+    async function updateDataPath(e: any) {
+        if (!$saved) {
+            // save files first and backup just in case
+            save(false, { backup: true, isAutoBackup: true })
+            await wait(1500)
+        }
 
+        const oldPath = $dataPath
         const newPath = e.detail
+
+        sendMain(Main.UPDATE_DATA_PATH, { newPath, oldPath })
         dataPath.set(newPath)
+
+        sendMain(Main.REFRESH_SHOWS)
     }
 </script>
 

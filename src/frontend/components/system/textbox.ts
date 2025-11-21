@@ -37,8 +37,8 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
         const xItems = isResizing ? [directionId.includes("e") ? itemElem.offsetWidth : 0] : [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
         const yItems = isResizing ? [directionId.includes("s") ? itemElem.offsetHeight : 0] : [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
-        // get other items pos
-        ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter((a) => !a.closest(".preview")).forEach(getItemLines)
+            // get other items pos
+            ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter((a) => !a.closest(".preview")).forEach(getItemLines)
 
         function getItemLines(item: HTMLElement, i: number) {
             let id: number | string = i
@@ -109,7 +109,7 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
         })
     }
 
-    // WIP remove duplicate lines (both x and same coords (or less than very simular))
+    // WIP remove duplicate lines (both x and same coords (or less than very similar))
 
     return { styles, lines }
 }
