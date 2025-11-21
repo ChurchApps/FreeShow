@@ -332,9 +332,14 @@
 
     $: if (searchValue.length) referenceSearch()
 
+    let freezeTimeout: NodeJS.Timeout | null = null
     let freezeInput: string | null = null
     async function referenceSearch() {
-        if (freezeInput) {
+        // if search value ends with any number, unfreeze
+        if (/\d$/.test(searchValue) || searchValue.length < (freezeInput?.length || 0)) {
+            if (freezeTimeout) clearTimeout(freezeTimeout)
+            freezeInput = null
+        } else if (freezeInput) {
             searchValue = freezeInput
             return
         }
@@ -359,7 +364,7 @@
             // prevent inputs right after auto complete
             if (!result.chapter) {
                 freezeInput = searchValue
-                setTimeout(() => (freezeInput = null), 200)
+                freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
             }
         }
 
@@ -388,7 +393,10 @@
         const sanitizedValue = value?.replace(/\s+/g, " ").trim()
         if (!sanitizedValue) return null
 
-        const rawSegments = sanitizedValue.split(";").map((segment) => segment.trim()).filter(Boolean)
+        const rawSegments = sanitizedValue
+            .split(";")
+            .map((segment) => segment.trim())
+            .filter(Boolean)
         const segmentsToProcess = rawSegments.length ? rawSegments : [sanitizedValue]
 
         const firstSegment = segmentsToProcess[0]
