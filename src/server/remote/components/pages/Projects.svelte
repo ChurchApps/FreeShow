@@ -319,17 +319,24 @@
     /* Active state - purple accent bar */
     .projectItem :global(button.active) {
         background-color: rgb(255 255 255 / 0.08) !important;
-        border-left: 3px solid var(--secondary) !important;
+        box-shadow: inset 4px 0 0 var(--secondary) !important;
         border-top: none !important;
         border-right: none !important;
         border-bottom: none !important;
         outline: none !important;
-        padding-left: calc(0.65rem - 3px) !important;
         box-sizing: border-box !important;
     }
 
     .projectItem.root :global(button.active) {
         background-color: transparent !important;
+    }
+
+    .rootFolder .projectItem:last-child :global(button.active) {
+        border-bottom-right-radius: 12px !important;
+    }
+
+    .rootFolder .projectItem:first-child :global(button.active) {
+        border-top-right-radius: 12px !important;
     }
 
     .projectItem :global(button.folder) {
@@ -412,9 +419,10 @@
             font-size: 1.05em;
         }
 
-        .projectItem :global(button.active) {
-            padding-left: calc(0.75rem - 3px);
+        .projectItem :global(button) {
+            border-bottom-left-radius: 0 !important;
         }
+
 
         .projectItem :global(button) :global(svg) {
             width: 1.4em;

@@ -943,7 +943,6 @@
         word-wrap: break-word;
     }
 
-    /* Unified header bar with title, ref and actions - matches Projects header styling */
     .header-bar {
         display: flex;
         align-items: center;
@@ -1027,7 +1026,6 @@
         background-color: var(--hover);
     }
 
-    /* Slightly larger icon hit area and size */
     .header-action {
         transform: scale(1);
     }
@@ -1101,7 +1099,6 @@
         border-radius: 0 !important;
     }
 
-    /* text input */
 
     .input {
         width: 100%;
@@ -1210,6 +1207,9 @@
         border-right: none !important;
         border-top: none !important;
         background-color: transparent !important;
+        display: flex !important;
+        align-items: center !important;
+        border-bottom-left-radius: 0 !important;
     }
 
     .section-items :global(.scripture-item:hover) {
@@ -1218,8 +1218,15 @@
 
     .section-items :global(.scripture-item.active) {
         background-color: rgb(255 255 255 / 0.08) !important;
-        border-left: 3px solid var(--secondary) !important;
-        padding-left: calc(0.9rem - 3px) !important;
+        box-shadow: inset 4px 0 0 var(--secondary) !important;
+    }
+
+    .section-items > :global(.scripture-item:first-child.active) {
+        border-top-right-radius: 12px;
+    }
+
+    .section-items > :global(.scripture-item:last-child.active) {
+        border-bottom-right-radius: 12px;
     }
 
     .collection-count {
@@ -1263,10 +1270,8 @@
         text-align: left;
         font-size: inherit !important;
         margin: 0;
-        display: flex;
-        align-items: center;
+        display: block;
         line-height: 1.2;
-        justify-content: flex-start;
     }
 
     :global(.scripture-item) :global(svg) {
@@ -1274,6 +1279,8 @@
         height: 1.5em;
         flex-shrink: 0;
         margin-right: 0.5em;
+        margin-top: 0;
+        align-self: center;
     }
 
     /* Tablet and mobile styles - match project sizes exactly */
@@ -1289,15 +1296,16 @@
         }
 
         .section-items :global(.scripture-item) {
-            padding: 0.85rem 1.1rem !important;
-            min-height: 58px !important;
-            font-size: 1.15em !important;
+            padding: 0.55rem 0.85rem !important;
+            min-height: 46px !important;
+            font-size: 0.95em !important;
         }
 
         :global(.scripture-item) :global(svg) {
-            width: 1.8em !important;
-            height: 1.8em !important;
+            width: 1.4em !important;
+            height: 1.4em !important;
         }
+
 
         .input {
             padding: 14px 20px;

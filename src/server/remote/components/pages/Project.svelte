@@ -415,9 +415,9 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
 
     :global(.section-item-button),
     :global(.project-show-button) {
-        min-height: 48px !important;
-        height: 48px !important;
-        padding: 0.35rem 0.85rem !important;
+        min-height: 50px !important;
+        height: 50px !important;
+        padding: 0.65rem 0.9rem !important;
         font-size: 1em;
         box-sizing: border-box;
         display: flex !important;
@@ -436,14 +436,14 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
 
     :global(.section-item-button.active) {
         background-color: rgb(255 255 255 / 0.08) !important;
-        border-left: 3px solid var(--secondary) !important;
-        padding-left: calc(0.65rem - 3px) !important;
+        box-shadow: inset 4px 0 0 var(--secondary) !important;
     }
 
     :global(.section-item-button) :global(svg) {
-        width: 1.4em;
-        height: 1.4em;
+        width: 1.5em;
+        height: 1.5em;
         margin-right: 0.6em;
+        align-self: center;
     }
 
     :global(.section-item-button) :global(p),
@@ -472,12 +472,18 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         background-color: transparent;
         border-radius: 0;
         transition: background-color 0.15s ease;
-        min-height: 48px;
+        min-height: 50px;
         width: 100%;
+        border-bottom-left-radius: 0 !important;
     }
 
     .section-items > .show-button-wrapper:first-child,
     .section-items > :global(.section-item-button:first-child) {
+        border-top-right-radius: 12px;
+    }
+
+    .section-items > .show-button-wrapper:first-child.active,
+    .section-items > :global(.section-item-button:first-child.active) {
         border-top-right-radius: 12px;
     }
 
@@ -492,7 +498,12 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
 
     .show-button-wrapper.active {
         background-color: rgb(255 255 255 / 0.08);
-        border-left: 3px solid var(--secondary);
+        box-shadow: inset 4px 0 0 var(--secondary);
+    }
+
+    .section-items > .show-button-wrapper:last-child.active,
+    .section-items > :global(.section-item-button:last-child.active) {
+        border-bottom-right-radius: 12px;
     }
 
     .show-button-wrapper :global(button) {
@@ -508,10 +519,22 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         justify-content: space-between;
         gap: 0.6em;
         min-height: inherit;
+        border-bottom-left-radius: 0 !important;
     }
 
-    .show-button-wrapper.active :global(button) {
-        padding-left: calc(0.65rem - 3px) !important;
+
+    /* Project ShowButton icon and text alignment
+       Override `box` sizes and inner margins to align icons and text like scripture */
+    .show-button-wrapper :global(svg) {
+        width: 1.5em;
+        height: 1.5em;
+        margin-right: 0.6em;
+        align-self: center;
+        flex-shrink: 0;
+    }
+    .show-button-wrapper :global(p) {
+        margin: 0 !important;
+        line-height: 1.2;
     }
 
     /* List items */
@@ -531,7 +554,6 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         margin: 0;
     }
 
-    /* Header layout - match global header style */
     .header {
         display: flex;
         align-items: center;
@@ -636,34 +658,35 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         }
 
         .section-items > * {
-            height: 60px;
-            min-height: 60px;
+            height: 46px;
+            min-height: 46px;
             box-sizing: border-box;
         }
 
         :global(.section-item-button),
         :global(.project-show-button) {
-            min-height: 60px !important;
-            height: 60px !important;
-            padding: 0.9rem 1.1rem !important;
-            font-size: 1.1em;
+            min-height: 46px !important;
+            height: 46px !important;
+            padding: 0.55rem 0.85rem !important;
+            font-size: 0.95em;
         }
 
         :global(.section-item-button) :global(svg),
         :global(.project-show-button) :global(svg) {
-            width: 1.75em;
-            height: 1.75em;
+            width: 1.4em;
+            height: 1.4em;
         }
 
         .section-item.info,
         .show-button-wrapper {
-            min-height: 60px;
-            font-size: 1.1em;
+            min-height: 46px;
+            font-size: 0.95em;
         }
 
         .show-button-wrapper :global(button) {
-            padding: 0.9rem 1.1rem !important;
+            padding: 0.55rem 0.85rem !important;
         }
+
 
         .floating-input-container {
             bottom: 15px;
