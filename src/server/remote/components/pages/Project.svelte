@@ -372,38 +372,45 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     .project-sections {
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
-        margin: 0.75rem 0;
-        align-items: stretch;
+        gap: 10px;
+        margin: 10px 0;
+        padding-right: 5px;
         width: 100%;
-        padding-right: 12px;
+        box-sizing: border-box;
+        align-items: flex-start;
     }
 
     .section-card {
         background-color: var(--primary-darkest);
         border: 1px solid var(--primary-lighter);
-        border-left: none;
-        border-radius: 0 12px 12px 0;
+        border-left: 0;
+        border-radius: 10px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
         width: 100%;
-        /* max-width: 520px; */
+        max-width: 520px;
     }
-
     .section-title {
-        font-size: 0.78em;
         font-weight: 600;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        padding: 0.45rem 0.95rem;
-        background-color: var(--primary-darker);
+        opacity: 0.85;
+        background: rgb(0 0 0 / 0.25);
         border-bottom: 1px solid var(--primary-lighter);
-        color: rgb(255 255 255 / 0.75);
     }
 
     .section-items {
         display: flex;
         flex-direction: column;
+        width: 100%;
+    }
+
+    .section-items > .show-button-wrapper,
+    .section-items > :global(.section-item-button) {
+        width: 100%;
     }
 
     :global(.section-item-button),
@@ -466,6 +473,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         border-radius: 0;
         transition: background-color 0.15s ease;
         min-height: 48px;
+        width: 100%;
     }
 
     .section-items > .show-button-wrapper:first-child,

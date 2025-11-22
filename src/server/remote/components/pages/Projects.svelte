@@ -47,7 +47,7 @@
                 type: "folder",
                 parent: item.parent || "/",
                 index,
-                path: itemPath
+                path: path
             })
 
             // Recursively add children for opened folders
@@ -253,7 +253,7 @@
         flex-direction: column;
         gap: 5px;
         margin: 10px 0;
-        margin-right: 5px;
+        padding-right: 5px;
     }
 
     .rootFolder {
@@ -264,6 +264,8 @@
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         overflow: hidden;
+        width: 100%;
+        max-width: 520px;
     }
 
     .title {
@@ -395,7 +397,7 @@
 
         .fullTree {
             margin: 10px 0;
-            margin-right: 12px;
+            padding-right: 12px;
         }
 
         .rootFolder {
