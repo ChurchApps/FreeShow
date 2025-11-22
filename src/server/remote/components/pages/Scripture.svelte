@@ -646,6 +646,7 @@
         const parts = ref.split('.')
         const bookNum = parseInt(parts[0], 10)
         const chapterNum = parseInt(parts[1], 10)
+        const verseNum = parts[2] ? parseInt(parts[2], 10) : 0
 
         // Close search first so ScriptureContent component is rendered
         openScriptureSearch = false
@@ -665,6 +666,15 @@
                         scriptureContentRef.navigateToVerse(bookNum, chapterNum)
                     }
                 }, 100)
+            }
+
+            // Auto-scroll to verse in list mode after navigation
+            if ($scriptureViewList && verseNum > 0) {
+                setTimeout(() => {
+                    if (scriptureContentRef?.scrollToVerse) {
+                        scriptureContentRef.scrollToVerse(verseNum)
+                    }
+                }, 200)
             }
         }, 0)
     }

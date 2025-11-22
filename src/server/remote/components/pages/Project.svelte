@@ -203,6 +203,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                                                 class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}
                                             >
                                                 <ShowButton
+                                                    class="project-show-button"
                                                     on:click={(e) => {
                                                         _set("active", show)
                                                         _set("activeTab", "show")
@@ -405,16 +406,21 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         flex-direction: column;
     }
 
-    :global(.section-item-button) {
-        padding: 0.22rem 0.65rem !important;
-        min-height: 44px;
+    :global(.section-item-button),
+    :global(.project-show-button) {
+        min-height: 48px !important;
+        height: 48px !important;
+        padding: 0.35rem 0.85rem !important;
         font-size: 1em;
+        box-sizing: border-box;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.6em;
         border-radius: 0 !important;
-        text-align: left;
-        justify-content: flex-start;
         background-color: transparent !important;
         border: none !important;
-        transition: background-color 0.15s ease;
+        box-shadow: none !important;
+        text-align: left;
     }
 
     :global(.section-item-button:hover) {
@@ -444,10 +450,10 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     .section-item.info {
         display: flex;
         align-items: center;
-        gap: 0.65em;
-        padding: 0.65rem 0.85rem;
+        gap: 0.6em;
+        padding: 0.35rem 0.85rem;
         min-height: 48px;
-        font-size: 0.85em;
+        font-size: 1em;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         opacity: 0.75;
@@ -459,6 +465,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         background-color: transparent;
         border-radius: 0;
         transition: background-color 0.15s ease;
+        min-height: 48px;
     }
 
     .section-items > .show-button-wrapper:first-child,
@@ -486,10 +493,13 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0.22rem 0.65rem !important;
-        min-height: 44px;
         font-size: 1em;
         text-align: left;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between;
+        gap: 0.6em;
+        min-height: inherit;
     }
 
     .show-button-wrapper.active :global(button) {
@@ -617,20 +627,34 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
             gap: 3px;
         }
 
-        :global(.section-item-button) {
-            padding: 0.9rem 1.1rem !important;
+        .section-items > * {
+            height: 60px;
             min-height: 60px;
+            box-sizing: border-box;
+        }
+
+        :global(.section-item-button),
+        :global(.project-show-button) {
+            min-height: 60px !important;
+            height: 60px !important;
+            padding: 0.9rem 1.1rem !important;
             font-size: 1.1em;
         }
 
-        :global(.section-item-button) :global(svg) {
+        :global(.section-item-button) :global(svg),
+        :global(.project-show-button) :global(svg) {
             width: 1.75em;
             height: 1.75em;
         }
 
-        .section-item.info {
+        .section-item.info,
+        .show-button-wrapper {
             min-height: 60px;
-            font-size: 1em;
+            font-size: 1.1em;
+        }
+
+        .show-button-wrapper :global(button) {
+            padding: 0.9rem 1.1rem !important;
         }
 
         .floating-input-container {
