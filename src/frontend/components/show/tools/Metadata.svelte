@@ -138,7 +138,7 @@
     <HRule title="edit.style" />
     <div style="padding: 10px;">
         <InputRow>
-            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} on:change={(e) => updateMetadata(e, "override")} />
+            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} style="width: 100%;" on:change={(e) => updateMetadata(e, "override")} />
             {#if !metadata.override}
                 <MaterialButton icon="edit" title="menu.edit" on:click={editMetadataStyle} />
             {/if}

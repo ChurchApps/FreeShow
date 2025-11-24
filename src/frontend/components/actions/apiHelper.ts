@@ -609,7 +609,9 @@ export function timerSeekTo(data: API_seek) {
 // OTHER
 
 export function toggleLogSongUsage(data: API_toggle_specific) {
-    const newValue = data.value !== undefined ? data.value : !get(special).logSongUsage
+    if ((data.value as any) === "false") data.value = false // from Companion
+
+    const newValue = data.value !== undefined ? !!data.value : !get(special).logSongUsage
     special.update((a) => {
         a.logSongUsage = newValue
         return a

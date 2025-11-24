@@ -15,6 +15,7 @@ import { openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
+import { getDefaultElements } from "./createData"
 
 let initialized = false
 let startupProfile = ""
@@ -139,6 +140,8 @@ async function getStoredData() {
 
     // LOAD SHOWS FROM FOLDER
     sendMain(Main.SHOWS)
+
+    getDefaultElements()
 }
 
 async function startupOutput() {

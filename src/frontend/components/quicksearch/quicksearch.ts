@@ -440,7 +440,7 @@ function getMenubarItems() {
 const drawerSubmenus = [
     // media
     { id: "online", name: "media.online", icon: "web" },
-    { id: "screens", name: "live.screens", icon: "screen" },
+    { id: "screens", name: "live.screens", icon: "screen", aliases: ["live.windows", "NDI®"] },
     { id: "cameras", name: "live.cameras", icon: "camera" },
     // audio
     { id: "microphones", name: "live.microphones", icon: "microphone" },

@@ -266,12 +266,12 @@ export const receiveREMOTE: any = {
                     referenceFull: ref.reference || "",
                     verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
                 }))
-                
+
                 // Apply book filter if provided
                 if (bookFilter) {
                     filteredResults = filteredResults.filter((ref: any) => ref.book === bookFilter)
                 }
-                
+
                 msg.data.searchResults = {
                     type: "text",
                     results: filteredResults.slice(0, 50),

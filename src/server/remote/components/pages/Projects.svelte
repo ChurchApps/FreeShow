@@ -23,7 +23,7 @@
         return [...items].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
     }
 
-    function buildTree(parent = "/", index = 0, path = ""): TreeItem[] {
+    function buildTree(parent = "/", index = 0, path = "", _updater: any = null): TreeItem[] {
         const tree: TreeItem[] = []
 
         // Get folders in this parent
@@ -50,11 +50,8 @@
                 path: path
             })
 
-            // Recursively add children for opened folders
-            if ($openedFolders.includes(item.id)) {
-                const children = buildTree(item.id, index + 1, itemPath)
-                tree.push(...children)
-            }
+            const children = buildTree(item.id, index + 1, itemPath)
+            tree.push(...children)
         })
 
         // Add projects
@@ -72,7 +69,7 @@
         return tree
     }
 
-    $: tree = buildTree()
+    $: tree = buildTree("/", 0, "", { $projects })
 
     // Split tree into sections (root folders and their children)
     $: splittedTree = (() => {
@@ -105,7 +102,10 @@
 
     function toggleFolder(folderId: string) {
         if ($openedFolders.includes(folderId)) {
-            _set("openedFolders", $openedFolders.filter((id) => id !== folderId))
+            _set(
+                "openedFolders",
+                $openedFolders.filter((id) => id !== folderId)
+            )
         } else {
             _set("openedFolders", [...$openedFolders, folderId])
         }
@@ -148,28 +148,16 @@
                                 {@const isActive = $activeProject?.id === item.id}
                                 {@const activeProjectParent = $activeProject?.parent || "/"}
                                 {@const isActiveFolder = item.type === "folder" && item.id === activeProjectParent && activeProjectParent !== "/"}
-                                
+
                                 {#if shown}
                                     <div class="projectItem" class:indented={item.parent !== "/"} class:root={item.parent === "/"} style="margin-inline-start: {8 * item.index}px;">
                                         {#if item.type === "folder"}
-                                            <Button 
-                                                on:click={() => toggleFolder(item.id)} 
-                                                class="project-button folder"
-                                                active={isActiveFolder}
-                                                bold={false}
-                                                border
-                                            >
+                                            <Button on:click={() => toggleFolder(item.id)} class="project-button folder" active={isActiveFolder} bold={false} border>
                                                 <Icon id={isOpened ? "folderOpen" : "folder"} right />
                                                 <span>{item.name}</span>
                                             </Button>
                                         {:else}
-                                            <Button 
-                                                on:click={() => openProject(item.id)} 
-                                                class="project-button"
-                                                active={isActive}
-                                                bold={false}
-                                                border
-                                            >
+                                            <Button on:click={() => openProject(item.id)} class="project-button" active={isActive} bold={false} border>
                                                 <Icon id="project" right />
                                                 <span>{item.name}</span>
                                             </Button>
@@ -422,7 +410,6 @@
         .projectItem :global(button) {
             border-bottom-left-radius: 0 !important;
         }
-
 
         .projectItem :global(button) :global(svg) {
             width: 1.4em;

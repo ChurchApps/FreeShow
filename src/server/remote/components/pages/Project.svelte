@@ -8,72 +8,66 @@
     import { _set, active, activeProject, activeShow, dictionary, mediaCache, project, projectsOpened, shows } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Projects from "./Projects.svelte"
-import type { ShowList } from "../../../../types/Show"
+    import type { ShowList } from "../../../../types/Show"
 
-type ProjectSection = {
-    id: string
-    name: string | null
-    items: any[]
-}
-
-const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
-const THUMBNAIL_TYPES = new Set(["image", "video"])
-
-let editProject = false
-let showLookup: Record<string, ShowList> = {}
-
-$: showLookup = Array.isArray($shows)
-    ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show]))
-    : {}
-
-$: projectSections = buildProjectSections($activeProject?.shows || [])
-$: canAddActiveShow =
-    ($active.type || "show") === "show" &&
-    $activeShow &&
-    !!$activeProject?.shows &&
-    !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
-
-function getShowId(show: any): string | undefined {
-    return show?.id
-}
-
-function getShowType(show: any): string {
-    return (show?.type || "").toString()
-}
-
-function isMediaType(type: string): boolean {
-    return MEDIA_TYPES.has(type)
-}
-
-function needsThumbnail(type: string): boolean {
-    return THUMBNAIL_TYPES.has(type)
-}
-
-function buildProjectSections(shows: any[] = []): ProjectSection[] {
-    if (!Array.isArray(shows) || !shows.length) return []
-
-    const sections: ProjectSection[] = []
-    let current: ProjectSection | null = null
-
-    const startSection = (id: string, name: string | null) => {
-        const section = { id, name, items: [] as any[] }
-        sections.push(section)
-        return section
+    type ProjectSection = {
+        id: string
+        name: string | null
+        items: any[]
     }
 
-    current = startSection("section-root", null)
+    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
+    const THUMBNAIL_TYPES = new Set(["image", "video"])
 
-    shows.forEach((show, index) => {
-        if (getShowType(show).toLowerCase() === "section") {
-            current = startSection(`section-${index}`, show?.name?.trim() || null)
-            return
+    let editProject = false
+    let showLookup: Record<string, ShowList> = {}
+
+    $: showLookup = Array.isArray($shows) ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show])) : {}
+
+    $: projectSections = buildProjectSections($activeProject?.shows || [])
+    $: canAddActiveShow = ($active.type || "show") === "show" && $activeShow && !!$activeProject?.shows && !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
+
+    function getShowId(show: any): string | undefined {
+        return show?.id
+    }
+
+    function getShowType(show: any): string {
+        return (show?.type || "").toString()
+    }
+
+    function isMediaType(type: string): boolean {
+        return MEDIA_TYPES.has(type)
+    }
+
+    function needsThumbnail(type: string): boolean {
+        return THUMBNAIL_TYPES.has(type)
+    }
+
+    function buildProjectSections(shows: any[] = []): ProjectSection[] {
+        if (!Array.isArray(shows) || !shows.length) return []
+
+        const sections: ProjectSection[] = []
+        let current: ProjectSection | null = null
+
+        const startSection = (id: string, name: string | null) => {
+            const section = { id, name, items: [] as any[] }
+            sections.push(section)
+            return section
         }
 
-        current?.items.push(show)
-    })
+        current = startSection("section-root", null)
 
-    return sections.filter((section) => section.items.length)
-}
+        shows.forEach((show, index) => {
+            if (getShowType(show).toLowerCase() === "section") {
+                current = startSection(`section-${index}`, show?.name?.trim() || null)
+                return
+            }
+
+            current?.items.push(show)
+        })
+
+        return sections.filter((section) => section.items.length)
+    }
 
     function renameProject() {
         const name = prompt("Enter a new name:", $activeProject?.name)
@@ -113,25 +107,11 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                     <p style="flex: 1;text-align: center;padding: 0.2em 0.8em;">{$activeProject.name}</p>
 
                     <div class="header-actions">
-                        <Button
-                            on:click={renameProject}
-                            center
-                            dark
-                            class="header-action-button"
-                            aria-label={translate("actions.rename", $dictionary)}
-                            title={translate("actions.rename", $dictionary)}
-                        >
+                        <Button on:click={renameProject} center dark class="header-action-button" aria-label={translate("actions.rename", $dictionary)} title={translate("actions.rename", $dictionary)}>
                             <Icon id="rename" size={1.2} />
                         </Button>
 
-                        <Button
-                            on:click={deleteProject}
-                            center
-                            dark
-                            class="header-action-button destructive"
-                            aria-label={translate("actions.delete", $dictionary)}
-                            title={translate("actions.delete", $dictionary)}
-                        >
+                        <Button on:click={deleteProject} center dark class="header-action-button destructive" aria-label={translate("actions.delete", $dictionary)} title={translate("actions.delete", $dictionary)}>
                             <Icon id="delete" size={1.2} />
                         </Button>
                     </div>
@@ -140,7 +120,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                 <div class="list edit-list">
                     {#each $activeProject.shows as show, i}
                         {@const showId = getShowId(show)}
-                        {@const lookupShow = showId ? showLookup[showId] ?? null : null}
+                        {@const lookupShow = showId ? (showLookup[showId] ?? null) : null}
                         <div class="item">
                             <p style="padding: 4px 8px;">{lookupShow?.name || show.name || (showId ? getFileName(removeExtension(showId)) : show.type)}</p>
 
@@ -173,7 +153,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                                     {#each section.items as show}
                                         {@const showId = getShowId(show)}
                                         {@const showType = getShowType(show)}
-                                        {@const showData = showId ? showLookup[showId] ?? null : null}
+                                        {@const showData = showId ? (showLookup[showId] ?? null) : null}
 
                                         {#if isMediaType(showType)}
                                             <Button
@@ -198,10 +178,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                                                 <p>{showType}</p>
                                             </div>
                                         {:else if showData}
-                                            <div
-                                                class="show-button-wrapper"
-                                                class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}
-                                            >
+                                            <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}>
                                                 <ShowButton
                                                     class="project-show-button"
                                                     on:click={(e) => {
@@ -356,7 +333,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     }
 
     .project-shows-list::-webkit-scrollbar-track,
-        .project-shows-list::-webkit-scrollbar-corner {
+    .project-shows-list::-webkit-scrollbar-corner {
         background: rgb(255 255 255 / 0.05);
     }
 
@@ -522,7 +499,6 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         border-bottom-left-radius: 0 !important;
     }
 
-
     /* Project ShowButton icon and text alignment
        Override `box` sizes and inner margins to align icons and text like scripture */
     .show-button-wrapper :global(svg) {
@@ -686,7 +662,6 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         .show-button-wrapper :global(button) {
             padding: 0.55rem 0.85rem !important;
         }
-
 
         .floating-input-container {
             bottom: 15px;

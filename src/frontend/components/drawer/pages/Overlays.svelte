@@ -75,7 +75,7 @@
     }
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
+<div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_overlays" on:wheel={wheel}>
     {#if active === "effects"}
         <Effects {searchValue} />
     {:else}

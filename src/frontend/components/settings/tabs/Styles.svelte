@@ -187,7 +187,7 @@
     on:input={(e) => updateStyle(e, "background")}
 />
 
-<InputRow>
+<InputRow arrow={!!(currentStyle.backgroundImage && (currentStyle.clearStyleBackgroundOnText || activeLayers.includes("slide")))}>
     <MaterialFilePicker
         label="edit.background_media{templateBackgroundImage && bgImage ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;">settings.overrided_value<span>' : ''}"
         value={bgImage}
@@ -198,10 +198,11 @@
     {#if bgImage}
         <MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />
     {/if}
+
+    <div slot="menu">
+        <MaterialToggleSwitch label="settings.clear_style_background_on_text" checked={currentStyle.clearStyleBackgroundOnText} defaultValue={false} on:change={(e) => updateStyle(e.detail, "clearStyleBackgroundOnText")} />
+    </div>
 </InputRow>
-{#if currentStyle.backgroundImage && (currentStyle.clearStyleBackgroundOnText || activeLayers.includes("slide"))}
-    <MaterialToggleSwitch label="settings.clear_style_background_on_text" checked={currentStyle.clearStyleBackgroundOnText} defaultValue={false} on:change={(e) => updateStyle(e.detail, "clearStyleBackgroundOnText")} />
-{/if}
 
 <MaterialPopupButton label="popup.transition" id="style" value={currentStyle.transition} name={transitionLabel} popupId="transition" icon="transition" on:change={(e) => updateStyle(e.detail || "", "transition")} allowEmpty />
 <MaterialPopupButton label="edit.media_fit" value={mediaFit} defaultValue="contain" name={mediaFitLabel} popupId="media_fit" icon="media_fit" data={{ updateCustom, styleId }} on:change={(e) => updateStyle(e.detail, "fit")} />

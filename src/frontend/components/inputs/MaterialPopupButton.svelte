@@ -75,7 +75,7 @@
         }}
         on:keydown={handleKeydown}
     >
-        <span class="selected-text" data-title={value ? name : ""}>
+        <span class="selected-text" data-title={value ? translateText(name) : ""}>
             {#if value}
                 <!-- {#if icon}<Icon id={icon} white />{/if} -->
 

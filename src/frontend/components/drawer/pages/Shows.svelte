@@ -238,16 +238,22 @@
             return a
         })
     }
+
+    let activeIsSearch = true
+    function mouseup() {
+        activeIsSearch = document.activeElement?.classList.contains("search") || false
+    }
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:mouseup={mouseup} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <!-- bind:this={listElem} -->
     <div class="column {readOnly ? '' : 'context #drawer_show'}">
         {#if filteredShows.length}
-            {#if createFromSearch && searchValue.length && typeof searchValue === "string"}
+            {#if createFromSearch && searchValue.length && typeof searchValue === "string" && activeIsSearch}
                 <div class="warning">
+                    <!-- role="none" on:click={createNew} -->
                     <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
                 </div>
             {/if}
@@ -279,6 +285,7 @@
                                 data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)}
                                 class="#drawer_show_button"
                                 match={show.match || null}
+                                isFirst={firstMatch?.id === show.id && activeIsSearch}
                             />
                         {/if}
                     </SelectElem>
@@ -342,8 +349,8 @@
     .sort-header {
         display: flex;
         height: 28px;
-        border-radius: 8px;
-        background-color: var(--primary-darkest);
+        border-radius: 4px;
+        background-color: var(--primary-darker);
         /* box-shadow: 0 3px 8px rgb(0 0 0 / 0.2); */
         border-bottom: 1px solid var(--primary-lighter);
     }
@@ -356,7 +363,7 @@
         border-right: 1px solid var(--primary-lighter) !important;
     }
     .sort-header :global(button.isActive) {
-        background-color: var(--primary-darker) !important;
+        background-color: var(--primary-darkest) !important;
         border-bottom: 0 !important;
     }
 

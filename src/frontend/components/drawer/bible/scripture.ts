@@ -965,7 +965,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(showPopup = false, bypassPopup = false) {
+export async function createScriptureShow(showPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -976,7 +976,8 @@ export async function createScriptureShow(showPopup = false, bypassPopup = false
 
     // force the popup when attribution or version settings must be confirmed
     const requiresVersionPopup = !!(biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion)
-    if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+    // if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+    if (showPopup) {
         popupData.set({ showVersion: requiresVersionPopup, create: true })
         activePopup.set("scripture_show")
         return

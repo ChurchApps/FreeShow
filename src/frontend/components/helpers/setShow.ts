@@ -56,7 +56,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
-                quickAccess: value.quickAccess,
+                quickAccess: value.quickAccess || {},
             }
 
             if (value.origin) a[id].origin = value.origin

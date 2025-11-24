@@ -85,7 +85,7 @@
     }
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
+<div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_templates" on:wheel={wheel}>
     <DropArea id="templates">
         {#if preloader && fullFilteredTemplates.length > 10}
             <Center>
