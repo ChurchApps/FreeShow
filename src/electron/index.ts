@@ -2,7 +2,7 @@
 // This is the electron entry point
 
 import type { Rectangle } from "electron"
-import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, screen } from "electron"
+import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
@@ -19,6 +19,7 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { registerProtectedProtocol } from "./data/protected"
 
 // ----- STARTUP -----
 
@@ -69,6 +70,19 @@ if (disableHWA === true) {
     console.info("Hardware Acceleration Disabled")
 }
 
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: "freeshow-protected",
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            corsEnabled: true,
+            stream: true
+        }
+    }
+])
+
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", startApp)
@@ -90,6 +104,8 @@ function startApp() {
     setTimeout(createLoading)
 
     setupStores()
+
+    registerProtectedProtocol()
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()
