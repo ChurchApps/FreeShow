@@ -434,7 +434,7 @@
         "variable": "Variable",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
-        "now_playing": "NowPlaying file",
+        "now_playing": "Now playing file",
         "aspect_ratio": "Change aspect ratio",
         "max_lines": "Set max lines",
         "transition": "Transition",

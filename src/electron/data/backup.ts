@@ -118,7 +118,7 @@ export function restoreFiles(data?: { folder: string }) {
         }
 
         if (filePath.includes("SETTINGS")) {
-            restoreShows(filePath)
+            restoreStore(filePath, "SETTINGS")
             return
         }
 
