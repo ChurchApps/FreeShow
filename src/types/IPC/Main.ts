@@ -55,6 +55,7 @@ export enum Main {
     SHOW = "SHOW",
     SAVE = "SAVE",
     BACKUPS = "BACKUPS",
+    DELETE_BACKUP = "DELETE_BACKUP",
     ///////////////////
     SPELLCHECK = "SPELLCHECK",
     ////
@@ -148,6 +149,7 @@ export interface MainSendPayloads {
     [Main.SHOW]: { id: string; name: string }
     [Main.SAVE]: SaveData
     ////////////
+    [Main.DELETE_BACKUP]: { path: string }
     [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
@@ -221,7 +223,7 @@ export interface MainReturnPayloads {
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
-    [Main.BACKUPS]: { name: string, date: number }[]
+    [Main.BACKUPS]: { path: string; name: string, date: number; size: number }[]
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }

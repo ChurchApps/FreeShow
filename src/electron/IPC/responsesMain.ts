@@ -10,7 +10,7 @@ import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { ContentProviderRegistry } from "../contentProviders"
-import { getBackups, restoreFiles } from "../data/backup"
+import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
@@ -86,6 +86,7 @@ export const mainResponses: MainResponses = {
     /// //////////////////////
     [Main.SAVE]: (a) => save(a),
     [Main.BACKUPS]: () => getBackups(),
+    [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
