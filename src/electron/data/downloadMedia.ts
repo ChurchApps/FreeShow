@@ -3,12 +3,12 @@ import fs from "fs"
 import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { LessonFile, LessonsData } from "../../types/Main"
-import { sendToMain } from "../IPC/main"
-import { doesPathExist, getDataFolderPath, getValidFileName, makeDir } from "../utils/files"
-import { waitUntilValueIsDefined } from "../utils/helpers"
-import { decryptFile, encryptFile, getProtectedPath } from "./protected"
-import { filePathHashCode } from "./thumbnails"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
+import { sendToMain } from "../IPC/main"
+import { doesPathExist, getDataFolderPath, getMimeType, getValidFileName, makeDir } from "../utils/files"
+import { waitUntilValueIsDefined } from "../utils/helpers"
+import { encryptFile, getProtectedPath, registerProtectedMediaFile } from "./protected"
+import { filePathHashCode } from "./thumbnails"
 
 export function downloadLessonsMedia(lessons: LessonsData[]) {
     const replace = lessons.map(checkLesson)
@@ -245,7 +245,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
         .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(outputPath, (err) => console.error(err))
+                fs.unlink(outputPath, (err) => err && console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 return
@@ -261,16 +261,16 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             })
 
             fileStream.on("error", (err1) => {
-                fs.unlink(outputPath, (err2) => console.error(err2))
+                fs.unlink(outputPath, (err2) => err2 && console.error(err2))
                 console.error(`File error: ${err1.message}`)
 
                 retry()
             })
 
-            fileStream.on("finish", () => {
+            fileStream.on("finish", async () => {
                 fileStream.close()
                 downloadCount++
-                console.error(`Finished downloading file: ${url}`)
+                console.info(`Finished downloading file: ${url}`)
             })
         })
         .on("error", (err) => {
@@ -308,23 +308,24 @@ export async function checkIfMediaDownloaded({ url, contentFile }: { url: string
         const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
         if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             try {
-                const encryptionKey = provider.getEncryptionKey?.()
-                if (!encryptionKey) {
-                    console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
+                const protectedUrl = registerProtectedMediaFile({
+                    filePath: outputPath,
+                    providerId: contentFile.providerId,
+                    mimeType: getMimeTypeFromContentFile(contentFile, outputPath)
+                })
+                if (!protectedUrl) {
+                    console.error(`Failed to register protected media for ${url}`)
                     return null
                 }
-                const decryptedData = await decryptFile(outputPath, encryptionKey)
-                return { path: outputPath, buffer: decryptedData }
+                return { path: outputPath, buffer: null, protectedUrl }
             } catch (err) {
-                console.error(`Failed to decrypt file: ${url}`, err)
-                // this response will request a re-download, and replace the file
-                // important in case the key has changed or file is corrupted
+                console.error(`Failed to prepare protected media: ${url}`, err)
                 return null
             }
         }
     }
 
-    return { path: outputPath, buffer: null }
+    return { path: outputPath, buffer: null, protectedUrl: null }
 }
 
 function getMediaThumbnailPath(url: string, contentFile?: any) {
@@ -342,4 +343,11 @@ function getMediaThumbnailPath(url: string, contentFile?: any) {
     const outputFolder = getDataFolderPath("onlineMedia")
 
     return path.join(outputFolder, fileName)
+}
+
+function getMimeTypeFromContentFile(contentFile: any, fallbackPath: string) {
+    if (typeof contentFile?.mimeType === "string") return contentFile.mimeType
+    if (contentFile?.type === "image") return "image/jpeg"
+    if (contentFile?.type === "video") return "video/mp4"
+    return getMimeType(fallbackPath) || "application/octet-stream"
 }
