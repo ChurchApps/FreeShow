@@ -1,10 +1,8 @@
 <script lang="ts">
     import { derived } from "svelte/store"
     import type { ContentFile, ContentProviderId } from "../../../../electron/contentProviders/base/types"
-    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
-    import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
     import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
