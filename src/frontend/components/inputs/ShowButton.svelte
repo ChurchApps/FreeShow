@@ -16,8 +16,6 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let active: string | null = null
-
     export let id: string
     export let show: any // ShowList | ShowRef
     export let data: null | string = null
@@ -26,6 +24,7 @@
     $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
+    $: showNumber = show?.quickAccess?.number || show?.meta?.number || ""
 
     let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
@@ -47,7 +46,7 @@
     let iconID: null | string = null
     let custom = false
     $: {
-        // WIP simular to focus.ts
+        // WIP similar to focus.ts
         if (icon) {
             custom = false
             if (type === "show") {
@@ -196,33 +195,31 @@
         style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}"
         tab
     >
-        <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
-            {#if icon || show.locked}
-                <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
-            {/if}
+        <div class="row">
+            <span class="cell" style="max-width: calc(100% {showNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
+                {#if icon || show.locked}
+                    <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
+                {/if}
 
-            {#if active === "number" && show.quickAccess?.number}
-                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-inline-end: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
-            {/if}
+                <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
 
-            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
+                {#if show.layoutInfo?.name}
+                    <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
+                {/if}
 
-            {#if active !== "number" && show.quickAccess?.number}
-                <span style="opacity: 0.8;white-space: nowrap;">{show.quickAccess.number}</span>
-            {/if}
+                {#if show.scheduleLength !== undefined && Number(show.scheduleLength)}
+                    <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
+                {/if}
+            </span>
 
-            {#if show.layoutInfo?.name}
-                <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
-            {/if}
+            <span class="cell">
+                {#if showNumber}
+                    <span class="number">{showNumber}</span>
+                {/if}
 
-            {#if show.scheduleLength !== undefined && Number(show.scheduleLength)}
-                <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
-            {/if}
-        </span>
-
-        {#if data}
-            <span style="opacity: 0.5;padding-inline-start: 10px;font-size: 0.9em;">{data}</span>
-        {/if}
+                <span class="date">{data || ""}</span>
+            </span>
+        </div>
     </MaterialButton>
 </div>
 
@@ -233,8 +230,45 @@
 
     .main :global(button) {
         width: 100%;
-        justify-content: space-between;
         padding: 0.15em 0.8em;
+    }
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .cell {
+        display: flex;
+        align-items: center;
+
+        max-width: 75%;
+    }
+
+    .cell .number,
+    .cell .date {
+        font-size: 0.9em;
+        white-space: nowrap;
+        text-align: right;
+        color: var(--text);
+        opacity: 0.75;
+    }
+
+    .cell .number {
+        font-weight: 600;
+        text-align: center;
+
+        min-width: var(--number-width);
+    }
+
+    .cell .date {
+        font-variant-numeric: tabular-nums;
+
+        /* remove button padding & scrollbar width */
+        min-width: calc(var(--modified-width) - 0.8em - 8px);
     }
     .main :global(button p) {
         margin: 3px 5px;
@@ -248,10 +282,7 @@
         opacity: 0.8;
         font-size: 0.8em;
         padding-inline-start: 5px;
-
-        /* overflow: hidden;
-        text-overflow: ellipsis; */
         white-space: nowrap;
-        max-width: 40%;
+        max-width: 45%;
     }
 </style>

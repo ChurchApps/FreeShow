@@ -9,7 +9,7 @@ import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
-import { config, updateDataPath } from "./data/store"
+import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
 import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
@@ -37,8 +37,13 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
+let autoProfile = ""
+export function setAutoProfile(profile: string) {
+    if (profile) autoProfile = profile
+}
+
 // parse command line arguments
-const commandLineArgs = parseCommandLineArgs()
+parseCommandLineArgs()
 
 // check if store works
 config.set("loaded", true)
@@ -81,7 +86,7 @@ function startApp() {
 
     setTimeout(createLoading)
 
-    updateDataPath({ load: true })
+    setupStores()
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()
@@ -181,7 +186,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 
     window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile: commandLineArgs.profile || "" })
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
     })
 
     function loadingFailed(err: Error) {

@@ -168,7 +168,10 @@
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
 
-    $: isOptimized = $special.optimizedMode
+    const isOptimized = $special.optimizedMode
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -190,7 +193,7 @@ bind:offsetWidth={width} -->
         ? 'width: 100%;'
         : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${
               backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''
-          }`}{cssVariables}"
+          }`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
 >

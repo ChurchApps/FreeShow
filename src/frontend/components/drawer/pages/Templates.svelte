@@ -19,6 +19,7 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
+    import { translateText } from "../../../utils/language"
 
     export let active: string | null
     export let searchValue = ""
@@ -69,6 +70,19 @@
     onMount(() => setTimeout(() => (preloader = false), 20))
 
     const ignoreDefault = ["metadata", "message", "double"]
+
+    $: templateWithNonExistentCategory = active === "unlabeled" && filteredTemplates.some((s) => s.category)
+    function createNonExistentCategories() {
+        const nonexistentCategories = [...new Set(filteredTemplates.map((s) => s.category))].filter((c) => c && !$templateCategories[c]) as string[]
+
+        templateCategories.update((a) => {
+            nonexistentCategories.forEach((id) => {
+                if (a[id]) return
+                a[id] = { name: translateText("main.unnamed") }
+            })
+            return a
+        })
+    }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
@@ -159,6 +173,14 @@
         {/if}
     </DropArea>
 </div>
+
+{#if templateWithNonExistentCategory}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton icon="autofill" on:click={createNonExistentCategories}>
+            <T id="category.create_nonexistent" />
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <FloatingInputs onlyOne>
     <MaterialButton disabled={readOnly} icon="add" title="new.template" on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "template" } })}>

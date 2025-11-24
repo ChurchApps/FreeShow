@@ -1,7 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Overlay } from "../../../../types/Show"
-    import { activeEdit, activePage, activeShow, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { addProjectItem } from "../../../converters/project"
+    import { activeEdit, activePage, activeShow, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -58,6 +60,19 @@
     // open drawer tab instantly before content has loaded
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
+
+    $: overlayWithNonExistentCategory = active === "unlabeled" && filteredOverlays.some((s) => s.category)
+    function createNonExistentCategories() {
+        const nonexistentCategories = [...new Set(filteredOverlays.map((s) => s.category))].filter((c) => c && !$overlayCategories[c]) as string[]
+
+        overlayCategories.update((a) => {
+            nonexistentCategories.forEach((id) => {
+                if (a[id]) return
+                a[id] = { name: translateText("main.unnamed") }
+            })
+            return a
+        })
+    }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
@@ -96,9 +111,7 @@
                                     if (e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                                    activeShow.set({ id: overlay.id, type: "overlay" })
-                                    activePage.set("show")
-                                    if ($focusMode) focusMode.set(false)
+                                    addProjectItem({ id: overlay.id, name: overlay.name || "", type: "overlay" })
                                 }}
                             >
                                 <!-- icons -->
@@ -125,6 +138,14 @@
         </DropArea>
     {/if}
 </div>
+
+{#if overlayWithNonExistentCategory}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton icon="autofill" on:click={createNonExistentCategories}>
+            <T id="category.create_nonexistent" />
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 {#if active === "effects"}
     <FloatingInputs onlyOne>

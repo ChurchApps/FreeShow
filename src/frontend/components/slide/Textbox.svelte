@@ -13,6 +13,8 @@
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
     import { readAutoSizeCache, writeAutoSizeCache } from "./autosizeCache"
+    import { getItemText } from "../edit/scripts/textStyle"
+    import { wait } from "../../utils/common"
 
     export let item: Item
     export let itemIndex = -1
@@ -269,7 +271,7 @@
 
     let loopStop: NodeJS.Timeout | null = null
     let newCall = false
-    function calculateAutosize() {
+    async function calculateAutosize() {
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) return
 
@@ -290,8 +292,11 @@
         let maxFontSize
 
         const isTextItem = (item.type || "text") === "text"
+        const isDynamic = isTextItem && getItemText(isStage ? stageItem : item).includes("{")
 
         if (isStage) {
+            // wait for text content to populate if dynamic value
+            if (isDynamic) await wait(10)
             if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
@@ -326,7 +331,7 @@
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature()
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
-        if (cachedResult && cachedResult.signature === cacheSignature) {
+        if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
             if (item.type === "slide_tracker") {
                 markAutoSizeReady()
@@ -362,7 +367,7 @@
             return
         }
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
-        if (cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+        if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
         markAutoSizeReady()
     }
 
@@ -506,12 +511,15 @@
     // let foregroundFilters = foregroundFiltersValues ? (noTransition ? foregroundFiltersValues : foregroundFiltersDefault) : ""
     // setTimeout(() => (foregroundFilters = foregroundFiltersValues))
     $: foregroundFilters = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}{fixedWidth}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

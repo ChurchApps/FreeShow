@@ -7,7 +7,7 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { dataPath, loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
+import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
@@ -575,11 +575,7 @@ export async function downloadOnlineMedia(url: string) {
     if (!url?.startsWith("http")) return url
 
     const mediaData = get(media)[url]
-    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, {
-        url,
-        dataPath: get(dataPath),
-        contentFile: mediaData?.contentFile
-    })
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
     if (downloadedPath?.buffer) {
         const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
@@ -614,11 +610,7 @@ export async function downloadOnlineMedia(url: string) {
 
     // not downloaded yet - get updated media data in case pingbackUrl was just set
     const updatedMediaData = get(media)[url]
-    sendMain(Main.MEDIA_DOWNLOAD, {
-        url,
-        dataPath: get(dataPath),
-        contentFile: updatedMediaData?.contentFile
-    })
+    sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })
     return url
 }
 

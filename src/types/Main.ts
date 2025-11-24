@@ -2,6 +2,14 @@ import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { Cropping } from "./Settings"
 
+export interface Config {
+    loaded: boolean
+    maximized: boolean
+    bounds: Electron.Rectangle
+    dataPath: string | null
+    disableHardwareAcceleration: boolean | null
+}
+
 export interface OS {
     platform: NodeJS.Platform
     name: string
@@ -201,15 +209,12 @@ export type LyricSearchResult = {
 
 export interface DriveData {
     mainFolderId: string | null
-    path: string | null
-    dataPath: string
     method: string | null
     closeWhenFinished: boolean
 }
 
 export interface LessonsData {
     type?: keyof typeof dataFolderNames
-    path: string
     showId: string
     name: string
     files: LessonFile[]
@@ -275,6 +280,7 @@ export interface Profiles {
 export interface Profile {
     name: string
     color: string
+    password?: string
     image: string
     access: { [key: string]: { [key: string]: AccessType } }
 }
@@ -321,6 +327,7 @@ export type Popups =
     | "variable"
     | "trigger"
     | "audio_stream"
+    | "now_playing"
     | "aspect_ratio"
     | "max_lines"
     | "transition"
@@ -336,6 +343,7 @@ export type Popups =
     | "choose_output"
     | "choose_style"
     | "change_output_values"
+    | "output_selector"
     | "set_time"
     | "assign_shortcut"
     | "dynamic_values"
@@ -348,6 +356,7 @@ export type Popups =
     | "about"
     | "shortcuts"
     | "unsaved"
+    | "restore"
     | "reset_all"
     | "alert"
     | "history"
@@ -357,7 +366,6 @@ export type Popups =
     | "category_action"
     | "custom_action"
     | "slide_midi"
-    | "user_data_overwrite"
     | "connect"
     | "cloud_update"
     | "cloud_method"

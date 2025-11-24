@@ -8,6 +8,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let showVersion = !!$popupData.showVersion
+    let create = !!$popupData.create
 
     onMount(() => popupData.set({}))
 
@@ -19,7 +20,7 @@
     }
 
     function createShow() {
-        createScriptureShow(true)
+        createScriptureShow(false, true)
         activePopup.set(null)
     }
 </script>
@@ -41,6 +42,8 @@
     <!-- {/if} -->
 {/if}
 
-<MaterialButton variant="contained" style="margin-top: 20px;" icon="add" on:click={createShow}>
-    <T id="new.show_convert" />
-</MaterialButton>
+{#if create}
+    <MaterialButton variant="contained" style="margin-top: 20px;" icon="add" on:click={createShow}>
+        <T id="new.show_convert" />
+    </MaterialButton>
+{/if}

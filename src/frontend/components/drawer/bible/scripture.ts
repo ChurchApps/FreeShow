@@ -10,17 +10,17 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
-import { activePopup, activeProject, activeScripture, dataPath, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { splitTextContentInHalf } from "../../../show/slides"
+import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
+import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getActiveOutputs, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
-import { getItemText } from "../../edit/scripts/textStyle"
-import { splitTextContentInHalf } from "../../../show/slides"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
@@ -53,8 +53,8 @@ export async function loadJsonBible(id: string) {
     const localBible = await getLocalBible(id)
     if (!localBible) throw new Error("Local Bible not found")
 
-    // load custom book names for local bibles (as many xml names are missing or in English) & fix numbers
-    localBible.books = localBible.books.map((a, i) => ({ ...a, name: (a as any).customName || a.name, number: !isNaN(a.number) ? Number(a.number) : i + 1 }))
+    // load custom book names for local bibles (as many xml names are missing or in English)
+    localBible.books = localBible.books.map((a) => ({ ...a, name: (a as any).customName || a.name }))
 
     return await JsonBible(localBible)
 }
@@ -65,7 +65,7 @@ async function getLocalBible(id: string) {
     const scriptureData = get(scriptures)[id]
     if (!scriptureData) return null
 
-    const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id, path: get(dataPath) })
+    const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id })
     const localBible = localBibleResponse.content?.[1]
 
     if (localBibleResponse.error === "not_found" || !localBible) {
@@ -197,6 +197,8 @@ export async function playScripture() {
 
     const slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
 
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    // include every selected chapter/verse in the displayed reference label
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
     const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
     const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
@@ -208,7 +210,7 @@ export async function playScripture() {
             book: biblesContent[0].bookId,
             chapter: biblesContent[0].chapters[0],
             verse: selectedVerses[0],
-            reference: `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${value}`,
+            reference: `${biblesContent[0].book} ${fullReferenceRange || `${biblesContent[0].chapters[0]}:${value}`}`.trim(),
             text: getSplittedVerses(biblesContent[0].verses?.[0])[selectedVerses[0]?.[0]] || biblesContent[0].verses[selectedVerses[0]?.[0]] || ""
         }
         // WIP multiple verses, play from another version
@@ -231,8 +233,7 @@ export async function playScripture() {
     setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
 
     // track
-    const verseRange = joinRange(selectedVerses[0])
-    const reference = `${biblesContent[0].book} ${biblesContent[0].chapters[0]}:${verseRange}`
+    const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
     biblesContent.forEach((translation) => {
         const name = translation.version || ""
         const apiId = translation.isApi ? get(scriptures)[translation.id]?.id || translation.id || "" : null
@@ -403,7 +404,27 @@ export function joinRange(array: (number | string)[]) {
             if (segment.start === segment.end) return `${chapterPrefix}${segment.start}`
             return `${chapterPrefix}${segment.start}-${segment.end}`
         })
-        .join("+")
+        .join(" ; ")
+}
+
+// Combine multiple chapter selections into a single "1:1-4 ; 2:1-10" style reference.
+export function buildFullReferenceRange(chapters: (number | string)[], versesPerChapter: (number | string)[][]) {
+    if (!Array.isArray(chapters) || !Array.isArray(versesPerChapter)) return ""
+
+    const normalized: (number | string)[] = []
+    chapters.forEach((chapter, index) => {
+        const chapterVerses = versesPerChapter[index] || []
+        chapterVerses.forEach((verse) => {
+            const value = String(verse)
+            if (!value || value === "NaN") return
+
+            if (value.includes(":")) normalized.push(value)
+            else normalized.push(`${chapter}:${value}`)
+        })
+    })
+
+    if (!normalized.length) return ""
+    return joinRange(normalized)
 }
 
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
@@ -687,7 +708,56 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 
 export function splitText(value: string, maxLength: number) {
     if (!value) return []
+    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
+    return splitPlainText(value, maxLength)
+}
 
+const BRACKET_WORD_LIMIT = 4
+type DanglingBracketInfo = { lastOpen: number }
+
+function getDanglingBracketInfo(before: string, after: string): DanglingBracketInfo | null {
+    const lastOpen = before.lastIndexOf("[")
+    if (lastOpen === -1) return null
+    if (before.indexOf("]", lastOpen) !== -1) return null
+
+    const closingIndex = after.indexOf("]")
+    if (closingIndex === -1) return null
+
+    const bracketContent = (before.slice(lastOpen + 1) + after.slice(0, closingIndex)).replace(/[\[\]]/g, "").trim()
+    if (!bracketContent.length) return null
+
+    const wordCount = bracketContent.split(/\s+/).filter(Boolean).length
+    if (!wordCount || wordCount >= BRACKET_WORD_LIMIT) return null
+
+    return { lastOpen }
+}
+
+function adjustSplitIndexForBracket(text: string, breakIndex: number) {
+    if (!text) return breakIndex
+    const safeIndex = Math.max(0, Math.min(breakIndex, text.length))
+    const before = text.slice(0, safeIndex)
+    const after = text.slice(safeIndex)
+    const info = getDanglingBracketInfo(before, after)
+    if (!info) return safeIndex
+
+    let newIndex = info.lastOpen
+    while (newIndex > 0 && /\s/.test(before[newIndex - 1])) newIndex--
+
+    return Math.max(0, newIndex)
+}
+
+function moveDanglingBracketToNext(first: string, second: string) {
+    const info = getDanglingBracketInfo(first, second)
+    if (!info) return { first, second }
+
+    const kept = first.slice(0, info.lastOpen).trimEnd()
+
+    const movedPortion = first.slice(info.lastOpen)
+    const combinedSecond = `${movedPortion}${second ? ` ${second.trimStart()}` : ""}`.trim()
+    return { first: kept, second: combinedSecond }
+}
+
+function splitPlainText(value: string, maxLength: number) {
     const queue: string[] = [value.trim()]
     const segments: string[] = []
     const proportion = Math.floor(maxLength * 0.3)
@@ -713,6 +783,8 @@ export function splitText(value: string, maxLength: number) {
 
         let [first, second] = halves
 
+            ; ({ first, second } = moveDanglingBracketToNext(first, second))
+
         const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
         first = rebalanced.first
         second = rebalanced.second
@@ -731,6 +803,109 @@ export function splitText(value: string, maxLength: number) {
     }
 
     return segments
+}
+
+function splitHtmlText(value: string, maxLength: number) {
+    const tokens = tokenizeHtml(value)
+    if (!tokens.length) return [value]
+
+    const segments: string[] = []
+    let current = ""
+    let currentLength = 0
+    const openTags: { name: string; tag: string }[] = []
+
+    const reopenTags = () => openTags.map((entry) => entry.tag).join("")
+    const closeTags = () => openTags.slice().reverse().map((entry) => `</${entry.name}>`).join("")
+
+    const flushSegment = () => {
+        const textContent = current.replace(/<[^>]+>/g, "").trim()
+        if (textContent) segments.push(current + closeTags())
+        current = reopenTags()
+        currentLength = 0
+    }
+
+    tokens.forEach((token) => {
+        if (token.type === "tag") {
+            current += token.value
+            updateTagStack(token.value, openTags)
+            return
+        }
+
+        let remaining = token.value
+        while (remaining.length) {
+            const capacity = maxLength - currentLength
+            if (capacity <= 0) {
+                flushSegment()
+                continue
+            }
+
+            const splitIndex = findHtmlSplitIndex(remaining, capacity)
+            const chunk = remaining.slice(0, splitIndex)
+            current += chunk
+            currentLength += chunk.length
+            remaining = remaining.slice(splitIndex)
+
+            if (remaining.length) flushSegment()
+        }
+    })
+
+    if (current.replace(/<[^>]+>/g, "").trim()) segments.push(current + closeTags())
+
+    return segments.length ? segments : [value]
+}
+
+function tokenizeHtml(value: string) {
+    const tokens: { type: "text" | "tag"; value: string }[] = []
+    const regex = /(<[^>]+>)/gi
+    let lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = regex.exec(value))) {
+        if (match.index > lastIndex) tokens.push({ type: "text", value: value.slice(lastIndex, match.index) })
+        tokens.push({ type: "tag", value: match[0] })
+        lastIndex = regex.lastIndex
+    }
+    if (lastIndex < value.length) tokens.push({ type: "text", value: value.slice(lastIndex) })
+    return tokens
+}
+
+function updateTagStack(tag: string, stack: { name: string; tag: string }[]) {
+    const isClosing = /^<\//.test(tag)
+    const isSelfClosing = /\/>$/.test(tag)
+    if (!isClosing && !isSelfClosing) {
+        const name = getTagName(tag)
+        if (name) stack.push({ name, tag })
+        return
+    }
+
+    if (isClosing) {
+        const name = getTagName(tag)
+        if (!name) return
+        for (let i = stack.length - 1; i >= 0; i--) {
+            if (stack[i].name === name) {
+                stack.splice(i, 1)
+                break
+            }
+        }
+    }
+}
+
+function getTagName(tag: string) {
+    const match = tag.match(/^<\/?([a-z0-9_-]+)/i)
+    return match ? match[1] : ""
+}
+
+function findHtmlSplitIndex(text: string, capacity: number) {
+    if (text.length <= capacity) return text.length
+    const slice = text.slice(0, capacity)
+    const breakChars = [" ", "\n", "\t", "-", ","]
+    let splitIndex = -1
+    breakChars.forEach((char) => {
+        const idx = slice.lastIndexOf(char)
+        if (idx > splitIndex) splitIndex = idx
+    })
+    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
+    breakPos = adjustSplitIndexForBracket(text, breakPos)
+    return Math.max(0, breakPos)
 }
 
 function getSplitHalves(text: string, maxLength: number): [string, string] | null {
@@ -778,7 +953,7 @@ function rebalanceHalves(first: string, second: string, maxLength: number, minSe
     return { first, second }
 }
 
-function removeTags(text) {
+function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
@@ -790,7 +965,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(noPopup = false, showPopup = false) {
+export async function createScriptureShow(showPopup = false, bypassPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -799,10 +974,10 @@ export async function createScriptureShow(noPopup = false, showPopup = false) {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    if (!noPopup && (showPopup || selectedVerses[0]?.length > 3)) {
-        const showVersion = biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion
-
-        popupData.set({ showVersion })
+    // force the popup when attribution or version settings must be confirmed
+    const requiresVersionPopup = !!(biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion)
+    if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+        popupData.set({ showVersion: requiresVersionPopup, create: true })
         activePopup.set("scripture_show")
         return
     }
@@ -821,6 +996,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     let slides: Item[][] = [[]]
     if (selectedVerses.length || get(scriptureSettings)) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses })
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    // use the combined range so slide names show multi-chapter selections
 
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
@@ -897,8 +1074,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     })
     // if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
 
-    const verseRange = joinRange(selectedVerses[0])
-    const bibleShowName = `${biblesContent[0].book} ${selectedChapters[0]},${verseRange}`
+    const fallbackRange = joinRange(selectedVerses[0])
+    const bibleShowName = `${biblesContent[0].book} ${fullReferenceRange || `${selectedChapters[0]}:${fallbackRange}`}`.trim()
     show.name = checkName(bibleShowName)
     if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(biblesContent[0].version || "")}`)
     show.slides = slides2
@@ -930,9 +1107,9 @@ export function getReferenceText(biblesContent: BibleContent[]) {
     // if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
 
     const books = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
-    const referenceDivider = get(scriptureSettings).referenceDivider || ":"
-    const range = joinRange(biblesContent[0].activeVerses[0])
-    const reference = `${books} ${biblesContent[0].chapters[0]}${referenceDivider}${range}`
+    // reflect all selected chapters when labeling slides/previews
+    const range = buildFullReferenceRange(biblesContent[0].chapters, biblesContent[0].activeVerses)
+    const reference = `${books} ${range || biblesContent[0].chapters[0]}`.trim()
     return reference
 
     // let v = get(scriptureSettings).versesPerSlide

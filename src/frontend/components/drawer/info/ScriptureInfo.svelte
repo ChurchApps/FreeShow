@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeEdit, activePage, activeScripture, drawerTabsData, outputs, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs } from "../../helpers/output"
@@ -242,22 +243,28 @@
     </div>
 </div>
 
-<Button
-    on:click={(e) => {
-        const preventPopup = e.ctrlKey || e.metaKey
-        createScriptureShow(preventPopup, e.altKey)
-    }}
-    style="width: 100%;"
-    disabled={!selectedVerses.length}
-    dark
-    center
->
-    <Icon id="slide" right />
-    <T id="new.show_convert" />
-    <!-- {#if slides.length > 1}
-        <span style="opacity: 0.5;margin-inline-start: 0.5em;">({slides.length})</span>
-    {/if} -->
-</Button>
+<InputRow>
+    <Button on:click={(e) => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
+        <Icon id="slide" right />
+        <T id="new.show_convert" />
+        <!-- {#if slides.length > 1}
+            <span style="opacity: 0.5;margin-inline-start: 0.5em;">({slides.length})</span>
+        {/if} -->
+    </Button>
+
+    <Button
+        title={translateText("popup.scripture_show")}
+        on:click={() => {
+            const showVersion = biblesContent.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
+            popupData.set({ showVersion })
+            activePopup.set("scripture_show")
+        }}
+        dark
+        center
+    >
+        <Icon id="options" white />
+    </Button>
+</InputRow>
 
 <style>
     .scroll {

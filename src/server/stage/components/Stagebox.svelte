@@ -97,11 +97,19 @@
             else itemStyle += `${key}: ${value};`
         })
     }
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
-<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};">
+<div
+    class="item"
+    class:border={stageLayout?.settings.labels}
+    class:isDisabledVariable
+    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}"
+>
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}

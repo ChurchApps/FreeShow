@@ -59,7 +59,7 @@
 
     $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
     function openSelectShow() {
-        popupData.set({ ...$popupData, action: "select_show", revert: $activePopup, active: value?.id, actionIndex })
+        popupData.set({ ...$popupData, action: "select_show", revert: "action", active: value?.id, actionIndex })
         activePopup.set("select_show")
     }
 
@@ -179,6 +179,8 @@
 {:else if inputId === "strval"}
     <!-- run by name -->
     <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={(e) => updateValue("value", e)} />
+{:else if inputId === "toggle"}
+    <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "output_lock"}
     <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />

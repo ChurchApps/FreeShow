@@ -56,7 +56,7 @@ export interface ToMainSendPayloads {
     [ToMain.REFRESH_SHOWS2]: TrimmedShows
     [ToMain.RESTORE2]: { starting?: boolean; finished?: boolean }
     [ToMain.API_TRIGGER2]: { action: string; returnId: string; data: any }
-    [ToMain.OPEN_FOLDER2]: { channel: string; path: string; showsPath?: string }
+    [ToMain.OPEN_FOLDER2]: { channel: string; path: string }
     [ToMain.OPEN_FILE2]: { channel: string; id: string; files: string[]; content: { [key: string]: string } }
     [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" | "control" }
 }

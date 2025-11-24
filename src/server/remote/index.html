@@ -1,23 +1,26 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="theme-color" content="#242832" />
-        <title>FreeShow Remote</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#242832" />
+    <title>FreeShow Remote</title>
 
-        <link href="styles.css" rel="stylesheet" />
-        <link href="manifest.json" rel="manifest" />
-        <link rel="icon" href="icon.png" />
-    </head>
+    <link href="styles.css" rel="stylesheet" />
+    <link href="manifest.json" rel="manifest" />
+    <link rel="icon" href="icon.png" />
+  </head>
 
-    <body>
-        <script src="client.js"></script>
-        <script>
-            if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.register("./sw.js")
-                // .then((reg) => console.log(reg)).catch((err) => console.error(err));
-            }
-        </script>
-    </body>
+  <body>
+    <script src="client.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js")
+        // .then((reg) => console.log(reg)).catch((err) => console.error(err));
+      }
+    </script>
+  </body>
 </html>

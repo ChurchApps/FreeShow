@@ -2,28 +2,29 @@ import path from "path"
 import type { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
-import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
+import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
-import { stores, updateDataPath } from "./store"
+import { doesPathExist, getDataFolderPath, getFileStats, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
+import { _store, getStore, storeFilesData } from "./store"
 
-// "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
-const storesToSave: (keyof typeof stores)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
-// don't upload: config.json, cache.json, history.json, DRIVE_API_KEY.json
-
-export async function startBackup({ showsPath, dataPath, customTriggers }: { showsPath: string; dataPath: string; customTriggers: SaveActions }) {
-    let shows: TrimmedShows | null = null
+export async function startBackup({ customTriggers }: { customTriggers: SaveActions }) {
+    let shows = getStore("SHOWS")
     // let bibles = null
 
     // no need to backup shows on auto backup (as that just takes a lot of space)
     const isAutoBackup = !!customTriggers?.isAutoBackup
 
-    const backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
-    const backupFolder = createFolder(path.join(backupPath, getTimePointString() + (isAutoBackup ? "_auto" : "")))
+    const folderName = getTimePointString() + (isAutoBackup ? "_auto" : "")
+    const backupFolder = getDataFolderPath("backups", folderName)
 
     // CONFIGS
-    await Promise.all(storesToSave.map(syncStores))
+    await Promise.all(Object.entries(storeFilesData).map(([id, data]) => {
+        if (!data.portable) return
+        syncStores(id as keyof typeof _store)
+    }))
+    // "SYNCED_SETTINGS" and "STAGE" has to be before "SETTINGS" and "SHOWS" (can't remember why)
+    syncStores("SETTINGS")
 
     // SCRIPTURE
     // bibles are not backed up because they are located in the Bibles folder
@@ -34,18 +35,15 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
 
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
-    if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
-    else if (!isAutoBackup) openInSystem(backupFolder, true)
+    if (!isAutoBackup) openInSystem(backupFolder, true)
 
     /// //
 
-    async function syncStores(id: keyof typeof stores) {
-        const store = stores[id]
-        const name = id + ".json"
+    async function syncStores(id: keyof typeof _store) {
+        const store = _store[id]
+        if (!store) return
 
-        if (id === "SHOWS" && isAutoBackup) return
-        if (id === "SHOWS") shows = store.store as TrimmedShows
-        // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
+        const name = id + ".json"
 
         const content: string = JSON.stringify(store.store)
         const filePath: string = path.resolve(backupFolder, name)
@@ -53,10 +51,11 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     }
 
     async function syncAllShows() {
-        if (!shows || !showsPath) return
+        if (!shows) return
 
         const name = "SHOWS_CONTENT.json"
         const allShows: Shows = {}
+        const showsPath = getDataFolderPath("shows")
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: [string, TrimmedShow]) {
@@ -77,16 +76,40 @@ export async function startBackup({ showsPath, dataPath, customTriggers }: { sho
     }
 }
 
+export function getBackups(): { name: string, date: number }[] {
+    const backupsFolder = getDataFolderPath("backups")
+    const files = readFolder(backupsFolder)
+
+    let backups: { name: string, date: number }[] = []
+    files.forEach((name) => {
+        const filePath = path.resolve(backupsFolder, name)
+        const stat = getFileStats(filePath)
+        if (!stat?.folder) return
+
+        backups.push({ name, date: stat.stat.ctimeMs })
+    })
+
+    return backups
+}
+
 // RESTORE
 
-export function restoreFiles({ showsPath }: { showsPath: string }) {
-    const files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
+export function restoreFiles(data?: { folder: string }) {
+    let files: string[] = []
+
+    if (data?.folder) {
+        const backupsFolder = getDataFolderPath("backups", data.folder)
+        files = readFolder(backupsFolder).map((name) => path.join(backupsFolder, name))
+    } else {
+        const initialPath = getDataFolderPath("backups")
+        files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] }, true, initialPath)
+    }
+
     if (!files?.length) return sendToMain(ToMain.RESTORE2, { finished: false })
     sendToMain(ToMain.RESTORE2, { starting: true })
 
-    // don't replace certain settings
-    const settings = stores.SETTINGS.store
-    const dataPath: string = settings.dataPath
+    const showsPath = getDataFolderPath("shows")
+    const portableStoreFiles = Object.entries(storeFilesData).filter(([_, data]) => data.portable).map(([key, _]) => key)
 
     files.forEach((filePath: string) => {
         if (filePath.includes("SHOWS_CONTENT")) {
@@ -94,10 +117,15 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
             return
         }
 
-        const storeId = storesToSave.find((a) => filePath.includes(a))
+        if (filePath.includes("SETTINGS")) {
+            restoreShows(filePath)
+            return
+        }
+
+        const storeId = portableStoreFiles.find((a) => filePath.includes(a))
 
         if (!storeId) return
-        restoreStore(filePath, storeId)
+        restoreStore(filePath, storeId as keyof typeof _store)
     })
 
     sendToMain(ToMain.RESTORE2, { finished: true })
@@ -105,20 +133,14 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
 
     /// //
 
-    function restoreStore(filePath: string, storeId: keyof typeof stores) {
+    function restoreStore(filePath: string, storeId: keyof typeof _store) {
         const file = readFile(filePath)
-        if (!stores[storeId] || !file || !isValidJSON(file)) return
+        if (!_store[storeId] || !file || !isValidJSON(file)) return
 
         const data = JSON.parse(file)
 
-        // don't replace certain settings
-        if (storeId === "SETTINGS") {
-            data.dataPath = dataPath
-            data.showsPath = showsPath
-        }
-
-        stores[storeId].clear()
-            ; (stores[storeId] as any).set(data)
+        _store[storeId]?.clear()
+        _store[storeId]?.set(data)
 
         sendMain(storeId as Main, data)
     }

@@ -1,7 +1,7 @@
 import { CLOUD } from "../../types/Channels"
 import type { DriveData } from "../../types/Main"
 import type { Message } from "../../types/Socket"
-import { stores } from "../data/store"
+import { _store } from "../data/store"
 import { authenticate, listFiles, listFolders, syncDataDrive } from "./drive"
 
 export async function cloudConnect(e: Electron.IpcMainEvent, { channel, data }: Message) {
@@ -16,7 +16,7 @@ export async function cloudConnect(e: Electron.IpcMainEvent, { channel, data }: 
 
 const cloudHelpers = {
     DRIVE_CONNECT: async () => {
-        const keysFilePath = stores.DRIVE_API_KEY.path
+        const keysFilePath = _store.DRIVE_API_KEY?.path || ""
 
         const status = await authenticate(keysFilePath)
 

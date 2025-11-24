@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item, Overlay } from "../../../../types/Show"
     import { clone } from "../../../common/util/helpers"
     import Textbox from "./Textbox.svelte"
@@ -11,8 +12,6 @@
 
     $: if (overlays[id]?.items !== undefined) updateItems()
 
-    $: console.log(overlays, id, overlays[id]?.items, currentItems)
-
     let timeout: NodeJS.Timeout | null = null
     function updateItems() {
         show = false
@@ -24,6 +23,10 @@
             show = true
         })
     }
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
 </script>
 
 {#key show}

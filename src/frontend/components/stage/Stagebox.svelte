@@ -223,6 +223,9 @@
 
     $: currentItemText = item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))
     $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater) : false
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -235,7 +238,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
+    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}

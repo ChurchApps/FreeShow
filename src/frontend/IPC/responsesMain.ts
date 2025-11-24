@@ -67,7 +67,6 @@ import {
     redoHistory,
     shows,
     showsCache,
-    showsPath,
     spellcheck,
     stageShows,
     templates,
@@ -108,7 +107,7 @@ export const mainResponses: MainResponses = {
 
         shows.set(a)
     },
-    [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
+    [Main.STAGE]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
         const projectsList = a.projects || {}
 
@@ -146,7 +145,6 @@ export const mainResponses: MainResponses = {
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
     [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
-    [Main.SHOWS_PATH]: (a) => showsPath.set(a),
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")
@@ -390,8 +388,6 @@ export const mainResponses: MainResponses = {
         const receiveFOLDER = {
             MEDIA: () => addDrawerFolder(a, "media"), // menuClick
             AUDIO: () => addDrawerFolder(a, "audio"), // menuClick
-            // SHOWS: () => showsPath.set(a.path),
-            // DATA: () => dataPath.set(a.path)
         }
 
         if (!receiveFOLDER[a.channel]) return

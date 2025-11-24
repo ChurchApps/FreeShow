@@ -3,7 +3,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { Emitter, EmitterTemplate, EmitterTemplateValue } from "../../../../types/Show"
     import { requestMain } from "../../../IPC/main"
-    import { emitters } from "../../../stores"
+    import { activePopup, emitters, popupData } from "../../../stores"
     import { emitterData, formatData } from "../../actions/emitters"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -39,8 +39,19 @@
     const DEFAULT_TEMPLATE: EmitterTemplate = { name: "", inputs: [] }
     const DEFAULT_TEMPLATE_VALUE: EmitterTemplateValue = { name: "", value: "" }
 
+    // create from action dropdown
+    const createId = $popupData?.id || ""
+    const createName = $popupData?.name || ""
+    const backData = $popupData?.actionData || null
+    if (createName) {
+        createEmitter()
+        updateValue("name", createName)
+    } else if (createId) {
+        editEmitter = createId
+    }
+
     function createEmitter() {
-        let id = uid()
+        let id = createId ?? uid()
         emitters.update((a) => {
             a[id] = clone(DEFAULT_EMITTER)
             return a
@@ -153,6 +164,19 @@
     }
 </script>
 
+{#if backData}
+    <MaterialButton
+        class="popup-back"
+        icon="back"
+        iconSize={1.3}
+        title="actions.back"
+        on:click={() => {
+            popupData.set(backData)
+            activePopup.set("action")
+        }}
+    />
+{/if}
+
 {#if editTemplate && template}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editTemplate = "")} />
 
@@ -178,7 +202,9 @@
         </div>
     {/if}
 {:else if editEmitter && emitter}
-    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editEmitter = "")} />
+    {#if !backData}
+        <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editEmitter = "")} />
+    {/if}
 
     <MaterialTextInput label="midi.name" value={emitter.name} on:change={(e) => updateValue("name", e.detail)} autofocus={!emitter.name} />
     <MaterialTextInput label="midi.description" value={emitter.description || ""} on:change={(e) => updateValue("description", e.detail)} />

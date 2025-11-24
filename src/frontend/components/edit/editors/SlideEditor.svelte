@@ -371,7 +371,7 @@
     </div>
 
     {#if notesVisible}
-        <div class="notes">
+        <div class="notes" role="none" on:click={() => triggerFunction("slide_notes")}>
             <Icon id="notes" right white />
             <p>{@html notes}</p>
         </div>
@@ -393,6 +393,11 @@
             <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
 
             {#if open}
+                <div class="divider"></div>
+
+                <!-- open slide notes -->
+                <MaterialButton icon="notes" title="items.slide_notes" on:click={() => triggerFunction("slide_notes")} />
+
                 <div class="divider"></div>
 
                 {#if hasTextContent}

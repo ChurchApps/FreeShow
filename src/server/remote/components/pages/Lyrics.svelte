@@ -9,8 +9,8 @@
 
     $: slides = $outShow?.slides || {}
 
-    function click(e: any) {
-        if (e.clientX < window.innerWidth / 3) send("API:previous_slide")
+    function click(e?: any) {
+        if (!e || e.clientX < window.innerWidth / 3) send("API:previous_slide")
         else send("API:next_slide")
     }
 
@@ -30,20 +30,20 @@
     }
 </script>
 
-<div on:click={click} bind:this={lyricsScroll} class="lyrics">
-    {#each layout || [] as layoutSlide, i}
+<div on:click={click} on:keydown={(e) => e.key === "Enter" && click(e)} bind:this={lyricsScroll} class="lyrics" role="button" tabindex="0">
+    {#each layout || [] as layoutSlide, i (layoutSlide.id ? `${layoutSlide.id}-${i}` : `layout-${i}`)}
         {#if !layoutSlide.disabled}
             <span style="padding: 5px;{$outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}">
                 <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                     <span style="left: 0;position: absolute;">{i + 1}</span>
-                    <span>{slides[layoutSlide.id].group === null ? "" : getName(slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
+                    <span>{slides[layoutSlide.id]?.group === null ? "" : getName(slides[layoutSlide.id]?.group || "", layoutSlide.id, i)}</span>
                 </span>
-                {#each slides[layoutSlide.id].items as item}
+                {#each slides[layoutSlide.id]?.items || [] as item, itemIndex (item.id ? `${layoutSlide.id}-item-${item.id}` : `${layoutSlide.id}-item-${i}-${itemIndex}`)}
                     {#if item.lines}
                         <div class="lyric">
-                            {#each item.lines as line}
+                            {#each item.lines as line, lineIndex (line.id ? `${layoutSlide.id}-line-${line.id}` : `${layoutSlide.id}-line-${i}-${lineIndex}`)}
                                 <div class="break">
-                                    {#each line.text || [] as text}
+                                    {#each line.text || [] as text, textIndex (text.id ? `${layoutSlide.id}-text-${text.id}` : `${layoutSlide.id}-text-${i}-${textIndex}`)}
                                         <span>{@html text.value}</span>
                                     {/each}
                                 </div>
@@ -66,7 +66,6 @@
         overflow-y: auto;
         overflow-x: hidden;
         padding: 10px;
-        /* gap: 10px; */
         scroll-behavior: smooth;
         /* FreeShow UI scrollbar */
         scrollbar-width: thin; /* Firefox */
@@ -90,5 +89,10 @@
     .lyric {
         font-size: 1.1em;
         text-align: center;
+        line-height: 1.6;
+        margin: 0.45rem 0; /* gap between lyric blocks */
+    }
+    .lyric .break {
+        margin-bottom: 0.25rem; /* gap between lines inside a lyric block */
     }
 </style>

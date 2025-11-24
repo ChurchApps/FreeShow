@@ -3,7 +3,7 @@
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, activeProject, dataPath, focusMode, labelsDisabled, outLocked, outputs, popupData, projects, slidesOptions, styles } from "../../../stores"
+    import { activePopup, activeProject, focusMode, labelsDisabled, outLocked, outputs, popupData, projects, slidesOptions, styles } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { newToast, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -119,7 +119,7 @@
 
     function convertToImages() {
         newToast("actions.converting")
-        sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, filePath: path })
+        sendMain(Main.PDF_TO_IMAGE, { filePath: path })
     }
 
     $: timer = data?.timer || 0

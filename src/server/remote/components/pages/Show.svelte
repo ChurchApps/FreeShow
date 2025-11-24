@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Dropdown from "../../../common/components/Dropdown.svelte"
@@ -13,23 +14,30 @@
     import GroupsEdit from "./GroupsEdit.svelte"
     import TextEdit from "./TextEdit.svelte"
 
+    // Memoize layout calculation
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
     $: _set("layout", layout)
 
     $: slideNum = $outSlide ?? -1
 
+    // Memoize totalSlides calculation
     $: totalSlides = layout ? layout.length : 0
 
     let scrollElem: HTMLElement | undefined
     let lyricsScroll: any
-    // auto scroll
+    // auto scroll - optimize with requestAnimationFrame
+    let scrollRaf: number | null = null
     $: {
-        if (lyricsScroll && slideNum !== null && $activeTab === "lyrics") {
-            let offset = lyricsScroll.children[slideNum]?.offsetTop - lyricsScroll.offsetTop - 5
-            lyricsScroll.scrollTo(0, offset)
+        if (lyricsScroll && slideNum !== null && $activeTab === "lyrics" && scrollRaf === null) {
+            scrollRaf = requestAnimationFrame(() => {
+                let offset = lyricsScroll.children[slideNum]?.offsetTop - lyricsScroll.offsetTop - 5
+                lyricsScroll.scrollTo(0, offset)
+                scrollRaf = null
+            }) as unknown as number
         }
     }
 
+    // Memoize layouts to avoid recalculation
     $: layouts = Object.entries($activeShow?.layouts || {}).map(([id, a]: any) => ({ id, name: a.name }))
 
     function changeLayout(e: any) {
@@ -92,6 +100,13 @@
         _set("outShow", $activeShow)
         send("API:get_cleared")
     }
+
+    // Cleanup scroll animation frame
+    onDestroy(() => {
+        if (scrollRaf !== null) {
+            cancelAnimationFrame(scrollRaf)
+        }
+    })
 </script>
 
 <!-- GetLayout($activeShow, $activeShow?.settings?.activeLayout).length -->
@@ -109,18 +124,20 @@
             <TextEdit bind:value={textValue} />
         {/if}
 
-        <div class="buttons">
-            {#if groupsOpened && !addGroups}
-                <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
-                    <Icon id="add" right />
-                    {translate("settings.add", $dictionary)}
-                </Button>
-            {/if}
+        <div class="buttons" style="position: relative; z-index: 2;">
+            <div class="edit-actions">
+                {#if groupsOpened && !addGroups}
+                    <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
+                        <Icon id="add" right />
+                        {translate("settings.add", $dictionary)}
+                    </Button>
+                {/if}
 
-            <Button on:click={done} style="width: 100%;" center dark>
-                <Icon id={addGroups ? "back" : "check"} right />
-                {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
-            </Button>
+                <Button on:click={done} style="width: 100%;" center dark class="done-button">
+                    <Icon id={addGroups ? "back" : "check"} right />
+                    {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
+                </Button>
+            </div>
         </div>
     {:else}
         <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
@@ -128,28 +145,39 @@
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
-            <div class="buttons">
-                {#key slideNum}
-                    <Clear outSlide={slideNum} />
-                {/key}
-            </div>
-
             {#if $activeShow.id === $outShow?.id}
-                <div class="buttons" style="display: flex;width: 100%;">
-                    <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                    <Button style="flex: 1;" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} center><Icon size={1.8} id="previous" /></Button>
-                    <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{slideNum + 1}/{totalSlides}</span>
-                    <Button style="flex: 1;" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                    <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                <div class="controls-section">
+                    <div class="buttons">
+                        {#key slideNum}
+                            <Clear outSlide={slideNum} />
+                        {/key}
+                    </div>
+
+                    <div class="slide-progress">
+                        <Button on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
+                            <Icon id="previous" size={1.2} />
+                        </Button>
+                        <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                        <Button on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
+                            <Icon id="next" size={1.2} />
+                        </Button>
+                    </div>
+                </div>
+            {:else}
+                <div class="buttons">
+                    {#key slideNum}
+                        <Clear outSlide={slideNum} />
+                    {/key}
                 </div>
             {/if}
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}
-                    <Dropdown value={layouts.find((a) => a.id == $activeShow.settings?.activeLayout)?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
+                    {@const currentLayout = layouts.find((a) => a.id == $activeShow.settings?.activeLayout)}
+                    <Dropdown value={currentLayout?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 
-                <div class="edit" style="display: flex;">
+                <div class="edit">
                     <Button on:click={() => (groupsOpened = true)} style="width: 100%;" center dark>
                         <Icon id="groups" right />
                         {translate("tools.groups", $dictionary)}
@@ -167,6 +195,61 @@
 {/if}
 
 <style>
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .controls-section .buttons {
+        border-radius: 8px 8px 0 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .slide-progress {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        gap: 12px;
+        padding: 2px 6px;
+        background-color: var(--primary-darkest);
+        border-radius: 0;
+        min-height: 36px;
+    }
+
+    .slide-progress :global(button) {
+        min-width: 32px;
+        min-height: 32px !important;
+        padding: 2px 6px !important;
+        flex-shrink: 0;
+    }
+
+    .slide-progress :global(button) :global(svg) {
+        fill: var(--secondary);
+    }
+
+    .slide-progress .counter {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: white;
+        font-size: 0.85em;
+        font-weight: 700;
+        padding: 0 8px;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.3px;
+        pointer-events: none;
+    }
+
     .scroll {
         display: flex;
         flex-direction: column;
@@ -182,4 +265,19 @@
     .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
     .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
     .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+
+    @media screen and (max-width: 1000px) {
+        .scroll {
+            background-color: var(--primary) !important;
+        }
+
+        .slide-progress {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+    }
+
+    .edit-actions :global(.done-button) {
+        border-radius: 8px 8px 0 0 !important;
+    }
 </style>

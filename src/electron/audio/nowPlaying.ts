@@ -2,27 +2,36 @@ import { type ICommonTagsResult, parseFile } from "music-metadata"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, deleteFile, doesPathExist, getDocumentsFolder, writeFile } from "../utils/files"
+import { deleteFile, doesPathExist, getDataFolderPath, openInSystem, readFile, writeFile } from "../utils/files"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
 
+type NowPlayingData = {
+    filePath: string
+    name: string
+    unknownLang: string[]
+    format: string
+    duration: number
+}
+
 // let currentContent = ""
-export async function setPlayingState(data: { dataPath: string; filePath: string; name: string; unknownLang: string[] }) {
-    const documentsPath = createFolder(join(data.dataPath || getDocumentsFolder(), dataFolderNames.audio))
+export async function setPlayingState(data: NowPlayingData) {
+    const audioFolder = getDataFolderPath("audio")
 
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
-    const artist = (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
-    const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
-    const album = metadata?.album || data.unknownLang[2] || "Unknown Album"
+    // const artist = (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
+    // const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
+    // const album = metadata?.album || data.unknownLang[2] || "Unknown Album"
 
     // format: Artist - Title - Album
-    const content = `${artist} - ${title} - ${album}`
+    // const content = `${artist} - ${title} - ${album}`
+    const content = await convertDynamicValues(data)
     // currentContent = content
 
     // create playing data text file
-    const filePath = join(documentsPath, fileNameText)
+    const filePath = join(audioFolder, fileNameText)
     writeFile(filePath, content)
 
     // (no point in this at the moment)
@@ -30,7 +39,7 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
     // startServer()
 
     // create album art cover
-    const filePathCover = join(documentsPath, fileNameImage)
+    const filePathCover = join(audioFolder, fileNameImage)
     const cover = metadata?.picture?.[0]
     const buffer = cover?.data
     if (!buffer) {
@@ -43,6 +52,54 @@ export async function setPlayingState(data: { dataPath: string; filePath: string
     writeFile(filePathCover, buffer)
 }
 
+// , "{time}", "{time_s}"
+const dynamicValues = ["{artist}", "{title}", "{album}", "{year}", "{artwork_path}", "{artwork_base64}", "{duration}", "{duration_s}"]
+async function convertDynamicValues(data: NowPlayingData) {
+    if (!data.format) data.format = `{artist} - {title} - {album}`
+
+    const metadata = await getAudioMetadata(data.filePath)
+
+    dynamicValues.forEach((value) => {
+        data.format = data.format.replaceAll(value, replaceValue(value))
+    })
+
+    return data.format
+
+    function replaceValue(value: string) {
+        switch (value) {
+            case "{artist}":
+                return (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
+            case "{title}":
+                return metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
+            case "{album}":
+                return metadata?.album || data.unknownLang[2] || "Unknown Album"
+            case "{year}":
+                return metadata?.year?.toString() || "Unknown Year"
+            case "{artwork_path}":
+            case "{artwork_base64}":
+                const audioFolder = getDataFolderPath("audio")
+                const coverFilePath = join(audioFolder, fileNameImage)
+                if (value === "{artwork_path}") return coverFilePath
+
+                const pngBuffer = readFile(coverFilePath)
+                const base64String = Buffer.from(pngBuffer).toString('base64')
+                return pngBuffer ? `data:image/png;base64,${base64String}` : ""
+            case "{duration}":
+            case "{duration_s}":
+                if (value === "{duration_s}") return data.duration.toString()
+
+                if (!data.duration) return "00:00"
+                const totalSeconds = Math.floor(data.duration)
+                const minutes = Math.floor(totalSeconds / 60)
+                const seconds = totalSeconds % 60
+                return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+            default:
+                return ""
+        }
+    }
+}
+
+
 // same as frontend function
 function getArtist(metadata: ICommonTagsResult) {
     const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
@@ -50,16 +107,22 @@ function getArtist(metadata: ICommonTagsResult) {
 }
 
 // remove now playing when not playing
-export function unsetPlayingAudio(data: { dataPath: string }) {
-    const documentsPath = join(data.dataPath, dataFolderNames.audio)
+export function unsetPlayingAudio() {
+    const audioFolder = getDataFolderPath("audio")
 
-    const filePath = join(documentsPath, fileNameText)
+    const filePath = join(audioFolder, fileNameText)
     writeFile(filePath, "")
 
-    const filePathCover = join(documentsPath, fileNameImage)
+    const filePathCover = join(audioFolder, fileNameImage)
     if (doesPathExist(filePathCover)) {
         deleteFile(filePathCover)
     }
+}
+
+export function openNowPlaying() {
+    const audioFolder = getDataFolderPath("audio")
+    const filePath = join(audioFolder, fileNameText)
+    openInSystem(filePath)
 }
 
 // const app = express()

@@ -60,6 +60,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     manage_variable_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
     variable_tag_set: { label: "context.setTag", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_set"] },
     variable_tag_filter: { label: "context.filterByTags", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_filter"] },
+    action_history: { label: "popup.action_history", icon: "history", iconColor: "var(--secondary)" },
     newCategory: { label: "context.newCategory", icon: "add", iconColor: "var(--secondary)" },
     newScripture: { label: "new.scripture", icon: "add", iconColor: "var(--secondary)" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -121,6 +122,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     slide_transition: { label: "popup.transition", icon: "transition", iconColor: "#ffd5bb" },
     disable: { label: "actions.disable", icon: "disable", iconColor: "#ff5454" },
     edit: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" },
+    edit_style: { label: "edit.style", icon: "styles", iconColor: "#97c7ff" },
     recolor: { label: "actions.recolor", icon: "color", iconColor: "#6effbe" },
     actions: { label: "actions.slide_actions", icon: "actions", iconColor: "#d497ff", items: ["LOAD_actions"] },
     bind_to: { label: "actions.bind_to", icon: "bind", iconColor: "#d497ff", items: ["LOAD_bind_slide"] },
@@ -198,7 +200,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output: ["force_output", "SEPARATOR", "align_with_screen", "choose_screen"], // , "SEPARATOR", "edit"
 
     // OUTPUTS
-    output_preview: ["edit", "SEPARATOR", "live_prepare", "SEPARATOR", "test_pattern"],
+    output_preview: ["edit", "edit_style", "SEPARATOR", "live_prepare", "SEPARATOR", "test_pattern"],
     output_active_button: ["edit", "SEPARATOR", "toggle_output", "move_to_front", "SEPARATOR", "hide_from_preview"],
 
     // DRAWER
@@ -224,12 +226,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
-    drawer_show_button_readonly: ["tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
+    drawer_show_button: ["addToProject", "SEPARATOR", "edit", "lock_show", "SEPARATOR", "rename", "duplicate", "delete", "SEPARATOR", "tag_set", "tag_filter", "SEPARATOR", "selectAll"],
+    drawer_show_button_readonly: ["tag_filter", "SEPARATOR", "selectAll"], // "addToProject", "SEPARATOR",
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
-    media_preview: ["create_show", "SEPARATOR", "close"],
+    media_preview: ["create_show", "SEPARATOR", "system_open", "SEPARATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["edit", "preview", "SEPARATOR", "play_no_filters", "SEPARATOR", "system_open"], // "play_no_audio"
@@ -257,7 +259,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     screen_card: ["recording"],
     camera_card: ["edit", "SEPARATOR", "startup_activate", "SEPARATOR", "recording"],
     // actions
-    actions: ["manage_action_tags", "action_tag_filter"],
+    actions: ["manage_action_tags", "action_tag_filter", "SEPARATOR", "action_history"],
     actions_readonly: ["action_tag_filter"],
     action: ["edit", "disable", "SEPARATOR", "duplicate", "delete", "SEPARATOR", "action_tag_set", "action_tag_filter"],
     action_readonly: ["action_tag_filter"],

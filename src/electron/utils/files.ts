@@ -13,11 +13,11 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { FileData, MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
-import { stores } from "../data/store"
+import { _store, config, getStore } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { mainWindow, toApp } from "./../index"
+import { mainWindow, setAutoProfile, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
@@ -170,13 +170,14 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true): string[] {
+export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
     // crashes if empty in electron v37
     if (!filters.extensions.length) filters.extensions = ["*"]
 
     const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
     if (multiple) options.properties!.push("multiSelections")
+    if (initialPath) options.defaultPath = initialPath
 
     const files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
@@ -200,26 +201,6 @@ export function openInSystem(filePath: string, openFolder = false) {
     else shell.showItemInFolder(filePath)
 }
 
-const appFolderName = "FreeShow"
-export function getDocumentsFolder(folderPath: string | null = null, folderName = dataFolderNames.shows, shouldCreateFolder = true): string {
-    const documentsFolderPath = [app.getPath("documents"), appFolderName]
-    if (folderName) documentsFolderPath.push(folderName)
-    if (!folderPath) folderPath = path.join(...documentsFolderPath)
-    if (!doesPathExist(folderPath) && shouldCreateFolder) makeDir(folderPath)
-
-    return folderPath
-}
-
-export function checkShowsFolder(folderPath: string): string {
-    if (!folderPath) {
-        folderPath = getDocumentsFolder()
-        sendMain(Main.SHOWS_PATH, folderPath)
-        return folderPath
-    }
-
-    return createFolder(folderPath)
-}
-
 export const dataFolderNames = {
     shows: "Shows",
     backups: "Backups",
@@ -235,10 +216,20 @@ export const dataFolderNames = {
     userData: "Config"
 }
 
-// DATA PATH
-export function getDataFolder(dataPath: string, name: string) {
-    if (!dataPath) return getDocumentsFolder(null, name)
-    return createFolder(path.join(dataPath, name))
+// Documents/FreeShow
+export function getDefaultDataFolderRoot() {
+    const documentsPath = app.getPath("documents")
+    const appFolderName = "FreeShow"
+    return createFolder(path.join(documentsPath, appFolderName))
+}
+export function getDataFolderRoot() {
+    return config.get("dataPath") || getDefaultDataFolderRoot()
+}
+
+export function getDataFolderPath(id: keyof typeof dataFolderNames, subfolder?: string) {
+    let folderPath = path.join(getDataFolderRoot(), dataFolderNames[id])
+    if (subfolder) folderPath = path.join(folderPath, subfolder)
+    return createFolder(folderPath)
 }
 
 // HELPERS
@@ -294,9 +285,6 @@ export function getPaths() {
         videos: app.getPath("videos"),
         music: app.getPath("music")
     }
-
-    // this will create "documents/Shows" folder if it doesen't exist
-    // paths.shows = getDocumentsFolder()
 
     return paths
 }
@@ -389,23 +377,23 @@ export function getSimularPaths(data: { paths: string[] }) {
     const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
     const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
-    let simularArray: [{ path: string; name: string }, number][] = []
+    let similarArray: [{ path: string; name: string }, number][] = []
     data.paths.forEach((originalFilePath: string) => {
         const originalFileName = parse(originalFilePath).name
 
         filteredFilePaths.forEach((filePath: string) => {
             const name = parse(filePath).name
-            if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
+            if (data.paths.includes(filePath) || similarArray.find((a) => a[0].name.includes(name))) return
 
             const match = similarity(originalFileName, name)
             if (match < 0.5) return
 
-            simularArray.push([{ path: filePath, name }, match])
+            similarArray.push([{ path: filePath, name }, match])
         })
     })
 
-    simularArray = simularArray.sort((a, b) => b[1] - a[1])
-    const sortedSimularArray = simularArray.slice(0, 10).map((a) => a[0])
+    similarArray = similarArray.sort((a, b) => b[1] - a[1])
+    const sortedSimularArray = similarArray.slice(0, 10).map((a) => a[0])
 
     return sortedSimularArray
 }
@@ -445,17 +433,9 @@ export function selectFolder(msg: { channel: string; title?: string; path?: stri
     const folder = selectFolderDialog(msg.title, msg.path)
     if (!folder) return
 
-    // only when initializing
-    if (msg.channel === "DATA_SHOWS") {
-        const dataPath = folder
-        const showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
-        sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: dataPath, showsPath })
-        return
-    }
-
     if (msg.channel === "SHOWS") {
-        sendMain(Main.FULL_SHOWS_LIST, getAllShows({ path: folder }))
-        sendMain(Main.SHOWS, loadShows({ showsPath: folder }))
+        sendMain(Main.FULL_SHOWS_LIST, getAllShows())
+        sendMain(Main.SHOWS, loadShows())
     }
 
     sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: folder })
@@ -703,9 +683,11 @@ async function checkIsFolder(filePath: string): Promise<boolean> {
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling = false
-export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; dataPath: string }) {
+export function bundleMediaFiles() {
     if (currentlyBundling) return
     currentlyBundling = true
+
+    const showsPath = getDataFolderPath("shows")
 
     let showsList = readFolder(showsPath)
     showsList = showsList
@@ -739,7 +721,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
     }
 
     // get/create new folder
-    const outputPath = getDataFolder(dataPath, dataFolderNames.mediaBundle)
+    const outputPath = getDataFolderPath("mediaBundle")
 
     // copy media files
     allMediaFiles.forEach((mediaPath) => {
@@ -761,22 +743,15 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: { showsPath: string }, returnShows = false) {
-    if (!showsPath) {
-        console.error("Invalid shows path, does the program have proper read/write permission?")
-        return {}
-    }
+export function loadShows(returnShows = false) {
+    const showsPath = getDataFolderPath("shows")
 
     specialCaseFixer()
-
-    // check if Shows folder exist
-    // makeDir(showsPath)
-    if (!doesPathExist(showsPath)) return {}
 
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    const cachedShows = (stores.SHOWS.store || {}) as { [key: string]: Show }
+    const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
 
     // create a map for quick lookup of cached shows by name
@@ -815,8 +790,8 @@ export function loadShows({ showsPath }: { showsPath: string }, returnShows = fa
     if (returnShows) return newCachedShows
 
     // save this (for cloud sync)
-    stores.SHOWS.clear()
-    stores.SHOWS.set(newCachedShows)
+    _store.SHOWS?.clear()
+    _store.SHOWS?.set(newCachedShows)
 
     return newCachedShows
 }
@@ -848,9 +823,10 @@ export function parseJSON(jsonData: string) {
 }
 
 // load shows by id (used for show export)
-export function getShowsFromIds(showIds: string[], showsPath: string) {
+export function getShowsFromIds(showIds: string[]) {
     const shows: Show[] = []
-    const cachedShows: TrimmedShows = stores.SHOWS.store
+    const cachedShows = getStore("SHOWS")
+    const showsPath = getDataFolderPath("shows")
 
     showIds.forEach((id) => {
         const cachedShow = cachedShows[id]
@@ -881,11 +857,14 @@ const FIXES = {
     },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
-        openInSystem(stores.SETTINGS.path, true)
+        openInSystem(_store.SETTINGS?.path || "", true)
+    },
+    ADMIN_PROFILE: () => {
+        setAutoProfile("admin")
     }
 }
 function specialCaseFixer() {
-    const defaultDataFolder = getDocumentsFolder(null, "", false)
+    const defaultDataFolder = getDefaultDataFolderRoot()
     if (!doesPathExist(defaultDataFolder)) return
 
     const files: string[] = readFolder(defaultDataFolder)

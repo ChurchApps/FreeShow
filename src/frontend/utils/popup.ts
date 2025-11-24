@@ -53,6 +53,7 @@ import MaxLines from "../components/main/popups/MaxLines.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
 import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
+import OutputSelector from "../components/main/popups/OutputSelector.svelte"
 import Rename from "../components/main/popups/Rename.svelte"
 import ResetAll from "../components/main/popups/ResetAll.svelte"
 import ScriptureShow from "../components/main/popups/ScriptureShow.svelte"
@@ -62,6 +63,7 @@ import SelectStyle from "../components/main/popups/SelectStyle.svelte"
 import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
 import SetTime from "../components/main/popups/SetTime.svelte"
 import Shortcuts from "../components/main/popups/Shortcuts.svelte"
+import SlideMidi from "../components/main/popups/SlideMidi.svelte"
 import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
 import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
 import TemplateStyleOverrides from "../components/main/popups/TemplateStyleOverrides.svelte"
@@ -69,10 +71,10 @@ import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
 import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
-import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
-import SlideMidi from "../components/main/popups/SlideMidi.svelte"
+import NowPlaying from "../components/main/popups/NowPlaying.svelte"
+import Restore from "../components/main/popups/Restore.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -106,6 +108,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     trigger: Trigger,
     audio_stream: AudioStream,
+    now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,
     transition: Transition,
@@ -119,6 +122,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     choose_output: ChooseOutput,
     choose_style: ChooseStyle,
     change_output_values: ChangeOutputValues,
+    output_selector: OutputSelector,
     set_time: SetTime,
     assign_shortcut: SlideShortcut,
     dynamic_values: DynamicValues,
@@ -131,6 +135,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     about: About,
     shortcuts: Shortcuts,
     unsaved: Unsaved,
+    restore: Restore,
     reset_all: ResetAll,
     alert: Alert,
     history: History,
@@ -140,7 +145,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     category_action: CategoryAction,
     custom_action: CustomAction,
     slide_midi: SlideMidi,
-    user_data_overwrite: UserDataOverwrite,
     connect: Connect,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
@@ -176,4 +180,10 @@ export async function confirmCustom(prompt: string) {
     popupData.set({ prompt })
     const data = await waitForPopupData("confirm")
     return !!data
+}
+
+export async function promptCustom(prompt: string) {
+    popupData.set({ prompt, textInput: true })
+    const data = await waitForPopupData("confirm") || ""
+    return data as string
 }

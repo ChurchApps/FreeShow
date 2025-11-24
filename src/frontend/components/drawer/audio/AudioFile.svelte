@@ -1,7 +1,8 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
-    import { activeFocus, activeShow, focusMode, media, outLocked, playingAudio } from "../../../stores"
+    import { addProjectItem } from "../../../converters/project"
+    import { activeShow, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -35,9 +36,7 @@
         }}
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey || e.shiftKey) return
-
-            if ($focusMode) activeFocus.set({ id: path, type: "audio" })
-            else activeShow.set({ id: path, name, type: "audio" })
+            addProjectItem({ id: path, name, type: "audio" })
         }}
     >
         <span style="max-width: 90%;">

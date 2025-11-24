@@ -20,6 +20,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleButtons from "../../inputs/MaterialToggleButtons.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import T from "../../helpers/T.svelte"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -158,7 +159,26 @@
     function updateCustom(e: any) {
         updateStyle(e.value, e.key)
     }
+
+    $: normalOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
+    function useStyle() {
+        outputs.update((a) => {
+            Object.keys(a).forEach((outputId) => {
+                let output = a[outputId]
+                if (output.stageOutput || !output.enabled) return
+
+                output.style = styleId
+            })
+            return a
+        })
+    }
 </script>
+
+{#if normalOutputs.length === 1 && normalOutputs[0].style !== styleId}
+    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={useStyle}>
+        <T id="settings.active_style" />
+    </MaterialButton>
+{/if}
 
 <MaterialColorInput
     label="edit.background_color{templateBackground ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.6em;">settings.overrided_value<span>' : ''}"

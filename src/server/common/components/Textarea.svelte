@@ -11,19 +11,29 @@
     textarea {
         flex: 1;
 
-        padding: 20px;
+        padding: 16px;
         outline: none;
-        border: none;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 8px;
 
-        background-color: inherit;
+        background-color: var(--primary-darker);
         color: inherit;
         font-size: inherit;
         font-family: inherit;
 
         resize: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
         /* FreeShow UI scrollbar */
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    textarea:hover {
+        border-color: var(--primary-lighter);
+    }
+    textarea:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px var(--secondary-opacity);
+        background-color: var(--primary-darker);
     }
     textarea::-webkit-scrollbar { width: 8px; height: 8px; }
     textarea::-webkit-scrollbar-track,

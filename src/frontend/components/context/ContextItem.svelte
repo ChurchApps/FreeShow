@@ -8,6 +8,7 @@
         activeShow,
         categories,
         colorbars,
+        dictionary,
         disabledServers,
         drawerTabsData,
         effects,
@@ -28,11 +29,13 @@
         showsCache,
         slidesOptions,
         stageShows,
+        styles,
         templateCategories,
         timers,
         topContextActive,
         undoHistory
     } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -90,6 +93,24 @@
         edit: () => {
             if ($selected.id !== "show_drawer" || !$shows[$selected.data[0]?.id]?.locked) return
             disabled = !!$shows[$selected.data[0].id].locked
+        },
+        edit_style: () => {
+            let outputId = contextElem?.id || ""
+            const styleId = $outputs[outputId]?.style || ""
+            const stageId = $outputs[outputId]?.stageOutput || ""
+
+            if (stageId) {
+                menu.label = "stage.stage_layout"
+                menu.icon = "stage"
+                if (!$stageShows[stageId]) disabled = true
+                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                return
+            }
+
+            menu.label = "edit.style"
+            menu.icon = "styles"
+            if (!$styles[styleId]) disabled = true
+            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
         },
         lock_show: () => {
             if (!$shows[$selected.data[0]?.id]?.locked) return
@@ -157,6 +178,7 @@
             if (!$redoHistory.length) disabled = true
         },
         addToProject: () => {
+            // hide button if $selected.id === "media" && one item selected ? as it's now done with double click
             if ($selected.id === "media" && $selected.data.length > 1) {
                 id = "createSlideshow"
                 menu = { label: "context.create_slideshow", icon: "slide" }
@@ -359,7 +381,8 @@
                 {/if}
             {:else}
                 {#key menu}
-                    <T id={menu?.label || id} />
+                    <!-- <T id={menu?.label || id} /> -->
+                    {translateText(menu?.label || id, $dictionary)}
                 {/key}
             {/if}
             {#if menu?.external}
