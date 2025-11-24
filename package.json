@@ -105,6 +105,7 @@
     "dependencies": {
         "@discordjs/opus": "^0.10.0",
         "@googleapis/drive": "^8.16.0",
+        "@sentry/electron": "^7.3.0",
         "@tanstack/pacer": "^0.14.0",
         "@vimeo/player": "^2.29.3",
         "adm-zip": "^0.5.16",

@@ -129,7 +129,7 @@ export function startAutosave() {
 }
 
 // error logger
-const ERROR_FILTER = [
+export const ERROR_FILTER = [
     "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
     "Failed to construct 'ImageData'", // invalid image size
     "Failed to load because no supported source was found.", // media file doesn't exists
