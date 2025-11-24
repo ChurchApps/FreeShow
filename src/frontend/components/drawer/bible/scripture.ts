@@ -240,7 +240,7 @@ export async function playScripture() {
         if (name || apiId) trackScriptureUsage(name, apiId, reference)
     })
 
-    const templateId = get(scriptureSettings).template || "scripture" // $styles[styleId]?.templateScripture || ""
+    const templateId = getScriptureTemplateId()
     const template = get(templates)[templateId] || {}
     const templateBackground = template.settings?.backgroundPath
 
@@ -430,7 +430,7 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
     const slides: Item[][] = [[]]
 
-    const template = get(templates)[get(scriptureSettings).template]
+    const template = get(templates)[getScriptureTemplateId()]
     const templateItems = clone(template?.items || [])
     const templateTextItems = templateItems.filter((a) => a.lines && !getItemText(a).includes("{"))
     const templateOtherItems = templateItems.filter((a) => (!a.lines && a.type !== "text") || getItemText(a).includes("{"))
@@ -1022,7 +1022,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     }
 
     // template data
-    const template = clone(get(templates)[get(scriptureSettings).template])
+    const template = clone(get(templates)[getScriptureTemplateId()])
     const backgroundPath = template?.settings?.backgroundPath
     const media = {}
     const backgroundId = uid(5)
@@ -1065,7 +1065,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     const layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
-    const templateId = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
+    const templateId = get(scriptureSettings).combineWithText ? false : getScriptureTemplateId() || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
     const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : templateId)
 
@@ -1101,6 +1101,17 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     // WIP add template background?
 
     return show
+}
+
+function getScriptureTemplateId() {
+    const scriptureTemplate = get(scriptureSettings).template || "scripture"
+
+    const onlyOneNormalOutput = getActiveOutputs(get(outputs), false, true, true).length === 1
+    if (!onlyOneNormalOutput) return scriptureTemplate
+
+    const styleId = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.style || ""
+    const styleScriptureTemplate = onlyOneNormalOutput ? get(styles)[styleId]?.templateScripture : ""
+    return styleScriptureTemplate || scriptureTemplate
 }
 
 export function getReferenceText(biblesContent: BibleContent[]) {

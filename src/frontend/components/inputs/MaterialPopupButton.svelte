@@ -110,7 +110,7 @@
     <label class:selected={value}>{translateText(label)}</label>
     <span class="underline" />
 
-    {#if allowEmpty && value}
+    {#if allowEmpty && value && !disabled}
         <div class="remove">
             <MaterialButton {disabled} on:click={() => dispatch("change", null)} title="clear.general" white>
                 <Icon id="close" white />

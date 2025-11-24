@@ -38,7 +38,7 @@
     let slides: Item[][] = [[]]
 
     // background
-    $: templateId = $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
+    $: templateId = styleScriptureTemplate || $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
     $: template = $templates[templateId] || {}
     $: templateBackground = template.settings?.backgroundPath
 
@@ -132,7 +132,7 @@
         previousSlides = JSON.stringify(slides[0])
     }
 
-    $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
+    $: styleId = $outputs[getActiveOutputs($outputs, true, true, true)[0]]?.style || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 
     $: attributionString = getMergedAttribution(biblesContent)
@@ -141,6 +141,9 @@
     let verseMenuOpened = false
     let redMenuOpened = false
     let referenceMenuOpened = false
+
+    $: onlyOneNormalOutput = getActiveOutputs($outputs, false, true, true).length === 1
+    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 </script>
 
 <div class="scroll split">
@@ -166,12 +169,14 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        <InputRow style="margin-bottom: 10px;">
-            <MaterialPopupButton label="info.template" value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
-            {#if templateId && $templates[templateId]}
-                <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
-            {/if}
-        </InputRow>
+        {#if !styleScriptureTemplate}
+            <InputRow style="margin-bottom: 10px;">
+                <MaterialPopupButton label="info.template" value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
+                {#if templateId && $templates[templateId]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
+                {/if}
+            </InputRow>
+        {/if}
 
         <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
         <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={(e) => update("versesOnIndividualLines", e.detail)} />
