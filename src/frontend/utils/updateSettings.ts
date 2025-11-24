@@ -88,6 +88,7 @@ import { checkForUpdates } from "./checkForUpdates"
 import { startAutosave } from "./common"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { startAutosave } from "./common"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return

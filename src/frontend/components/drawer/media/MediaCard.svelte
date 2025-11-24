@@ -1,7 +1,10 @@
 <script lang="ts">
     import { derived } from "svelte/store"
+    import type { ContentFile, ContentProviderId } from "../../../../electron/contentProviders/base/types"
+    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
+    import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
     import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -23,7 +26,17 @@
     export let shiftRange: any[] = []
     export let thumbnailPath = ""
     export let thumbnail = true
-    export let contentProvider = false
+    export let contentProvider: ContentProviderId | false = false
+    export let contentFileData: ContentFile | null = null
+
+    // Store ContentFile object for later license check during download
+    $: if (contentFileData && contentProvider && path) {
+        media.update((m) => {
+            if (!m[path]) m[path] = {}
+            m[path].contentFile = { ...contentFileData, providerId: contentProvider }
+            return m
+        })
+    }
 
     // Memoized name computation
     let displayName = ""

@@ -135,7 +135,8 @@ export enum Main {
     // Content Library
     GET_CONTENT_PROVIDERS = "GET_CONTENT_PROVIDERS",
     GET_CONTENT_LIBRARY = "GET_CONTENT_LIBRARY",
-    GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT"
+    GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT",
+    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE"
 }
 
 export interface MainSendPayloads {
@@ -167,8 +168,8 @@ export interface MainSendPayloads {
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
-    [Main.MEDIA_DOWNLOAD]: { url: string }
-    [Main.MEDIA_IS_DOWNLOADED]: { url: string }
+    [Main.MEDIA_DOWNLOAD]: { url: string; contentFile?: any }
+    [Main.MEDIA_IS_DOWNLOADED]: { url: string; contentFile?: any }
     [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[]; format: string; duration: number }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
@@ -205,6 +206,7 @@ export interface MainSendPayloads {
     // Content Library
     [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
     [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
+    [Main.CHECK_MEDIA_LICENSE]: { providerId: ContentProviderId; mediaId: string }
 }
 
 export interface MainReturnPayloads {
@@ -277,6 +279,7 @@ export interface MainReturnPayloads {
     [Main.GET_CONTENT_PROVIDERS]: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[]
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
+    [Main.CHECK_MEDIA_LICENSE]: Promise<string | null>
 }
 
 ///////////

@@ -574,7 +574,8 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
 export async function downloadOnlineMedia(url: string) {
     if (!url?.startsWith("http")) return url
 
-    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url })
+    const mediaData = get(media)[url]
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
     if (downloadedPath?.buffer) {
         const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
@@ -585,8 +586,31 @@ export async function downloadOnlineMedia(url: string) {
         return downloadedPath.path
     }
 
-    // not downloaded yet
-    sendMain(Main.MEDIA_DOWNLOAD, { url })
+    // Check license before downloading (for content providers like APlay)
+    if (mediaData?.contentFile?.mediaId && mediaData?.contentFile?.providerId && !mediaData?.licenseChecked) {
+        media.update((m) => {
+            if (!m[url]) m[url] = {}
+            m[url].licenseChecked = true
+            return m
+        })
+
+        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, {
+            providerId: mediaData.contentFile.providerId,
+            mediaId: mediaData.contentFile.mediaId
+        })
+        if (pingbackUrl) {
+            media.update((m) => {
+                if (!m[url]) m[url] = {}
+                if (!m[url].contentFile) m[url].contentFile = {}
+                m[url].contentFile.pingbackUrl = pingbackUrl
+                return m
+            })
+        }
+    }
+
+    // not downloaded yet - get updated media data in case pingbackUrl was just set
+    const updatedMediaData = get(media)[url]
+    sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })
     return url
 }
 

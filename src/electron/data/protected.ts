@@ -7,13 +7,6 @@ import path from 'path'
 import { createFolder } from "../utils/files"
 import { filePathHashCode } from "./thumbnails"
 import { getKey } from "../utils/keys"
-import { getMachineId } from "../IPC/responsesMain"
-
-const protectedProviders = ["stream.mux.com"]
-
-export function isProtectedProvider(url: string) {
-    return protectedProviders.find(a => url.includes(a))
-}
 
 export function getProtectedPath(url: string) {
     const protectedDir = path.join(app.getPath("temp"), "freeshow-protected")
@@ -24,11 +17,6 @@ export function getProtectedPath(url: string) {
 const alg = 'aes-256-cbc'
 const keyLength = 32 // 32 bytes for AES-256
 const ivLength = 16  // 16 bytes for CBC
-
-export function getProviderKey(url: string) {
-    if (url.includes("stream.mux.com")) return getMachineId()
-    return getKey("enc_general")
-}
 
 function deriveKey(key: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {

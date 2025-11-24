@@ -412,7 +412,7 @@
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if isProviderSection}
-            <ContentLibraryBrowser providerId={active} columns={$mediaOptions.columns} />
+            <ContentLibraryBrowser providerId={active} columns={$mediaOptions.columns} {searchValue} />
         {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
