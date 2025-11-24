@@ -4,7 +4,6 @@ import fs from "fs"
 import http from "http"
 import https from "https"
 import path from "path"
-import { Readable } from "stream"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { createFolder, getMimeType } from "../utils/files"
@@ -132,12 +131,9 @@ const decryptedCache = new Map<
 
 const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
 const PROTOCOL_SCHEME = "freeshow-protected"
-let protocolRegistered = false
 
 export function registerProtectedProtocol() {
-    if (protocolRegistered) return
-
-    protocol.registerStreamProtocol(PROTOCOL_SCHEME, async (request, callback) => {
+    protocol.handle(PROTOCOL_SCHEME, async (request) => {
         try {
             const parsed = new URL(request.url)
             const entryId = parsed.hostname || parsed.pathname.replace(/^\//, "")
@@ -148,28 +144,26 @@ export function registerProtectedProtocol() {
             if (!buffer) throw new Error(`Failed to decrypt protected file: ${entry.filePath}`)
 
             const total = buffer.length
-            const range = request.headers.range || request.headers.Range
+            const range = request.headers.get("range")
             const { start, end, statusCode } = parseRange(range, total)
             const chunk = buffer.subarray(start, end + 1)
 
-            callback({
-                statusCode,
-                headers: {
-                    "Content-Type": entry.mimeType,
-                    "Content-Length": String(chunk.length),
-                    "Accept-Ranges": "bytes",
-                    ...(statusCode === 206 ? { "Content-Range": `bytes ${start}-${end}/${total}` } : {}),
-                    "Cache-Control": "no-store"
-                },
-                data: Readable.from(chunk)
+            const headers = new Headers({
+                "Content-Type": entry.mimeType,
+                "Content-Length": String(chunk.length),
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "no-store"
             })
+            if (statusCode === 206) {
+                headers.set("Content-Range", `bytes ${start}-${end}/${total}`)
+            }
+
+            return new Response(new Uint8Array(chunk), { status: statusCode, headers })
         } catch (err) {
             console.error("[ProtectedMedia] Failed to serve protected media:", err)
-            callback({ statusCode: 500 })
+            return new Response(null, { status: 500 })
         }
     })
-
-    protocolRegistered = true
 }
 
 export function registerProtectedMediaFile({
@@ -222,13 +216,12 @@ function refreshCache(id: string) {
     cached.timeout = setTimeout(() => decryptedCache.delete(id), CACHE_TTL)
 }
 
-function parseRange(rangeHeader: string | string[] | undefined, totalLength: number) {
+function parseRange(rangeHeader: string | null, totalLength: number) {
     if (!rangeHeader || totalLength === 0) {
         return { start: 0, end: Math.max(0, totalLength - 1), statusCode: 200 }
     }
 
-    const rangeValue = Array.isArray(rangeHeader) ? rangeHeader[0] : rangeHeader
-    const match = /bytes=(\d*)-(\d*)/.exec(rangeValue || "")
+    const match = /bytes=(\d*)-(\d*)/.exec(rangeHeader || "")
     if (!match) return { start: 0, end: totalLength - 1, statusCode: 200 }
 
     const hasStart = match[1] !== ""
