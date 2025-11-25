@@ -200,7 +200,7 @@ export function openInSystem(filePath: string, openFolder = false) {
     else shell.showItemInFolder(filePath)
 }
 
-const appFolderName = "FreeShow"
+const appFolderName = "APlay Pro"
 export function getDocumentsFolder(folderPath: string | null = null, folderName = dataFolderNames.shows, shouldCreateFolder = true): string {
     const documentsFolderPath = [app.getPath("documents"), appFolderName]
     if (folderName) documentsFolderPath.push(folderName)
