@@ -47,7 +47,7 @@ import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
+import { getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
@@ -76,9 +76,8 @@ export function selectShowByName(name: string) {
 export function gotoGroup(dataGroupId: string) {
     if (get(outLocked)) return
 
-    const outputId = getActiveOutputs(get(outputs))[0]
-    const currentOutput = get(outputs)[outputId] || null
-    const outSlide = currentOutput.out?.slide
+    const currentOutput = getFirstActiveOutput()
+    const outSlide = currentOutput?.out?.slide
     const currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
 
@@ -222,7 +221,7 @@ export function toggleLock(data: API_output_lock) {
         return
     }
 
-    const outputIds = data.outputId === "all" ? getActiveOutputs(get(outputs), false, true, true) : [data.outputId]
+    const outputIds = data.outputId === "all" ? getAllEnabledOutputs().map(a => a.id) : [data.outputId]
 
     const isLocked = get(outputs)[outputIds[0]]?.active === false
     outputIds.forEach(outputId => {
@@ -531,9 +530,8 @@ export function playMedia(data: API_media) {
         return
     }
 
-    const outputId = getActiveOutputs(get(outputs))[0]
-    const currentOutput = get(outputs)[outputId] || {}
-    const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+    const currentOutput = getFirstActiveOutput()
+    const currentStyle = getCurrentStyle(get(styles), currentOutput?.style)
 
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
@@ -543,7 +541,7 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    const activeOutputIds = getAllActiveOutputs().map((a) => a.id)
     const timeValues: any = {}
     activeOutputIds.forEach((id) => {
         timeValues[id] = data.seconds
@@ -609,7 +607,9 @@ export function timerSeekTo(data: API_seek) {
 // OTHER
 
 export function toggleLogSongUsage(data: API_toggle_specific) {
-    const newValue = data.value !== undefined ? data.value : !get(special).logSongUsage
+    if ((data.value as any) === "false") data.value = false // from Companion
+
+    const newValue = data.value !== undefined ? !!data.value : !get(special).logSongUsage
     special.update((a) => {
         a.logSongUsage = newValue
         return a

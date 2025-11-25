@@ -7,12 +7,12 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
+import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
-import { getActiveOutputs, getOutputResolution } from "./output"
+import { getFirstActiveOutput, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -62,10 +62,16 @@ export function joinPath(path: string[]): string {
     return path.join(pathJoiner)
 }
 
+function isLocalFile(path: string): boolean {
+    if (typeof path !== "string") return false
+    if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:") || path.startsWith("blob:") || path.startsWith("freeshow-protected://")) return false
+    return true
+}
+
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
-    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return path
+    if (!isLocalFile(path)) return path
 
     // already encoded
     if (path.match(/%\d+/g)) {
@@ -102,8 +108,9 @@ export async function getThumbnail(data: API_media) {
 }
 
 export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
-    const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    const outSlide = get(outputs)[outputId]?.out?.slide
+    const currentOutput = getFirstActiveOutput()
+    const outSlide = currentOutput?.out?.slide
+    if (!currentOutput) return ""
 
     if (!data.showId) data.showId = outSlide?.id
     if (!data.layoutId) data.layoutId = outSlide?.layout
@@ -111,7 +118,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData:
 
     if (!data?.showId) return ""
 
-    const output = clone(get(outputs)[outputId])
+    const output = clone(currentOutput)
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
 
@@ -123,10 +130,10 @@ export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData:
     if (extraOutData.backgroundImage) output.out.background = { path: extraOutData.backgroundImage }
     if (extraOutData.overlays) output.out.overlays = extraOutData.overlays
 
-    let resolution: any = getOutputResolution(outputId)
+    let resolution: any = getOutputResolution(currentOutput.id)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
 
-    const thumbnail = await requestMain(Main.CAPTURE_SLIDE, { output: { [outputId]: output }, resolution })
+    const thumbnail = await requestMain(Main.CAPTURE_SLIDE, { output: { [currentOutput.id]: output }, resolution })
     return thumbnail?.base64 || ""
 }
 
@@ -215,7 +222,7 @@ export async function doesMediaExist(path: string, noCache = false) {
 export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mimeType: string; mimeCodec: string } | null> {
     let info: { path?: string; codecs: string[]; mimeType: string; mimeCodec: string } | null = null
     if (typeof path !== "string") return info
-    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return info
+    if (!isLocalFile(path)) return info
 
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
@@ -318,9 +325,7 @@ export const mediaSize = {
 
 export async function loadThumbnail(input: string, size: number) {
     if (typeof input !== "string") return ""
-
-    // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http") || input.includes("data:") || input.includes("blob:")) return input
+    if (!isLocalFile(input)) return input
 
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache")) return input
@@ -337,9 +342,7 @@ export async function loadThumbnail(input: string, size: number) {
 
 export function getThumbnailPath(input: string, size: number) {
     if (!input) return ""
-
-    // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http") || input.includes("data:") || input.includes("blob:")) return input
+    if (!isLocalFile(input)) return input
 
     // already encoded
     if (input.includes("freeshow-cache")) return input
@@ -384,9 +387,7 @@ function getThumbnailId(data: { input: string; size: number }) {
 // convert path to base64
 export async function getBase64Path(path: string, size: number = mediaSize.big) {
     if (typeof path !== "string" || !mediaExtensions.includes(getExtension(path))) return ""
-
-    // online media (e.g. Pixabay/Unsplash)
-    if (path.includes("http") || path.includes("data:") || path.includes("blob:")) return path
+    if (!isLocalFile(path)) return path
 
     const thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
@@ -574,19 +575,37 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
 export async function downloadOnlineMedia(url: string) {
     if (!url?.startsWith("http")) return url
 
-    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url })
+    const mediaData = get(media)[url]
+    const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
-    if (downloadedPath?.buffer) {
-        const blob = new Blob([downloadedPath.buffer as BlobPart], { type: "video/mp4" })
-        return URL.createObjectURL(blob)
+    if (downloadedPath?.protectedUrl) return downloadedPath.protectedUrl
+    if (downloadedPath?.path) return downloadedPath.path
+
+    // Check license before downloading (for content providers like APlay)
+    if (mediaData?.contentFile?.mediaId && mediaData?.contentFile?.providerId && !mediaData?.licenseChecked) {
+        media.update((m) => {
+            if (!m[url]) m[url] = {}
+            m[url].licenseChecked = true
+            return m
+        })
+
+        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, {
+            providerId: mediaData.contentFile.providerId,
+            mediaId: mediaData.contentFile.mediaId
+        })
+        if (pingbackUrl) {
+            media.update((m) => {
+                if (!m[url]) m[url] = {}
+                if (!m[url].contentFile) m[url].contentFile = {}
+                m[url].contentFile.pingbackUrl = pingbackUrl
+                return m
+            })
+        }
     }
 
-    if (downloadedPath) {
-        return downloadedPath.path
-    }
-
-    // not downloaded yet
-    sendMain(Main.MEDIA_DOWNLOAD, { url })
+    // not downloaded yet - get updated media data in case pingbackUrl was just set
+    const updatedMediaData = get(media)[url]
+    sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })
     return url
 }
 

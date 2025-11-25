@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { Item, Line } from "../../../../types/Show"
-import { outputs, styles } from "../../../stores"
+import { styles } from "../../../stores"
 import { clone } from "../../helpers/array"
-import { getActiveOutputs } from "../../helpers/output"
+import { getFirstActiveOutput } from "../../helpers/output"
 import { getStyles } from "../../helpers/style"
 import { getItemText } from "../scripts/textStyle"
 
@@ -193,9 +193,8 @@ export class EditboxHelper {
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
 
         // get first output style
-        const outputId = getActiveOutputs()[0]
-        const currentOutput = get(outputs)[outputId] || {}
-        const outputStyle = get(styles)[currentOutput.style || ""] || {}
+        const currentOutput = getFirstActiveOutput()
+        const outputStyle = get(styles)[currentOutput?.style || ""] || {}
         if (!Object.keys(outputStyle).length) return style
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100

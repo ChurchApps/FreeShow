@@ -55,27 +55,6 @@
         })
     })
 
-    // const fakeScreen0 = {
-    //     bounds: { x: -864 - 1536, y: -452, width: 1536, height: 1536 },
-    //     id: 2528732444,
-    //     internal: false,
-    // }
-    // const fakeScreen = {
-    //     bounds: { x: -864, y: -452, width: 864, height: 1536 },
-    //     id: 2528732444,
-    //     internal: false,
-    // }
-    // const fakeScreen2 = {
-    //     bounds: { x: 1920 + 1536, y: 0, width: 1536, height: 1536 },
-    //     id: 2528732444,
-    //     internal: false,
-    // }
-    // const fakeScreen3 = {
-    //     bounds: { x: 1920 + 1536 + 1536, y: 0, width: 1536, height: 1536 },
-    //     id: 2528732444,
-    //     internal: false,
-    // }
-
     function internalFirst(a, b) {
         return b.internal - a.internal
     }
@@ -144,6 +123,7 @@
         display: flex;
         /* justify-content: center; */
         /* transform: translateX(-20%); */
+        overflow: auto;
 
         min-height: 200px;
     }

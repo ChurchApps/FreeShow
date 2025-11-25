@@ -2,7 +2,7 @@
     import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, timeFormat } from "../../../stores"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
-    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
+    import { getDefaultProjectName, projectReplacers } from "../../helpers/historyHelpers"
     import Title from "../../input/Title.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
@@ -33,7 +33,7 @@
     // WIP set calendar starting day
     // WIP change date format (DD.MM.YYYY, YYYY-MM-DD)
 
-    $: projectName = $special.default_project_name ?? DEFAULT_PROJECT_NAME
+    $: projectName = $special.default_project_name ?? getDefaultProjectName()
 
     $: groupsString = updateGroups($groups, $dictionary)
     function updateGroups(groups: any, _updater: any) {
@@ -59,7 +59,7 @@
 
 <Title label="guide_title.project" icon="project" />
 
-<MaterialTextInput label="settings.default_project_name" title={projectReplacerTitle} value={projectName} defaultValue={DEFAULT_PROJECT_NAME} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
+<MaterialTextInput label="settings.default_project_name" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
 <!-- WIP <span style="opacity: 0.6;display: flex;align-items: center;padding-left: 10px;font-size: 0.8em;">({getProjectName($special)})</span> -->
 
 <MaterialToggleSwitch label="settings.startup_projects_list" checked={$special.startupProjectsList} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "startupProjectsList")} />

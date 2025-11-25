@@ -6,7 +6,7 @@
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { audioChannelsData, currentWindow, media, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -120,7 +120,8 @@
     onMount(() => (mounted = true))
     $: if (id && !fadingOut && mounted) startReceiver()
     function startReceiver() {
-        if (mirror || receiving) return
+        const isStage = !!Object.values($outputs)[0]?.stageOutput
+        if ((mirror && !isStage) || receiving) return
         receiving = true
 
         destroy(OUTPUT, listenerId)

@@ -511,8 +511,11 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
     })
 }
 
-function getMimeType(filePath: string) {
-    const ext = filePath.split(".").pop()?.toLowerCase() || ""
+export function getMimeType(filePath: string) {
+    if (typeof filePath !== "string") return ""
+
+    // const ext = filePath.split(".").pop()?.toLowerCase() || ""
+    const ext = path.extname(filePath).toLowerCase().slice(1)
     return mimeTypes[ext] || ""
 }
 

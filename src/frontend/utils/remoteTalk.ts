@@ -2,21 +2,21 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
+import { loadJsonBible } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
-import { getActiveOutputs, setOutput } from "../components/helpers/output"
+import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getLayoutRef } from "../components/helpers/show"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activePage, activeProject, activeShow, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { activePage, activeProject, activeShow, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
-import { loadJsonBible } from "../components/drawer/bible/scripture"
-import { lastClickTime } from "./common"
 
 // REMOTE
 
@@ -85,8 +85,8 @@ export const receiveREMOTE: any = {
         const currentId = uid(5)
         currentOut = currentId
 
-        const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-        const out: any = currentOutput?.out?.slide || null
+        const currentOutput = getFirstActiveOutput()
+        const out = currentOutput?.out?.slide || null
         let id = ""
 
         if (msg.data === "clear") {
@@ -135,7 +135,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     OUT_DATA: (msg: any) => {
-        const currentOutput = get(outputs)[getActiveOutputs()[0]]
+        const currentOutput = getFirstActiveOutput()
         const out = currentOutput?.out || {}
         msg.data = out
 
@@ -266,12 +266,12 @@ export const receiveREMOTE: any = {
                     referenceFull: ref.reference || "",
                     verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
                 }))
-                
+
                 // Apply book filter if provided
                 if (bookFilter) {
                     filteredResults = filteredResults.filter((ref: any) => ref.book === bookFilter)
                 }
-                
+
                 msg.data.searchResults = {
                     type: "text",
                     results: filteredResults.slice(0, 50),
@@ -299,7 +299,7 @@ export async function initializeRemote(id: string) {
     send(REMOTE, ["PROJECT"], get(activeProject))
 
     // Get current output state
-    const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    const currentOutput = getFirstActiveOutput()
     const styleRes = currentOutput?.style ?
         get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution :
         null

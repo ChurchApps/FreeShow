@@ -1,10 +1,10 @@
 <script lang="ts">
     import { draw, drawSettings, drawTool, outputs } from "../../stores"
-    import { getActiveOutputs, getOutputResolution } from "../helpers/output"
+    import { getFirstActiveOutput, getOutputResolution } from "../helpers/output"
     import Output from "../output/Output.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
 
-    $: outputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: outputId = getFirstActiveOutput($outputs)?.id || ""
     // $: ref = $activeShow?.id ? getLayoutRef() : null
     // $: currentOutput = $outputs[outputId] || {}
     // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()?.[0] : null

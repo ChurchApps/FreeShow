@@ -8,72 +8,66 @@
     import { _set, active, activeProject, activeShow, dictionary, mediaCache, project, projectsOpened, shows } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Projects from "./Projects.svelte"
-import type { ShowList } from "../../../../types/Show"
+    import type { ShowList } from "../../../../types/Show"
 
-type ProjectSection = {
-    id: string
-    name: string | null
-    items: any[]
-}
-
-const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
-const THUMBNAIL_TYPES = new Set(["image", "video"])
-
-let editProject = false
-let showLookup: Record<string, ShowList> = {}
-
-$: showLookup = Array.isArray($shows)
-    ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show]))
-    : {}
-
-$: projectSections = buildProjectSections($activeProject?.shows || [])
-$: canAddActiveShow =
-    ($active.type || "show") === "show" &&
-    $activeShow &&
-    !!$activeProject?.shows &&
-    !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
-
-function getShowId(show: any): string | undefined {
-    return show?.id
-}
-
-function getShowType(show: any): string {
-    return (show?.type || "").toString()
-}
-
-function isMediaType(type: string): boolean {
-    return MEDIA_TYPES.has(type)
-}
-
-function needsThumbnail(type: string): boolean {
-    return THUMBNAIL_TYPES.has(type)
-}
-
-function buildProjectSections(shows: any[] = []): ProjectSection[] {
-    if (!Array.isArray(shows) || !shows.length) return []
-
-    const sections: ProjectSection[] = []
-    let current: ProjectSection | null = null
-
-    const startSection = (id: string, name: string | null) => {
-        const section = { id, name, items: [] as any[] }
-        sections.push(section)
-        return section
+    type ProjectSection = {
+        id: string
+        name: string | null
+        items: any[]
     }
 
-    current = startSection("section-root", null)
+    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
+    const THUMBNAIL_TYPES = new Set(["image", "video"])
 
-    shows.forEach((show, index) => {
-        if (getShowType(show).toLowerCase() === "section") {
-            current = startSection(`section-${index}`, show?.name?.trim() || null)
-            return
+    let editProject = false
+    let showLookup: Record<string, ShowList> = {}
+
+    $: showLookup = Array.isArray($shows) ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show])) : {}
+
+    $: projectSections = buildProjectSections($activeProject?.shows || [])
+    $: canAddActiveShow = ($active.type || "show") === "show" && $activeShow && !!$activeProject?.shows && !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
+
+    function getShowId(show: any): string | undefined {
+        return show?.id
+    }
+
+    function getShowType(show: any): string {
+        return (show?.type || "").toString()
+    }
+
+    function isMediaType(type: string): boolean {
+        return MEDIA_TYPES.has(type)
+    }
+
+    function needsThumbnail(type: string): boolean {
+        return THUMBNAIL_TYPES.has(type)
+    }
+
+    function buildProjectSections(shows: any[] = []): ProjectSection[] {
+        if (!Array.isArray(shows) || !shows.length) return []
+
+        const sections: ProjectSection[] = []
+        let current: ProjectSection | null = null
+
+        const startSection = (id: string, name: string | null) => {
+            const section = { id, name, items: [] as any[] }
+            sections.push(section)
+            return section
         }
 
-        current?.items.push(show)
-    })
+        current = startSection("section-root", null)
 
-    return sections.filter((section) => section.items.length)
-}
+        shows.forEach((show, index) => {
+            if (getShowType(show).toLowerCase() === "section") {
+                current = startSection(`section-${index}`, show?.name?.trim() || null)
+                return
+            }
+
+            current?.items.push(show)
+        })
+
+        return sections.filter((section) => section.items.length)
+    }
 
     function renameProject() {
         const name = prompt("Enter a new name:", $activeProject?.name)
@@ -113,25 +107,11 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                     <p style="flex: 1;text-align: center;padding: 0.2em 0.8em;">{$activeProject.name}</p>
 
                     <div class="header-actions">
-                        <Button
-                            on:click={renameProject}
-                            center
-                            dark
-                            class="header-action-button"
-                            aria-label={translate("actions.rename", $dictionary)}
-                            title={translate("actions.rename", $dictionary)}
-                        >
+                        <Button on:click={renameProject} center dark class="header-action-button" aria-label={translate("actions.rename", $dictionary)} title={translate("actions.rename", $dictionary)}>
                             <Icon id="rename" size={1.2} />
                         </Button>
 
-                        <Button
-                            on:click={deleteProject}
-                            center
-                            dark
-                            class="header-action-button destructive"
-                            aria-label={translate("actions.delete", $dictionary)}
-                            title={translate("actions.delete", $dictionary)}
-                        >
+                        <Button on:click={deleteProject} center dark class="header-action-button destructive" aria-label={translate("actions.delete", $dictionary)} title={translate("actions.delete", $dictionary)}>
                             <Icon id="delete" size={1.2} />
                         </Button>
                     </div>
@@ -140,7 +120,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                 <div class="list edit-list">
                     {#each $activeProject.shows as show, i}
                         {@const showId = getShowId(show)}
-                        {@const lookupShow = showId ? showLookup[showId] ?? null : null}
+                        {@const lookupShow = showId ? (showLookup[showId] ?? null) : null}
                         <div class="item">
                             <p style="padding: 4px 8px;">{lookupShow?.name || show.name || (showId ? getFileName(removeExtension(showId)) : show.type)}</p>
 
@@ -173,7 +153,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                                     {#each section.items as show}
                                         {@const showId = getShowId(show)}
                                         {@const showType = getShowType(show)}
-                                        {@const showData = showId ? showLookup[showId] ?? null : null}
+                                        {@const showData = showId ? (showLookup[showId] ?? null) : null}
 
                                         {#if isMediaType(showType)}
                                             <Button
@@ -198,11 +178,9 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
                                                 <p>{showType}</p>
                                             </div>
                                         {:else if showData}
-                                            <div
-                                                class="show-button-wrapper"
-                                                class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}
-                                            >
+                                            <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}>
                                                 <ShowButton
+                                                    class="project-show-button"
                                                     on:click={(e) => {
                                                         _set("active", show)
                                                         _set("activeTab", "show")
@@ -355,7 +333,7 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     }
 
     .project-shows-list::-webkit-scrollbar-track,
-        .project-shows-list::-webkit-scrollbar-corner {
+    .project-shows-list::-webkit-scrollbar-corner {
         background: rgb(255 255 255 / 0.05);
     }
 
@@ -371,50 +349,62 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     .project-sections {
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
-        margin: 0.75rem 0;
-        align-items: stretch;
+        gap: 10px;
+        margin: 10px 0;
+        padding-right: 5px;
         width: 100%;
-        padding-right: 12px;
+        box-sizing: border-box;
+        align-items: flex-start;
     }
 
     .section-card {
         background-color: var(--primary-darkest);
         border: 1px solid var(--primary-lighter);
-        border-left: none;
-        border-radius: 0 12px 12px 0;
+        border-left: 0;
+        border-radius: 10px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
         width: 100%;
-        /* max-width: 520px; */
+        max-width: 520px;
     }
-
     .section-title {
-        font-size: 0.78em;
         font-weight: 600;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        padding: 0.45rem 0.95rem;
-        background-color: var(--primary-darker);
+        opacity: 0.85;
+        background: rgb(0 0 0 / 0.25);
         border-bottom: 1px solid var(--primary-lighter);
-        color: rgb(255 255 255 / 0.75);
     }
 
     .section-items {
         display: flex;
         flex-direction: column;
+        width: 100%;
     }
 
-    :global(.section-item-button) {
-        padding: 0.22rem 0.65rem !important;
-        min-height: 44px;
+    .section-items > .show-button-wrapper,
+    .section-items > :global(.section-item-button) {
+        width: 100%;
+    }
+
+    :global(.section-item-button),
+    :global(.project-show-button) {
+        min-height: 50px !important;
+        height: 50px !important;
+        padding: 0.65rem 0.9rem !important;
         font-size: 1em;
+        box-sizing: border-box;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.6em;
         border-radius: 0 !important;
-        text-align: left;
-        justify-content: flex-start;
         background-color: transparent !important;
         border: none !important;
-        transition: background-color 0.15s ease;
+        box-shadow: none !important;
+        text-align: left;
     }
 
     :global(.section-item-button:hover) {
@@ -423,14 +413,14 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
 
     :global(.section-item-button.active) {
         background-color: rgb(255 255 255 / 0.08) !important;
-        border-left: 3px solid var(--secondary) !important;
-        padding-left: calc(0.65rem - 3px) !important;
+        box-shadow: inset 4px 0 0 var(--secondary) !important;
     }
 
     :global(.section-item-button) :global(svg) {
-        width: 1.4em;
-        height: 1.4em;
+        width: 1.5em;
+        height: 1.5em;
         margin-right: 0.6em;
+        align-self: center;
     }
 
     :global(.section-item-button) :global(p),
@@ -444,10 +434,10 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
     .section-item.info {
         display: flex;
         align-items: center;
-        gap: 0.65em;
-        padding: 0.65rem 0.85rem;
+        gap: 0.6em;
+        padding: 0.35rem 0.85rem;
         min-height: 48px;
-        font-size: 0.85em;
+        font-size: 1em;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         opacity: 0.75;
@@ -459,10 +449,18 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         background-color: transparent;
         border-radius: 0;
         transition: background-color 0.15s ease;
+        min-height: 50px;
+        width: 100%;
+        border-bottom-left-radius: 0 !important;
     }
 
     .section-items > .show-button-wrapper:first-child,
     .section-items > :global(.section-item-button:first-child) {
+        border-top-right-radius: 12px;
+    }
+
+    .section-items > .show-button-wrapper:first-child.active,
+    .section-items > :global(.section-item-button:first-child.active) {
         border-top-right-radius: 12px;
     }
 
@@ -477,7 +475,12 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
 
     .show-button-wrapper.active {
         background-color: rgb(255 255 255 / 0.08);
-        border-left: 3px solid var(--secondary);
+        box-shadow: inset 4px 0 0 var(--secondary);
+    }
+
+    .section-items > .show-button-wrapper:last-child.active,
+    .section-items > :global(.section-item-button:last-child.active) {
+        border-bottom-right-radius: 12px;
     }
 
     .show-button-wrapper :global(button) {
@@ -486,14 +489,28 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0.22rem 0.65rem !important;
-        min-height: 44px;
         font-size: 1em;
         text-align: left;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between;
+        gap: 0.6em;
+        min-height: inherit;
+        border-bottom-left-radius: 0 !important;
     }
 
-    .show-button-wrapper.active :global(button) {
-        padding-left: calc(0.65rem - 3px) !important;
+    /* Project ShowButton icon and text alignment
+       Override `box` sizes and inner margins to align icons and text like scripture */
+    .show-button-wrapper :global(svg) {
+        width: 1.5em;
+        height: 1.5em;
+        margin-right: 0.6em;
+        align-self: center;
+        flex-shrink: 0;
+    }
+    .show-button-wrapper :global(p) {
+        margin: 0 !important;
+        line-height: 1.2;
     }
 
     /* List items */
@@ -513,7 +530,6 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
         margin: 0;
     }
 
-    /* Header layout - match global header style */
     .header {
         display: flex;
         align-items: center;
@@ -617,20 +633,34 @@ function buildProjectSections(shows: any[] = []): ProjectSection[] {
             gap: 3px;
         }
 
-        :global(.section-item-button) {
-            padding: 0.9rem 1.1rem !important;
-            min-height: 60px;
-            font-size: 1.1em;
+        .section-items > * {
+            height: 46px;
+            min-height: 46px;
+            box-sizing: border-box;
         }
 
-        :global(.section-item-button) :global(svg) {
-            width: 1.75em;
-            height: 1.75em;
+        :global(.section-item-button),
+        :global(.project-show-button) {
+            min-height: 46px !important;
+            height: 46px !important;
+            padding: 0.55rem 0.85rem !important;
+            font-size: 0.95em;
         }
 
-        .section-item.info {
-            min-height: 60px;
-            font-size: 1em;
+        :global(.section-item-button) :global(svg),
+        :global(.project-show-button) :global(svg) {
+            width: 1.4em;
+            height: 1.4em;
+        }
+
+        .section-item.info,
+        .show-button-wrapper {
+            min-height: 46px;
+            font-size: 0.95em;
+        }
+
+        .show-button-wrapper :global(button) {
+            padding: 0.55rem 0.85rem !important;
         }
 
         .floating-input-container {

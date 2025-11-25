@@ -26,7 +26,7 @@
                 <Icon id={icon || "noIcon"} box={icon === "ppt" ? 50 : 24} custom={!!(icon && icon !== "private" && icon !== "slide")} right />
             {/if}
 
-            <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+            <p style="margin: 0;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
                 {#if show.name}
                     {show.name}
                 {:else}

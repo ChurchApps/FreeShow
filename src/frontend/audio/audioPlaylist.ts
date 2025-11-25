@@ -19,6 +19,9 @@ export class AudioPlaylist {
         const playlist = get(audioPlaylists)[playlistId]
         if (!playlist) return
 
+        // don't restart if already playing
+        if (!options.pauseIfPlaying && get(activePlaylist)?.id === playlistId) return
+
         // pause if already playing
         if (options.pauseIfPlaying && audioPath && get(activePlaylist)?.id === playlistId && get(playingAudio)[audioPath]) {
             AudioPlayer.start(audioPath, { name: "" }, { pauseIfPlaying: true })

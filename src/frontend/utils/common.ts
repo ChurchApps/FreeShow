@@ -19,7 +19,6 @@ import {
     quickSearchActive,
     resized,
     serverData,
-    special,
     theme,
     themes,
     toastMessages,
@@ -32,6 +31,13 @@ import { save } from "./save"
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
 export const MENU_BAR_HEIGHT = 25 // main (ManuBar.svelte) - Windows
+
+export function isMainWindow() {
+    return get(currentWindow) === null
+}
+export function isOutputWindow() {
+    return get(currentWindow) === "output"
+}
 
 // create toast popup
 export function newToast(msg: string) {
@@ -111,7 +117,7 @@ export function focusArea(e: any) {
 let autosaveTimeout: NodeJS.Timeout | null = null
 export let previousAutosave = 0
 export function startAutosave() {
-    if (get(currentWindow)) return
+    if (!isMainWindow()) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
 
     const as = get(autosave) || "15min"
@@ -129,7 +135,7 @@ export function startAutosave() {
 }
 
 // error logger
-const ERROR_FILTER = [
+export const ERROR_FILTER = [
     "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
     "Failed to construct 'ImageData'", // invalid image size
     "Failed to load because no supported source was found.", // media file doesn't exists
@@ -162,7 +168,8 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
-    if (get(currentWindow) || get(special).optimizedMode) return
+    // get(special).optimizedMode
+    if (!isMainWindow()) return
 
     const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId

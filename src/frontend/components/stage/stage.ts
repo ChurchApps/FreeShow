@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import type { Item, LayoutRef } from "../../../types/Show"
 import type { StageItem, StageLayout } from "../../../types/Stage"
+import { isOutputWindow } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { arrayToObject, filterObjectArray } from "../../utils/sendData"
 import { getItemText } from "../edit/scripts/textStyle"
 import { getActiveOutputs } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { STAGE } from "./../../../types/Channels"
-import { activeStage, allOutputs, connections, currentWindow, outputs, outputSlideCache, showsCache, stageShows, timers, variables } from "./../../stores"
+import { activeStage, allOutputs, connections, outputs, outputSlideCache, showsCache, stageShows, timers, variables } from "./../../stores"
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
@@ -79,7 +80,7 @@ export function stageItemToItem(item: StageItem) {
 export function getSlideTextItems(stageLayout: StageLayout, item: StageItem, _updater: any = null) {
     const slideOffset = Number(item.slideOffset || 0)
     const currentShow = stageLayout === null ? (get(activeStage).id ? get(stageShows)[get(activeStage).id!] : null) : stageLayout
-    const stageMainOutputId = currentShow?.settings?.output || getActiveOutputs(get(currentWindow) === "output" ? get(allOutputs) : get(outputs), false, true, true)[0]
+    const stageMainOutputId = currentShow?.settings?.output || getActiveOutputs(isOutputWindow() ? get(allOutputs) : get(outputs), false, true, true)[0]
     const currentOutput = get(outputs)[stageMainOutputId] || get(allOutputs)[stageMainOutputId] || {}
     const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageMainOutputId] || null : null)
     const showRef = currentSlide ? getLayoutRef(currentSlide.id) : []

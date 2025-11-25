@@ -93,6 +93,25 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     getContent?(key: string): Promise<ContentFile[]>
 
     /**
+     * Checks if a media item is licensed and returns its pingback URL (optional)
+     */
+    checkMediaLicense?(mediaId: string): Promise<string | null>
+
+    /**
+     * Determines if a specific URL from this provider should be encrypted (optional)
+     * @param url - The media URL to check
+     * @param pingbackUrl - Optional pingback URL indicating licensed content
+     * @returns true if the URL should be encrypted
+     */
+    shouldEncrypt?(url: string, pingbackUrl?: string): boolean
+
+    /**
+     * Returns the encryption key for this provider's media (optional)
+     * @returns The encryption key to use for encrypting/decrypting media
+     */
+    getEncryptionKey?(): string
+
+    /**
      * Validates if a scope is supported by this provider
      */
     protected validateScope(scope: string): scope is TScope {

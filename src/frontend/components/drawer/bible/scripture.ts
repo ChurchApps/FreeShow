@@ -11,7 +11,7 @@ import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
-import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
@@ -19,7 +19,7 @@ import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
-import { getActiveOutputs, setOutput } from "../../helpers/output"
+import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
@@ -222,7 +222,7 @@ export async function playScripture() {
         return a
     })
 
-    const outputIsScripture = get(outputs)[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
+    const outputIsScripture = getFirstActiveOutput()?.out?.slide?.id === "temp"
     if (!outputIsScripture) customActionActivation("scripture_start")
 
     const attributionString = getMergedAttribution(biblesContent)
@@ -240,7 +240,7 @@ export async function playScripture() {
         if (name || apiId) trackScriptureUsage(name, apiId, reference)
     })
 
-    const templateId = get(scriptureSettings).template || "scripture" // $styles[styleId]?.templateScripture || ""
+    const templateId = getScriptureTemplateId()
     const template = get(templates)[templateId] || {}
     const templateBackground = template.settings?.backgroundPath
 
@@ -248,7 +248,7 @@ export async function playScripture() {
     if (!templateBackground) return
 
     // get style (for media "fit")
-    const currentOutput = get(outputs)[getActiveOutputs()[0]]
+    const currentOutput = getFirstActiveOutput()
     const currentStyle = get(styles)[currentOutput?.style || ""] || {}
 
     const mediaStyle = getMediaStyle(get(media)[templateBackground], currentStyle)
@@ -280,9 +280,9 @@ export async function playScripture() {
     }
 }
 
-export function outputIsScripture(updater = get(outputs)) {
-    const outputId = getActiveOutputs(updater, true, true, true)[0]
-    return updater[outputId]?.out?.slide?.id === "temp"
+export function outputIsScripture(_updater: any = null) {
+    const output = getFirstActiveOutput()
+    return output?.out?.slide?.id === "temp"
 }
 
 export function getMergedAttribution(biblesContent: BibleContent[]) {
@@ -430,7 +430,7 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[], selectedChapters: number[], selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
     const slides: Item[][] = [[]]
 
-    const template = get(templates)[get(scriptureSettings).template]
+    const template = get(templates)[getScriptureTemplateId()]
     const templateItems = clone(template?.items || [])
     const templateTextItems = templateItems.filter((a) => a.lines && !getItemText(a).includes("{"))
     const templateOtherItems = templateItems.filter((a) => (!a.lines && a.type !== "text") || getItemText(a).includes("{"))
@@ -965,7 +965,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(showPopup = false, bypassPopup = false) {
+export async function createScriptureShow(showPopup = false) {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -976,7 +976,8 @@ export async function createScriptureShow(showPopup = false, bypassPopup = false
 
     // force the popup when attribution or version settings must be confirmed
     const requiresVersionPopup = !!(biblesContent.find((a) => a?.attributionRequired) || get(scriptureSettings).showVersion)
-    if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+    // if (!bypassPopup && (showPopup || requiresVersionPopup)) {
+    if (showPopup) {
         popupData.set({ showVersion: requiresVersionPopup, create: true })
         activePopup.set("scripture_show")
         return
@@ -1021,7 +1022,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     }
 
     // template data
-    const template = clone(get(templates)[get(scriptureSettings).template])
+    const template = clone(get(templates)[getScriptureTemplateId()])
     const backgroundPath = template?.settings?.backgroundPath
     const media = {}
     const backgroundId = uid(5)
@@ -1064,7 +1065,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     const layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
-    const templateId = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
+    const templateId = get(scriptureSettings).combineWithText ? false : getScriptureTemplateId() || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
     const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : templateId)
 
@@ -1102,6 +1103,17 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     return show
 }
 
+function getScriptureTemplateId() {
+    const scriptureTemplate = get(scriptureSettings).template || "scripture"
+
+    const onlyOneNormalOutput = getAllNormalOutputs().length === 1
+    if (!onlyOneNormalOutput) return scriptureTemplate
+
+    const styleId = getFirstActiveOutput()?.style || ""
+    const styleScriptureTemplate = onlyOneNormalOutput ? get(styles)[styleId]?.templateScripture : ""
+    return styleScriptureTemplate || scriptureTemplate
+}
+
 export function getReferenceText(biblesContent: BibleContent[]) {
     // const referenceTextItem = items.find((a) => a.lines?.find((a) => a.text?.find((a) => a.value.includes(":") && a.value.length < 25)))
     // if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
@@ -1136,9 +1148,11 @@ export function moveSelection(lengths: { book: number, chapters: number, verses:
 
     if (!moveLeft) {
         // ---- MOVE RIGHT ----
+        console.log(lastVerse, maxVerses)
         if (lastVerse < maxVerses) {
             // Just move within the same chapter
             const newStart = firstVerse + verseCount
+            console.log(newStart, maxVerses)
             if (newStart <= maxVerses) {
                 // return plain verse numbers (strip subverse parts)
                 verses = Array.from({ length: verseCount }, (_, i) => newStart + i).filter(v => v <= maxVerses)

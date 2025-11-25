@@ -4,7 +4,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { doesPathExist, getDataFolderPath, getFileStats, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
+import { deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
 import { _store, getStore, storeFilesData } from "./store"
 
@@ -76,24 +76,41 @@ export async function startBackup({ customTriggers }: { customTriggers: SaveActi
     }
 }
 
-export function getBackups(): { name: string, date: number }[] {
+export function getBackups() {
     const backupsFolder = getDataFolderPath("backups")
     const files = readFolder(backupsFolder)
 
-    let backups: { name: string, date: number }[] = []
+    let backups: { path: string; name: string; date: number; size: number }[] = []
     files.forEach((name) => {
         const filePath = path.resolve(backupsFolder, name)
         const stat = getFileStats(filePath)
         if (!stat?.folder) return
 
-        backups.push({ name, date: stat.stat.ctimeMs })
+        let size = 0
+        readFolder(filePath).forEach((fileName) => {
+            const fileStat = getFileStats(path.resolve(filePath, fileName))
+            if (fileStat) size += fileStat.stat.size
+        })
+        if (size === 0) return
+
+        backups.push({ path: filePath, name, date: stat.stat.ctimeMs, size })
     })
 
     return backups
 }
 
+export function deleteBackup(data: { path: string }) {
+    if (!data?.path) return
+
+    const backupsFolder = getDataFolderPath("backups")
+    const folderPath = path.resolve(backupsFolder, data.path)
+
+    deleteFolder(folderPath)
+}
+
 // RESTORE
 
+// WIP should be case insensitive
 export function restoreFiles(data?: { folder: string }) {
     let files: string[] = []
 
@@ -118,7 +135,7 @@ export function restoreFiles(data?: { folder: string }) {
         }
 
         if (filePath.includes("SETTINGS")) {
-            restoreShows(filePath)
+            restoreStore(filePath, "SETTINGS")
             return
         }
 

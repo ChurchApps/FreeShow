@@ -29,7 +29,7 @@
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
@@ -339,7 +339,7 @@
     const nextActiveView = { all: "image", folder: "image", image: "video", video: "all" } // all: "folder"
     $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
+    $: currentOutput = getFirstActiveOutput($outputs)
 
     // select all
     $: if ($selectAllMedia) selectAll()
@@ -412,7 +412,7 @@
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if isProviderSection}
-            <ContentLibraryBrowser providerId={active} columns={$mediaOptions.columns} />
+            <ContentLibraryBrowser providerId={active} columns={$mediaOptions.columns} {searchValue} />
         {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
@@ -437,7 +437,7 @@
                         let cam = detail.cam
 
                         if ($outLocked || e.ctrlKey || e.metaKey) return
-                        if (currentOutput.out?.background?.id === cam.id) clearBackground()
+                        if (currentOutput?.out?.background?.id === cam.id) clearBackground()
                         else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
                     }}
                 />

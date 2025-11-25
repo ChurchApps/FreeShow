@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -38,7 +38,7 @@
     let slides: Item[][] = [[]]
 
     // background
-    $: templateId = $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
+    $: templateId = styleScriptureTemplate || $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
     $: template = $templates[templateId] || {}
     $: templateBackground = template.settings?.backgroundPath
 
@@ -113,6 +113,12 @@
     }
 
     function editTemplate() {
+        if (styleScriptureTemplate) {
+            activeStyle.set(styleId)
+            activePage.set("settings")
+            return
+        }
+
         activeDrawerTab.set("templates")
         // closeDrawer()
         // drawerTabsData.update(a => {
@@ -132,7 +138,7 @@
         previousSlides = JSON.stringify(slides[0])
     }
 
-    $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
+    $: styleId = getFirstActiveOutput($outputs)?.style || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 
     $: attributionString = getMergedAttribution(biblesContent)
@@ -141,6 +147,9 @@
     let verseMenuOpened = false
     let redMenuOpened = false
     let referenceMenuOpened = false
+
+    $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
+    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 </script>
 
 <div class="scroll split">
@@ -167,7 +176,16 @@
     <div class="settings border">
         <!-- Template -->
         <InputRow style="margin-bottom: 10px;">
-            <MaterialPopupButton label="info.template" value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
+            <MaterialPopupButton
+                label="info.template"
+                disabled={!!styleScriptureTemplate}
+                value={templateId}
+                name={$templates[templateId]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={(e) => update("template", e.detail)}
+                allowEmpty={!isDefault}
+            />
             {#if templateId && $templates[templateId]}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}

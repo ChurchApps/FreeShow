@@ -6,7 +6,7 @@
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
+    import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../../helpers/output"
     import { getNumberVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
@@ -125,7 +125,7 @@
         })
     }
 
-    $: customOutputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: customOutputId = getFirstActiveOutput($outputs)?.id || ""
     function getCustomStyle(style: string, outputId = "") {
         if (outputId) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)

@@ -91,7 +91,8 @@
 
 <div style="height: 20px;"></div>
 
-<MaterialTextarea label="actions.format" value={format} rows={8} on:change={(e) => updateSpecial("nowPlayingFormat", e.detail)} />
+<!-- label="actions.format" -->
+<MaterialTextarea label="NowPlaying.txt" value={format} rows={8} on:change={(e) => updateSpecial("nowPlayingFormat", e.detail)} />
 
 <style>
     .title {

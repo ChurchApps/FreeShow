@@ -21,6 +21,14 @@ export const DEFAULT_DICTIONARY = {
     tabs: {
         scripture: "Scriptures",
     },
+    category: {
+        favourites: "Favourites",
+    },
+    scripture: {
+        collections: "Collections",
+        bibles_section: "Bibles",
+        api_section: "API",
+    },
     titlebar: {
         edit: "Edit",
     },

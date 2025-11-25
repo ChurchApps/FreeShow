@@ -1,14 +1,15 @@
 <script lang="ts">
     import { derived } from "svelte/store"
+    import type { ContentFile, ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
     import { addProjectItem } from "../../../converters/project"
-    import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle, getMediaType } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getAllActiveOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -23,7 +24,17 @@
     export let shiftRange: any[] = []
     export let thumbnailPath = ""
     export let thumbnail = true
-    export let contentProvider = false
+    export let contentProvider: ContentProviderId | false = false
+    export let contentFileData: ContentFile | null = null
+
+    // Store ContentFile object for later license check during download
+    $: if (contentFileData && contentProvider && path) {
+        media.update((m) => {
+            if (!m[path]) m[path] = {}
+            m[path].contentFile = { ...contentFileData, providerId: contentProvider }
+            return m
+        })
+    }
 
     // Memoized name computation
     let displayName = ""
@@ -106,10 +117,10 @@
         if (videoType === "foreground") clearSlide()
 
         // get style per output
-        getActiveOutputs().forEach((outputId) => {
-            const currentOutputStyle = $styles[$outputs[outputId]?.style || ""]
+        getAllActiveOutputs().forEach((output) => {
+            const currentOutputStyle = $styles[output.style || ""]
             const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
-            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, outputId)
+            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)
         })
 
         // unsplash requires the download to be triggered when using their images
@@ -130,7 +141,7 @@
     }
 
     // Memoized output and style computation
-    const currentOutput = derived(outputs, ($outputs) => $outputs[getActiveOutputs()[0]])
+    const currentOutput = derived(outputs, ($outputs) => getFirstActiveOutput($outputs))
     const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => $styles[$currentOutput?.style || ""] || {})
 
     // Memoized media style computation
@@ -245,7 +256,8 @@
             {/if}
         </div>
 
-        {#if thumbnail && !$special.optimizedMode}
+        <!-- && !$special.optimizedMode -->
+        {#if thumbnail}
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
         {:else}
             <div class="icon">

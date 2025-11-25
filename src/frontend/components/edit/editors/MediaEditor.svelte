@@ -3,7 +3,7 @@
     import { activeEdit, activeShow, media, outputs, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs, getCurrentStyle } from "../../helpers/output"
+    import { getCurrentStyle, getFirstActiveOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Media from "../../output/layers/Media.svelte"
@@ -17,8 +17,7 @@
     let videoTime = 0
     let videoData = { paused: false, muted: true, duration: 0, loop: true }
 
-    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
-    $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
+    $: outputStyle = getCurrentStyle($styles, getFirstActiveOutput($outputs)?.style)
 
     // get styling
     let mediaStyle: MediaStyle = {}

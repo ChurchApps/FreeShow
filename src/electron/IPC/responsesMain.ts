@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/electron/main"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
 import { machineIdSync } from "node-machine-id"
@@ -9,7 +10,7 @@ import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { ContentProviderRegistry } from "../contentProviders"
-import { getBackups, restoreFiles } from "../data/backup"
+import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
@@ -85,6 +86,7 @@ export const mainResponses: MainResponses = {
     /// //////////////////////
     [Main.SAVE]: (a) => save(a),
     [Main.BACKUPS]: () => getBackups(),
+    [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
@@ -211,6 +213,14 @@ export const mainResponses: MainResponses = {
             return []
         }
         return await provider.getContent(data.key)
+    },
+    [Main.CHECK_MEDIA_LICENSE]: async (data) => {
+        const provider = ContentProviderRegistry.getProvider(data.providerId)
+        if (!provider?.checkMediaLicense) {
+            console.error(`Provider ${data.providerId} does not support checkMediaLicense`)
+            return null
+        }
+        return await provider.checkMediaLicense(data.mediaId)
     }
 }
 
@@ -408,6 +418,20 @@ export function createLog(err: Error) {
         message: err.message,
         stack: err.stack
     } as ErrorLog
+}
+
+export function autoErrorReport() {
+    if (!isProd) return
+
+    Sentry.init({
+        dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",
+        beforeSend(event) {
+            // filter out known non-critical errors
+            const errorMessage = event.exception?.values?.[0]?.value || ""
+            const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
+            return shouldFilter ? null : event
+        },
+    })
 }
 
 // STORE MEDIA AS BASE64

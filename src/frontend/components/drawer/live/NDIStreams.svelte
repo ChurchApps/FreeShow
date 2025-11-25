@@ -3,7 +3,7 @@
     import { NDI } from "../../../../types/Channels"
     import { outLocked, outputs } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Loader from "../../main/Loader.svelte"
     import { clearBackground } from "../../output/clear"
@@ -12,7 +12,7 @@
 
     let sources: { name: string; id: string }[] = []
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
+    $: currentOutput = getFirstActiveOutput($outputs)
 
     let loading = true
     const receiveNDI = {
@@ -39,7 +39,7 @@
             {screen}
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
-                if (currentOutput.out?.background?.id === screen.id) clearBackground()
+                if (currentOutput?.out?.background?.id === screen.id) clearBackground()
                 else setOutput("background", { id: screen.id, type: "ndi" })
             }}
         />

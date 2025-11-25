@@ -2,7 +2,7 @@
 // This is the electron entry point
 
 import type { Rectangle } from "electron"
-import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, screen } from "electron"
+import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
@@ -11,7 +11,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
-import { saveRecording } from "./IPC/responsesMain"
+import { autoErrorReport, saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
@@ -19,6 +19,7 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { registerProtectedProtocol } from "./data/protected"
 
 // ----- STARTUP -----
 
@@ -56,6 +57,9 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 // set application menu
 setGlobalMenu()
 
+// error reporting
+autoErrorReport()
+
 // hardware acceleration
 const disableHWA = config.get("disableHardwareAcceleration")
 if (disableHWA === true) {
@@ -65,6 +69,19 @@ if (disableHWA === true) {
     app.disableHardwareAcceleration()
     console.info("Hardware Acceleration Disabled")
 }
+
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: "freeshow-protected",
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            corsEnabled: true,
+            stream: true
+        }
+    }
+])
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
@@ -88,6 +105,10 @@ function startApp() {
 
     setupStores()
 
+    registerProtectedProtocol()
+
+    requestHeaders()
+
     // Start servers initialization early (asynchronously)
     Promise.resolve()
         .then(() => {
@@ -101,6 +122,20 @@ function startApp() {
 
     // prevent display sleeping
     powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
+}
+
+function requestHeaders() {
+    // Fix YouTube Error 153 - set referrer policy for all requests
+    // https://stackoverflow.com/questions/79802987/youtube-error-153-video-player-configuration-error-when-embedding-youtube-video
+    app.whenReady().then(() => {
+        const session = require("electron").session.defaultSession
+        session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
+            if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
+                details.requestHeaders["Referer"] = "https://freeshow.app/"
+            }
+            callback({ requestHeaders: details.requestHeaders })
+        })
+    })
 }
 
 // ----- LOADING WINDOW -----

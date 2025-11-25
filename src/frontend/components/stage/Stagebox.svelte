@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
-    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, special, stageShows, timers, variables } from "../../stores"
+    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
@@ -272,24 +272,22 @@
     <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX || 'center'};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
         <span style="pointer-events: none;width: 100%;height: 100%;{item.type === 'current_output' ? 'position: relative;' : ''}">
             {#if item.type === "current_output" || id.includes("current_output")}
-                {#if !$special.optimizedMode}
-                    <!-- use PreviewCanvas only in remote StageShow -->
-                    <!-- {#if $currentWindow === "output"} -->
-                    <!-- <PreviewCanvas capture={$previewBuffers[outputWindowId]} id={outputWindowId} fullscreen /> -->
-                    {#if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput}
-                        <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} />
-                    {:else}
-                        <Output outputId={outputWindowId} mirror style="width: 100%; height: 100%;" />
-                    {/if}
+                <!-- use PreviewCanvas only in remote StageShow -->
+                <!-- {#if $currentWindow === "output" && !$special.optimizedMode} -->
+                <!-- <PreviewCanvas capture={$previewBuffers[outputWindowId]} id={outputWindowId} fullscreen /> -->
+                {#if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput}
+                    <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} />
+                {:else}
+                    <Output outputId={outputWindowId} mirror style="width: 100%; height: 100%;" />
+                {/if}
 
-                    {#if item.currentOutput?.showLabel}
-                        <div
-                            class="label"
-                            style="position: absolute;top: unset;bottom: 10px;left: 50%;transform: translateX(-50%);pointer-events: none;font-size: 28px;background-color: rgba(0, 0, 0, 0.5);padding: 2px 6px;border-radius: 12px;height: 46px;width: 180px;display: flex;justify-content: center;align-items: center;"
-                        >
-                            <p>{$outputs[outputWindowId]?.name || $allOutputs[outputWindowId]?.name || ""}</p>
-                        </div>
-                    {/if}
+                {#if item.currentOutput?.showLabel}
+                    <div
+                        class="label"
+                        style="position: absolute;top: unset;bottom: 10px;left: 50%;transform: translateX(-50%);pointer-events: none;font-size: 28px;background-color: rgba(0, 0, 0, 0.5);padding: 2px 6px;border-radius: 12px;height: 46px;width: 180px;display: flex;justify-content: center;align-items: center;"
+                    >
+                        <p>{$outputs[outputWindowId]?.name || $allOutputs[outputWindowId]?.name || ""}</p>
+                    </div>
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}

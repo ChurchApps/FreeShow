@@ -6,7 +6,7 @@ import { addSlideAction } from "../../actions/actions"
 import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
-import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
+import { getFirstActiveOutput, getStageOutputId } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
 import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
@@ -386,8 +386,7 @@ export function _getVariableValue(dynamicId: string) {
 }
 
 export function getDynamicValue(id: string, type: "default" | "stage" = "default") {
-    const outputId = getActiveOutputs()[0]
-    const outSlide = get(outputs)[outputId]?.out?.slide
+    const outSlide = getFirstActiveOutput()?.out?.slide
 
     const ref = {
         showId: outSlide?.id || get(activeShow)?.id,

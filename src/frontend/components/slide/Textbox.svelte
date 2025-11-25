@@ -2,19 +2,19 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import type { Item, Transition, TemplateStyleOverride, Slide } from "../../../types/Show"
-    import { activeFocus, activeShow, currentWindow, focusMode, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
+    import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
+    import { activeFocus, activeShow, currentWindow, focusMode, groups, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
+    import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getActiveOutputs, getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
     import { readAutoSizeCache, writeAutoSizeCache } from "./autosizeCache"
-    import { getItemText } from "../edit/scripts/textStyle"
-    import { wait } from "../../utils/common"
 
     export let item: Item
     export let itemIndex = -1
@@ -241,7 +241,7 @@
         return $showsCache[showId]?.settings?.template || ""
     })()
     // let outputTemplateAutoSize = false
-    $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
+    $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false

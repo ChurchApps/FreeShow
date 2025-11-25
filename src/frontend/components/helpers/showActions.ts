@@ -10,6 +10,7 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
+import { isMainWindow, isOutputWindow } from "../../utils/common"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
@@ -28,7 +29,6 @@ import {
     activeShow,
     allOutputs,
     audioData,
-    currentWindow,
     customMetadata,
     dictionary,
     driveData,
@@ -57,7 +57,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -201,7 +201,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
 
-    const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
+    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
@@ -400,8 +400,7 @@ export function goToNextProjectItem(key = "") {
     // play project media with arrow right if not already playing
     const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
     if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
-        const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
-        const outBg = get(outputs)[outputId]?.out?.background
+        const outBg = getFirstOutput()?.out?.background
         if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
             return togglePlayingMedia()
         }
@@ -497,7 +496,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
 
-    const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
+    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId] || {}
     let slide = currentOutput.out?.slide || null
     if (!slide) {
@@ -670,7 +669,7 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
 
     index++
 
-    const outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
+    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId] || {}
     const slide = currentOutput.out?.slide || null
     const layout = _show(slide ? slide.id : "active")
@@ -696,9 +695,8 @@ function getNextEnabled(index: null | number, end = false, customOutputId = ""):
 export function randomSlide() {
     if (get(outLocked)) return
 
-    const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
-    const currentOutput = get(outputs)[outputId] || {}
-    const slide = currentOutput.out?.slide || null
+    const currentOutput = getFirstActiveOutput()
+    const slide = currentOutput?.out?.slide || null
     const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     const showId = slide?.id || currentShow?.id
     if (!showId) return
@@ -1009,7 +1007,7 @@ export function changeOutputStyle(data: API_output_style) {
         return
     }
 
-    const outputIds = data.outputId ? [data.outputId] : getActiveOutputs(get(outputs), false, true, true)
+    const outputIds = data.outputId ? [data.outputId] : getAllNormalOutputs().map((a) => a.id)
     outputs.update((a) => {
         outputIds.forEach((outputId) => {
             a[outputId].style = data.styleId || ""
@@ -1067,7 +1065,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         nextActive.splice(nextActive.indexOf(outputId), 1)
     }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
 
-    if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+    if (!outputId) outputId = getFirstActiveOutput()?.id || ""
     if (!outputId) return false
 
     const currentOutput = get(outputs)[outputId]
@@ -1109,7 +1107,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 
 export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] as string[] }) {
     if (!slideId) {
-        const outSlide: OutSlide | null = get(outputs)[getActiveOutputs(get(outputs), false, true, true)[0]]?.out?.slide || null
+        const outSlide: OutSlide | null = getFirstOutput()?.out?.slide || null
         if (!outSlide) return
 
         showId = outSlide.id || ""
@@ -1249,13 +1247,13 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
-    const isOutputWindow = get(currentWindow) === "output"
+    const isOutputWin = isOutputWindow()
 
     if (type === "stage") {
-        const stageLayoutId: string = isOutputWindow ? Object.values(get(outputs))[0]?.stageOutput || id : id
+        const stageLayoutId: string = isOutputWin ? Object.values(get(outputs))[0]?.stageOutput || id : id
         const stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
-        const outputId = stageOutput || getActiveOutputs(isOutputWindow ? get(allOutputs) : get(outputs), false, true, true)[0]
-        const outSlide = (isOutputWindow ? get(allOutputs) : get(outputs))[outputId]?.out?.slide
+        const outputId = stageOutput || getActiveOutputs(isOutputWin ? get(allOutputs) : get(outputs), false, true, true)[0]
+        const outSlide = (isOutputWin ? get(allOutputs) : get(outputs))[outputId]?.out?.slide
         showId = outSlide?.id
         slideIndex = outSlide?.index ?? -1
     }
@@ -1304,9 +1302,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return convertRSSToString(getRSS(rss.url, rss.updateInterval), rss.divider, rss.count)
         }
 
-        let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+        let outputId: string = getFirstOutput()?.id || ""
 
-        if (dynamicId.includes("video_") && isOutputWindow) {
+        if (dynamicId.includes("video_") && isOutputWin) {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
@@ -1342,8 +1340,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         const playingAudioIds = AudioPlayer.getAllPlaying(false)
         const activeAudio = get(playingAudio)[playingAudioIds[0]]?.audio
-        const audioTime = (isOutputWindow ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
-        const audioDuration = (isOutputWindow ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
+        const audioTime = (isOutputWin ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
+        const audioDuration = (isOutputWin ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
         let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
@@ -1362,9 +1360,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const audioActive = Object.keys(get(playingAudio)).length || get(playingMetronome)
             return [backgroundActive ? "background" : "", slideActive ? "slide" : "", overlaysActive ? "overlays" : "", audioActive ? "audio" : ""].filter(Boolean).join(", ")
         } else if (dynamicId === "active_styles") {
-            const activeOutputIds = getActiveOutputs(get(outputs), false, true, true)
-            const outputStyeIds = activeOutputIds.map((oId) => get(outputs)[oId].style || "").filter(Boolean)
-            const outputStyleNames = outputStyeIds.map((styleId) => get(styles)[styleId]?.name).filter(Boolean)
+            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
+            const outputStyleIds = activeOutputIds.map((oId) => get(outputs)[oId].style || "").filter(Boolean)
+            const outputStyleNames = outputStyleIds.map((styleId) => get(styles)[styleId]?.name).filter(Boolean)
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
         }
 
@@ -1372,13 +1370,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
 
-        if (dynamicId === "show_name_next" && !value && isOutputWindow) {
+        if (dynamicId === "show_name_next" && !value && isOutputWin) {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
         }
 
         // send data to output
         const sendToOutput = ["audio_time", "audio_countdown", "audio_duration"]
-        if (sendToOutput.includes(dynamicId) && !get(currentWindow)) {
+        if (sendToOutput.includes(dynamicId) && isMainWindow()) {
             send(OUTPUT, ["DYNAMIC_VALUE_DATA"], { audioTime, audioDuration })
         }
 

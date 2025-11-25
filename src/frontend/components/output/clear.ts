@@ -29,7 +29,7 @@ import {
 import { customActionActivation } from "../actions/actions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
-import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
+import { clearOverlayTimer, clearPlayingVideo, getAllActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
 import { stopSlideRecording } from "../helpers/slideRecording"
 
@@ -57,11 +57,11 @@ export function clearAll(button = false) {
 function storeCache() {
     if (!get(outputCache)) outputCache.set({})
 
-    const activeOutputs = getActiveOutputs()
+    const activeOutputs = getAllActiveOutputs()
 
     outputCache.update((a) => {
         // only store active outputs
-        activeOutputs.forEach((id) => {
+        activeOutputs.forEach(({ id }) => {
             const out = get(outputs)[id]?.out
             if (out) a[id] = clone(out)
         })
@@ -80,13 +80,13 @@ function storeCache() {
 export function restoreOutput() {
     if (get(outLocked) || !get(outputCache)) return
 
-    const activeOutputs = getActiveOutputs()
+    const activeOutputIds = getAllActiveOutputs().map(({ id }) => id)
 
     outputs.update((a) => {
         Object.keys(get(outputCache)).forEach((id) => {
             if (id.includes("playing")) return
             // restore only selected outputs
-            if (!activeOutputs.includes(id) || !a[id]) return
+            if (!activeOutputIds.includes(id) || !a[id]) return
             a[id].out = get(outputCache)[id]
         })
 
@@ -105,7 +105,7 @@ export function restoreOutput() {
 }
 
 export function clearBackground(specificOutputId = "") {
-    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
 
     outputIds.forEach((outputId) => {
         // clearVideo()
@@ -132,16 +132,16 @@ export function clearSlide(shouldClearAll = false) {
     if (!shouldClearAll) {
         // store position
         const slideCache: { [key: string]: OutSlide } = {}
-        const outputIds: string[] = getActiveOutputs()
-        outputIds.forEach((outputId) => {
-            const slide = get(outputs)[outputId]?.out?.slide || null
+        const activeOutputs = getAllActiveOutputs()
+        activeOutputs.forEach((output) => {
+            const slide = output?.out?.slide || null
             if (!slide?.id || slide.index === undefined) return
 
             // only store if not last slide & not in focus mode
             const layoutRef = _show(slide.id).layouts([slide.layout]).ref()[0] || []
             if (!get(focusMode) && slide.index >= layoutRef.length - 1) return
 
-            slideCache[outputId] = slide
+            slideCache[output.id] = slide
         })
         if (Object.keys(slideCache).length) {
             outputSlideCache.set(clone(slideCache))
@@ -157,27 +157,27 @@ export function clearSlide(shouldClearAll = false) {
 }
 
 export function clearOverlay(overlayId: string) {
-    const outputIds: string[] = getActiveOutputs()
+    const activeOutputs = getAllActiveOutputs()
 
-    outputIds.forEach((outputId) => {
-        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
+    activeOutputs.forEach((output) => {
+        let outOverlays = output?.out?.overlays || []
         outOverlays = outOverlays.filter((id) => id !== overlayId)
         lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
 
-        setOutput("overlays", outOverlays, false, outputId)
+        setOutput("overlays", outOverlays, false, output.id)
 
         // clear effects
-        let outEffects: string[] = get(outputs)[outputId]?.out?.effects || []
+        let outEffects: string[] = output?.out?.effects || []
         outEffects = outEffects.filter((id) => id !== overlayId)
-        setOutput("effects", outEffects, false, outputId)
+        setOutput("effects", outEffects, false, output.id)
     })
 }
 
 export function clearOverlays(specificOutputId = "") {
-    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
 
     outputIds.forEach((outputId) => {
-        let outOverlays: string[] = clone(get(outputs)[outputId]?.out?.overlays || [])
+        let outOverlays = clone(get(outputs)[outputId]?.out?.overlays || [])
         outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
         setOutput("overlays", outOverlays, false, outputId)
         lockedOverlays.set(outOverlays)
@@ -194,7 +194,7 @@ export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
     // clear slide timers
     setOutput("transition", null, false, specificOutputId)
 
-    const outputIds: string[] = specificOutputId ? [specificOutputId] : getActiveOutputs()
+    const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
     Object.keys(get(slideTimers)).forEach((id) => {
         if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })

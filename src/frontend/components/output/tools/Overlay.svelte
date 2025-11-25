@@ -9,7 +9,7 @@
 
     // $: if (!currentOutput?.out?.overlays?.length) {
     //   // get all overlays
-    //   let outs = getActiveOutputs().map((id) => $outputs[id])
+    //   let outs = getAllActiveOutputs()
     //   currentOutput = outs.find((output) => output.out?.overlays)
     // }
 

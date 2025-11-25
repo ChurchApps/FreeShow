@@ -187,6 +187,26 @@
         }
     }
 
+    // Scroll to a specific verse in list mode
+    export function scrollToVerse(verseNum: number) {
+        if (!versesContainer || verseNum <= 0) return
+
+        // Find the verse button with the specified verse number
+        const verseButtons = versesContainer.querySelectorAll('.verse-button')
+        for (let i = 0; i < verseButtons.length; i++) {
+            const button = verseButtons[i] as HTMLElement
+            const verseSpan = button.querySelector('span')
+            if (verseSpan && Number(verseSpan.textContent?.trim()) === verseNum) {
+                // Scroll the container to show the button
+                const containerRect = versesContainer.getBoundingClientRect()
+                const buttonRect = button.getBoundingClientRect()
+                const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - (containerRect.height / 2) + (buttonRect.height / 2)
+                versesContainer.scrollTo({ top: scrollTop, behavior: 'smooth' })
+                break
+            }
+        }
+    }
+
     $: if (!scripture || !Array.isArray(scripture.books)) {
         activeBook = -1
         activeChapter = -1
@@ -714,7 +734,7 @@
         content: '';
         position: absolute;
         left: -4px; /* Start a bit before the verse number */
-        right: 0;
+        right: -4px;
         top: 0;
         bottom: 0;
         background-color: var(--focus);

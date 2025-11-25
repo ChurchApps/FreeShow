@@ -38,6 +38,11 @@
     }
     
     let depthBeforeSearch = 0
+    let depth = 0
+    let scriptureContentRef: any
+    let currentBook = ""
+    let currentChapter = ""
+    let currentVerse = ""
 
     function openScripture(id: string, collection: string = "") {
         openedScripture = id
@@ -51,30 +56,45 @@
         localStorage.setItem("collectionId", collection)
     }
 
-    // Include both local and API bibles; keep original sorting - memoize to avoid recalculation
-    $: sortedBibles = keysToID($scriptures)
-        .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-        .sort((a: any, b: any) => {
-            // Combined sort for better performance
-            const nameA = (a.customName || a.name || "").toLowerCase()
-            const nameB = (b.customName || b.name || "").toLowerCase()
-            const nameCompare = nameB.localeCompare(nameA)
-            if (nameCompare !== 0) return nameCompare
-            
-            // API bibles last
-            if (a.api !== b.api) return a.api ? 1 : -1
-            
-            // Collections first
-            if (a.collection !== b.collection) return a.collection ? -1 : 1
-            
-            return 0
-        })
+    const iconForScripture = (item: any) => (item.api ? "scripture_alt" : item.collection ? "collection" : "scripture")
+    const sortByName = (list: any[]) => list.slice().sort((a: any, b: any) => {
+        const nameA = (a.customName || a.name || "").toLowerCase()
+        const nameB = (b.customName || b.name || "").toLowerCase()
+        return nameA.localeCompare(nameB)
+    })
 
-    let depth = 0
-    let scriptureContentRef: any
-    let currentBook = ""
-    let currentChapter = ""
-    let currentVerse = ""
+    function selectScripture(scripture: any) {
+        const collection = scripture.collection
+        const id = scripture.id
+        openScripture(collection ? collection.versions[0] : id, collection ? id : "")
+    }
+
+    $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) }))
+    $: favoritesList = sortByName(scriptureEntries.filter((a) => a.favorite))
+    $: favoriteIds = new Set(favoritesList.map((a) => a.id))
+    $: collectionList = sortByName(scriptureEntries.filter((a) => a.collection && !favoriteIds.has(a.id)))
+    $: localBibles = sortByName(scriptureEntries.filter((a) => !a.collection && !a.api && !favoriteIds.has(a.id)))
+    $: apiBibles = sortByName(scriptureEntries.filter((a) => !a.collection && a.api && !favoriteIds.has(a.id)))
+
+    type ScriptureSection = {
+        id: string
+        labelKey: string
+        items: any[]
+        apiDividerIndex?: number
+    }
+
+    $: scriptureSections = [
+        favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null,
+        collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null,
+        localBibles.length || apiBibles.length
+            ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null
+    ].filter((section): section is ScriptureSection => Boolean(section))
+
+    function isActiveScripture(scripture: any): boolean {
+        if (!scripture) return false
+        if (scripture.collection) return collectionId === scripture.id
+        return !collectionId && openedScripture === scripture.id
+    }
 
     function next() {
         scriptureContentRef?.forward?.()
@@ -646,6 +666,7 @@
         const parts = ref.split('.')
         const bookNum = parseInt(parts[0], 10)
         const chapterNum = parseInt(parts[1], 10)
+        const verseNum = parts[2] ? parseInt(parts[2], 10) : 0
 
         // Close search first so ScriptureContent component is rendered
         openScriptureSearch = false
@@ -665,6 +686,15 @@
                         scriptureContentRef.navigateToVerse(bookNum, chapterNum)
                     }
                 }, 100)
+            }
+
+            // Auto-scroll to verse in list mode after navigation
+            if ($scriptureViewList && verseNum > 0) {
+                setTimeout(() => {
+                    if (scriptureContentRef?.scrollToVerse) {
+                        scriptureContentRef.scrollToVerse(verseNum)
+                    }
+                }, 200)
             }
         }, 0)
     }
@@ -867,26 +897,39 @@
             {/if}
         </div>
     {/if}
-{:else if sortedBibles.length}
+{:else if scriptureEntries.length}
     <h2 class="header">
         {translate("tabs.scripture", $dictionary)}
     </h2>
     <div class="scroll scripture-list" style="overflow: auto;">
-        {#each sortedBibles as scripture (scripture.id)}
-            <Button
-                on:click={() => {
-                    const collection = $scriptures[scripture.id].collection
-                    openScripture(collection ? collection.versions[0] : scripture.id, collection ? scripture.id : "")
-                }}
-                title={scripture.customName || scripture.name}
-                style="width: 100%;"
-                bold={false}
-                class="scripture-item"
-            >
-                <Icon id={scripture.icon} right />
-                <p>{scripture.customName || scripture.name}</p>
-            </Button>
-        {/each}
+        <div class="section-stack">
+            {#each scriptureSections as section (section.id)}
+                {@const label = translate(section.labelKey, $dictionary)}
+                <div class="section-card">
+                    <div class="section-heading">{label}</div>
+                    <div class="section-items">
+                        {#each section.items as scripture, index (scripture.id)}
+                            {#if section.apiDividerIndex !== undefined && index === section.apiDividerIndex}
+                                <div class="api-divider">{translate("scripture.api_section", $dictionary)}</div>
+                            {/if}
+                            <Button
+                                on:click={() => selectScripture(scripture)}
+                                title={scripture.customName || scripture.name}
+                                bold={false}
+                                class="scripture-item"
+                                active={isActiveScripture(scripture)}
+                            >
+                                <Icon id={scripture.icon} right />
+                                <p>{scripture.customName || scripture.name}</p>
+                                {#if scripture.collection?.versions?.length}
+                                    <span class="collection-count">{scripture.collection.versions.length}</span>
+                                {/if}
+                            </Button>
+                        {/each}
+                    </div>
+                </div>
+            {/each}
+        </div>
     </div>
 {:else}
     <Center faded>{translate("empty.general", $dictionary)}</Center>
@@ -900,7 +943,6 @@
         word-wrap: break-word;
     }
 
-    /* Unified header bar with title, ref and actions - matches Projects header styling */
     .header-bar {
         display: flex;
         align-items: center;
@@ -984,7 +1026,6 @@
         background-color: var(--hover);
     }
 
-    /* Slightly larger icon hit area and size */
     .header-action {
         transform: scale(1);
     }
@@ -1058,7 +1099,6 @@
         border-radius: 0 !important;
     }
 
-    /* text input */
 
     .input {
         width: 100%;
@@ -1118,16 +1158,110 @@
 
     /* Scripture list styling */
     .scripture-list {
-        gap: 2px;
+        padding-bottom: 60px;
+    }
+
+    .section-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 10px 0;
+        padding-right: 5px;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: flex-start;
+    }
+
+    .section-card {
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+        border-left: 0;
+        border-radius: 10px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        overflow: hidden;
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .section-heading {
+        font-weight: 500;
+        padding: 4px 14px;
+        font-size: 0.8rem;
+        opacity: 0.8;
+        background: var(--primary-darkest);
+        border-bottom: 1px solid var(--primary-lighter);
+    }
+
+    .section-items {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .section-items :global(.scripture-item) {
+        width: 100%;
+        padding: 0.65rem 0.9rem !important;
+        min-height: 50px !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        background-color: transparent !important;
+        display: flex !important;
+        align-items: center !important;
+        border-bottom-left-radius: 0 !important;
+    }
+
+    .section-items :global(.scripture-item:hover) {
+        background-color: rgb(255 255 255 / 0.04) !important;
+    }
+
+    .section-items :global(.scripture-item.active) {
+        background-color: rgb(255 255 255 / 0.08) !important;
+        box-shadow: inset 4px 0 0 var(--secondary) !important;
+    }
+
+    .section-items > :global(.scripture-item:first-child.active) {
+        border-top-right-radius: 12px;
+    }
+
+    .section-items > :global(.scripture-item:last-child.active) {
+        border-bottom-right-radius: 12px;
+    }
+
+    .collection-count {
+        font-size: 0.75em;
+        opacity: 0.75;
+        margin-left: auto;
+        padding-left: 0.75rem;
+    }
+
+    .api-divider {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 8px 14px 4px;
+        margin-top: 4px;
+        color: rgb(255 255 255 / 0.75);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .api-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgb(255 255 255 / 0.12);
+        border-radius: 999px;
     }
 
     :global(.scripture-item) {
         justify-content: flex-start !important;
         align-items: center !important;
         text-align: left !important;
-        padding: 0.75em 1em !important;
-        min-height: 56px !important;
-        font-size: 1.05em !important;
+        gap: 0.6rem !important;
+        font-size: 1em !important;
         margin: 0 !important;
         line-height: 1.2 !important;
     }
@@ -1136,10 +1270,8 @@
         text-align: left;
         font-size: inherit !important;
         margin: 0;
-        display: flex;
-        align-items: center;
+        display: block;
         line-height: 1.2;
-        justify-content: flex-start;
     }
 
     :global(.scripture-item) :global(svg) {
@@ -1147,6 +1279,8 @@
         height: 1.5em;
         flex-shrink: 0;
         margin-right: 0.5em;
+        margin-top: 0;
+        align-self: center;
     }
 
     /* Tablet and mobile styles - match project sizes exactly */
@@ -1156,20 +1290,22 @@
             padding: 0.6em 0;
         }
 
-        .scripture-list {
-            gap: 3px;
+        .section-stack {
+            gap: 6px;
+            padding-right: 8px;
         }
 
-        :global(.scripture-item) {
-            padding: 0.9em 1.2em !important;
-            min-height: 60px !important;
-            font-size: 1.15em !important;
+        .section-items :global(.scripture-item) {
+            padding: 0.55rem 0.85rem !important;
+            min-height: 46px !important;
+            font-size: 0.95em !important;
         }
 
         :global(.scripture-item) :global(svg) {
-            width: 1.8em !important;
-            height: 1.8em !important;
+            width: 1.4em !important;
+            height: 1.4em !important;
         }
+
 
         .input {
             padding: 14px 20px;

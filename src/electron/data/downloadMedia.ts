@@ -3,10 +3,11 @@ import fs from "fs"
 import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { LessonFile, LessonsData } from "../../types/Main"
+import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 import { sendToMain } from "../IPC/main"
-import { doesPathExist, getDataFolderPath, getValidFileName, makeDir } from "../utils/files"
+import { doesPathExist, getDataFolderPath, getMimeType, getValidFileName, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
-import { decryptFile, encryptFile, getProtectedPath, getProviderKey, isProtectedProvider } from "./protected"
+import { encryptFile, getProtectedPath, registerProtectedMediaFile } from "./protected"
 import { filePathHashCode } from "./thumbnails"
 
 export function downloadLessonsMedia(lessons: LessonsData[]) {
@@ -215,7 +216,7 @@ function startDownload(data: DownloadFile) {
 /// //
 
 const downloading: string[] = []
-export function downloadMedia({ url }: { url: string }) {
+export function downloadMedia({ url, contentFile }: { url: string; contentFile?: any }) {
     if (!url?.includes("http") || url?.includes("blob:")) return
 
     if (downloading.includes(url)) return
@@ -223,11 +224,20 @@ export function downloadMedia({ url }: { url: string }) {
 
     console.info("Downloading online media: " + url)
 
-    const outputPath = getMediaThumbnailPath(url)
+    const outputPath = getMediaThumbnailPath(url, contentFile)
 
-    if (isProtectedProvider(url)) {
-        encryptFile(url, outputPath, getProviderKey(url))
-        return
+    // Check if provider-based encryption is needed
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
+            const encryptionKey = provider.getEncryptionKey?.()
+            if (!encryptionKey) {
+                console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
+                return
+            }
+            encryptFile(url, outputPath, encryptionKey)
+            return
+        }
     }
 
     const fileStream = fs.createWriteStream(outputPath)
@@ -235,7 +245,7 @@ export function downloadMedia({ url }: { url: string }) {
         .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(outputPath, (err) => console.error(err))
+                fs.unlink(outputPath, (err) => err && console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 return
@@ -251,16 +261,16 @@ export function downloadMedia({ url }: { url: string }) {
             })
 
             fileStream.on("error", (err1) => {
-                fs.unlink(outputPath, (err2) => console.error(err2))
+                fs.unlink(outputPath, (err2) => err2 && console.error(err2))
                 console.error(`File error: ${err1.message}`)
 
                 retry()
             })
 
-            fileStream.on("finish", () => {
+            fileStream.on("finish", async () => {
                 fileStream.close()
                 downloadCount++
-                console.error(`Finished downloading file: ${url}`)
+                console.info(`Finished downloading file: ${url}`)
             })
         })
         .on("error", (err) => {
@@ -287,30 +297,45 @@ export function downloadMedia({ url }: { url: string }) {
     // ) // 8 minutes timeout
 }
 
-export async function checkIfMediaDownloaded({ url }: { url: string }) {
+export async function checkIfMediaDownloaded({ url, contentFile }: { url: string; contentFile?: any }) {
     if (!url?.includes("http")) return null
 
-    const outputPath = getMediaThumbnailPath(url)
+    const outputPath = getMediaThumbnailPath(url, contentFile)
     if (!doesPathExist(outputPath)) return null
 
-    if (isProtectedProvider(url)) {
-        try {
-            const decryptedData = await decryptFile(outputPath, getProviderKey(url))
-            return { path: outputPath, buffer: decryptedData }
-        } catch (err) {
-            console.error(`Failed to decrypt file: ${url}`, err)
-            // this response will request a re-download, and replace the file
-            // important in case the key has changed or file is corrupted
-            return null
+    // Check if provider-based encryption is needed
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
+            try {
+                const protectedUrl = registerProtectedMediaFile({
+                    filePath: outputPath,
+                    providerId: contentFile.providerId,
+                    mimeType: getMimeTypeFromContentFile(contentFile, outputPath)
+                })
+                if (!protectedUrl) {
+                    console.error(`Failed to register protected media for ${url}`)
+                    return null
+                }
+                return { path: outputPath, buffer: null, protectedUrl }
+            } catch (err) {
+                console.error(`Failed to prepare protected media: ${url}`, err)
+                return null
+            }
         }
     }
 
-    return { path: outputPath, buffer: null }
+    return { path: outputPath, buffer: null, protectedUrl: null }
 }
 
-function getMediaThumbnailPath(url: string) {
-    const isProtected = isProtectedProvider(url)
-    if (isProtected) return getProtectedPath(url)
+function getMediaThumbnailPath(url: string, contentFile?: any) {
+    // Check if provider-based encryption is needed
+    if (contentFile?.providerId) {
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
+            return getProtectedPath(url)
+        }
+    }
 
     const urlWithoutQuery = url.split('?')[0]
     const extension = path.extname(urlWithoutQuery)
@@ -318,4 +343,11 @@ function getMediaThumbnailPath(url: string) {
     const outputFolder = getDataFolderPath("onlineMedia")
 
     return path.join(outputFolder, fileName)
+}
+
+function getMimeTypeFromContentFile(contentFile: any, fallbackPath: string) {
+    if (typeof contentFile?.mimeType === "string") return contentFile.mimeType
+    if (contentFile?.type === "image") return "image/jpeg"
+    if (contentFile?.type === "video") return "video/mp4"
+    return getMimeType(fallbackPath) || "application/octet-stream"
 }

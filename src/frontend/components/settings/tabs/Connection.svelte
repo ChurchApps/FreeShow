@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData } from "../../../stores"
     import { contentProviderSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -103,7 +103,8 @@
         { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
         { id: "stage", name: "StageShow", icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
-        ...($special.optimizedMode && $disabledServers.output_stream !== false ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        // $special.optimizedMode &&
+        ...($disabledServers.output_stream !== false ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
         // Bitfocus Companion (WebSocket/REST)
         { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" }
         // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },

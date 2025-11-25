@@ -13,7 +13,7 @@
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle, getMediaType, getVideoDuration } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../../helpers/output"
+    import { findMatchingOut, getFirstActiveOutput, setOutput, startFolderTimer } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -43,7 +43,7 @@
         totalTime = Math.ceil(total)
     })
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = getFirstActiveOutput($outputs)
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     function playMedia(file: TFile) {
