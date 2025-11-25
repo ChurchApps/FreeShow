@@ -19,7 +19,6 @@ import {
     quickSearchActive,
     resized,
     serverData,
-    special,
     theme,
     themes,
     toastMessages,
@@ -169,7 +168,8 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
-    if (!isMainWindow() || get(special).optimizedMode) return
+    // get(special).optimizedMode
+    if (!isMainWindow()) return
 
     const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId

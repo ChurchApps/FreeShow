@@ -4,7 +4,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { ShowType } from "../../../../types/Show"
     import { addProjectItem } from "../../../converters/project"
-    import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, special, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
@@ -256,7 +256,8 @@
             {/if}
         </div>
 
-        {#if thumbnail && !$special.optimizedMode}
+        <!-- && !$special.optimizedMode -->
+        {#if thumbnail}
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
         {:else}
             <div class="icon">

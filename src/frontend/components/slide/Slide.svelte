@@ -80,7 +80,7 @@
     let isFirstGhost = false
     // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
     // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < 60 && !$special.optimizedMode && layoutSlides.length) setTimeout(checkGhostBackground)
+    $: if (!background && index < ($special.optimizedMode ? 20 : 60) && layoutSlides.length) setTimeout(checkGhostBackground)
     function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {

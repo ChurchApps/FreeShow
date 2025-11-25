@@ -84,10 +84,10 @@
 
     $: categories = currentCategory?.children || library
     $: showBackButton = currentPath.length > 0 || currentCategory !== null
-   
+
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    $: filteredCategories = searchValue.length > 1 ? categories.filter(cat => filter(cat.name).includes(filter(searchValue))) : categories
-    $: filteredContent = searchValue.length > 1 ? content.filter(item => filter(item.name || "").includes(filter(searchValue))) : content
+    $: filteredCategories = searchValue.length > 1 ? categories.filter((cat) => filter(cat.name).includes(filter(searchValue))) : categories
+    $: filteredContent = searchValue.length > 1 ? content.filter((item) => filter(item.name || "").includes(filter(searchValue))) : content
 </script>
 
 <div class="content-library">
@@ -118,7 +118,7 @@
         <div class="grid" class:list={$mediaOptions.mode === "list"}>
             <div class="context #media" style="display: contents;">
                 <MediaGrid items={filteredContent} {columns} let:item>
-                    <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} allFiles={[]} activeFile={null} active="online" contentProvider={providerId} contentFileData={item} />
+                    <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />
                 </MediaGrid>
             </div>
         </div>
