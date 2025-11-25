@@ -549,7 +549,7 @@ export const itemBoxes: Box2 = {
                     {
                         id: "tracker.accent",
                         type: "color",
-                        value: "#F0008C",
+                        value: "#54EB77",
                         values: {
                             label: "edit.accent_color",
                             allowEmpty: true,

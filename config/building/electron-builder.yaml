@@ -1,6 +1,6 @@
-appId: app.freeshow
-productName: FreeShow
-artifactName: FreeShow-${version}-${arch}.${ext}
+appId: com.joinamazing.aplay-pro
+productName: APlay Pro
+artifactName: APlay-Pro-${version}-${arch}.${ext}
 
 # WIDEVINE
 # Use castlabs electron builds to get widevine support
