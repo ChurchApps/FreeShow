@@ -220,12 +220,15 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 
 let justLogged = ""
 function appendShowUsage(showId: string) {
+    console.log(get(special).logSongUsage)
     if (!get(special).logSongUsage) return
 
+    console.log(get(showsCache), showId)
     const show = get(showsCache)[showId]
     if (!show) return
 
     // only log once in a row
+    console.log(justLogged)
     if (show.name === justLogged) return
     justLogged = show.name || ""
 
@@ -236,11 +239,13 @@ function appendShowUsage(showId: string) {
             if (!metadata[key]) delete metadata[key]
         })
 
+        if (!a.all) a.all = []
         a.all.push({
             name: show.name,
             time: Date.now(),
             metadata
         })
+
         return a
     })
 }

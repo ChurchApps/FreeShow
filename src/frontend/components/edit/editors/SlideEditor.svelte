@@ -2,7 +2,26 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
+    import {
+        activeEdit,
+        activePage,
+        activePopup,
+        activeShow,
+        activeTriggerFunction,
+        alertMessage,
+        driveData,
+        focusMode,
+        labelsDisabled,
+        media,
+        outputs,
+        overlays,
+        refreshEditSlide,
+        showsCache,
+        special,
+        styles,
+        templates,
+        textEditActive
+    } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { triggerFunction } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
@@ -31,6 +50,7 @@
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
     import { getSlideText, setCaretAtEnd } from "../scripts/textStyle"
+    import { translateText } from "../../../utils/language"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -305,9 +325,25 @@
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 
     $: hasTextContent = getSlideText(Slide)?.length
+
+    $: template = Slide?.settings?.template || currentShow?.settings?.template || ""
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
+
+{#if template}
+    <div class="default" data-title={translateText(`info.template: ${$templates[template]?.name || "—"}`)}>
+        <MaterialButton
+            style="border-radius: 50%;"
+            on:click={() => {
+                activeEdit.set({ type: "template", id: currentShow.settings.template || "", items: [] })
+                activePage.set("edit")
+            }}
+        >
+            <Icon id="templates" white />
+        </MaterialButton>
+    </div>
+{/if}
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -460,6 +496,27 @@
 </div>
 
 <style>
+    .default {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+
+        padding: 10px;
+        border-radius: 50%;
+
+        z-index: 999;
+    }
+
     .editArea {
         width: 100%;
         height: 100%;

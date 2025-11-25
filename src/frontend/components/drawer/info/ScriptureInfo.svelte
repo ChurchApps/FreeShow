@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -113,6 +113,12 @@
     }
 
     function editTemplate() {
+        if (styleScriptureTemplate) {
+            activeStyle.set(styleId)
+            activePage.set("settings")
+            return
+        }
+
         activeDrawerTab.set("templates")
         // closeDrawer()
         // drawerTabsData.update(a => {
@@ -169,14 +175,21 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        {#if !styleScriptureTemplate}
-            <InputRow style="margin-bottom: 10px;">
-                <MaterialPopupButton label="info.template" value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
-                {#if templateId && $templates[templateId]}
-                    <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
-                {/if}
-            </InputRow>
-        {/if}
+        <InputRow style="margin-bottom: 10px;">
+            <MaterialPopupButton
+                label="info.template"
+                disabled={!!styleScriptureTemplate}
+                value={templateId}
+                name={$templates[templateId]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={(e) => update("template", e.detail)}
+                allowEmpty={!isDefault}
+            />
+            {#if templateId && $templates[templateId]}
+                <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
+            {/if}
+        </InputRow>
 
         <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
         <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={(e) => update("versesOnIndividualLines", e.detail)} />
