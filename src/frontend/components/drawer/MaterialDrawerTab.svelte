@@ -4,12 +4,12 @@
     import { actions, activeActionTagFilter, activeDrawerTab, activePlaylist, activeVariableTagFilter, audioPlaylists, drawerTabsData, outputs, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getActionIcon } from "../actions/actions"
+    import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
+    import { getFirstActiveOutput } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { clone } from "../helpers/array"
-    import { getActiveOutputs } from "../helpers/output"
 
     export let category: any
 
@@ -30,8 +30,7 @@
     $: submenuActive = isSubmenu ? (active === "actions" ? $activeActionTagFilter.includes(id) : active === "variables" ? $activeVariableTagFilter.includes(id) : false) : false
     $: isActive = submenuActive || active === id
 
-    $: outputIds = getActiveOutputs($outputs, true, true, true)
-    $: output = $outputs[outputIds[0] || ""]
+    $: output = getFirstActiveOutput($outputs)
     $: showOutline = drawerId === "scripture" ? (output?.out?.slide as any)?.categoryId === id : drawerId === "audio" ? $activePlaylist?.id === id : false
 
     $: drawerId = $activeDrawerTab

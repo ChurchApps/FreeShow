@@ -42,7 +42,7 @@
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
+    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -242,7 +242,7 @@
     // slide?.settings?.resolution
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = getFirstActiveOutput($outputs)
     $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
     $: layers = Array.isArray(currentStyle.layers) ? currentStyle.layers : ["background"]

@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, dictionary, events, nextActionEventPaused, nextActionEventStart, timers } from "../../stores"
-import { newToast } from "../../utils/common"
+import { activeTimers, dictionary, events, nextActionEventPaused, nextActionEventStart, timers } from "../../stores"
+import { isMainWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
@@ -21,7 +21,7 @@ const ONE_MINUTE = 1000 * 60
 let timeout: NodeJS.Timeout | null = null
 let customInterval = INTERVAL
 export function startTimer() {
-    if (get(currentWindow)) return
+    if (!isMainWindow()) return
     if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
 
     if (timeout) clearTimeout(timeout)

@@ -24,6 +24,7 @@
     } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { triggerFunction } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -31,7 +32,7 @@
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
-    import { getActiveOutputs, getResolution, getSlideFilter } from "../../helpers/output"
+    import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -50,7 +51,6 @@
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
     import { getSlideText, setCaretAtEnd } from "../scripts/textStyle"
-    import { translateText } from "../../../utils/language"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -107,7 +107,7 @@
         thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = getFirstActiveOutput($outputs)
     $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 

@@ -3,7 +3,7 @@
     import { slideTimers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getAllActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Slider from "../../inputs/Slider.svelte"
 
@@ -11,7 +11,7 @@
     export let timer: any
 
     // $: if (!currentOutput?.out?.transition) {
-    //   let outs = getActiveOutputs().map((id) => $outputs[id])
+    //   let outs = getAllActiveOutputs()
     //   currentOutput = outs.find((output) => output.out?.transition)
     // }
 
@@ -20,7 +20,7 @@
     function transitionChange(e: any) {
         step = true
 
-        let outputIds = getActiveOutputs()
+        let outputIds = getAllActiveOutputs().map(({ id }) => id)
         outputIds.forEach((id) => {
             let timer = $slideTimers[id]
             if (timer) updateTime(e.target.value, timer)
@@ -38,7 +38,7 @@
         step = false
 
         if (autoPause) {
-            let outputIds = getActiveOutputs()
+            let outputIds = getAllActiveOutputs().map(({ id }) => id)
             outputIds.forEach((id) => {
                 let timer = $slideTimers[id]
                 if (timer) timer.timer.resume()
@@ -49,7 +49,7 @@
     }
 
     function playPause(isPaused: boolean) {
-        let outputIds = getActiveOutputs()
+        let outputIds = getAllActiveOutputs().map(({ id }) => id)
         outputIds.forEach((id) => {
             let timer = $slideTimers[id]
             if (timer) {

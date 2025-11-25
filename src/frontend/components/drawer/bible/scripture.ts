@@ -11,7 +11,7 @@ import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
-import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, outputs, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
@@ -19,7 +19,7 @@ import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
-import { getActiveOutputs, setOutput } from "../../helpers/output"
+import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
@@ -222,7 +222,7 @@ export async function playScripture() {
         return a
     })
 
-    const outputIsScripture = get(outputs)[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
+    const outputIsScripture = getFirstActiveOutput()?.out?.slide?.id === "temp"
     if (!outputIsScripture) customActionActivation("scripture_start")
 
     const attributionString = getMergedAttribution(biblesContent)
@@ -248,7 +248,7 @@ export async function playScripture() {
     if (!templateBackground) return
 
     // get style (for media "fit")
-    const currentOutput = get(outputs)[getActiveOutputs()[0]]
+    const currentOutput = getFirstActiveOutput()
     const currentStyle = get(styles)[currentOutput?.style || ""] || {}
 
     const mediaStyle = getMediaStyle(get(media)[templateBackground], currentStyle)
@@ -280,9 +280,9 @@ export async function playScripture() {
     }
 }
 
-export function outputIsScripture(updater = get(outputs)) {
-    const outputId = getActiveOutputs(updater, true, true, true)[0]
-    return updater[outputId]?.out?.slide?.id === "temp"
+export function outputIsScripture(_updater: any = null) {
+    const output = getFirstActiveOutput()
+    return output?.out?.slide?.id === "temp"
 }
 
 export function getMergedAttribution(biblesContent: BibleContent[]) {
@@ -1106,10 +1106,10 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 function getScriptureTemplateId() {
     const scriptureTemplate = get(scriptureSettings).template || "scripture"
 
-    const onlyOneNormalOutput = getActiveOutputs(get(outputs), false, true, true).length === 1
+    const onlyOneNormalOutput = getAllNormalOutputs().length === 1
     if (!onlyOneNormalOutput) return scriptureTemplate
 
-    const styleId = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.style || ""
+    const styleId = getFirstActiveOutput()?.style || ""
     const styleScriptureTemplate = onlyOneNormalOutput ? get(styles)[styleId]?.templateScripture : ""
     return styleScriptureTemplate || scriptureTemplate
 }
@@ -1148,9 +1148,11 @@ export function moveSelection(lengths: { book: number, chapters: number, verses:
 
     if (!moveLeft) {
         // ---- MOVE RIGHT ----
+        console.log(lastVerse, maxVerses)
         if (lastVerse < maxVerses) {
             // Just move within the same chapter
             const newStart = firstVerse + verseCount
+            console.log(newStart, maxVerses)
             if (newStart <= maxVerses) {
                 // return plain verse numbers (strip subverse parts)
                 verses = Array.from({ length: verseCount }, (_, i) => newStart + i).filter(v => v <= maxVerses)

@@ -1,9 +1,9 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { drawerTabsData, outputs, photoApiCredits, playerVideos } from "../../../stores"
+    import { drawerTabsData, photoApiCredits, playerVideos } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getAllNormalOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
@@ -19,8 +19,8 @@
         // { label: "info.download", value: $photoApiCredits.downloadUrl, type: "url" },
     ]
 
-    $: isPlayingYoutube = getActiveOutputs($outputs, false, true, true).find((outputId) => {
-        const bg = $outputs[outputId].out?.background
+    $: isPlayingYoutube = getAllNormalOutputs().find((output) => {
+        const bg = output.out?.background
         return bg?.type === "player" && $playerVideos[bg?.id || ""]?.type === "youtube"
     })
 </script>

@@ -7,12 +7,12 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
+import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
-import { getActiveOutputs, getOutputResolution } from "./output"
+import { getFirstActiveOutput, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -108,8 +108,9 @@ export async function getThumbnail(data: API_media) {
 }
 
 export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
-    const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    const outSlide = get(outputs)[outputId]?.out?.slide
+    const currentOutput = getFirstActiveOutput()
+    const outSlide = currentOutput?.out?.slide
+    if (!currentOutput) return ""
 
     if (!data.showId) data.showId = outSlide?.id
     if (!data.layoutId) data.layoutId = outSlide?.layout
@@ -117,7 +118,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData:
 
     if (!data?.showId) return ""
 
-    const output = clone(get(outputs)[outputId])
+    const output = clone(currentOutput)
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
 
@@ -129,10 +130,10 @@ export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData:
     if (extraOutData.backgroundImage) output.out.background = { path: extraOutData.backgroundImage }
     if (extraOutData.overlays) output.out.overlays = extraOutData.overlays
 
-    let resolution: any = getOutputResolution(outputId)
+    let resolution: any = getOutputResolution(currentOutput.id)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
 
-    const thumbnail = await requestMain(Main.CAPTURE_SLIDE, { output: { [outputId]: output }, resolution })
+    const thumbnail = await requestMain(Main.CAPTURE_SLIDE, { output: { [currentOutput.id]: output }, resolution })
     return thumbnail?.base64 || ""
 }
 

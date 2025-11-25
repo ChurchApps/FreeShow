@@ -5,7 +5,7 @@
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -138,7 +138,7 @@
         previousSlides = JSON.stringify(slides[0])
     }
 
-    $: styleId = $outputs[getActiveOutputs($outputs, true, true, true)[0]]?.style || ""
+    $: styleId = getFirstActiveOutput($outputs)?.style || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 
     $: attributionString = getMergedAttribution(biblesContent)
@@ -148,7 +148,7 @@
     let redMenuOpened = false
     let referenceMenuOpened = false
 
-    $: onlyOneNormalOutput = getActiveOutputs($outputs, false, true, true).length === 1
+    $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 </script>
 

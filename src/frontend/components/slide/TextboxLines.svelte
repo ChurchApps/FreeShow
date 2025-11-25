@@ -2,12 +2,12 @@
     import { createEventDispatcher, onDestroy } from "svelte"
     import type { Styles } from "../../../types/Settings"
     import type { Item, TemplateStyleOverride } from "../../../types/Show"
+    import { createVirtualBreaks } from "../../show/slides"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
-    import { createVirtualBreaks } from "../../show/slides"
     import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
@@ -132,9 +132,8 @@
 
         // get first output style
         if (!outputStyle) {
-            const outputId = getActiveOutputs()[0]
-            const currentOutput = $outputs[outputId] || {}
-            outputStyle = $styles[currentOutput.style || ""] || null
+            const currentOutput = getFirstActiveOutput()
+            outputStyle = $styles[currentOutput?.style || ""] || null
         }
         if (!outputStyle) return ""
 

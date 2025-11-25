@@ -33,6 +33,13 @@ export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (s
 export const DEFAULT_DRAWER_HEIGHT = 300
 export const MENU_BAR_HEIGHT = 25 // main (ManuBar.svelte) - Windows
 
+export function isMainWindow() {
+    return get(currentWindow) === null
+}
+export function isOutputWindow() {
+    return get(currentWindow) === "output"
+}
+
 // create toast popup
 export function newToast(msg: string) {
     if (!msg) return
@@ -111,7 +118,7 @@ export function focusArea(e: any) {
 let autosaveTimeout: NodeJS.Timeout | null = null
 export let previousAutosave = 0
 export function startAutosave() {
-    if (get(currentWindow)) return
+    if (!isMainWindow()) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
 
     const as = get(autosave) || "15min"
@@ -162,7 +169,7 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
-    if (get(currentWindow) || get(special).optimizedMode) return
+    if (!isMainWindow() || get(special).optimizedMode) return
 
     const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId

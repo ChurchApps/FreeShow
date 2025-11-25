@@ -52,6 +52,10 @@
 {#if !isClosed && !$isDev}
     <section class="toolbar" transition:slide={{ duration: 150 }}>
         <div class="text">
+            {#if activeMessage === "donate"}
+                <Icon id="heart" right size={0.8} white />
+            {/if}
+
             {message}
 
             {#if activeMessage === "donate"}

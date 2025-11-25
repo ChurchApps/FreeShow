@@ -1,11 +1,11 @@
 <script lang="ts">
     import { outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getAllNormalOutputs } from "../../helpers/output"
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
     import AudioMixersGroup from "./AudioMixersGroup.svelte"
 
-    const outputIds = getActiveOutputs($outputs, false, true, true)
+    const outputIds = getAllNormalOutputs().map((a) => a.id)
 
     const mixerGroups = [
         {

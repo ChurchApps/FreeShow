@@ -31,7 +31,6 @@ import {
     categories,
     colorbars,
     currentOutputSettings,
-    currentWindow,
     drawer,
     drawerTabsData,
     effects,
@@ -73,7 +72,7 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
+import { hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
@@ -94,7 +93,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
+import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -821,7 +820,7 @@ const clickActions = {
         }
     },
     close: (obj: ObjData) => {
-        if (get(currentWindow) === "output") {
+        if (isOutputWindow()) {
             hideDisplay()
             return
         }
@@ -1301,9 +1300,8 @@ const clickActions = {
         const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
-        const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-        const currentOutput = get(outputs)[outputId] || {}
-        const outputStyle = get(styles)[currentOutput.style || ""]
+        const currentOutput = getFirstActiveOutput()
+        const outputStyle = get(styles)[currentOutput?.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
         const videoType = get(media)[path]?.videoType || ""
@@ -1321,9 +1319,8 @@ const clickActions = {
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
 
-        const outputId = getActiveOutputs(get(outputs))[0]
-        const currentOutput = get(outputs)[outputId] || {}
-        const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+        const currentOutput = getFirstActiveOutput()
+        const currentStyle = getCurrentStyle(get(styles), currentOutput?.style)
 
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
 

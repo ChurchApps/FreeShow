@@ -9,7 +9,7 @@
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle, getMediaType } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getAllActiveOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -117,10 +117,10 @@
         if (videoType === "foreground") clearSlide()
 
         // get style per output
-        getActiveOutputs().forEach((outputId) => {
-            const currentOutputStyle = $styles[$outputs[outputId]?.style || ""]
+        getAllActiveOutputs().forEach((output) => {
+            const currentOutputStyle = $styles[output.style || ""]
             const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
-            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, outputId)
+            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)
         })
 
         // unsplash requires the download to be triggered when using their images
@@ -141,7 +141,7 @@
     }
 
     // Memoized output and style computation
-    const currentOutput = derived(outputs, ($outputs) => $outputs[getActiveOutputs()[0]])
+    const currentOutput = derived(outputs, ($outputs) => getFirstActiveOutput($outputs))
     const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => $styles[$currentOutput?.style || ""] || {})
 
     // Memoized media style computation

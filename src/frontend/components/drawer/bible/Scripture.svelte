@@ -619,6 +619,7 @@
 
     /// MOVE SELECTION ///
 
+    let chapterLengths: { [key: number]: number } = {}
     $: if ($activeTriggerFunction === "scripture_next") _moveSelection(false)
     $: if ($activeTriggerFunction === "scripture_previous") _moveSelection(true)
     function _moveSelection(moveLeft: boolean) {
@@ -629,7 +630,7 @@
         const currentVerseId = currentVerses[0]?.toString()
         const selectionCount = currentVerses.length
         if (currentVerseId && splittedVerses.length) {
-            const currentIndex = splittedVerses.findIndex((v) => v.id === currentVerseId)
+            const currentIndex = splittedVerses.findIndex((v) => v.id === currentVerseId || getVerseIdParts(v.id).id === Number(currentVerseId))
             if (currentIndex !== -1) {
                 // Navigate within split verses, maintaining selection count
                 const newIndex = moveLeft ? currentIndex - selectionCount : currentIndex + selectionCount
@@ -650,17 +651,18 @@
             }
         }
 
-        let versesCount = splittedVerses.length
+        let versesCount = verses?.length || 0 // splittedVerses.length
 
-        // WIP get length from previous chapter when moving left from verse 1
-        // const normalizedVerses = (verses || []).map((v) => getVerseIdParts(String(v)).id)
-        // const firstVerse = normalizedVerses[0]
-        // if (moveLeft && firstVerse === 1) {
-        //     // get verses count from previous chapter
-        //     const prevChapterIndex = (chapters || []).findIndex((c) => c.number?.toString() === activeReference.chapters[0]?.toString()) - 1
-        //     const prevChapter = chapters?.[prevChapterIndex]
-        //     versesCount = prevChapter ? prevChapter.verses.length : 0
-        // }
+        // get length from previous chapter when moving left from verse 1
+        const normalizedVerses = (verses || []).map((v) => getVerseIdParts(v.number).id)
+        const firstVerse = normalizedVerses[0]
+        if (moveLeft && firstVerse === 1) {
+            // get verses count from previous chapter
+            const chapterNumber = activeReference.chapters[0]
+            const prevChapterIndex = (chapters || []).findIndex((c) => c.number?.toString() === chapterNumber?.toString()) - 1
+            const prevChapter = chapters?.[prevChapterIndex]
+            versesCount = prevChapter ? prevChapter.verses.length || chapterLengths[Number(chapterNumber) - 1] : 0
+        }
 
         const lengths = {
             book: books?.length || 0,
@@ -673,6 +675,9 @@
             chapters: [Number(activeReference.chapters[0])],
             verses: activeReference.verses[0] || []
         }
+
+        // store
+        if (lengths.verses) chapterLengths[selection.chapters[0]] = lengths.verses
 
         const newSelection = moveSelection(lengths, selection, moveLeft)
 

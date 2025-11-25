@@ -1,12 +1,13 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { OUTPUT } from "../../types/Channels"
-import { audioChannels, currentWindow, outputs } from "../stores"
+import { clone } from "../components/helpers/array"
+import { audioChannels, outputs } from "../stores"
+import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
-import { clone } from "../components/helpers/array"
 
 export class AudioAnalyserMerger {
     static dBmin = -80
@@ -109,7 +110,7 @@ export class AudioAnalyserMerger {
         const mergedChannels = merged.map((a, i) => ({ dB: { value: this.mergeDB(a, i) } }))
         audioChannels.set(mergedChannels)
 
-        if (get(currentWindow) === "output") {
+        if (isOutputWindow()) {
             send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], channels: mergedChannels })
         }
     }

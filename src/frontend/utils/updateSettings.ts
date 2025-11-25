@@ -83,9 +83,9 @@ import {
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+import { maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
-import { startAutosave } from "./common"
+import { isMainWindow, startAutosave } from "./common"
 import { setLanguage } from "./language"
 import { send } from "./request"
 
@@ -108,7 +108,7 @@ export function updateSettings(data: any) {
         else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
 
-    if (get(currentWindow)) return
+    if (!isMainWindow()) return
 
     // output
     if (data.outputs) {

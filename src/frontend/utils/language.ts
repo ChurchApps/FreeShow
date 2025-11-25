@@ -5,7 +5,8 @@ import { Main } from "../../types/IPC/Main"
 import type { Dictionary } from "../../types/Settings"
 import { sortByName } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
-import { currentWindow, dictionary, language, localeDirection } from "../stores"
+import { dictionary, language, localeDirection } from "../stores"
+import { isMainWindow } from "./common"
 import { languageFlags, languages, replace } from "./languageData"
 import { send } from "./request"
 
@@ -59,7 +60,7 @@ function setLanguage(locale = "", init = false) {
         if (init && get(language) !== "en" && get(language) !== locale) return
 
         dictionary.set(messages)
-        if (init || get(currentWindow)) return
+        if (init || !isMainWindow()) return
 
         language.set(locale)
 

@@ -4,7 +4,7 @@ import type { OutSlide } from "../../types/Show"
 import { runAction } from "../components/actions/actions"
 import { clone, keysToID } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
-import { getActiveOutputs } from "../components/helpers/output"
+import { getFirstOutput } from "../components/helpers/output"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
@@ -112,7 +112,7 @@ export const receiveSTAGE = {
         const stageLayout = get(stageShows)[stageId]
         if (!stageLayout) return
 
-        const outputId = stageLayout.settings.output || getActiveOutputs(get(outputs), false, true, true)[0]
+        const outputId = stageLayout.settings.output || getFirstOutput()?.id
         const output = { ...get(outputs)[outputId], id: outputId }
         if (!output?.out) return
 
@@ -127,7 +127,7 @@ export const receiveSTAGE = {
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
-        const outputId = stageLayout.settings.output || getActiveOutputs(get(outputs), false, true, true)[0]
+        const outputId = stageLayout.settings.output || getFirstOutput()?.id
         const outSlideId = get(outputs)[outputId]?.out?.slide?.id
 
         if (!outSlideId) return
@@ -137,7 +137,7 @@ export const receiveSTAGE = {
 
     REQUEST_PROGRESS: (data: any) => {
         let outputId = data.outputId
-        if (!outputId) outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+        if (!outputId) outputId = getFirstOutput()?.id
         if (!outputId) return
 
         const currentSlideOut = get(outputs)[outputId]?.out?.slide || null
@@ -172,7 +172,7 @@ export const receiveSTAGE = {
     },
     REQUEST_STREAM: (data: any) => {
         let id = data.outputId
-        if (!id) id = getActiveOutputs(get(outputs), false, true, true)[0]
+        if (!id) id = getFirstOutput()?.id
 
         if (!id) return
 
@@ -190,7 +190,7 @@ export const receiveSTAGE = {
 
     //     // WIP don't know the outputId
     //     // let id = data.outputId
-    //     let outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+    //     let outputId = getFirstOutput()?.id
     //     if (!outputId) return
 
     //     data.data = get(videosData)[outputId]
