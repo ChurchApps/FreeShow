@@ -21,16 +21,13 @@
 
     // https://developers.google.com/youtube/player_parameters
     const options = {
-        // https://stackoverflow.com/questions/79802987/youtube-error-153-video-player-configuration-error-when-embedding-youtube-video/79806694#79806694
-        // host: "https://www.youtube-nocookie.com", // only working with one at a time
         playerVars: {
             autoplay: 1,
             loop: videoData.loop,
             fs: 0,
             rel: 0,
-            controls: $special.hideCursor ? 0 : 1,
-            origin: "youtube.com"
-            // origin: window.location.origin
+            controls: $special.hideCursor ? 0 : 1
+            // enablejsapi: 1
             // cc_load_policy: true
         }
     }

@@ -107,6 +107,8 @@ function startApp() {
 
     registerProtectedProtocol()
 
+    requestHeaders()
+
     // Start servers initialization early (asynchronously)
     Promise.resolve()
         .then(() => {
@@ -120,6 +122,20 @@ function startApp() {
 
     // prevent display sleeping
     powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
+}
+
+function requestHeaders() {
+    // Fix YouTube Error 153 - set referrer policy for all requests
+    // https://stackoverflow.com/questions/79802987/youtube-error-153-video-player-configuration-error-when-embedding-youtube-video
+    app.whenReady().then(() => {
+        const session = require("electron").session.defaultSession
+        session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
+            if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
+                details.requestHeaders["Referer"] = "https://freeshow.app/"
+            }
+            callback({ requestHeaders: details.requestHeaders })
+        })
+    })
 }
 
 // ----- LOADING WINDOW -----

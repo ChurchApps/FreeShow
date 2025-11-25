@@ -81,6 +81,7 @@ async function convertDynamicValues(data: NowPlayingData) {
                 const coverFilePath = join(audioFolder, fileNameImage)
                 if (value === "{artwork_path}") return coverFilePath
 
+                if (!doesPathExist(coverFilePath)) return ""
                 const pngBuffer = readFile(coverFilePath)
                 const base64String = Buffer.from(pngBuffer).toString('base64')
                 return pngBuffer ? `data:image/png;base64,${base64String}` : ""

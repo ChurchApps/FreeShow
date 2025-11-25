@@ -1,6 +1,6 @@
 <script>
     import { slide } from "svelte/transition"
-    import { isDev, special } from "../../stores"
+    import { activePopup, guideActive, isDev, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import Link from "../inputs/Link.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -23,7 +23,7 @@
     let lastInteracted = $special[`${key}_interacted`] || 0
     let now = Date.now()
     // show again after 7 days (or 14 days if interacted) & 30% chance & until the end of 2025 (for now)
-    let isClosed = (lastInteracted ? now - lastInteracted < ONE_DAY * 14 : now - lastClosed < ONE_DAY * 7) && Math.random() < 0.7 && new Date().getFullYear() === 2025
+    let isClosed = (lastInteracted ? now - lastInteracted < ONE_DAY * 14 : now - lastClosed < ONE_DAY * 7) || Math.random() > 0.3 || new Date().getFullYear() !== 2025
 
     function close() {
         isClosed = true
@@ -47,6 +47,8 @@
         sendMain(Main.URL, "https://churchapps.org/partner#give")
         interact()
     }
+
+    $: if ($activePopup === "initialize" || $guideActive) isClosed = true
 </script>
 
 {#if !isClosed && !$isDev}
