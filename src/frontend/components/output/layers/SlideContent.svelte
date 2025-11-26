@@ -171,7 +171,9 @@
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
-        const allowPersistentCarryOver = !transitionEnabled || currentTransition?.type === "none"
+        const hasActiveItemTransition = typeof itemTransitionDuration === "number" && itemTransitionDuration > 0
+        const globalTransitionNone = !currentTransition || currentTransition.type === "none"
+        const allowPersistentCarryOver = (!transitionEnabled || globalTransitionNone) && !hasActiveItemTransition
         let waitToShow = currentTransitionDuration * 0.5
 
         const shouldBlank = currentItems.length && currentSlide.items.length
