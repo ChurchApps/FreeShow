@@ -160,11 +160,18 @@ function moveStore(key: keyof typeof storeFilesData, previousLocation: string, s
     const fileData = readFile(filePathOld)
     if (!fileData) return
 
-    store.clear()
-    store.set(JSON.parse(fileData))
+    try {
+        store.clear()
+        store.set(JSON.parse(fileData))
+
+        console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
+    } catch (err) {
+        console.error("Could not read the " + filePathOld + ".json settings file, probably wrong JSON format!", err)
+        // auto delete files that can't be parsed!
+        deleteFile(filePathOld)
+    }
 
     // deleteFile(filePathOld) // keep old file for now
-    console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
 }
 
 // move pre 1.5.3 data path & config

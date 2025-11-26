@@ -488,7 +488,8 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
     return new Promise((resolve) => {
         try {
             const buffer = fs.readFileSync(data.path)
-            const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+            const uint8Array = new Uint8Array(buffer)
+            const arrayBuffer: any = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
@@ -499,9 +500,8 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
                 resolve({ ...data, codecs, mimeType, mimeCodec })
             }
 
-            const ab: any = arrayBuffer
-            ab.fileStart = 0
-            mp4boxfile.appendBuffer(ab)
+            arrayBuffer.fileStart = 0
+            mp4boxfile.appendBuffer(arrayBuffer)
             mp4boxfile.flush()
         } catch (err) {
             console.error("MP4Box error catch:", err)
@@ -527,9 +527,11 @@ export function getMediaTracks(data: { path: string }) {
 async function extractSubtitles(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
     const MP4Box = require("mp4box")
 
-    let arrayBuffer: ArrayBuffer
+    let arrayBuffer: any
     try {
-        arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+        const buffer = fs.readFileSync(data.path)
+        const uint8Array = new Uint8Array(buffer)
+        arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
     } catch (err) {
         console.error(err)
         return { ...data, tracks: [] }
@@ -585,7 +587,8 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
             })
         }
 
-        mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+        arrayBuffer.fileStart = 0
+        mp4boxfile.appendBuffer(arrayBuffer)
         mp4boxfile.flush()
     })
 }
