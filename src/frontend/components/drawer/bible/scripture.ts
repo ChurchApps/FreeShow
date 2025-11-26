@@ -1022,7 +1022,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     }
 
     // template data
-    const template = clone(get(templates)[getScriptureTemplateId()])
+    const scriptureTemplateId = getScriptureTemplateId() || ""
+    const template = clone(get(templates)[scriptureTemplateId])
     const backgroundPath = template?.settings?.backgroundPath
     const media = {}
     const backgroundId = uid(5)
@@ -1065,7 +1066,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     const layoutID = uid()
     // only set template if not combined (because it might be a custom reference style on first line)
-    const templateId = get(scriptureSettings).combineWithText ? false : getScriptureTemplateId() || false
+    const templateId = get(scriptureSettings).combineWithText ? false : scriptureTemplateId || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
     const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), get(scriptureSettings).verseNumbers ? false : templateId)
 
@@ -1094,7 +1095,8 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
             book: biblesContent[0].bookId ?? biblesContent[0].book,
             chapter: biblesContent[0].chapters[0],
             verses: biblesContent[0].activeVerses,
-            attributionString: biblesContent[0].attributionString
+            attributionString: biblesContent[0].attributionString,
+            templateId: scriptureTemplateId
         }
     }
 

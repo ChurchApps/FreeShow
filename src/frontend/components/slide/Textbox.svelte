@@ -63,7 +63,9 @@
 
     // reuse autosize work across components by caching measurements alongside a signature
     // surface measurement completion for parents that want to precompute autosize
-    const dispatch = createEventDispatcher<{ autosizeReady: { key: string; fontSize: number } }>()
+    const dispatch = createEventDispatcher<{
+        autosizeReady: { key: string; fontSize: number }
+    }>()
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -154,11 +156,21 @@
     let slideData: Slide | null = null
     let groupTemplateId = ""
     let resolvedTemplateId = ""
+    let scriptureReferenceTemplateId = ""
+    let showReference: any = null
+    let isScriptureContext = false
+    let scriptureTranslationKey = ""
+    let styleScriptureTemplateId = ""
     $: slideData = (() => {
         if (!ref?.showId) return null
         const slideId = ref.slideId || ref.id
         if (!slideId) return null
         return ($showsCache[ref.showId]?.slides?.[slideId] as Slide) || null
+    })()
+    // remember show-level reference metadata so we can identify scripture flows
+    $: showReference = (() => {
+        if (!ref?.showId) return null
+        return $showsCache[ref.showId]?.reference || null
     })()
     $: groupTemplateId = (() => {
         if (!slideData) return ""
@@ -166,6 +178,24 @@
         if (!groupId) return ""
         // pick up template supplied by group overrides (if present)
         return $groups[groupId]?.template || ""
+    })()
+    // scripture slides can come from drawer preview or a stored show reference
+    $: isScriptureContext = (() => {
+        if (ref?.id === "scripture" || ref?.showId === "temp") return true
+        return (showReference?.type || "") === "scripture"
+    })()
+    // translation count dictates which style-specific template should apply
+    $: scriptureTranslationKey = isScriptureContext ? buildScriptureTranslationKey(showReference) : ""
+    // prefer the output-style scripture template when the current output overrides scripture layouts
+    $: styleScriptureTemplateId = (() => {
+        if (!isScriptureContext || !outputStyle) return ""
+        const translationTemplate = scriptureTranslationKey ? (outputStyle[`templateScripture${scriptureTranslationKey}` as keyof Styles] as string | undefined) : undefined
+        return translationTemplate || outputStyle.templateScripture || ""
+    })()
+    // fall back to the template captured when the scripture show was created
+    $: scriptureReferenceTemplateId = (() => {
+        if (!isScriptureContext || !ref?.showId) return ""
+        return showReference?.data?.templateId || ""
     })()
     // track whether this textbox belongs to the first slide for the active layout
     let isFirstLayoutSlide = false
@@ -201,8 +231,16 @@
         const showResolved = resolveTemplate(currentShowTemplateId)
         if (showResolved) return showResolved
 
+        // favor output-driven scripture layouts first so overrides don't bleed between outputs
+        const styleScriptureResolved = resolveTemplate(styleScriptureTemplateId)
+        if (styleScriptureResolved) return styleScriptureResolved
+
         const styleResolved = resolveTemplate(outputStyle?.template || "")
         if (styleResolved) return styleResolved
+
+        // finally fall back to the template captured when the scripture show was generated
+        const scriptureResolved = resolveTemplate(scriptureReferenceTemplateId)
+        if (scriptureResolved) return scriptureResolved
 
         return ""
     })()
@@ -212,6 +250,22 @@
         if (!resolvedTemplateId) return []
         return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
+
+    // convert translation metadata into the suffix used by templateScripture_* settings
+    function buildScriptureTranslationKey(reference: any) {
+        const translationCount = getScriptureTranslationCount(reference)
+        if (translationCount <= 1) return ""
+        const limitedCount = Math.min(4, translationCount)
+        return `_${limitedCount}`
+    }
+
+    // count how many translations are present for the current scripture selection
+    function getScriptureTranslationCount(reference: any) {
+        if (!reference?.data) return 1
+        if (reference.data.translations) return Number(reference.data.translations) || 1
+        const versionList = typeof reference.data.version === "string" ? reference.data.version.split("+") : []
+        return versionList.filter((value) => value.trim().length).length || 1
+    }
 
     // AUTO SIZE
 
@@ -356,7 +410,12 @@
         //     textQuery = ".align .item .align " + textQuery
         // }
 
-        fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
+        fontSize = autosize(elem, {
+            type,
+            textQuery,
+            defaultFontSize,
+            maxFontSize
+        })
 
         // smaller in general if bullet list, because they are not accounted for
         if (item?.list?.enabled) fontSize *= 0.9
