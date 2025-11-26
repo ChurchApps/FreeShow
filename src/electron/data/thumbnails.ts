@@ -176,9 +176,9 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     generationFinished()
 }
 
-export function saveImage(data: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
+export function saveImage(data: { base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
-    let savePath = data.path
+    let savePath = ""
 
     if (data.filePath?.length) {
         const fileName = data.filePath.pop()!

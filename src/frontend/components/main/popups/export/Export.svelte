@@ -4,7 +4,7 @@
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
-    import { activePopup, activeProject, projects, showsCache, special } from "../../../../stores"
+    import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
     import { translateText } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
@@ -109,7 +109,8 @@
             loading = false
         } else {
             const options = exportFormat === "pdf" ? (pdfOptions.chordSheet ? { ...pdfOptions, chordSheet: true } : pdfOptions) : {}
-            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, options })
+            const showNames = showIds.map((id) => $shows[id]?.name || "")
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames, options })
         }
 
         activePopup.set(null)
