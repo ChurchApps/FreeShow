@@ -377,6 +377,13 @@ export function getFirstOutput() {
     return getAllNormalOutputs()[0]
 }
 
+// get window output id
+export function getWindowOutputId() {
+    if (!isOutputWindow()) return getFirstOutput()?.id || ""
+    return getActiveOutputs(get(outputs), false, true, true)[0]
+    // return getActiveOutputs(get(allOutputs), false, true, true)[0]
+}
+
 export function getAllActiveOutputs() {
     return getAllEnabledOutputs().filter(a => !a.stageOutput && a.active)
 }

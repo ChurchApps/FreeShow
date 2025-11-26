@@ -57,7 +57,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, isOutCleared, refreshOut, setOutput } from "./output"
+import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -1302,14 +1302,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return convertRSSToString(getRSS(rss.url, rss.updateInterval), rss.divider, rss.count)
         }
 
-        let outputId: string = getFirstOutput()?.id || ""
+        let outputId: string = getWindowOutputId()
 
         if (dynamicId.includes("video_") && isOutputWin) {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
         // set to normal output, if stage output, for video time
-        const stageLayout = get(outputs)[outputId].stageOutput
+        const stageLayout = get(outputs)[outputId]?.stageOutput
         if (stageLayout) outputId = get(stageShows)[stageLayout]?.settings?.output || getActiveOutputs(get(allOutputs), false, true, true)[0]
 
         const outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
