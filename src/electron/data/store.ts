@@ -3,7 +3,7 @@
 // https://www.npmjs.com/package/electron-store
 
 import Store from "electron-store"
-import { renameSync, statSync } from "fs"
+import { mkdirSync, renameSync, statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
@@ -90,13 +90,17 @@ function checkStores(dataPath: string) {
 export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
 export function createStores(previousLocation?: string | null, setup: boolean = false) {
-    let configFolderPath = ""
-    try {
-        configFolderPath = getDataFolderPath("userData")
-    } catch (err) {
-        configFolderPath = previousLocation || getDefaultDataFolderRoot()
-        config.set("dataPath", configFolderPath)
-        sendToMain(ToMain.ALERT, "Error: No access to data folder!")
+    let configFolderPath = getDataFolderPath("userData")
+
+    if (!doesPathExist(configFolderPath)) {
+        try {
+            mkdirSync(configFolderPath, { recursive: true })
+        } catch (err) {
+            configFolderPath = previousLocation || getDefaultDataFolderRoot()
+            config.set("dataPath", configFolderPath)
+            sendMain(Main.DATA_PATH, configFolderPath)
+            sendToMain(ToMain.ALERT, "Error: No permission to folder!")
+        }
     }
     if (previousLocation === configFolderPath) previousLocation = ""
 
