@@ -146,15 +146,24 @@
                 currentStyle: clone(currentStyle)
             }
             lastRenderedItems = []
+            clearCarryOverItems(true)
+            if (show) {
+                show = false
+                if (import.meta.env?.DEV) console.debug("[SlideContent] forced hide due to empty slide")
+            }
             return
         }
 
+        cancelPendingBlank()
         scheduleAutoSizePrecompute(currentSlide.items)
 
         const previousItemsSnapshot = lastRenderedItems.length ? lastRenderedItems : currentItems
         const previousSignatures = buildSignatureMap(previousItemsSnapshot)
         const nextSignatures = buildSignatureMap(currentSlide.items)
-        const nextSignatureCounts = buildSignatureCounts(currentSlide.items)
+        const nextItemsById = buildItemIdMap(currentSlide.items)
+        let fallbackTransition: any = null
+        const previousCount = previousItemsSnapshot.length
+        const nextCount = currentSlide.items.length
 
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
@@ -171,18 +180,56 @@
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
-        const hasActiveItemTransition = typeof itemTransitionDuration === "number" && itemTransitionDuration > 0
-        const globalTransitionNone = !currentTransition || currentTransition.type === "none"
-        const allowPersistentCarryOver = (!transitionEnabled || globalTransitionNone) && !hasActiveItemTransition
-        let waitToShow = currentTransitionDuration * 0.5
+        const hasActiveItemTransition = itemsHaveVisibleTransition(currentItems) || itemsHaveVisibleTransition(currentSlide.items)
+        const hasVisualGlobalTransition = transitionEnabled && transitionHasVisibleEffect(transition)
+        const allowPersistentCarryOver = !hasVisualGlobalTransition
+        if (allowPersistentCarryOver && transitionEnabled) fallbackTransition = transition
 
-        const shouldBlank = currentItems.length && currentSlide.items.length
-        if (shouldBlank) transitioningBetween = true
-        else transitioningBetween = false
+        const outgoingTransitionDuration = Math.max(currentTransitionDuration, getMaxItemTransitionDuration(previousItemsSnapshot))
+        // reveal the next slide midway through the outgoing fade so text does not feel delayed
+        const waitToShow = outgoingTransitionDuration > 0 ? Math.max(100, Math.round(outgoingTransitionDuration / 2)) : 0
+
+        const hasContentOnBothSlides = previousCount > 0 && nextCount > 0
+        const shouldBlank = hasContentOnBothSlides
+        transitioningBetween = hasContentOnBothSlides
+
+        if (import.meta.env?.DEV) {
+            console.debug("[SlideContent] transition snapshot", {
+                transitionEnabled,
+                transition: sanitizeTransitionDebug(transition),
+                currentTransition: sanitizeTransitionDebug(currentTransition),
+                hasVisualGlobalTransition,
+                hasActiveItemTransition
+            })
+            console.debug("[SlideContent] update", {
+                previousCount,
+                nextCount,
+                hasContentOnBothSlides,
+                shouldBlank,
+                allowPersistentCarryOver,
+                fallbackTransition: sanitizeTransitionDebug(fallbackTransition),
+                hasVisualGlobalTransition,
+                showState: show,
+                transitionEnabled,
+                globalTransitionType: currentTransition?.type || "unknown",
+                itemTransitionDuration,
+                currentTransitionDuration,
+                outgoingTransitionDuration
+            })
+        }
 
         // cache any textboxes whose content did not change so they can stay visible during the blank
         if (shouldBlank && allowPersistentCarryOver) {
-            const persistent = findPersistentItems(previousItemsSnapshot, previousSignatures, nextSignatures, nextSignatureCounts)
+            const nextSignatureCounts = buildPersistableSignatureCounts(currentSlide.items, fallbackTransition)
+            const persistent = findPersistentItems(
+                previousItemsSnapshot,
+                previousSignatures,
+                nextSignatures,
+                nextSignatureCounts,
+                nextItemsById,
+                fallbackTransition
+            )
+            if (import.meta.env?.DEV) console.debug("[SlideContent] persistent items", persistent.map((item) => item.id || getItemSignature(item)))
             carryOverItems = persistent.map((item) => ({
                 item: clone(item),
                 state: {
@@ -194,7 +241,6 @@
                 }
             }))
             persistentHold = carryOverItems.length > 0
-            persistentHold = carryOverItems.length > 0
         } else {
             clearCarryOverItems(true)
             persistentHold = false
@@ -205,6 +251,7 @@
         if (!shouldBlank) {
             applyCurrentSlideState()
             show = true
+            if (import.meta.env?.DEV) console.debug("[SlideContent] show true without blank")
             clearCarryOverItems(true)
             return
         }
@@ -212,19 +259,17 @@
         // wait for between to update out transition
         timeout = setTimeout(() => {
             show = false
+            if (import.meta.env?.DEV) console.debug("[SlideContent] show false starting blank")
 
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
                 applyCurrentSlideState()
+                transitioningBetween = false
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
                     show = true
-                    scheduleCarryOverRelease(currentTransitionDuration)
-
-                    // wait for between to set in transition
-                    timeout = setTimeout(() => {
-                        transitioningBetween = false
-                    })
+                    if (import.meta.env?.DEV) console.debug("[SlideContent] show true after blank")
+                    scheduleCarryOverRelease(outgoingTransitionDuration)
                 }, waitToShow)
             })
         })
@@ -263,6 +308,31 @@
         return counts
     }
 
+    function buildPersistableSignatureCounts(items: Item[] = [], fallbackTransition?: any) {
+        const counts = new Map<string, number>()
+        items.forEach((item) => {
+            if (!canItemPersist(item, fallbackTransition)) return
+            const signature = getItemSignature(item)
+            if (!signature) return
+            counts.set(signature, (counts.get(signature) || 0) + 1)
+        })
+        return counts
+    }
+
+    function isStickyMetadata(item: Item) {
+        if (!item?.lines?.length) return false
+        return JSON.stringify(item.lines).includes("{meta_")
+    }
+
+    function buildItemIdMap(items: Item[] = []) {
+        const map = new Map<string, Item>()
+        items.forEach((item) => {
+            if (!item?.id) return
+            map.set(item.id, item)
+        })
+        return map
+    }
+
     function getItemSignature(item: Item) {
         if (!item) return ""
         const safeLines = (item.lines || []).map((line) => ({
@@ -271,26 +341,119 @@
         return JSON.stringify({ lines: safeLines, list: item.list, text: (item as any).text || "", variable: item.variable || null })
     }
 
+    function itemsHaveVisibleTransition(items: Item[] = []) {
+        if (!items?.length) return false
+        return items.some((item) => transitionHasVisibleEffect(item?.actions?.transition))
+    }
+
+    function getMaxItemTransitionDuration(items: Item[] = []) {
+        if (!items?.length) return 0
+        return items.reduce((max, item) => {
+            const duration = getTransitionDuration(item?.actions?.transition)
+            return Math.max(max, duration)
+        }, 0)
+    }
+
+    function getTransitionDuration(transitionData: any) {
+        if (!transitionData) return 0
+        const parts = [transitionData.out, transitionData.between, transitionData.in, transitionData]
+        return parts.reduce((max, part) => Math.max(max, getTransitionPartDuration(part)), 0)
+    }
+
+    function getTransitionPartDuration(part: any) {
+        if (!part) return 0
+        const type = typeof part.type === "string" ? part.type.toLowerCase() : ""
+        const duration = toNumericDuration(part.duration)
+        if (type === "none" && duration <= 0) return 0
+        if (!type && duration <= 0) return 0
+        return Math.max(duration, 0)
+    }
+
+    function canItemPersist(item: Item, fallbackTransition?: any) {
+        if (!item) return false
+        const itemTransition = item?.actions?.transition
+        const effectiveTransition = itemTransition ?? fallbackTransition
+        if (transitionHasVisibleEffect(effectiveTransition)) return false
+        return true
+    }
+
+    function toNumericDuration(value: any) {
+        if (typeof value === "number" && Number.isFinite(value)) return value
+        if (typeof value === "string") {
+            const parsed = parseFloat(value)
+            if (Number.isFinite(parsed)) return parsed
+        }
+        return 0
+    }
+
+    function sanitizeTransitionDebug(value: any) {
+        if (!value) return value
+        const cloneValue = typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value))
+        const normalize = (part: any) => {
+            if (!part) return part
+            const duration = toNumericDuration(part.duration)
+            return { type: part.type || "", duration }
+        }
+        return {
+            between: normalize(cloneValue.between || cloneValue),
+            in: normalize(cloneValue.in || cloneValue),
+            out: normalize(cloneValue.out || cloneValue),
+            type: cloneValue.type || "",
+            duration: toNumericDuration(cloneValue.duration)
+        }
+    }
+
+    function transitionHasVisibleEffect(transitionData: any) {
+        if (!transitionData) return false
+        const parts = [transitionData.between, transitionData.in, transitionData.out, transitionData]
+        return parts.some((part) => isTransitionPartVisible(part))
+    }
+
+    function isTransitionPartVisible(part: any) {
+        if (!part) return false
+        const duration = toNumericDuration(part.duration)
+        const type = typeof part.type === "string" ? part.type.toLowerCase() : ""
+        if (type === "none") return false
+        if (!type && duration <= 0) return false
+        return duration > 0 || !!type
+    }
+
     function findPersistentItems(
         previousItems: Item[],
         previousSignatures: Map<string, string>,
         nextSignatures: Map<string, string>,
-        nextSignatureCounts: Map<string, number>
+        nextSignatureCounts: Map<string, number>,
+        nextItemsById: Map<string, Item>,
+        fallbackTransition?: any
     ) {
         if (!previousItems?.length) return []
         const availableSignatureCounts = new Map(nextSignatureCounts)
         return previousItems.filter((prev) => {
+            if (!canItemPersist(prev, fallbackTransition)) {
+                if (import.meta.env?.DEV) console.debug("[SlideContent] skip persist (prev transition)", prev.id, prev.actions?.transition)
+                return false
+            }
             const prevId = prev?.id
             const prevSignature = prevId ? previousSignatures.get(prevId) : getItemSignature(prev)
             if (!prevSignature) return false
 
             if (prevId) {
+                const nextItem = nextItemsById.get(prevId)
+                if (!nextItem) return false
+                if (!canItemPersist(nextItem, fallbackTransition)) {
+                    if (import.meta.env?.DEV)
+                        console.debug("[SlideContent] skip persist (next transition)", prevId, nextItem.actions?.transition)
+                    return false
+                }
                 const nextSignature = nextSignatures.get(prevId)
                 if (nextSignature && nextSignature === prevSignature) return true
             }
 
             const remaining = availableSignatureCounts.get(prevSignature) || 0
-            if (!remaining) return false
+            if (!remaining) {
+                if (isStickyMetadata(prev)) return true
+                return false
+            }
             availableSignatureCounts.set(prevSignature, remaining - 1)
             return true
         })
@@ -318,6 +481,15 @@
         }
         carryOverItems = []
         persistentHold = false
+    }
+
+    function cancelPendingBlank() {
+        if (timeout) {
+            clearTimeout(timeout)
+            timeout = null
+        }
+        transitioningBetween = false
+        show = true
     }
 </script>
 
