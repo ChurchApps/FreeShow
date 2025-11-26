@@ -42,6 +42,10 @@
 
     let currentItems: Item[] = []
     let current: any = {}
+    let carryOverItems: { item: Item; state: { outSlide: any; slideData: any; currentSlide: any; lines: any; currentStyle: any } }[] = []
+    let lastRenderedItems: Item[] = []
+    let persistentHold = false
+    let carryOverReleaseTimeout: NodeJS.Timeout | null = null
     let show = false
     // maintain a hidden workload that primes autosize results ahead of the visible reveal
     let precomputeTargets: { item: Item; index: number; key: string }[] = []
@@ -141,10 +145,16 @@
                 lines: clone(lines),
                 currentStyle: clone(currentStyle)
             }
+            lastRenderedItems = []
             return
         }
 
         scheduleAutoSizePrecompute(currentSlide.items)
+
+        const previousItemsSnapshot = lastRenderedItems.length ? lastRenderedItems : currentItems
+        const previousSignatures = buildSignatureMap(previousItemsSnapshot)
+        const nextSignatures = buildSignatureMap(currentSlide.items)
+        const nextSignatureCounts = buildSignatureCounts(currentSlide.items)
 
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
@@ -163,10 +173,36 @@
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * 0.5
 
-        // between
-        if (currentItems.length && currentSlide.items.length) transitioningBetween = true
+        const shouldBlank = currentItems.length && currentSlide.items.length
+        if (shouldBlank) transitioningBetween = true
+        else transitioningBetween = false
+
+        // cache any textboxes whose content did not change so they can stay visible during the blank
+        if (shouldBlank) {
+            const persistent = findPersistentItems(previousItemsSnapshot, previousSignatures, nextSignatures, nextSignatureCounts)
+            carryOverItems = persistent.map((item) => ({
+                item: clone(item),
+                state: {
+                    outSlide: clone(current.outSlide || outSlide),
+                    slideData: clone(current.slideData || slideData),
+                    currentSlide: clone(current.currentSlide || currentSlide),
+                    lines: clone(current.lines || lines),
+                    currentStyle: clone(current.currentStyle || currentStyle)
+                }
+            }))
+            persistentHold = carryOverItems.length > 0
+        } else {
+            clearCarryOverItems(true)
+        }
 
         if (timeout) clearTimeout(timeout)
+
+        if (!shouldBlank) {
+            applyCurrentSlideState()
+            show = true
+            clearCarryOverItems(true)
+            return
+        }
 
         // wait for between to update out transition
         timeout = setTimeout(() => {
@@ -174,18 +210,11 @@
 
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
-                currentItems = clone(currentSlide.items || [])
-                current = {
-                    outSlide: clone(outSlide),
-                    slideData: clone(slideData),
-                    currentSlide: clone(currentSlide),
-                    lines: clone(lines),
-                    currentStyle: clone(currentStyle)
-                }
-
+                applyCurrentSlideState()
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
                     show = true
+                    scheduleCarryOverRelease(currentTransitionDuration)
 
                     // wait for between to set in transition
                     timeout = setTimeout(() => {
@@ -194,6 +223,96 @@
                 }, waitToShow)
             })
         })
+    }
+
+    function applyCurrentSlideState() {
+        currentItems = clone(currentSlide?.items || [])
+        current = {
+            outSlide: clone(outSlide),
+            slideData: clone(slideData),
+            currentSlide: clone(currentSlide),
+            lines: clone(lines),
+            currentStyle: clone(currentStyle)
+        }
+        lastRenderedItems = clone(currentItems)
+    }
+
+    function buildSignatureMap(items: Item[] = []) {
+        const map = new Map<string, string>()
+        items.forEach((item) => {
+            if (!item?.id) return
+            const signature = getItemSignature(item)
+            map.set(item.id, signature)
+        })
+        return map
+    }
+
+    function buildSignatureCounts(items: Item[] = []) {
+        const counts = new Map<string, number>()
+        items.forEach((item, index) => {
+            const signature = getItemSignature(item)
+            if (!signature) return
+            const previousCount = counts.get(signature) || 0
+            counts.set(signature, previousCount + 1)
+        })
+        return counts
+    }
+
+    function getItemSignature(item: Item) {
+        if (!item) return ""
+        const safeLines = (item.lines || []).map((line) => ({
+            text: (line.text || []).map((part) => ({ value: part.value ?? part.text ?? "" }))
+        }))
+        return JSON.stringify({ lines: safeLines, list: item.list, text: (item as any).text || "", variable: item.variable || null })
+    }
+
+    function findPersistentItems(
+        previousItems: Item[],
+        previousSignatures: Map<string, string>,
+        nextSignatures: Map<string, string>,
+        nextSignatureCounts: Map<string, number>
+    ) {
+        if (!previousItems?.length) return []
+        const availableSignatureCounts = new Map(nextSignatureCounts)
+        return previousItems.filter((prev) => {
+            const prevId = prev?.id
+            const prevSignature = prevId ? previousSignatures.get(prevId) : getItemSignature(prev)
+            if (!prevSignature) return false
+
+            if (prevId) {
+                const nextSignature = nextSignatures.get(prevId)
+                if (nextSignature && nextSignature === prevSignature) return true
+            }
+
+            const remaining = availableSignatureCounts.get(prevSignature) || 0
+            if (!remaining) return false
+            availableSignatureCounts.set(prevSignature, remaining - 1)
+            return true
+        })
+    }
+
+    function scheduleCarryOverRelease(duration: number) {
+        if (!persistentHold || !carryOverItems.length) {
+            clearCarryOverItems(true)
+            return
+        }
+
+        const delay = Math.max(100, duration || 0)
+        if (carryOverReleaseTimeout) clearTimeout(carryOverReleaseTimeout)
+        carryOverReleaseTimeout = setTimeout(() => {
+            persistentHold = false
+            clearCarryOverItems(true)
+        }, delay)
+    }
+
+    function clearCarryOverItems(force = false) {
+        if (!force && persistentHold) return
+        if (carryOverReleaseTimeout) {
+            clearTimeout(carryOverReleaseTimeout)
+            carryOverReleaseTimeout = null
+        }
+        carryOverItems = []
+        persistentHold = false
     }
 </script>
 
@@ -243,6 +362,50 @@
         {/if}
     {/each}
 {/key}
+
+{#if carryOverItems.length && (!show || persistentHold)}
+    {#each carryOverItems as carry, index}
+        {#if shouldItemBeShown(carry.item, carryOverItems.map((a) => a.item), showItemRef, updater)}
+            <SlideItemTransition
+                {preview}
+                transitionEnabled={false}
+                transitioningBetween={false}
+                globalTransition={transition}
+                currentSlide={carry.state.currentSlide}
+                item={carry.item}
+                outSlide={carry.state.outSlide}
+                lines={carry.state.lines}
+                currentStyle={carry.state.currentStyle}
+                let:customSlide
+                let:customItem
+                let:customLines
+                let:customOut
+                let:transition
+            >
+                <Textbox
+                    backdropFilter={carry.state.slideData?.["backdrop-filter"] || ""}
+                    disableListTransition={mirror}
+                    chords={customItem.chords?.enabled}
+                    animationStyle={animationData.style || {}}
+                    item={customItem}
+                    {transition}
+                    {ratio}
+                    {outputId}
+                    ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
+                    linesStart={customLines?.[currentLineId || ""]?.[carry.item.lineReveal ? "linesStart" : "start"]}
+                    linesEnd={customLines?.[currentLineId || ""]?.[carry.item.lineReveal ? "linesEnd" : "end"]}
+                    clickRevealed={!!customLines?.[currentLineId || ""]?.clickRevealed}
+                    outputStyle={carry.state.currentStyle}
+                    {mirror}
+                    {preview}
+                    slideIndex={customOut?.index}
+                    {styleIdOverride}
+                    autoSizeKey={`carry-${createAutoSizeKey(carry.item, index)}`}
+                />
+            </SlideItemTransition>
+        {/if}
+    {/each}
+{/if}
 
 {#if precomputeTargets.length}
     <div class="autosize-precompute" aria-hidden="true">
