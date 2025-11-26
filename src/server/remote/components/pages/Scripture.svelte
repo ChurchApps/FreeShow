@@ -10,6 +10,7 @@
     import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
+    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 
     export let tablet: boolean = false
     export let triggerScriptureSearch: boolean = false
@@ -380,14 +381,15 @@
         booksToSearch.forEach((book) => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
-                    if (verse.text.toLowerCase().includes(searchLower)) {
+                    const verseContent = sanitizeVerseText(verse.text || "")
+                    if (verseContent.toLowerCase().includes(searchLower)) {
                         results.push({
                             book: book,
                             chapter: chapter,
                             verse: verse,
                             reference: `${book.number}.${chapter.number}.${verse.number}`,
                             referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                            verseText: verse.text
+                            verseText: verseContent
                         })
                     }
                 })
@@ -442,7 +444,7 @@
                                 searchResult = {
                                     reference: `${book.number}.${chapterNumber}.${verse.number}`,
                                     referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
-                                    verseText: verse.text
+                                    verseText: sanitizeVerseText(verse.text || "")
                                 }
                                 searchResults = [searchResult]
                                 return
@@ -453,7 +455,7 @@
                                 searchResults = chapter.verses.map((verse: any) => ({
                                     reference: `${book.number}.${chapterNumber}.${verse.number}`,
                                     referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
-                                    verseText: verse.text
+                                    verseText: sanitizeVerseText(verse.text || "")
                                 }))
                                 if (searchResults.length > 0) {
                                     searchResult = searchResults[0]
@@ -560,7 +562,7 @@
                             searchResult = {
                                 reference: `${book.number}.${chapter.number}.${verse.number}`,
                                 referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                                verseText: verse.text
+                                verseText: sanitizeVerseText(verse.text || "")
                             }
                             searchResults = [searchResult]
                             return
@@ -571,7 +573,7 @@
                             chapter.verses?.map((verse: any) => ({
                                 reference: `${book.number}.${chapter.number}.${verse.number}`,
                                 referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                                verseText: verse.text
+                                verseText: sanitizeVerseText(verse.text || "")
                             })) || []
                         if (searchResults.length > 0) {
                             searchResult = searchResults[0]
@@ -642,7 +644,7 @@
             let results = (apiResults.results || []).map((r: any) => ({
                 reference: r.reference,
                 referenceFull: r.referenceFull || r.reference,
-                verseText: r.verseText || ""
+                verseText: sanitizeVerseText(r.verseText || "")
             }))
             
             // Apply book filter if provided
@@ -767,7 +769,7 @@
                 validResults.push({
                     reference: result.reference,
                     referenceFull: result.referenceFull,
-                    verseText: verse.text
+                    verseText: sanitizeVerseText(verse.text || "")
                 })
             } else {
                 validResults.push(result)

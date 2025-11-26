@@ -8,6 +8,7 @@ import { Main } from "../../../../types/IPC/Main"
 import type { BibleContent } from "../../../../types/Scripture"
 import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
+import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
@@ -168,7 +169,7 @@ export async function getActiveScripturesContent() {
             verses.forEach(v => {
                 const { id, subverse } = getVerseIdParts(v)
 
-                const text = Chapters[i].getVerse(id).getHTML()
+                const text = sanitizeVerseText(Chapters[i].getVerse(id).getHTML())
                 const splittedVerses = getSplittedVerses({ [id]: text })
 
                 const newVerseId = id + (subverse ? `_${subverse}` : "")
@@ -465,7 +466,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             const slideArr = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines?.[0]?.text) return
 
-            let text: string = v.text
+            let text: string = sanitizeVerseText(v.text || "")
             if (!text) return
 
             let lineIndex = 0
@@ -694,7 +695,7 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     const chars = Number(get(scriptureSettings).longVersesChars || 100)
     const newVerses: { [key: string | number]: string } = {}
     Object.keys(verses || {}).forEach((verseKey) => {
-        const verse = verses[verseKey]
+        const verse = sanitizeVerseText(verses[verseKey] || "")
         const newVerseStrings = splitText(verse, chars)
 
         for (let i = 0; i < newVerseStrings.length; i++) {
@@ -959,6 +960,7 @@ function removeTags(text: string) {
 
 export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
+    text = sanitizeVerseText(text)
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
     return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", '&')
 }
