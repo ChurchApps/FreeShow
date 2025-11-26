@@ -27,11 +27,12 @@
     export let contentProvider: ContentProviderId | false = false
     export let contentFileData: ContentFile | null = null
 
-    // Store ContentFile object for later license check during download
+    // Store ContentFile object and display name for later use (license check, convert to show, etc.)
     $: if (contentFileData && contentProvider && path) {
         media.update((m) => {
             if (!m[path]) m[path] = {}
             m[path].contentFile = { ...contentFileData, providerId: contentProvider }
+            m[path].name = name
             return m
         })
     }

@@ -749,8 +749,11 @@ const clickActions = {
     create_show: (obj: ObjData) => {
         if (obj.contextElem?.classList.contains("#media_preview")) {
             const path = obj.contextElem.id
-            const name = removeExtension(getFileName(path))
-            const mediaType = getMediaType(getExtension(path))
+            const currentShow = get(activeShow)
+            const mediaData = get(media)[path]
+            const projectShowRef = currentShow?.index !== undefined ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow.index] : null
+            const name = currentShow?.name || projectShowRef?.name || mediaData?.name || mediaData?.contentFile?.name || removeExtension(getFileName(path))
+            const mediaType = currentShow?.type || projectShowRef?.type || mediaData?.contentFile?.type || getMediaType(getExtension(path))
 
             const layoutId = uid()
             const show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
