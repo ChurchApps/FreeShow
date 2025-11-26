@@ -14,6 +14,9 @@
         // getCacheSize()
         // getAudioOutputs()
         sendMain(Main.FULL_SHOWS_LIST)
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoErrorReporting" }, (value) => {
+            autoErrorReporting = value !== false
+        })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
             disableHardwareAcceleration = !!value
         })
@@ -39,6 +42,16 @@
         })
 
         // if (key === "previewRate") restartOutputs()
+    }
+
+    // auto error reporting
+    let autoErrorReporting = true
+    function toggleAutoErrorReporting(e: any) {
+        autoErrorReporting = e.detail
+        sendMain(Main.SET_STORE_VALUE, { file: "config", key: "autoErrorReporting", value: autoErrorReporting })
+
+        alertMessage.set("settings.restart_for_change")
+        activePopup.set("alert")
     }
 
     // hardware acceleration
@@ -174,6 +187,8 @@
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 
 <MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
+
+<MaterialToggleSwitch label="settings.auto_error_reporting" checked={autoErrorReporting} defaultValue={true} on:change={toggleAutoErrorReporting} />
 
 <MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} defaultValue={false} on:change={toggleHardwareAcceleration} />
 <!-- "optimized_mode": "Optimized mode", -->

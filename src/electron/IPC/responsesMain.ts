@@ -426,6 +426,7 @@ export function createLog(err: Error) {
 
 export function autoErrorReport() {
     if (!isProd) return
+    if (config.get("autoErrorReporting") === false) return
 
     Sentry.init({
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",

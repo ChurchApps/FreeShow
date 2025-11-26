@@ -8,6 +8,7 @@ export interface Config {
     bounds: Electron.Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
+    autoErrorReporting?: boolean
 }
 
 export interface OS {
