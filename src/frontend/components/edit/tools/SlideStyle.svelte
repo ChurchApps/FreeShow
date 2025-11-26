@@ -113,7 +113,7 @@
             </span>
         </div>
 
-        <MaterialTextarea label="tools.notes" value={note} rows={3} on:change={edit} />
+        <MaterialTextarea label="items.slide_notes" value={note} rows={3} on:change={edit} />
     </div>
 </div>
 

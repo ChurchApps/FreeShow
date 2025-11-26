@@ -2,7 +2,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { SaveData } from "../../../../types/Save"
     import { sendMain } from "../../../IPC/main"
-    import { activeEdit, activePage, activePopup, activeShow, dataPath, deletedShows, drawSettings, renamedShows, scripturesCache, showsPath } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, deletedShows, drawSettings, renamedShows, scripturesCache } from "../../../stores"
     import { save } from "../../../utils/save"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -11,19 +11,17 @@
     function reset() {
         // backup
         save(false, { backup: true, isAutoBackup: true })
-        setTimeout(resetSettings, 500)
+        setTimeout(resetSettings, 1000)
     }
 
     function resetSettings() {
         sendMain(Main.SAVE, {
-            path: $showsPath || "",
-            dataPath: $dataPath,
             // SETTINGS
             SETTINGS: {},
             SYNCED_SETTINGS: {},
             // SHOWS
             SHOWS: {},
-            STAGE_SHOWS: {},
+            STAGE: {},
             // STORES
             PROJECTS: { projects: {}, folders: {}, projectTemplates: {} },
             OVERLAYS: {},
@@ -37,7 +35,7 @@
             USAGE: { all: [] },
             // SAVE DATA
             closeWhenFinished: false,
-            customTriggers: { changeUserData: { reset: true } }
+            customTriggers: { reset: true }
         } as SaveData)
 
         // WIP reset error log / other config files
@@ -47,8 +45,6 @@
         clearAll()
         drawSettings.set({})
 
-        showsPath.set(null)
-        // dataPath.set("")
         // showsCache.set({})
         scripturesCache.set({})
         deletedShows.set([])

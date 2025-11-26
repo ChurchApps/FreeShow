@@ -3,7 +3,7 @@ import type { Show } from "../../../types/Show"
 import type { ShowObj } from "../../classes/Show"
 import { fixShowIssues } from "../../converters/importHelpers"
 import { requestMain } from "../../IPC/main"
-import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
+import { cachedShowsData, categories, notFound, saved, shows, showsCache, textCache } from "../../stores"
 import { Main } from "./../../../types/IPC/Main"
 import { getShowCacheId, updateCachedShow } from "./show"
 
@@ -56,7 +56,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
-                quickAccess: value.quickAccess,
+                quickAccess: value.quickAccess || {},
             }
 
             if (value.origin) a[id].origin = value.origin
@@ -104,7 +104,7 @@ export async function loadShows(s: string[], deleting = false) {
     if (!notLoaded.length) return
 
     await Promise.all(notLoaded.map(async showId => {
-        await requestMain(Main.SHOW, { path: get(showsPath), name: get(shows)[showId].name, id: showId }, (data) => {
+        await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, (data) => {
             if (data.error || !data.content) {
                 notFound.update((a) => {
                     a.show.push(data.id)

@@ -10,7 +10,7 @@
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
-    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles))]
+    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
 
     // set id after deletion
     $: if (profileId !== "" && !$profiles[profileId]) profileId = ""

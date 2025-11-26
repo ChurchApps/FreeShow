@@ -1,5 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { ClickEvent } from "../../../../types/Main"
     import type { Styles } from "../../../../types/Settings"
     import { activeStyle, activeTriggerFunction, outputs, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -41,9 +42,9 @@
 
     // CREATE
 
-    $: if ($activeTriggerFunction === "create_style") createStyle({})
-    async function createStyle(e: any) {
-        const skipPopup = e.ctrlKey || e.metaKey
+    $: if ($activeTriggerFunction === "create_style") createStyle()
+    async function createStyle(e?: ClickEvent) {
+        const skipPopup = e?.detail.ctrl
         let type = skipPopup ? "normal" : await waitForPopupData("choose_style")
         if (!type) return
 

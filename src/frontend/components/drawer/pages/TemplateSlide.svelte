@@ -25,7 +25,7 @@
     export let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
-    // $: currentOutput = $outputs[getActiveOutputs()[0]]
+    // $: currentOutput = getFirstActiveOutput($outputs)
     // $: transparentOutput = !!currentOutput?.transparent
     // $: currentStyle = $styles[currentOutput?.style || ""] || {}
 

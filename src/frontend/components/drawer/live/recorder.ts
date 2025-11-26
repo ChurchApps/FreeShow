@@ -1,6 +1,5 @@
-import { get } from "svelte/store"
 import { RECORDER } from "../../../../types/Channels"
-import { activeRecording, currentRecordingStream, dataPath } from "../../../stores"
+import { activeRecording, currentRecordingStream } from "../../../stores"
 import { newToast } from "../../../utils/common"
 
 let mediaRecorder
@@ -43,8 +42,8 @@ async function handleStop() {
     const blob = new Blob(recordedChunks, options)
     const arraybuffer = await blob.arrayBuffer()
 
-    const name = `APlay Pro_${formatTime()}.webm`
-    window.api.send(RECORDER, { blob: arraybuffer, path: get(dataPath), name })
+    const name = `FreeShow_${formatTime()}.webm`
+    window.api.send(RECORDER, { blob: arraybuffer, name })
 
     currentRecordingStream.set(null)
     activeRecording.set(null)

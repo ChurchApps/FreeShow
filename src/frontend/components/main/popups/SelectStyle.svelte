@@ -1,15 +1,18 @@
 <script lang="ts">
+    import { uid } from "uid"
     import type { OutData } from "../../../../types/Output"
     import type { Styles } from "../../../../types/Settings"
-    import { activePopup, currentOutputSettings, outputs, popupData, styles } from "../../../stores"
+    import { activePage, activePopup, activeStyle, currentOutputSettings, outputs, popupData, settingsTab, styles } from "../../../stores"
     import Card from "../../drawer/Card.svelte"
     import { DEFAULT_ITEM_STYLE } from "../../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Output from "../../output/Output.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
@@ -50,7 +53,18 @@
     }
 
     $: outputData = $outputs[outputId]?.out
+
+    function createNew() {
+        const styleId = uid()
+        history({ id: "UPDATE", newData: { data: { name: "" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+        select(styleId)
+        activeStyle.set(styleId)
+        settingsTab.set("styles")
+        activePage.set("settings")
+    }
 </script>
+
+<MaterialButton class="popup-options" icon="add" iconSize={1.3} title="new.style" on:click={createNew} white />
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
     {#if outputStyles.length}
@@ -61,6 +75,8 @@
                     <Output {outputId} style={getStyleResolution(resolution, resolution.width, resolution.height, "fit")} styleIdOverride={style.id} outOverride={outputData?.slide ? outputData : getOverride(style)} mirror />
                 </Card>
             {/each}
+
+            <!-- <Card label="Create new" icon="add" resolution={getResolution(null, null, false, outputId)} on:click={() => select("")} /> -->
         </div>
     {:else}
         <Center size={1.2} faded style="height: 100px;padding-top: 20px;">

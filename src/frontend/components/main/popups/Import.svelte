@@ -4,7 +4,7 @@
     import { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, dataPath } from "../../../stores"
+    import { activePopup, alertMessage } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
@@ -65,10 +65,10 @@
     ]
 
     function pptText() {
-        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] }, settings: { path: $dataPath } })
+        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
     }
     function libreOfficeConvert() {
-        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint", dataPath: $dataPath })
+        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint" })
     }
     function onlineConvert() {
         sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")
@@ -120,7 +120,7 @@
                 style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
                 on:click={() => {
                     let name = translateText(format.name)
-                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
+                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
                     displayTutorial(format)
                 }}
             >
@@ -187,7 +187,7 @@
                         })
                     } else {
                         let name = translateText(format.name)
-                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
+                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
                         displayTutorial(format)
                     }
                 }}

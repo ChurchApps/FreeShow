@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
-    import { activeStage, dictionary, labelsDisabled, selected, special, stageShows, timers } from "../../../stores"
+    import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getSortedStageItems, rearrangeStageItems, updateSortedStageItems } from "../../edit/scripts/itemHelpers"
     import { getItemText } from "../../edit/scripts/textStyle"
@@ -32,7 +32,7 @@
         { id: "clock" },
         { id: "slide_tracker", icon: "percentage" },
         { id: "metronome", maxAmount: 1 },
-        ...($special.optimizedMode ? [] : [{ id: "current_output", icon: "screen" }])
+        { id: "current_output", icon: "screen" }
     ]
 
     $: stageId = $activeStage.id || ""

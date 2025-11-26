@@ -41,6 +41,7 @@ import {
     selected,
     shows,
     showsCache,
+    special,
     stageShows,
     styles,
     templateCategories,
@@ -1247,6 +1248,34 @@ const exludedCategories = ["all", "unlabeled", "favourites", "effects_library", 
 function historyDelete(id, data, { updater } = { updater: "" }) {
     data = data.filter((a) => !exludedCategories.includes(a.id || a))
     data.forEach((a: any) => history({ id, newData: { id: a.id || a }, location: { page: get(activePage) as any, id: updater || undefined } }))
+
+    // set as deleted (for defaults)
+    if (["template", "overlay", "effect"].includes(updater)) {
+        special.update(a => {
+            if (updater === "template") a.deletedTemplates = getDeletedArray("deletedTemplates")
+            if (updater === "overlay") a.deletedOverlays = getDeletedArray("deletedOverlays")
+            if (updater === "effect") a.deletedEffects = getDeletedArray("deletedEffects")
+            return a
+
+            function getDeletedArray(key: string) {
+                let deletedIds = [...(a[key] || []), ...data.map((a) => a.id || a)]
+
+                // only defaults
+                deletedIds = deletedIds.filter((id) => {
+                    if (updater === "template") return get(templates)[id]?.isDefault
+                    if (updater === "overlay") return get(overlays)[id]?.isDefault
+                    if (updater === "effect") return get(effects)[id]?.isDefault
+                    return false
+                })
+
+                // remove any duplicates
+                deletedIds = [...new Set(deletedIds)]
+
+                return deletedIds
+            }
+        })
+    }
+
 }
 
 async function duplicateShows(selectedData: any) {

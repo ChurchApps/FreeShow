@@ -288,7 +288,7 @@ export const variableTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
-export const dataPath: Writable<string> = writable("") // ""
+export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
 export const lockedOverlays: Writable<string[]> = writable([]) // []
 export const special: Writable<any> = writable({}) // {}
 
@@ -303,7 +303,7 @@ export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(false) // false
 export const splitLines: Writable<number> = writable(0) // 0
-export const showsPath: Writable<null | string> = writable(null) // null
+export const showsPath: Writable<null | string> = writable(null) // null // DEPRECATED
 export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
 
 // THEME
@@ -414,7 +414,6 @@ export const $ = {
     drawer,
     mediaOptions,
     resized,
-    dataPath,
     special,
     language,
     direction: localeDirection,
@@ -426,7 +425,6 @@ export const $ = {
     fullColors,
     formatNewShow,
     splitLines,
-    showsPath,
     theme,
     themes,
     outputs,

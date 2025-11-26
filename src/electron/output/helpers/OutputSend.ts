@@ -1,6 +1,7 @@
 import type { ValidChannels } from "../../../types/Channels"
 import { OUTPUT } from "../../../types/Channels"
 import type { Message } from "../../../types/Socket"
+import { clone } from "../../utils/helpers"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 
@@ -11,7 +12,7 @@ export class OutputSend {
         function sendToWindow(output: Output & { id: string }) {
             if ((msg.data?.id && msg.data.id !== output.id) || !output?.window || output.window.isDestroyed()) return
 
-            let tempMsg: Message = JSON.parse(JSON.stringify(msg))
+            let tempMsg: Message = clone(msg)
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, output.id)
 
             output.window.webContents.send(OUTPUT, tempMsg)

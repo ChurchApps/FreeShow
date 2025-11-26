@@ -304,6 +304,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     } else {
                         if (!show) return
 
+                        // don't overwrite from project if locked
+                        if (projectImport && get(shows)[id]?.locked) return
+
                         // return if old show is modified after new show & not importing project
                         if (initializing && !projectImport && get(shows)[id]?.timestamps?.modified && show.timestamps?.modified && get(shows)[id].timestamps.modified! > show.timestamps.modified) return
 

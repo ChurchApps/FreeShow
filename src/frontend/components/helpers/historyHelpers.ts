@@ -630,9 +630,35 @@ export const projectReplacers = [
     { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
     { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) }
 ]
-export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
+const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
+export function getDefaultProjectName() {
+    try {
+        const locale = navigator.language
+        const formatter = new Intl.DateTimeFormat(locale)
+        const parts = formatter.formatToParts()
+
+        const format = parts.reduce((acc, part) => {
+            switch (part.type) {
+                case 'day':
+                    return acc + '{DD}'
+                case 'month':
+                    return acc + '{MM}'
+                case 'year':
+                    return acc + '{YY}'
+                case 'literal':
+                    return acc + part.value
+                default:
+                    return ""
+            }
+        }, '')
+
+        return format || DEFAULT_PROJECT_NAME
+    } catch {
+        return DEFAULT_PROJECT_NAME
+    }
+}
 export function getProjectName(updater = get(special)) {
-    let name = updater.default_project_name ?? DEFAULT_PROJECT_NAME
+    let name = updater.default_project_name ?? getDefaultProjectName()
 
     const date = new Date()
     projectReplacers.forEach((a) => {

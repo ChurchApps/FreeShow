@@ -4,7 +4,7 @@
     import { requestMain } from "../../../IPC/main"
     import { outLocked, outputs } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
@@ -28,7 +28,7 @@
         if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
+    $: currentOutput = getFirstActiveOutput($outputs)
 </script>
 
 {#if fullFilteredWindows.length}
@@ -39,7 +39,7 @@
                 screen={window}
                 on:click={(e) => {
                     if ($outLocked || e.ctrlKey || e.metaKey) return
-                    if (currentOutput.out?.background?.id === window.id) clearBackground()
+                    if (currentOutput?.out?.background?.id === window.id) clearBackground()
                     else setOutput("background", { id: window.id, type: "screen" })
                 }}
             />

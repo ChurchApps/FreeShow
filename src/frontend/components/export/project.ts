@@ -6,7 +6,7 @@ import { EXPORT } from "../../../types/Channels"
 import type { Effects } from "../../../types/Effects"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
 import type { Action, Overlays, Shows, SlideData } from "../../../types/Show"
-import { actions as actionsStores, dataPath, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
+import { actions as actionsStores, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
@@ -123,7 +123,7 @@ export async function exportProject(project: Project, projectId: string) {
     }
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: projectData })
+    send(EXPORT, ["GENERATE"], { type: "project", name: formatToFileName(project.name), file: projectData })
 
     function getItem(showRef: ProjectShowRef) {
         const type = showRef.type || "show"

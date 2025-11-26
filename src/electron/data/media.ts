@@ -46,6 +46,7 @@ export const audioExtensions = [
 ]
 
 export const mimeTypes: { [key: string]: string } = {
+    // video
     mp4: "video/mp4",
     webm: "video/webm",
     ogv: "video/ogg",
@@ -60,4 +61,9 @@ export const mimeTypes: { [key: string]: string } = {
     dvrms: "video/dvr-ms",
     mpeg: "video/mpeg",
     mpg: "video/mpeg",
+
+    // image
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
 }

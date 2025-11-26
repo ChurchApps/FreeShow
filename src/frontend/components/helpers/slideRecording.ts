@@ -1,8 +1,8 @@
 import type { Unsubscriber } from "svelte/store"
 import { get } from "svelte/store"
 import type { Recording } from "../../../types/Show"
-import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio, videosData, videosTime } from "../../stores"
-import { getActiveOutputs, setOutput } from "./output"
+import { activeShow, activeSlideRecording, outLocked, playingAudio, videosData, videosTime } from "../../stores"
+import { getFirstActiveOutput, setOutput } from "./output"
 import { updateOut } from "./showActions"
 import { _show } from "./shows"
 import { updateVideoData, updateVideoTime } from "./video"
@@ -64,8 +64,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
         if (audioPath && get(playingAudio)[audioPath]?.audio?.paused) return
 
-        const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
-        const outSlide = get(outputs)[outputId]?.out?.slide
+        const outSlide = getFirstActiveOutput()?.out?.slide
         const slideIndex = sequence.slideRef.index
         if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== slideIndex) {
             updateOut("active", slideIndex, layoutRef)
@@ -111,7 +110,7 @@ function startBackgroundListener() {
     if (backgroundListener) return
 
     // this might not get correct output if background is not playing in first output..
-    const activeOutputId = getActiveOutputs(get(outputs), true, true, true)[0]
+    const activeOutputId = getFirstActiveOutput()?.id || ""
 
     backgroundListener = videosTime.subscribe((a) => {
         const time = a[activeOutputId]

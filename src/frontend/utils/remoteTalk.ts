@@ -2,20 +2,21 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
+import { loadJsonBible } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
-import { getActiveOutputs, setOutput } from "../components/helpers/output"
+import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getLayoutRef } from "../components/helpers/show"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { activePage, activeProject, activeShow, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
-import { loadJsonBible } from "../components/drawer/bible/scripture"
 
 // REMOTE
 
@@ -75,6 +76,7 @@ export const receiveREMOTE: any = {
 
         if (loadingShow !== showID) return
 
+        openShow(showID)
         return msg
     },
     OUT: async (msg: any) => {
@@ -83,8 +85,8 @@ export const receiveREMOTE: any = {
         const currentId = uid(5)
         currentOut = currentId
 
-        const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-        const out: any = currentOutput?.out?.slide || null
+        const currentOutput = getFirstActiveOutput()
+        const out = currentOutput?.out?.slide || null
         let id = ""
 
         if (msg.data === "clear") {
@@ -133,7 +135,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     OUT_DATA: (msg: any) => {
-        const currentOutput = get(outputs)[getActiveOutputs()[0]]
+        const currentOutput = getFirstActiveOutput()
         const out = currentOutput?.out || {}
         msg.data = out
 
@@ -212,7 +214,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     SEARCH_SCRIPTURE: async (msg: ClientMessage) => {
-        const { id, searchTerm, searchType } = msg.data || {}
+        const { id, searchTerm, searchType, bookFilter } = msg.data || {}
         if (!id || !searchTerm) return
 
         const jsonBible = await loadJsonBible(id)
@@ -252,20 +254,28 @@ export const receiveREMOTE: any = {
             } else {
                 // Use textSearch for content search (minimum 3 characters)
                 if (searchTerm.length < 3) {
-                    msg.data.searchResults = { type: "text", results: [] }
+                    msg.data.searchResults = { type: "text", results: [], bookFilter }
                     return msg
                 }
                 const results = await jsonBible.textSearch(searchTerm)
+                let filteredResults = (results || []).map((ref: any) => ({
+                    book: ref.book,
+                    chapter: ref.chapter,
+                    verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
+                    reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
+                    referenceFull: ref.reference || "",
+                    verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
+                }))
+
+                // Apply book filter if provided
+                if (bookFilter) {
+                    filteredResults = filteredResults.filter((ref: any) => ref.book === bookFilter)
+                }
+
                 msg.data.searchResults = {
                     type: "text",
-                    results: (results || []).slice(0, 50).map((ref: any) => ({
-                        book: ref.book,
-                        chapter: ref.chapter,
-                        verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
-                        reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
-                        referenceFull: ref.reference || "",
-                        verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
-                    }))
+                    results: filteredResults.slice(0, 50),
+                    bookFilter
                 }
             }
         } catch (err) {
@@ -289,7 +299,7 @@ export async function initializeRemote(id: string) {
     send(REMOTE, ["PROJECT"], get(activeProject))
 
     // Get current output state
-    const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    const currentOutput = getFirstActiveOutput()
     const styleRes = currentOutput?.style ?
         get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution :
         null
@@ -364,3 +374,12 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 //     reader.onload = () => resolve(reader.result);
 //     reader.onerror = error => reject(error);
 // });
+
+function openShow(id: string) {
+    if (get(activePage) !== "show") return
+    if (!get(shows)[id]) return
+    // don't open if last interaction was less than 20 seconds ago
+    if (Date.now() - lastClickTime < 20000) return
+
+    activeShow.set({ id })
+}

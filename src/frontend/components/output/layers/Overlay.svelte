@@ -22,7 +22,7 @@
 
     $: if (overlays[id]?.items !== undefined) updateItems()
 
-    // WIP simular to SlideContent.svelte
+    // WIP similar to SlideContent.svelte
     let timeout: NodeJS.Timeout | null = null
     function updateItems() {
         show = false

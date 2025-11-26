@@ -3,16 +3,17 @@ import path from 'path'
 import { parseStringPromise } from 'xml2js'
 import { toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
-import { createFolder, dataFolderNames, writeFile } from '../../utils/files'
+import { createFolder, getDataFolderPath, writeFile } from '../../utils/files'
 
 // Extract .pptx contents directly from the ZIP using adm-zip and convert XML files to JSON
 // using xml2js. Media and fonts are written to disk and referenced in json.contentPaths
-export async function pptToShow(filePath: string, dataPath: string) {
+export async function pptToShow(filePath: string) {
     try {
         console.info('Starting PPT importing (zip -> xml2js) ...')
 
         const fileName = path.basename(filePath, path.extname(filePath))
-        const contentFolder = createFolder(path.join(dataPath, dataFolderNames.imports, 'PowerPoint', fileName))
+        const importsFolder = getDataFolderPath("imports", "PowerPoint")
+        const contentFolder = createFolder(path.join(importsFolder, fileName))
 
         const zip = new AdmZip(filePath)
         const entries = zip.getEntries()

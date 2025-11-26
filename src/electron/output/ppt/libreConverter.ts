@@ -6,11 +6,11 @@ import { isWindows } from "../.."
 import { ToMain } from "../../../types/IPC/ToMain"
 import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
-import { createFolder, dataFolderNames, selectFilesDialog } from "../../utils/files"
+import { getDataFolderPath, selectFilesDialog } from "../../utils/files"
 
 const convertAsync = promisify(libre.convert)
 
-export function libreConvert(data: { type: string, dataPath: string }) {
+export function libreConvert(data: { type: string }) {
     if (data.type === "powerpoint") {
         const files: string[] = selectFilesDialog("", { name: "PowerPoint", extensions: ["ppt", "pptx"] }, false)
         if (!files.length) return
@@ -19,7 +19,7 @@ export function libreConvert(data: { type: string, dataPath: string }) {
 
         const ext = path.extname(pptPath)
         const fileName = path.basename(pptPath, ext)
-        const outputFolder = createFolder(path.join(data.dataPath, dataFolderNames.imports, "PowerPoint"))
+        const outputFolder = getDataFolderPath("imports", "PowerPoint")
         const pdfPath = path.join(outputFolder, fileName + ".pdf")
 
         convertPptToPdf(pptPath, pdfPath)

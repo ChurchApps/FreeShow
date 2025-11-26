@@ -1,10 +1,14 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
-    import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
+    import { activeRecording, activeShow, drawerTabsData, special } from "../../../stores"
     import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
+    import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import InfoMetadata from "./InfoMetadata.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
@@ -24,6 +28,8 @@
         getCodecInfo()
     }
 
+    $: console.log(mediaData)
+
     let codecInfo: { codecs?: string[]; mimeType?: string; mimeCodec?: string } = {}
     async function getCodecInfo() {
         if (!videoExtensions.includes(getExtension($activeShow?.id || ""))) return
@@ -38,12 +44,23 @@
     $: info = [
         { label: "info.extension", value: mediaData.extension?.toUpperCase() || "-" },
         { label: "info.size", value: formatBytes(mediaData.size || 0) },
-        { label: "info.created", value: mediaData.birthtime, type: "date" },
-        { label: "info.modified", value: mediaData.mtime, type: "date" },
-        { label: "info.changed", value: mediaData.ctime, type: "date" },
+        { label: "info.created", value: mediaData.birthtimeMs, type: "date" },
+        { label: "info.modified", value: mediaData.mtimeMs, type: "date" },
+        { label: "info.changed", value: mediaData.ctimeMs, type: "date" },
         ...(codecInfo.codecs ? [{ label: "info.codecs", value: codecInfo.codecs?.join(", ") }] : [])
         // ...(codecInfo.mimeType ? [{ label: "info.mimeType", value: codecInfo.mimeType }] : [])
     ]
+
+    let settingsOpened = false
+
+    function updateSpecial(value: any, key: string, allowEmpty = false) {
+        special.update((a) => {
+            if (!allowEmpty && !value) delete a[key]
+            else a[key] = value
+
+            return a
+        })
+    }
 </script>
 
 {#if subTab === "screens" || $activeRecording}
@@ -52,8 +69,21 @@
     <PlayerInfo />
 {:else}
     <div class="scroll">
-        <InfoMetadata title={name} {info} />
+        {#if settingsOpened}
+            <main style="overflow-x: hidden;padding: 10px;">
+                <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
+                <MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoLocateMedia", true)} />
+            </main>
+        {:else if $activeShow?.type === "video" || $activeShow?.type === "image"}
+            <InfoMetadata title={name} {info} />
+        {/if}
     </div>
+
+    <FloatingInputs round>
+        <MaterialButton isActive={settingsOpened} title="edit.options" on:click={() => (settingsOpened = !settingsOpened)}>
+            <Icon size={1.1} id="options" white={!settingsOpened} />
+        </MaterialButton>
+    </FloatingInputs>
 {/if}
 
 <style>

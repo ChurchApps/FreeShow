@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
-import { getActiveOutputs } from "./output"
+import { OUTPUT } from "../../../types/Channels"
 import { outputs, styles } from "../../stores"
 import { send } from "../../utils/request"
-import { OUTPUT } from "../../../types/Channels"
+import { getAllNormalOutputs } from "./output"
 
 export function updateVideoTime(time: number) {
-    const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
 
     const timeValues: { [key: string]: number } = {}
     activeOutputIds.forEach((id) => {
@@ -16,7 +16,7 @@ export function updateVideoTime(time: number) {
 }
 
 export function updateVideoData(data: any) {
-    const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
+    const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
     const backgroundOutputId = activeOutputIds.find((id) => getLayersFromId(id).includes("background")) || activeOutputIds[0]
 
     const dataValues: any = {}
@@ -34,7 +34,7 @@ function getLayersFromId(id: string) {
 }
 
 export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], _updater: any = null) {
-    if (!outputIds.length) outputIds = getActiveOutputs(get(outputs), false, true, true)
+    if (!outputIds.length) outputIds = getAllNormalOutputs().map((a) => a.id)
 
     return outputIds.find(id => {
         const output = get(outputs)[id]

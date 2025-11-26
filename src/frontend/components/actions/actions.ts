@@ -1,19 +1,19 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { actionHistory, audioPlaylists, audioStreams, actions, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
+import { actionHistory, actions, audioPlaylists, audioStreams, runningActions, shows, stageShows, styles, triggers } from "../../stores"
 import { newToast, wait } from "../../utils/common"
+import { getShowBPM } from "../drawer/audio/metronome"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { clone, keysToID } from "../helpers/array"
 import { history } from "../helpers/history"
-import { getActiveOutputs } from "../helpers/output"
+import { getFirstActiveOutput } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { actionData } from "./actionData"
 import type { API_toggle } from "./api"
 import { API_ACTIONS } from "./api"
-import { convertOldMidiToNewAction } from "./midi"
 import { sortByClosestMatch } from "./apiHelper"
-import { getShowBPM } from "../drawer/audio/metronome"
-import { getDynamicValue } from "../edit/scripts/itemHelpers"
+import { convertOldMidiToNewAction } from "./midi"
 
 export function runActionId(id: string) {
     runAction(get(actions)[id])
@@ -70,7 +70,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
-            const outputRef = get(outputs)[getActiveOutputs()[0]]?.out?.slide
+            const outputRef = getFirstActiveOutput()?.out?.slide
             const showId = outputRef?.id || "active"
             const layoutRef = _show(showId)
                 .layouts(outputRef?.layout ? [outputRef.layout] : "active")

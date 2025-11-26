@@ -67,13 +67,15 @@
 
     // open tab instantly before loading content
     let loadingStarted: boolean = false
-    onMount(() => setTimeout(() => (loadingStarted = true), 10))
+    onMount(() => {
+        loadingStarted = true
+    })
 </script>
 
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
         {#if layoutSlides.length < 10 || loadingStarted}
-            {#each layoutSlides as slide, i}
+            {#each layoutSlides as slide, i (`${$activeShow?.id || 'show'}-${slide.id || 'slide'}-${i}`)}
                 <Slide
                     {resolution}
                     media={$activeShow?.media}

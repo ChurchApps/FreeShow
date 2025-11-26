@@ -11,7 +11,7 @@ import { sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getMediaStyle, getMediaType } from "../components/helpers/media"
-import { getActiveOutputs, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
+import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
@@ -28,7 +28,6 @@ import {
     activeSlideRecording,
     activeStage,
     contextActive,
-    currentWindow,
     drawer,
     focusedArea,
     focusMode,
@@ -52,7 +51,7 @@ import {
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
-import { hideDisplay, togglePanels } from "./common"
+import { hideDisplay, isOutputWindow, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
 
@@ -145,7 +144,7 @@ export function keydown(e: KeyboardEvent) {
     // don't prevent close event
     if (e.key === "F4" && e.altKey) return
 
-    if (get(currentWindow) === "output") {
+    if (isOutputWindow()) {
         const currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
         const contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
         if (e.key === "Escape" && !contentDisplayed) return hideDisplay()
@@ -300,7 +299,7 @@ export const previewShortcuts = {
 
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) {
-            const out = get(outputs)[getActiveOutputs()[0]]?.out
+            const out = getFirstActiveOutput()?.out
             if (!out?.slide) {
                 if (currentShow?.type === "overlay" && !out?.overlays?.includes(currentShow?.id)) {
                     e.preventDefault()
@@ -324,7 +323,7 @@ export const previewShortcuts = {
 
         // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         // if (!get(showsCache)[currentShow?.id || ""]) {
-        //     const out = get(outputs)[getActiveOutputs()[0]]?.out
+        //     const out = getFirstActiveOutput()?.out
         //     if (!out?.slide) {
         //         if (currentShow?.type === "folder") {
         //             return playMedia(e, true)
@@ -349,8 +348,7 @@ export const previewShortcuts = {
             return togglePlayingMedia(e)
         }
 
-        const allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
-        const outputId = allActiveOutputs[0]
+        const outputId = getFirstActiveOutput()?.id || ""
         const currentOutput = outputId ? get(outputs)[outputId] || null : null
         const outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
 
@@ -426,9 +424,8 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
     if (!item || !type) return
     e?.preventDefault()
 
-    const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-    const currentOutput = get(outputs)[outputId] || {}
-    const currentlyPlaying = currentOutput.out?.background?.path
+    const currentOutput = getFirstActiveOutput()
+    const currentlyPlaying = currentOutput?.out?.background?.path
     const alreadyPlaying = currentlyPlaying === item.id
 
     if (type === "video" || type === "image" || type === "player") {
@@ -436,17 +433,17 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
             // play / pause video
             // WIP duplicate of MediaControls.svelte
             const dataValues: any = {}
-            const activeOutputIds = getActiveOutputs(get(outputs), true, true, true)
-            const videoData = get(videosData)[outputId] || {}
+            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
+            const videoData = get(videosData)[currentOutput?.id || ""] || {}
             activeOutputIds.forEach((id) => {
-                dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted, paused: !videoData.paused }
+                dataValues[id] = { ...videoData, muted: id !== currentOutput?.id ? true : videoData.muted, paused: !videoData.paused }
             })
 
             send(OUTPUT, ["DATA"], dataValues)
             return
         }
 
-        const outputStyle = get(styles)[currentOutput.style || ""]
+        const outputStyle = get(styles)[currentOutput?.style || ""]
         const mediaData = get(media)[item.id] || {}
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
@@ -466,9 +463,8 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
 }
 
 export async function playFolder(path: string, back = false) {
-    const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-    const currentOutput = get(outputs)[outputId] || {}
-    const currentlyPlaying = currentOutput.out?.background?.path
+    const currentOutput = getFirstActiveOutput()
+    const currentlyPlaying = currentOutput?.out?.background?.path
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     const files = await requestMain(Main.READ_FOLDER, { path })
@@ -485,7 +481,7 @@ export async function playFolder(path: string, back = false) {
         AudioPlayer.start(folderFiles[allFilesIndex - 1].path, { name: folderFiles[allFilesIndex - 1].name })
     }
 
-    const outputStyle = get(styles)[currentOutput.style || ""]
+    const outputStyle = get(styles)[currentOutput?.style || ""]
     const mediaStyle = getMediaStyle(get(media)[newMedia.path], outputStyle)
 
     setOutput("background", { type: newMedia.type, path: newMedia.path, muted: false, loop: false, ...mediaStyle, folderPath: path })

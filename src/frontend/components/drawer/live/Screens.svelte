@@ -3,7 +3,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
     import { outLocked, outputs } from "../../../stores"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import { clearBackground } from "../../output/clear"
     import Capture from "./Capture.svelte"
 
@@ -14,9 +14,7 @@
         screens = await requestMain(Main.GET_SCREENS)
     })
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
-
-    $: console.log(screens)
+    $: currentOutput = getFirstActiveOutput($outputs)
 </script>
 
 {#each screens as screen}
@@ -25,7 +23,7 @@
         {screen}
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
-            if (currentOutput.out?.background?.id === screen.id) clearBackground()
+            if (currentOutput?.out?.background?.id === screen.id) clearBackground()
             else setOutput("background", { id: screen.id, type: "screen" })
         }}
     />

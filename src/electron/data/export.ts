@@ -7,13 +7,12 @@ import { BrowserWindow, ipcMain } from "electron"
 import fs, { type WriteFileOptions } from "fs"
 import { basename, extname, join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
-import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, Template } from "../../types/Show"
 import type { Message } from "../../types/Socket"
 import { isProd } from "../index"
-import { sendMain, sendToMain } from "../IPC/main"
-import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openInSystem, parseShow, readFile, selectFolderDialog } from "../utils/files"
+import { sendToMain } from "../IPC/main"
+import { doesPathExist, getDataFolderPath, getShowsFromIds, getTimePointString, makeDir, openInSystem, parseShow, readFile } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
 import { filePathHashCode } from "./thumbnails"
@@ -26,16 +25,6 @@ const customJSONExtensions = {
 
 export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
     if (!msg.data) return
-    let dataPath: string = msg.data.path
-
-    if (!dataPath) {
-        dataPath = selectFolderDialog()
-        if (!dataPath) return
-
-        sendMain(Main.DATA_PATH, dataPath)
-    }
-
-    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
     if (msg.channel === "TEMPLATE") {
         exportTemplate(msg.data)
@@ -44,13 +33,14 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     const customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
-        exportJSON(msg.data.content, customExt, msg.data.path)
+        const exportFolder = getDataFolderPath("exports")
+        exportJSON(msg.data.content, customExt, exportFolder)
         return
     }
 
     if (msg.channel === "USAGE") {
-        const path = createFolder(join(msg.data.path, "Usage"))
-        exportJSONFile(msg.data.content, path, getTimePointString())
+        const usageFolder = getDataFolderPath("exports", "Usage")
+        exportJSONFile(msg.data.content, usageFolder, getTimePointString())
         return
     }
 
@@ -61,9 +51,9 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     if (msg.channel !== "GENERATE") return
 
-    if (msg.data.showIds && msg.data.showsPath) {
+    if (msg.data.showIds) {
         // load shows
-        msg.data.shows = getShowsFromIds(msg.data.showIds, msg.data.showsPath)
+        msg.data.shows = getShowsFromIds(msg.data.showIds)
     }
 
     if (msg.data.type === "pdf") createPDFWindow(msg.data)
@@ -134,15 +124,17 @@ export function createPDFWindow(data: any) {
 ipcMain.on(EXPORT, (_e, msg: any) => {
     if (!msg.data?.path) return
 
+    const exportFolderPath = getDataFolderPath("exports")
+
     if (msg.channel === "DONE") {
-        doneWritingFile(null, msg.data.path)
+        doneWritingFile(null, exportFolderPath)
         return
     }
     if (msg.channel !== "EXPORT") return
 
     if (!msg.data?.name) return
     sendToMain(ToMain.ALERT, msg.data.name)
-    if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
+    if (msg.data.type === "pdf") generatePDF(join(exportFolderPath, msg.data.name))
 })
 
 // ----- JSON -----
@@ -221,16 +213,18 @@ function getSlidesText(show: Show) {
 
 // ----- ALL SHOWS -----
 
-function exportAllShows(data: { type: string; showsPath: string; path: string }) {
+function exportAllShows(data: { type: string; path: string }) {
     const type = data.type
 
     const supportedTypes = ["txt", "show"]
     if (!supportedTypes.includes(type)) return
 
-    const allShows: string[] = getAllShows({ path: data.showsPath })
+    const showsPath = getDataFolderPath("shows")
+
+    const allShows: string[] = getAllShows()
     const shows: Show[] = []
     for (const showName of allShows) {
-        const showFilePath = join(data.showsPath, showName)
+        const showFilePath = join(showsPath, showName)
         // WIP override existing instead of creating new?
         const showContent = parseShow(readFile(showFilePath))
 

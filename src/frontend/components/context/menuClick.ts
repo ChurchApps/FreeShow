@@ -23,6 +23,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    activeStyle,
     activeTagFilter,
     activeTimers,
     activeVariableTagFilter,
@@ -30,8 +31,6 @@ import {
     categories,
     colorbars,
     currentOutputSettings,
-    currentWindow,
-    dataPath,
     drawer,
     drawerTabsData,
     effects,
@@ -73,7 +72,8 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, newToast, triggerFunction, wait } from "../../utils/common"
+import { hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
+import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
@@ -93,7 +93,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
+import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -321,6 +321,15 @@ const clickActions = {
         })
         return m
     },
+    reset_defaults: () => {
+        const activeTab = get(activeDrawerTab)
+        if (activeTab === "templates") setExampleTemplates()
+        else if (activeTab === "overlays") {
+            const subTab = get(drawerTabsData).overlays?.activeSubTab
+            if (subTab === "effects") setExampleEffects()
+            else setExampleOverlays()
+        }
+    },
 
     // TAGS
     manage_show_tags: () => {
@@ -495,6 +504,9 @@ const clickActions = {
         else activeTags.splice(currentIndex, 1)
 
         activeVariableTagFilter.set(activeTags || [])
+    },
+    action_history: () => {
+        activePopup.set("action_history")
     },
 
     addToProject: (obj: ObjData) => {
@@ -773,7 +785,7 @@ const clickActions = {
             })
             getFile(template.settings?.backgroundPath)
 
-            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
+            send(EXPORT, ["TEMPLATE"], { name: formatToFileName(template.name), file: { template: { id, ...template }, files } })
 
             function getFile(path: string | undefined) {
                 if (!path) return
@@ -786,7 +798,7 @@ const clickActions = {
         if (obj.sel?.id === "theme") {
             const theme = get(themes)[obj.sel.data[0]?.id]
             if (!theme) return
-            send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
+            send(EXPORT, ["THEME"], { content: theme })
 
             return
         }
@@ -803,12 +815,12 @@ const clickActions = {
         if (obj.contextElem?.classList.value.includes("#projectsTab")) {
             const extensions = ["project", "shows", "json", "zip"]
             const name = translateText("formats.project")
-            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name }, settings: { path: get(dataPath) } })
+            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
             return
         }
     },
     close: (obj: ObjData) => {
-        if (get(currentWindow) === "output") {
+        if (isOutputWindow()) {
             hideDisplay()
             return
         }
@@ -1060,6 +1072,23 @@ const clickActions = {
             activePopup.set("custom_action")
         }
     },
+    edit_style: (obj: ObjData) => {
+        const outputId = obj.contextElem?.id || ""
+        const output = get(outputs)[outputId]
+        if (!output) return
+
+        if (output.stageOutput) {
+            activeStage.set({ id: output.stageOutput, items: [] })
+            activePage.set("stage")
+            return
+        }
+
+        if (!output.style) return
+
+        activeStyle.set(output.style)
+        settingsTab.set("styles")
+        activePage.set("settings")
+    },
     manage_groups: () => {
         // settingsTab.set("general")
         // activePage.set("settings")
@@ -1271,9 +1300,8 @@ const clickActions = {
         const path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
-        const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-        const currentOutput = get(outputs)[outputId] || {}
-        const outputStyle = get(styles)[currentOutput.style || ""]
+        const currentOutput = getFirstActiveOutput()
+        const outputStyle = get(styles)[currentOutput?.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
         const videoType = get(media)[path]?.videoType || ""
@@ -1291,9 +1319,8 @@ const clickActions = {
         const path = obj.sel?.data[0].path || obj.sel?.data[0].id
         if (!path) return
 
-        const outputId = getActiveOutputs(get(outputs))[0]
-        const currentOutput = get(outputs)[outputId] || {}
-        const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+        const currentOutput = getFirstActiveOutput()
+        const currentStyle = getCurrentStyle(get(styles), currentOutput?.style)
 
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
 
@@ -1368,7 +1395,7 @@ const clickActions = {
         if (obj.sel.id === "category_media") data = get(mediaFolders)[data]
         else if (obj.sel.id === "category_audio") data = get(audioFolders)[data]
 
-        const path = data?.path
+        const path = data?.path ?? obj.contextElem?.id
         if (!path) return
 
         sendMain(Main.SYSTEM_OPEN, path)

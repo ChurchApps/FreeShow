@@ -18,3 +18,14 @@ export function openProfileByName(profileName: string) {
     if (!profileId) return
     activeProfile.set(profileId)
 }
+
+// doesn't need to be secure
+export function encodePassword(password: string) {
+    return encrypt(password)
+}
+export function checkPassword(password: string, encoded: string) {
+    if (!password || !encoded) return false
+    return encoded === encrypt(password)
+}
+const k = "bw46feskw4"
+const encrypt = (text) => Array.from(text, (char: string, i) => ('0' + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join('')

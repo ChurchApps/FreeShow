@@ -509,7 +509,7 @@ export function removeItemValues(items: Item[]) {
 // }
 
 // split in half
-// WIP simular to Editbox.svelte
+// WIP similar to Editbox.svelte
 export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { start?: number; end?: number }[] = [], cutIndex = -1) {
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
     lines = lines.filter((a) => a.text?.[0]?.value?.length)

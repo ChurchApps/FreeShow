@@ -300,7 +300,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
-    STAGE_SHOWS: (a: any) => stageShows.set(a),
+    STAGE: (a: any) => stageShows.set(a),
 
     // for dynamic values
     PROJECTS: (a: any) => projects.set(a),

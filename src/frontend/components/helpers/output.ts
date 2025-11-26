@@ -17,7 +17,6 @@ import {
     categories,
     connections,
     currentOutputSettings,
-    currentWindow,
     disabledServers,
     effects,
     lockedOverlays,
@@ -43,7 +42,7 @@ import {
     usageLog
 } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
-import { newToast } from "../../utils/common"
+import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
@@ -220,12 +219,15 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 
 let justLogged = ""
 function appendShowUsage(showId: string) {
+    console.log(get(special).logSongUsage)
     if (!get(special).logSongUsage) return
 
+    console.log(get(showsCache), showId)
     const show = get(showsCache)[showId]
     if (!show) return
 
     // only log once in a row
+    console.log(justLogged)
     if (show.name === justLogged) return
     justLogged = show.name || ""
 
@@ -236,17 +238,19 @@ function appendShowUsage(showId: string) {
             if (!metadata[key]) delete metadata[key]
         })
 
+        if (!a.all) a.all = []
         a.all.push({
             name: show.name,
             time: Date.now(),
             metadata
         })
+
         return a
     })
 }
 
 function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
-    if (get(currentWindow) === null) {
+    if (isMainWindow()) {
         setTimeout(() => {
             // update stage background if any
             sendBackgroundToStage(id)
@@ -353,6 +357,41 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 
 ///
 
+export function getAllOutputs() {
+    // sort by normal first A-Z, then stage A-Z
+    return sortObject(sortByName(keysToID(get(outputs))), "stageOutput")
+    // return sortByName(keysToID(get(outputs)))
+}
+export function getAllEnabledOutputs() {
+    return getAllOutputs().filter(a => a.enabled)
+}
+
+export function getAllNormalOutputs() {
+    return getAllEnabledOutputs().filter((a) => !a.stageOutput)
+}
+export function getAllStageOutputs() {
+    return getAllEnabledOutputs().filter((a) => a.stageOutput)
+}
+
+export function getFirstOutput() {
+    return getAllNormalOutputs()[0]
+}
+
+export function getAllActiveOutputs() {
+    return getAllEnabledOutputs().filter(a => !a.stageOutput && a.active)
+}
+export function getFirstActiveOutput(_updater: any = null) {
+    const firstActive = getAllActiveOutputs()[0]
+    if (firstActive) return firstActive
+
+    // create one if none exist
+    if (!getAllOutputs().filter((a) => !a.stageOutput).length && isMainWindow()) addOutput(true)
+
+    // get first regardless of active state
+    return keysToID(get(outputs)).find(a => !a.stageOutput)
+}
+
+// DEPRECATED
 let sortedOutputs: (Output & { id: string })[] = []
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
     // keyOutput is not in use anymore
@@ -369,7 +408,7 @@ export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive 
     let enabledIds = enabled.map((a) => a.id)
 
     if (!enabledIds.length) {
-        if (!sortedOutputs.length && get(currentWindow) === null) addOutput(true)
+        if (!sortedOutputs.length && isMainWindow()) addOutput(true)
         if (sortedOutputs[0]) enabledIds = [sortedOutputs[0].id]
     }
 
@@ -402,7 +441,7 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
 
 export function refreshOut(refresh = true) {
     outputs.update((a) => {
-        getActiveOutputs().forEach((id: string) => {
+        getAllActiveOutputs().forEach(({ id }) => {
             a[id].out = { ...a[id].out, refresh }
         })
         return a
@@ -477,7 +516,7 @@ export function outputSlideHasContent(output) {
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes = false, outputId = "", styleIdOverride = ""): Resolution {
     if (initial) return initial
 
-    if (!outputId) outputId = getActiveOutputs()[0]
+    if (!outputId) outputId = getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId]
 
     if (currentOutput?.stageOutput) return currentOutput.bounds
@@ -590,7 +629,7 @@ function trimPixelValue(value: any) {
 }
 
 export function checkWindowCapture(startup = false) {
-    getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
+    getAllEnabledOutputs().forEach(({ id }) => shouldBeCaptured(id, startup))
 
     AudioAnalyser.recorderActivate()
 }
@@ -600,7 +639,7 @@ export function shouldBeCaptured(outputId: string, startup = false) {
     const output = get(outputs)[outputId]
     const captures = {
         ndi: !!output.ndi,
-        server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
+        server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
         stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId)
     }
 
@@ -665,8 +704,7 @@ export function addOutput(onlyFirst = false, styleId = "") {
 
 // WIP history
 export function enableStageOutput(options: any = {}) {
-    const outputIds = getActiveOutputs()
-    const bounds = get(outputs)[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
+    const bounds = getFirstActiveOutput()?.bounds || { x: 0, y: 0, width: 100, height: 100 }
     const id = uid()
 
     outputs.update((a) => {
@@ -759,8 +797,7 @@ export async function clearPlayingVideo(clearOutput = "") {
 export function getCurrentMediaTransition() {
     const transition: Transition = get(transitionData).media
 
-    const outputId = getActiveOutputs(get(outputs))[0]
-    const currentOutput = get(outputs)[outputId] || {}
+    const currentOutput = getFirstActiveOutput()
     const out = currentOutput?.out || {}
     const slide = out.slide || null
     const slideData = get(showsCache) && slide && slide.id !== "temp" ? getLayoutRef(slide.id)[slide.index!]?.data : null
@@ -1158,7 +1195,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     const maxStyleLines = Number(styleLines || 0)
 
     // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
-    const outputsList = get(currentWindow) === "output" ? get(allOutputs) : get(outputs)
+    const outputsList = isOutputWindow() ? get(allOutputs) : get(outputs)
     const amountOfLinesToShow: number = getFewestOutputLines(outputsList)
     if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
@@ -1196,7 +1233,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
 }
 
 function getHighestOutputLinePos() {
-    const outputsList = get(currentWindow) === "output" ? get(allOutputs) : get(outputs)
+    const outputsList = isOutputWindow() ? get(allOutputs) : get(outputs)
     const outputIds = getActiveOutputs(outputsList, true, true, true)
     let highestLine = 0
     outputIds.forEach((outputId) => {

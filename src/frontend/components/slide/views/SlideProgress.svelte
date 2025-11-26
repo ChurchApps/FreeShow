@@ -1,9 +1,9 @@
 <script lang="ts">
+    import type { LayoutRef, Show, ShowGroups, Slide } from "../../../../types/Show"
     import { allOutputs, groups, outputs, showsCache } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getFirstActiveOutput } from "../../helpers/output"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
-    import type { LayoutRef, Show, ShowGroups, Slide } from "../../../../types/Show"
 
     export let tracker: any
     export let outputId = ""
@@ -46,7 +46,7 @@
     let slidesLength = 0
     let progressData: ProgressEntry = { layoutGroups: [], slidesLength: 0, layoutSeed: "", groupSeed: "", trackerKey: "" }
 
-    $: if (!outputId) outputId = getActiveOutputs()[0]
+    $: if (!outputId) outputId = getFirstActiveOutput()?.id || ""
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
     $: currentSlideOut = currentOutput?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
@@ -102,14 +102,7 @@
         return ref
     }
 
-    function getProgress(
-        showId: string,
-        show: Show | null,
-        layoutRef: LayoutRef[],
-        slides: { [key: string]: Slide | undefined },
-        groupsStore: ShowGroups,
-        trackerData: any
-    ): ProgressEntry {
+    function getProgress(showId: string, show: Show | null, layoutRef: LayoutRef[], slides: { [key: string]: Slide | undefined }, groupsStore: ShowGroups, trackerData: any): ProgressEntry {
         if (!showId || !show || !layoutRef.length) return { layoutGroups: [], slidesLength: 0, layoutSeed: "", groupSeed: "", trackerKey: "" }
 
         const layoutSeed = getLayoutSeed(show)
@@ -124,7 +117,7 @@
             if (ref.type === "parent" && Array.isArray(ref.children)) parentChildrenMap.set(ref.id, ref.children)
         })
 
-    const showData = { show: show as Show, showId }
+        const showData = { show: show as Show, showId }
         const layoutGroups: LayoutGroupInfo[] = layoutRef.map((entry) => {
             const ref = entry.parent || entry
             const slide = slides[ref.id]

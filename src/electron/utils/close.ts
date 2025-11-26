@@ -68,6 +68,7 @@ export function closeMain() {
     mainWindow?.close()
 }
 
+// not in use currently - was used when custom data location changed previously
 export function forceCloseApp() {
     sendToMain(ToMain.ALERT, "actions.closing")
     // let user read message and action finish

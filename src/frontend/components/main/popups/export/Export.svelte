@@ -4,7 +4,7 @@
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
-    import { activePopup, activeProject, dataPath, projects, showsCache, showsPath, special } from "../../../../stores"
+    import { activePopup, activeProject, projects, showsCache, special } from "../../../../stores"
     import { translateText } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
@@ -77,7 +77,7 @@
 
         if (exportType === "all_shows") {
             loading = true
-            send(EXPORT, ["ALL_SHOWS"], { type: exportFormat, path: $dataPath, showsPath: $showsPath })
+            send(EXPORT, ["ALL_SHOWS"], { type: exportFormat })
             return
         }
 
@@ -104,12 +104,12 @@
             const images = await convertShowSlidesToImages(showIds[0])
             images.forEach((base64, i) => {
                 if (!base64) return
-                sendMain(Main.SAVE_IMAGE, { path: $dataPath, base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg" })
+                sendMain(Main.SAVE_IMAGE, { base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg" })
             })
             loading = false
         } else {
             const options = exportFormat === "pdf" ? (pdfOptions.chordSheet ? { ...pdfOptions, chordSheet: true } : pdfOptions) : {}
-            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options })
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, options })
         }
 
         activePopup.set(null)

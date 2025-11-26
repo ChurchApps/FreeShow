@@ -3,7 +3,7 @@
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, os, popupData, shows, showsCache, showsPath, special, usageLog, version } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, deletedShows, os, popupData, shows, showsCache, special, usageLog, version } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -13,16 +13,13 @@
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
-        if ($showsPath) sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
-        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
-            if (a.key === "disableHardwareAcceleration") {
-                disableHardwareAcceleration = !!a.value
-            }
+        sendMain(Main.FULL_SHOWS_LIST)
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
+            disableHardwareAcceleration = !!value
         })
-        if ($showsPath)
-            requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
-                if (a) emptyShows = a
-            })
+        requestMain(Main.GET_EMPTY_SHOWS, { cached: $showsCache }, (a) => {
+            if (a) emptyShows = a
+        })
         getDuplicatedShows()
     })
 
@@ -35,7 +32,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value && key !== "autoLocateMedia") delete a[key]
+            if (!value) delete a[key]
             else a[key] = value
 
             return a
@@ -69,22 +66,20 @@
 
     // get all shows inside current shows folder (and remove missing)
     // function refreshShows() {
-    //     sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
+    //     sendMain(Main.REFRESH_SHOWS)
 
     //     setTimeout(() => {
-    //         sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
+    //         sendMain(Main.FULL_SHOWS_LIST)
     //     }, 800)
     // }
 
     // delete shows from folder that are not indexed
     function deleteShows() {
-        if (!$showsPath) return
-
-        sendMain(Main.DELETE_SHOWS_NI, { shows: $shows, path: $showsPath })
+        sendMain(Main.DELETE_SHOWS_NI, { shows: $shows })
 
         setTimeout(() => {
             // this will not include newly created shows not saved yet, but it should not be an issue.
-            sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
+            sendMain(Main.FULL_SHOWS_LIST)
         }, 800)
     }
 
@@ -97,9 +92,7 @@
 
     let emptyShows: { id: string; name: string }[] = []
     function deleteEmptyShows() {
-        if (!$showsPath) return
-
-        sendMain(Main.DELETE_SHOWS, { shows: emptyShows, path: $showsPath })
+        sendMain(Main.DELETE_SHOWS, { shows: emptyShows })
         // emptyShows = []
         activePage.set("show")
     }
@@ -144,8 +137,7 @@
 
     // bundle media files
     function bundleMediaFiles() {
-        if (!$showsPath) return
-        sendMain(Main.BUNDLE_MEDIA_FILES, { showsPath: $showsPath, dataPath: $dataPath })
+        sendMain(Main.BUNDLE_MEDIA_FILES)
     }
 
     // usage log
@@ -158,7 +150,7 @@
             usageLogExported = true
             exportingUsageLog = false
         }, 1000)
-        send(EXPORT, ["USAGE"], { path: $dataPath, content: $usageLog })
+        send(EXPORT, ["USAGE"], { content: $usageLog })
     }
     function resetUsageLog() {
         usageLog.set({ all: [] })
@@ -178,8 +170,6 @@
 {/if}
 <!-- </div> -->
 <!-- </InputRow> -->
-
-<MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoLocateMedia")} />
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 

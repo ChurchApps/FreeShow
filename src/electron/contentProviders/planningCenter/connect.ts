@@ -207,7 +207,7 @@ export function pcoDisconnect(scope: PCOScopes = "services") {
     return { success: true }
 }
 
-export async function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {
+export async function pcoStartupLoad(scope: PCOScopes = "services") {
     if (!getContentProviderAccess("planningcenter", scope)) return
-    await pcoLoadServices(dataPath)
+    await pcoLoadServices()
 }

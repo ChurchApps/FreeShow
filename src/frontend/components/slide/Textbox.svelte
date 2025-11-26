@@ -2,12 +2,14 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import type { Item, Transition, TemplateStyleOverride, Slide } from "../../../types/Show"
-    import { activeFocus, activeShow, currentWindow, focusMode, outputs, overlays, showsCache, styles, templates, variables, groups } from "../../stores"
+    import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
+    import { activeFocus, activeShow, currentWindow, focusMode, groups, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
+    import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getActiveOutputs, getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
@@ -239,7 +241,7 @@
         return $showsCache[showId]?.settings?.template || ""
     })()
     // let outputTemplateAutoSize = false
-    $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
+    $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
@@ -269,7 +271,7 @@
 
     let loopStop: NodeJS.Timeout | null = null
     let newCall = false
-    function calculateAutosize() {
+    async function calculateAutosize() {
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) return
 
@@ -290,8 +292,11 @@
         let maxFontSize
 
         const isTextItem = (item.type || "text") === "text"
+        const isDynamic = isTextItem && getItemText(isStage ? stageItem : item).includes("{")
 
         if (isStage) {
+            // wait for text content to populate if dynamic value
+            if (isDynamic) await wait(10)
             if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
@@ -326,7 +331,7 @@
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature()
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
-        if (cachedResult && cachedResult.signature === cacheSignature) {
+        if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
             if (item.type === "slide_tracker") {
                 markAutoSizeReady()
@@ -362,7 +367,7 @@
             return
         }
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
-        if (cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+        if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
         markAutoSizeReady()
     }
 
@@ -506,12 +511,15 @@
     // let foregroundFilters = foregroundFiltersValues ? (noTransition ? foregroundFiltersValues : foregroundFiltersDefault) : ""
     // setTimeout(() => (foregroundFilters = foregroundFiltersValues))
     $: foregroundFilters = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}{fixedWidth}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

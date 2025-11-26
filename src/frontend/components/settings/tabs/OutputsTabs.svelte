@@ -1,5 +1,6 @@
 <script lang="ts">
     import { BLACKMAGIC, OUTPUT } from "../../../../types/Channels"
+    import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { activeTriggerFunction, currentOutputSettings, ndiData, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -137,9 +138,9 @@
 
     // CREATE
 
-    $: if ($activeTriggerFunction === "create_output") createOutput({})
-    async function createOutput(e: any) {
-        const skipPopup = e.ctrlKey || e.metaKey
+    $: if ($activeTriggerFunction === "create_output") createOutput()
+    async function createOutput(e?: ClickEvent) {
+        const skipPopup = e?.detail.ctrl
         let stageLayouts = keysToID($stageShows)
         let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
         if (!type) return
@@ -169,6 +170,13 @@
     let edit: any
 </script>
 
+<!-- <InputRow style="background-color: var(--primary);">
+    {#if outputsList.length > 1}
+        <MaterialButton variant="text" title="popup.output_selector" class="small_add" on:click={() => activePopup.set("output_selector")}>
+            <Icon id="outputs" size={1.2} white />
+        </MaterialButton>
+    {/if} -->
+
 <Tabs id="output" tabs={outputsList} value={$currentOutputSettings || ""} newLabel="settings.new_output" class="context #output_screen" on:open={(e) => currentOutputSettings.set(e.detail)} on:create={createOutput} let:tab>
     {#if tab.stageOutput}<Icon id="stage" right />{/if}
     {#if tab.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
@@ -178,3 +186,19 @@
         <div class="color" style="--color: {tab.color};"></div>
     {/if}
 </Tabs>
+<!-- </InputRow> -->
+
+<!-- <style>
+    :global(.row button.small_add) {
+        transform: translate(6px, 4px);
+
+        background-color: transparent !important;
+        border-radius: 15px;
+        height: 40px;
+        aspect-ratio: 1;
+    }
+
+    :global(.center) {
+        overflow: hidden;
+    }
+</style> -->

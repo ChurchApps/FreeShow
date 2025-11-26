@@ -30,40 +30,170 @@
 </script>
 
 {#if $outShow}
-    <h2 class="header">{$outShow.name || ""}</h2>
+    <div class="slide-container">
+        <h2 class="header">{$outShow.name || ""}</h2>
 
-    {#if $outputMode === "lyrics"}
-        <Lyrics />
-    {:else}
-        <div on:click={click} class="outSlides">
-            <Slide outSlide={slideNum} {transition} />
-            {#if $outLayout && nextSlide(layout, slideNum) && getNextSlide($outShow, slideNum, $outLayout)}
-                <Slide outSlide={nextSlide(layout, slideNum) || 0} {transition} />
-            {:else}
-                <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">{translate("remote.end", $dictionary)}</div>
-            {/if}
+        {#if $outputMode === "lyrics"}
+            <Lyrics />
+        {:else}
+            <div on:click={click} class="outSlides">
+                <Slide outSlide={slideNum} {transition} />
+                {#if $outLayout && nextSlide(layout, slideNum) && getNextSlide($outShow, slideNum, $outLayout)}
+                    <Slide outSlide={nextSlide(layout, slideNum) || 0} {transition} />
+                {:else}
+                    <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">{translate("remote.end", $dictionary)}</div>
+                {/if}
+            </div>
+        {/if}
+
+        <div class="slide-progress-text">{slideNum + 1}/{totalSlides}</div>
+
+        <div class="controls-section">
+            <div class="slide-progress desktop-only">
+                <Button class="desktop-nav" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
+                    <Icon id="previous" size={1.2} />
+                </Button>
+                <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                <Button class="desktop-nav" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
+                    <Icon id="next" size={1.2} />
+                </Button>
+            </div>
+
+            <div class="buttons">
+                <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
+            </div>
+
+            <div class="mode-toggle">
+                <Button on:click={() => _set("outputMode", $outputMode === "slide" ? "lyrics" : "slide")} style="width: 100%;" center dark>
+                    <Icon id={$outputMode} right />
+                    {translate(`remote.${$outputMode}`, $dictionary)}
+                </Button>
+            </div>
         </div>
-    {/if}
 
-    <div class="buttons" style="display: flex;width: 100%;">
-        <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.6em;padding: 6px;">{slideNum + 1}/{totalSlides}</span>
-    </div>
-
-    <div class="buttons">
-        <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
-    </div>
-
-    <div class="modes">
-        <Button on:click={() => _set("outputMode", $outputMode === "slide" ? "lyrics" : "slide")} style="width: 100%;" center dark>
-            <Icon id={$outputMode} right />
-            {translate(`remote.${$outputMode}`, $dictionary)}
-        </Button>
+        <div class="modes desktop-only">
+            <Button on:click={() => _set("outputMode", $outputMode === "slide" ? "lyrics" : "slide")} style="width: 100%;" center dark>
+                <Icon id={$outputMode} right />
+                {translate(`remote.${$outputMode}`, $dictionary)}
+            </Button>
+        </div>
     </div>
 {:else}
     <Center faded>{translate("remote.no_output", $dictionary)}</Center>
 {/if}
 
 <style>
+    /* Slide container - flex layout to push buttons to bottom */
+    .slide-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .slide-progress-text,
+    .slide-progress .counter {
+        font-size: 0.85em;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.3px;
+        color: white;
+    }
+
+    .slide-progress-text {
+        text-align: center;
+        padding: 8px 0;
+    }
+
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--primary-darkest);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .controls-section .buttons {
+        border-radius: 0;
+    }
+
+    .controls-section :global(.clearAll) {
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    .slide-progress {
+        display: none;
+    }
+
+    .mode-toggle {
+        padding: 4px;
+        background-color: var(--primary-darkest);
+        border-radius: 0;
+    }
+
+    .mode-toggle :global(button) {
+        width: 100%;
+        border-radius: 0 !important;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    @media screen and (min-width: 1001px) {
+        .slide-progress-text {
+            display: none;
+        }
+
+        .slide-progress {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            gap: 12px;
+            padding: 2px 6px;
+            background-color: var(--primary-darkest);
+            border-radius: 8px 8px 0 0;
+            min-height: 36px;
+        }
+
+        .slide-progress :global(.desktop-nav) {
+            display: flex;
+            min-width: 32px;
+            min-height: 32px !important;
+            padding: 2px 6px !important;
+            flex-shrink: 0;
+        }
+
+        .slide-progress :global(.desktop-nav) :global(svg) {
+            fill: var(--secondary);
+        }
+
+        .slide-progress .counter {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            padding: 0 8px;
+            pointer-events: none;
+        }
+
+        .controls-section .buttons {
+            border-radius: 0;
+        }
+
+        .mode-toggle {
+            display: none;
+        }
+
+        .desktop-only {
+            display: block;
+        }
+    }
+
     .outSlides {
         height: 100%;
         flex: 1;
@@ -82,6 +212,28 @@
         .outSlides :global(.main) {
             height: 50%;
             width: inherit;
+        }
+    }
+
+    /* Push bottom buttons to align with tabs bar */
+    .buttons:last-of-type {
+        margin-top: auto;
+    }
+
+    /* Mobile styles - align bottom buttons with tabs bar */
+    @media screen and (max-width: 1000px) {
+        .desktop-only {
+            display: none;
+        }
+
+        /* Ensure buttons align with tabs bar at bottom */
+        .slide-container {
+            justify-content: space-between;
+        }
+
+        .buttons:last-of-type {
+            margin-top: 0;
+            margin-bottom: 0;
         }
     }
 </style>

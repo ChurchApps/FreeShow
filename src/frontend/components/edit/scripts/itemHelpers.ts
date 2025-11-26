@@ -6,7 +6,7 @@ import { addSlideAction } from "../../actions/actions"
 import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
-import { getActiveOutputs, getStageOutputId } from "../../helpers/output"
+import { getFirstActiveOutput, getStageOutputId } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
 import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
@@ -318,6 +318,8 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
     const data = cVal.data || "value"
     let dataValue: string | number = cVal.value ?? ""
     if (data === "seconds" || (element === "timer" && operator !== "isRunning")) dataValue = (cVal.seconds || 0).toString()
+    // dynamic value text
+    if (dataValue.toString().includes("{")) dataValue = getDynamicValue(dataValue.toString(), type)
 
     let value = ""
     if (element === "text") value = itemsText
@@ -384,8 +386,7 @@ export function _getVariableValue(dynamicId: string) {
 }
 
 export function getDynamicValue(id: string, type: "default" | "stage" = "default") {
-    const outputId = getActiveOutputs()[0]
-    const outSlide = get(outputs)[outputId]?.out?.slide
+    const outSlide = getFirstActiveOutput()?.out?.slide
 
     const ref = {
         showId: outSlide?.id || get(activeShow)?.id,

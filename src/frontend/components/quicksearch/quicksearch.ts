@@ -440,7 +440,7 @@ function getMenubarItems() {
 const drawerSubmenus = [
     // media
     { id: "online", name: "media.online", icon: "web" },
-    { id: "screens", name: "live.screens", icon: "screen" },
+    { id: "screens", name: "live.screens", icon: "screen", aliases: ["live.windows", "NDI®"] },
     { id: "cameras", name: "live.cameras", icon: "camera" },
     // audio
     { id: "microphones", name: "live.microphones", icon: "microphone" },
@@ -542,7 +542,7 @@ const settings = [
         id: "files",
         name: "settings.files",
         icon: "files",
-        aliases: ["settings.autosave", "settings.auto_backup", "settings.data_location", "settings.show_location", "settings.user_data_location", "settings.cloud", "-Cloud sync", "-Sync", "settings.backup_all", "settings.restore"]
+        aliases: ["settings.autosave", "settings.auto_backup", "settings.data_location", "settings.cloud", "-Cloud sync", "-Sync", "settings.backup_all", "settings.restore"]
     },
     { id: "profiles", name: "settings.profiles", icon: "profiles" },
     { id: "theme", name: "settings.theme", icon: "theme" }

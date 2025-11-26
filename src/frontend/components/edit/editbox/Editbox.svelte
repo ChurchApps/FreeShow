@@ -6,7 +6,7 @@
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
+    import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../../helpers/output"
     import { getNumberVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
@@ -125,7 +125,7 @@
         })
     }
 
-    $: customOutputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: customOutputId = getFirstActiveOutput($outputs)?.id || ""
     function getCustomStyle(style: string, outputId = "") {
         if (outputId) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
@@ -168,7 +168,10 @@
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
 
-    $: isOptimized = $special.optimizedMode
+    const isOptimized = $special.optimizedMode
+
+    // fixed letter width
+    $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -190,7 +193,7 @@ bind:offsetWidth={width} -->
         ? 'width: 100%;'
         : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${
               backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''
-          }`}{cssVariables}"
+          }`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
 >

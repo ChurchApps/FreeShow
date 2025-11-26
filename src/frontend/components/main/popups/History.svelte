@@ -109,6 +109,8 @@
     }
 </script>
 
+<MaterialButton class="popup-options" icon="delete" title="actions.clear_history" on:click={clearHistory} white />
+
 <main class="history">
     {#if rHistory.length || uHistory.length}
         <div class="list">
@@ -135,14 +137,6 @@
                 </MaterialButton>
             {/each}
         </div>
-
-        <MaterialButton variant="outlined" style="margin-top: 20px;" icon="delete" on:click={clearHistory}>
-            <T id="actions.clear_history" />
-        </MaterialButton>
-        <!-- <div>
-        <p>Delete oldest automaticly when more than</p>
-        <NumberInput value={$historyCacheCount} on:change={(e) => historyCacheCount.set(e.detail)} buttons={false} />
-    </div> -->
     {:else}
         <Center faded>
             <T id="empty.general" />

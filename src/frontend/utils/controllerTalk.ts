@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { getActiveOutputs, getOutputResolution } from "../components/helpers/output"
+import { getFirstActiveOutput, getFirstOutput, getOutputResolution } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { clearAll, clearSlide } from "../components/output/clear"
 import { outputs, paintCache, serverData } from "../stores"
@@ -39,7 +39,7 @@ export const receiveCONTROLLER = {
             return
         }
 
-        const outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+        const outputId = getFirstActiveOutput()?.id || ""
         const resolution = getOutputResolution(outputId, get(outputs), true)
         data.offset.x *= resolution.width
         data.offset.y *= resolution.height
@@ -57,7 +57,7 @@ export const receiveCONTROLLER = {
         if (tool === "paint") paintCache.set([{ x: 0, y: 0, size: 0, color: "#ffffff" }])
     },
     GET_OUTPUT_ID: () => {
-        return { channel: "GET_OUTPUT_ID", data: get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0] }
+        return { channel: "GET_OUTPUT_ID", data: get(serverData)?.output_stream?.outputId || getFirstOutput()?.id }
     },
 }
 

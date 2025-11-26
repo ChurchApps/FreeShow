@@ -3,7 +3,8 @@ import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
 import { API_ACTIONS } from "../components/actions/api"
 import { checkWindowCapture } from "../components/helpers/output"
-import { connections, currentWindow, shows } from "../stores"
+import { connections, shows } from "../stores"
+import { isMainWindow } from "./common"
 import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
@@ -52,7 +53,7 @@ export function setConnectedState(type: string, connectionId: string, key = "act
 // send data to client
 export async function sendData(id: Clients, msg: ClientMessage, check = false) {
     // console.log(id, msg)
-    if (get(currentWindow) !== null) return
+    if (!isMainWindow()) return
 
     let channel = msg.channel
     if (channel.includes("API:")) {

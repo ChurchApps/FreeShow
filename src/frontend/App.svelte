@@ -69,8 +69,9 @@
 
         {#if $currentWindow === "output"}
             <MainOutput />
-        {:else if $loaded && Object.keys($profiles).length && $activeProfile === null}
+        {:else if $loaded && Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
             <Popup />
+            <Toast />
             <ProfileSelector />
         {:else if $loaded}
             <Popup />

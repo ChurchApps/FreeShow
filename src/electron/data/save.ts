@@ -1,31 +1,31 @@
+import type { Bible } from "json-bible/lib/Bible"
 import path from "path"
 import type { Main } from "../../types/IPC/Main"
-import type { Bible } from "json-bible/lib/Bible"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
-import { stores } from "../data/store"
+import { _store } from "../data/store"
 import { sendMain, sendToMain } from "../IPC/main"
-import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, parseShow, readFile, writeFile } from "../utils/files"
+import { deleteFile, doesPathExist, getDataFolderPath, parseShow, readFile, writeFile } from "../utils/files"
+import { clone, wait } from "../utils/helpers"
 import { renameShows } from "../utils/shows"
-import { wait } from "../utils/helpers"
 
 let isSaving = false
 export async function save(data: SaveData) {
     if (isSaving) return
     isSaving = true
 
-    const reset = !!data.customTriggers?.changeUserData?.reset
+    const reset = !!data.customTriggers?.reset
     if (reset) {
-        data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
-        data.SYNCED_SETTINGS = JSON.parse(JSON.stringify(defaultSyncedSettings))
+        data.SETTINGS = clone(defaultSettings)
+        data.SYNCED_SETTINGS = clone(defaultSyncedSettings)
     }
 
     // save to files
-    Object.entries(stores).forEach(storeData as any)
-    function storeData([key, store]: [keyof typeof stores, any]) {
+    Object.entries(_store).forEach(storeData as any)
+    function storeData([key, store]: [keyof typeof _store, any]) {
         if (!(data as any)[key] || checkIfMatching(store.store, (data as any)[key])) return
 
         store.clear()
@@ -35,20 +35,19 @@ export async function save(data: SaveData) {
     }
 
     // scriptures
-    const scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
+    const scriptureFolderPath = getDataFolderPath("scriptures")
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: [string, Bible]) {
         if (!value) return
-        const filePath: string = path.join(scripturePath, value.name + ".fsb")
+        const filePath: string = path.join(scriptureFolderPath, value.name + ".fsb")
         writeFile(filePath, JSON.stringify([id, value]), id)
     }
 
-    data.path = checkShowsFolder(data.path)
+    const showsPath = getDataFolderPath("shows")
     // rename shows
     if (data.renamedShows) {
         const renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
-        renameShows(renamedShows, data.path)
-
+        renameShows(renamedShows, showsPath)
         // rename should be sync, but sometimes it might not be finished right away
         // so add some extra wait time just in case
         await wait(200)
@@ -58,7 +57,7 @@ export async function save(data: SaveData) {
     if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
     function saveShow([id, value]: [string, any]) {
         if (!value) return
-        const filePath: string = path.join(data.path, String(value.name || id) + ".show")
+        const filePath: string = path.join(showsPath, String(value.name || id) + ".show")
         writeFile(filePath, JSON.stringify([id, value]), id)
     }
 
@@ -67,7 +66,7 @@ export async function save(data: SaveData) {
     function deleteShow({ name, id }: { name: string; id: string }) {
         if (!id || data.showsCache?.[id]) return
 
-        const filePath: string = path.join(data.path, (name || id) + ".show")
+        const filePath: string = path.join(showsPath, (name || id) + ".show")
         if (!doesPathExist(filePath)) return
 
         // load file to double check the ID (as a new show with the same name might have been created)
@@ -83,7 +82,7 @@ export async function save(data: SaveData) {
 
     // SAVED
 
-    if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, customTriggers: data.customTriggers })
+    if (data.customTriggers?.backup) startBackup({ customTriggers: data.customTriggers })
 
     if (data.closeWhenFinished) await wait(300) // make sure files are written before closing
     if (!reset) sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })

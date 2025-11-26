@@ -42,7 +42,7 @@
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getResolution, getSlideFilter } from "../helpers/output"
+    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -80,7 +80,7 @@
     let isFirstGhost = false
     // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
     // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < 60 && !$special.optimizedMode && layoutSlides.length) setTimeout(checkGhostBackground)
+    $: if (!background && index < ($special.optimizedMode ? 20 : 60) && layoutSlides.length) setTimeout(checkGhostBackground)
     function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
@@ -242,7 +242,7 @@
     // slide?.settings?.resolution
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = getFirstActiveOutput($outputs)
     $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
     $: layers = Array.isArray(currentStyle.layers) ? currentStyle.layers : ["background"]

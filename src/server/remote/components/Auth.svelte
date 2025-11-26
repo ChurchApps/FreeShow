@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Button from "../../common/components/Button.svelte"
     import { getValue, isChecked } from "../../common/util/helpers"
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
@@ -64,7 +63,7 @@
 				</label>
 
 				<div class="submit-wrap">
-					<Button type="submit" bold dark center style="width: 100%; border-radius: 12px;">{translate("remote.submit", $dictionary)}</Button>
+					<button type="submit" class="submit-button">{translate("remote.submit", $dictionary)}</button>
 				</div>
 			</div>
 		</form>
@@ -83,13 +82,13 @@
 	.card {
 		display: flex;
 		flex-direction: column;
-		gap: 18px;
-		padding: 28px;
+		gap: 24px;
+		padding: 32px;
 		width: min(560px, 92vw);
 		background-color: var(--primary-darker);
 		border: 1px solid var(--primary-lighter);
-		border-radius: 16px;
-		box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+		border-radius: 20px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
 		position: relative;
 		overflow: hidden;
 	}
@@ -99,18 +98,21 @@
 		align-items: center;
 		justify-content: center;
 		gap: 10px;
+		margin-bottom: 8px;
 	}
 	.title {
 		margin: 0;
 		text-align: center;
 		color: var(--secondary);
-		letter-spacing: 0.2px;
+		letter-spacing: 0.3px;
+		font-weight: 500;
+		font-size: 1.75em;
 	}
 
 	.auth-form {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 20px;
 	}
 
 	.sr-only {
@@ -132,40 +134,44 @@
 	}
 	.icon {
 		position: absolute;
-		left: 12px;
-		color: color-mix(in oklab, var(--text) 70%, transparent);
+		left: 14px;
+		color: color-mix(in oklab, var(--text) 65%, transparent);
 		pointer-events: none;
+		z-index: 1;
 	}
 	.input {
 		width: 100%;
-		background-color: rgb(255 255 255 / 0.06);
+		background-color: rgb(255 255 255 / 0.05);
 		color: var(--text);
-		padding: 12px 16px 12px 40px;
-		border: 1px solid var(--primary-lighter);
-		border-radius: 12px;
+		padding: 14px 18px 14px 44px;
+		border: 1.5px solid var(--primary-lighter);
+		border-radius: 14px;
 		font-size: inherit;
-		transition: outline-color 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+		transition: all 150ms ease;
 	}
 	.input:hover {
-		border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary));
+		border-color: color-mix(in oklab, var(--primary-lighter) 70%, var(--secondary));
+		background-color: rgb(255 255 255 / 0.07);
 	}
 	.input:active,
 	.input:focus {
-		outline: 2px solid var(--secondary);
-		outline-offset: 0;
-		background-color: rgb(255 255 255 / 0.08);
-		box-shadow: 0 0 0 4px var(--secondary-opacity);
+		outline: none;
+		background-color: rgb(255 255 255 / 0.09);
+		box-shadow: 0 0 0 3px var(--secondary-opacity);
+		border-color: var(--secondary);
+		transform: translateY(-1px);
 	}
 	.input::placeholder {
 		color: inherit;
-		opacity: 0.55;
+		opacity: 0.5;
 	}
 
 	.actions {
 		display: grid;
 		grid-template-columns: 1fr auto;
-		gap: 12px;
+		gap: 16px;
 		align-items: center;
+		margin-top: 4px;
 	}
 	.submit-wrap { width: 100%; }
 
@@ -174,41 +180,103 @@
 		align-items: center;
 		gap: 10px;
 		user-select: none;
+		cursor: pointer;
 	}
 	.remember-checkbox {
 		appearance: none;
-		width: 18px;
-		height: 18px;
+		width: 19px;
+		height: 19px;
 		border-radius: 6px;
-		border: 1px solid var(--primary-lighter);
-		background-color: rgb(255 255 255 / 0.06);
+		border: 1.5px solid var(--primary-lighter);
+		background-color: rgb(255 255 255 / 0.05);
 		display: inline-block;
 		position: relative;
 		outline: none;
 		cursor: pointer;
-		transition: box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
+		transition: all 150ms ease;
+		flex-shrink: 0;
 	}
-	.remember-checkbox:hover { border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary)); }
+	.remember-checkbox:hover { 
+		border-color: color-mix(in oklab, var(--primary-lighter) 70%, var(--secondary));
+		background-color: rgb(255 255 255 / 0.07);
+	}
 	.remember-checkbox:focus { box-shadow: 0 0 0 3px var(--secondary-opacity); }
-	.remember-checkbox:checked { background-color: var(--secondary); border-color: var(--secondary); }
+	.remember-checkbox:checked { 
+		background-color: var(--secondary); 
+		border-color: var(--secondary); 
+	}
 	.remember-checkbox:checked::after {
 		content: "";
 		position: absolute;
-		left: 5px;
-		top: 2px;
-		width: 4px;
-		height: 8px;
+		left: 6px;
+		top: 3px;
+		width: 5px;
+		height: 9px;
 		border: solid var(--secondary-text);
 		border-width: 0 2px 2px 0;
 		transform: rotate(45deg);
 	}
-	.remember-label { opacity: 0.8; font-size: 0.95em; }
+	.remember-label { 
+		opacity: 0.85; 
+		font-size: 0.95em;
+		cursor: pointer;
+	}
+
+	.submit-button {
+		width: 100%;
+		padding: 14px 18px;
+		background-color: var(--secondary);
+		color: var(--secondary-text);
+		border: none;
+		border-radius: 14px;
+		font-family: inherit;
+		font-size: inherit;
+		font-weight: 500;
+		letter-spacing: 0.2px;
+		cursor: pointer;
+		transition: all 150ms ease;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
+
+	.submit-button:hover {
+		background-color: color-mix(in oklab, var(--secondary) 90%, white);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		transform: translateY(-1px);
+	}
+
+	.submit-button:active {
+		transform: translateY(0);
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+	}
+
+	.submit-button:focus {
+		outline: none;
+		box-shadow: 0 0 0 3px var(--secondary-opacity), 0 4px 12px rgba(0, 0, 0, 0.2);
+	}
 
 	@media only screen and (max-width: 560px) {
-		.card { padding: 22px; }
-		.title { font-size: 1.4em; }
-		.input { padding: 10px 14px 10px 38px; }
-		.actions { grid-template-columns: 1fr; }
-		.submit-wrap { margin-top: 12px; }
+		.card { 
+			padding: 24px; 
+			gap: 20px;
+		}
+		.title { 
+			font-size: 1.5em; 
+		}
+		.auth-form {
+			gap: 18px;
+		}
+		.input { 
+			padding: 12px 16px 12px 42px; 
+		}
+		.actions { 
+			grid-template-columns: 1fr; 
+			gap: 14px;
+		}
+		.submit-wrap { 
+			margin-top: 0; 
+		}
+		.submit-button {
+			padding: 12px 16px;
+		}
 	}
 </style>

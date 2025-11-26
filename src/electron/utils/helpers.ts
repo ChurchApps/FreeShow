@@ -1,3 +1,9 @@
+// clone objects
+export function clone<T>(object: T): T {
+    if (typeof object !== "object") return object
+    return JSON.parse(JSON.stringify(object))
+}
+
 // async wait (instead of timeouts)
 export function wait(ms: number) {
     return new Promise((resolve) => {

@@ -1,6 +1,6 @@
 import { app, screen, type BrowserWindow } from "electron"
 import path from "path"
-import { isProd, isWindows } from ".."
+import { isProd, isWindows, setAutoProfile } from ".."
 import { catchErrors } from "../IPC/responsesMain"
 import { doesPathExist } from "./files"
 
@@ -14,6 +14,8 @@ export function parseCommandLineArgs() {
         if (arg.startsWith('--profile=')) result.profile = arg.substring('--profile='.length)
         else if (arg.startsWith('-p=')) result.profile = arg.substring('-p='.length)
     }
+
+    setAutoProfile(result.profile || "")
 
     return result
 }

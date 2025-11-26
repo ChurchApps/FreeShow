@@ -9,7 +9,7 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { createFolder, dataFolderNames, deleteFile, doesPathExist, doesPathExistAsync, getFileStatsAsync, makeDir } from "../utils/files"
+import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -176,13 +176,14 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     generationFinished()
 }
 
-export function saveImage(data: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
+export function saveImage(data: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
     let savePath = data.path
 
     if (data.filePath?.length) {
         const fileName = data.filePath.pop()!
-        const folderPath = path.join(savePath, dataFolderNames.exports, ...data.filePath)
+        const exportFolder = getDataFolderPath("exports")
+        const folderPath = path.join(exportFolder, ...data.filePath)
         createFolder(folderPath)
         savePath = path.join(folderPath, fileName)
     } else {
@@ -195,9 +196,10 @@ export function saveImage(data: { path: string; base64?: string; filePath?: stri
     saveToDisk(savePath, image, false, data.format || "png")
 }
 
-export async function pdfToImage({ filePath, dataPath }: { filePath: string; dataPath: string }) {
+export async function pdfToImage({ filePath }: { filePath: string }) {
     const pdfName = path.basename(filePath, path.extname(filePath))
-    const pathName = createFolder(path.join(dataPath, dataFolderNames.imports, "PDF", pdfName))
+    const pdfImportPath = getDataFolderPath("imports", "PDF")
+    const pathName = createFolder(path.join(pdfImportPath, pdfName))
 
     const { pages: pdfImages }: { pages: string[] } = await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })
     if (!Array.isArray(pdfImages)) return

@@ -2,16 +2,16 @@
 // This is the electron entry point
 
 import type { Rectangle } from "electron"
-import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, screen } from "electron"
+import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
-import { config, updateDataPath } from "./data/store"
+import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
-import { saveRecording } from "./IPC/responsesMain"
+import { autoErrorReport, saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
@@ -19,6 +19,7 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { registerProtectedProtocol } from "./data/protected"
 
 // ----- STARTUP -----
 
@@ -37,8 +38,13 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
+let autoProfile = ""
+export function setAutoProfile(profile: string) {
+    if (profile) autoProfile = profile
+}
+
 // parse command line arguments
-const commandLineArgs = parseCommandLineArgs()
+parseCommandLineArgs()
 
 // check if store works
 config.set("loaded", true)
@@ -51,6 +57,9 @@ if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 // set application menu
 setGlobalMenu()
 
+// error reporting
+autoErrorReport()
+
 // hardware acceleration
 const disableHWA = config.get("disableHardwareAcceleration")
 if (disableHWA === true) {
@@ -60,6 +69,19 @@ if (disableHWA === true) {
     app.disableHardwareAcceleration()
     console.info("Hardware Acceleration Disabled")
 }
+
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: "freeshow-protected",
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            corsEnabled: true,
+            stream: true
+        }
+    }
+])
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
@@ -81,7 +103,11 @@ function startApp() {
 
     setTimeout(createLoading)
 
-    updateDataPath({ load: true })
+    setupStores()
+
+    registerProtectedProtocol()
+
+    requestHeaders()
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()
@@ -96,6 +122,20 @@ function startApp() {
 
     // prevent display sleeping
     powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
+}
+
+function requestHeaders() {
+    // Fix YouTube Error 153 - set referrer policy for all requests
+    // https://stackoverflow.com/questions/79802987/youtube-error-153-video-player-configuration-error-when-embedding-youtube-video
+    app.whenReady().then(() => {
+        const session = require("electron").session.defaultSession
+        session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
+            if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
+                details.requestHeaders["Referer"] = "https://freeshow.app/"
+            }
+            callback({ requestHeaders: details.requestHeaders })
+        })
+    })
 }
 
 // ----- LOADING WINDOW -----
@@ -181,7 +221,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 
     window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile: commandLineArgs.profile || "" })
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
     })
 
     function loadingFailed(err: Error) {

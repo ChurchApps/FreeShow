@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { disabledServers, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
@@ -97,7 +98,7 @@ export class AudioAnalyser {
 
         delete this.sources[id]
 
-        if (get(currentWindow) !== "output") return
+        if (!isOutputWindow()) return
 
         // wait for audio to clear before checking
         setTimeout(() => {
@@ -279,7 +280,7 @@ export class AudioAnalyser {
         if (this.recorder || !this.recorderActive) return
         this.initDestination()
 
-        const id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
+        const id = isOutputWindow() ? Object.keys(get(outputs))[0] : "main"
         // might only work in "main" for OutputShow
 
         this.recorder = new MediaRecorder(this.destNode!.stream, {
@@ -315,7 +316,7 @@ export class AudioAnalyser {
 
     private static shouldBeActive() {
         let outputList = Object.values(get(outputs))
-        if (get(currentWindow) === "output") outputList = [Object.values(get(outputs))[0]]
+        if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
         // any outputs with ndi audio enabled
         if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true

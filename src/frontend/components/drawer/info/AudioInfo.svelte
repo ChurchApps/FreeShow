@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { playingMetronome, special } from "../../../stores"
+    import { activePopup, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -10,8 +10,9 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../main/Tabs.svelte"
-    import AudioMixers from "../audio/AudioMixers.svelte"
     import AudioEqualizer from "../audio/AudioEqualizer.svelte"
+    import AudioMixers from "../audio/AudioMixers.svelte"
+    import T from "../../helpers/T.svelte"
 
     let tabs: TabsObj = {
         mixer: { name: "audio.mixer", icon: "volume" },
@@ -65,6 +66,11 @@
         <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
 
         <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
+
+        <MaterialButton variant="outlined" style="width: 100%;" on:click={() => activePopup.set("now_playing")}>
+            <Icon id="document" />
+            <T id="popup.now_playing" />
+        </MaterialButton>
     </main>
 {:else}
     <Tabs {tabs} bind:active />

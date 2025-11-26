@@ -91,29 +91,37 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
     })
 }
 
-// sort any object.name by numbers in the front of the string
-export function sortByNameAndNumber<T extends Record<string, any>>(array: T[]) {
+// sort quick access numbers with optional prefixes/suffixes; blanks always go last
+export function sortByNameAndNumber<T extends Record<string, any>>(array: T[], direction: "asc" | "desc" = "asc") {
+    const dir = direction === "asc" ? 1 : -1
+
+    const parseToken = (value: string | undefined) => {
+        // keep a consistent tuple of prefix, numeric core, and suffix for reliable comparisons
+        const trimmed = value?.trim() || ""
+        if (!trimmed) return { empty: true, prefix: "", number: Number.POSITIVE_INFINITY, suffix: "" }
+
+        const match = trimmed.match(/^([A-Za-z]*)(\d+)?([A-Za-z]*)$/)
+        const prefix = (match?.[1] || "").toUpperCase()
+        const suffix = (match?.[3] || "").toUpperCase()
+        const hasDigits = !!match?.[2]
+        const number = hasDigits ? parseInt(match![2]!, 10) : Number.POSITIVE_INFINITY
+
+        return { empty: false, prefix, number, suffix, hasDigits }
+    }
+
     return array.sort((a, b) => {
-        const aNumberStr = a.quickAccess?.number?.toString() || ""
-        const bNumberStr = b.quickAccess?.number?.toString() || ""
+        const aToken = parseToken(a.quickAccess?.number?.toString())
+        const bToken = parseToken(b.quickAccess?.number?.toString())
 
-        // Split into prefix letters + numeric part
-        const extractParts = (str: string) => {
-            const match = str.match(/^([A-Za-z]*)(\d+)?$/)
-            return { prefix: match?.[1] || "", number: match?.[2] ? parseInt(match[2], 10) : Infinity }
-        }
+        if (aToken.empty !== bToken.empty) return aToken.empty ? 1 : -1
 
-        const aParts = extractParts(aNumberStr)
-        const bParts = extractParts(bNumberStr)
+        if (aToken.prefix !== bToken.prefix) return aToken.prefix.localeCompare(bToken.prefix) * dir
 
-        // Compare by prefix first
-        if (aParts.prefix !== bParts.prefix) return aParts.prefix.localeCompare(bParts.prefix)
+        if (aToken.number !== bToken.number) return (aToken.number - bToken.number) * dir
 
-        // Then by numeric part
-        if (aParts.number !== bParts.number) return aParts.number - bParts.number
+        if (aToken.suffix !== bToken.suffix) return aToken.suffix.localeCompare(bToken.suffix) * dir
 
-        // Fall back to name
-        return (a.name || "").localeCompare(b.name || "")
+        return ((a.name || "").localeCompare(b.name || "")) * dir
     })
 }
 
