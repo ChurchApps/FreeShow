@@ -171,6 +171,7 @@
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
+        const allowPersistentCarryOver = !transitionEnabled || currentTransition?.type === "none"
         let waitToShow = currentTransitionDuration * 0.5
 
         const shouldBlank = currentItems.length && currentSlide.items.length
@@ -178,7 +179,7 @@
         else transitioningBetween = false
 
         // cache any textboxes whose content did not change so they can stay visible during the blank
-        if (shouldBlank) {
+        if (shouldBlank && allowPersistentCarryOver) {
             const persistent = findPersistentItems(previousItemsSnapshot, previousSignatures, nextSignatures, nextSignatureCounts)
             carryOverItems = persistent.map((item) => ({
                 item: clone(item),
@@ -191,8 +192,10 @@
                 }
             }))
             persistentHold = carryOverItems.length > 0
+            persistentHold = carryOverItems.length > 0
         } else {
             clearCarryOverItems(true)
+            persistentHold = false
         }
 
         if (timeout) clearTimeout(timeout)
