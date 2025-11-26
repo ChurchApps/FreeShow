@@ -14,11 +14,11 @@ export class EditboxHelper {
         const newTexts: string[] = []
 
         oldLines?.forEach((line) => {
-            oldTexts.push(line.text[0].value)
+            if (line.text?.[0]?.value) oldTexts.push(line.text[0].value)
         })
 
         newLines.forEach((line) => {
-            newTexts.push(line.text[0].value)
+            if (line.text?.[0]?.value) newTexts.push(line.text[0].value)
         })
 
         let lastLineChanged = -1
@@ -46,7 +46,7 @@ export class EditboxHelper {
         let newLine = { ...line }
         newLine.text = []
 
-        line.text.forEach((text) => {
+        line.text?.forEach((text) => {
             const value = text.value
             const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })

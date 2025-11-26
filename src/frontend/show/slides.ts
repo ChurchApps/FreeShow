@@ -893,8 +893,10 @@ export function createVirtualBreaks(lines: Line[], skip = false) {
     if (!lines?.length) return []
 
     const replaceWith = skip ? "" : "<br>"
-    lines.forEach(a => {
-        a.text.forEach(text => {
+    lines.forEach(line => {
+        if (!Array.isArray(line?.text)) return
+
+        line.text.forEach(text => {
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })
     })

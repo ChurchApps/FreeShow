@@ -140,9 +140,7 @@ export const ERROR_FILTER = [
     "Failed to construct 'ImageData'", // invalid image size
     "Failed to load because no supported source was found.", // media file doesn't exists
     "The element has no supported sources.", // audio error
-    "The play() request was interrupted by a call to pause().", // video transitions
-    "The play() request was interrupted because the media was removed from the document.", // video transitions
-    "The play() request was interrupted because video-only background media was paused to save power.", // video issue
+    "The play() request was interrupted", // video transition "issue"
     "Failed to fetch", // probably offline
     "Uncaught IndexSizeError: Failed to execute 'setStart' on 'Range'", // caret update/reset (pos larger than content)
     "Uncaught IndexSizeError: Failed to execute 'setEnd' on 'Range'", // caret update/reset (pos larger than content)

@@ -170,6 +170,8 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
     const index = findFirstWithSameSlideIndex
     playRecording(recording, activeRec.ref, index)
 
+    if (!get(activeSlideRecording)) return
+
     // change time of playing audio
     const audioPath = get(activeSlideRecording).audioPath
     if (audioPath) playAudioTrack(audioPath, index, recording)

@@ -201,7 +201,7 @@
                     if (!a[$activeEdit.id!]?.items[i]?.lines) return
 
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
-                        line.text.forEach((text) => {
+                        line.text?.forEach((text) => {
                             text.style = ""
                         })
                     })
@@ -310,6 +310,8 @@
 
             selectedItems.forEach((index) => {
                 let item = allSlideItems[index]
+                if (!item) return
+
                 let previousItemValue = Number(getStyles(item.style, true)?.[key] || "0")
                 let newValue = previousItemValue + value + "px"
 

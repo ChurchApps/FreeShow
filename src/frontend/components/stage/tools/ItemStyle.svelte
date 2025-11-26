@@ -57,6 +57,7 @@
         // gradient value
         if (input.id === "style" && input.key === "background-color") {
             // set "background" value instead of "background-color"
+            if (typeof input.value !== "string") input.value = ""
             if (input.value.includes("gradient")) input.key = "background"
             // reset "background" value
             else if (data.background) updateStyle({ detail: { ...input, key: "background", value: "" } })

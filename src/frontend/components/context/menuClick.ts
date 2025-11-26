@@ -207,7 +207,7 @@ const clickActions = {
             const layout = clone(_show().get("layouts")[activeLayout] || {})
             layout.recording?.[0].sequence.splice(index, 1)
 
-            history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_layout" } })
+            history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
             return
         }
 
@@ -344,7 +344,7 @@ const clickActions = {
             return
         }
 
-        const disable = get(shows)[obj.sel?.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
+        const disable = get(shows)[obj.sel?.data[0]?.id]?.quickAccess?.tags?.includes(tagId)
 
         obj.sel?.data?.forEach(({ id }) => {
             // WIP similar to Tag.svelte - toggleTag()
@@ -540,7 +540,7 @@ const clickActions = {
         if (data.length > 1) videoData = { muted: false, loop: false }
 
         data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? videoData : {}) }))
-        const activeLayout = get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
+        const activeLayout = get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout
         const layoutLength = _show().layouts([activeLayout]).get()[0]?.length
         const newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
 
@@ -565,6 +565,8 @@ const clickActions = {
 
             const mediaId = uid(5)
             const mediaData = data[i]
+            if (!mediaData) return
+
             show.media[mediaId] = { ...mediaData, path: mediaData.path || mediaData.id, ...(mediaData.type === "video" ? videoData : {}) }
 
             const layoutData: SlideData = { id: slideId, background: mediaId }
@@ -905,7 +907,7 @@ const clickActions = {
         })
     },
     copy_to_template: (obj: ObjData) => {
-        let project = clone(get(projects)[obj.sel?.data?.[0]?.id])
+        let project = clone(get(projects)[obj.sel?.data[0]?.id])
         if (!project) return
 
         project = { name: project.name, parent: "/", shows: project.shows, created: 0 }
@@ -964,7 +966,7 @@ const clickActions = {
         if (obj.sel?.id === "stage") {
             // history({ id: "changeStage", newData: {key: "disabled", value: }, location: { page: "stage", slide: obj.sel.data.map(({id}) => (id)) } })
             stageShows.update((a) => {
-                const value = !a[obj.sel!.data[0].id].disabled
+                const value = !a[obj.sel!.data[0]?.id].disabled
                 obj.sel!.data.forEach((b) => {
                     a[b.id].disabled = value
                 })
@@ -974,7 +976,7 @@ const clickActions = {
         }
 
         if (obj.sel?.id === "action") {
-            const enabledState = get(actions)[obj.sel.data[0].id].enabled
+            const enabledState = get(actions)[obj.sel.data[0]?.id].enabled
             const value = enabledState === undefined ? false : !enabledState
             actions.update((a) => {
                 obj.sel!.data.forEach((b) => {
@@ -1012,7 +1014,7 @@ const clickActions = {
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: getMediaType(getExtension(path)) })
         } else if (obj.sel.id === "camera") {
             const data = obj.sel.data[0]
-            activeEdit.set({ type: "camera", id: data.id, data, items: [] })
+            activeEdit.set({ type: "camera", id: data?.id, data, items: [] })
             activePage.set("edit")
         } else if (obj.sel.id === "player") {
             const id = obj.sel.data[0]
@@ -1025,7 +1027,7 @@ const clickActions = {
             activePage.set("edit")
             if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: "audio" })
         } else if (obj.sel.id === "show_drawer") {
-            const showId = obj.sel.data[0].id
+            const showId = obj.sel.data[0]?.id
             activeShow.set({ type: "show", id: showId })
             activeEdit.set({ type: "show", slide: 0, items: [], showId })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
@@ -1053,7 +1055,7 @@ const clickActions = {
         } else if (obj.sel.id === "timer") {
             activePopup.set("timer")
         } else if (obj.sel.id === "global_timer") {
-            select("timer", { id: obj.sel.data[0].id })
+            select("timer", { id: obj.sel.data[0]?.id })
             activePopup.set("timer")
         } else if (obj.sel.id === "variable") {
             activePopup.set("variable")
@@ -1132,7 +1134,7 @@ const clickActions = {
         if (!data.chord) {
             // create chord
             const item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
-            addChords(item, { showId: get(activeShow)!.id, id: data.slideId }, data.itemIndex)
+            addChords(item, { showId: get(activeShow)?.id, id: data.slideId }, data.itemIndex)
         }
 
         activePopup.set("rename")
@@ -1177,6 +1179,7 @@ const clickActions = {
             const slideIndex = get(activeEdit).slide || 0
             const ref = getLayoutRef()
             const slideRef = ref[slideIndex]
+            if (!slideRef) return
 
             const currentItems = _show().slides([slideRef.id]).items().get()[0]
             if (!currentItems?.[items[0]]) return
@@ -1191,7 +1194,7 @@ const clickActions = {
             // })
             showsCache.update((a) => {
                 items.forEach((itemIndex) => {
-                    a[get(activeShow)!.id].slides[slideRef.id].items[itemIndex][id] = newState
+                    a[get(activeShow)?.id || ""].slides[slideRef.id].items[itemIndex][id] = newState
                 })
                 return a
             })
@@ -1261,7 +1264,7 @@ const clickActions = {
     preview: (obj: ObjData) => {
         if (!obj.sel) return
 
-        const path: string = obj.sel.data[0].path || obj.sel.data[0].id || obj.sel.data[0]
+        const path: string = obj.sel.data[0]?.path || obj.sel.data[0]?.id || obj.sel.data[0]
         if (!path) return
 
         const type = obj.sel.id || "media"
@@ -1297,7 +1300,7 @@ const clickActions = {
         if (get(outLocked)) return
 
         // video (play in project)
-        const path = obj.sel.data[0].path || obj.sel.data[0].id
+        const path = obj.sel.data[0]?.path || obj.sel.data[0]?.id
         if (!path) return
 
         const currentOutput = getFirstActiveOutput()
@@ -1316,7 +1319,7 @@ const clickActions = {
     play_no_audio: (obj: ObjData) => {
         if (get(outLocked)) return
 
-        const path = obj.sel?.data[0].path || obj.sel?.data[0].id
+        const path = obj.sel?.data[0]?.path || obj.sel?.data[0]?.id
         if (!path) return
 
         const currentOutput = getFirstActiveOutput()
@@ -1330,7 +1333,7 @@ const clickActions = {
     play_no_filters: (obj: ObjData) => {
         if (get(outLocked)) return
 
-        const path = obj.sel?.data[0].path || obj.sel?.data[0].id
+        const path = obj.sel?.data[0]?.path || obj.sel?.data[0]?.id
         if (!path) return
 
         const videoType = get(media)[path]?.videoType || ""
@@ -1354,7 +1357,7 @@ const clickActions = {
             return
         }
 
-        const favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
+        const favourite: boolean = get(media)[obj.sel.data[0]?.path || obj.sel.data[0]?.id]?.favourite !== true
         media.update((a) => {
             obj.sel!.data.forEach((card) => {
                 const path = card.path || card.id
@@ -1368,7 +1371,7 @@ const clickActions = {
     effects_library_add: (obj: ObjData) => {
         if (!obj.sel) return
 
-        const path = obj.sel.data[0].path || obj.sel.data[0].id
+        const path = obj.sel.data[0]?.path || obj.sel.data[0]?.id
         const existing = !!get(effectsLibrary).find((a) => a.path === path)
 
         effectsLibrary.update((a) => {
@@ -1527,6 +1530,7 @@ const clickActions = {
         const slideIndex: number = get(activeEdit).slide || 0
         const ref = getLayoutRef()
         const slideRef = ref[slideIndex]
+        if (!slideRef) return
 
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
         itemValues = itemValues.map((a) => a || [])
@@ -1795,7 +1799,7 @@ function changeSlideAction(obj: ObjData, id: string) {
 
 export function removeGroup(data: any[]) {
     const ref = getLayoutRef()
-    const firstSlideId = ref[0].id
+    const firstSlideId = ref[0]?.id
 
     let removeSlideIds: string[] = []
     data.forEach((slideRef) => {

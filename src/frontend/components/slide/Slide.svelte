@@ -177,7 +177,7 @@
     $: if (bgPath && !disableThumbnails) setTimeout(loadBackground)
     let thumbnailPath = ""
     async function loadBackground() {
-        if (bgPath.includes("http")) return download()
+        if (typeof bgPath === "string" && bgPath.includes("http")) return download()
 
         if (isLessons) {
             thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)

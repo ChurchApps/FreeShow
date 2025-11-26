@@ -63,6 +63,7 @@
 
         let time = Math.floor(duration * ((Math.floor(percentage * steps) * steps + steps) / 100))
         if (time && videoElem.currentTime === time) return
+        if (!isFinite(time)) return
 
         if (Number(time) === time) videoElem.currentTime = time
     }

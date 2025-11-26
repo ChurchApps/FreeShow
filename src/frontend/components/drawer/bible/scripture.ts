@@ -51,7 +51,7 @@ export async function loadJsonBible(id: string) {
     if (scriptureData?.collection) throw new Error("Collections must load one at a time")
 
     const localBible = await getLocalBible(id)
-    if (!localBible) throw new Error("Local Bible not found")
+    if (!localBible?.books) throw new Error("Local Bible not found")
 
     // load custom book names for local bibles (as many xml names are missing or in English)
     localBible.books = localBible.books.map((a) => ({ ...a, name: (a as any).customName || a.name }))
@@ -151,7 +151,7 @@ export async function getActiveScripturesContent() {
         selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
         // remove selected not in range of min to max verse number
         const minVerseNumber = 1
-        const maxVerseNumber = Chapters[0].data.verses[Chapters[0].data.verses.length - 1].number ?? Chapters[0].data.verses.length
+        const maxVerseNumber = Chapters[0] ? Chapters[0].data.verses[Chapters[0].data.verses.length - 1].number ?? Chapters[0].data.verses.length : 1
         selected[0] = selected[0].filter(v => {
             const id = getVerseId(v)
             if (isNaN(id)) return true

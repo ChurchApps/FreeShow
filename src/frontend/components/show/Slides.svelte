@@ -182,7 +182,9 @@
                 if (!item.lines) return
 
                 item.lines.forEach((line) => {
-                    line?.text.forEach((text) => {
+                    if (!Array.isArray(line?.text)) return
+
+                    line.text.forEach((text) => {
                         let newValue = capitalize(text.value)
                         if (text.value !== newValue) capitalized = true
                         text.value = newValue

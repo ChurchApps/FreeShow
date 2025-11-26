@@ -399,7 +399,11 @@ export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "
 }
 
 const ERROR_FILTER = [
-    "ENOENT: no such file or directory" // file/folder does not exist
+    "ENOENT: no such file or directory", // file/folder does not exist
+    "::internal::", // internal errors (v8 / partition_alloc)
+    "crash_reporter::DumpWithoutCrashing", // chromium crashes
+    "ERR_INTERNET_DISCONNECTED", // internet disconnected
+    "First argument to DataView constructor must be an ArrayBuffer" // mp4box issue
 ]
 export function catchErrors() {
     process.on("uncaughtException", (err) => {

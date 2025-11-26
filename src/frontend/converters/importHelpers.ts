@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show } from "../../types/Show"
+import type { Show, Slide } from "../../types/Show"
 import type { Category } from "../../types/Tabs"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
@@ -145,6 +145,8 @@ export function importSpecific(data: { content: string; name?: string; extension
 }
 
 export function fixShowIssues(show) {
+    if (!show.slides) show.slides = {}
+
     // remove unused children slides
     const allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
         const slide = show.slides[slideId]
@@ -180,6 +182,14 @@ export function fixShowIssues(show) {
 
             previousItem = currentItem
         }
+    })
+
+    Object.values<Slide>(show.slides).forEach((slide) => {
+        // fix undefined lines issue
+        slide.items?.forEach((item) => {
+            if (!item.lines) return
+            item.lines = item.lines.filter((line) => line !== undefined)
+        })
     })
 
     return show

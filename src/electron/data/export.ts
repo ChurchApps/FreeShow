@@ -196,7 +196,7 @@ function getSlidesText(show: Show) {
             if (!item.lines) return
 
             item.lines.forEach((line) => {
-                if (!line.text) return
+                if (!Array.isArray(line?.text)) return
 
                 line.text.forEach((txt) => {
                     text += txt.value

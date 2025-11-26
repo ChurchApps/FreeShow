@@ -25,7 +25,11 @@
 
     const input = (e: any) => {
         let inputValue = e.target.value || 0
-        inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
+        try {
+            inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
+        } catch (err) {
+            inputValue = value
+        }
 
         let newVaule = Math.max(Math.min(inputValue, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
         dispatch("change", newVaule !== null ? newVaule.toFixed(decimals) : value)

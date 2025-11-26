@@ -67,7 +67,7 @@
         on:keydown={handleKeydown}
     >
         <span class="selected-text">
-            {#if value?.includes("data:")}
+            {#if typeof value === "string" && value.includes("data:")}
                 Embeded data
             {:else if value}
                 {getFileName(value)}

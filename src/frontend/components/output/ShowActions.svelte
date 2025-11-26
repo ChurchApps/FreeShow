@@ -71,7 +71,7 @@
         //     return
         // }
 
-        if (!currentShow) return
+        if (!currentShow || !$showsCache[currentShow.id]) return
 
         const layout = $showsCache[currentShow.id].settings.activeLayout
         if (isEdit) setOutput("slide", { id: currentShow.id, layout, index: $activeEdit.slide })

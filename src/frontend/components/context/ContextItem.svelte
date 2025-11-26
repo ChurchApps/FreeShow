@@ -88,7 +88,7 @@
         archive: () => {
             const projectId = $selected.data?.[0]?.id
             let project = $projects[projectId]
-            enabled = !!project.archived
+            enabled = !!project?.archived
         },
         edit: () => {
             if ($selected.id !== "show_drawer" || !$shows[$selected.data[0]?.id]?.locked) return

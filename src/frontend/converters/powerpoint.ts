@@ -288,7 +288,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 // split each text[] into line[] if there are line breaks
                 const lineBreaks = paragraph["a:br"] || []
                 if (lineBreaks.length) {
-                    line.text.forEach(a => {
+                    line.text?.forEach(a => {
                         lines.push({ ...line, text: [a] })
                     })
                 }

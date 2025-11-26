@@ -20,7 +20,7 @@
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
 
-    $: if (path.includes("http")) download()
+    $: if (typeof path === "string" && path.includes("http")) download()
     async function download() {
         path = await downloadOnlineMedia(path)
     }

@@ -32,6 +32,7 @@ function XMLtoObject(xml: string) {
     const books: Book[] = []
 
     bible.BIBLEBOOK.forEach((book: any) => {
+        if (!book) return
         const name = book["@bname"]
         const abbreviation = book["@babbr"]
         const bookNumber = book["@bnumber"]
@@ -39,6 +40,7 @@ function XMLtoObject(xml: string) {
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
         book.CHAPTER.forEach((chapter: any) => {
+            if (!chapter) return
             const chapterNumber = chapter["@cnumber"]
             const verses: Verse[] = []
 

@@ -531,7 +531,7 @@
             return
         }
 
-        const result = await currentBibleData?.bibleData?.textSearch(contentSearchValue)
+        const result = await currentBibleData?.bibleData?.textSearch(encodeURIComponent(contentSearchValue.trim()))
         if (!result) return
 
         contentSearchResults = result

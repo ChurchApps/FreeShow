@@ -13,11 +13,12 @@ import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
-import { sendMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
 import { clone } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { ToMain } from "../../types/IPC/ToMain"
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
@@ -89,7 +90,15 @@ function checkStores(dataPath: string) {
 export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
 export function createStores(previousLocation?: string | null, setup: boolean = false) {
-    const configFolderPath = getDataFolderPath("userData")
+    let configFolderPath = ""
+    try {
+        configFolderPath = getDataFolderPath("userData")
+    } catch (err) {
+        configFolderPath = previousLocation || getDefaultDataFolderRoot()
+        config.set("dataPath", configFolderPath)
+        sendToMain(ToMain.ALERT, "Error: No access to data folder!")
+    }
+    if (previousLocation === configFolderPath) previousLocation = ""
 
     Object.entries(storeFilesData).forEach(([key, data]) => {
         _store[key as keyof typeof storeFilesData] = new Store({

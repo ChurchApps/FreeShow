@@ -285,6 +285,7 @@ function XMLtoObject(xml: string) {
 
     function getLines(lines: string | any) {
         if (lines.tag) lines = lines.tag.tag?.["#text"]
+        if (!lines) return { lines: [], chords: [] }
 
         // might be <lines break="optional">
         if (lines["#text"]) lines = lines["#text"]

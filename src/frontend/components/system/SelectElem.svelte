@@ -163,7 +163,7 @@
 
             let selectedBetween: number[] = range(lowestNumber, highestNumber)
             function range(start: number, end: number) {
-                return Array(end - start + 1)
+                return Array(Math.abs(end - start) + 1)
                     .fill("")
                     .map((_, idx) => start + idx)
             }

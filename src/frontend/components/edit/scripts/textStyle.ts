@@ -280,7 +280,7 @@ export function getItemTextArray(item: Item): string[] {
     if (!item?.lines) return []
 
     item.lines.forEach((line) => {
-        if (!line.text) return
+        if (!Array.isArray(line?.text)) return
 
         line.text.forEach((content) => {
             text.push(content.value)
@@ -335,7 +335,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
 
     // get end child elem
     const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
-    const currentEndTextLength = lastEndChild.innerText.length
+    let currentEndTextLength = lastEndChild.innerText.length
 
     const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
     if (line === 0 && breakElem) return
@@ -343,7 +343,11 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     const startElem = lineElem.childNodes[childElem].childNodes[0]
     const endElem = lastEndChild.childNodes[0]
 
-    range.setStart(startElem, pos - currentTextLength)
+    let offset = pos - currentTextLength
+    if (offset > startElem.length) offset = startElem.length
+    if (endElem && currentEndTextLength > endElem.length) currentEndTextLength = endElem.length
+
+    range.setStart(startElem, offset)
     if (toEnd) range.setEnd(endElem, currentEndTextLength)
     else range.collapse(true)
 
