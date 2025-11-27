@@ -194,18 +194,26 @@
         const transitioningItems: Item[] = []
         const transitioningIndexes: number[] = []
 
+        // First, check if ANY item on the slide has a real transition
+        // If so, all items should animate together (no persistent items)
+        const slideHasAnyTransition = currentSlide.items.some((item: Item) => {
+            const itemTrans = item.actions?.transition
+            return hasRealTransition(itemTrans, currentTransition)
+        })
+
         currentSlide.items.forEach((newItem: Item, newIndex: number) => {
             // Find matching old item by index (position-based matching for slides)
             const oldItem = currentItems[newIndex]
-            const itemTrans = newItem.actions?.transition
-            const hasTransition = hasRealTransition(itemTrans, currentTransition)
 
-            // Item is persistent if: unchanged content AND no real transition
-            if (itemsAreEqual(oldItem, newItem) && !hasTransition) {
+            // Item is persistent only if:
+            // 1. Content is unchanged AND
+            // 2. No real transition on this item AND
+            // 3. No other item on the slide has a transition (so whole slide animates together)
+            if (itemsAreEqual(oldItem, newItem) && !slideHasAnyTransition) {
                 newPersistentIndexes.push(newIndex)
                 newPersistentItems.push(clone(newItem))
             } else {
-                // Item needs to be re-rendered (changed or has transition)
+                // Item needs to be re-rendered (changed, has transition, or another item has transition)
                 transitioningIndexes.push(newIndex)
                 transitioningItems.push(clone(newItem))
             }
